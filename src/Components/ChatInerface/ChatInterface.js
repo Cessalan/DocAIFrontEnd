@@ -51,6 +51,15 @@ import {
   generate_scenario
 } from '../../Services/FastAPICalls.js';
 
+
+// Updated imports for ChatInterface.js
+import {
+  ask_llm_websocket,  // Replace ask_llm_stream
+  warmUpWebSocket,
+  closeWebSocketConnection,
+  setupWebSocketKeepalive,
+} from '../../Services/WebSocketManager.js';
+
 // Styles
 import './ChatInterface.css';
 
@@ -83,6 +92,7 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   
   const [activeStudyGuide, setActiveStudyGuide] = useState(null);
 
+
   // Loading states
   const [loadingStates, setLoadingStates] = useState({
     quiz: false,
@@ -93,8 +103,11 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   });
 
 
-  // in case the user answers quiz while its being loaded and streamed
-  const pendingQuizAnswersRef = useRef({});
+  // track if connection is alive
+  const [wsKeepalive, setWsKeepalive] = useState(null);
+  // 'connecting', 'connected', 'disconnected', 'error'
+  const [connectionStatus, setConnectionStatus] = useState('disconnected'); 
+
 
   // ============================================
   // REFS
@@ -102,10 +115,45 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   const messagesEndRef = useRef(null);
   const documentFileInputRef = useRef(null);
   const isQuizGeneratingRef = useRef(false);
+  // in case the user answers quiz while its being loaded and streamed
+  const pendingQuizAnswersRef = useRef({});
  
   // ============================================
   // HELPER FUNCTIONS
   // ============================================
+
+  // manage websocket connection everytime currentChatID changes
+  useEffect(() => {
+    if (currentChatID) {
+      // Warm up WebSocket connection
+      const initWebSocket = async () => {
+        setConnectionStatus('connecting');
+        try {
+          await warmUpWebSocket(currentChatID);
+          setConnectionStatus('connected');
+          
+          // Setup keepalive
+          const keepaliveInterval = setupWebSocketKeepalive(currentChatID);
+          setWsKeepalive(keepaliveInterval);
+        } catch (error) {
+          console.error('WebSocket initialization failed:', error);
+          setConnectionStatus('error');
+        }
+      };
+
+      initWebSocket();
+
+      // Cleanup on unmount or chat change
+      return () => {
+        if (wsKeepalive) {
+          clearInterval(wsKeepalive);
+        }
+        closeWebSocketConnection(currentChatID);
+        setConnectionStatus('disconnected');
+      };
+    }
+  }, [currentChatID]);
+
   const scrollToLatestMessage = useCallback(() => {
      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, []);
@@ -256,7 +304,7 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   // ============================================
   // MESSAGE HANDLING
   // ============================================
-  const handleSendNewUserMessage = async (e = null, customPrompt = null) => {
+  const handleSendNewUserMessageOLD = async (e = null, customPrompt = null) => {
     if (e) e.preventDefault();
     
     const messageToSend = customPrompt ?? userInputText;
@@ -278,6 +326,7 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
 
     // Save to Firebase
     const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+    
     if (updatedChatId && updatedChatId !== currentChatID) {
       setChatId(updatedChatId);
     }
@@ -497,6 +546,242 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
       
       setIsAiTyping(false);
     }
+  };
+
+  const handleSendNewUserMessage = async (e = null, customPrompt = null) => {
+  if (e) e.preventDefault();
+  
+  const messageToSend = customPrompt ?? userInputText;
+  if (messageToSend.trim() === '') return;
+
+  // Check WebSocket connection status
+  if (connectionStatus !== 'connected') {
+    console.warn('WebSocket not connected, attempting to reconnect...');
+    try {
+      await warmUpWebSocket(currentChatID);
+      setConnectionStatus('connected');
+    } catch (error) {
+      console.error('Failed to establish WebSocket connection:', error);
+      setConnectionStatus('error');
+      return;
+    }
+  }
+
+  // Add user message
+  const newUserMessage = {
+    id: uuidv4(),
+    role: 'user',
+    content: messageToSend,
+  };
+  
+  setChatMessages(prev => [...prev, newUserMessage]);
+  setUserInputText('');
+
+  // Save to Firebase
+  const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+  if (updatedChatId && updatedChatId !== currentChatID) {
+    setChatId(updatedChatId);
+  }
+
+  // Prepare for streaming
+  setIsAiTyping(true);
+  setStreamingStatus(null);
+  
+  const streamingMessageId = `streaming-${Date.now()}`;
+  const placeholderMessage = {
+    id: streamingMessageId,
+    role: 'assistant',
+    content: '',
+    isStreaming: true,
+    timestamp: new Date()
+  };
+  
+  setChatMessages(prev => [...prev, placeholderMessage]);
+  
+  let fullResponse = "";
+  
+  try {
+    // Use WebSocket with all your current logic
+    await ask_llm_websocket(
+      currentLanguage,
+      messageToSend,
+      formatChatHistory(chatMessages),
+      formatFilesForAPI(uploadedFilesList),
+      updatedChatId || currentChatID,
+
+      // Status callback - handles all your current status updates
+      (statusUpdate) => {
+        // Study sheet generation
+        if (statusUpdate.status === "studysheet_generated") {
+          handleStudySheetResponse(statusUpdate.html, streamingMessageId, updatedChatId);
+          return;
+        }
+
+        // Study guide trigger
+        if (statusUpdate.status === "study_guide_trigger") {
+          if (statusUpdate.parameters) {
+            setActiveStudyGuide({
+              topic: statusUpdate.parameters.topic,
+              num_sections: statusUpdate.parameters.num_sections,
+              chatId: currentChatID
+            });
+            onCloseSidebar();
+          }
+          return;
+        }
+
+        // Quiz generation progress
+        if (statusUpdate.status === "quiz_generating") {
+          console.log("generating quiz streaming");
+          isQuizGeneratingRef.current = true;
+          setChatMessages(prev => {
+            const existingQuiz = prev.find(msg => 
+              msg.id === streamingMessageId && msg.type === 'quiz'
+            );
+            
+            if (existingQuiz) {
+              return prev.map(msg =>
+                msg.id === streamingMessageId && msg.type === 'quiz'
+                  ? { ...msg, content: statusUpdate.message }
+                  : msg
+              );
+            }
+            
+            return [...prev, {
+              id: streamingMessageId,
+              role: 'assistant',
+              type: 'quiz',
+              content: statusUpdate.message,
+              quizData: [],
+              isStreaming: true,
+              timestamp: new Date()
+            }];
+          });
+          
+          setStreamingStatus({
+            status: 'generating_quiz',
+            message: statusUpdate.message
+          });
+          return;
+        }
+
+        // Individual quiz question ready
+        if (statusUpdate.status === "quiz_question") {
+          console.log("📝 Quiz question received:", statusUpdate.total_so_far);
+          
+          setChatMessages(prev =>
+            prev.map(msg => {
+              if (msg.id === streamingMessageId && msg.type === 'quiz') {
+                const newQuizData = [...(msg.quizData || []), statusUpdate.question];
+                console.log("✅ Appended question, total:", newQuizData.length);
+                
+                return {
+                  ...msg,
+                  quizData: newQuizData,
+                  content: `Quiz - ${statusUpdate.total_so_far} questions générées`,
+                  isStreaming: true
+                };
+              }
+              return msg;
+            })
+          );
+          return;
+        }
+          
+        // Quiz complete
+        if (statusUpdate.status === "quiz_complete") {
+          console.log("quiz completed");
+          handleQuizComplete(statusUpdate.quiz_data, streamingMessageId, updatedChatId);
+          setStreamingStatus(null);
+          return;
+        }
+
+        // Default status update
+        setStreamingStatus(statusUpdate);
+      },
+      
+      // Token callback - handles regular text streaming
+      (chunk) => {
+        console.log('📦 Chunk received In chatInterface:', chunk);
+        fullResponse = (fullResponse + chunk); 
+        
+        console.log('📏 fullResponse length:', fullResponse.length);
+        console.log('🆔 streamingMessageId:', streamingMessageId);
+
+        if (fullResponse.length > 0 && streamingStatus) {
+          setStreamingStatus(null);
+        }
+        
+        setChatMessages(prev => {
+          console.log('🔍 Total messages:', prev.length);
+          
+          const found = prev.find(m => m.id === streamingMessageId);
+          console.log('✅ Found message:', !!found, 'Type:', found?.type);
+          
+          const updated = prev.map(msg => {
+            if (msg.id === streamingMessageId && msg.type !== 'quiz') {
+              console.log('🎨 UPDATING MESSAGE with content length:', fullResponse.length);
+              return { ...msg, content: fullResponse, isStreaming: true };
+            }
+            return msg;
+          });
+          
+          return updated;
+        });
+      },
+      
+      // Complete callback - handles end of stream
+      async () => {
+        setStreamingStatus(null);
+
+        // Check if this was a quiz (don't save quiz as text)
+        if (isQuizGeneratingRef.current) {
+          console.log("⏭️ Skipping complete callback - was a quiz");
+          isQuizGeneratingRef.current = false;
+          setIsAiTyping(false);
+          return;
+        }
+        
+        // Only save text responses
+        const finalMessage = {
+          id: uuidv4(),
+          role: "assistant",
+          content: fullResponse,
+          timestamp: new Date(),
+          isStreaming: false
+        };
+        
+        await AppendToChat(updatedChatId || currentChatID, finalMessage);
+        
+        setChatMessages(prev =>
+          prev.map(msg =>
+            msg.id === streamingMessageId ? finalMessage : msg
+          )
+        );
+        
+        setIsAiTyping(false);
+      }
+    );
+  } catch (error) {
+    console.error("WebSocket streaming error:", error);
+    setStreamingStatus(null);
+    
+    setChatMessages(prev =>
+      prev.map(msg =>
+        msg.id === streamingMessageId
+          ? {
+              ...msg,
+              content: "Une erreur de connexion est survenue. Veuillez réessayer.",
+              error: true,
+              isStreaming: false
+            }
+          : msg
+      )
+    );
+    
+    setIsAiTyping(false);
+    setConnectionStatus('error');
+  }
   };
 
   const handleQuizResponse = async (quizData, messageId, chatId) => {

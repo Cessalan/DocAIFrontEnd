@@ -269,15 +269,3 @@ export const setupWebSocketKeepalive = (chatId, intervalMs = 30000) => {
   }, intervalMs);
 };
 
-// Backward compatibility - keep existing HTTP functions as fallbacks
-export {
-  embed_docs,
-  generate_title,
-  generate_summary,
-  stream_summary,
-  generate_quiz,
-  generate_scenario,
-  generate_study_guide_plan,
-  search_for_study_guide,
-  generate_study_guide_section
-} from './FastAPICall.js';

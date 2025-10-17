@@ -64,7 +64,7 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
 
     const chatQuery = query(
       chatsRef,
-      where("userId", "==", user.uid), // get only chats for current user
+      //where("userId", "==", user.uid), // get only chats for current user
       orderBy("updatedAt", "desc")     // sort by most recent
     );
   
@@ -73,6 +73,7 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
         id: doc.id,
         ...doc.data()
       }));
+      
       setChats(updatedChats);
       
       // Load file counts for all chats
@@ -218,7 +219,7 @@ const getchatDate = (timestamp) => {
                     </span>
                     <span className="conversation-metadata-separator">•</span>
                     <span className="conversation-user-id">
-                      {/* {chat.userId} */}
+                      {chat.userId}
                     </span>
                   </div>
                 </div>
