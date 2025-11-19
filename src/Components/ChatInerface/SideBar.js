@@ -73,7 +73,6 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
         id: doc.id,
         ...doc.data()
       }));
-      
       setChats(updatedChats);
       
       // Load file counts for all chats
@@ -197,7 +196,7 @@ const getchatDate = (timestamp) => {
               )}
               
               {/* Delete button - appears on hover */}
-              {/* {hoveredChatId === chat.id && (
+               {/* {hoveredChatId === chat.id && (
                 <button
                   className="delete-chat-button"
                   onClick={(e) => handleDeleteChat(e, chat.id)}
@@ -205,7 +204,7 @@ const getchatDate = (timestamp) => {
                 >
                   🗑️
                 </button>
-              )} */}
+              )}  */}
               
               <div className="conversation-details">
                 {/* Header section - now stacked vertically */}

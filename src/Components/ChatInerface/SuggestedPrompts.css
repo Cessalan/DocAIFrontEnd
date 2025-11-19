@@ -1,0 +1,286 @@
+/* ============================================
+   SUGGESTED PROMPTS - Seamless Chat Integration
+   ============================================ */
+
+/* Wrapper - Normal chat message behavior */
+.suggestions-wrapper {
+  width: 100%;
+  max-width: 100%;
+  padding: 8px 0;
+  margin: 12px 0;
+  position: relative;
+  display: block;
+}
+
+/* Card - NOW A SEAMLESS CONTAINER */
+.suggestions-card {
+  /* REMOVED background, border, border-radius, box-shadow */
+  background: transparent;
+  border: none;
+  padding: 0;
+  
+  /* Smooth appearance */
+  animation: slideIn 0.3s ease-out;
+  
+  /* CRITICAL: No fixed dimensions */
+  max-width: 100%;
+  width: 100%;
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   HEADER - Title for the list
+   ============================================ */
+
+.suggestions-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  
+  /* REMOVED border-bottom and padding-bottom */
+}
+
+.suggestions-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.suggestions-title {
+  margin: 0;
+  padding: 0;
+  font-size: 14px; /* Kept original size */
+  font-weight: 600; /* Kept original weight */
+  color: #5B4570; /* Kept original color */
+  line-height: 1;
+}
+
+/* ============================================
+   LIST - Vertical list
+   ============================================ */
+
+.suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0; /* Let items control spacing */
+  
+  max-height: none;
+  overflow: visible;
+}
+
+/* ============================================
+   SUGGESTION ITEMS - Borderless list style
+   ============================================ */
+
+.suggestion-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  
+  /* Use padding for spacing, not gap */
+  padding: 12px 8px;
+  
+  /* REMOVED background, border, border-radius */
+  background: transparent;
+  border: none;
+  border-radius: 6px; /* Added radius for hover/focus state */
+  
+  /* ADDED border-bottom for separator */
+  border-bottom: 1px solid rgba(173, 125, 195, 0.15);
+  
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #374151;
+  text-align: left;
+  
+  cursor: pointer;
+  transition: all 0.18s ease;
+  
+  /* Button reset */
+  width: 100%;
+  outline: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove border from the last item */
+.suggestion-item:last-child {
+  border-bottom: none;
+}
+
+/* Hover */
+.suggestion-item:hover:not(.disabled) {
+  /* Kept your hover color */
+  background: rgba(173, 125, 195, 0.06);
+  
+  /* REMOVED transform and box-shadow */
+  transform: none;
+  box-shadow: none;
+}
+
+.suggestion-item:hover:not(.disabled) .suggestion-icon-arrow {
+  /* Kept your icon hover color */
+  color: #AD7DC3;
+  
+  /* REMOVED transform */
+  transform: none;
+}
+
+/* Active */
+.suggestion-item:active:not(.disabled) {
+  /* REMOVED transform */
+  transform: none;
+  background: rgba(173, 125, 195, 0.1);
+}
+
+/* Focus */
+.suggestion-item:focus {
+  /* REMOVED border-color */
+  /* Kept box-shadow for accessibility */
+  box-shadow: 0 0 0 2px rgba(173, 125, 195, 0.15);
+}
+
+/* Disabled */
+.suggestion-item.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+/* ============================================
+   ARROW ICON - Small, subtle
+   ============================================ */
+
+.suggestion-icon-arrow {
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+  color: #9CA3AF;
+  transition: all 0.18s ease;
+}
+
+/* ============================================
+   TEXT - Wraps naturally
+   ============================================ */
+
+.suggestion-text {
+  flex: 1;
+  color: inherit;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
+}
+
+/* ============================================
+   MOBILE - Adjustments
+   ============================================ */
+
+@media (max-width: 768px) {
+  .suggestions-wrapper {
+    padding: 6px 0;
+    margin: 10px 0;
+  }
+  
+  .suggestions-card {
+    padding: 0;
+  }
+  
+  .suggestions-header {
+    margin-bottom: 8px;
+  }
+  
+  .suggestions-title {
+    font-size: 13px;
+  }
+  
+  .suggestion-item {
+    padding: 10px 6px;
+    font-size: 12px;
+    gap: 8px;
+  }
+  
+  .suggestion-icon-arrow {
+    width: 13px;
+    height: 13px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .suggestions-card {
+    animation: none;
+  }
+  
+  .suggestion-item:hover:not(.disabled),
+  .suggestion-item:active:not(.disabled) {
+    transform: none;
+  }
+  
+  .suggestion-icon-arrow {
+    transition: none;
+  }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .suggestions-card {
+    /* REMOVED background and border */
+    background: transparent;
+    border-color: none;
+  }
+  
+  .suggestions-title {
+    color: #E5D9F2; /* Kept original color */
+  }
+  
+  .suggestion-item {
+    /* REMOVED background and border */
+    background: transparent;
+    
+    /* ADDED border-bottom using your dark mode color */
+    border-bottom: 1px solid rgba(173, 125, 195, 0.25);
+    color: #E5E7EB;
+  }
+  
+  .suggestion-item:last-child {
+    border-bottom: none;
+  }
+  
+  .suggestion-item:hover:not(.disabled) {
+    /* Kept original hover color */
+    background: rgba(173, 125, 195, 0.15);
+    border-color: transparent; /* Ensure no border appears */
+  }
+}
+
+/* ============================================
+   CRITICAL DEBUG OVERRIDES
+   ============================================ */
+/* These are unchanged and still good practice */
+.suggestions-wrapper,
+.suggestions-card,
+.suggestions-list {
+  position: relative !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  overflow: visible !important;
+}

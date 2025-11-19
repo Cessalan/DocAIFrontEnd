@@ -23,7 +23,8 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+     "build:quiz": "esbuild src/nclex-quiz-widget.jsx --bundle --outfile=public/js/nclex-quiz-widget.bundle.js --format=iife --global-name=NCLEXQuizWidget --external:react --external:react-dom"
   },
   "eslintConfig": {
     "extends": [
@@ -44,6 +45,7 @@
     ]
   },
   "devDependencies": {
+    "esbuild": "^0.27.0",
     "tailwindcss": "^4.0.17"
   }
 }

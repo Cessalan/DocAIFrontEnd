@@ -1,7 +1,7 @@
 // WebSocketManager.js - Replace FastAPICall.js functions
 
-const WS_BASE = "ws://127.0.0.1:8000";
-// const WS_BASE = "wss://ragfastapi-1075876064685.europe-west1.run.app";
+//const WS_BASE = "ws://127.0.0.1:8000";
+const WS_BASE = "wss://ragfastapi-1075876064685.europe-west1.run.app";
 
 class WebSocketManager {
   constructor() {
@@ -221,6 +221,14 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
           status: "quiz_complete",
           quiz_data: data.quiz_data,
           total_generated: data.total_generated
+        });
+      }
+
+      if (data.status === "suggested_prompts" && data.suggestions) {
+        console.log("📝 Received suggestions:", data.suggestions);
+        onStatusUpdate({
+          status: "suggested_prompts",
+          suggestions: data.suggestions,
         });
       }
       break;

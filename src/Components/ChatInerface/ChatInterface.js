@@ -19,6 +19,7 @@ import {
 
 // Components
 import ChatMessage from './ChatMessage';
+import LoadingMessageBox from './LoadingMessageBox';
 
 // SVG Components
 import SvgFileUpload from '../Svg/SvgFileUpload';
@@ -48,7 +49,8 @@ import {
   embed_docs,
   generate_summary,
   stream_summary,
-  generate_scenario
+  generate_scenario,
+  upload_files_with_progress
 } from '../../Services/FastAPICalls.js';
 
 
@@ -66,6 +68,9 @@ import './ChatInterface.css';
 // translation
 import { useTranslation } from 'react-i18next';
 import StudyGuideGenerator from './StudyGuideGenerator.js';
+import StudySheetLivePreview from './StudySheetLivePreview.js';
+import StickyQuizProgress from './StickyQuizProgress';
+import SuggestedPrompts from './SuggestedPrompts';
 
 
 
@@ -74,6 +79,14 @@ import StudyGuideGenerator from './StudyGuideGenerator.js';
  * Features: Text messaging with AI, File uploads, Quiz/Summary/Scenario generation
  */
 const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
+
+  // Add this as the FIRST useEffect in ChatInterface
+useEffect(() => {
+  console.log('🔍 Component mounted, checking URL...');
+  console.log('🔍 Current URL:', window.location.href);
+  console.log('🔍 Search params:', window.location.search);
+}, []);
+
   // ============================================
   // STATE MANAGEMENT
   // ============================================
@@ -90,7 +103,39 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   const [streamingStatus, setStreamingStatus] = useState(null);
   const [isFilesModalVisible, setIsFilesModalVisible] = useState(false);
   
-  const [activeStudyGuide, setActiveStudyGuide] = useState(null);
+  // Upload insights state
+  const [uploadInsights, setUploadInsights] = useState([]);
+  const [uploadSummary, setUploadSummary] = useState(null);
+  const [isUploadAnalyzing, setIsUploadAnalyzing] = useState(false);
+  const [uploadMessageId, setUploadMessageId] = useState(null);
+  
+  const [activeStudySheet, setActiveStudySheet] = useState(null);
+  const [studySheetWebSocketData, setStudySheetWebSocketData] = useState(null);
+
+
+  // State for sticky quiz progress bar
+  const [activeQuizProgress, setActiveQuizProgress] = useState(null);
+  
+  //Track which quiz is currently active
+  const [activeQuizId, setActiveQuizId] = useState(null);
+
+  // track sugggested prompts that is received after each message
+  const [suggestedPrompts, setSuggestedPrompts] = useState([]);
+
+  /**
+ * activeQuizProgress structure:
+ * {
+ *   messageId: string,
+ *   isVisible: boolean,
+ *   answeredCount: number,
+ *   totalQuestions: number,
+ *   correctCount: number,
+ *   incorrectCount: number,
+ *   currentStreak: number,
+ *   longestStreak: number,
+ *   lastAnswerWasCorrect: boolean
+ * }
+ */
 
 
   // Loading states
@@ -108,15 +153,37 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   // 'connecting', 'connected', 'disconnected', 'error'
   const [connectionStatus, setConnectionStatus] = useState('disconnected'); 
 
+  const [studySheetData, setStudySheetData] = useState({
+    htmlContent: '',
+    sections: [],
+    steps: [],
+    progress: 0,
+    currentSection: null,
+    isComplete: false,
+    hasContent: false
+  });
+
 
   // ============================================
   // REFS
   // ============================================
   const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   const documentFileInputRef = useRef(null);
   const isQuizGeneratingRef = useRef(false);
   // in case the user answers quiz while its being loaded and streamed
   const pendingQuizAnswersRef = useRef({});
+  // Track which questions have been submitted (prevent double-submit)
+  const submittedAnswersRef = useRef(new Set());
+  const hasInitiallyScrolledRef = useRef(false);
+  // Track upload message ID for synchronous updates
+  const uploadMessageIdRef = useRef(null);
+  // 🆕 Track insights accumulation to avoid race conditions
+  const uploadInsightsAccumulatorRef = useRef([]);
+  
+  // Track if user is at bottom of chat
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
  
   // ============================================
   // HELPER FUNCTIONS
@@ -154,9 +221,101 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
     }
   }, [currentChatID]);
 
-  const scrollToLatestMessage = useCallback(() => {
-     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+
+  // In your ChatInterface component
+  useEffect(() => {
+  const params = new URLSearchParams(window.location.search);
+  const urlPrompt = params.get('prompt');  // ✅ Renamed to avoid conflicts
+  
+  if (urlPrompt) {
+    console.log('📝 Setting prompt from URL:', urlPrompt);
+    setUserInputText(urlPrompt);  // Already decoded by URLSearchParams
+    
+    // Clear URL params after reading
+    window.history.replaceState({}, '', window.location.pathname);
+  }
+}, []);
+  // Check if user is near bottom of messages
+  const isNearBottom = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return true;
+    
+    const threshold = 100; // pixels from bottom
+    const { scrollTop, scrollHeight, clientHeight } = container;
+    return scrollHeight - scrollTop - clientHeight < threshold;
   }, []);
+
+  // Scroll to bottom using messagesEndRef (more reliable than scrollHeight)
+  const scrollToBottom = useCallback((behavior = 'auto') => {
+    // Try scrollIntoView first (most reliable)
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
+    }
+    // Fallback to scrollTop method
+    else if (messagesContainerRef.current) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  }, []);
+
+  // Handle scroll event to show/hide button
+  const handleScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    
+    const isAtBottom = isNearBottom();
+    setShowScrollButton(!isAtBottom);
+  }, [isNearBottom]);
+
+  // Initial scroll to bottom ONLY on first load
+  useEffect(() => {
+    if (chatMessages.length > 0 && !hasInitiallyScrolledRef.current) {
+      const container = messagesContainerRef.current;
+      if (!container) return;
+      
+      // IMMEDIATE first scroll - prevents flash of content at wrong position
+      scrollToBottom('auto');
+      
+      let lastHeight = 0;
+      let stableCount = 0;
+      
+      // Keep checking and re-scrolling as content loads (quizzes, images, etc.)
+      const checkHeight = () => {
+        const currentHeight = container.scrollHeight;
+        
+        if (currentHeight === lastHeight) {
+          stableCount++;
+          if (stableCount >= 3) {
+            // Height stable, final scroll and we're done
+            scrollToBottom('auto');
+            hasInitiallyScrolledRef.current = true;
+            setIsInitialLoadComplete(true); // Show content now!
+            return;
+          }
+        } else {
+          // Height changed, scroll again and reset counter
+          scrollToBottom('auto');
+          stableCount = 0;
+        }
+        
+        lastHeight = currentHeight;
+        
+        // Keep checking until stable
+        if (stableCount < 3) {
+          setTimeout(checkHeight, 100);
+        }
+      };
+      
+      // Start checking after initial render
+      setTimeout(checkHeight, 100);
+    }
+  }, [chatMessages.length, scrollToBottom]);
+
+  // Auto-scroll on new messages only if already at bottom
+  useEffect(() => {
+    if (chatMessages.length > 0 && isNearBottom()) {
+      scrollToBottom('auto');
+    }
+  }, [chatMessages, isNearBottom, scrollToBottom]);
 
   const setLoadingState = useCallback((key, value) => {
     setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -237,11 +396,28 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
 
   // Sync with parent chatId prop
   useEffect(() => {
-  if (chatId) {
-    setChatId(chatId);
-    const chatDocRef = doc(db, "chats", chatId);
+  if (chatId && chatId !== currentChatID) {
+    // Clear messages immediately to force loader to show
+    setChatMessages([]);
     
-    // get the title of the chat
+    // Update chat ID
+    setChatId(chatId);
+    
+    // Reset scroll and loading flags
+    hasInitiallyScrolledRef.current = false;
+    setIsInitialLoadComplete(false);
+    
+    // Clear UI states from previous chat
+    setSuggestedPrompts([]);           // Clear suggested prompts (fixes reported bug)
+    setActiveQuizProgress(null);       // Clear sticky quiz progress bar
+    setActiveQuizId(null);             // Clear active quiz tracking
+    setActiveStudySheet(null);         // Close study sheet panel
+    setStudySheetWebSocketData(null);  // Clear study sheet data
+    setIsAiTyping(false);              // Clear typing indicator
+    setStreamingStatus(null);          // Clear streaming status
+    
+    // Get chat title
+    const chatDocRef = doc(db, "chats", chatId);
     getDoc(chatDocRef).then((docSnapshot) => {
       if (docSnapshot.exists()) {
         const chatData = docSnapshot.data();
@@ -249,7 +425,7 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
       }
     });
   }
-}, [chatId]);
+}, [chatId, currentChatID]);
 
   // Load messages from Firebase
   useEffect(() => {
@@ -266,7 +442,42 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
         id: doc.id,
         ...doc.data()
       }));
-      setChatMessages(loadedMessages);
+      
+      // CRITICAL FIX: Preserve upload_loading messages that exist in state but not in Firebase yet
+      // These are actively being updated with streaming insights
+      setChatMessages(prev => {
+        // Find any upload_loading messages in current state
+        const activeUploadMessages = prev.filter(msg => 
+          msg.type === 'upload_loading' && msg.isLoading === true
+        );
+        
+        if (activeUploadMessages.length === 0) {
+          // No active uploads, just use Firebase data
+          return loadedMessages;
+        }
+        
+        // Merge: Keep active upload messages, add Firebase messages
+        // Remove any upload_loading from Firebase (they're complete)
+        const firebaseWithoutUploads = loadedMessages.filter(msg => 
+          msg.type !== 'upload_loading'
+        );
+        
+        // Insert active upload messages in correct position (usually at end)
+        // Find where they were in the previous array
+        const result = [...firebaseWithoutUploads];
+        activeUploadMessages.forEach(uploadMsg => {
+          // Add at end if not found, or keep relative position
+          result.push(uploadMsg);
+        });
+        
+        console.log('🔄 Merged messages:', {
+          fromFirebase: firebaseWithoutUploads.length,
+          activeUploads: activeUploadMessages.length,
+          total: result.length
+        });
+        
+        return result;
+      });
     });
 
     return () => unsubscribe();
@@ -290,11 +501,11 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
       var lastMessage = chatMessages[chatMessages.length-1];
       if(lastMessage && lastMessage.type !=="quiz")
       {
-        scrollToLatestMessage();
+        scrollToBottom();
       }
       
     }
-  }, [chatMessages.length, isAiTyping]); // scroll down only if a new message is added at the bottom and once the AI finishes typing
+  }, [chatMessages.length, isAiTyping, scrollToBottom]); // scroll down only if a new message is added at the bottom and once the AI finishes typing
 
 
   const { t , i18n} = useTranslation();
@@ -304,533 +515,303 @@ const ChatInterface = ({ chatId ,onChatSelected, onCloseSidebar}) => {
   // ============================================
   // MESSAGE HANDLING
   // ============================================
-  const handleSendNewUserMessageOLD = async (e = null, customPrompt = null) => {
-    if (e) e.preventDefault();
-    
-    const messageToSend = customPrompt ?? userInputText;
-    if (messageToSend.trim() === '') return;
-
-    // Prepare for streaming
-    setIsAiTyping(true);
-    setStreamingStatus(null);
-
-    // Add user message
-    const newUserMessage = {
-      id: uuidv4(),
-      role: 'user',
-      content: messageToSend,
-    };
-    
-    setChatMessages(prev => [...prev, newUserMessage]);
-    setUserInputText('');
-
-    // Save to Firebase
-    const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
-    
-    if (updatedChatId && updatedChatId !== currentChatID) {
-      setChatId(updatedChatId);
-    }
-
   
-    const streamingMessageId = `streaming-${Date.now()}`;    
-   
-    // ADD PLACEHOLDER MESSAGE FOR TEXT RESPONSES
-    const placeholderMessage = {
-      id: streamingMessageId,
-      role: 'assistant',
-      content: '',
-      isStreaming: true,
-      timestamp: new Date()
-    };
+const handleSendNewUserMessage = async (e = null, customPrompt = null) => {
+if (e) e.preventDefault();
 
-    setChatMessages(prev => [...prev, placeholderMessage]);
-  
-    //  WAIT FOR REACT TO PROCESS THE STATE UPDATE
-    await new Promise(resolve => setTimeout(resolve, 0));
+// clear the state of suggested prompts
+setSuggestedPrompts([]);
 
-     let fullResponse = "";
-    
-    try {
-      // will be used to build the context
-      const chatHistory = formatChatHistory(chatMessages);
-      const filesList = formatFilesForAPI(uploadedFilesList)
-      
-      await ask_llm_stream(
-        currentLanguage,
-        messageToSend,
-        chatHistory,
-        filesList,
-        updatedChatId || currentChatID,
+const messageToSend = customPrompt ?? userInputText;
+if (messageToSend.trim() === '') return;
 
-      // check status
-      (statusUpdate) => {
+// Check WebSocket connection status
+if (connectionStatus !== 'connected') {
+  console.warn('WebSocket not connected, attempting to reconnect...');
+  try {
+    await warmUpWebSocket(currentChatID);
+    setConnectionStatus('connected');
+  } catch (error) {
+    console.error('Failed to establish WebSocket connection:', error);
+    setConnectionStatus('error');
+    return;
+  }
+}
 
-        if(statusUpdate.status == "studysheet_generated")
-        {
-          // Handle study sheet response
-          handleStudySheetResponse(statusUpdate.html, streamingMessageId, updatedChatId);
-          return;
-        }
+// Add user message
+const newUserMessage = {
+  id: uuidv4(),
+  role: 'user',
+  content: messageToSend,
+};
 
-        if(statusUpdate.status == "study_guide_trigger")
-        {
-            if(statusUpdate.parameters)
-            {
-               // need to implement the logic to open the studyguidegenerator.js and make api calls to complete it
-                setActiveStudyGuide({
-                topic: statusUpdate.parameters.topic,
-                num_sections: statusUpdate.parameters.num_sections,
-                chatId: currentChatID
-              });
+setChatMessages(prev => [...prev, newUserMessage]);
+setUserInputText('');
 
-              // close side bar when we open the study sheet generator
-              onCloseSidebar();
-            }
-        }
+// Save to Firebase
+const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+if (updatedChatId && updatedChatId !== currentChatID) {
+  setChatId(updatedChatId);
+}
 
-        // start quiz generation
-        if (statusUpdate.status === "quiz_generating") {
+// Prepare for streaming
+setIsAiTyping(true);
+setStreamingStatus(null);
 
-          console.log("generating quiz streaming");
-          isQuizGeneratingRef.current = true;
-          setChatMessages(prev => {
-            const existingQuiz = prev.find(msg => 
-              msg.id === streamingMessageId && msg.type === 'quiz'
-            );
-            
-            if (existingQuiz) {
-              // Update existing
-              return prev.map(msg =>
-                msg.id === streamingMessageId && msg.type === 'quiz'
-                  ? { ...msg, content: statusUpdate.message }
-                  : msg
-              );
-            }
-            
-            // Create new quiz message (first time)
-            return [...prev, {
-              id: streamingMessageId,
-              role: 'assistant',
-              type: 'quiz',
-              content: statusUpdate.message,
-              quizData: [],
-              isStreaming: true,
-              timestamp: new Date()
-            }];
-          });
-          
-          setStreamingStatus({
-            status: 'generating_quiz',
-            message: statusUpdate.message
-          });
-          return;
-        }
+const streamingMessageId = `streaming-${Date.now()}`;
+const placeholderMessage = {
+  id: streamingMessageId,
+  role: 'assistant',
+  content: '',
+  isStreaming: true,
+  timestamp: new Date()
+};
 
-        // Individual question ready - ADD THIS
-        if (statusUpdate.status === "quiz_question") {
-          console.log("📝 Quiz question received:", statusUpdate.total_so_far);
-          
-          setChatMessages(prev =>
-            prev.map(msg => {
-              if (msg.id === streamingMessageId && msg.type === 'quiz') {
-                const newQuizData = [...(msg.quizData || []), statusUpdate.question];
-                console.log("✅ Appended question, total:", newQuizData.length);
-                
-                return {
-                  ...msg,
-                  quizData: newQuizData,
-                  content: `Quiz - ${statusUpdate.total_so_far} questions générées`,
-                  isStreaming: true
-                };
-              }
-              return msg;
-            })
+setChatMessages(prev => [...prev, placeholderMessage]);
+
+let fullResponse = "";
+
+try {
+  // Use WebSocket with all your current logic
+  await ask_llm_websocket(
+    currentLanguage,
+    messageToSend,
+    formatChatHistory(chatMessages),
+    formatFilesForAPI(uploadedFilesList),
+    updatedChatId || currentChatID,
+
+    // Status callback - handles all your current status updates
+    (statusUpdate) => {
+
+      // Quiz generation progress
+      if (statusUpdate.status === "quiz_generating") {
+        console.log("generating quiz streaming");
+        isQuizGeneratingRef.current = true;
+        setChatMessages(prev => {
+          const existingQuiz = prev.find(msg => 
+            msg.id === streamingMessageId && msg.type === 'quiz'
           );
-          return;
-        }
           
-        // Quiz complete
-        if (statusUpdate.status === "quiz_complete") {
-
-            console.log("quiz completed");
-
-            handleQuizComplete(statusUpdate.quiz_data, streamingMessageId, updatedChatId);
-            setStreamingStatus(null);
-            return;
-          }
-
-        setStreamingStatus(statusUpdate);
-      },
-        
-      // Chunk callback
-      (chunk) => {
-         
-          console.log('📦 Chunk received In chatInterface:', chunk);
-          fullResponse = (fullResponse + chunk); 
-          
-           console.log('📏 fullResponse length:', fullResponse.length);
-           console.log('🆔 streamingMessageId:', streamingMessageId);
-
-          if (fullResponse.length > 0 && streamingStatus) {
-            setStreamingStatus(null);
-          }
-          
-           setChatMessages(prev => {
-            console.log('🔍 Total messages:', prev.length);
-            
-            const found = prev.find(m => m.id === streamingMessageId);
-            console.log('✅ Found message:', !!found, 'Type:', found?.type);
-            
-            const updated = prev.map(msg => {
-              if (msg.id === streamingMessageId && msg.type !== 'quiz') {
-                console.log('🎨 UPDATING MESSAGE with content length:', fullResponse.length);
-                return { ...msg, content: fullResponse, isStreaming: true };
-              }
-              return msg;
-            });
-            
-            return updated;
-          });
-          
-        },
-        
-        // Complete callback
-        async () => {
-            setStreamingStatus(null);
-
-             
-            // Check the ref
-            if (isQuizGeneratingRef.current) {
-              console.log("⏭️ Skipping complete callback - was a quiz");
-              isQuizGeneratingRef.current = false;  // Reset
-              setIsAiTyping(false);
-              return;
-            }
-            
-            // Only save text responses
-            const finalMessage = {
-              id: uuidv4(),
-              role: "assistant",
-              content: fullResponse,
-              timestamp: new Date(),
-              isStreaming: false
-            };
-            
-            await AppendToChat(updatedChatId || currentChatID, finalMessage);
-            
-            setChatMessages(prev =>
-              prev.map(msg =>
-                msg.id === streamingMessageId ? finalMessage : msg
-              )
+          if (existingQuiz) {
+            return prev.map(msg =>
+              msg.id === streamingMessageId && msg.type === 'quiz'
+                ? { ...msg, content: statusUpdate.message }
+                : msg
             );
-            
-            setIsAiTyping(false);
           }
-      );
-    } catch (error) {
-      console.error("Streaming error:", error);
+          
+          return [...prev, {
+            id: streamingMessageId,
+            role: 'assistant',
+            type: 'quiz',
+            content: statusUpdate.message,
+            quizData: [],
+            isStreaming: true,
+            timestamp: new Date()
+          }];
+        });
+        
+        setStreamingStatus({
+          status: 'generating_quiz',
+          message: statusUpdate.message
+        });
+        return;
+      }
+
+      // Individual quiz question ready
+      if (statusUpdate.status === "quiz_question") {
+        console.log("📝 Quiz question received:", statusUpdate.total_so_far);
+        
+        setChatMessages(prev =>
+          prev.map(msg => {
+            if (msg.id === streamingMessageId && msg.type === 'quiz') {
+              const newQuizData = [...(msg.quizData || []), statusUpdate.question];
+              console.log("✅ Appended question, total:", newQuizData.length);
+              
+              return {
+                ...msg,
+                quizData: newQuizData,
+                content: `Quiz - ${statusUpdate.total_so_far} questions générées`,
+                isStreaming: true
+              };
+            }
+            return msg;
+          })
+        );
+        return;
+      }
+        
+      // Quiz complete
+      if (statusUpdate.status === "quiz_complete") {
+        console.log("quiz completed");
+        handleQuizComplete(statusUpdate.quiz_data, streamingMessageId, updatedChatId);
+        setStreamingStatus(null);
+        return;
+      }
+
+      // Prompts suggestions
+      if (statusUpdate.status === "suggested_prompts" && statusUpdate.suggestions) {
+        console.log("💡 Received suggestions:", statusUpdate.suggestions);
+        setSuggestedPrompts(statusUpdate.suggestions);
+        return;
+      }
+
+      // Study sheet generation trigger
+      if (statusUpdate.status === "study_sheet_trigger") {
+        console.log("Study sheet triggered:", statusUpdate);
+        
+        setActiveStudySheet(null);
+
+        setActiveStudySheet({
+          topic: statusUpdate.topic,
+          chatId: currentChatID,
+          key: uuidv4()
+        });
+
+        onCloseSidebar();
+        return;
+      }
+
+      // All study sheet streaming updates
+      if (statusUpdate.status?.startsWith("study_sheet_")) {
+        console.log("📚 Study sheet update:", statusUpdate.status, statusUpdate);
+        
+        // Pass the raw WebSocket data to the component
+        setStudySheetWebSocketData(statusUpdate);
+        
+        // Special handling for completion
+        if (statusUpdate.status === "study_sheet_complete") {
+          saveStudySheetToChat(statusUpdate.html_content, updatedChatId);
+        }
+        
+        return;
+      }
+
+      // Default status update
+      setStreamingStatus(statusUpdate);
+    },
+    
+    // Token callback - handles regular text streaming
+    (chunk) => {
+      console.log('📦 Chunk received In chatInterface:', chunk);
+      fullResponse = (fullResponse + chunk); 
+      
+      console.log('📏 fullResponse length:', fullResponse.length);
+      console.log('🆔 streamingMessageId:', streamingMessageId);
+
+      if (fullResponse.length > 0 && streamingStatus) {
+        setStreamingStatus(null);
+      }
+      
+      setChatMessages(prev => {
+        console.log('🔍 Total messages:', prev.length);
+        
+        const found = prev.find(m => m.id === streamingMessageId);
+        console.log('✅ Found message:', !!found, 'Type:', found?.type);
+        
+        const updated = prev.map(msg => {
+          if (msg.id === streamingMessageId && msg.type !== 'quiz') {
+            console.log('🎨 UPDATING MESSAGE with content length:', fullResponse.length);
+            return { ...msg, content: fullResponse, isStreaming: true };
+          }
+          return msg;
+        });
+        
+        return updated;
+      });
+    },
+    
+    // Complete callback - handles end of stream
+    async () => {
       setStreamingStatus(null);
+
+      // Check if this was a quiz (don't save quiz as text)
+      if (isQuizGeneratingRef.current) {
+        console.log("⏭️ Skipping complete callback - was a quiz");
+        isQuizGeneratingRef.current = false;
+        setIsAiTyping(false);
+        return;
+      }
+      
+      // Only save text responses
+      const finalMessage = {
+        id: uuidv4(),
+        role: "assistant",
+        content: fullResponse,
+        timestamp: new Date(),
+        isStreaming: false
+      };
+      
+      await AppendToChat(updatedChatId || currentChatID, finalMessage);
       
       setChatMessages(prev =>
         prev.map(msg =>
-          msg.id === streamingMessageId
-            ? {
-                ...msg,
-                content: "Une erreur est survenue. Veuillez réessayer.",
-                error: true,
-                isStreaming: false
-              }
-            : msg
+          msg.id === streamingMessageId ? finalMessage : msg
         )
       );
       
       setIsAiTyping(false);
     }
-  };
-
-  const handleSendNewUserMessage = async (e = null, customPrompt = null) => {
-  if (e) e.preventDefault();
-  
-  const messageToSend = customPrompt ?? userInputText;
-  if (messageToSend.trim() === '') return;
-
-  // Check WebSocket connection status
-  if (connectionStatus !== 'connected') {
-    console.warn('WebSocket not connected, attempting to reconnect...');
-    try {
-      await warmUpWebSocket(currentChatID);
-      setConnectionStatus('connected');
-    } catch (error) {
-      console.error('Failed to establish WebSocket connection:', error);
-      setConnectionStatus('error');
-      return;
-    }
-  }
-
-  // Add user message
-  const newUserMessage = {
-    id: uuidv4(),
-    role: 'user',
-    content: messageToSend,
-  };
-  
-  setChatMessages(prev => [...prev, newUserMessage]);
-  setUserInputText('');
-
-  // Save to Firebase
-  const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
-  if (updatedChatId && updatedChatId !== currentChatID) {
-    setChatId(updatedChatId);
-  }
-
-  // Prepare for streaming
-  setIsAiTyping(true);
+  );
+} catch (error) {
+  console.error("WebSocket streaming error:", error);
   setStreamingStatus(null);
   
-  const streamingMessageId = `streaming-${Date.now()}`;
-  const placeholderMessage = {
-    id: streamingMessageId,
-    role: 'assistant',
-    content: '',
-    isStreaming: true,
-    timestamp: new Date()
-  };
-  
-  setChatMessages(prev => [...prev, placeholderMessage]);
-  
-  let fullResponse = "";
-  
-  try {
-    // Use WebSocket with all your current logic
-    await ask_llm_websocket(
-      currentLanguage,
-      messageToSend,
-      formatChatHistory(chatMessages),
-      formatFilesForAPI(uploadedFilesList),
-      updatedChatId || currentChatID,
-
-      // Status callback - handles all your current status updates
-      (statusUpdate) => {
-        // Study sheet generation
-        if (statusUpdate.status === "studysheet_generated") {
-          handleStudySheetResponse(statusUpdate.html, streamingMessageId, updatedChatId);
-          return;
-        }
-
-        // Study guide trigger
-        if (statusUpdate.status === "study_guide_trigger") {
-          if (statusUpdate.parameters) {
-            setActiveStudyGuide({
-              topic: statusUpdate.parameters.topic,
-              num_sections: statusUpdate.parameters.num_sections,
-              chatId: currentChatID
-            });
-            onCloseSidebar();
+  setChatMessages(prev =>
+    prev.map(msg =>
+      msg.id === streamingMessageId
+        ? {
+            ...msg,
+            content: "Une erreur de connexion est survenue. Veuillez réessayer.",
+            error: true,
+            isStreaming: false
           }
-          return;
-        }
-
-        // Quiz generation progress
-        if (statusUpdate.status === "quiz_generating") {
-          console.log("generating quiz streaming");
-          isQuizGeneratingRef.current = true;
-          setChatMessages(prev => {
-            const existingQuiz = prev.find(msg => 
-              msg.id === streamingMessageId && msg.type === 'quiz'
-            );
-            
-            if (existingQuiz) {
-              return prev.map(msg =>
-                msg.id === streamingMessageId && msg.type === 'quiz'
-                  ? { ...msg, content: statusUpdate.message }
-                  : msg
-              );
-            }
-            
-            return [...prev, {
-              id: streamingMessageId,
-              role: 'assistant',
-              type: 'quiz',
-              content: statusUpdate.message,
-              quizData: [],
-              isStreaming: true,
-              timestamp: new Date()
-            }];
-          });
-          
-          setStreamingStatus({
-            status: 'generating_quiz',
-            message: statusUpdate.message
-          });
-          return;
-        }
-
-        // Individual quiz question ready
-        if (statusUpdate.status === "quiz_question") {
-          console.log("📝 Quiz question received:", statusUpdate.total_so_far);
-          
-          setChatMessages(prev =>
-            prev.map(msg => {
-              if (msg.id === streamingMessageId && msg.type === 'quiz') {
-                const newQuizData = [...(msg.quizData || []), statusUpdate.question];
-                console.log("✅ Appended question, total:", newQuizData.length);
-                
-                return {
-                  ...msg,
-                  quizData: newQuizData,
-                  content: `Quiz - ${statusUpdate.total_so_far} questions générées`,
-                  isStreaming: true
-                };
-              }
-              return msg;
-            })
-          );
-          return;
-        }
-          
-        // Quiz complete
-        if (statusUpdate.status === "quiz_complete") {
-          console.log("quiz completed");
-          handleQuizComplete(statusUpdate.quiz_data, streamingMessageId, updatedChatId);
-          setStreamingStatus(null);
-          return;
-        }
-
-        // Default status update
-        setStreamingStatus(statusUpdate);
-      },
-      
-      // Token callback - handles regular text streaming
-      (chunk) => {
-        console.log('📦 Chunk received In chatInterface:', chunk);
-        fullResponse = (fullResponse + chunk); 
-        
-        console.log('📏 fullResponse length:', fullResponse.length);
-        console.log('🆔 streamingMessageId:', streamingMessageId);
-
-        if (fullResponse.length > 0 && streamingStatus) {
-          setStreamingStatus(null);
-        }
-        
-        setChatMessages(prev => {
-          console.log('🔍 Total messages:', prev.length);
-          
-          const found = prev.find(m => m.id === streamingMessageId);
-          console.log('✅ Found message:', !!found, 'Type:', found?.type);
-          
-          const updated = prev.map(msg => {
-            if (msg.id === streamingMessageId && msg.type !== 'quiz') {
-              console.log('🎨 UPDATING MESSAGE with content length:', fullResponse.length);
-              return { ...msg, content: fullResponse, isStreaming: true };
-            }
-            return msg;
-          });
-          
-          return updated;
-        });
-      },
-      
-      // Complete callback - handles end of stream
-      async () => {
-        setStreamingStatus(null);
-
-        // Check if this was a quiz (don't save quiz as text)
-        if (isQuizGeneratingRef.current) {
-          console.log("⏭️ Skipping complete callback - was a quiz");
-          isQuizGeneratingRef.current = false;
-          setIsAiTyping(false);
-          return;
-        }
-        
-        // Only save text responses
-        const finalMessage = {
-          id: uuidv4(),
-          role: "assistant",
-          content: fullResponse,
-          timestamp: new Date(),
-          isStreaming: false
-        };
-        
-        await AppendToChat(updatedChatId || currentChatID, finalMessage);
-        
-        setChatMessages(prev =>
-          prev.map(msg =>
-            msg.id === streamingMessageId ? finalMessage : msg
-          )
-        );
-        
-        setIsAiTyping(false);
-      }
-    );
-  } catch (error) {
-    console.error("WebSocket streaming error:", error);
-    setStreamingStatus(null);
-    
-    setChatMessages(prev =>
-      prev.map(msg =>
-        msg.id === streamingMessageId
-          ? {
-              ...msg,
-              content: "Une erreur de connexion est survenue. Veuillez réessayer.",
-              error: true,
-              isStreaming: false
-            }
-          : msg
-      )
-    );
-    
-    setIsAiTyping(false);
-    setConnectionStatus('error');
-  }
-  };
-
-  const handleQuizResponse = async (quizData, messageId, chatId) => {
-    setStreamingStatus(null);
-    
-    const quizMessage = {
-      id: uuidv4(),
-      role: "assistant",
-      content: "Voici votre quiz",
-      quizData: quizData, // Array of quiz questions
-      type: "quiz",
-      timestamp: new Date(),
-      isStreaming: false
-    };
-
-    await AppendToChat(chatId, quizMessage);
-
-    setChatMessages(prev =>
-      prev.map(msg =>
-        msg.id === messageId ? quizMessage : msg
-      )
-    );
-
-    setIsAiTyping(false);
+        : msg
+    )
+  );
+  
+  setIsAiTyping(false);
+  setConnectionStatus('error');
+}
 };
 
-const handleStudySheetResponse = async (htmlStudySheet,messageId,chatId)=>{
-   const studySheetMessage = {
+ /**
+   * Handle suggestion click - auto-send the suggested prompt
+   */
+const handleSuggestionClick = useCallback((suggestion) => {
+  console.log("💡 User clicked suggestion:", suggestion);
+  
+  // Haptic feedback on mobile
+  if (navigator.vibrate) {
+    navigator.vibrate(10);
+  }
+  
+  // Clear suggestions immediately
+  setSuggestedPrompts([]);
+  
+  // Auto-send the message
+  handleSendNewUserMessage(null, suggestion);
+}, [handleSendNewUserMessage]);
+
+
+const saveStudySheetToChat = async (finalHtml, chatId) => {
+  try {
+    const studySheetMessage = {
       id: uuidv4(),
       role: "assistant",
-      content: `${t("chat.studysheetgenerated")}`,
-      // html generate by anthropic to create the study sheet that will be didplayed in an iframe
-      html: htmlStudySheet, 
+      content: `Study sheet created ${activeStudySheet?.topic || ':Study Guide'}`,
+      html: finalHtml,
       type: "studysheet",
       timestamp: new Date(),
       isStreaming: false
     };
 
     await AppendToChat(chatId, studySheetMessage);
-
-    setChatMessages(prev =>
-      prev.map(msg =>
-        msg.id === messageId ? studySheetMessage : msg
-      )
-    );
-
-    setIsAiTyping(false);
-}
-
+    console.log('Study sheet saved to chat');
+  } catch (error) {
+    console.error('Error saving study sheet:', error);
+  }
+};
 
 // ✅ FIXED: Use ref instead of state for synchronous updates
 const handleQuizAnswerSelect = async (answerData) => {
@@ -841,6 +822,15 @@ const handleQuizAnswerSelect = async (answerData) => {
     console.log("  Question Index:", answerData.quizIndex);
     console.log("  Selected:", answerData.selectedOptionText);
     console.log("  Correct?", answerData.isCorrect ? "✓" : "✗");
+    
+    // ✅ FIX: Prevent double-submission
+    const answerKey = `${answerData.messageId}-${answerData.quizIndex}`;
+    if (submittedAnswersRef.current.has(answerKey)) {
+      console.log("  ⚠️ Answer already submitted, ignoring duplicate");
+      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      return;
+    }
+    submittedAnswersRef.current.add(answerKey);
     
     // ✅ Find the message to check if it's still streaming
     const quizMessage = chatMessages.find(msg => msg.id === answerData.messageId);
@@ -909,31 +899,66 @@ const handleQuizAnswerSelect = async (answerData) => {
   }
 };
 
+const handleQuizInteraction = useCallback((quizId) => {
+  console.log('📝 Quiz interaction:', quizId);
+  if (quizId === null) {
+    setActiveQuizId(null);
+    setActiveQuizProgress(null);
+  } else {
+    setActiveQuizId(quizId);
+  }
+}, []);
+
+/**
+ * Handle quiz visibility changes from ChatMessage
+ * Called when quiz progress bar scrolls in/out of view
+ * 
+ * @param {Object} quizData - Quiz progress data from ChatMessage
+ */
+const handleQuizVisibilityChange = useCallback((quizData) => {
+  console.log('👁️ Quiz visibility change:', {
+    messageId: quizData.messageId,
+    isVisible: quizData.isVisible,
+    activeQuizId: activeQuizId,
+    isActive: quizData.messageId === activeQuizId
+  });
+  
+  if (quizData.isVisible) {
+    // Only show sticky if this is the active quiz
+    if (quizData.messageId === activeQuizId) {
+      console.log('✅ Showing sticky bar for active quiz');
+      setActiveQuizProgress(quizData);
+    } else {
+      console.log('⏭️ Ignoring non-active quiz');
+    }
+  } else {
+    setActiveQuizProgress(prev => {
+      if (prev && prev.messageId === quizData.messageId) {
+        console.log('✅ Hiding sticky bar (inline visible)');
+        return null;
+      }
+      return prev;
+    });
+  }
+}, [activeQuizId]); // Important: Add activeQuizId to dependencies
+
 const handleQuizComplete = async (quizData, messageId, chatId) => {
   console.log("✅ Quiz complete, finalizing message");
   console.log("Backend sent", quizData?.length, "questions");
   setStreamingStatus(null);
   
-  // ✅ Get pending answers from ref
+  // ✅ Get pending answers from ref FIRST
   const pendingAnswers = pendingQuizAnswersRef.current[messageId] || {};
   console.log("📦 Pending answers from REF:", pendingAnswers);
   console.log("📦 Number of pending answers:", Object.keys(pendingAnswers).length);
   
-  // ✅ FIX: Get current message from state SYNCHRONOUSLY
-  const currentMessage = chatMessages.find(msg => msg.id === messageId);
-  
-  console.log("📝 Current message quizData:", currentMessage?.quizData?.length, "questions");
-  console.log("📝 Questions with answers in state:", 
-    currentMessage?.quizData?.filter(q => q.userSelection).length || 0
-  );
-  
-  // ✅ FIX: Build merged data BEFORE any async operations
+  // ✅ NEW FIX: Build merged data BEFORE touching state
+  // Trust the ref as the source of truth for streaming answers
   const mergedQuizData = quizData.map((question, idx) => {
     const pendingAnswer = pendingAnswers[idx];
-    const stateAnswer = currentMessage?.quizData?.[idx]?.userSelection;
     
     if (pendingAnswer) {
-      console.log(`✓ Q${idx + 1}: Using pending answer (from ref)`);
+      console.log(`✓ Q${idx + 1}: Using pending answer from REF`);
       return {
         ...question,
         userSelection: {
@@ -943,9 +968,6 @@ const handleQuizComplete = async (quizData, messageId, chatId) => {
           timestamp: pendingAnswer.timestamp
         }
       };
-    } else if (stateAnswer) {
-      console.log(`✓ Q${idx + 1}: Using state answer`);
-      return { ...question, userSelection: stateAnswer };
     }
     
     console.log(`- Q${idx + 1}: No answer`);
@@ -958,7 +980,7 @@ const handleQuizComplete = async (quizData, messageId, chatId) => {
     mergedQuizData.length
   );
   
-  // ✅ Update UI state
+  // ✅ Update UI state with merged data
   setChatMessages(prev =>
     prev.map(msg => {
       if (msg.id === messageId && msg.type === 'quiz') {
@@ -974,7 +996,7 @@ const handleQuizComplete = async (quizData, messageId, chatId) => {
     })
   );
 
-  // ✅ Save to Firebase with merged data
+  // ✅ Save to Firebase with merged data (with retry)
   console.log("💾 Saving to Firebase:", 
     mergedQuizData.filter(q => q.userSelection).length,
     "answered questions"
@@ -1001,7 +1023,21 @@ const handleQuizComplete = async (quizData, messageId, chatId) => {
   console.log("🔍 DEBUG - messageToSave.quizData:", messageToSave.quizData);
   console.log("🔍 DEBUG - messageToSave.quizData length:", messageToSave.quizData.length);
   
-  await AppendToChat(chatId, messageToSave);
+  // ✅ Try to save, retry once if it fails
+  try {
+    await AppendToChat(chatId, messageToSave);
+    console.log("✅ Firebase save successful");
+  } catch (error) {
+    console.error("❌ Firebase save failed, retrying once:", error);
+    try {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      await AppendToChat(chatId, messageToSave);
+      console.log("✅ Firebase save successful on retry");
+    } catch (retryError) {
+      console.error("❌ Firebase save failed on retry:", retryError);
+      // Don't throw - let user continue, data is in UI
+    }
+  }
   
   // ✅ Clear ref
   if (pendingQuizAnswersRef.current[messageId]) {
@@ -1009,203 +1045,469 @@ const handleQuizComplete = async (quizData, messageId, chatId) => {
     console.log("🧹 Cleared pending answers from ref");
   }
   
+  // ✅ Clear submission tracking for this quiz
+  submittedAnswersRef.current = new Set(
+    Array.from(submittedAnswersRef.current).filter(key => !key.startsWith(messageId))
+  );
+  console.log("🧹 Cleared submission tracking for quiz");
+  
   setIsAiTyping(false);
   console.log("✅ Quiz save complete!");
 };
-  // ============================================
-  // FILE HANDLING
-  // ============================================
-  const ensureChatExists = async (chatId, user) => {
-    if (chatId) {
-      const chatRef = doc(db, "chats", chatId);
-      const chatSnapshot = await getDoc(chatRef);
-      if (chatSnapshot.exists()) {
-        return chatId;
-      }
+
+
+
+// ============================================
+// FILE HANDLING
+// ============================================
+const ensureChatExists = async (chatId, user) => {
+  if (chatId) {
+    const chatRef = doc(db, "chats", chatId);
+    const chatSnapshot = await getDoc(chatRef);
+    if (chatSnapshot.exists()) {
+      return chatId;
     }
+  }
 
-    const newChat = {
-      userId: user.uid,
-      title: "Nouveau Chat",
-      description: "Nouvelle conversation",
-      updatedAt: serverTimestamp()
-    };
-
-    const newChatRef = await addDoc(collection(db, "chats"), newChat);
-    return newChatRef.id;
+  const newChat = {
+    userId: user.uid,
+    title: "Nouveau Chat",
+    description: "Nouvelle conversation",
+    updatedAt: serverTimestamp()
   };
 
-  const handleDocumentUpload = async (e) => {
-    const uploadedFile = e.target.files[0];
-    if (!uploadedFile) return;
-    
-    const user = auth.currentUser;
-    if (!user?.uid) {
-      console.log("User not found");
-      return <Navigate to="/login" replace />;
-    }
+  const newChatRef = await addDoc(collection(db, "chats"), newChat);
+  return newChatRef.id;
+};
 
-    setLoadingState('fileUpload', true);
+const handleFileSelect = async (e) => {
+  const files = Array.from(e.target.files);
+  if (files.length === 0) return;
 
-    const newFileMetadata = {
-      id: uuidv4(),
-      name: uploadedFile.name,
-      size: formatFileSize(uploadedFile.size),
-      type: uploadedFile.type,
-      uploadedAt: Date.now(),
-      status: 'uploading'
-    };
-    
-    setUploadedFilesList(prev => [...prev, newFileMetadata]);
-    
-    const fileUploadMessage = {
-      id: uuidv4(),
-      role: 'user',
-      content: `${t("upload.started")}: ${uploadedFile.name}...`,
-      timestamp: new Date(),
-      file: {
-        id: newFileMetadata.id,
-        name: uploadedFile.name,
-        size: uploadedFile.size,
-        type: uploadedFile.type,
-        uploadedAt: Date.now(),
-        status: 'uploading',
-      }
-    };
-    
-    setChatMessages(prev => [...prev, fileUploadMessage]);
+  const user = auth.currentUser;
+  if (!user) {
+    console.error('No authenticated user');
+    return;
+  }
 
-    const resolvedChatId = await ensureChatExists(currentChatID, user);
+  // Ensure chat exists
+  let resolvedChatId = currentChatID;
+  try {
+    resolvedChatId = await ensureChatExists(currentChatID, user);
     if (resolvedChatId !== currentChatID) {
       setChatId(resolvedChatId);
     }
-    
-    const firebaseUserUploadLink = `chats/${resolvedChatId}/uploads/${uploadedFile.name}`;
-    const storageRef = createStorageRef(firebaseUserUploadLink);
-    const uploadTask = uploadBytesResumable(storageRef, uploadedFile);
-    
-    uploadTask.on('state_changed',
-      (snapshot) => {
-        const progress = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-        
-        setUploadedFilesList(prev =>
-          prev.map(file =>
-            file.id === newFileMetadata.id
-              ? { ...file, progress, status: 'uploading' }
-              : file
-          )
-        );
-      },
-      
-      (error) => {
-        console.error( `${t("upload.failed")} : `, error);
-        setLoadingState('fileUpload', false);
-        
-        setUploadedFilesList(prev =>
-          prev.map(file =>
-            file.id === newFileMetadata.id
-              ? { ...file, status: 'error', errorMessage: error.message }
-              : file
-          )
-        );
-      },
-      
-      () => {
-        getDownloadURL(uploadTask.snapshot.ref).then(async (downloadURL) => {
-          const newFile = {
-            ...newFileMetadata,
-            status: 'completed',
-            progress: 100,
-            downloadURL
-          };
+  } catch (error) {
+    console.error('Failed to ensure chat exists:', error);
+    return;
+  }
 
-          setUploadedFilesList(prev =>
-            prev.map(file =>
-              file.id === newFileMetadata.id ? newFile : file
-            )
-          );
+  // Track files by name for UI updates
+  const fileTracker = new Map();
+  
+  files.forEach(file => {
+    const tempId = uuidv4();
+    fileTracker.set(file.name, {
+      tempId: tempId,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      status: 'uploading',
+      stage: 'uploading'
+    });
+  });
+  
+  // ========================================
+  // 🆕 CREATE LOADING MESSAGE IMMEDIATELY (BEFORE API CALL)
+  // ========================================
+  const loadingMsgId = uuidv4();
+  uploadMessageIdRef.current = loadingMsgId;  // Set ref FIRST!
+  uploadInsightsAccumulatorRef.current = [];  // 🆕 Reset accumulator
+  
+  const loadingMessage = {
+    id: loadingMsgId,
+    role: 'assistant',
+    type: 'upload_loading',
+    content: 'upload_analyzing',
+    timestamp: Date.now(),
+    isLoading: true,
+    insights: [],
+    summary: null,
+    fileCount: files.length,  // Set count immediately
+    filenames: files.map(f => f.name),
+    language: currentLanguage
+  };
+  
+  setChatMessages(prev => [...prev, loadingMessage]);
+  console.log(`📦 Created loading message BEFORE upload: ${loadingMsgId}`);
+  console.log(`   File count: ${files.length}`);
+  
+  setLoadingState('fileUpload', true);
 
-          const finalFileUploadMessage = {
-            ...fileUploadMessage,
-            content: `${t("upload.uploaded")}: ${uploadedFile.name}`,
-            file: {
-              ...fileUploadMessage.file,
-              status: 'completed',
-              progress: 100,
-              downloadURL
-            }
-          };
-
-          const updatedChatId = await AppendToChat(resolvedChatId, finalFileUploadMessage);
-
-          const completedFiles = [
-            ...uploadedFilesList.filter(f => f.id !== newFileMetadata.id && f.status === 'completed'),
-            newFile
-          ];
-
-          const filesList = formatFilesForAPI(completedFiles);
-          
-          if (filesList.length >= 1) {
-            setLoadingState('fileUpload', false);
-            setLoadingState('fileEmbedding', true);
-
-            const embedResult = await embed_docs(filesList, updatedChatId);
-
-            if (embedResult !== null) {
-              const wordCount = embedResult["word-count"];
-              setLoadingState('fileEmbedding', false);
-              
-              await SaveFileMetaData(updatedChatId, newFileMetadata, downloadURL, wordCount);
-            }
-          }
-          
-          if (updatedChatId !== resolvedChatId) {
-            setChatId(updatedChatId);
-          }
-          
-          simulateAiFileResponse(uploadedFile, resolvedChatId, downloadURL);
-        });
-      }
+  try {
+    // Upload files with progress tracking
+    const results = await upload_files_with_progress(
+      files,
+      resolvedChatId,
+      (update) => handleUploadProgress(update, fileTracker, resolvedChatId)
     );
-    
-    e.target.value = null;
-  };
 
-  const simulateAiFileResponse = async (file, updatedChatId) => {
-    setIsAiTyping(true);
-    
-    try {
-      const aiResponse = {
-        id: uuidv4(),
-        role: 'assistant',
-        content: ` ${t('upload.received')} "" ${file.name} " ${t('upload.question')}`,
-        // options: ["Résumé", "Quiz", "Mise en situation"],
-        options: ["Résumé", "Quiz"],
-        file: {
-          name: file.name,
-          size: file.size,
-          type: file.type,
-          uploadedAt: Date.now(),
-          status: 'completed',
-        }
+    // All files completed
+    setLoadingState('fileUpload', false);
+    setLoadingState('fileEmbedding', false);
+
+    // Update uploaded files list
+    const completedFiles = Array.from(results.files.values()).map(fileData => {
+      const trackedFile = Array.from(fileTracker.values()).find(
+        f => f.fileId === fileData.file_id
+      );
+      
+      return {
+        id: fileData.file_id,
+        name: fileData.filename,
+        size: trackedFile?.size || 0,
+        type: trackedFile?.type || '',
+        status: 'completed',
+        downloadURL: fileData.firebase_url,
+        uploadedAt: Date.now(),
+        wordCount: fileData.word_count
       };
+    });
 
-      setChatMessages(prev => [...prev, aiResponse]);
-      await AppendToChat(updatedChatId, aiResponse);
+    setUploadedFilesList(prev => [...prev, ...completedFiles]);
 
-    } catch (error) {
-      console.error("Error in AI response:", error);
-    } finally {
-      setIsAiTyping(false);
+    // Save metadata to Firestore for each file
+    for (const file of completedFiles) {
+      try {
+        await SaveFileMetaData(
+          resolvedChatId,
+          file,
+          file.downloadURL,
+          file.wordCount
+        );
+      } catch (metaError) {
+        console.error('Failed to save file metadata:', metaError);
+      }
     }
-  };
 
+    // Insights and summary are now shown in LoadingMessageBox via handleUploadProgress
+
+  } catch (error) {
+    console.error('Upload error:', error);
+    setLoadingState('fileUpload', false);
+    setLoadingState('fileEmbedding', false);
+
+    // Mark all uploading files as error
+    setChatMessages(prev => prev.map(msg => 
+      msg.type === 'file' && msg.file?.status === 'uploading'
+        ? {
+            ...msg,
+            content: `${t("upload.failed")}: ${msg.file.name}`,
+            file: { ...msg.file, status: 'error', errorMessage: error.message }
+          }
+        : msg
+    ));
+  }
+
+  e.target.value = null;
+};
+
+// Progress handler - add this as a new function in your component
+const handleUploadProgress = (update, fileTracker, chatId) => {
+  console.log('📦 Upload progress:', update.type, update);
+
+  switch (update.type) {
+    case 'batch_start':
+      console.log(`🚀 Starting upload of ${update.total_files} files`);
+      // Loading message already created in handleFileSelect!
+      // Just update fileCount and filenames if needed
+      const batchMsgId = uploadMessageIdRef.current;
+      if (batchMsgId) {
+        setChatMessages(prev => prev.map(msg => 
+          msg.id === batchMsgId && msg.type === 'upload_loading'
+            ? { ...msg, fileCount: update.total_files, filenames: update.filenames }
+            : msg
+        ));
+      }
+      
+      setIsUploadAnalyzing(true);
+      setUploadInsights([]);
+      setUploadSummary(null);
+      break;
+
+    case 'file_start':
+      if (fileTracker.has(update.filename)) {
+        const tracked = fileTracker.get(update.filename);
+        tracked.stage = 'processing';
+        tracked.fileId = update.file_id;
+      }
+      break;
+
+    case 'insight_batch':
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`🔍 INSIGHT_BATCH RECEIVED`);
+      console.log(`   Filename: ${update.filename}`);
+      console.log(`   Topics:`, update.topics);
+      console.log(`   Concepts:`, update.concepts);
+      
+      const msgId = uploadMessageIdRef.current;
+      if (!msgId) {
+        console.error('⚠️ No uploadMessageId - this should never happen now!');
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        return;
+      }
+      
+      console.log(`   Message ID: ${msgId}`);
+      
+      // 🆕 FIX: Accumulate in REF first (synchronous, no race!)
+      const newInsight = {
+        filename: update.filename,
+        topics: update.topics || [],
+        concepts: update.concepts || [],
+        documentType: update.document_type
+      };
+      
+      console.log(`   Created insight object:`, newInsight);
+      
+      // CRITICAL: Check ref BEFORE push
+      console.log(`   🔍 Accumulator BEFORE push:`, uploadInsightsAccumulatorRef.current.length, 'items');
+      console.log(`   🔍 Accumulator contents BEFORE:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+      
+      uploadInsightsAccumulatorRef.current.push(newInsight);
+      
+      // CRITICAL: Check ref AFTER push
+      console.log(`   ✅ Accumulator AFTER push:`, uploadInsightsAccumulatorRef.current.length, 'items');
+      console.log(`   ✅ Accumulator contents AFTER:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+      
+      // Update state with ALL accumulated insights (prevents race)
+      setChatMessages(prev => {
+        console.log(`   🔍 setChatMessages called`);
+        console.log(`   🔍 Total messages in state:`, prev.length);
+        
+        const updated = prev.map(msg => {
+          if (msg.id === msgId && msg.type === 'upload_loading') {
+            console.log(`   ✅ Found upload_loading message!`);
+            console.log(`   📊 Current insights in message:`, msg.insights?.length || 0);
+            console.log(`   📊 New insights from ref:`, uploadInsightsAccumulatorRef.current.length);
+            
+            return {
+              ...msg,
+              insights: [...uploadInsightsAccumulatorRef.current]  // Use ref as source of truth
+            };
+          }
+          return msg;
+        });
+        
+        console.log(`   ✅ State update complete`);
+        return updated;
+      });
+      
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      break;
+
+    case 'upload_summary':
+      console.log(`📝 Upload summary received:`, update.summary);
+      
+      setUploadSummary(update.summary);
+      
+      const summaryMsgId = uploadMessageIdRef.current;
+      
+      // Add summary to the loading message but KEEP showing all insights
+      // Do NOT transition yet - wait for all_complete
+      setChatMessages(prev => prev.map(msg => {
+        if (msg.id === summaryMsgId && msg.type === 'upload_loading') {
+          console.log('📝 Adding summary to loading message (still showing all insights)');
+          return {
+            ...msg,
+            summary: update.summary,
+            fileCount: update.file_count,
+            filenames: update.filenames,
+            // Keep isLoading: true to continue showing full progress
+          };
+        }
+        return msg;
+      }));
+      
+      break;
+
+    case 'embedding_start':
+      setLoadingState('fileEmbedding', true);
+      // Find file by file_id and update stage
+      for (const [name, data] of fileTracker.entries()) {
+        if (data.fileId === update.file_id) {
+          data.stage = 'embedding';
+          break;
+        }
+      }
+      break;
+
+    case 'embedding_progress':
+      console.log(`🔤 Embedding progress: ${update.stage}`);
+      break;
+
+    case 'embedding_complete':
+      console.log(`✅ Embedded: ${update.word_count} words, ${update.chunks} chunks`);
+      break;
+
+    case 'firebase_start':
+      console.log(`☁️ Starting Firebase upload...`);
+      break;
+
+    case 'firebase_complete':
+      console.log(`✅ Firebase uploaded: ${update.firebase_url}`);
+      break;
+
+    case 'quiz_complete':
+      console.log(`📝 Quiz generated: ${update.question_count} questions`);
+      break;
+
+    case 'file_complete':
+      // Remove individual file messages - we're showing insights instead
+      console.log(`✅ File complete: ${update.filename}`);
+      break;
+
+    case 'file_error':
+      console.error(`❌ File error: ${update.filename}`, update.message);
+      setChatMessages(prev => prev.map(msg => 
+        msg.file?.name === update.filename
+          ? {
+              ...msg,
+              content: `${t("upload.failed")}: ${update.filename}`,
+              file: {
+                ...msg.file,
+                status: 'error',
+                errorMessage: update.message
+              }
+            }
+          : msg
+      ));
+      break;
+
+    case 'all_complete':
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`🎉 ALL_COMPLETE RECEIVED`);
+      console.log(`   Completed: ${update.completed_files}/${update.total_files}`);
+      
+      setIsUploadAnalyzing(false);
+      
+      const completeMsgId = uploadMessageIdRef.current;
+      if (!completeMsgId) {
+        console.warn('⚠️ No uploadMessageId found for completion');
+        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        return;
+      }
+      
+      console.log(`   Message ID: ${completeMsgId}`);
+      console.log(`   🔍 Accumulator final count: ${uploadInsightsAccumulatorRef.current.length}`);
+      console.log(`   🔍 Accumulator final files:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+      
+      // Mark the loading message as complete AND save to Firebase
+      setChatMessages(prev => {
+        console.log(`   🔍 Total messages in state: ${prev.length}`);
+        
+        return prev.map(msg => {
+          if (msg.id === completeMsgId && msg.type === 'upload_loading') {
+            console.log(`   ✅ Found upload_loading message to complete`);
+            console.log(`   📊 Message insights BEFORE completion:`, msg.insights?.length || 0, 'items');
+            console.log(`   📊 Files in message:`, msg.insights?.map(i => i.filename) || []);
+            
+            // Create the completed version - PRESERVE ALL FIELDS
+            const completedMsg = {
+              ...msg,
+              isLoading: false,  // Stop spinner, show checkmark
+              insights: msg.insights || [],  // Explicitly preserve
+              summary: msg.summary || null,  // Explicitly preserve
+              fileCount: msg.fileCount || update.total_files,
+              filenames: msg.filenames || [],
+              timestamp: Date.now()
+            };
+            
+            console.log(`   📊 Completed message created:`);
+            console.log(`      - Insight count: ${completedMsg.insights?.length}`);
+            console.log(`      - Files:`, completedMsg.insights?.map(i => i.filename));
+            console.log(`      - Has summary: ${!!completedMsg.summary}`);
+            console.log(`      - File count: ${completedMsg.fileCount}`);
+            
+            // Save to Firebase immediately
+            const messageForFirebase = {
+              id: completedMsg.id,
+              role: completedMsg.role || 'assistant',
+              type: 'upload_loading',
+              content: 'upload_insights_complete',
+              isLoading: false,
+              insights: completedMsg.insights || [],
+              summary: completedMsg.summary || null,
+              fileCount: completedMsg.fileCount || 0,
+              filenames: completedMsg.filenames || [],
+              language: completedMsg.language || currentLanguage
+            };
+            
+            console.log('💾 Saving to Firebase with', messageForFirebase.insights?.length, 'insights');
+            
+            AppendToChat(chatId, messageForFirebase)
+              .then(() => console.log('✅ Saved completed insights to Firebase'))
+              .catch(err => console.error('❌ Failed to save:', err));
+            
+            return completedMsg;
+          }
+          return msg;
+        });
+      });
+      
+      // Clear refs
+      uploadMessageIdRef.current = null;
+      uploadInsightsAccumulatorRef.current = [];  // 🆕 Clear accumulator
+      
+      break;
+
+    case 'error':
+      console.error('❌ Batch error:', update.message);
+      setIsUploadAnalyzing(false);
+      break;
+  }
+};
+
+// AI response for batch upload - add this as a new function in your component
+const simulateAiBatchFileResponse = async (files, chatId, totalWords) => {
+  if (!files || files.length === 0) return;
+  
+  setIsAiTyping(true);
+  
+  try {
+    await new Promise(resolve => setTimeout(resolve, 800)); // Small delay for realism
+    
+    const fileNames = files.map(f => f.name).join(', ');
+    const fileCount = files.length;
+    
+    let message;
+    if (fileCount === 1) {
+      message = t('chat.fileReceived');
+    } else {
+      message = t('chat.filesReceived');
+    }
+    
+    const aiMessage = {
+      role: 'assistant',
+      type: 'text',
+      timestamp: Date.now(),
+      content: message
+    };
+    
+    setChatMessages(prev => [...prev, aiMessage]);
+    await AppendToChat(chatId, aiMessage);
+    
+  } catch (error) {
+    console.error('Error in AI file response:', error);
+  } finally {
+    setIsAiTyping(false);
+  }
+};
   // ============================================
   // DOCUMENT OPTIONS HANDLING
   // ============================================
   const handlePostDocumentUploadOption = async (option, fileName) => {
     setIsFilesModalVisible(false);
-    scrollToLatestMessage();
+    scrollToBottom();
 
     const optionHandlers = {
       // "Résumé": handleSummaryStream,
@@ -1352,6 +1654,11 @@ const handleSummaryStream = async (fileName) => {
     }
   };
 
+  const handleCloseStudySheet = () => {
+      setActiveStudySheet(null);
+      setStudySheetWebSocketData(null);
+    };
+
   // ============================================
   // RENDER
   // ============================================
@@ -1360,19 +1667,29 @@ const handleSummaryStream = async (fileName) => {
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
-      <div className="chat-container" style={{ 
-          width: activeStudyGuide ? '300px' : '100%',
-          height:'100%',
-          display: 'flex',
-          flexDirection: 'column',
-          borderRight: activeStudyGuide ? '1px solid #e5e7eb' : 'none'
-        }}>
+      <div 
+          className={`chat-container ${activeStudySheet ? 'has-study-sheet' : ''}`}
+        >
         {/* Header */}
         <div className="chat-header">
           <h2 className="chat-header-title" onClick={() => setIsFilesModalVisible(true)}>
               {currentChatTitle}
           </h2>
         </div>
+         {/* 🎯 STICKY QUIZ PROGRESS BAR - ADD THIS */}
+        {activeQuizProgress && activeQuizProgress.isVisible && (
+          <StickyQuizProgress
+            answeredCount={activeQuizProgress.answeredCount}
+            totalQuestions={activeQuizProgress.totalQuestions}
+            correctCount={activeQuizProgress.correctCount}
+            incorrectCount={activeQuizProgress.incorrectCount}
+            currentStreak={activeQuizProgress.currentStreak}
+            longestStreak={activeQuizProgress.longestStreak}
+            isVisible={activeQuizProgress.isVisible}
+            lastAnswerWasCorrect={activeQuizProgress.lastAnswerWasCorrect}
+          />
+        )}
+
 
         {/* Empty State */}
         {!hasMessages && (
@@ -1384,19 +1701,117 @@ const handleSummaryStream = async (fileName) => {
         )}
 
         {/* Messages */}
-        <div className="messages-container">
-          {chatMessages
-            .filter(msg =>typeof msg.content === 'string' && 
-                    msg.content.trim())
-            .map((message) => (
-              <ChatMessage
-                key={message.id}
-                message={message}
-                onOptionClick={handlePostDocumentUploadOption}
-                onQuizAnswerSelect={handleQuizAnswerSelect}
-                uploadedFilesList={uploadedFilesList}
-              />
-            ))}
+        <div 
+          className="messages-container"
+          ref={messagesContainerRef}
+          onScroll={handleScroll}
+        >
+          {/* Loading Skeleton - shown while positioning content */}
+          {!isInitialLoadComplete && chatMessages.length > 0 && (
+             <div className="nurse-loader">
+              <div className="loader-core">
+
+                {/* Spinning 3D Heart */}
+                <div className="loader-heart">
+                  <svg
+                    viewBox="0 0 200 200"
+                    className="heart-svg"
+                  >
+                    <defs>
+                      <linearGradient id="metallicPurple" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#e6c7ff"/>
+                        <stop offset="25%" stop-color="#c89aff"/>
+                        <stop offset="60%" stop-color="#9a57ff"/>
+                        <stop offset="100%" stop-color="#5b1bcc"/>
+                      </linearGradient>
+                    </defs>
+
+                    <path
+                      fill="url(#metallicPurple)"
+                      d="
+                        M100 150
+                        C72 125 45 95 53 67
+                        C58 48 75 38 90 42
+                        C99 45 106 53 108 62
+                        C112 53 119 45 128 42
+                        C143 38 160 48 165 67
+                        C173 95 146 125 118 150
+                        Z
+                      "
+                    />
+                  </svg>
+                </div>
+
+                {/* Sparkles */}
+                <div className="sparkle sparkle-1"></div>
+                <div className="sparkle sparkle-2"></div>
+                <div className="sparkle sparkle-3"></div>
+              </div>
+
+              <p className="loader-text">{t("loading.justAmoment")}</p>
+            </div>
+
+          )}
+          
+          {/* Actual Messages - hidden until positioned */}
+          <div style={{ opacity: isInitialLoadComplete ? 1 : 0, transition: 'opacity 0.3s ease' }}>
+            {chatMessages.map((message) => {
+              // Handle upload messages - show LoadingMessageBox for both loading and completed insights
+              if (message.type === 'upload_loading') {
+                return (
+                  <LoadingMessageBox
+                    key={message.id}
+                    isLoading={message.isLoading}
+                    insights={message.insights || []}
+                    summary={message.summary}
+                    fileCount={message.fileCount}
+                    filenames={message.filenames}
+                    language={message.language || currentLanguage}
+                  />
+                );
+              }
+              
+              // Handle separate upload completion message (shows "Document uploaded" summary)
+              if (message.type === 'upload_complete') {
+                return (
+                  <div key={message.id} className="upload-complete-message">
+                    <div className="upload-complete-icon">📄</div>
+                    <div className="upload-complete-content">
+                      <div className="upload-complete-title">
+                        {message.fileCount === 1 
+                          ? (currentLanguage === 'fr' ? 'Document téléversé' : 'Document uploaded')
+                          : (currentLanguage === 'fr' 
+                              ? `${message.fileCount} documents téléversés` 
+                              : `${message.fileCount} documents uploaded`)
+                        }
+                      </div>
+                      {message.summary && (
+                        <div className="upload-complete-summary">{message.summary}</div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+              
+              // Regular messages
+              if (typeof message.content === 'string' && message.content.trim()) {
+                return (
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                    onOptionClick={handlePostDocumentUploadOption}
+                    onQuizAnswerSelect={handleQuizAnswerSelect}
+                    uploadedFilesList={uploadedFilesList}
+                    onQuizVisibilityChange={handleQuizVisibilityChange}
+                    onQuizInteraction={handleQuizInteraction}
+                    isActiveQuiz={message.id === activeQuizId}
+                  />
+                );
+              }
+              
+              return null;
+            })}
+          </div>
 
           {/* Loading Spinners */}
           {loadingStates.quiz && (
@@ -1414,7 +1829,7 @@ const handleSummaryStream = async (fileName) => {
             </div>
           )}
 
-          {loadingStates.fileUpload && (
+          {/* {loadingStates.fileUpload && (
             <div className="chat-spinner">
               <div className="typing-indicator">
                   <span className="blinking-dots">
@@ -1427,9 +1842,9 @@ const handleSummaryStream = async (fileName) => {
                   </span>
               </div>
             </div>
-          )}
+          )} */}
 
-          {loadingStates.fileEmbedding && (
+          {/* {loadingStates.fileEmbedding && (
             <div className="chat-spinner">
               <div className="typing-indicator">
                   <span className="blinking-dots">
@@ -1443,7 +1858,7 @@ const handleSummaryStream = async (fileName) => {
                   </span>
               </div>
             </div>
-          )}
+          )} */}
 
           {loadingStates.summary && (
             <div className="chat-spinner">
@@ -1482,7 +1897,7 @@ const handleSummaryStream = async (fileName) => {
         {isAiTyping && (
           <div className="message ai-message">
             <div>
-              <img src="/LogoSimple.png" alt="Logo" width="65" />
+              <img src="/LogoSimple.png" alt="Logo" width="30" />
             </div>
             <div className="chat-spinner">
               <div className="typing-indicator">
@@ -1520,16 +1935,54 @@ const handleSummaryStream = async (fileName) => {
           </div>
         )}
 
-          <div ref={messagesEndRef} />
-        </div>
+         
+     
 
+          <div ref={messagesEndRef} />
+
+           {/*  //NEW: Suggested Prompts - Above Input  */}
+           <div className='message ai-message'>
+                <SuggestedPrompts 
+                  suggestions={suggestedPrompts}
+                  onSuggestionClick={handleSuggestionClick}
+                  isLoading={isAiTyping}
+                />  
+           </div>
+      
+          
+          {/* Scroll to Bottom Button */}
+          {showScrollButton && isInitialLoadComplete && (
+            <button
+              className="scroll-to-bottom-btn"
+              onClick={() => scrollToBottom('smooth')}
+              aria-label="Scroll to bottom"
+              title="Aller au dernier message"
+            >
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                stroke="currentColor" 
+                strokeWidth="2"
+                strokeLinecap="round" 
+                strokeLinejoin="round"
+              >
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+          )}
+        </div>
+       
+       
         {/* Input Area */}
         <form className="input-area" onSubmit={handleSendNewUserMessage}>
           <input
             type="file"
             ref={documentFileInputRef}
-            onChange={handleDocumentUpload}
+            onChange={handleFileSelect}
             style={{ display: 'none' }}
+            multiple 
           />
 
           <div className="input-wrapper">
@@ -1563,66 +2016,60 @@ const handleSummaryStream = async (fileName) => {
             />
 
             <div className="input-actions">
-              <button
-                type="button"
+              <button type="button"
                 className="upload-button file-button"
                 onClick={openFileUploadDialog}
-                title="Ajouter un fichier"
-              >
+                title={t('chat.addFile')}
+                disabled={isSystemBusy()}>
                 <SvgFileUpload />
               </button>
 
 
-            <button 
-    type="button" 
-    className="upload-button photo-button" 
-    onClick={() => setIsFilesModalVisible(true)} 
-    title={t('chat.filesInMemory')}
-    style={{ position: 'relative' }}
-  >
-    📁 
-    {uploadedFilesList.length > 0 && (
-      <span style={{
-        position: 'absolute',
-        top: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
-        right: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
-        backgroundColor: '#a5d567',
-        color: 'white',
-        borderRadius: '50%',
-        minWidth: uploadedFilesList.length >= 10 ? '24px' : '20px',
-        height: uploadedFilesList.length >= 10 ? '24px' : '20px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        fontSize: uploadedFilesList.length >= 10 ? '11px' : '12px',
-        fontWeight: '600',
-        border: '2px solid white',
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-        lineHeight: '1'
-      }}>
-        {uploadedFilesList.length} 
-      </span>
-    )}
-  </button>
+            <button type="button" 
+                    className="upload-button photo-button" 
+                    onClick={() => setIsFilesModalVisible(true)} 
+                    title={t('chat.filesInMemory')}
+                    style={{ position: 'relative' }}>
+                    📁
+                    {uploadedFilesList.length > 0 && (
+                      <span style={{
+                        position: 'absolute',
+                        top: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
+                        right: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
+                        backgroundColor: '#a5d567',
+                        color: 'white',
+                        borderRadius: '50%',
+                        minWidth: uploadedFilesList.length >= 10 ? '24px' : '20px',
+                        height: uploadedFilesList.length >= 10 ? '24px' : '20px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: uploadedFilesList.length >= 10 ? '11px' : '12px',
+                        fontWeight: '600',
+                        border: '2px solid white',
+                        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                        lineHeight: '1'
+                      }}>
+                      {uploadedFilesList.length} 
+                    </span>
+                  )}
+              </button>
             </div>
           </div>
 
-          <button
-            type="submit"
-            className={`send-button ${isSystemBusy() ? 'send-button-busy' : ''}`}
-            disabled={!userInputText.trim() || isSystemBusy()}
-          >
-            {isSystemBusy() ? (
-              <div className="pulsing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            ) : (
-              t('chat.send')
-            )}
+          <button type="submit"
+                  className={`send-button ${isSystemBusy() ? 'send-button-busy' : ''}`}
+                  disabled={!userInputText.trim() || isSystemBusy()}>
+                  {isSystemBusy() ? (
+                    <div className="pulsing-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  ) : (
+                    t('chat.send')
+                  )}
           </button>
-
         </form>
 
         {/* Files Modal */}
@@ -1691,22 +2138,25 @@ const handleSummaryStream = async (fileName) => {
         )}
       </div>
        {/* Study Guide Panel */}
-      {activeStudyGuide && (
-        <div className="study-guide-panel">
-          <div className="study-guide-header">
-            <h2>📚 Guide</h2>
-            <button className="study-guide-close-btn" onClick={() => setActiveStudyGuide(null)}>
-             x
-            </button>
-          </div>
+      {activeStudySheet && (
+        <div className="study-sheet-panel">
           <div className="study-guide-content">
-               <StudyGuideGenerator
+               {/* <StudyGuideGenerator
                   topic={activeStudyGuide.topic}
                   chatId={activeStudyGuide.chatId}
                   numSections={activeStudyGuide.num_sections}
-                />      
+                />  */}
+
+                 <StudySheetLivePreview
+                    key={activeStudySheet.key}
+                    topic={activeStudySheet.topic}
+                    chatId={activeStudySheet.chatId}
+                    onClose={handleCloseStudySheet}
+                    websocketData={studySheetWebSocketData}
+                  />     
           </div>
         </div>
+       
       )}
     </div>
   );
