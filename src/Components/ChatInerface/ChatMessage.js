@@ -5,7 +5,7 @@ import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
 import QuizResults from "./QuizResults";
-import QuizProgressBar from "./QuizProgressBar";
+
 import QuizLoading from "./QuizLoading";
 
 import './ChatInterface.css';
@@ -38,11 +38,12 @@ const ChatMessage = ({
   // ALL HOOKS MUST BE CALLED FIRST (before any returns)
   // ============================================
 
-  // Quiz navigation state
+  // Quiz state management
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [showResults, setShowResults] = useState(false);
-  const [skippedQuestions, setSkippedQuestions] = useState([]); // Track skipped question indices
-  const [quizModalOpen, setQuizModalOpen] = useState(false); // Modal state lifted here
+  const [quizModalOpen, setQuizModalOpen] = useState(false);
+  const [skippedQuestions, setSkippedQuestions] = useState([]);
+  const prevModalOpenRef = useRef(false); // Track previous modal state
   const lastMessageIdRef = useRef(null);
 
   // Streak tracking
@@ -151,6 +152,18 @@ const ChatMessage = ({
     setQuizModalOpen(true);
     setCurrentQuestionIndex(0);
   }, []);
+
+  // Restore results view when modal closes after reviewing
+  useEffect(() => {
+    // Check if modal was open and is now closed
+    if (prevModalOpenRef.current && !quizModalOpen && isReviewing) {
+      // Modal was closed, restore results view
+      setShowResults(true);
+      setIsReviewing(false);
+    }
+    // Update previous modal state
+    prevModalOpenRef.current = quizModalOpen;
+  }, [quizModalOpen, isReviewing]);
 
   // Skip question handler
   const handleSkipQuestion = useCallback(() => {
@@ -440,18 +453,7 @@ const ChatMessage = ({
         {/* Quiz Display - Single Question Navigation */}
         {isAI && Array.isArray(parsedQuizData) && parsedQuizData.length > 0 && (
           <div className="message-text">
-            {/* Progress Bar */}
-            {!message.isStreaming && parsedQuizData.length > 0 && !showResults && (
-              <div ref={progressBarRef}>
-                <QuizProgressBar
-                  answeredCount={parsedQuizData.filter(q => q.userSelection).length}
-                  totalQuestions={parsedQuizData.length}
-                  correctCount={quizStreak.totalCorrect}
-                  incorrectCount={quizStreak.totalIncorrect}
-                  isActiveQuiz={isActiveQuiz}
-                />
-              </div>
-            )}
+
 
             {/* Quiz Content - Conditional Rendering */}
             <div className="quiz-single-view-container">
