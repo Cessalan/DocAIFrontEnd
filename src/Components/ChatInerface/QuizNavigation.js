@@ -1,6 +1,7 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import './QuizNavigation.css';
+import QuizFeedback from './QuizFeedback';
 
 function QuizNavigation({
   questions = [],
@@ -78,6 +79,10 @@ function QuizNavigation({
             </button>
           );
         })}
+      </div>
+
+      <div className="quiz-nav-footer">
+        <QuizFeedback />
       </div>
     </div>
   );
