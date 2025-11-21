@@ -16,89 +16,91 @@ import { useTranslation } from 'react-i18next';
  * - incorrectAnswers: number
  * - longestStreak: number
  * - onStartTargetedPractice: (prompt: string) => void - callback to pre-fill chat
+ * - onReview: () => void - callback to review the quiz
  */
-const QuizResults = ({ 
-  totalQuestions, 
-  correctAnswers, 
-  incorrectAnswers, 
+const QuizResults = ({
+  totalQuestions,
+  correctAnswers,
+  incorrectAnswers,
   longestStreak,
-  onStartTargetedPractice 
+  onStartTargetedPractice,
+  onReview
 }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
-  
-  const percentage = totalQuestions > 0 
-    ? Math.round((correctAnswers / totalQuestions) * 100) 
+
+  const percentage = totalQuestions > 0
+    ? Math.round((correctAnswers / totalQuestions) * 100)
     : 0;
 
   // Determine performance tier with color, emoji, and message
   const getPerformanceTier = () => {
     if (percentage >= 90) {
-      return { 
-        color: 'outstanding', 
-        emoji: '🏆', 
+      return {
+        color: 'outstanding',
+        emoji: '🏆',
         title: currentLanguage === 'fr' ? 'Exceptionnel!' : 'Outstanding!',
-        message: currentLanguage === 'fr' 
-          ? 'Tu maîtrises cette matière!' 
+        message: currentLanguage === 'fr'
+          ? 'Tu maîtrises cette matière!'
           : 'You\'re mastering this material!'
       };
     }
     if (percentage >= 80) {
-      return { 
-        color: 'excellent', 
-        emoji: '🌟', 
+      return {
+        color: 'excellent',
+        emoji: '🌟',
         title: currentLanguage === 'fr' ? 'Excellent!' : 'Excellent!',
-        message: currentLanguage === 'fr' 
-          ? 'Continue comme ça!' 
+        message: currentLanguage === 'fr'
+          ? 'Continue comme ça!'
           : 'Great work, keep it up!'
       };
     }
     if (percentage >= 70) {
-      return { 
-        color: 'good', 
-        emoji: '🎉', 
+      return {
+        color: 'good',
+        emoji: '🎉',
         title: currentLanguage === 'fr' ? 'Bien joué!' : 'Well done!',
-        message: currentLanguage === 'fr' 
-          ? 'Tu progresses bien!' 
+        message: currentLanguage === 'fr'
+          ? 'Tu progresses bien!'
           : 'You\'re making good progress!'
       };
     }
     if (percentage >= 60) {
-      return { 
-        color: 'moderate', 
-        emoji: '💪', 
+      return {
+        color: 'moderate',
+        emoji: '💪',
         title: currentLanguage === 'fr' ? 'Continue!' : 'Keep going!',
-        message: currentLanguage === 'fr' 
-          ? 'Tu y arrives!' 
+        message: currentLanguage === 'fr'
+          ? 'Tu y arrives!'
           : 'You\'re getting there!'
       };
     }
     if (percentage >= 50) {
-      return { 
-        color: 'review', 
-        emoji: '📚', 
+      return {
+        color: 'review',
+        emoji: '📚',
         title: currentLanguage === 'fr' ? 'À réviser!' : 'Review time!',
-        message: currentLanguage === 'fr' 
-          ? 'Un peu plus de pratique t\'aidera!' 
+        message: currentLanguage === 'fr'
+          ? 'Un peu plus de pratique t\'aidera!'
           : 'A bit more practice will help!'
       };
     }
     if (percentage >= 40) {
-      return { 
-        color: 'practice', 
-        emoji: '🎯', 
+      return {
+        color: 'practice',
+        emoji: '🎯',
         title: currentLanguage === 'fr' ? 'Continue d\'essayer!' : 'Keep trying!',
-        message: currentLanguage === 'fr' 
-          ? 'Concentre-toi sur les explications!' 
+        message: currentLanguage === 'fr'
+          ? 'Concentre-toi sur les explications!'
           : 'Focus on the explanations!'
       };
     }
-    return { 
-      color: 'study', 
-      emoji: '📖', 
+    return {
+      color: 'study',
+      emoji: '📖',
       title: currentLanguage === 'fr' ? 'À réviser!' : 'Let\'s review!',
-      message: currentLanguage === 'fr' 
-        ? 'Prends le temps de revoir la matière!' 
+      message: currentLanguage === 'fr'
+        ? 'Prends le temps de revoir la matière!'
         : 'Take time to review the material!'
     };
   };
@@ -169,29 +171,51 @@ const QuizResults = ({
 
       {/* CTA Section */}
       <div className="quiz-results-cta">
-        <button 
+        <button
           className="quiz-results-cta-button"
           onClick={handleStartTargetedPractice}
         >
           <span className="cta-icon">🚀</span>
           <span className="cta-text">
-            {percentage >= 80 
+            {percentage >= 80
               ? (currentLanguage === 'fr' ? 'Me challenger davantage' : 'Challenge me more')
               : (currentLanguage === 'fr' ? 'Pratiquer mes points faibles' : 'Practice weak areas')
             }
           </span>
         </button>
+
+        {/* Review Button */}
+        {onReview && (
+          <button
+            className="quiz-results-review-button"
+            onClick={onReview}
+            style={{
+              marginTop: '12px',
+              background: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: 'var(--text-secondary)',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              fontSize: '0.9rem',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            {t('quiz.reviewQuiz')}
+          </button>
+        )}
+
         <p className="quiz-results-cta-note">
-          {currentLanguage === 'fr' 
-            ? 'L\'IA s\'adapte à tes besoins' 
+          {currentLanguage === 'fr'
+            ? 'L\'IA s\'adapte à tes besoins'
             : 'AI adapts to your needs'}
         </p>
       </div>
 
       {/* Disclaimer */}
       <p className="quiz-results-disclaimer">
-        {currentLanguage === 'fr' 
-          ? 'À des fins éducatives seulement' 
+        {currentLanguage === 'fr'
+          ? 'À des fins éducatives seulement'
           : 'Educational purposes only'}
       </p>
     </div>

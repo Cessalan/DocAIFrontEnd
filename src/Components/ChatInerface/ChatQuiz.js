@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useCallback } from "react";
 import { createPortal } from "react-dom";
 import './ChatInterface.css';
 import './ChatQuizCompact.css';
+import QuizNavigation from './QuizNavigation';
 import { useTranslation } from 'react-i18next';
 
 // Constants
@@ -57,7 +58,9 @@ function ChatQuiz(props) {
     showReview = false,
     onSkip,  // New prop for skipping questions
     modalOpen: externalModalOpen,  // Modal state from parent
-    onModalChange  // Callback to update parent modal state
+    onModalChange,  // Callback to update parent modal state
+    skippedQuestions = [], // New prop for skipped questions
+    onNavigate // New prop for navigation
   } = props;
 
   // State
@@ -65,7 +68,7 @@ function ChatQuiz(props) {
   const [revealed, setRevealed] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
-  
+
   // Use parent-controlled modal state if provided, otherwise use local state
   const [localModalOpen, setLocalModalOpen] = useState(false);
   const modalOpen = externalModalOpen !== undefined ? externalModalOpen : localModalOpen;
@@ -114,7 +117,7 @@ function ChatQuiz(props) {
   // Handlers
   const handleSelect = useCallback((index) => {
     if (revealed || !quiz) return;
-    
+
     setSelectedIndex(index);
     setRevealed(true);
 
@@ -161,20 +164,20 @@ function ChatQuiz(props) {
   // Review Content
   function renderReviewContent() {
     const correctCount = userAnswers.filter(a => a.isCorrect).length;
-    
+
     return (
       <div className="quiz-review-container">
         <div className="quiz-review-header">
           <h3>📋 {currentLanguage === 'fr' ? 'Révision des réponses' : 'Answer Review'}</h3>
           <p>{correctCount}/{allQuizzes.length} correct</p>
         </div>
-        
+
         <div className="quiz-review-list">
           {allQuizzes.map((q, idx) => {
             const answer = userAnswers.find(a => a.quizIndex === idx);
             const qCorrectIndex = q.options.findIndex(opt => opt === q.answer);
             const answerIsCorrect = answer && answer.isCorrect;
-            
+
             return (
               <div key={idx} className={`quiz-review-item ${answerIsCorrect ? 'correct' : 'incorrect'}`}>
                 <div className="review-item-header">
@@ -216,150 +219,202 @@ function ChatQuiz(props) {
   function renderQuizContent(inModal) {
     if (!quiz) return null;
 
+    // In review mode, we always show the answer and feedback
+    const isReviewing = reviewMode;
+    const effectiveRevealed = revealed || isReviewing;
+    const effectiveShowFeedback = showFeedback || isReviewing;
+
+    // Get user's answer for this specific question if in review mode
+    let reviewAnswer = null;
+    let reviewSelectedIndex = -1;
+
+    if (isReviewing) {
+      reviewAnswer = userAnswers.find(a => a.quizIndex === quizIndex);
+      if (reviewAnswer) {
+        reviewSelectedIndex = reviewAnswer.selectedOptionIndex;
+      }
+    }
+
+    const displaySelectedIndex = isReviewing ? reviewSelectedIndex : selectedIndex;
+
     return (
       <div className={`quiz-compact-container glassmorphic ${inModal ? 'in-modal' : ''}`}>
-        <div className="quiz-content-wrapper" key={quizIndex}>
-          {/* Header */}
-          <div className="quiz-compact-header">
-            <div className="quiz-compact-title-row">
-              <span className="quiz-compact-title">
-                {currentLanguage === 'fr' ? 'Question' : 'Question'} {quizIndex + 1} {currentLanguage === 'fr' ? 'sur' : 'of'} {totalQuestions}
-              </span>
-              {!inModal && (
-                <button 
-                  className="quiz-expand-btn"
-                  onClick={handleOpenModal}
-                  aria-label="View fullscreen"
-                  type="button"
-                >
-                  <ExpandIcon />
-                </button>
-              )}
-            </div>
-            <div className="quiz-compact-progress-track">
-              <div className="quiz-compact-progress-fill" style={progressStyle} />
-            </div>
+        {/* Side Navigation - Only show if we have multiple quizzes and not in review mode */}
+        {allQuizzes.length > 1 && !reviewMode && (
+          <div className="quiz-sidebar">
+            <QuizNavigation
+              questions={allQuizzes}
+              currentIndex={quizIndex}
+              onNavigate={onNavigate}
+              userAnswers={userAnswers}
+              skippedQuestions={skippedQuestions}
+            />
           </div>
+        )}
 
-          {/* Question */}
-          <div className="quiz-compact-question">
-            {quiz.question}
+        {/* Side Navigation for Review Mode (In Modal) */}
+        {allQuizzes.length > 1 && reviewMode && inModal && (
+          <div className="quiz-sidebar">
+            <QuizNavigation
+              questions={allQuizzes}
+              currentIndex={quizIndex}
+              onNavigate={onNavigate}
+              userAnswers={userAnswers}
+              skippedQuestions={skippedQuestions}
+            />
           </div>
+        )}
 
-          {/* Options */}
-          <div className="quiz-compact-options">
-          {quiz.options && quiz.options.map((choice, index) => {
-            const isSelected = index === selectedIndex;
-            const isAnswer = index === correctIndex;
-            const shouldHighlightCorrect = revealed && !isCorrect && isAnswer;
-
-            let optionClass = 'quiz-compact-option';
-            if (revealed) {
-              if (isAnswer) {
-                optionClass += ' correct';
-              } else if (isSelected) {
-                optionClass += ' incorrect';
-              } else {
-                optionClass += ' disabled';
-              }
-            }
-            if (isSelected) {
-              optionClass += ' selected';
-            }
-            if (shouldHighlightCorrect) {
-              optionClass += ' correct-highlight';
-            }
-
-            let letterClass = 'option-letter';
-            if (isSelected) {
-              letterClass += ' selected';
-            }
-            if (revealed && isAnswer) {
-              letterClass += ' correct';
-            }
-
-            return (
-              <div
-                key={index}
-                onClick={() => handleSelect(index)}
-                className={optionClass}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' || e.key === ' ') {
-                    handleSelect(index);
-                  }
-                }}
-              >
-                <span className={letterClass}>
-                  {OPTION_LETTERS[index]}
+        <div className="quiz-main-content">
+          <div className="quiz-content-wrapper" key={quizIndex}>
+            {/* Header */}
+            <div className="quiz-compact-header">
+              <div className="quiz-compact-title-row">
+                <span className="quiz-compact-title">
+                  {currentLanguage === 'fr' ? 'Question' : 'Question'} {quizIndex + 1} {currentLanguage === 'fr' ? 'sur' : 'of'} {totalQuestions}
+                  {isReviewing && (
+                    <span className="review-badge">
+                      {currentLanguage === 'fr' ? ' (Révision)' : ' (Review)'}
+                    </span>
+                  )}
                 </span>
-                <span className="option-text">{choice}</span>
-                
-                {revealed && isAnswer && isSelected && (
-                  <span className="compact-icon checkmark">
-                    <CheckmarkIcon />
-                  </span>
-                )}
-                
-                {revealed && !isAnswer && isSelected && (
-                  <span className="compact-icon x-mark">
-                    <XMarkIcon />
-                  </span>
+                {!inModal && (
+                  <button
+                    className="quiz-expand-btn"
+                    onClick={handleOpenModal}
+                    aria-label="View fullscreen"
+                    type="button"
+                  >
+                    <ExpandIcon />
+                  </button>
                 )}
               </div>
-            );
-          })}
-        </div>
+              <div className="quiz-compact-progress-track">
+                <div className="quiz-compact-progress-fill" style={progressStyle} />
+              </div>
+            </div>
 
-        {/* Feedback */}
-        {showFeedback && correctIndex !== -1 && (
-          <div className={`quiz-compact-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
-            <div className="feedback-header">
-              <span className={`feedback-status ${isCorrect ? 'correct' : 'incorrect'}`}>
-                {isCorrect 
-                  ? (currentLanguage === 'fr' ? '✓ Bonne réponse!' : '✓ Correct!') 
-                  : (currentLanguage === 'fr' ? '✗ Incorrect' : '✗ Incorrect')
+            {/* Question */}
+            <div className="quiz-compact-question">
+              {quiz.question}
+            </div>
+
+            {/* Options */}
+            <div className="quiz-compact-options">
+              {quiz.options && quiz.options.map((choice, index) => {
+                const isSelected = index === displaySelectedIndex;
+                const isAnswer = index === correctIndex;
+                const shouldHighlightCorrect = effectiveRevealed && (!isCorrect || isReviewing) && isAnswer;
+
+                let optionClass = 'quiz-compact-option';
+                if (effectiveRevealed) {
+                  if (isAnswer) {
+                    optionClass += ' correct';
+                  } else if (isSelected) {
+                    optionClass += ' incorrect';
+                  } else {
+                    optionClass += ' disabled';
+                  }
                 }
-              </span>
-            </div>
-            
-            <div className="feedback-rationale-container">
-              <div className="feedback-rationale-label">
-                💡 {currentLanguage === 'fr' ? 'Explication' : 'Rationale'}
-              </div>
-              <div 
-                className="feedback-rationale-content"
-                dangerouslySetInnerHTML={{ __html: quiz.justification }}
-              />
-            </div>
-          </div>
-        )}
+                if (isSelected) {
+                  optionClass += ' selected';
+                }
+                if (shouldHighlightCorrect) {
+                  optionClass += ' correct-highlight';
+                }
 
-        {/* Skip Button - Only visible before answering */}
-        {!revealed && onSkip && (
-          <button 
-            className="quiz-skip-btn"
-            onClick={onSkip}
-            type="button"
-          >
-            {currentLanguage === 'fr' ? 'Passer la question →' : 'Skip Question →'}
-          </button>
-        )}
-        
-        {/* Next Button - Appears after answering */}
-        {showFeedback && onNext && (
-          <button 
-            className="quiz-compact-next-btn"
-            onClick={onNext}
-            type="button"
-          >
-            {isLastQuestion 
-              ? (currentLanguage === 'fr' ? 'Voir les résultats →' : 'View Results →')
-              : (currentLanguage === 'fr' ? 'Question suivante →' : 'Next Question →')
-            }
-          </button>
-        )}
+                let letterClass = 'option-letter';
+                if (isSelected) {
+                  letterClass += ' selected';
+                }
+                if (effectiveRevealed && isAnswer) {
+                  letterClass += ' correct';
+                }
+
+                return (
+                  <div
+                    key={index}
+                    onClick={() => !isReviewing && handleSelect(index)}
+                    className={optionClass}
+                    role="button"
+                    tabIndex={isReviewing ? -1 : 0}
+                    style={{ cursor: isReviewing ? 'default' : 'pointer' }}
+                    onKeyDown={(e) => {
+                      if (!isReviewing && (e.key === 'Enter' || e.key === ' ')) {
+                        handleSelect(index);
+                      }
+                    }}
+                  >
+                    <span className={letterClass}>
+                      {OPTION_LETTERS[index]}
+                    </span>
+                    <span className="option-text">{choice}</span>
+
+                    {effectiveRevealed && isAnswer && (isSelected || isReviewing) && (
+                      <span className="compact-icon checkmark">
+                        <CheckmarkIcon />
+                      </span>
+                    )}
+
+                    {effectiveRevealed && !isAnswer && isSelected && (
+                      <span className="compact-icon x-mark">
+                        <XMarkIcon />
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Feedback */}
+            {effectiveShowFeedback && correctIndex !== -1 && (
+              <div className={`quiz-compact-feedback ${displaySelectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
+                <div className="feedback-header">
+                  <span className={`feedback-status ${displaySelectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
+                    {displaySelectedIndex === correctIndex
+                      ? (currentLanguage === 'fr' ? '✓ Bonne réponse!' : '✓ Correct!')
+                      : (currentLanguage === 'fr' ? '✗ Incorrect' : '✗ Incorrect')
+                    }
+                  </span>
+                </div>
+
+                <div className="feedback-rationale-container">
+                  <div className="feedback-rationale-label">
+                    💡 {currentLanguage === 'fr' ? 'Explication' : 'Rationale'}
+                  </div>
+                  <div
+                    className="feedback-rationale-content"
+                    dangerouslySetInnerHTML={{ __html: quiz.justification }}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Skip Button - Only visible before answering and NOT in review mode */}
+            {!effectiveRevealed && onSkip && !isReviewing && (
+              <button
+                className="quiz-skip-btn"
+                onClick={onSkip}
+                type="button"
+              >
+                {currentLanguage === 'fr' ? 'Passer la question →' : 'Skip Question →'}
+              </button>
+            )}
+
+            {/* Next Button - Appears after answering OR in review mode */}
+            {(effectiveShowFeedback || isReviewing) && onNext && (
+              <button
+                className="quiz-compact-next-btn"
+                onClick={onNext}
+                type="button"
+              >
+                {isLastQuestion
+                  ? (currentLanguage === 'fr' ? 'Voir les résultats →' : 'View Results →')
+                  : (currentLanguage === 'fr' ? 'Question suivante →' : 'Next Question →')
+                }
+              </button>
+            )}
+          </div>
         </div>
       </div>
     );
@@ -372,7 +427,7 @@ function ChatQuiz(props) {
     const modalContent = (
       <div className="quiz-modal-overlay" onClick={handleCloseModal}>
         <div className="quiz-modal-content" onClick={e => e.stopPropagation()}>
-          <button 
+          <button
             className="quiz-modal-close"
             onClick={handleCloseModal}
             aria-label="Close"
@@ -380,9 +435,9 @@ function ChatQuiz(props) {
           >
             <CloseIcon />
           </button>
-          
+
           <div className="quiz-modal-scroll-wrapper">
-            {reviewMode ? renderReviewContent() : renderQuizContent(true)}
+            {reviewMode ? renderQuizContent(true) : renderQuizContent(true)}
           </div>
         </div>
       </div>
@@ -394,7 +449,7 @@ function ChatQuiz(props) {
   // Main render
   return (
     <>
-      {reviewMode ? renderReviewContent() : renderQuizContent(false)}
+      {renderQuizContent(false)}
       {renderModal()}
     </>
   );

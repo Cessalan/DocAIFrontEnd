@@ -21,10 +21,10 @@ import { useTranslation } from 'react-i18next';
  * - Loading state if next question not streamed yet
  * - Results screen on completion with CTA
  */
-const ChatMessage = ({ 
-  message, 
-  onOptionClick, 
-  onQuizAnswerSelect, 
+const ChatMessage = ({
+  message,
+  onOptionClick,
+  onQuizAnswerSelect,
   uploadedFilesList,
   onQuizVisibilityChange,
   onQuizInteraction,
@@ -43,7 +43,7 @@ const ChatMessage = ({
   const [skippedQuestions, setSkippedQuestions] = useState([]); // Track skipped question indices
   const [quizModalOpen, setQuizModalOpen] = useState(false); // Modal state lifted here
   const lastMessageIdRef = useRef(null);
-  
+
   // Streak tracking
   const [quizStreak, setQuizStreak] = useState({
     current: 0,
@@ -52,23 +52,23 @@ const ChatMessage = ({
     totalIncorrect: 0
   });
   const [lastAnswerWasCorrect, setLastAnswerWasCorrect] = useState(null);
-  
+
   // Refs
   const progressBarRef = useRef(null);
 
   // Parse quiz data
   const parsedQuizData = useMemo(() => {
     if (!message || !message.quizData) return null;
-    
+
     try {
       if (Array.isArray(message.quizData)) {
         return message.quizData;
       }
-      
+
       if (typeof message.quizData === "string") {
         return JSON.parse(message.quizData);
       }
-      
+
       return null;
     } catch (err) {
       console.error("Failed to parse quizData:", err);
@@ -104,7 +104,7 @@ const ChatMessage = ({
     for (let i = quizData.length - 1; i >= 0; i--) {
       const question = quizData[i];
       if (!question.userSelection) continue;
-      
+
       if (question.userSelection.isCorrect) {
         currentStreak++;
       } else {
@@ -118,18 +118,19 @@ const ChatMessage = ({
   // Reset navigation when message changes
   useEffect(() => {
     if (!message) return;
-    
+
     if (message.id !== lastMessageIdRef.current) {
       lastMessageIdRef.current = message.id;
       setCurrentQuestionIndex(0);
       setShowResults(false);
       setSkippedQuestions([]); // Reset skipped questions on new message
       setQuizModalOpen(false); // Reset modal state on new message
-      
+      setIsReviewing(false); // Reset review mode
+
       if (parsedQuizData) {
         const initialStreak = calculateInitialStreak(parsedQuizData);
         setQuizStreak(initialStreak);
-        
+
         const firstUnanswered = parsedQuizData.findIndex(q => !q.userSelection);
         if (firstUnanswered === -1 && parsedQuizData.length > 0) {
           setShowResults(true);
@@ -140,20 +141,30 @@ const ChatMessage = ({
     }
   }, [message?.id, parsedQuizData, calculateInitialStreak]);
 
+  // Review Quiz Handler
+  const [isReviewing, setIsReviewing] = useState(false);
+
+  const handleReviewQuiz = useCallback(() => {
+    setShowResults(false);
+    setIsReviewing(true);
+    setQuizModalOpen(true);
+    setCurrentQuestionIndex(0);
+  }, []);
+
   // Skip question handler
   const handleSkipQuestion = useCallback(() => {
     if (!parsedQuizData || !message) return;
-    
+
     // Add current question to skipped list if not already there and not answered
     const currentQuestion = parsedQuizData[currentQuestionIndex];
     if (!currentQuestion?.userSelection && !skippedQuestions.includes(currentQuestionIndex)) {
       setSkippedQuestions(prev => [...prev, currentQuestionIndex]);
     }
-    
+
     // Find next unanswered question (excluding currently skipped ones)
     let nextIndex = currentQuestionIndex + 1;
     let foundNext = false;
-    
+
     // First, try to find next unanswered question after current
     for (let i = nextIndex; i < parsedQuizData.length; i++) {
       if (!parsedQuizData[i].userSelection) {
@@ -162,7 +173,7 @@ const ChatMessage = ({
         break;
       }
     }
-    
+
     // If no unanswered questions ahead, go back to first skipped question
     if (!foundNext && skippedQuestions.length > 0) {
       const nextSkippedIndex = skippedQuestions[0];
@@ -170,12 +181,12 @@ const ChatMessage = ({
       setCurrentQuestionIndex(nextSkippedIndex);
       foundNext = true;
     }
-    
+
     // If still no question found and we have a newly skipped one, go to it
     if (!foundNext && !currentQuestion?.userSelection) {
       const newlySkipped = currentQuestionIndex;
       setSkippedQuestions(prev => prev.filter(idx => idx !== newlySkipped));
-      
+
       // Try to find any other unanswered question
       for (let i = 0; i < parsedQuizData.length; i++) {
         if (!parsedQuizData[i].userSelection && i !== currentQuestionIndex) {
@@ -185,7 +196,7 @@ const ChatMessage = ({
         }
       }
     }
-    
+
     // If we've gone through all questions and have no skipped ones left, show results
     if (!foundNext && skippedQuestions.length === 0) {
       const allAnswered = parsedQuizData.every(q => q.userSelection);
@@ -204,7 +215,20 @@ const ChatMessage = ({
   // Navigation handler
   const handleNextQuestion = useCallback(() => {
     if (!parsedQuizData || !message) return;
-    
+
+    // Review Mode Navigation: Simple next/prev without skipping logic
+    if (isReviewing) {
+      if (currentQuestionIndex < parsedQuizData.length - 1) {
+        setCurrentQuestionIndex(prev => prev + 1);
+      } else {
+        // End of review - maybe close modal or show results?
+        // For now, let's just close the modal and show results
+        setQuizModalOpen(false);
+        setShowResults(true);
+      }
+      return;
+    }
+
     // If there are skipped questions, prioritize them
     if (skippedQuestions.length > 0) {
       const nextSkippedIndex = skippedQuestions[0];
@@ -212,11 +236,11 @@ const ChatMessage = ({
       setCurrentQuestionIndex(nextSkippedIndex);
       return;
     }
-    
+
     // Otherwise, find next unanswered question
     let nextIndex = currentQuestionIndex + 1;
     let foundNext = false;
-    
+
     for (let i = nextIndex; i < parsedQuizData.length; i++) {
       if (!parsedQuizData[i].userSelection) {
         setCurrentQuestionIndex(i);
@@ -224,7 +248,7 @@ const ChatMessage = ({
         break;
       }
     }
-    
+
     // If no unanswered questions found ahead
     if (!foundNext) {
       if (nextIndex >= parsedQuizData.length && !message.isStreaming) {
@@ -247,25 +271,25 @@ const ChatMessage = ({
         }
       }
     }
-  }, [currentQuestionIndex, parsedQuizData, skippedQuestions, message?.isStreaming, onQuizInteraction]);
+  }, [currentQuestionIndex, parsedQuizData, skippedQuestions, message?.isStreaming, onQuizInteraction, isReviewing]);
 
   // Answer selection handler
   const handleQuizAnswerSelect = useCallback((answerData) => {
     if (!message) return;
-    
+
     if (onQuizInteraction) {
       onQuizInteraction(message.id);
     }
-    
+
     // Remove current question from skipped list if it was skipped
     setSkippedQuestions(prev => prev.filter(idx => idx !== currentQuestionIndex));
-    
+
     setLastAnswerWasCorrect(answerData.isCorrect);
-    
+
     setQuizStreak(prev => {
       const newCurrent = answerData.isCorrect ? prev.current + 1 : 0;
       const newLongest = Math.max(prev.longest, newCurrent);
-      
+
       return {
         current: newCurrent,
         longest: newLongest,
@@ -303,7 +327,7 @@ const ChatMessage = ({
       (entries) => {
         entries.forEach((entry) => {
           const shouldShowSticky = !entry.isIntersecting;
-          
+
           if (shouldShowSticky) {
             onQuizVisibilityChange({
               messageId: message.id,
@@ -342,7 +366,7 @@ const ChatMessage = ({
       if (progressBarRef.current) {
         const rect = progressBarRef.current.getBoundingClientRect();
         const isOutOfView = rect.top < 70;
-        
+
         if (isOutOfView) {
           onQuizVisibilityChange({
             messageId: message.id,
@@ -363,7 +387,7 @@ const ChatMessage = ({
   // ============================================
   // GUARD CLAUSE (after all hooks)
   // ============================================
-  
+
   if (!message) {
     console.warn('ChatMessage received undefined message');
     return null;
@@ -382,17 +406,17 @@ const ChatMessage = ({
   );
 
   const currentQuestion = parsedQuizData ? parsedQuizData[currentQuestionIndex] : null;
-  const isWaitingForQuestion = parsedQuizData && 
-    currentQuestionIndex >= parsedQuizData.length && 
+  const isWaitingForQuestion = parsedQuizData &&
+    currentQuestionIndex >= parsedQuizData.length &&
     message.isStreaming;
-  const isLastQuestion = parsedQuizData && 
+  const isLastQuestion = parsedQuizData &&
     currentQuestionIndex === parsedQuizData.length - 1 &&
     skippedQuestions.length === 0; // Only last if no skipped questions remain
 
   // ============================================
   // RENDER
   // ============================================
-  
+
   return (
     <div className={`message ${isUser ? "user-message" : "ai-message"}`}>
       {/* Avatar */}
@@ -438,13 +462,14 @@ const ChatMessage = ({
                   incorrectAnswers={quizStreak.totalIncorrect}
                   longestStreak={quizStreak.longest}
                   onStartTargetedPractice={handleStartTargetedPractice}
+                  onReview={handleReviewQuiz}
                 />
               ) : isWaitingForQuestion ? (
                 /* Loading State - Waiting for next question */
                 <QuizLoading />
               ) : currentQuestion ? (
                 /* Current Question */
-                <ChatQuiz 
+                <ChatQuiz
                   quiz={currentQuestion}
                   messageId={message.id}
                   quizIndex={currentQuestionIndex}
@@ -455,13 +480,17 @@ const ChatMessage = ({
                   totalQuestions={parsedQuizData.length}
                   modalOpen={quizModalOpen}
                   onModalChange={setQuizModalOpen}
+                  allQuizzes={parsedQuizData}
+                  onNavigate={setCurrentQuestionIndex}
+                  skippedQuestions={skippedQuestions}
+                  showReview={isReviewing}
                 />
               ) : (
                 /* Initial loading state */
                 <QuizLoading />
               )}
             </div>
-            
+
             {/* Streaming Indicator */}
             {message.isStreaming && !showResults && (
               <div className="quiz-streaming-indicator">
@@ -484,16 +513,16 @@ const ChatMessage = ({
 
         {/* Study Sheet Display */}
         {isAI && message.html && (
-          <ChatStudySheet message={message} />    
+          <ChatStudySheet message={message} />
         )}
 
         {/* Scenario Display */}
         {isAI && message.type === "scenario" && message.scenarioData && (
           <div className="message-text">
-            <ChatScenario 
+            <ChatScenario
               scenario={message.scenarioData}
-              askScenario={() => onOptionClick("Mise en situation", message.file.name)} 
-            />   
+              askScenario={() => onOptionClick("Mise en situation", message.file.name)}
+            />
           </div>
         )}
 

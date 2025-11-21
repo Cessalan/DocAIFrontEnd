@@ -9,128 +9,30 @@
   border-radius: 12px;
   padding: 14px;
   margin-top: 12px;
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(173, 125, 195, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(233, 216, 253, 0.8);
   font-family: "Segoe UI", -apple-system, sans-serif;
   position: relative;
   animation: quizSlideIn 0.3s ease-out;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
 }
 
-.quiz-compact-container.in-modal {
-  margin: 0;
-  box-shadow: none;
-  border: none;
-  background: transparent;
-  backdrop-filter: none;
-  padding: 0;
+.quiz-sidebar {
+  flex-shrink: 0;
 }
 
-.quiz-compact-container.in-modal .quiz-compact-title {
-  font-size: 13px;
-}
-
-.quiz-compact-container.in-modal .quiz-compact-question {
-  font-size: 15px;
-  margin-bottom: 10px;
-  line-height: 1.3;
-}
-
-.quiz-compact-container.in-modal .quiz-compact-option {
-  padding: 8px 10px;
-  min-height: 38px;
-  margin-bottom: 5px;
-}
-
-.quiz-compact-container.in-modal .quiz-compact-options {
-  gap: 5px;
-  margin-bottom: 8px;
-}
-
-.quiz-compact-container.in-modal .option-letter {
-  width: 24px;
-  height: 24px;
-  font-size: 11px;
-}
-
-.quiz-compact-container.in-modal .option-text {
-  font-size: 13px;
-  line-height: 1.3;
-}
-
-.quiz-compact-container.in-modal .feedback-rationale-content {
-  font-size: 12px;
-  max-height: 100px;
-  overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: #d6bcfa transparent;
-  line-height: 1.4;
-}
-
-.quiz-compact-container.in-modal .feedback-rationale-content::-webkit-scrollbar {
-  width: 4px;
-}
-
-.quiz-compact-container.in-modal .feedback-rationale-content::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.quiz-compact-container.in-modal .feedback-rationale-content::-webkit-scrollbar-thumb {
-  background: #d6bcfa;
-  border-radius: 2px;
-}
-
-.quiz-compact-container.in-modal .feedback-status {
-  font-size: 14px;
-}
-
-.quiz-compact-container.in-modal .feedback-rationale-label {
-  font-size: 11px;
-  margin-bottom: 4px;
-}
-
-.quiz-compact-container.in-modal .quiz-compact-feedback {
-  margin-top: 8px;
-  padding: 10px;
-}
-
-.quiz-compact-container.in-modal .feedback-rationale-container {
-  padding: 8px;
-}
-
-.quiz-compact-container.in-modal .quiz-compact-next-btn {
-  margin-top: 8px;
-  padding: 9px 12px;
-  font-size: 13px;
-}
-
-.quiz-compact-container.in-modal .quiz-skip-btn {
-  margin-top: 8px;
-  padding: 9px 12px;
-  font-size: 13px;
-}
-
-@keyframes quizSlideIn {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* Smooth transition for question changes */
-.quiz-content-wrapper {
-  animation: fadeIn 0.3s ease-in-out;
+animation: fadeIn 0.3s ease-in-out;
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
@@ -292,9 +194,17 @@
 }
 
 @keyframes correctPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.015); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.015);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 .quiz-compact-option.correct .option-text {
@@ -309,9 +219,19 @@
 }
 
 @keyframes incorrectShake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-3px); }
-  75% { transform: translateX(3px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-3px);
+  }
+
+  75% {
+    transform: translateX(3px);
+  }
 }
 
 .quiz-compact-option.incorrect .option-text {
@@ -370,6 +290,7 @@
     opacity: 0;
     transform: translateY(-6px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -542,8 +463,13 @@
 }
 
 @keyframes modalOverlayFadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .quiz-modal-content {
@@ -559,7 +485,7 @@
   display: flex;
   flex-direction: column;
   position: relative;
-  box-shadow: 
+  box-shadow:
     0 20px 60px rgba(107, 70, 193, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(233, 216, 253, 0.6);
@@ -596,6 +522,7 @@
     opacity: 0;
     transform: scale(0.95) translateY(20px);
   }
+
   to {
     opacity: 1;
     transform: scale(1) translateY(0);
@@ -636,7 +563,7 @@
   border-radius: 12px;
   padding: 16px;
   margin-top: 12px;
-  box-shadow: 
+  box-shadow:
     0 4px 16px rgba(173, 125, 195, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.6);
   border: 1px solid rgba(233, 216, 253, 0.8);
@@ -776,125 +703,125 @@
     padding: 12px;
     border-radius: 10px;
   }
-  
+
   .quiz-compact-title {
     font-size: 11px;
   }
-  
+
   .quiz-compact-question {
     font-size: 13px;
     margin-bottom: 8px;
   }
-  
+
   .quiz-compact-options {
     gap: 5px;
   }
-  
+
   .quiz-compact-option {
     padding: 7px 8px;
     gap: 6px;
     min-height: 32px;
   }
-  
+
   .option-letter {
     width: 20px;
     height: 20px;
     font-size: 10px;
   }
-  
+
   .option-text {
     font-size: 11px;
   }
-  
+
   .compact-icon {
     width: 16px;
     height: 16px;
   }
-  
+
   .compact-icon svg {
     width: 8px;
     height: 8px;
   }
-  
+
   .quiz-compact-feedback {
     padding: 8px;
     margin-top: 8px;
   }
-  
+
   .feedback-status {
     font-size: 12px;
   }
-  
+
   .feedback-rationale-container {
     padding: 6px;
   }
-  
+
   .feedback-rationale-label {
     font-size: 10px;
   }
-  
+
   .feedback-rationale-content {
     font-size: 10px;
     max-height: 70px;
   }
-  
+
   .quiz-compact-next-btn {
     padding: 9px 12px;
     font-size: 12px;
     margin-top: 8px;
   }
-  
+
   .quiz-skip-btn {
     padding: 9px 12px;
     font-size: 12px;
     margin-top: 8px;
   }
-  
+
   .quiz-modal-overlay {
     padding: 12px;
   }
-  
+
   .quiz-modal-content {
     padding: 16px;
     max-height: 90vh;
   }
-  
+
   .quiz-modal-close {
     top: 8px;
     right: 8px;
     padding: 6px;
   }
-  
+
   .quiz-modal-close svg {
     width: 16px;
     height: 16px;
   }
-  
+
   .quiz-review-container {
     padding: 12px;
   }
-  
+
   .quiz-review-header h3 {
     font-size: 14px;
   }
-  
+
   .quiz-review-header p {
     font-size: 12px;
   }
-  
+
   .quiz-review-list {
     max-height: 300px;
     gap: 10px;
   }
-  
+
   .quiz-review-item {
     padding: 10px;
   }
-  
+
   .review-item-question {
     font-size: 11px;
   }
-  
+
   .review-answer {
     font-size: 10px;
   }
@@ -904,25 +831,25 @@
   .quiz-compact-container.glassmorphic {
     padding: 10px;
   }
-  
+
   .quiz-compact-question {
     font-size: 12px;
   }
-  
+
   .quiz-compact-option {
     padding: 6px 7px;
   }
-  
+
   .option-letter {
     width: 18px;
     height: 18px;
     font-size: 9px;
   }
-  
+
   .option-text {
     font-size: 10px;
   }
-  
+
   .feedback-rationale-content {
     max-height: 60px;
     font-size: 9px;
@@ -934,6 +861,7 @@
    ============================================ */
 
 @media (prefers-reduced-motion: reduce) {
+
   .quiz-compact-container.glassmorphic,
   .quiz-compact-feedback,
   .quiz-compact-option.correct,
@@ -942,14 +870,14 @@
   .quiz-modal-content {
     animation: none !important;
   }
-  
+
   .quiz-compact-next-btn:hover,
   .quiz-compact-option:hover,
   .quiz-expand-btn:hover,
   .quiz-modal-close:hover {
     transform: none;
   }
-  
+
   .quiz-compact-progress-fill {
     transition: width 0.2s linear;
   }
@@ -959,37 +887,8 @@
   .quiz-compact-option {
     border-width: 2px;
   }
-  
+
   .quiz-compact-container.glassmorphic {
     border-width: 2px;
-  }
-}
-/* ============================================
-   SIDEBAR AND MAIN CONTENT LAYOUT
-   ============================================ */
-
-.quiz-compact-container.glassmorphic {
-  display: flex !important;
-  flex-direction: row !important;
-  gap: 16px !important;
-  align-items: flex-start !important;
-}
-
-.quiz-sidebar {
-  flex-shrink: 0 !important;
-}
-
-.quiz-main-content {
-  flex: 1 !important;
-  min-width: 0 !important;
-}
-
-@media (max-width: 768px) {
-  .quiz-compact-container.glassmorphic {
-    flex-direction: column !important;
-  }
-
-  .quiz-sidebar {
-    width: 100% !important;
   }
 }
