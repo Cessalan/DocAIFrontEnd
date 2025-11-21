@@ -59,9 +59,9 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
                             <div className="feedback-step-initial">
                                 <p>{t('quizFeedback.question', 'How is your quiz experience?')}</p>
                                 <div className="emoji-rating">
-                                    <button onClick={() => handleRating('bad')} title="Bad">☹️</button>
-                                    <button onClick={() => handleRating('neutral')} title="Okay">😐</button>
-                                    <button onClick={() => handleRating('good')} title="Good">😄</button>
+                                    <button onClick={() => handleRating('bad')} title={t('quizFeedback.ratingBad', 'Bad')}>☹️</button>
+                                    <button onClick={() => handleRating('neutral')} title={t('quizFeedback.ratingOkay', 'Okay')}>😐</button>
+                                    <button onClick={() => handleRating('good')} title={t('quizFeedback.ratingGood', 'Good')}>😄</button>
                                 </div>
                             </div>
                         )}
@@ -76,15 +76,15 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
                                 <div className="feedback-options">
                                     {rating === 'bad' ? (
                                         <>
-                                            <button onClick={() => submitFeedback('too_hard')}>Too Hard</button>
-                                            <button onClick={() => submitFeedback('confusing')}>Confusing</button>
-                                            <button onClick={() => submitFeedback('bugs')}>Bugs</button>
+                                            <button onClick={() => submitFeedback('too_hard')}>{t('quizFeedback.tooHard', 'Too Hard')}</button>
+                                            <button onClick={() => submitFeedback('confusing')}>{t('quizFeedback.confusing', 'Confusing')}</button>
+                                            <button onClick={() => submitFeedback('bugs')}>{t('quizFeedback.bugs', 'Bugs')}</button>
                                         </>
                                     ) : (
                                         <>
-                                            <button onClick={() => submitFeedback('content')}>Content</button>
-                                            <button onClick={() => submitFeedback('ui')}>Design</button>
-                                            <button onClick={() => submitFeedback('learning')}>Learning</button>
+                                            <button onClick={() => submitFeedback('content')}>{t('quizFeedback.content', 'Content')}</button>
+                                            <button onClick={() => submitFeedback('ui')}>{t('quizFeedback.design', 'Design')}</button>
+                                            <button onClick={() => submitFeedback('learning')}>{t('quizFeedback.learning', 'Learning')}</button>
                                         </>
                                     )}
                                 </div>
