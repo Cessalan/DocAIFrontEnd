@@ -60,7 +60,9 @@ function ChatQuiz(props) {
     modalOpen: externalModalOpen,  // Modal state from parent
     onModalChange,  // Callback to update parent modal state
     skippedQuestions = [], // New prop for skipped questions
-    onNavigate // New prop for navigation
+    onNavigate, // New prop for navigation
+    onFeedbackSubmit, // New prop for feedback submission
+    feedbackData // Feedback data from message (if already submitted)
   } = props;
 
   // State
@@ -68,6 +70,15 @@ function ChatQuiz(props) {
   const [revealed, setRevealed] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [feedbackGiven, setFeedbackGiven] = useState(false);
+
+  const handleFeedbackSubmit = (data) => {
+    console.log('Quiz Feedback Submitted:', data);
+    setFeedbackGiven(true);
+    if (onFeedbackSubmit) {
+      onFeedbackSubmit(messageId, data);
+    }
+  };
 
   // Use parent-controlled modal state if provided, otherwise use local state
   const [localModalOpen, setLocalModalOpen] = useState(false);
@@ -107,6 +118,19 @@ function ChatQuiz(props) {
       }
     }
   }, [quiz, quizIndex]); // Added quizIndex to ensure reset on question change
+
+  // Initialize feedbackGiven from message data
+  useEffect(() => {
+    // Check if message has feedbackData to determine if feedback was already given
+    console.log('📊 Checking feedbackData:', feedbackData);
+    if (feedbackData && feedbackData.submittedAt) {
+      console.log('✅ Feedback already submitted, hiding feedback button');
+      setFeedbackGiven(true);
+    } else {
+      console.log('❌ No feedback found, showing feedback button');
+      setFeedbackGiven(false);
+    }
+  }, [feedbackData]);
 
   useEffect(() => {
     if (showReview) {
@@ -248,6 +272,8 @@ function ChatQuiz(props) {
               onNavigate={onNavigate}
               userAnswers={userAnswers}
               skippedQuestions={skippedQuestions}
+              onFeedbackSubmit={handleFeedbackSubmit}
+              hasGivenFeedback={feedbackGiven}
             />
           </div>
         )}
@@ -261,6 +287,8 @@ function ChatQuiz(props) {
               onNavigate={onNavigate}
               userAnswers={userAnswers}
               skippedQuestions={skippedQuestions}
+              onFeedbackSubmit={handleFeedbackSubmit}
+              hasGivenFeedback={feedbackGiven}
             />
           </div>
         )}

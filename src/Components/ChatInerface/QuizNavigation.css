@@ -213,6 +213,12 @@
     animation: feedbackPulse 2s infinite;
 }
 
+.feedback-trigger-btn.submitted {
+    animation: none;
+    box-shadow: 0 2px 6px rgba(107, 70, 193, 0.2);
+    background: linear-gradient(135deg, #805ad5 0%, #b794f4 100%);
+}
+
 .feedback-trigger-btn:hover,
 .feedback-trigger-btn.active {
     transform: scale(1.1) translateY(-2px);
@@ -237,6 +243,12 @@
     border: 2px solid white;
     border-radius: 50%;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    transition: transform 0.3s ease;
+}
+
+.feedback-trigger-btn.submitted::after {
+    transform: scale(0);
+    opacity: 0;
 }
 
 @keyframes feedbackPulse {

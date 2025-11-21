@@ -29,7 +29,8 @@ const ChatMessage = ({
   onQuizVisibilityChange,
   onQuizInteraction,
   isActiveQuiz = false,
-  onSendMessage
+  onSendMessage,
+  onFeedbackSubmit
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -484,6 +485,8 @@ const ChatMessage = ({
                   onNavigate={setCurrentQuestionIndex}
                   skippedQuestions={skippedQuestions}
                   showReview={isReviewing}
+                  onFeedbackSubmit={onFeedbackSubmit}
+                  feedbackData={message.feedbackData}
                 />
               ) : (
                 /* Initial loading state */

@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import './QuizNavigation.css'; // We'll add styles here
 
-const QuizFeedback = () => {
+const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
     const { t } = useTranslation();
     const [isOpen, setIsOpen] = useState(false);
     const [feedbackStep, setFeedbackStep] = useState('initial'); // initial, rating, detail, thanks
     const [rating, setRating] = useState(null);
 
     const handleToggle = () => {
+        if (hasSubmitted) return; // Prevent opening if already submitted
         setIsOpen(!isOpen);
         if (!isOpen) setFeedbackStep('initial');
     };
@@ -19,8 +20,13 @@ const QuizFeedback = () => {
     };
 
     const submitFeedback = (detail) => {
-        // Here you would send the data to your backend
-        console.log('Feedback submitted:', { rating, detail });
+        const feedbackData = { rating, detail };
+        console.log('Feedback submitted:', feedbackData);
+
+        if (onFeedbackSubmit) {
+            onFeedbackSubmit(feedbackData);
+        }
+
         setFeedbackStep('thanks');
         setTimeout(() => {
             setIsOpen(false);
@@ -32,11 +38,12 @@ const QuizFeedback = () => {
         <div className="quiz-feedback-container">
             {/* Trigger Button */}
             <button
-                className={`feedback-trigger-btn ${isOpen ? 'active' : ''}`}
+                className={`feedback-trigger-btn ${isOpen ? 'active' : ''} ${hasSubmitted ? 'submitted' : ''}`}
                 onClick={handleToggle}
-                title={t('quizFeedback.leaveFeedback', 'Leave Feedback')}
+                title={hasSubmitted ? t('quizFeedback.submitted', 'Feedback sent!') : t('quizFeedback.leaveFeedback', 'Leave Feedback')}
+                disabled={hasSubmitted}
             >
-                <span className="feedback-icon">💬</span>
+                <span className="feedback-icon">{hasSubmitted ? '✓' : '💬'}</span>
             </button>
 
             {/* Popover Content */}

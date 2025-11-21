@@ -8,7 +8,9 @@ function QuizNavigation({
   currentIndex,
   onNavigate,
   userAnswers = [],
-  skippedQuestions = []
+  skippedQuestions = [],
+  onFeedbackSubmit,
+  hasGivenFeedback
 }) {
   const { t } = useTranslation();
 
@@ -82,7 +84,10 @@ function QuizNavigation({
       </div>
 
       <div className="quiz-nav-footer">
-        <QuizFeedback />
+        <QuizFeedback
+          onFeedbackSubmit={onFeedbackSubmit}
+          hasSubmitted={hasGivenFeedback}
+        />
       </div>
     </div>
   );

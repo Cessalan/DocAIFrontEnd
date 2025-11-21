@@ -1,12 +1,12 @@
-import { createStorageRef,db,user,auth ,storage} from "../Firebase/config";
-import {listAll, getMetadata, getDownloadURL,ref,deleteObject} from "firebase/storage";
+import { createStorageRef, db, user, auth, storage } from "../Firebase/config";
+import { listAll, getMetadata, getDownloadURL, ref, deleteObject } from "firebase/storage";
 import {
   query,
   orderBy,
   onSnapshot,
   collection,
   serverTimestamp,
-  addDoc, 
+  addDoc,
   deleteDoc,
   doc,
   getDocs,
@@ -16,7 +16,7 @@ import {
   where
 } from "firebase/firestore";
 
-import { generate_title} from '../Services/FastAPICalls.js';
+import { generate_title } from '../Services/FastAPICalls.js';
 
 const CreateNewChatWithMessage = async (messageObject) => {
   try {
@@ -27,7 +27,7 @@ const CreateNewChatWithMessage = async (messageObject) => {
 
     // Step 2: Create a title for the chat based on the content of the message
     // make a request to FAST API to generate title using AI
-    let chat_title_promise =await generate_title(messageObject.content);
+    let chat_title_promise = await generate_title(messageObject.content);
     let chat_title = chat_title_promise.title;
 
     console.log("chat title created: ", chat_title);
@@ -76,77 +76,74 @@ const ChatHasMessages = async (chatId) => {
   }
 };
 
-const AppendToChat = async (chatId,messageObject)=>{
+const AppendToChat = async (chatId, messageObject) => {
 
-    // if there is no chatID, create a new chat and insert the first message
-    // this will also generate a chat title
-    if(!chatId)
-    {
-      chatId = await CreateNewChatWithMessage(messageObject);
-      return chatId;
-    }
-        
-    try{
-      console.log("Attempting to upload to chatID:" + chatId);
-      console.log("message object: ",messageObject);
-
-       // check if there has been messages
-       const chatHasMessages = await ChatHasMessages(chatId);
-
-       if(!chatHasMessages)
-       {
-         // if chat doesnt have a message generate a title using AI
-         let chat_title_promise =await generate_title(messageObject.content);
-         let chat_title = chat_title_promise.title;
- 
-         try {
-           // query the chat i want to update
-           const chatRef = doc(db, "chats", chatId);  
- 
-           // update the chat doc by adding the title generated
-           await updateDoc(chatRef, {
-             title: chat_title,
-             updatedAt: serverTimestamp()  // Optional: update timestamp
-           });
-           
-           // show that the update was successful
-           console.log("✅ Chat title updated");
- 
-         } catch (error) {
-           console.error("❌ Error updating chat title:", error);
-         }
-      }
-
-      console.log("Adding message do addDoc: ", messageObject)
-
-      // add a message in the collection inside chat
-      await addDoc(collection(db, "chats", chatId,"messages"), {
-        ...messageObject,
-        timestamp: serverTimestamp() // Firebase server time
-      });
-
-
-
-      // Step 2: Update the parent chat's updatedAt
-      const chatRef = doc(db, "chats", chatId);
-        await updateDoc(chatRef, {
-        updatedAt: serverTimestamp()
-      });
-  
-    }catch(error)
-    {
-      console.error("❌ Error uploading user message to Chat:", chatId, error);
-    }
-    
+  // if there is no chatID, create a new chat and insert the first message
+  // this will also generate a chat title
+  if (!chatId) {
+    chatId = await CreateNewChatWithMessage(messageObject);
     return chatId;
+  }
+
+  try {
+    console.log("Attempting to upload to chatID:" + chatId);
+    console.log("message object: ", messageObject);
+
+    // check if there has been messages
+    const chatHasMessages = await ChatHasMessages(chatId);
+
+    if (!chatHasMessages) {
+      // if chat doesnt have a message generate a title using AI
+      let chat_title_promise = await generate_title(messageObject.content);
+      let chat_title = chat_title_promise.title;
+
+      try {
+        // query the chat i want to update
+        const chatRef = doc(db, "chats", chatId);
+
+        // update the chat doc by adding the title generated
+        await updateDoc(chatRef, {
+          title: chat_title,
+          updatedAt: serverTimestamp()  // Optional: update timestamp
+        });
+
+        // show that the update was successful
+        console.log("✅ Chat title updated");
+
+      } catch (error) {
+        console.error("❌ Error updating chat title:", error);
+      }
+    }
+
+    console.log("Adding message do addDoc: ", messageObject)
+
+    // add a message in the collection inside chat
+    await addDoc(collection(db, "chats", chatId, "messages"), {
+      ...messageObject,
+      timestamp: serverTimestamp() // Firebase server time
+    });
+
+
+
+    // Step 2: Update the parent chat's updatedAt
+    const chatRef = doc(db, "chats", chatId);
+    await updateDoc(chatRef, {
+      updatedAt: serverTimestamp()
+    });
+
+  } catch (error) {
+    console.error("❌ Error uploading user message to Chat:", chatId, error);
+  }
+
+  return chatId;
 }
 
-const SaveFileMetaData = async(chatId, newFileMetaData,downloadURL,wordCount) => {
+const SaveFileMetaData = async (chatId, newFileMetaData, downloadURL, wordCount) => {
   const fileDocRef = doc(db, "chats", chatId, "uploads", newFileMetaData.id);
   await setDoc(fileDocRef, {
     ...newFileMetaData,
     downloadURL,
-    wordCount:wordCount || 0,
+    wordCount: wordCount || 0,
     uploadedAt: serverTimestamp()
   });
 }
@@ -171,7 +168,7 @@ const GetFileMetadataByName = async (chatId, filename) => {
 export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSelection) => {
   try {
     console.log("Attempting to update quiz answer:", { chatId, messageId, questionText });
-    
+
     let messageRef;
     let messageDoc;
     let actualDocId;
@@ -180,7 +177,7 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
     try {
       messageRef = doc(db, "chats", chatId, "messages", messageId);
       messageDoc = await getDoc(messageRef);
-      
+
       if (messageDoc.exists()) {
         console.log("Found message via direct access");
         actualDocId = messageId;
@@ -192,35 +189,35 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
     // STEP 2: If direct access failed, query for document with matching id field
     if (!messageDoc || !messageDoc.exists()) {
       console.log("Querying for message with id field:", messageId);
-      
+
       const messagesRef = collection(db, "chats", chatId, "messages");
       const q = query(messagesRef, where("id", "==", messageId));
       const querySnapshot = await getDocs(q);
-      
+
       if (querySnapshot.empty) {
         throw new Error(`Message not found: ${messageId} in chat: ${chatId}`);
       }
-      
+
       // Get the first (should be only) matching document
       messageDoc = querySnapshot.docs[0];
       actualDocId = messageDoc.id;
       messageRef = doc(db, "chats", chatId, "messages", actualDocId);
-      
+
       console.log("Found message via query, Firebase doc ID:", actualDocId);
     }
 
     console.log("Message found, data:", messageDoc.data());
-    
+
     const messageData = messageDoc.data();
     const quizData = [...messageData.quizData];
-    
+
     // Find the quiz question by matching the question text
     const quizIndex = quizData.findIndex(quiz => quiz.question === questionText);
-    
+
     if (quizIndex === -1) {
       throw new Error(`Quiz question not found with text: ${questionText}`);
     }
-    
+
     // Update the specific quiz question with user selection
     quizData[quizIndex] = {
       ...quizData[quizIndex],
@@ -232,16 +229,16 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
         timeToAnswer: userSelection.timeToAnswer || null
       }
     };
-    
+
     // Update the message document using the correct Firebase document reference
     await updateDoc(messageRef, {
       quizData: quizData,
       updatedAt: new Date()
     });
-    
+
     console.log("Quiz answer saved successfully to document:", actualDocId);
     return { success: true, docId: actualDocId };
-    
+
   } catch (error) {
     console.error("Error saving quiz answer:", error);
     throw error;
@@ -256,8 +253,8 @@ export const DeleteChat = async (chatId) => {
     // 1. Delete messages subcollection
     const messagesRef = collection(db, "chats", chatId, "messages");
     const messagesSnapshot = await getDocs(messagesRef);
-    
-    const deletePromises = messagesSnapshot.docs.map(doc => 
+
+    const deletePromises = messagesSnapshot.docs.map(doc =>
       deleteDoc(doc.ref)
     );
     await Promise.all(deletePromises);
@@ -290,19 +287,19 @@ export const DeleteChat = async (chatId) => {
 async function deleteFolder(folderRef) {
   try {
     const listResult = await listAll(folderRef);
-    
+
     // Delete all files in this folder
-    const fileDeletePromises = listResult.items.map(item => 
+    const fileDeletePromises = listResult.items.map(item =>
       deleteObject(item)
     );
     await Promise.all(fileDeletePromises);
-    
+
     // Recursively delete all subfolders
-    const folderDeletePromises = listResult.prefixes.map(prefix => 
+    const folderDeletePromises = listResult.prefixes.map(prefix =>
       deleteFolder(prefix)
     );
     await Promise.all(folderDeletePromises);
-    
+
   } catch (error) {
     // Folder might not exist, that's okay
     if (error.code !== 'storage/object-not-found') {
@@ -310,5 +307,64 @@ async function deleteFolder(folderRef) {
     }
   }
 }
-  export{AppendToChat,SaveFileMetaData,GetFileMetadataByName}
-    
+// Function to save quiz feedback
+export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
+  try {
+    console.log("Attempting to save quiz feedback:", { chatId, messageId, feedbackData });
+
+    let messageRef;
+    let messageDoc;
+    let actualDocId;
+
+    // STEP 1: Try direct access using messageId as Firebase document ID
+    try {
+      messageRef = doc(db, "chats", chatId, "messages", messageId);
+      messageDoc = await getDoc(messageRef);
+
+      if (messageDoc.exists()) {
+        console.log("Found message via direct access");
+        actualDocId = messageId;
+      }
+    } catch (directAccessError) {
+      console.log("Direct access failed, will try query approach");
+    }
+
+    // STEP 2: If direct access failed, query for document with matching id field
+    if (!messageDoc || !messageDoc.exists()) {
+      console.log("Querying for message with id field:", messageId);
+
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const q = query(messagesRef, where("id", "==", messageId));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        throw new Error(`Message not found: ${messageId} in chat: ${chatId}`);
+      }
+
+      // Get the first (should be only) matching document
+      messageDoc = querySnapshot.docs[0];
+      actualDocId = messageDoc.id;
+      messageRef = doc(db, "chats", chatId, "messages", actualDocId);
+
+      console.log("Found message via query, Firebase doc ID:", actualDocId);
+    }
+
+    // Update the message document with feedback data
+    await updateDoc(messageRef, {
+      feedbackData: {
+        ...feedbackData,
+        submittedAt: new Date()
+      },
+      updatedAt: new Date()
+    });
+
+    console.log("Quiz feedback saved successfully to document:", actualDocId);
+    return { success: true, docId: actualDocId };
+
+  } catch (error) {
+    console.error("Error saving quiz feedback:", error);
+    throw error;
+  }
+};
+
+export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };
