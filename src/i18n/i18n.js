@@ -137,6 +137,7 @@ const resources = {
         practicetitle: "Keep trying!",
         practicemessage: "Focus on the explanations above!",
         reviewtitle: "Review time!",
+        reviewQuiz:"Review quiz",
         reviewmessage: "A bit more practice will help!",
         moderatetitle: "Keep going!",
         25: "✨ You're doing great!",
