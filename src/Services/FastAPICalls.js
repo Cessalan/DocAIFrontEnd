@@ -1,7 +1,7 @@
 import { auth } from '../Firebase/config';
 
-//const FAST_API_BASE = "http://127.0.0.1:8000";
-const FAST_API_BASE ="https://ragfastapi-1075876064685.europe-west1.run.app";
+const FAST_API_BASE = "http://127.0.0.1:8000";
+//const FAST_API_BASE ="https://ragfastapi-1075876064685.europe-west1.run.app";
 const header ={"Content-Type": "application/json"};
 
 // not used

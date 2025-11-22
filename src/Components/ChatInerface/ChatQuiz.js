@@ -324,6 +324,14 @@ function ChatQuiz(props) {
               </div>
             </div>
 
+            {/* Topic Badge - Above Question */}
+            {quiz.topic && (
+              <div className="quiz-topic-badge">
+                <span className="topic-badge-icon">📚</span>
+                <span className="topic-badge-text">{quiz.topic}</span>
+              </div>
+            )}
+
             {/* Question */}
             <div className="quiz-compact-question">
               {quiz.question}

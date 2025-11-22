@@ -223,6 +223,37 @@ const resources = {
         learning: "Learning"
       },
 
+      // Quiz Results Analytics
+      quizAnalytics: {
+        outstanding: "Outstanding!",
+        outstandingMsg: "You're mastering this material!",
+        excellent: "Excellent!",
+        excellentMsg: "Great work, keep it up!",
+        wellDone: "Well done!",
+        wellDoneMsg: "You're making good progress!",
+        keepGoing: "Keep going!",
+        keepGoingMsg: "You're getting there!",
+        reviewTime: "Review time!",
+        reviewTimeMsg: "A bit more practice will help!",
+        letsReview: "Let's review!",
+        letsReviewMsg: "Take time to review the material!",
+        correct: "Correct",
+        incorrect: "Incorrect",
+        bestStreak: "Best Streak",
+        topics: "Topics",
+        performanceByTopic: "Performance by Topic",
+        insights: "Insights",
+        strongAreas: "Strong Areas",
+        needsImprovement: "Needs Improvement",
+        practiceWeakTopics: "Practice Weak Topics",
+        challengeMore: "Challenge Me More",
+        tryAgain: "Try Again",
+        reviewQuiz: "Review Quiz",
+        of: "of",
+        aiAdapts: "AI adapts to your needs and creates personalized quizzes",
+        generalTopic: "General"
+      },
+
       // Onboarding
       onboarding: {
         intro: "To better understand your needs, please answer these quick questions ✨",
@@ -467,6 +498,37 @@ const resources = {
         content: "Contenu",
         design: "Design",
         learning: "Apprentissage"
+      },
+
+      // Quiz Results Analytics
+      quizAnalytics: {
+        outstanding: "Exceptionnel!",
+        outstandingMsg: "Tu maîtrises cette matière!",
+        excellent: "Excellent!",
+        excellentMsg: "Continue comme ça!",
+        wellDone: "Bien joué!",
+        wellDoneMsg: "Tu progresses bien!",
+        keepGoing: "Continue!",
+        keepGoingMsg: "Tu y arrives!",
+        reviewTime: "À réviser!",
+        reviewTimeMsg: "Un peu plus de pratique t'aidera!",
+        letsReview: "À réviser!",
+        letsReviewMsg: "Prends le temps de revoir la matière!",
+        correct: "Correct",
+        incorrect: "Incorrect",
+        bestStreak: "Meilleure série",
+        topics: "Sujets",
+        performanceByTopic: "Performance par sujet",
+        insights: "Analyse",
+        strongAreas: "Points forts",
+        needsImprovement: "À améliorer",
+        practiceWeakTopics: "Pratiquer les points faibles",
+        challengeMore: "Me challenger davantage",
+        tryAgain: "Recommencer",
+        reviewQuiz: "Revoir le quiz",
+        of: "sur",
+        aiAdapts: "L'IA s'adapte à tes besoins et crée des quiz personnalisés",
+        generalTopic: "Général"
       },
 
       // Onboarding

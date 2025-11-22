@@ -1,7 +1,7 @@
 // WebSocketManager.js - Replace FastAPICall.js functions
 
-//const WS_BASE = "ws://127.0.0.1:8000";
-const WS_BASE = "wss://ragfastapi-1075876064685.europe-west1.run.app";
+const WS_BASE = "ws://127.0.0.1:8000";
+//const WS_BASE = "wss://ragfastapi-1075876064685.europe-west1.run.app";
 
 class WebSocketManager {
   constructor() {
@@ -200,6 +200,24 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
         });
       }
       // Handle quiz-specific streaming
+      else if (data.status === "empathetic_message_start") {
+        // Signal start of empathetic message streaming
+        onStatusUpdate({
+          status: "empathetic_message_start",
+          message: data.message
+        });
+      }
+      else if (data.status === "empathetic_message_chunk") {
+        // Stream empathetic message chunks
+        onTokenReceived(data.chunk);
+      }
+      else if (data.status === "empathetic_message_complete") {
+        // Signal empathetic message complete
+        onStatusUpdate({
+          status: "empathetic_message_complete",
+          full_message: data.full_message
+        });
+      }
       else if (data.status === "quiz_generating") {
         onStatusUpdate({
           status: "quiz_generating",

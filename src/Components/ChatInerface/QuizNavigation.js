@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import './QuizNavigation.css';
 import QuizFeedback from './QuizFeedback';
@@ -13,6 +13,11 @@ function QuizNavigation({
   hasGivenFeedback
 }) {
   const { t } = useTranslation();
+
+  // Map all questions without filtering
+  const filteredQuestions = useMemo(() => {
+    return questions.map((q, i) => ({ question: q, originalIndex: i }));
+  }, [questions]);
 
   return (
     <div className="quiz-navigation compact">
@@ -40,12 +45,12 @@ function QuizNavigation({
       <div className="quiz-nav-divider"></div>
 
       <div className="quiz-nav-list">
-        {questions.map((question, index) => {
-          const isCurrent = index === currentIndex;
-          const answer = userAnswers.find(a => a.quizIndex === index) || (question.userSelection ? { isCorrect: question.userSelection.isCorrect } : null);
+        {filteredQuestions.map(({ question, originalIndex }) => {
+          const isCurrent = originalIndex === currentIndex;
+          const answer = userAnswers.find(a => a.quizIndex === originalIndex) || (question.userSelection ? { isCorrect: question.userSelection.isCorrect } : null);
           const isAnswered = !!answer;
           const isCorrect = answer?.isCorrect;
-          const isSkipped = skippedQuestions.includes(index);
+          const isSkipped = skippedQuestions.includes(originalIndex);
 
           let statusClass = '';
           let statusText = '';
@@ -66,13 +71,13 @@ function QuizNavigation({
 
           return (
             <button
-              key={index}
+              key={originalIndex}
               className={`quiz-nav-item ${statusClass}`}
-              onClick={() => onNavigate(index)}
-              aria-label={`${t('quizNavigation.questionPrefix')}${index + 1}`}
-              title={`${t('quizNavigation.questionPrefix')}${index + 1}: ${statusText}`}
+              onClick={() => onNavigate(originalIndex)}
+              aria-label={`${t('quizNavigation.questionPrefix')}${originalIndex + 1}`}
+              title={`${t('quizNavigation.questionPrefix')}${originalIndex + 1}: ${statusText}`}
             >
-              <span className="nav-number">{index + 1}</span>
+              <span className="nav-number">{originalIndex + 1}</span>
               {isAnswered && (
                 <span className="nav-status-dot">
                   {isCorrect ? '✓' : '✗'}

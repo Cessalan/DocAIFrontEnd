@@ -213,6 +213,46 @@
 }
 
 /* ============================================
+   TOPIC BADGE - BEAUTIFUL DESIGN
+   ============================================ */
+
+.quiz-topic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.12), rgba(159, 122, 234, 0.12));
+  border: 1.5px solid rgba(107, 70, 193, 0.25);
+  border-radius: 20px;
+  margin-bottom: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(107, 70, 193, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.quiz-topic-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.15);
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.18), rgba(159, 122, 234, 0.18));
+  border-color: rgba(107, 70, 193, 0.35);
+}
+
+.topic-badge-icon {
+  font-size: 16px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+.topic-badge-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b46c1;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================
    OPTIONS - WITH SMOOTH TRANSITIONS
    ============================================ */
 
@@ -1040,6 +1080,23 @@ body.dark-mode .quiz-compact-question {
   font-weight: 500;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   letter-spacing: 0.01em;
+}
+
+body.dark-mode .quiz-topic-badge {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(167, 139, 250, 0.2));
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.15);
+}
+
+body.dark-mode .quiz-topic-badge:hover {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.28), rgba(167, 139, 250, 0.28));
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+}
+
+body.dark-mode .topic-badge-text {
+  color: #c4b5fd;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 body.dark-mode .quiz-compact-option {

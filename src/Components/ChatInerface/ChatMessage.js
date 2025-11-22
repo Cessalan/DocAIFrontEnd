@@ -4,7 +4,7 @@ import ChatQuiz from "./ChatQuiz";
 import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
-import QuizResults from "./QuizResults";
+import QuizResultsAnalytics from "./QuizResultsAnalytics";
 
 import QuizLoading from "./QuizLoading";
 
@@ -459,7 +459,8 @@ const ChatMessage = ({
             <div className="quiz-single-view-container">
               {showResults ? (
                 /* Results Screen */
-                <QuizResults
+                <QuizResultsAnalytics
+                  quizData={parsedQuizData}
                   totalQuestions={parsedQuizData.length}
                   correctAnswers={quizStreak.totalCorrect}
                   incorrectAnswers={quizStreak.totalIncorrect}

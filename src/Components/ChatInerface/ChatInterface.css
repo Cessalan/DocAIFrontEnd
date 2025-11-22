@@ -149,6 +149,7 @@
   flex: 1;
   overflow-y: auto;
   padding: var(--spacing-2xl);
+  padding-bottom: 150px; /* Extra bottom padding to prevent input overlap */
   display: flex;
   flex-direction: column;
   gap: 20px; /* Increased from 16px for better message separation */
