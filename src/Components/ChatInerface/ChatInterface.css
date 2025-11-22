@@ -700,7 +700,7 @@
   display: flex;
   align-items: flex-end;
   max-width: 850px;
-  margin-bottom:5px;
+  margin-bottom:2px;
   gap: 12px;
   background: var(--glass-bg-strong);
   backdrop-filter: var(--blur-lg);
@@ -826,26 +826,71 @@
 }
 
 .upload-button {
-  background: transparent;
-  border: none;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
   cursor: pointer;
-  padding: 8px;
-  border-radius: var(--radius-md);
-  transition: all var(--transition-fast);
+  padding: 10px 14px;
+  border-radius: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   align-items: center;
   justify-content: center;
   color: var(--primary-purple);
+  min-width: 44px;
+  min-height: 44px;
+  font-size: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  position: relative;
+  overflow: visible;
+}
+
+.upload-button::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.6);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  border-radius: 12px;
+  z-index: 0;
+}
+
+/* Keep emoji/icon above the overlay */
+.upload-button > * {
+  position: relative;
+  z-index: 1;
+}
+
+.upload-button:hover:not(:disabled)::before {
+  opacity: 1;
 }
 
 .upload-button:hover:not(:disabled) {
-  background: rgba(173, 125, 195, 0.1);
-  transform: scale(1.1);
+  border-color: rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.upload-button:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .upload-button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none;
+}
+
+/* Make SVG icons bigger */
+.upload-button svg {
+  width: 22px;
+  height: 22px;
+  transition: all 0.3s ease;
+}
+
+.upload-button:hover:not(:disabled) svg {
+  transform: scale(1.1);
 }
 
 /* Send button as icon inside input */
@@ -1313,7 +1358,15 @@
   }
 
   .upload-button {
-    padding: 6px;
+    padding: 8px 12px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 18px;
+  }
+
+  .upload-button svg {
+    width: 20px;
+    height: 20px;
   }
 
   .message {
@@ -1469,11 +1522,19 @@ body.dark-mode .send-button-icon:hover:not(:disabled) {
 }
 
 body.dark-mode .upload-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
   color: #a78bfa;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .upload-button::before {
+  background: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .upload-button:hover:not(:disabled) {
-  background: rgba(107, 70, 193, 0.2);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 /* Empty State - Dark */
