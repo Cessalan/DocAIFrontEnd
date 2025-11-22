@@ -699,13 +699,24 @@
 .input-area {
   display: flex;
   align-items: flex-end;
+  max-width: 850px;
+  margin-bottom:5px;
   gap: 12px;
-  padding: var(--spacing-lg) var(--spacing-xl);
   background: var(--glass-bg-strong);
   backdrop-filter: var(--blur-lg);
   -webkit-backdrop-filter: var(--blur-lg);
   border-top: 1px solid transparent;
   box-shadow: 0 -1px 0 0 rgba(255, 255, 255, 0.5) inset;
+
+  /* --- ADD THIS --- */
+  border-radius: 24px; /* Or use 9999px for a perfect pill shape */
+
+  /* --- NEW CENTERING CODE --- */
+  position: fixed;     /* Pins it to the viewport */
+  bottom: 0;           /* Sticks to the bottom */
+  left: 50%;           /* Moves left edge to center */
+  transform: translateX(-50%); /* Shifts element back by half its width to center perfectly */
+  width: 100%;
 }
 
 /* Input wrapper container - vertical layout */
