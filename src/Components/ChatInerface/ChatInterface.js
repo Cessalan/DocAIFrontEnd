@@ -661,7 +661,10 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
 
             // If empathetic message exists, create a SECOND bubble for quiz
             if (empatheticMessageId) {
-              quizMessageId = `quiz-${Date.now()}`;
+              // Only set quizMessageId ONCE (first time)
+              if (!quizMessageId) {
+                quizMessageId = `quiz-${Date.now()}`;
+              }
 
               setChatMessages(prev => {
                 // Check if quiz bubble already exists
