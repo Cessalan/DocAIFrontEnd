@@ -1,17 +1,18 @@
 /* LoadingMessageBox.css */
 
 .loading-message-box {
-  margin: 1rem 0;
+  margin: 1rem auto; /* Center horizontally */
   padding: 1.5rem;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(139, 92, 246, 0.2);
-  box-shadow: 
+  box-shadow:
     0 8px 32px rgba(139, 92, 246, 0.1),
     0 2px 8px rgba(0, 0, 0, 0.05);
-  max-width: 600px;
+  max-width: 800px; /* Match the centered message width */
+  width: 100%;      /* Take full width within max-width constraint */
   animation: slideIn 0.3s ease-out;
 }
 

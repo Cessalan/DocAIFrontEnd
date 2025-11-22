@@ -61,12 +61,12 @@
   background: var(--glass-bg);
   backdrop-filter: var(--blur-sm);
   -webkit-backdrop-filter: var(--blur-sm);
-  margin: 10px;
-  border-radius: var(--radius-2xl);
+  margin: 0;
+  border-radius: 0;
   overflow: hidden;
-  border: 1px solid var(--glass-border);
-  box-shadow: var(--shadow-lg);
-  max-height: calc(100vh - 20px);
+  border: none;
+  box-shadow: none;
+  max-height: 100vh;
   transition: width var(--transition-normal);
 }
 
@@ -476,7 +476,7 @@
   align-items: flex-start;
   gap:3px;
   gap: 12px;
-  max-width: 100%; /* Increased from 85% - more space without avatars */
+  max-width: 800px; /* Constrain width for centered layout like ChatGPT */
   animation: messageSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
@@ -492,14 +492,18 @@
 }
 
 .ai-message {
+  margin-left: auto;   /* Center by using auto margins on both sides */
   margin-right: auto;
+  width: 100%;         /* Take full width within max-width constraint */
 }
 
 .user-message {
   margin-left: auto;
+  margin-right: auto;  /* Also center user messages */
   flex-direction: row-reverse;
   padding-top: 12px;    /* Added: Creates breathing room above user messages */
   padding-bottom: 12px; /* Added: Creates breathing room below user messages */
+  width: 100%;         /* Take full width within max-width constraint */
 }
 
 .message-avatar {
@@ -530,7 +534,7 @@
   padding: var(--spacing-lg) var(--spacing-xl);
   border-radius: var(--radius-xl);
   border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 
+  box-shadow:
     var(--shadow-md),
     0 1px 0 0 rgba(255, 255, 255, 0.5) inset;
   transition: all var(--transition-normal);
@@ -538,26 +542,45 @@
 
 .message-content:hover {
   transform: translateY(-2px);
-  box-shadow: 
+  box-shadow:
     var(--shadow-lg),
     0 1px 0 0 rgba(255, 255, 255, 0.6) inset;
 }
 
+/* AI messages: Seamless, no background - just better typography */
+.ai-message .message-content {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border: none;
+  box-shadow: none;
+  padding: 20px 24px; /* Increased padding for more breathing room */
+  pointer-events: auto; /* Ensure clicks work on interactive elements */
+}
+
+.ai-message .message-content:hover {
+  background: transparent;
+  transform: none;
+  box-shadow: none;
+}
+
+/* User messages: Keep the purple bubble for distinction */
 .user-message .message-content {
   background: rgba(173, 125, 195, 0.15);
   backdrop-filter: var(--blur-md);
   border: 1px solid rgba(173, 125, 195, 0.25);
-  box-shadow: 
+  box-shadow:
     var(--shadow-sm),
     0 1px 0 0 rgba(255, 255, 255, 0.3) inset;
 }
 
 .message-text,
 .user-text {
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--text-primary);
-  letter-spacing: -0.2px;
+  font-size: 16px; /* Increased from 15px for better readability */
+  line-height: 1.7; /* Increased from 1.6 for more breathing room */
+  color: #2d2d2d; /* Darker, more readable color */
+  letter-spacing: 0; /* Removed negative spacing for clarity */
+  font-weight: 400; /* Ensure normal weight for body text */
 }
 
 .message-text strong {
@@ -681,7 +704,7 @@
   background: var(--glass-bg-strong);
   backdrop-filter: var(--blur-lg);
   -webkit-backdrop-filter: var(--blur-lg);
-  border-top: 1px solid rgba(173, 125, 195, 0.15);
+  border-top: 1px solid transparent;
   box-shadow: 0 -1px 0 0 rgba(255, 255, 255, 0.5) inset;
 }
 
@@ -690,20 +713,18 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--glass-bg);
+  background: rgba(248, 249, 250, 0.6);
   backdrop-filter: var(--blur-md);
-  border: 1px solid rgba(173, 125, 195, 0.2);
-  border-radius: var(--radius-pill);
-  padding: 8px 16px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 12px 20px;
   transition: all var(--transition-fast);
 }
 
 .input-wrapper:focus-within {
-  border-color: var(--primary-purple);
-  background: rgba(255, 255, 255, 0.9);
-  box-shadow: 
-    0 0 0 3px rgba(173, 125, 195, 0.1),
-    var(--shadow-md);
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .input-wrapper textarea {
@@ -716,6 +737,12 @@
   font-size: 16px;
   line-height: 1.5;
   color: var(--text-primary);
+  font-weight: 400;
+}
+
+.input-wrapper textarea::placeholder {
+  color: rgba(0, 0, 0, 0.38);
+  font-weight: 400;
 }
 
 .input-actions {
@@ -1119,34 +1146,248 @@
    ============================================ */
 @media (max-width: 768px) {
   .chat-container {
-    margin: 8px;
-    border-radius: var(--radius-xl);
-    max-height: calc(100vh - 16px);
+    margin: 0;
+    border-radius: 0;
+    max-height: 100vh;
   }
-  
+
   .messages-container {
     padding: var(--spacing-lg);
     gap: 24px; /* Increased to 24px for very clear message separation on mobile */
   }
-  
+
   .input-area {
     padding: 12px 16px;
   }
-  
+
   .message {
-    max-width: 95%;
+    max-width: 100%; /* Use full width on mobile for better space utilization */
     margin-bottom: 4px; /* Additional spacing for even better separation */
   }
-  
+
   /* Ensure message content has adequate padding on mobile */
   .message-content {
     padding: 14px 16px; /* Slightly reduced for mobile efficiency */
   }
-  
+
   /* Improve message text readability on mobile */
   .message-text,
   .user-text {
     font-size: 14px; /* Slightly smaller for mobile readability */
     line-height: 1.65; /* Increased line-height for better reading */
   }
+}
+
+/* ============================================
+   DARK MODE STYLES - PREMIUM EDITION
+   ============================================ */
+body.dark-mode {
+  background: linear-gradient(135deg, #0f0f12 0%, #1a1a1e 100%);
+  color: #e5e7eb;
+}
+
+/* Chat Container - Dark */
+body.dark-mode .chat-container {
+  background: linear-gradient(135deg, rgba(25, 25, 30, 1), rgba(30, 30, 35, 1));
+  border: none;
+  box-shadow: none;
+  border-left: 1px solid transparent;
+}
+
+/* Messages Container - Dark */
+body.dark-mode .messages-container {
+  background: transparent;
+}
+
+/* AI Messages - Dark Mode */
+body.dark-mode .ai-message .message-content {
+  background: transparent;
+  color: #f3f4f6;
+}
+
+body.dark-mode .ai-message .message-text {
+  font-size: 17px;
+  font-weight: 400;
+}
+
+/* User Messages - Dark Mode */
+body.dark-mode .user-message .message-content {
+  background: rgba(60, 60, 67, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #f3f4f6;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+/* Message Text - Dark */
+body.dark-mode .message-text,
+body.dark-mode .user-text {
+  color: #f3f4f6;
+  font-weight: 450;
+}
+
+body.dark-mode .message-text strong {
+  color: #ffffff;
+  font-weight: 650;
+}
+
+/* Chat Header - Dark */
+body.dark-mode .chat-header {
+  background: rgba(30, 30, 30, 0.95);
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .chat-header-title {
+  color: #e5e7eb;
+  font-weight: 600;
+}
+
+body.dark-mode .chat-header-title:hover {
+  color: #ffffff;
+}
+
+/* Input Area - Dark */
+body.dark-mode .input-area {
+  background: rgba(30, 30, 30, 0.95);
+  border-top-color: transparent;
+}
+
+body.dark-mode .input-wrapper {
+  background: rgba(52, 53, 65, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .input-wrapper:focus-within {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(52, 53, 65, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .input-wrapper textarea {
+  color: #e5e7eb;
+  font-weight: 400;
+}
+
+body.dark-mode .input-wrapper textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+}
+
+/* Buttons - Dark */
+body.dark-mode .send-button {
+  background: linear-gradient(135deg, #8b5cf6, #6b46c1);
+}
+
+body.dark-mode .send-button:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+body.dark-mode .upload-button {
+  color: #a78bfa;
+}
+
+body.dark-mode .upload-button:hover {
+  background: rgba(107, 70, 193, 0.2);
+}
+
+/* Empty State - Dark */
+body.dark-mode .empty-upload-text {
+  color: #a78bfa;
+}
+
+body.dark-mode .empty-upload-btn {
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+body.dark-mode .empty-upload-btn:hover {
+  background: rgba(107, 70, 193, 0.2);
+  border-color: #c4b5fd;
+}
+
+/* Scroll Button - Dark */
+body.dark-mode .scroll-to-bottom-btn {
+  background: rgba(45, 45, 50, 0.95);
+  border-color: rgba(107, 70, 193, 0.5);
+  color: #a78bfa;
+}
+
+body.dark-mode .scroll-to-bottom-btn:hover {
+  background: rgba(107, 70, 193, 0.3);
+  border-color: #a78bfa;
+}
+
+/* Typing Indicator - Dark */
+body.dark-mode .typing-indicator {
+  background: rgba(45, 45, 50, 0.95);
+  border-color: rgba(107, 70, 193, 0.3);
+}
+
+body.dark-mode .typing-indicator h4 {
+  color: #a78bfa;
+}
+
+/* Loading States - Dark */
+body.dark-mode .loader-text {
+  color: #a78bfa;
+}
+
+/* Modal - Dark */
+body.dark-mode .modal-overlay {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+body.dark-mode .modal-content {
+  background: rgba(30, 30, 30, 0.98);
+  border-color: rgba(107, 70, 193, 0.4);
+}
+
+body.dark-mode .modal-header {
+  background: rgba(30, 30, 30, 0.95);
+  border-bottom-color: rgba(107, 70, 193, 0.3);
+}
+
+body.dark-mode .modal-header h3 {
+  color: #a78bfa;
+}
+
+body.dark-mode .close-button {
+  background: rgba(107, 70, 193, 0.2);
+  color: #a78bfa;
+}
+
+body.dark-mode .close-button:hover {
+  background: rgba(107, 70, 193, 0.3);
+}
+
+/* File Items - Dark */
+body.dark-mode .file-item {
+  background: rgba(45, 45, 50, 0.95);
+  border-color: rgba(107, 70, 193, 0.3);
+}
+
+body.dark-mode .file-item:hover {
+  border-color: rgba(107, 70, 193, 0.5);
+}
+
+body.dark-mode .file-name {
+  color: #e5e7eb;
+}
+
+body.dark-mode .file-meta {
+  color: #9ca3af;
+}
+
+body.dark-mode .file-action-btn {
+  background: rgba(107, 70, 193, 0.2);
+  border-color: rgba(107, 70, 193, 0.3);
+  color: #a78bfa;
+}
+
+body.dark-mode .file-action-btn:hover {
+  background: rgba(107, 70, 193, 0.3);
+}
+
+/* Lists - Dark */
+body.dark-mode .message-text ul > li::before {
+  color: #a78bfa;
 }

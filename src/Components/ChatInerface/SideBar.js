@@ -13,12 +13,35 @@ import {
 } from "firebase/firestore";
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat } from "../../Services/FireBaseServiceChats.js";
+import DarkModeToggle from './DarkModeToggle';
 import '../../index.css';
 
 // translation
 import { useTranslation } from 'react-i18next';
 
 const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
+
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage for saved preference
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    // Save preference
+    localStorage.setItem('darkMode', isDarkMode);
+  }, [isDarkMode]);
+
+  const handleDarkModeToggle = () => {
+    setIsDarkMode(prev => !prev);
+  };
   
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
@@ -235,6 +258,7 @@ const getchatDate = (timestamp) => {
       </div>
 
       <div className="sidebar-footer">
+        <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />
         <div className="nav-item" onClick={handleSignOut}>
           {t('side.logout')} ⏻
         </div>

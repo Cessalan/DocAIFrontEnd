@@ -171,14 +171,16 @@ function ChatQuiz(props) {
   }, [revealed, quiz, quizIndex, onAnswerSelect]);
 
   const handleOpenModal = useCallback(() => {
+    console.log('🔍 Opening modal, setModalOpen:', setModalOpen);
     setModalOpen(true);
     document.body.style.overflow = 'hidden';
-  }, []);
+  }, [setModalOpen]);
 
   const handleCloseModal = useCallback(() => {
+    console.log('🔍 Closing modal');
     setModalOpen(false);
     document.body.style.overflow = '';
-  }, []);
+  }, [setModalOpen]);
 
   // Early return after all hooks
   if (!quiz && !reviewMode) {
