@@ -708,17 +708,80 @@
   box-shadow: 0 -1px 0 0 rgba(255, 255, 255, 0.5) inset;
 }
 
-.input-wrapper {
+/* Input wrapper container - vertical layout */
+.input-wrapper-container {
   flex: 1;
   display: flex;
-  align-items: center;
-  gap: 12px;
+  flex-direction: column;
+  gap: 10px;
   background: rgba(248, 249, 250, 0.6);
   backdrop-filter: var(--blur-md);
   border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 24px;
-  padding: 12px 20px;
+  padding: 12px 16px;
   transition: all var(--transition-fast);
+}
+
+.input-wrapper-container:focus-within {
+  border-color: rgba(0, 0, 0, 0.12);
+  background: rgba(255, 255, 255, 0.95);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.message-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  outline: none;
+  resize: none;
+  font-family: inherit;
+  font-size: 16px;
+  line-height: 1.5;
+  color: var(--text-primary);
+  font-weight: 400;
+  min-height: 24px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.message-textarea::placeholder {
+  color: rgba(0, 0, 0, 0.38);
+  font-weight: 400;
+}
+
+/* Bottom row: file buttons on left, send button on right */
+.input-actions-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.input-actions-left-group {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+/* Old input-wrapper for compatibility */
+.input-wrapper {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(248, 249, 250, 0.6);
+  backdrop-filter: var(--blur-md);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 24px;
+  padding: 8px 12px 8px 12px;
+  transition: all var(--transition-fast);
+}
+
+.input-actions-left {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .input-wrapper:focus-within {
@@ -764,11 +827,56 @@
   color: var(--primary-purple);
 }
 
-.upload-button:hover {
+.upload-button:hover:not(:disabled) {
   background: rgba(173, 125, 195, 0.1);
   transform: scale(1.1);
 }
 
+.upload-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Send button as icon inside input */
+.send-button-icon {
+  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  min-height: 40px;
+  flex-shrink: 0;
+}
+
+.send-button-icon:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--primary-purple-hover) 0%, var(--primary-purple-dark) 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(173, 125, 195, 0.4);
+}
+
+.send-button-icon:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.send-button-icon.send-button-busy {
+  background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+}
+
+.send-button-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Old send button - keep for compatibility */
 .send-button {
   background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
   color: white;
@@ -1153,28 +1261,65 @@
 
   .messages-container {
     padding: var(--spacing-lg);
-    gap: 24px; /* Increased to 24px for very clear message separation on mobile */
+    gap: 24px;
   }
 
   .input-area {
     padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .input-wrapper-container {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  .input-actions-bottom {
+    gap: 8px;
+  }
+
+  .input-actions-left-group {
+    gap: 6px;
+  }
+
+  .input-actions-left {
+    margin-bottom: 0;
+  }
+
+  .input-wrapper {
+    padding: 6px 10px 6px 16px;
+  }
+
+  .send-button-icon {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 8px;
+  }
+
+  .send-button-icon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .upload-button {
+    padding: 6px;
   }
 
   .message {
-    max-width: 100%; /* Use full width on mobile for better space utilization */
-    margin-bottom: 4px; /* Additional spacing for even better separation */
+    max-width: 100%;
+    margin-bottom: 4px;
   }
 
   /* Ensure message content has adequate padding on mobile */
   .message-content {
-    padding: 14px 16px; /* Slightly reduced for mobile efficiency */
+    padding: 14px 16px;
   }
 
   /* Improve message text readability on mobile */
   .message-text,
   .user-text {
-    font-size: 14px; /* Slightly smaller for mobile readability */
-    line-height: 1.65; /* Increased line-height for better reading */
+    font-size: 14px;
+    line-height: 1.65;
   }
 }
 
@@ -1251,6 +1396,27 @@ body.dark-mode .input-area {
   border-top-color: transparent;
 }
 
+body.dark-mode .input-wrapper-container {
+  background: rgba(52, 53, 65, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .input-wrapper-container:focus-within {
+  border-color: rgba(255, 255, 255, 0.15);
+  background: rgba(52, 53, 65, 0.7);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .message-textarea {
+  color: #e5e7eb;
+  font-weight: 400;
+}
+
+body.dark-mode .message-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+  font-weight: 400;
+}
+
 body.dark-mode .input-wrapper {
   background: rgba(52, 53, 65, 0.5);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1281,11 +1447,21 @@ body.dark-mode .send-button:hover:not(:disabled) {
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
 }
 
+body.dark-mode .send-button-icon {
+  background: linear-gradient(135deg, #8b5cf6, #6b46c1);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .send-button-icon:hover:not(:disabled) {
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+}
+
 body.dark-mode .upload-button {
   color: #a78bfa;
 }
 
-body.dark-mode .upload-button:hover {
+body.dark-mode .upload-button:hover:not(:disabled) {
   background: rgba(107, 70, 193, 0.2);
 }
 

@@ -566,16 +566,17 @@ body.dark-mode .sidebar-title {
 }
 
 body.dark-mode .new-chat-button {
-  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-  color: white;
-  border-color: transparent;
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
-  font-weight: 600;
+  background: transparent;
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: 0 1px 2px rgba(167, 139, 250, 0.05);
+  font-weight: 500;
 }
 
 body.dark-mode .new-chat-button:hover {
-  background: linear-gradient(135deg, #7c3aed, #6d28d9);
-  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+  background: rgba(167, 139, 250, 0.08);
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 2px 4px rgba(167, 139, 250, 0.1);
   transform: translateY(-1px);
 }
 

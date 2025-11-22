@@ -3,15 +3,15 @@
     backdrop-filter: blur(12px);
     -webkit-backdrop-filter: blur(12px);
     border-radius: 16px;
-    padding: 12px 8px;
+    padding: 8px 6px;
     border: 1px solid rgba(255, 255, 255, 0.8);
     height: auto;
-    min-width: 64px;
-    max-width: 64px;
+    min-width: 56px;
+    max-width: 56px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     box-shadow:
         0 4px 20px rgba(107, 70, 193, 0.08),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
@@ -21,7 +21,7 @@
 .quiz-nav-stats {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
     width: 100%;
     align-items: center;
     padding-bottom: 2px;
@@ -31,9 +31,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 4px;
-    padding: 4px;
-    border-radius: 8px;
+    gap: 3px;
+    padding: 3px;
+    border-radius: 6px;
     background: rgba(255, 255, 255, 0.8);
     width: 100%;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
@@ -70,21 +70,36 @@
 .quiz-nav-list {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
     overflow-y: auto;
     width: 100%;
     padding: 2px;
-    scrollbar-width: none;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(107, 70, 193, 0.3) transparent;
     align-items: center;
+    max-height: 600px;
 }
 
 .quiz-nav-list::-webkit-scrollbar {
-    display: none;
+    width: 4px;
+}
+
+.quiz-nav-list::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.quiz-nav-list::-webkit-scrollbar-thumb {
+    background: rgba(107, 70, 193, 0.3);
+    border-radius: 2px;
+}
+
+.quiz-nav-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(107, 70, 193, 0.5);
 }
 
 .quiz-nav-item {
-    width: 36px;
-    height: 36px;
+    width: 26px;
+    height: 26px;
     border-radius: 50%;
     border: 1.5px solid transparent;
     background: rgba(255, 255, 255, 0.8);
@@ -106,7 +121,7 @@
 }
 
 .nav-number {
-    font-size: 11px;
+    font-size: 10px;
     font-weight: 700;
     color: #718096;
 }
@@ -158,16 +173,16 @@
 /* Status Dot Overlay */
 .nav-status-dot {
     position: absolute;
-    top: -3px;
-    right: -3px;
-    width: 12px;
-    height: 12px;
+    top: -2px;
+    right: -2px;
+    width: 10px;
+    height: 10px;
     border-radius: 50%;
     background: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 8px;
+    font-size: 7px;
     font-weight: bold;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
 }
@@ -389,7 +404,27 @@
         height: auto;
         padding: 8px 12px;
         overflow-x: auto;
+        overflow-y: hidden;
         gap: 12px;
+        scrollbar-width: thin;
+        scrollbar-color: rgba(107, 70, 193, 0.3) transparent;
+    }
+
+    .quiz-navigation.compact::-webkit-scrollbar {
+        height: 6px;
+    }
+
+    .quiz-navigation.compact::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .quiz-navigation.compact::-webkit-scrollbar-thumb {
+        background: rgba(107, 70, 193, 0.3);
+        border-radius: 3px;
+    }
+
+    .quiz-navigation.compact::-webkit-scrollbar-thumb:hover {
+        background: rgba(107, 70, 193, 0.5);
     }
 
     .quiz-nav-stats {
@@ -399,6 +434,7 @@
         border-right: 1px solid rgba(107, 70, 193, 0.15);
         padding-right: 12px;
         flex-direction: row;
+        flex-shrink: 0;
     }
 
     .quiz-nav-divider {
@@ -409,9 +445,16 @@
         display: flex;
         flex-direction: row;
         width: auto;
+        flex: 1;
         overflow-x: auto;
+        overflow-y: hidden;
         padding: 4px;
         gap: 8px;
+        max-height: none;
+    }
+
+    .quiz-nav-item {
+        flex-shrink: 0;
     }
 
     .quiz-nav-footer {
@@ -421,12 +464,16 @@
         padding-top: 0;
         padding-left: 10px;
         margin-top: 0;
+        margin-left: 0;
+        flex-shrink: 0;
     }
 
     .feedback-popover {
         left: auto;
         right: 0;
-        bottom: 50px;
+        bottom: 60px;
+        width: 280px;
+        max-width: calc(100vw - 40px);
     }
 }
 
@@ -508,13 +555,17 @@ body.dark-mode .quiz-nav-item.skipped {
     border-color: rgba(251, 191, 36, 0.4);
 }
 
-body.dark-mode .quiz-nav-number {
-    color: #f3f4f6;
+body.dark-mode .nav-number {
+    color: #e5e7eb;
     font-weight: 700;
 }
 
-body.dark-mode .quiz-nav-item.correct .quiz-nav-number,
-body.dark-mode .quiz-nav-item.incorrect .quiz-nav-number {
+body.dark-mode .quiz-nav-item.current .nav-number {
+    color: white;
+}
+
+body.dark-mode .quiz-nav-item.correct .nav-number,
+body.dark-mode .quiz-nav-item.incorrect .nav-number {
     color: white;
 }
 
@@ -564,6 +615,35 @@ body.dark-mode .feedback-popover h4 {
     color: #ddd6fe;
 }
 
+body.dark-mode .feedback-content p {
+    color: #e5e7eb;
+    font-weight: 450;
+}
+
+body.dark-mode .feedback-header {
+    border-bottom-color: rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .close-btn {
+    color: #9ca3af;
+}
+
+body.dark-mode .close-btn:hover {
+    color: #ddd6fe;
+}
+
+body.dark-mode .feedback-options button {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #ddd6fe;
+    font-weight: 500;
+}
+
+body.dark-mode .feedback-options button:hover {
+    background: rgba(139, 92, 246, 0.25);
+    border-color: rgba(139, 92, 246, 0.4);
+}
+
 body.dark-mode .feedback-textarea {
     background: rgba(50, 53, 62, 0.8);
     border-color: rgba(139, 92, 246, 0.3);
@@ -597,4 +677,39 @@ body.dark-mode .feedback-actions button:first-child {
 body.dark-mode .feedback-actions button:first-child:hover {
     background: linear-gradient(135deg, #7c3aed, #6d28d9);
     box-shadow: 0 3px 10px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .quiz-nav-list {
+    scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
+}
+
+body.dark-mode .quiz-nav-list::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .quiz-nav-list::-webkit-scrollbar-thumb:hover {
+    background: rgba(139, 92, 246, 0.6);
+}
+
+/* Dark mode mobile horizontal scrollbar */
+@media (max-width: 768px) {
+    body.dark-mode .quiz-navigation.compact {
+        scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
+    }
+
+    body.dark-mode .quiz-navigation.compact::-webkit-scrollbar-thumb {
+        background: rgba(139, 92, 246, 0.4);
+    }
+
+    body.dark-mode .quiz-navigation.compact::-webkit-scrollbar-thumb:hover {
+        background: rgba(139, 92, 246, 0.6);
+    }
+
+    body.dark-mode .quiz-nav-stats {
+        border-right-color: rgba(139, 92, 246, 0.3);
+    }
+
+    body.dark-mode .quiz-nav-footer {
+        border-left-color: rgba(139, 92, 246, 0.3);
+    }
 }

@@ -270,86 +270,169 @@
 /* Mobile Responsive */
 @media (max-width: 768px) {
   .loading-message-box {
-    padding: 1rem;
-    margin: 0.75rem 0;
+    padding: 0.875rem;
+    margin: 0.5rem;
+    max-width: calc(100vw - 1rem);
   }
-  
+
+  .loading-header {
+    gap: 0.625rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .loading-text {
+    font-size: 0.875rem;
+  }
+
   .progress-stats {
-    gap: 1rem;
-    padding: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.625rem;
+    padding: 0.625rem;
+    justify-content: center;
   }
-  
+
+  .stat-item {
+    min-width: calc(33.333% - 0.5rem);
+    flex: 0 0 auto;
+  }
+
   .stat-number {
-    font-size: 1.5rem;
+    font-size: 1.375rem;
   }
-  
+
   .stat-label {
-    font-size: 0.7rem;
+    font-size: 0.625rem;
+    line-height: 1.1;
   }
-  
+
   .insight-preview {
     padding: 0.625rem;
+    gap: 0.375rem;
   }
-  
+
+  .insight-icon {
+    font-size: 0.875rem;
+  }
+
   .insight-text {
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
   }
-  
+
   .upload-title {
-    font-size: 0.85rem;
+    font-size: 0.875rem;
   }
-  
+
   .upload-summary {
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
   }
-  
+
   .summary-preview {
     padding: 0.75rem;
-    font-size: 0.8rem;
+    font-size: 0.8125rem;
+    margin-top: 0.75rem;
   }
 }
 
-/* Dark mode support (optional) */
-@media (prefers-color-scheme: dark) {
+/* Extra small mobile devices */
+@media (max-width: 480px) {
   .loading-message-box {
-    background: rgba(30, 27, 75, 0.95);
-    border-color: rgba(139, 92, 246, 0.3);
+    padding: 0.75rem;
+    margin: 0.375rem;
   }
-  
-  .loading-message-box.loading {
-    background: linear-gradient(
-      135deg,
-      rgba(30, 27, 75, 0.98),
-      rgba(45, 37, 95, 0.98)
-    );
+
+  .progress-stats {
+    gap: 0.5rem;
+    padding: 0.5rem;
   }
-  
-  .loading-text {
-    color: #c4b5fd;
+
+  .stat-item {
+    min-width: calc(50% - 0.375rem);
   }
-  
-  .insight-item {
-    background: rgba(45, 37, 95, 0.5);
-    border-left-color: #a78bfa;
+
+  .stat-number {
+    font-size: 1.25rem;
   }
-  
-  .insight-filename {
-    color: #e5e7eb;
+
+  .stat-label {
+    font-size: 0.6rem;
   }
-  
-  .concept-tag {
-    background: rgba(139, 92, 246, 0.2);
-    color: #c4b5fd;
-    border-color: rgba(139, 92, 246, 0.3);
-  }
-  
-  .upload-title {
-    color: #e5e7eb;
-  }
-  
-  .upload-summary {
-    color: #9ca3af;
-  }
+}
+
+/* Dark mode support */
+body.dark-mode .loading-message-box {
+  background: linear-gradient(135deg, rgba(35, 38, 45, 0.98), rgba(30, 33, 40, 0.98));
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .loading-message-box.loading {
+  background: linear-gradient(
+    135deg,
+    rgba(35, 38, 45, 0.98),
+    rgba(45, 37, 95, 0.85)
+  );
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .loading-message-box.complete-with-insights {
+  background: linear-gradient(
+    135deg,
+    rgba(35, 38, 45, 0.98),
+    rgba(30, 50, 40, 0.85)
+  );
+  border-color: rgba(34, 197, 94, 0.3);
+  box-shadow: 0 8px 32px rgba(34, 197, 94, 0.15);
+}
+
+body.dark-mode .loading-text {
+  color: #ddd6fe;
+}
+
+body.dark-mode .progress-stats {
+  background: rgba(50, 53, 62, 0.6);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+body.dark-mode .stat-number {
+  color: #a78bfa;
+}
+
+body.dark-mode .stat-label {
+  color: #9ca3af;
+}
+
+body.dark-mode .insight-preview {
+  background: rgba(50, 53, 62, 0.5);
+  border-left-color: #8b5cf6;
+}
+
+body.dark-mode .insight-text {
+  color: #e5e7eb;
+}
+
+body.dark-mode .insight-detail {
+  color: #9ca3af;
+}
+
+body.dark-mode .summary-preview {
+  background: rgba(50, 53, 62, 0.6);
+  border-left-color: #10b981;
+  color: #e5e7eb;
+}
+
+body.dark-mode .upload-title {
+  color: #e5e7eb;
+}
+
+body.dark-mode .upload-summary {
+  color: #9ca3af;
+}
+
+body.dark-mode .spinner-circle {
+  border-color: rgba(139, 92, 246, 0.3);
+  border-top-color: #a78bfa;
 }
 
 /* Upload Complete Message (separate from insights box) */

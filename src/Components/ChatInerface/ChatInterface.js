@@ -2007,7 +2007,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             multiple
           />
 
-          <div className="input-wrapper">
+          {/* Input wrapper - vertical layout with buttons at bottom */}
+          <div className="input-wrapper-container">
+            {/* Textarea */}
             <textarea
               placeholder="Message..."
               value={userInputText}
@@ -2020,78 +2022,71 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
                 }
               }}
               rows={1}
-              style={{
-                width: '100%',
-                padding: '12px 16px',
-                borderRadius: '24px',
-                outline: 'none',
-                resize: 'none',
-                fontFamily: 'inherit',
-                fontSize: '16px',
-                lineHeight: '1.5',
-                minHeight: '48px',
-                maxHeight: '200px',
-                overflowY: 'auto',
-                whiteSpace: 'pre-wrap',
-                wordWrap: 'break-word'
-              }}
+              className="message-textarea"
             />
 
-            <div className="input-actions">
-              <button type="button"
-                className="upload-button file-button"
-                onClick={openFileUploadDialog}
-                title={t('chat.addFile')}
-                disabled={isSystemBusy()}>
-                <SvgFileUpload />
-              </button>
+            {/* Bottom row: file buttons on left, send button on right */}
+            <div className="input-actions-bottom">
+              <div className="input-actions-left-group">
+                <button type="button"
+                  className="upload-button file-button"
+                  onClick={openFileUploadDialog}
+                  title={t('chat.addFile')}
+                  disabled={isSystemBusy()}>
+                  <SvgFileUpload />
+                </button>
 
+                <button type="button"
+                  className="upload-button photo-button"
+                  onClick={() => setIsFilesModalVisible(true)}
+                  title={t('chat.filesInMemory')}
+                  style={{ position: 'relative' }}>
+                  📁
+                  {uploadedFilesList.length > 0 && (
+                    <span style={{
+                      position: 'absolute',
+                      top: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
+                      right: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
+                      backgroundColor: '#a5d567',
+                      color: 'white',
+                      borderRadius: '50%',
+                      minWidth: uploadedFilesList.length >= 10 ? '24px' : '20px',
+                      height: uploadedFilesList.length >= 10 ? '24px' : '20px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: uploadedFilesList.length >= 10 ? '11px' : '12px',
+                      fontWeight: '600',
+                      border: '2px solid white',
+                      boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
+                      lineHeight: '1'
+                    }}>
+                      {uploadedFilesList.length}
+                    </span>
+                  )}
+                </button>
+              </div>
 
-              <button type="button"
-                className="upload-button photo-button"
-                onClick={() => setIsFilesModalVisible(true)}
-                title={t('chat.filesInMemory')}
-                style={{ position: 'relative' }}>
-                📁
-                {uploadedFilesList.length > 0 && (
-                  <span style={{
-                    position: 'absolute',
-                    top: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
-                    right: uploadedFilesList.length >= 10 ? '-10px' : '-8px',
-                    backgroundColor: '#a5d567',
-                    color: 'white',
-                    borderRadius: '50%',
-                    minWidth: uploadedFilesList.length >= 10 ? '24px' : '20px',
-                    height: uploadedFilesList.length >= 10 ? '24px' : '20px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: uploadedFilesList.length >= 10 ? '11px' : '12px',
-                    fontWeight: '600',
-                    border: '2px solid white',
-                    boxShadow: '0 2px 4px rgba(0, 0, 0, 0.1)',
-                    lineHeight: '1'
-                  }}>
-                    {uploadedFilesList.length}
-                  </span>
+              {/* Send button on the right */}
+              <button type="submit"
+                className={`send-button-icon ${isSystemBusy() ? 'send-button-busy' : ''}`}
+                disabled={!userInputText.trim() || isSystemBusy()}
+                title={t('chat.send')}>
+                {isSystemBusy() ? (
+                  <div className="pulsing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                  </div>
+                ) : (
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="22" y1="2" x2="11" y2="13"></line>
+                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                  </svg>
                 )}
               </button>
             </div>
           </div>
-
-          <button type="submit"
-            className={`send-button ${isSystemBusy() ? 'send-button-busy' : ''}`}
-            disabled={!userInputText.trim() || isSystemBusy()}>
-            {isSystemBusy() ? (
-              <div className="pulsing-dots">
-                <span></span>
-                <span></span>
-                <span></span>
-              </div>
-            ) : (
-              t('chat.send')
-            )}
-          </button>
         </form>
 
         {/* Files Modal */}

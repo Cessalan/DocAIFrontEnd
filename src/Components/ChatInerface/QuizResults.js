@@ -189,17 +189,6 @@ const QuizResults = ({
           <button
             className="quiz-results-review-button"
             onClick={onReview}
-            style={{
-              marginTop: '12px',
-              background: 'transparent',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              color: 'var(--text-secondary)',
-              padding: '8px 16px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              fontSize: '0.9rem',
-              transition: 'all 0.2s ease'
-            }}
           >
             {t('quiz.reviewQuiz')}
           </button>
