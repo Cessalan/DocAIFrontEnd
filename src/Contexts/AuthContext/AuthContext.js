@@ -3,11 +3,9 @@ import { auth } from '../../Firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 
 // Create a context for authentication
-// This creates a "container" that will hold our auth data and methods
 const AuthContext = React.createContext();
 
 // Custom hook to easily use the auth context in components
-// This saves us from having to import useContext and AuthContext in every component
 export function useAuth() {
   return useContext(AuthContext);
 }
@@ -18,54 +16,73 @@ export function AuthProvider({ children }) {
 
   // State for tracking the current user object
   const [currentUser, setCurrentUser] = useState(null);
-  
-  // State for tracking login status (provides a simple boolean for checks)
+
+  // State for tracking login status
   const [isUserLoggedIn, setIsUserLoggedIn] = useState(false);
-  
+
   // State for tracking whether the initial auth check is complete
-  // Used to prevent rendering components that depend on auth status until we know for sure
   const [isLoading, setIsLoading] = useState(true);
+
+  // State for user profile data from Firestore
+  const [userProfile, setUserProfile] = useState(null);
+
+  // State to track if the user has completed onboarding/profile creation
+  const [isProfileComplete, setIsProfileComplete] = useState(false);
 
   // Set up listener for authentication state changes when component mounts
   useEffect(() => {
-    // onAuthStateChanged returns an unsubscribe function
-    // This will run whenever the user logs in or out
     const unsubscribe = onAuthStateChanged(auth, initializeUser);
-    
-    // Clean up subscription when component unmounts (removed from the UI)
     return unsubscribe;
-  }, []) // Empty dependency array means this effect runs once on mount
+  }, []);
 
   // Handler function that processes authentication state changes
   async function initializeUser(user) {
     if (user) {
       // User is signed in
-      // We spread the user object to create a copy of it
       setCurrentUser({ ...user });
-      // We mark the user as Logged In
       setIsUserLoggedIn(true);
+
+      // Check for user profile in Firestore
+      try {
+        // Dynamic import to avoid circular dependencies if any, though standard import is usually fine
+        const { getUserProfile } = await import('../../Services/UserService');
+        const profile = await getUserProfile(user.uid);
+
+        if (profile) {
+          setUserProfile(profile);
+          setIsProfileComplete(true);
+        } else {
+          setUserProfile(null);
+          setIsProfileComplete(false);
+        }
+      } catch (error) {
+        console.error("Error initializing user profile:", error);
+        setIsProfileComplete(false);
+      }
+
     } else {
       // User is signed out
       setCurrentUser(null);
-      // Mark User as Logged Out
+      setUserProfile(null);
+      setIsProfileComplete(false);
       setIsUserLoggedIn(false);
     }
-    
-    // Whether signed in or not, we're done loading
+
     setIsLoading(false);
   }
 
-  // Object containing all the values we want to provide to components
   const value = {
     currentUser,
     isUserLoggedIn,
-    isLoading
+    isLoading,
+    userProfile,
+    isProfileComplete,
+    setIsProfileComplete,
+    setUserProfile
   };
 
   return (
     <AuthContext.Provider value={value}>
-      {/* Only render children when the loading is complete */}
-      {/* This prevents flashing unauthenticated content */}
       {!isLoading && children}
     </AuthContext.Provider>
   );

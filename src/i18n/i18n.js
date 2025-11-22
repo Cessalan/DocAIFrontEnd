@@ -137,7 +137,7 @@ const resources = {
         practicetitle: "Keep trying!",
         practicemessage: "Focus on the explanations above!",
         reviewtitle: "Review time!",
-        reviewQuiz:"Review quiz",
+        reviewQuiz: "Review quiz",
         reviewmessage: "A bit more practice will help!",
         moderatetitle: "Keep going!",
         25: "✨ You're doing great!",
@@ -221,6 +221,32 @@ const resources = {
         content: "Content",
         design: "Design",
         learning: "Learning"
+      },
+
+      // Onboarding
+      onboarding: {
+        intro: "To better understand your needs, please answer these quick questions ✨",
+        step1Title: "What is your main goal today?",
+        step2Title: "How do you use the questions?",
+        loading: "Setting up your profile...",
+        options: {
+          nclex: "NCLEX Prep 🏥",
+          courseExam: "Course Exam 📚",
+          generalReview: "General Review 💡",
+          flashcards: "Export to Flashcards (Anki/Quizlet) 🗂️",
+          trackProgress: "Track Progress Here 📈",
+          manual: "Print / Manual Copy 📝"
+        },
+        tracker: "Question {{current}} of {{total}}",
+        processing: {
+          analyzing: "Analyzing your preferences...",
+          personalizing: "Personalizing your experience..."
+        },
+        success: {
+          title: "All set! 🚀",
+          message: "Thanks for setting up your profile. You're ready to start learning!",
+          button: "Start Learning"
+        }
       }
     }
   },
@@ -362,8 +388,8 @@ const resources = {
         moderatetitle: "Continue!",
         25: "✨ Tu t'en sors très bien!",
         50: "💪 À mi-chemin! Ne lâche rien!",
-        75: "🔥 Termine en force! Tu peux le faire!",
-        90: "🏁 Presque fini! Continue jusqu'au bout!",
+        75: "🔥 Finish strong! You can do it!",
+        90: "🏁 Almost done! Keep going!",
         100: "🎉 Terminé! Excellent travail!"
       },
 
@@ -441,6 +467,32 @@ const resources = {
         content: "Contenu",
         design: "Design",
         learning: "Apprentissage"
+      },
+
+      // Onboarding
+      onboarding: {
+        intro: "Pour mieux comprendre vos besoins, veuillez répondre à ces questions rapides ✨",
+        step1Title: "Quel est votre objectif aujourd'hui?",
+        step2Title: "Comment utilisez-vous les questions?",
+        loading: "Configuration de votre profil...",
+        options: {
+          nclex: "Préparation NCLEX 🏥",
+          courseExam: "Examen de cours 📚",
+          generalReview: "Révision générale 💡",
+          flashcards: "Exporter vers Flashcards (Anki/Quizlet) 🗂️",
+          trackProgress: "Suivre les progrès ici 📈",
+          manual: "Imprimer / Copie manuelle 📝"
+        },
+        tracker: "Question {{current}} sur {{total}}",
+        processing: {
+          analyzing: "Analyse de vos préférences...",
+          personalizing: "Personnalisation de votre expérience..."
+        },
+        success: {
+          title: "C'est tout bon! 🚀",
+          message: "Merci d'avoir configuré votre profil. Vous êtes prêt à apprendre!",
+          button: "Commencer l'apprentissage"
+        }
       }
     }
   }

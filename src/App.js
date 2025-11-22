@@ -6,18 +6,24 @@ import SideBar from "./Components/ChatInerface/SideBar";
 import Login from "./Components/Auth/Login";
 import Signup from "./Components/Auth/SignUp";
 import ForgotPassword from "./Components/Auth/ForgotPassword";
-import ProtectedRoute from "./Components/Auth/ProtectedRoute"; // Make sure this exists
+import ProtectedRoute from "./Components/Auth/ProtectedRoute";
 import './index.css';
-import { auth} from "./Firebase/config";
+import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
+import OnboardingModal from "./Components/Onboarding/OnboardingModal";
+import { useAuth } from "./Contexts/AuthContext/AuthContext";
 
 function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [selectedChatId, setSelectedChatId] = useState(null);
 
-  console.log("Chat ID in state in App.js:  " + selectedChatId);
-  
-   // Warm up FastAPI server when interface loads
+  // Destructure isProfileComplete from useAuth
+  const authContext = useAuth();
+  const isProfileComplete = authContext ? authContext.isProfileComplete : false;
+
+  console.log("ChatLayout render. isProfileComplete:", isProfileComplete);
+
+  // Warm up FastAPI server when interface loads
   useEffect(() => {
     const warmUpServer = async () => {
       try {
@@ -36,12 +42,12 @@ function ChatLayout() {
 
     warmUpServer();
   }, []); // Empty dependency array - runs once on mount
-  
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
 
-    // Function to close sidebar (for mobile)
+  // Function to close sidebar (for mobile)
   const onCloseSidebar = () => {
     setSidebarOpen(false);
   };
@@ -55,21 +61,19 @@ function ChatLayout() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
- const user=auth.currentUser;
+  const user = auth.currentUser;
 
   // Function to check if we're on mobile
   const isMobile = () => {
     return window.innerWidth <= 768;
   };
 
- const onSelectChat = (chatId) => 
-  { 
+  const onSelectChat = (chatId) => {
     console.log("Chat ID Selected From SideBar.js:" + chatId);
 
     setSelectedChatId(chatId);
 
-    if(isMobile())
-    {
+    if (isMobile()) {
       toggleSidebar();
     }
   };
@@ -77,21 +81,23 @@ function ChatLayout() {
 
   return (
     <div className="app-wrapper">
-      
+
       <div >
-        <button className="sidebar-toggle"  onClick={toggleSidebar}>
+        <button className="sidebar-toggle" onClick={toggleSidebar}>
           {sidebarOpen ? '×' : '☰'}
         </button>
       </div>
-      
+
 
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <SideBar user={user} onChatSelected={onSelectChat} onCloseSidebar={onCloseSidebar} />    
+        <SideBar user={user} onChatSelected={onSelectChat} onCloseSidebar={onCloseSidebar} />
       </div>
 
       <div className={`main-content ${sidebarOpen ? 'shifted' : ''}`}>
         <ChatInterface chatId={selectedChatId} onChatSelected={onSelectChat} onCloseSidebar={onCloseSidebar} />
       </div>
+
+      {!isProfileComplete && <OnboardingModal />}
     </div>
   );
 }
@@ -106,13 +112,13 @@ function App() {
 
 
       {/* Protected Chat Layout */}
-      <Route 
-        path="/*" 
+      <Route
+        path="/*"
         element={
           <ProtectedRoute>
             <ChatLayout />
           </ProtectedRoute>
-        } 
+        }
       />
     </Routes>
   );
