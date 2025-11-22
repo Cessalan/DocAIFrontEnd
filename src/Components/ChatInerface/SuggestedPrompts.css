@@ -18,10 +18,10 @@
   background: transparent;
   border: none;
   padding: 0;
-  
+
   /* Smooth appearance */
   animation: slideIn 0.3s ease-out;
-  
+
   /* CRITICAL: No fixed dimensions */
   max-width: 100%;
   width: 100%;
@@ -32,6 +32,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -47,8 +48,6 @@
   align-items: center;
   gap: 8px;
   margin-bottom: 10px;
-  
-  /* REMOVED border-bottom and padding-bottom */
 }
 
 .suggestions-icon {
@@ -59,9 +58,9 @@
 .suggestions-title {
   margin: 0;
   padding: 0;
-  font-size: 14px; /* Kept original size */
-  font-weight: 600; /* Kept original weight */
-  color: #5B4570; /* Kept original color */
+  font-size: 14px;
+  font-weight: 600;
+  color: #5B4570;
   line-height: 1;
 }
 
@@ -72,8 +71,7 @@
 .suggestions-list {
   display: flex;
   flex-direction: column;
-  gap: 0; /* Let items control spacing */
-  
+  gap: 0;
   max-height: none;
   overflow: visible;
 }
@@ -86,28 +84,18 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  
-  /* Use padding for spacing, not gap */
   padding: 12px 8px;
-  
-  /* REMOVED background, border, border-radius */
   background: transparent;
   border: none;
-  border-radius: 6px; /* Added radius for hover/focus state */
-  
-  /* ADDED border-bottom for separator */
+  border-radius: 6px;
   border-bottom: 1px solid rgba(173, 125, 195, 0.15);
-  
   font-size: 13px;
   font-weight: 400;
   line-height: 1.4;
   color: #374151;
   text-align: left;
-  
   cursor: pointer;
   transition: all 0.18s ease;
-  
-  /* Button reset */
   width: 100%;
   outline: none;
   user-select: none;
@@ -115,44 +103,30 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Remove border from the last item */
 .suggestion-item:last-child {
   border-bottom: none;
 }
 
-/* Hover */
 .suggestion-item:hover:not(.disabled) {
-  /* Kept your hover color */
   background: rgba(173, 125, 195, 0.06);
-  
-  /* REMOVED transform and box-shadow */
   transform: none;
   box-shadow: none;
 }
 
 .suggestion-item:hover:not(.disabled) .suggestion-icon-arrow {
-  /* Kept your icon hover color */
   color: #AD7DC3;
-  
-  /* REMOVED transform */
   transform: none;
 }
 
-/* Active */
 .suggestion-item:active:not(.disabled) {
-  /* REMOVED transform */
   transform: none;
   background: rgba(173, 125, 195, 0.1);
 }
 
-/* Focus */
 .suggestion-item:focus {
-  /* REMOVED border-color */
-  /* Kept box-shadow for accessibility */
   box-shadow: 0 0 0 2px rgba(173, 125, 195, 0.15);
 }
 
-/* Disabled */
 .suggestion-item.disabled {
   opacity: 0.5;
   cursor: not-allowed;
@@ -192,25 +166,25 @@
     padding: 6px 0;
     margin: 10px 0;
   }
-  
+
   .suggestions-card {
     padding: 0;
   }
-  
+
   .suggestions-header {
     margin-bottom: 8px;
   }
-  
+
   .suggestions-title {
     font-size: 13px;
   }
-  
+
   .suggestion-item {
     padding: 10px 6px;
     font-size: 12px;
     gap: 8px;
   }
-  
+
   .suggestion-icon-arrow {
     width: 13px;
     height: 13px;
@@ -225,12 +199,12 @@
   .suggestions-card {
     animation: none;
   }
-  
+
   .suggestion-item:hover:not(.disabled),
   .suggestion-item:active:not(.disabled) {
     transform: none;
   }
-  
+
   .suggestion-icon-arrow {
     transition: none;
   }
@@ -240,41 +214,56 @@
    DARK MODE
    ============================================ */
 
-@media (prefers-color-scheme: dark) {
-  .suggestions-card {
-    /* REMOVED background and border */
-    background: transparent;
-    border-color: none;
-  }
-  
-  .suggestions-title {
-    color: #E5D9F2; /* Kept original color */
-  }
-  
-  .suggestion-item {
-    /* REMOVED background and border */
-    background: transparent;
-    
-    /* ADDED border-bottom using your dark mode color */
-    border-bottom: 1px solid rgba(173, 125, 195, 0.25);
-    color: #E5E7EB;
-  }
-  
-  .suggestion-item:last-child {
-    border-bottom: none;
-  }
-  
-  .suggestion-item:hover:not(.disabled) {
-    /* Kept original hover color */
-    background: rgba(173, 125, 195, 0.15);
-    border-color: transparent; /* Ensure no border appears */
-  }
+body.dark-mode .suggestions-title {
+  color: #ffffff;
+  /* Pure white */
+  text-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
+  font-weight: 700;
+}
+
+body.dark-mode .suggestion-item {
+  background: rgba(255, 255, 255, 0.05);
+  /* Slightly lighter background */
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  /* Increased spacing */
+  color: #ffffff;
+  /* Pure white text */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  font-size: 14px;
+  /* Increased from 13px */
+  font-weight: 500;
+  /* Increased weight */
+}
+
+body.dark-mode .suggestion-item:last-child {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .suggestion-item:hover:not(.disabled) {
+  background: rgba(139, 92, 246, 0.2);
+  /* Stronger purple tint */
+  border-color: rgba(139, 92, 246, 0.5);
+  transform: translateX(4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .suggestion-icon-arrow {
+  color: #c4b5fd;
+  /* Lighter purple */
+  font-weight: bold;
+}
+
+body.dark-mode .suggestion-item:hover .suggestion-icon-arrow {
+  color: #ffffff;
+  /* White on hover */
+  transform: translateX(2px);
 }
 
 /* ============================================
    CRITICAL DEBUG OVERRIDES
    ============================================ */
-/* These are unchanged and still good practice */
 .suggestions-wrapper,
 .suggestions-card,
 .suggestions-list {
