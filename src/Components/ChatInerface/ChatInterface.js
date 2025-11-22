@@ -517,7 +517,10 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
   // ============================================
 
   const handleSendNewUserMessage = async (e = null, customPrompt = null) => {
-    if (e) e.preventDefault();
+    // Check if e is actually an event object (has preventDefault method)
+    if (e && typeof e.preventDefault === 'function') {
+      e.preventDefault();
+    }
 
     // clear the state of suggested prompts
     setSuggestedPrompts([]);
@@ -570,6 +573,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     setChatMessages(prev => [...prev, placeholderMessage]);
 
     let fullResponse = "";
+    let empatheticMessageId = null; // Track empathetic message bubble
+    let quizMessageId = null; // Track quiz bubble
 
     try {
       // Use WebSocket with all your current logic
@@ -583,33 +588,130 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
         // Status callback - handles all your current status updates
         (statusUpdate) => {
 
-          // Quiz generation progress
-          if (statusUpdate.status === "quiz_generating") {
-            console.log("generating quiz streaming");
-            isQuizGeneratingRef.current = true;
+          // Empathetic message start
+          if (statusUpdate.status === "empathetic_message_start") {
+            console.log("💬 Empathetic message streaming started");
+
+            // Create a NEW message bubble for empathetic text
+            empatheticMessageId = `empathetic-${Date.now()}`;
+
             setChatMessages(prev => {
-              const existingQuiz = prev.find(msg =>
-                msg.id === streamingMessageId && msg.type === 'quiz'
-              );
+              // Remove the generic placeholder if it exists
+              const filtered = prev.filter(msg => msg.id !== streamingMessageId);
 
-              if (existingQuiz) {
-                return prev.map(msg =>
-                  msg.id === streamingMessageId && msg.type === 'quiz'
-                    ? { ...msg, content: statusUpdate.message }
-                    : msg
-                );
-              }
-
-              return [...prev, {
-                id: streamingMessageId,
+              return [...filtered, {
+                id: empatheticMessageId,
                 role: 'assistant',
-                type: 'quiz',
-                content: statusUpdate.message,
-                quizData: [],
+                content: '',
+                type: 'text', // Regular text message
                 isStreaming: true,
                 timestamp: new Date()
               }];
             });
+
+            return;
+          }
+
+          // Empathetic message chunk (stream text)
+          if (statusUpdate.status === "empathetic_message_chunk") {
+            console.log("💬 Empathetic chunk:", statusUpdate.chunk);
+
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.id === empatheticMessageId
+                  ? { ...msg, content: statusUpdate.chunk, isStreaming: true }
+                  : msg
+              )
+            );
+
+            return;
+          }
+
+          // Empathetic message complete
+          if (statusUpdate.status === "empathetic_message_complete") {
+            console.log("✅ Empathetic message complete");
+
+            // Mark empathetic message as complete and save to Firebase
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.id === empatheticMessageId
+                  ? { ...msg, content: statusUpdate.full_message, isStreaming: false }
+                  : msg
+              )
+            );
+
+            // Save empathetic message to Firebase
+            const empatheticMsg = {
+              id: uuidv4(),
+              role: 'assistant',
+              content: statusUpdate.full_message,
+              timestamp: new Date(),
+              isStreaming: false
+            };
+
+            AppendToChat(updatedChatId || currentChatID, empatheticMsg);
+
+            return;
+          }
+
+          // Quiz generation progress
+          if (statusUpdate.status === "quiz_generating") {
+            console.log("generating quiz streaming");
+            isQuizGeneratingRef.current = true;
+
+            // If empathetic message exists, create a SECOND bubble for quiz
+            if (empatheticMessageId) {
+              quizMessageId = `quiz-${Date.now()}`;
+
+              setChatMessages(prev => {
+                // Check if quiz bubble already exists
+                const existingQuiz = prev.find(msg => msg.id === quizMessageId);
+
+                if (existingQuiz) {
+                  return prev.map(msg =>
+                    msg.id === quizMessageId
+                      ? { ...msg, content: statusUpdate.message }
+                      : msg
+                  );
+                }
+
+                // Create NEW quiz bubble (second bubble after empathetic message)
+                return [...prev, {
+                  id: quizMessageId,
+                  role: 'assistant',
+                  type: 'quiz',
+                  content: statusUpdate.message,
+                  quizData: [],
+                  isStreaming: true,
+                  timestamp: new Date()
+                }];
+              });
+            } else {
+              // No empathetic message - use original logic (single bubble)
+              setChatMessages(prev => {
+                const existingQuiz = prev.find(msg =>
+                  msg.id === streamingMessageId && msg.type === 'quiz'
+                );
+
+                if (existingQuiz) {
+                  return prev.map(msg =>
+                    msg.id === streamingMessageId && msg.type === 'quiz'
+                      ? { ...msg, content: statusUpdate.message }
+                      : msg
+                  );
+                }
+
+                return [...prev, {
+                  id: streamingMessageId,
+                  role: 'assistant',
+                  type: 'quiz',
+                  content: statusUpdate.message,
+                  quizData: [],
+                  isStreaming: true,
+                  timestamp: new Date()
+                }];
+              });
+            }
 
             setStreamingStatus({
               status: 'generating_quiz',
@@ -622,9 +724,12 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
           if (statusUpdate.status === "quiz_question") {
             console.log("📝 Quiz question received:", statusUpdate.total_so_far);
 
+            // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
+            const targetMessageId = quizMessageId || streamingMessageId;
+
             setChatMessages(prev =>
               prev.map(msg => {
-                if (msg.id === streamingMessageId && msg.type === 'quiz') {
+                if (msg.id === targetMessageId && msg.type === 'quiz') {
                   const newQuizData = [...(msg.quizData || []), statusUpdate.question];
                   console.log("✅ Appended question, total:", newQuizData.length);
 
@@ -644,7 +749,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
           // Quiz complete
           if (statusUpdate.status === "quiz_complete") {
             console.log("quiz completed");
-            handleQuizComplete(statusUpdate.quiz_data, streamingMessageId, updatedChatId);
+
+            // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
+            const targetMessageId = quizMessageId || streamingMessageId;
+
+            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId);
             setStreamingStatus(null);
             return;
           }
@@ -1827,6 +1936,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
                     onQuizInteraction={handleQuizInteraction}
                     isActiveQuiz={message.id === activeQuizId}
                     onFeedbackSubmit={handleQuizFeedback}
+                    onSendMessage={handleSendNewUserMessage}
                   />
                 );
               }

@@ -145,6 +145,12 @@ export const ask_llm_websocket = async (
     });
 
     // Send chat message
+    console.log('📤 Sending message to backend:', {
+      type: 'chat_message',
+      input: userPrompt.substring(0, 100) + '...',
+      chat_id: chat_id
+    });
+
     const success = await wsManager.sendMessage(chat_id, {
       type: 'chat_message',
       input: userPrompt,
@@ -154,8 +160,11 @@ export const ask_llm_websocket = async (
     });
 
     if (!success) {
+      console.error('❌ Failed to send message to backend');
       throw new Error('Failed to send message via WebSocket');
     }
+
+    console.log('✅ Message sent successfully to backend');
 
   } catch (error) {
     console.error('WebSocket chat error:', error);

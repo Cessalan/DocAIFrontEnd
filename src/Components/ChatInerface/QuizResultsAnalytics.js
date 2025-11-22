@@ -153,9 +153,22 @@ const QuizResultsAnalytics = ({
   };
 
   const handlePracticeWeakTopics = () => {
-    const prompt = generateTargetedPrompt(weakTopics);
+    console.log("🎯 Practice Weak Topics clicked");
+    console.log("📊 Weak topics:", weakTopics);
+
+    // Simple intent message - backend will analyze last quiz and generate everything
+    const simpleIntent = t('common.language') === 'fr'
+      ? "Je veux pratiquer mes points faibles du dernier quiz"
+      : "I want to practice my weak areas from the last quiz";
+
+    console.log("📝 Sending simple intent:", simpleIntent);
+    console.log("🔗 onStartTargetedPractice exists:", !!onStartTargetedPractice);
+
     if (onStartTargetedPractice) {
-      onStartTargetedPractice(prompt);
+      console.log("✅ Calling onStartTargetedPractice with simple intent");
+      onStartTargetedPractice(simpleIntent);
+    } else {
+      console.error("❌ onStartTargetedPractice is not defined!");
     }
   };
 

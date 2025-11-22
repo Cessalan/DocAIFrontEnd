@@ -323,8 +323,13 @@ const ChatMessage = ({
 
   // Targeted practice handler
   const handleStartTargetedPractice = useCallback((prompt) => {
+    console.log("🎯 ChatMessage: handleStartTargetedPractice called with prompt:", prompt.substring(0, 100) + "...");
     if (onSendMessage) {
-      onSendMessage(prompt);
+      console.log("✅ ChatMessage: Calling onSendMessage with null event and custom prompt");
+      // Pass null as event, prompt as customPrompt (second parameter)
+      onSendMessage(null, prompt);
+    } else {
+      console.error("❌ ChatMessage: onSendMessage is not defined!");
     }
   }, [onSendMessage]);
 
@@ -453,7 +458,6 @@ const ChatMessage = ({
         {/* Quiz Display - Single Question Navigation */}
         {isAI && Array.isArray(parsedQuizData) && parsedQuizData.length > 0 && (
           <div className="message-text">
-
 
             {/* Quiz Content - Conditional Rendering */}
             <div className="quiz-single-view-container">
