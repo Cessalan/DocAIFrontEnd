@@ -190,6 +190,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false);
 
+  // State to force minimum height for scrolling user message to top
+  const [forceScrollSpace, setForceScrollSpace] = useState(false);
+
   // ============================================
   // HELPER FUNCTIONS
   // ============================================
@@ -288,30 +291,54 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     }
   }, [chatMessages.length, scrollToBottom]);
 
-  // Auto-scroll when new messages arrive (like ChatGPT)
+  // Auto-scroll when new messages arrive (ChatGPT/Claude premium feel)
   useEffect(() => {
     if (chatMessages.length > 0 && hasInitiallyScrolledRef.current) {
       if (!isAiTyping) {
-        // User just sent a message - scroll it to the TOP of viewport
+        // User just sent a message - scroll to absolute top with plenty of space below
         if (lastUserMessageRef.current) {
+          // Enable forced scroll space to ensure we can scroll the message to top
+          setForceScrollSpace(true);
+
           requestAnimationFrame(() => {
-            lastUserMessageRef.current?.scrollIntoView({
-              behavior: 'smooth',
-              block: 'start', // Position at TOP of viewport
-              inline: 'nearest'
-            });
+            const container = messagesContainerRef.current;
+            const messageElement = lastUserMessageRef.current;
+
+            if (container && messageElement) {
+              // Wait a tiny bit for the DOM to update with the spacer
+              setTimeout(() => {
+                // Calculate the exact scroll position to place message at the very top
+                const containerTop = container.getBoundingClientRect().top;
+                const messageTop = messageElement.getBoundingClientRect().top;
+                const currentScroll = container.scrollTop;
+
+                // Scroll so message appears RIGHT at the top (just 10px breathing room)
+                const targetScroll = currentScroll + (messageTop - containerTop) - 10;
+
+                container.scrollTo({
+                  top: targetScroll,
+                  behavior: 'smooth'
+                });
+              }, 50);
+            }
           });
         }
+      } else {
+        // AI is typing - remove the forced space as content will naturally fill it
+        setForceScrollSpace(false);
       }
     }
   }, [chatMessages.length, isAiTyping]);
 
-  // Auto-scroll during streaming (when message content updates, not just length)
+  // Auto-scroll during streaming (smooth, continuous scrolling like ChatGPT)
   useEffect(() => {
     if (isAiTyping && hasInitiallyScrolledRef.current) {
-      scrollToBottom('auto');
+      // Only scroll if user is near bottom (don't force scroll if they scrolled up)
+      if (isNearBottom()) {
+        scrollToBottom('smooth');
+      }
     }
-  }, [chatMessages, isAiTyping, scrollToBottom]);
+  }, [chatMessages, isAiTyping, scrollToBottom, isNearBottom]);
 
   const setLoadingState = useCallback((key, value) => {
     setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -2352,6 +2379,16 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
 
 
           <div ref={messagesEndRef} />
+
+          {/* Spacer to force user message to scroll to top when needed */}
+          {forceScrollSpace && (
+            <div style={{
+              height: '70vh',
+              width: '100%',
+              pointerEvents: 'none',
+              userSelect: 'none'
+            }} />
+          )}
 
           {/*  //NEW: Suggested Prompts - Above Input  */}
           <div className='message ai-message'>

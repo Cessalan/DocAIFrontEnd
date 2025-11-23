@@ -211,54 +211,61 @@
 }
 
 /* ============================================
-   DARK MODE
+   DARK MODE - Subtle & Seamless
    ============================================ */
 
 body.dark-mode .suggestions-title {
-  color: #ffffff;
-  /* Pure white */
-  text-shadow: 0 0 10px rgba(167, 139, 250, 0.3);
-  font-weight: 700;
+  color: #9ca3af;
+  /* Subtle gray */
+  text-shadow: none;
+  font-weight: 500;
+  /* Less bold */
+  font-size: 13px;
+  opacity: 0.8;
 }
 
 body.dark-mode .suggestion-item {
-  background: rgba(255, 255, 255, 0.05);
-  /* Slightly lighter background */
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  margin-bottom: 8px;
-  /* Increased spacing */
-  color: #ffffff;
-  /* Pure white text */
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  font-size: 14px;
-  /* Increased from 13px */
-  font-weight: 500;
-  /* Increased weight */
+  background: transparent;
+  /* No background */
+  border: none;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  /* Very subtle divider */
+  border-radius: 0;
+  margin-bottom: 0;
+  color: #d1d5db;
+  /* Softer white */
+  box-shadow: none;
+  font-size: 13px;
+  font-weight: 400;
+  /* Normal weight */
+  padding: 12px 8px;
 }
 
 body.dark-mode .suggestion-item:last-child {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
 }
 
 body.dark-mode .suggestion-item:hover:not(.disabled) {
-  background: rgba(139, 92, 246, 0.2);
-  /* Stronger purple tint */
-  border-color: rgba(139, 92, 246, 0.5);
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background: rgba(139, 92, 246, 0.08);
+  /* Very subtle purple tint */
+  border-color: rgba(139, 92, 246, 0.15);
+  transform: none;
+  /* No movement */
+  box-shadow: none;
+  color: #e5e7eb;
+  /* Slightly brighter on hover */
 }
 
 body.dark-mode .suggestion-icon-arrow {
-  color: #c4b5fd;
-  /* Lighter purple */
-  font-weight: bold;
+  color: #6b7280;
+  /* Subtle gray */
+  font-weight: normal;
 }
 
 body.dark-mode .suggestion-item:hover .suggestion-icon-arrow {
-  color: #ffffff;
-  /* White on hover */
-  transform: translateX(2px);
+  color: #a78bfa;
+  /* Light purple on hover */
+  transform: none;
 }
 
 /* ============================================
