@@ -848,13 +848,13 @@
 }
 
 .input-wrapper-container:focus-within {
-  border-color: rgba(173, 125, 195, 0.4);
+  border-color: rgba(173, 125, 195, 0.3);
   /* Purple accent on focus */
   background: #ffffff;
-  box-shadow: 0 4px 20px rgba(173, 125, 195, 0.15);
-  /* Elevated shadow with purple tint */
-  transform: translateY(-1px);
-  /* Subtle lift effect */
+  box-shadow: 0 2px 8px rgba(173, 125, 195, 0.08);
+  /* Subtle shadow with less purple tint */
+  transform: translateY(-0.5px);
+  /* Very subtle lift effect */
 }
 
 .message-textarea {
