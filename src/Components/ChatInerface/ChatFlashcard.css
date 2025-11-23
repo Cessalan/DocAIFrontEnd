@@ -16,12 +16,14 @@
 .flashcard-view-container {
   width: 100% !important;
   max-width: 100% !important;
-  margin: 0 !important;
+  margin: 0 auto !important;
   padding: 0 !important;
   box-sizing: border-box;
   min-height: 200px;
   position: relative;
-  display: block;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 /* ============================================
@@ -821,6 +823,7 @@ body.dark-mode .flashcard-compact-loading {
 
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
+
   .flashcard-card-face,
   .flashcard-review-btn,
   .flashcard-nav-btn {
