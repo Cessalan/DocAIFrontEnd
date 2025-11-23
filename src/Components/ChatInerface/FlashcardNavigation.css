@@ -4,28 +4,28 @@
    ============================================ */
 
 .flashcard-navigation {
-  background: white;
+  background: transparent;
   border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  padding: 6px 4px;
+  box-shadow: none;
   border: none;
 }
 
 .flashcard-nav-title {
   font-size: 10px;
   font-weight: 600;
-  color: #999;
+  color: #777;
   text-transform: uppercase;
   letter-spacing: 0.8px;
-  margin-bottom: 10px;
+  margin-bottom: 6px;
 }
 
 /* Card List */
 .flashcard-nav-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
-  gap: 6px;
-  margin-bottom: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+  gap: 8px;
+  margin-bottom: 6px;
 }
 
 .flashcard-nav-item {
@@ -35,60 +35,47 @@
   align-items: center;
   justify-content: center;
   gap: 2px;
-  background: rgba(0, 0, 0, 0.02);
+  background: rgba(255, 255, 255, 0.04);
   border: none;
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
-  padding: 6px;
+  padding: 4px;
   position: relative;
 }
 
 .flashcard-nav-item:hover {
-  background: rgba(0, 0, 0, 0.06);
+  background: rgba(255, 255, 255, 0.08);
   transform: scale(1.05);
 }
 
 .flashcard-nav-item.active {
-  background: rgba(107, 70, 193, 0.1);
-  box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.3);
+  background: rgba(124, 95, 255, 0.18);
+  box-shadow: none;
 }
 
 .flashcard-nav-number {
   font-size: 11px;
   font-weight: 600;
-  color: #333;
+  color: #f5f5f5;
 }
 
 .flashcard-nav-icon {
-  font-size: 12px;
+  font-size: 11px;
 }
 
 /* Status-specific styling - subtle macOS colors */
-.flashcard-nav-status-new {
-  background: rgba(0, 0, 0, 0.02);
-}
-
-.flashcard-nav-status-learning {
-  background: rgba(255, 193, 7, 0.12);
-}
-
-.flashcard-nav-status-mastered {
-  background: rgba(56, 161, 105, 0.12);
-}
-
-.flashcard-nav-status-know {
-  background: rgba(56, 161, 105, 0.15);
-}
-
+.flashcard-nav-status-new,
+.flashcard-nav-status-learning,
+.flashcard-nav-status-mastered,
+.flashcard-nav-status-know,
 .flashcard-nav-status-again {
-  background: rgba(229, 62, 62, 0.12);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Legend */
 .flashcard-nav-legend {
-  padding-top: 12px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  display: none;
 }
 
 .flashcard-legend-title {
@@ -143,8 +130,8 @@
 
 /* Dark Mode - macOS Style */
 body.dark-mode .flashcard-navigation {
-  background: #1a1a1a;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: transparent;
+  box-shadow: none;
 }
 
 body.dark-mode .flashcard-nav-title {
@@ -161,7 +148,7 @@ body.dark-mode .flashcard-nav-item:hover {
 
 body.dark-mode .flashcard-nav-item.active {
   background: rgba(159, 122, 234, 0.2);
-  box-shadow: 0 0 0 2px rgba(159, 122, 234, 0.4);
+  box-shadow: none;
 }
 
 body.dark-mode .flashcard-nav-number {
@@ -186,10 +173,6 @@ body.dark-mode .flashcard-nav-status-know {
 
 body.dark-mode .flashcard-nav-status-again {
   background: rgba(252, 129, 129, 0.15);
-}
-
-body.dark-mode .flashcard-nav-legend {
-  border-top-color: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .flashcard-legend-title,
