@@ -502,10 +502,12 @@
 /* Flashcard messages take much more width for better UX */
 .message:has(.flashcard-view-container),
 .message-with-flashcards {
-  max-width: 100%;
+  max-width: 850px;
   width: 100%;
   padding-left: 0;
   padding-right: 0;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @keyframes messageSlideIn {
@@ -530,10 +532,10 @@
 
 /* Flashcard messages should be centered with minimum width */
 .ai-message.message-with-flashcards {
-  margin-left: 0;
-  margin-right: 0;
+  margin-left: auto;
+  margin-right: auto;
   width: 100%;
-  max-width: 100%;
+  max-width: 850px;
 }
 
 /* Remove padding/background for flashcard messages to let the card control the layout */
