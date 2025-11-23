@@ -935,7 +935,7 @@
 
 /* Stop button - appears when streaming */
 .stop-button-icon {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
   color: white;
   border: none;
   padding: 10px;
@@ -945,17 +945,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
   min-width: 40px;
   min-height: 40px;
   flex-shrink: 0;
-  animation: pulse-red 2s ease-in-out infinite;
+  animation: pulse-purple 2s ease-in-out infinite;
 }
 
 .stop-button-icon:hover {
-  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  background: linear-gradient(135deg, var(--primary-purple-hover) 0%, var(--primary-purple-dark) 100%);
   transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+  box-shadow: 0 4px 12px rgba(173, 125, 195, 0.5);
   animation: none;
 }
 
@@ -969,12 +969,12 @@
 }
 
 /* Pulse animation for stop button */
-@keyframes pulse-red {
+@keyframes pulse-purple {
   0%, 100% {
-    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
   }
   50% {
-    box-shadow: 0 2px 16px rgba(239, 68, 68, 0.6);
+    box-shadow: 0 2px 16px rgba(173, 125, 195, 0.6);
   }
 }
 
@@ -1569,13 +1569,13 @@ body.dark-mode .send-button-icon:hover:not(:disabled) {
 
 /* Stop button - Dark mode */
 body.dark-mode .stop-button-icon {
-  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
-  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
+  background: linear-gradient(135deg, #8b5cf6, #6b46c1);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
 }
 
 body.dark-mode .stop-button-icon:hover {
-  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
-  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.6);
+  background: linear-gradient(135deg, #7c3aed, #5b21b6);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
 }
 
 body.dark-mode .upload-button {
