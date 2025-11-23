@@ -48,6 +48,7 @@ function ChatFlashcard(props) {
     showReview = false,
     onSkip,
     modalOpen: externalModalOpen,
+    isStreaming = false,
     onModalChange,
     onNavigate,
     showResults = false,
@@ -342,10 +343,24 @@ function ChatFlashcard(props) {
   // Main render (compact mode - no sidebar, full width)
   const mainContent = (
     <div className="flashcard-compact-container glassmorphic">
+      {/* Streaming Indicator - Above flashcard */}
+      {isStreaming && (
+        <div className="flashcard-streaming-bar">
+          <div className="flashcard-streaming-animation">
+            <div className="flashcard-streaming-dot"></div>
+            <div className="flashcard-streaming-dot"></div>
+            <div className="flashcard-streaming-dot"></div>
+          </div>
+          <span className="flashcard-streaming-text">Generating flashcards...</span>
+        </div>
+      )}
+
       <div className="flashcard-compact-single">
         {totalCards > 1 && !showResults && (
           <div className="flashcard-compact-header">
-            <h3 className="flashcard-compact-title">Flashcards</h3>
+            <h3 className="flashcard-compact-title">
+              Flashcards
+            </h3>
             <button
               className="flashcard-expand-btn"
               onClick={handleExpandModal}

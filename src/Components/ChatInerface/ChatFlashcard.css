@@ -90,6 +90,69 @@
   margin: 0;
   color: #1a1a1a;
   letter-spacing: -0.02em;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.flashcard-loading-spinner {
+  display: inline-flex;
+  align-items: center;
+  color: #9a57ff;
+  opacity: 0.8;
+}
+
+/* Streaming Indicator - Above flashcard */
+.flashcard-streaming-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, rgba(154, 87, 255, 0.08) 0%, rgba(154, 87, 255, 0.04) 100%);
+  border-radius: 8px;
+  margin-bottom: 12px;
+  border: 1px solid rgba(154, 87, 255, 0.12);
+}
+
+.flashcard-streaming-animation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.flashcard-streaming-dot {
+  width: 8px;
+  height: 8px;
+  background: #9a57ff;
+  border-radius: 50%;
+  animation: flashcardDotPulse 1.4s infinite ease-in-out;
+}
+
+.flashcard-streaming-dot:nth-child(1) {
+  animation-delay: -0.32s;
+}
+
+.flashcard-streaming-dot:nth-child(2) {
+  animation-delay: -0.16s;
+}
+
+@keyframes flashcardDotPulse {
+  0%, 80%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.flashcard-streaming-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #9a57ff;
+  letter-spacing: -0.01em;
 }
 
 .flashcard-expand-btn {
@@ -822,6 +885,19 @@ body.dark-mode .flashcard-reviewed-feedback.positive {
 body.dark-mode .flashcard-reviewed-feedback.negative {
   background: rgba(252, 129, 129, 0.15);
   color: #fc8181;
+}
+
+body.dark-mode .flashcard-streaming-bar {
+  background: linear-gradient(135deg, rgba(154, 87, 255, 0.12) 0%, rgba(154, 87, 255, 0.06) 100%);
+  border: 1px solid rgba(154, 87, 255, 0.18);
+}
+
+body.dark-mode .flashcard-streaming-text {
+  color: #a78bfa;
+}
+
+body.dark-mode .flashcard-streaming-dot {
+  background: #a78bfa;
 }
 
 body.dark-mode .flashcard-skip-btn {

@@ -439,36 +439,54 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
         ...doc.data()
       }));
 
-      // CRITICAL FIX: Preserve upload_loading messages that exist in state but not in Firebase yet
-      // These are actively being updated with streaming insights
+      // ✅ FIX: Preserve messages that haven't been saved to Firebase yet
       setChatMessages(prev => {
-        // Find any upload_loading messages in current state
+        // 1. Keep upload_loading messages (existing logic)
         const activeUploadMessages = prev.filter(msg =>
           msg.type === 'upload_loading' && msg.isLoading === true
         );
 
-        if (activeUploadMessages.length === 0) {
-          // No active uploads, just use Firebase data
+        // 2. 🆕 Keep flashcard/quiz messages that completed but aren't in Firebase yet
+        const pendingSaveMessages = prev.filter(msg => {
+          const isFlashcardOrQuiz = msg.type === 'flashcard' || msg.type === 'quiz';
+          const isCompleted = msg.isStreaming === false;
+          const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
+
+          if (isFlashcardOrQuiz && isCompleted && notInFirebase) {
+            console.log(`🔄 Preserving ${msg.type} message ${msg.id} (not in Firebase yet)`);
+          }
+
+          return isFlashcardOrQuiz && isCompleted && notInFirebase;
+        });
+
+        console.log(`🔍 Messages to preserve from state:`, {
+          uploadMessages: activeUploadMessages.length,
+          pendingFlashcards: pendingSaveMessages.filter(m => m.type === 'flashcard').length,
+          pendingQuizzes: pendingSaveMessages.filter(m => m.type === 'quiz').length
+        });
+
+        if (activeUploadMessages.length === 0 && pendingSaveMessages.length === 0) {
+          // No active messages to preserve, just use Firebase data
           return loadedMessages;
         }
 
-        // Merge: Keep active upload messages, add Firebase messages
-        // Remove any upload_loading from Firebase (they're complete)
-        const firebaseWithoutUploads = loadedMessages.filter(msg =>
-          msg.type !== 'upload_loading'
+        // 3. Merge: Remove these message types from Firebase data to avoid duplicates
+        const firebaseWithoutPending = loadedMessages.filter(msg =>
+          msg.type !== 'upload_loading' &&
+          !pendingSaveMessages.some(pending => pending.id === msg.id)
         );
 
-        // Insert active upload messages in correct position (usually at end)
-        // Find where they were in the previous array
-        const result = [...firebaseWithoutUploads];
-        activeUploadMessages.forEach(uploadMsg => {
-          // Add at end if not found, or keep relative position
-          result.push(uploadMsg);
-        });
+        // 4. Combine: Firebase messages + active uploads + pending saves
+        const result = [
+          ...firebaseWithoutPending,
+          ...activeUploadMessages,
+          ...pendingSaveMessages
+        ];
 
         console.log('🔄 Merged messages:', {
-          fromFirebase: firebaseWithoutUploads.length,
+          fromFirebase: firebaseWithoutPending.length,
           activeUploads: activeUploadMessages.length,
+          pendingSaves: pendingSaveMessages.length,
           total: result.length
         });
 
@@ -757,9 +775,10 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             return;
           }
 
-          // Flashcard generation progress
+          // Flashcard generation progress (EXACTLY like quiz)
           if (statusUpdate.status === "flashcard_generating") {
-            console.log("generating flashcards streaming");
+            console.log("📇 Flashcard generation streaming started");
+            isQuizGeneratingRef.current = true; // Use same ref as quiz to prevent text streaming
 
             setChatMessages(prev => {
               const existingFlashcard = prev.find(msg =>
@@ -792,7 +811,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             return;
           }
 
-          // Individual flashcard ready
+          // Individual flashcard ready (EXACTLY like quiz_question)
           if (statusUpdate.status === "flashcard_ready") {
             console.log("📇 Flashcard received:", statusUpdate.total_so_far);
 
@@ -815,9 +834,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             return;
           }
 
-          // Flashcards complete
+          // Flashcards complete (EXACTLY like quiz_complete)
           if (statusUpdate.status === "flashcard_complete") {
-            console.log("flashcards completed");
+            console.log("✅ Flashcards completed");
 
             handleFlashcardComplete(statusUpdate.flashcard_data, streamingMessageId, updatedChatId);
             setStreamingStatus(null);
@@ -885,7 +904,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             console.log('✅ Found message:', !!found, 'Type:', found?.type);
 
             const updated = prev.map(msg => {
-              if (msg.id === streamingMessageId && msg.type !== 'quiz') {
+              if (msg.id === streamingMessageId && msg.type !== 'quiz' && msg.type !== 'flashcard') {
                 console.log('🎨 UPDATING MESSAGE with content length:', fullResponse.length);
                 return { ...msg, content: fullResponse, isStreaming: true };
               }
@@ -1291,11 +1310,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
   const handleFlashcardComplete = async (flashcardData, messageId, chatId) => {
     console.log("✅ Flashcards complete, finalizing message");
     console.log("📦 Backend sent", flashcardData?.length, "flashcards");
-    console.log("🆔 Message ID:", messageId);
-    console.log("💬 Chat ID:", chatId);
     setStreamingStatus(null);
 
-    // Initialize flashcard data with status
+    // Initialize flashcard data with status (same as quiz initializes with answers)
     const initializedFlashcards = flashcardData.map(card => ({
       ...card,
       status: 'new',
@@ -1305,27 +1322,28 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
 
     console.log("🎴 Initialized flashcards:", initializedFlashcards);
 
-    // Update UI state
-    setChatMessages(prev => {
-      console.log("📝 Updating chat messages, current count:", prev.length);
-      const updatedMessages = prev.map(msg => {
+    // ✅ Update UI state (EXACTLY like handleQuizComplete)
+    setChatMessages(prev =>
+      prev.map(msg => {
         if (msg.id === messageId && msg.type === 'flashcard') {
-          console.log("✅ Found flashcard message to update:", msg.id);
           return {
             ...msg,
             flashcardData: initializedFlashcards,
-            content: `Flashcards - ${flashcardData.length} cards ready`,
+            content: `Flashcards - ${flashcardData.length} cards`,
             isStreaming: false,
             timestamp: new Date()
           };
         }
         return msg;
-      });
-      console.log("📝 Updated messages count:", updatedMessages.length);
-      return updatedMessages;
-    });
+      })
+    );
 
-    // Save to Firebase
+    // ✅ Save to Firebase with retry (EXACTLY like handleQuizComplete)
+    console.log("💾 Saving to Firebase:",
+      flashcardData.length,
+      "flashcards"
+    );
+
     const messageToSave = {
       id: messageId,
       role: 'assistant',
@@ -1336,22 +1354,24 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
       timestamp: new Date()
     };
 
+    // ✅ Try to save, retry once if it fails (EXACTLY like quiz)
     try {
       await AppendToChat(chatId, messageToSave);
-      console.log("✅ Flashcards saved to Firebase successfully");
+      console.log("✅ Firebase save successful");
     } catch (error) {
-      console.error("❌ Error saving flashcards to Firebase:", error);
+      console.error("❌ Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         await AppendToChat(chatId, messageToSave);
-        console.log("✅ Flashcards saved successfully on retry");
+        console.log("✅ Firebase save successful on retry");
       } catch (retryError) {
-        console.error("❌ Flashcards save failed on retry:", retryError);
+        console.error("❌ Firebase save failed on retry:", retryError);
+        // Don't throw - let user continue, data is in UI
       }
     }
 
     setIsAiTyping(false);
-    console.log("🎉 Flashcard finalization complete!");
+    console.log("✅ Flashcard save complete!");
   };
 
   const handleFlashcardReview = async (reviewData) => {
@@ -2284,8 +2304,10 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             </div>
           )}
 
-          {/* AI Typing Indicator */}
-          {isAiTyping && (
+          {/* AI Typing Indicator - Hide when generating quiz/flashcards (they have their own indicators) */}
+          {isAiTyping &&
+           streamingStatus?.status !== 'generating_quiz' &&
+           streamingStatus?.status !== 'generating_flashcards' && (
             <div className="message ai-message">
               <div>
                 <img src="/LogoSimple.png" alt="Logo" width="30" />

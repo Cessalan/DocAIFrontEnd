@@ -739,30 +739,13 @@ const ChatMessage = ({
                   onFeedbackSubmit={onFeedbackSubmit}
                   hasGivenFeedback={!!message.feedbackData}
                   feedbackData={message.feedbackData}
+                  isStreaming={message.isStreaming}
                 />
               ) : (
                 /* Loading state */
                 <QuizLoading />
               )}
             </div>
-
-            {/* Streaming Indicator */}
-            {message.isStreaming && !showFlashcardResults && (
-              <div className="flashcard-streaming-indicator">
-                <div className="typing-indicator">
-                  <span className="blinking-dots">
-                    <h4>
-                      <strong>
-                        ✨ {i18n.language === 'fr' ? 'Génération des flashcards...' : 'Generating flashcards...'}
-                      </strong>
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </h4>
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         )}
 
