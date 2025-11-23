@@ -1,6 +1,8 @@
 import { useMemo, useState, useEffect, useRef, useCallback } from 'react';
 import ReactMarkDown from "react-markdown";
 import ChatQuiz from "./ChatQuiz";
+import ChatFlashcard from "./ChatFlashcard";
+import FlashcardResults from "./FlashcardResults";
 import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
@@ -46,6 +48,11 @@ const ChatMessage = ({
   const prevModalOpenRef = useRef(false); // Track previous modal state
   const lastMessageIdRef = useRef(null);
 
+  // Flashcard state management
+  const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [showFlashcardResults, setShowFlashcardResults] = useState(false);
+  const [flashcardModalOpen, setFlashcardModalOpen] = useState(false);
+
   // Streak tracking
   const [quizStreak, setQuizStreak] = useState({
     current: 0,
@@ -77,6 +84,31 @@ const ChatMessage = ({
       return null;
     }
   }, [message?.quizData]);
+
+  // Parse flashcard data
+  const parsedFlashcardData = useMemo(() => {
+    if (!message || !message.flashcardData) return null;
+
+    try {
+      if (Array.isArray(message.flashcardData)) {
+        console.log("✅ Flashcard data parsed successfully:", message.flashcardData.length, "cards");
+        console.log("📋 Message type:", message.type);
+        console.log("📋 Message ID:", message.id);
+        return message.flashcardData;
+      }
+
+      if (typeof message.flashcardData === "string") {
+        const parsed = JSON.parse(message.flashcardData);
+        console.log("✅ Flashcard data parsed from string:", parsed.length, "cards");
+        return parsed;
+      }
+
+      return null;
+    } catch (err) {
+      console.error("Failed to parse flashcardData:", err);
+      return null;
+    }
+  }, [message?.flashcardData]);
 
   // Calculate initial streak from historical data
   const calculateInitialStreak = useCallback((quizData) => {
@@ -333,6 +365,123 @@ const ChatMessage = ({
     }
   }, [onSendMessage]);
 
+  // ============================================
+  // FLASHCARD HANDLERS
+  // ============================================
+
+  // Initialize flashcard view
+  useEffect(() => {
+    if (parsedFlashcardData) {
+      console.log("🔄 Initializing flashcard view, total cards:", parsedFlashcardData.length);
+      const firstUnreviewed = parsedFlashcardData.findIndex(card => !card.userReview);
+      console.log("🔍 First unreviewed card index:", firstUnreviewed);
+
+      if (firstUnreviewed === -1 && parsedFlashcardData.length > 0) {
+        console.log("📊 All cards reviewed, showing results");
+        setShowFlashcardResults(true);
+      } else {
+        const targetIndex = firstUnreviewed !== -1 ? firstUnreviewed : 0;
+        console.log("🎯 Setting current card index to:", targetIndex);
+        setCurrentCardIndex(targetIndex);
+        setShowFlashcardResults(false);
+      }
+    }
+  }, [message?.id, parsedFlashcardData]);
+
+  // Flashcard review handler
+  const handleCardReview = useCallback((cardIndex, reviewData) => {
+    if (!message || !parsedFlashcardData) return;
+
+    const card = parsedFlashcardData[cardIndex];
+
+    // Update card status based on review
+    let newStatus = card.status || 'new';
+    let newReviewCount = (card.reviewCount || 0);
+
+    if (reviewData.knowIt) {
+      newReviewCount++;
+      if (newReviewCount >= 3) {
+        newStatus = 'mastered';
+      } else {
+        newStatus = 'learning';
+      }
+    } else {
+      newReviewCount = 0;
+      newStatus = 'new';
+    }
+
+    // Prepare update data
+    const updateData = {
+      messageId: message.id,
+      cardIndex: cardIndex,
+      userReview: reviewData,
+      status: newStatus,
+      reviewCount: newReviewCount,
+      lastReviewed: new Date()
+    };
+
+    // Call parent handler to update Firebase
+    if (onQuizAnswerSelect) {
+      onQuizAnswerSelect(updateData);
+    }
+  }, [message?.id, parsedFlashcardData, onQuizAnswerSelect]);
+
+  // Next card handler
+  const handleNextCard = useCallback(() => {
+    if (!parsedFlashcardData) return;
+
+    const nextIndex = currentCardIndex + 1;
+
+    if (nextIndex < parsedFlashcardData.length) {
+      setCurrentCardIndex(nextIndex);
+    } else {
+      // Check if all reviewed
+      const allReviewed = parsedFlashcardData.every(card => card.userReview);
+      if (allReviewed) {
+        setShowFlashcardResults(true);
+      }
+    }
+  }, [currentCardIndex, parsedFlashcardData]);
+
+  // Skip card handler
+  const handleSkipCard = useCallback(() => {
+    if (!parsedFlashcardData) return;
+
+    const nextIndex = currentCardIndex + 1;
+    if (nextIndex < parsedFlashcardData.length) {
+      setCurrentCardIndex(nextIndex);
+    }
+  }, [currentCardIndex, parsedFlashcardData]);
+
+  // Navigate to specific card
+  const handleNavigateToCard = useCallback((index) => {
+    setCurrentCardIndex(index);
+    setShowFlashcardResults(false);
+  }, []);
+
+  // Review flashcards again
+  const handleReviewFlashcards = useCallback(() => {
+    setCurrentCardIndex(0);
+    setShowFlashcardResults(false);
+  }, []);
+
+  // Continue learning (focus on non-mastered cards)
+  const handleContinueLearning = useCallback(() => {
+    if (!parsedFlashcardData) return;
+
+    const firstNonMastered = parsedFlashcardData.findIndex(
+      card => card.status !== 'mastered'
+    );
+
+    if (firstNonMastered !== -1) {
+      setCurrentCardIndex(firstNonMastered);
+      setShowFlashcardResults(false);
+    } else {
+      setCurrentCardIndex(0);
+      setShowFlashcardResults(false);
+    }
+  }, [parsedFlashcardData]);
+
   // Intersection observer for sticky bar
   useEffect(() => {
     if (!parsedQuizData || !message || !onQuizVisibilityChange) {
@@ -436,8 +585,11 @@ const ChatMessage = ({
   // RENDER
   // ============================================
 
+  // Check if message contains flashcards for styling
+  const hasFlashcards = isAI && Array.isArray(parsedFlashcardData) && parsedFlashcardData.length > 0;
+
   return (
-    <div className={`message ${isUser ? "user-message" : "ai-message"}`}>
+    <div className={`message ${isUser ? "user-message" : "ai-message"} ${hasFlashcards ? "message-with-flashcards" : ""}`}>
       {/* Avatar */}
       {isAI && (
         <div>
@@ -521,6 +673,82 @@ const ChatMessage = ({
           </div>
         )}
 
+        {/* Flashcard Display - Single Card Navigation */}
+        {isAI && Array.isArray(parsedFlashcardData) && parsedFlashcardData.length > 0 && (() => {
+          console.log("🎴 RENDERING FLASHCARDS - Total:", parsedFlashcardData.length);
+          console.log("🎴 Current card index:", currentCardIndex);
+          console.log("🎴 Show results:", showFlashcardResults);
+          return true;
+        })() && (
+          <div className="message-text">
+            <div className="flashcard-view-container">
+              {showFlashcardResults ? (
+                /* Results Screen */
+                <FlashcardResults
+                  totalCards={parsedFlashcardData.length}
+                  masteredCards={parsedFlashcardData.filter(c => c.status === 'mastered').length}
+                  learningCards={parsedFlashcardData.filter(c => c.status === 'learning').length}
+                  newCards={parsedFlashcardData.filter(c => c.status === 'new' || !c.status).length}
+                  onContinue={handleContinueLearning}
+                  onReview={handleReviewFlashcards}
+                  topicBreakdown={(() => {
+                    // Calculate topic breakdown
+                    const topicMap = {};
+                    parsedFlashcardData.forEach(card => {
+                      const topic = card.topic || 'General';
+                      if (!topicMap[topic]) {
+                        topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
+                      }
+                      topicMap[topic].total++;
+                      if (card.status === 'mastered') topicMap[topic].mastered++;
+                      if (card.status === 'learning') topicMap[topic].learning++;
+                    });
+                    return Object.values(topicMap);
+                  })()}
+                />
+              ) : parsedFlashcardData[currentCardIndex] ? (
+                /* Current Flashcard */
+                <ChatFlashcard
+                  flashcard={parsedFlashcardData[currentCardIndex]}
+                  messageId={message.id}
+                  cardIndex={currentCardIndex}
+                  onCardReview={handleCardReview}
+                  onNext={handleNextCard}
+                  onSkip={handleSkipCard}
+                  isLastCard={currentCardIndex === parsedFlashcardData.length - 1}
+                  totalCards={parsedFlashcardData.length}
+                  modalOpen={flashcardModalOpen}
+                  onModalChange={setFlashcardModalOpen}
+                  allFlashcards={parsedFlashcardData}
+                  onNavigate={handleNavigateToCard}
+                  showReview={false}
+                />
+              ) : (
+                /* Loading state */
+                <QuizLoading />
+              )}
+            </div>
+
+            {/* Streaming Indicator */}
+            {message.isStreaming && !showFlashcardResults && (
+              <div className="flashcard-streaming-indicator">
+                <div className="typing-indicator">
+                  <span className="blinking-dots">
+                    <h4>
+                      <strong>
+                        ✨ {i18n.language === 'fr' ? 'Génération des flashcards...' : 'Generating flashcards...'}
+                      </strong>
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </h4>
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Study Sheet Display */}
         {isAI && message.html && (
           <ChatStudySheet message={message} />
@@ -537,7 +765,7 @@ const ChatMessage = ({
         )}
 
         {/* Regular Text Message */}
-        {!parsedQuizData && message.type !== "studysheet" && (
+        {!parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
           <div className={isAI ? "message-text" : ""}>
             {isUser ? (
               <div style={{ wordWrap: 'break-word' }}>

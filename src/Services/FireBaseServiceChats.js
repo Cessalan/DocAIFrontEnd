@@ -245,6 +245,79 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
   }
 };
 
+export const UpdateFlashcardReview = async (chatId, messageId, cardIndex, reviewData) => {
+  try {
+    console.log("Attempting to update flashcard review:", { chatId, messageId, cardIndex });
+
+    let messageRef;
+    let messageDoc;
+    let actualDocId;
+
+    // STEP 1: Try direct access using messageId as Firebase document ID
+    try {
+      messageRef = doc(db, "chats", chatId, "messages", messageId);
+      messageDoc = await getDoc(messageRef);
+
+      if (messageDoc.exists()) {
+        console.log("Found message via direct access");
+        actualDocId = messageId;
+      }
+    } catch (directAccessError) {
+      console.log("Direct access failed, will try query approach");
+    }
+
+    // STEP 2: If direct access failed, query for document with matching id field
+    if (!messageDoc || !messageDoc.exists()) {
+      console.log("Querying for message with id field:", messageId);
+
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const q = query(messagesRef, where("id", "==", messageId));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        throw new Error(`Message not found: ${messageId} in chat: ${chatId}`);
+      }
+
+      messageDoc = querySnapshot.docs[0];
+      actualDocId = messageDoc.id;
+      messageRef = doc(db, "chats", chatId, "messages", actualDocId);
+
+      console.log("Found message via query, Firebase doc ID:", actualDocId);
+    }
+
+    console.log("Message found, data:", messageDoc.data());
+
+    const messageData = messageDoc.data();
+    const flashcardData = [...messageData.flashcardData];
+
+    if (cardIndex < 0 || cardIndex >= flashcardData.length) {
+      throw new Error(`Invalid card index: ${cardIndex}`);
+    }
+
+    // Update the specific flashcard with review data
+    flashcardData[cardIndex] = {
+      ...flashcardData[cardIndex],
+      userReview: reviewData.userReview,
+      status: reviewData.status,
+      reviewCount: reviewData.reviewCount,
+      lastReviewed: reviewData.lastReviewed
+    };
+
+    // Update the message document
+    await updateDoc(messageRef, {
+      flashcardData: flashcardData,
+      updatedAt: new Date()
+    });
+
+    console.log("Flashcard review saved successfully to document:", actualDocId);
+    return { success: true, docId: actualDocId };
+
+  } catch (error) {
+    console.error("Error saving flashcard review:", error);
+    throw error;
+  }
+};
+
 
 export const DeleteChat = async (chatId) => {
   try {

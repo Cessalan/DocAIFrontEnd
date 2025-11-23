@@ -1,0 +1,198 @@
+/* ============================================
+   FLASHCARD NAVIGATION - macOS STYLE
+   Compact, minimal, professional
+   ============================================ */
+
+.flashcard-navigation {
+  background: white;
+  border-radius: 10px;
+  padding: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+  border: none;
+}
+
+.flashcard-nav-title {
+  font-size: 10px;
+  font-weight: 600;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 10px;
+}
+
+/* Card List */
+.flashcard-nav-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.flashcard-nav-item {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  background: rgba(0, 0, 0, 0.02);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  padding: 6px;
+  position: relative;
+}
+
+.flashcard-nav-item:hover {
+  background: rgba(0, 0, 0, 0.06);
+  transform: scale(1.05);
+}
+
+.flashcard-nav-item.active {
+  background: rgba(107, 70, 193, 0.1);
+  box-shadow: 0 0 0 2px rgba(107, 70, 193, 0.3);
+}
+
+.flashcard-nav-number {
+  font-size: 11px;
+  font-weight: 600;
+  color: #333;
+}
+
+.flashcard-nav-icon {
+  font-size: 12px;
+}
+
+/* Status-specific styling - subtle macOS colors */
+.flashcard-nav-status-new {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.flashcard-nav-status-learning {
+  background: rgba(255, 193, 7, 0.12);
+}
+
+.flashcard-nav-status-mastered {
+  background: rgba(56, 161, 105, 0.12);
+}
+
+.flashcard-nav-status-know {
+  background: rgba(56, 161, 105, 0.15);
+}
+
+.flashcard-nav-status-again {
+  background: rgba(229, 62, 62, 0.12);
+}
+
+/* Legend */
+.flashcard-nav-legend {
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.flashcard-legend-title {
+  font-size: 9px;
+  font-weight: 600;
+  color: #999;
+  margin-bottom: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.flashcard-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.flashcard-legend-icon {
+  font-size: 11px;
+}
+
+.flashcard-legend-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .flashcard-nav-list {
+    grid-template-columns: repeat(auto-fill, minmax(36px, 1fr));
+    gap: 5px;
+  }
+
+  .flashcard-nav-item {
+    padding: 5px;
+  }
+
+  .flashcard-nav-number {
+    font-size: 10px;
+  }
+
+  .flashcard-nav-icon {
+    font-size: 11px;
+  }
+}
+
+/* Dark Mode - macOS Style */
+body.dark-mode .flashcard-navigation {
+  background: #1a1a1a;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .flashcard-nav-title {
+  color: #999;
+}
+
+body.dark-mode .flashcard-nav-item {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .flashcard-nav-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .flashcard-nav-item.active {
+  background: rgba(159, 122, 234, 0.2);
+  box-shadow: 0 0 0 2px rgba(159, 122, 234, 0.4);
+}
+
+body.dark-mode .flashcard-nav-number {
+  color: #e5e5e5;
+}
+
+body.dark-mode .flashcard-nav-status-new {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .flashcard-nav-status-learning {
+  background: rgba(255, 193, 7, 0.15);
+}
+
+body.dark-mode .flashcard-nav-status-mastered {
+  background: rgba(104, 211, 145, 0.15);
+}
+
+body.dark-mode .flashcard-nav-status-know {
+  background: rgba(104, 211, 145, 0.18);
+}
+
+body.dark-mode .flashcard-nav-status-again {
+  background: rgba(252, 129, 129, 0.15);
+}
+
+body.dark-mode .flashcard-nav-legend {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .flashcard-legend-title,
+body.dark-mode .flashcard-legend-text {
+  color: #999;
+}

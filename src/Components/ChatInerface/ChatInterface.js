@@ -41,6 +41,7 @@ import {
   SaveFileMetaData,
   GetFileMetadataByName,
   UpdateQuizAnswer,
+  UpdateFlashcardReview,
   SaveQuizFeedback
 } from '../../Services/FireBaseServiceChats.js';
 
@@ -764,6 +765,73 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             return;
           }
 
+          // Flashcard generation progress
+          if (statusUpdate.status === "flashcard_generating") {
+            console.log("generating flashcards streaming");
+
+            setChatMessages(prev => {
+              const existingFlashcard = prev.find(msg =>
+                msg.id === streamingMessageId && msg.type === 'flashcard'
+              );
+
+              if (existingFlashcard) {
+                return prev.map(msg =>
+                  msg.id === streamingMessageId && msg.type === 'flashcard'
+                    ? { ...msg, content: statusUpdate.message }
+                    : msg
+                );
+              }
+
+              return [...prev, {
+                id: streamingMessageId,
+                role: 'assistant',
+                type: 'flashcard',
+                content: statusUpdate.message,
+                flashcardData: [],
+                isStreaming: true,
+                timestamp: new Date()
+              }];
+            });
+
+            setStreamingStatus({
+              status: 'generating_flashcards',
+              message: statusUpdate.message
+            });
+            return;
+          }
+
+          // Individual flashcard ready
+          if (statusUpdate.status === "flashcard_ready") {
+            console.log("📇 Flashcard received:", statusUpdate.total_so_far);
+
+            setChatMessages(prev =>
+              prev.map(msg => {
+                if (msg.id === streamingMessageId && msg.type === 'flashcard') {
+                  const newFlashcardData = [...(msg.flashcardData || []), statusUpdate.flashcard];
+                  console.log("✅ Appended flashcard, total:", newFlashcardData.length);
+
+                  return {
+                    ...msg,
+                    flashcardData: newFlashcardData,
+                    content: `Flashcards - ${statusUpdate.total_so_far} cards generated`,
+                    isStreaming: true
+                  };
+                }
+                return msg;
+              })
+            );
+            return;
+          }
+
+          // Flashcards complete
+          if (statusUpdate.status === "flashcard_complete") {
+            console.log("flashcards completed");
+
+            handleFlashcardComplete(statusUpdate.flashcard_data, streamingMessageId, updatedChatId);
+            setStreamingStatus(null);
+            return;
+          }
+
           // Prompts suggestions
           if (statusUpdate.status === "suggested_prompts" && statusUpdate.suggestions) {
             console.log("💡 Received suggestions:", statusUpdate.suggestions);
@@ -984,6 +1052,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
   // ✅ FIXED: Use ref instead of state for synchronous updates
   const handleQuizAnswerSelect = async (answerData) => {
     try {
+      // Check if this is a flashcard review instead of quiz answer
+      if (answerData.cardIndex !== undefined) {
+        return handleFlashcardReview(answerData);
+      }
+
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
       console.log("📝 Quiz answer received:");
       console.log("  Message ID:", answerData.messageId);
@@ -1223,7 +1296,111 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     console.log("✅ Quiz save complete!");
   };
 
+  const handleFlashcardComplete = async (flashcardData, messageId, chatId) => {
+    console.log("✅ Flashcards complete, finalizing message");
+    console.log("📦 Backend sent", flashcardData?.length, "flashcards");
+    console.log("🆔 Message ID:", messageId);
+    console.log("💬 Chat ID:", chatId);
+    setStreamingStatus(null);
 
+    // Initialize flashcard data with status
+    const initializedFlashcards = flashcardData.map(card => ({
+      ...card,
+      status: 'new',
+      reviewCount: 0,
+      lastReviewed: null
+    }));
+
+    console.log("🎴 Initialized flashcards:", initializedFlashcards);
+
+    // Update UI state
+    setChatMessages(prev => {
+      console.log("📝 Updating chat messages, current count:", prev.length);
+      const updatedMessages = prev.map(msg => {
+        if (msg.id === messageId && msg.type === 'flashcard') {
+          console.log("✅ Found flashcard message to update:", msg.id);
+          return {
+            ...msg,
+            flashcardData: initializedFlashcards,
+            content: `Flashcards - ${flashcardData.length} cards ready`,
+            isStreaming: false,
+            timestamp: new Date()
+          };
+        }
+        return msg;
+      });
+      console.log("📝 Updated messages count:", updatedMessages.length);
+      return updatedMessages;
+    });
+
+    // Save to Firebase
+    const messageToSave = {
+      id: messageId,
+      role: 'assistant',
+      type: 'flashcard',
+      flashcardData: initializedFlashcards,
+      content: `Flashcards - ${flashcardData.length} cards`,
+      isStreaming: false,
+      timestamp: new Date()
+    };
+
+    try {
+      await AppendToChat(chatId, messageToSave);
+      console.log("✅ Flashcards saved to Firebase successfully");
+    } catch (error) {
+      console.error("❌ Error saving flashcards to Firebase:", error);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await AppendToChat(chatId, messageToSave);
+        console.log("✅ Flashcards saved successfully on retry");
+      } catch (retryError) {
+        console.error("❌ Flashcards save failed on retry:", retryError);
+      }
+    }
+
+    setIsAiTyping(false);
+    console.log("🎉 Flashcard finalization complete!");
+  };
+
+  const handleFlashcardReview = async (reviewData) => {
+    try {
+      console.log("📇 Flashcard review received:", reviewData);
+
+      // Update UI immediately (optimistic update)
+      setChatMessages(prev =>
+        prev.map(msg => {
+          if (msg.id !== reviewData.messageId || msg.type !== 'flashcard') return msg;
+
+          const updatedFlashcardData = (msg.flashcardData || []).map((card, idx) =>
+            idx === reviewData.cardIndex
+              ? {
+                ...card,
+                userReview: reviewData.userReview,
+                status: reviewData.status,
+                reviewCount: reviewData.reviewCount,
+                lastReviewed: reviewData.lastReviewed
+              }
+              : card
+          );
+
+          console.log("✅ Updated flashcard UI state for card", reviewData.cardIndex + 1);
+          return { ...msg, flashcardData: updatedFlashcardData };
+        })
+      );
+
+      // Save to Firebase
+      await UpdateFlashcardReview(
+        currentChatID,
+        reviewData.messageId,
+        reviewData.cardIndex,
+        reviewData
+      );
+
+      console.log("✅ Flashcard review saved to Firebase");
+    } catch (error) {
+      console.error("❌ Error saving flashcard review:", error);
+    }
+  };
 
   // ============================================
   // FILE HANDLING

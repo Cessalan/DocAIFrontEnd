@@ -475,7 +475,40 @@ export const generate_quiz = async(chat_id, file_name,currentLanguage) => {
        console.error("Error during quiz generation:", error);
       throw error;
   }
-  
+
+}
+
+export const generate_flashcards = async(chat_id, file_name, currentLanguage, num_cards = 15) => {
+
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    filename: file_name,
+    num_cards: num_cards,
+    language: currentLanguage
+  });
+
+  try {
+    const response = await fetch(`${FAST_API_BASE}/chat/generate-flashcards`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Flashcard Generation request failed with status ${response.status}: ${errorText}`);
+    }
+
+    const flashcard_json = await response.json();
+    console.log("Fast API response flashcard generation: ", flashcard_json);
+    return flashcard_json;
+
+  } catch(error) {
+    console.error("Error during flashcard generation:", error);
+    throw error;
+  }
 }
 
 export const generate_scenario = async(chat_id,file_name)=> {

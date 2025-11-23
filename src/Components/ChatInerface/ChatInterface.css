@@ -492,6 +492,12 @@
   animation: messageSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
+/* Flashcard messages take much more width for better UX */
+.message:has(.flashcard-view-container),
+.message-with-flashcards {
+  max-width: 95%;
+}
+
 @keyframes messageSlideIn {
   from {
     opacity: 0;
@@ -507,6 +513,12 @@
   margin-left: auto;   /* Center by using auto margins on both sides */
   margin-right: auto;
   width: 100%;         /* Take full width within max-width constraint */
+}
+
+/* Flashcard messages should be centered with minimum width */
+.ai-message.message-with-flashcards {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .user-message {
