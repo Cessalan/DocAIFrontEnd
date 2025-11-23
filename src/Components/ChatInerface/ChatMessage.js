@@ -7,6 +7,7 @@ import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
 import QuizResultsAnalytics from "./QuizResultsAnalytics";
+import FlashcardFeedback from "./FlashcardFeedback";
 
 import QuizLoading from "./QuizLoading";
 
@@ -683,29 +684,39 @@ const ChatMessage = ({
           <div className="message-text">
             <div className="flashcard-view-container">
               {showFlashcardResults ? (
-                /* Results Screen */
-                <FlashcardResults
-                  totalCards={parsedFlashcardData.length}
-                  masteredCards={parsedFlashcardData.filter(c => c.status === 'mastered').length}
-                  learningCards={parsedFlashcardData.filter(c => c.status === 'learning').length}
-                  newCards={parsedFlashcardData.filter(c => c.status === 'new' || !c.status).length}
-                  onContinue={handleContinueLearning}
-                  onReview={handleReviewFlashcards}
-                  topicBreakdown={(() => {
-                    // Calculate topic breakdown
-                    const topicMap = {};
-                    parsedFlashcardData.forEach(card => {
-                      const topic = card.topic || 'General';
-                      if (!topicMap[topic]) {
-                        topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
-                      }
-                      topicMap[topic].total++;
-                      if (card.status === 'mastered') topicMap[topic].mastered++;
-                      if (card.status === 'learning') topicMap[topic].learning++;
-                    });
-                    return Object.values(topicMap);
-                  })()}
-                />
+                <>
+                  {/* Results Screen */}
+                  <FlashcardResults
+                    totalCards={parsedFlashcardData.length}
+                    masteredCards={parsedFlashcardData.filter(c => c.status === 'mastered').length}
+                    learningCards={parsedFlashcardData.filter(c => c.status === 'learning').length}
+                    newCards={parsedFlashcardData.filter(c => c.status === 'new' || !c.status).length}
+                    onContinue={handleContinueLearning}
+                    onReview={handleReviewFlashcards}
+                    topicBreakdown={(() => {
+                      // Calculate topic breakdown
+                      const topicMap = {};
+                      parsedFlashcardData.forEach(card => {
+                        const topic = card.topic || 'General';
+                        if (!topicMap[topic]) {
+                          topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
+                        }
+                        topicMap[topic].total++;
+                        if (card.status === 'mastered') topicMap[topic].mastered++;
+                        if (card.status === 'learning') topicMap[topic].learning++;
+                      });
+                      return Object.values(topicMap);
+                    })()}
+                  />
+
+                  {/* Feedback (matches design under flashcard view) */}
+                  <div className="flashcard-results-feedback">
+                    <FlashcardFeedback
+                      onFeedbackSubmit={(data) => onFeedbackSubmit && onFeedbackSubmit(message.id, data)}
+                      hasSubmitted={!!message.feedbackData}
+                    />
+                  </div>
+                </>
               ) : parsedFlashcardData[currentCardIndex] ? (
                 /* Current Flashcard */
                 <ChatFlashcard

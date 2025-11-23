@@ -442,12 +442,13 @@ export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
 
 /**
  * Get all quiz feedbacks from all chats (DEV MODE ONLY)
- * @returns {Promise<Array>} - Array of quiz feedback objects
+ * @returns {Promise<Array>} - Array of quiz feedback objects with full context
  */
 export const GetAllQuizFeedbacks = async () => {
   try {
     console.log("📥 Fetching all quiz feedbacks...");
 
+    const userId = auth.currentUser?.uid;
     const chatsRef = collection(db, "chats");
     const chatsSnapshot = await getDocs(chatsRef);
 
@@ -456,20 +457,48 @@ export const GetAllQuizFeedbacks = async () => {
     // Iterate through each chat
     for (const chatDoc of chatsSnapshot.docs) {
       const chatId = chatDoc.id;
-      const messagesRef = collection(db, "chats", chatId, "messages");
-      const messagesSnapshot = await getDocs(messagesRef);
+      const chatData = chatDoc.data();
 
-      // Find messages with feedbackData
-      messagesSnapshot.docs.forEach(messageDoc => {
-        const messageData = messageDoc.data();
-        if (messageData.feedbackData) {
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
+      const messagesSnapshot = await getDocs(messagesQuery);
+
+      const messages = messagesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Find messages with feedbackData and quizData
+      messages.forEach((messageData, index) => {
+        if (messageData.feedbackData && messageData.quizData) {
+          // Get previous and next messages
+          const previousMessage = index > 0 ? messages[index - 1] : null;
+          const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+
           allFeedbacks.push({
-            id: messageDoc.id,
+            id: messageData.id,
             chatId,
-            messageId: messageData.id || messageDoc.id,
+            messageId: messageData.id,
+            userEmail: chatData.userEmail || auth.currentUser?.email || 'Unknown',
+            userId: chatData.userId || userId,
             feedbackData: messageData.feedbackData,
             timestamp: messageData.feedbackData.submittedAt,
-            quizContent: messageData.content || messageData.text || 'N/A'
+            // Quiz content
+            quizData: messageData.quizData,
+            totalQuestions: Array.isArray(messageData.quizData) ? messageData.quizData.length : 0,
+            // Context messages
+            previousMessage: previousMessage ? {
+              content: previousMessage.content || previousMessage.text,
+              type: previousMessage.type,
+              sender: previousMessage.sender,
+              timestamp: previousMessage.timestamp
+            } : null,
+            nextMessage: nextMessage ? {
+              content: nextMessage.content || nextMessage.text,
+              type: nextMessage.type,
+              sender: nextMessage.sender,
+              timestamp: nextMessage.timestamp
+            } : null
           });
         }
       });
@@ -487,6 +516,86 @@ export const GetAllQuizFeedbacks = async () => {
 
   } catch (error) {
     console.error("❌ Error fetching quiz feedbacks:", error);
+    throw error;
+  }
+};
+
+/**
+ * Get all flashcard feedbacks from all chats (DEV MODE ONLY)
+ * @returns {Promise<Array>} - Array of flashcard feedback objects with full context
+ */
+export const GetAllFlashcardFeedbacks = async () => {
+  try {
+    console.log("📥 Fetching all flashcard feedbacks...");
+
+    const userId = auth.currentUser?.uid;
+    const chatsRef = collection(db, "chats");
+    const chatsSnapshot = await getDocs(chatsRef);
+
+    const allFeedbacks = [];
+
+    // Iterate through each chat
+    for (const chatDoc of chatsSnapshot.docs) {
+      const chatId = chatDoc.id;
+      const chatData = chatDoc.data();
+
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
+      const messagesSnapshot = await getDocs(messagesQuery);
+
+      const messages = messagesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Find messages with feedbackData and flashcardData
+      messages.forEach((messageData, index) => {
+        if (messageData.feedbackData && messageData.flashcardData) {
+          // Get previous and next messages
+          const previousMessage = index > 0 ? messages[index - 1] : null;
+          const nextMessage = index < messages.length - 1 ? messages[index + 1] : null;
+
+          allFeedbacks.push({
+            id: messageData.id,
+            chatId,
+            messageId: messageData.id,
+            userEmail: chatData.userEmail || auth.currentUser?.email || 'Unknown',
+            userId: chatData.userId || userId,
+            feedbackData: messageData.feedbackData,
+            timestamp: messageData.feedbackData.submittedAt,
+            // Flashcard content
+            flashcardData: messageData.flashcardData,
+            totalCards: Array.isArray(messageData.flashcardData) ? messageData.flashcardData.length : 0,
+            // Context messages
+            previousMessage: previousMessage ? {
+              content: previousMessage.content || previousMessage.text,
+              type: previousMessage.type,
+              sender: previousMessage.sender,
+              timestamp: previousMessage.timestamp
+            } : null,
+            nextMessage: nextMessage ? {
+              content: nextMessage.content || nextMessage.text,
+              type: nextMessage.type,
+              sender: nextMessage.sender,
+              timestamp: nextMessage.timestamp
+            } : null
+          });
+        }
+      });
+    }
+
+    // Sort by timestamp descending (newest first)
+    allFeedbacks.sort((a, b) => {
+      const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp) || new Date(0);
+      const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp) || new Date(0);
+      return timeB - timeA;
+    });
+
+    console.log(`✅ Fetched ${allFeedbacks.length} flashcard feedbacks`);
+    return allFeedbacks;
+
+  } catch (error) {
+    console.error("❌ Error fetching flashcard feedbacks:", error);
     throw error;
   }
 };
