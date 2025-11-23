@@ -1,7 +1,9 @@
 import React from 'react';
 import './FlashcardNavigation.css';
+import FlashcardFeedback from './FlashcardFeedback';
 
-function FlashcardNavigation({ flashcards, currentIndex, onNavigate }) {
+function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackSubmit, hasGivenFeedback, feedbackData }) {
+  const isDev = process.env.NODE_ENV === 'development';
   if (!flashcards || flashcards.length === 0) {
     return null;
   }
@@ -72,6 +74,38 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate }) {
           <span className="flashcard-legend-text">Mastered</span>
         </div>
       </div>
+
+      {/* Feedback Button */}
+      <div className="flashcard-nav-footer">
+        <FlashcardFeedback
+          onFeedbackSubmit={onFeedbackSubmit}
+          hasSubmitted={hasGivenFeedback}
+        />
+      </div>
+
+      {/* DEV MODE: Display Feedback Data */}
+      {isDev && feedbackData && (
+        <div className="flashcard-feedback-dev-display">
+          <div className="dev-feedback-header">
+            <span className="dev-badge">DEV</span>
+            <span className="dev-feedback-title">Flashcard Feedback Collected</span>
+          </div>
+          <div className="dev-feedback-content">
+            <div className="dev-feedback-row">
+              <span className="dev-feedback-label">Rating:</span>
+              <span className="dev-feedback-value">
+                {feedbackData.rating === 'good' ? '😄 Good' :
+                 feedbackData.rating === 'neutral' ? '😐 Okay' :
+                 feedbackData.rating === 'bad' ? '☹️ Bad' : feedbackData.rating}
+              </span>
+            </div>
+            <div className="dev-feedback-row">
+              <span className="dev-feedback-label">Detail:</span>
+              <span className="dev-feedback-value">{feedbackData.detail}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

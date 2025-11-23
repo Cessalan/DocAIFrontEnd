@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
 import './ChatFlashcard.css';
 import FlashcardNavigation from './FlashcardNavigation';
+import FlashcardResults from './FlashcardResults';
 import { useTranslation } from 'react-i18next';
 
 // Icon Components
@@ -48,7 +49,13 @@ function ChatFlashcard(props) {
     onSkip,
     modalOpen: externalModalOpen,
     onModalChange,
-    onNavigate
+    onNavigate,
+    showResults = false,
+    onReviewFlashcards,
+    onContinueLearning,
+    onFeedbackSubmit,
+    hasGivenFeedback,
+    feedbackData
   } = props;
 
   // State
@@ -74,6 +81,44 @@ function ChatFlashcard(props) {
   // Calculate mastered cards
   const masteredCount = useMemo(() => {
     return allFlashcards.filter(card => card.status === 'mastered').length;
+  }, [allFlashcards]);
+
+  // Calculate results statistics
+  const resultsData = useMemo(() => {
+    if (!allFlashcards || allFlashcards.length === 0) {
+      return { masteredCards: 0, learningCards: 0, newCards: 0, topicBreakdown: [] };
+    }
+
+    const masteredCards = allFlashcards.filter(card =>
+      card.status === 'mastered' || card.userReview?.knowIt === true
+    ).length;
+
+    const learningCards = allFlashcards.filter(card =>
+      card.status === 'learning' || (card.userReview && card.userReview.knowIt === false)
+    ).length;
+
+    const newCards = allFlashcards.filter(card =>
+      !card.status && !card.userReview
+    ).length;
+
+    // Calculate topic breakdown if topics exist
+    const topicMap = {};
+    allFlashcards.forEach(card => {
+      const topic = card.topic || 'General';
+      if (!topicMap[topic]) {
+        topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
+      }
+      topicMap[topic].total++;
+      if (card.status === 'mastered' || card.userReview?.knowIt === true) {
+        topicMap[topic].mastered++;
+      } else if (card.status === 'learning' || card.userReview?.knowIt === false) {
+        topicMap[topic].learning++;
+      }
+    });
+
+    const topicBreakdown = Object.values(topicMap);
+
+    return { masteredCards, learningCards, newCards, topicBreakdown };
   }, [allFlashcards]);
 
   // Effects
@@ -149,7 +194,14 @@ function ChatFlashcard(props) {
     }
   };
 
-  if (!flashcard) {
+  const handleFeedbackSubmit = (data) => {
+    console.log('Flashcard Feedback Submitted:', data);
+    if (onFeedbackSubmit) {
+      onFeedbackSubmit(messageId, data);
+    }
+  };
+
+  if (!flashcard && !showResults) {
     return (
       <div className="flashcard-compact-container">
         <div className="flashcard-compact-loading">
@@ -291,7 +343,7 @@ function ChatFlashcard(props) {
   const mainContent = (
     <div className="flashcard-compact-container glassmorphic">
       <div className="flashcard-compact-single">
-        {totalCards > 1 && (
+        {totalCards > 1 && !showResults && (
           <div className="flashcard-compact-header">
             <h3 className="flashcard-compact-title">Flashcards</h3>
             <button
@@ -303,7 +355,71 @@ function ChatFlashcard(props) {
             </button>
           </div>
         )}
-        {renderFlashcardContent()}
+        {showResults ? (
+          <>
+            <FlashcardResults
+              totalCards={totalCards}
+              masteredCards={resultsData.masteredCards}
+              learningCards={resultsData.learningCards}
+              newCards={resultsData.newCards}
+              onContinue={onContinueLearning}
+              onReview={onReviewFlashcards}
+              topicBreakdown={resultsData.topicBreakdown}
+            />
+
+            {/* DEV MODE: Display Feedback Data - In results view */}
+            {process.env.NODE_ENV === 'development' && feedbackData && (
+              <div className="flashcard-feedback-dev-display" style={{ marginTop: '12px' }}>
+                <div className="dev-feedback-header">
+                  <span className="dev-badge">DEV</span>
+                  <span className="dev-feedback-title">Flashcard Feedback Collected</span>
+                </div>
+                <div className="dev-feedback-content">
+                  <div className="dev-feedback-row">
+                    <span className="dev-feedback-label">Rating:</span>
+                    <span className="dev-feedback-value">
+                      {feedbackData.rating === 'good' ? '😄 Good' :
+                       feedbackData.rating === 'neutral' ? '😐 Okay' :
+                       feedbackData.rating === 'bad' ? '☹️ Bad' : feedbackData.rating}
+                    </span>
+                  </div>
+                  <div className="dev-feedback-row">
+                    <span className="dev-feedback-label">Detail:</span>
+                    <span className="dev-feedback-value">{feedbackData.detail}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        ) : (
+          <>
+            {flashcard && renderFlashcardContent()}
+
+            {/* DEV MODE: Display Feedback Data - In flashcard view */}
+            {process.env.NODE_ENV === 'development' && feedbackData && flashcard && (
+              <div className="flashcard-feedback-dev-display" style={{ marginTop: '12px' }}>
+                <div className="dev-feedback-header">
+                  <span className="dev-badge">DEV</span>
+                  <span className="dev-feedback-title">Flashcard Feedback Collected</span>
+                </div>
+                <div className="dev-feedback-content">
+                  <div className="dev-feedback-row">
+                    <span className="dev-feedback-label">Rating:</span>
+                    <span className="dev-feedback-value">
+                      {feedbackData.rating === 'good' ? '😄 Good' :
+                       feedbackData.rating === 'neutral' ? '😐 Okay' :
+                       feedbackData.rating === 'bad' ? '☹️ Bad' : feedbackData.rating}
+                    </span>
+                  </div>
+                  <div className="dev-feedback-row">
+                    <span className="dev-feedback-label">Detail:</span>
+                    <span className="dev-feedback-value">{feedbackData.detail}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );
@@ -324,17 +440,32 @@ function ChatFlashcard(props) {
         </div>
 
         <div className="flashcard-modal-body">
-          {totalCards > 1 && (
+          {!showResults && totalCards > 1 && (
             <div className="flashcard-modal-sidebar">
               <FlashcardNavigation
                 flashcards={allFlashcards}
                 currentIndex={cardIndex}
                 onNavigate={handleNavigation}
+                onFeedbackSubmit={handleFeedbackSubmit}
+                hasGivenFeedback={hasGivenFeedback}
+                feedbackData={feedbackData}
               />
             </div>
           )}
           <div className="flashcard-modal-main">
-            {renderFlashcardContent()}
+            {showResults ? (
+              <FlashcardResults
+                totalCards={totalCards}
+                masteredCards={resultsData.masteredCards}
+                learningCards={resultsData.learningCards}
+                newCards={resultsData.newCards}
+                onContinue={onContinueLearning}
+                onReview={onReviewFlashcards}
+                topicBreakdown={resultsData.topicBreakdown}
+              />
+            ) : (
+              renderFlashcardContent()
+            )}
           </div>
         </div>
       </div>

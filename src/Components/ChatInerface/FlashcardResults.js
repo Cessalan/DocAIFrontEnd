@@ -91,73 +91,51 @@ const FlashcardResults = ({
   const tier = getMasteryTier();
 
   return (
-    <div className="flashcard-results-container">
-      <div className={`flashcard-results-header ${tier.color}`}>
-        <div className="flashcard-results-emoji">{tier.emoji}</div>
-        <h2 className="flashcard-results-title">{tier.title}</h2>
-        <p className="flashcard-results-message">{tier.message}</p>
+    <div className={`flashcard-results-container tier-${tier.color}`}>
+      {/* Compact Header - No Circle */}
+      <div className="flashcard-results-header">
+        <div className="flashcard-results-title-wrapper">
+          <div>
+            <h2 className="flashcard-results-title">
+              <span className="flashcard-results-emoji">{tier.emoji}</span>
+              {tier.title}
+            </h2>
+            <p className="flashcard-results-message">{tier.message}</p>
+          </div>
+          <div className={`flashcard-score-percentage-inline tier-${tier.color}`}>
+            {percentage}%
+          </div>
+        </div>
       </div>
 
-      <div className="flashcard-results-score">
-        <div className="flashcard-score-circle">
-          <svg viewBox="0 0 100 100" className="flashcard-progress-ring">
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="#e0e0e0"
-              strokeWidth="8"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r="45"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="8"
-              strokeDasharray={`${percentage * 2.827} 282.7`}
-              strokeLinecap="round"
-              transform="rotate(-90 50 50)"
-              className={`flashcard-progress-bar ${tier.color}`}
-            />
-          </svg>
-          <div className="flashcard-score-text">
-            <div className="flashcard-score-percentage">{percentage}%</div>
-            <div className="flashcard-score-label">
-              {currentLanguage === 'fr' ? 'Maîtrisé' : 'Mastered'}
+      {/* Compact Stats Grid */}
+      <div className="flashcard-results-breakdown">
+        <div className="flashcard-breakdown-item mastered">
+          <div className="flashcard-breakdown-icon">✅</div>
+          <div className="flashcard-breakdown-details">
+            <div className="flashcard-breakdown-count">{masteredCards}</div>
+            <div className="flashcard-breakdown-label">
+              {currentLanguage === 'fr' ? 'Maîtrisées' : 'Mastered'}
             </div>
           </div>
         </div>
 
-        <div className="flashcard-results-breakdown">
-          <div className="flashcard-breakdown-item mastered">
-            <div className="flashcard-breakdown-icon">✅</div>
-            <div className="flashcard-breakdown-details">
-              <div className="flashcard-breakdown-count">{masteredCards}</div>
-              <div className="flashcard-breakdown-label">
-                {currentLanguage === 'fr' ? 'Maîtrisées' : 'Mastered'}
-              </div>
+        <div className="flashcard-breakdown-item learning">
+          <div className="flashcard-breakdown-icon">📘</div>
+          <div className="flashcard-breakdown-details">
+            <div className="flashcard-breakdown-count">{learningCards}</div>
+            <div className="flashcard-breakdown-label">
+              {currentLanguage === 'fr' ? 'En Cours' : 'Learning'}
             </div>
           </div>
+        </div>
 
-          <div className="flashcard-breakdown-item learning">
-            <div className="flashcard-breakdown-icon">📘</div>
-            <div className="flashcard-breakdown-details">
-              <div className="flashcard-breakdown-count">{learningCards}</div>
-              <div className="flashcard-breakdown-label">
-                {currentLanguage === 'fr' ? 'En Cours' : 'Learning'}
-              </div>
-            </div>
-          </div>
-
-          <div className="flashcard-breakdown-item new">
-            <div className="flashcard-breakdown-icon">🆕</div>
-            <div className="flashcard-breakdown-details">
-              <div className="flashcard-breakdown-count">{newCards}</div>
-              <div className="flashcard-breakdown-label">
-                {currentLanguage === 'fr' ? 'Nouvelles' : 'New'}
-              </div>
+        <div className="flashcard-breakdown-item new">
+          <div className="flashcard-breakdown-icon">🆕</div>
+          <div className="flashcard-breakdown-details">
+            <div className="flashcard-breakdown-count">{newCards}</div>
+            <div className="flashcard-breakdown-label">
+              {currentLanguage === 'fr' ? 'Nouvelles' : 'New'}
             </div>
           </div>
         </div>
@@ -167,7 +145,7 @@ const FlashcardResults = ({
       {topicBreakdown && topicBreakdown.length > 0 && (
         <div className="flashcard-topic-breakdown">
           <h3 className="flashcard-topic-title">
-            {currentLanguage === 'fr' ? 'Par Sujet' : 'By Topic'}
+            📚 {currentLanguage === 'fr' ? 'Performance par Sujet' : 'Performance by Topic'}
           </h3>
           <div className="flashcard-topic-list">
             {topicBreakdown.map((topic, index) => {
@@ -178,7 +156,7 @@ const FlashcardResults = ({
               return (
                 <div key={index} className="flashcard-topic-item">
                   <div className="flashcard-topic-header">
-                    <span className="flashcard-topic-name">📚 {topic.topic}</span>
+                    <span className="flashcard-topic-name">{topic.topic}</span>
                     <span className="flashcard-topic-percentage">{topicPercentage}%</span>
                   </div>
                   <div className="flashcard-topic-progress">
@@ -188,7 +166,9 @@ const FlashcardResults = ({
                     />
                   </div>
                   <div className="flashcard-topic-stats">
-                    <span>{topic.mastered} / {topic.total} {currentLanguage === 'fr' ? 'maîtrisées' : 'mastered'}</span>
+                    <span className="count-correct">{topic.mastered}</span>
+                    <span className="count-divider">/</span>
+                    <span className="count-total">{topic.total}</span>
                   </div>
                 </div>
               );

@@ -2028,6 +2028,27 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     }
   }, [currentChatID]);
 
+  // ============================================
+  // FLASHCARD FEEDBACK HANDLING
+  // ============================================
+  const handleFlashcardFeedback = useCallback(async (messageId, feedbackData) => {
+    try {
+      console.log("📝 Saving flashcard feedback:", { messageId, feedbackData });
+      await SaveQuizFeedback(currentChatID, messageId, feedbackData);
+
+      // Update local state to reflect feedback given
+      setChatMessages(prev =>
+        prev.map(msg =>
+          msg.id === messageId
+            ? { ...msg, feedbackData: { ...feedbackData, submittedAt: new Date() } }
+            : msg
+        )
+      );
+    } catch (error) {
+      console.error("Failed to save flashcard feedback:", error);
+    }
+  }, [currentChatID]);
+
   const hasMessages = chatMessages.length > 0;
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 

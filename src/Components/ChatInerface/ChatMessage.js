@@ -722,6 +722,12 @@ const ChatMessage = ({
                   allFlashcards={parsedFlashcardData}
                   onNavigate={handleNavigateToCard}
                   showReview={false}
+                  showResults={showFlashcardResults}
+                  onReviewFlashcards={handleReviewFlashcards}
+                  onContinueLearning={handleContinueLearning}
+                  onFeedbackSubmit={onFeedbackSubmit}
+                  hasGivenFeedback={!!message.feedbackData}
+                  feedbackData={message.feedbackData}
                 />
               ) : (
                 /* Loading state */
