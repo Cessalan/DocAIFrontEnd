@@ -2041,7 +2041,7 @@ body.dark-mode .quiz-results-disclaimer {
   font-size: 11px;
   line-height: 1.5;
   color: #2d3748;
-  max-height: 120px;
+  max-height: 250px;
   overflow-y: auto;
   padding-right: 8px;
 

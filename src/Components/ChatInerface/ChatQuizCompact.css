@@ -492,6 +492,13 @@
   scrollbar-color: #d6bcfa transparent;
 }
 
+/* Increase rationale space when in modal (full-screen) - Light Mode */
+.quiz-compact-container.in-modal .feedback-rationale-content {
+  max-height: 300px;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
 .feedback-rationale-content::-webkit-scrollbar {
   width: 3px;
 }
@@ -596,6 +603,11 @@
 /* ============================================
    MODAL
    ============================================ */
+
+/* Increase rationale space when in modal (full-screen) */
+.quiz-modal-content .feedback-rationale-content {
+  max-height: 300px;
+}
 
 .quiz-modal-overlay {
   position: fixed;
@@ -1246,7 +1258,7 @@ body.dark-mode .feedback-rationale-content b {
 
 body.dark-mode .quiz-compact-container.in-modal .feedback-rationale-content {
   font-size: 15px;
-  max-height: 150px;
+  max-height: 300px;
   line-height: 1.7;
 }
 
