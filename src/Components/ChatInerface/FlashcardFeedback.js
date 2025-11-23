@@ -34,9 +34,10 @@ const FlashcardFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
                 left = buttonRect.left - popoverWidth - spacing;
             }
 
-            // Ensure it doesn't overflow the bottom
-            if (top + popoverHeight > window.innerHeight) {
-                top = window.innerHeight - popoverHeight - spacing;
+            // Check if it would overflow the bottom - if so, position ABOVE the button
+            if (buttonRect.top + popoverHeight > window.innerHeight) {
+                // Position above the button instead
+                top = buttonRect.top - popoverHeight - spacing;
             }
 
             // Ensure it doesn't overflow the top

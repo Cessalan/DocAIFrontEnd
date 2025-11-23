@@ -206,7 +206,7 @@ function ChatFlashcard(props) {
     return (
       <div className="flashcard-compact-container">
         <div className="flashcard-compact-loading">
-          Loading flashcard...
+          {t('flashcard.loading', 'Loading flashcard...')}
         </div>
       </div>
     );
@@ -235,7 +235,7 @@ function ChatFlashcard(props) {
         <div className="flashcard-compact-progress-text">
           {cardIndex + 1} / {totalCards}
           {masteredCount > 0 && (
-            <span className="flashcard-mastered-count"> • {masteredCount} mastered ✅</span>
+            <span className="flashcard-mastered-count"> • {masteredCount} {t('flashcard.mastered', 'mastered')} ✅</span>
           )}
         </div>
       </div>
@@ -248,29 +248,29 @@ function ChatFlashcard(props) {
         {/* Front of card */}
         <div className="flashcard-card-face flashcard-card-front">
           <div className="flashcard-content">
-            <div className="flashcard-label">Question</div>
+            <div className="flashcard-label">{t('flashcard.question', 'Question')}</div>
             <div className="flashcard-text">{flashcard.front}</div>
             {flashcard.hint && !isFlipped && (
               <div className="flashcard-hint">
-                💡 Hint: {flashcard.hint}
+                💡 {t('flashcard.hint', 'Hint')}: {flashcard.hint}
               </div>
             )}
           </div>
           <div className="flashcard-flip-instruction">
             <FlipIcon />
-            <span>Tap to flip</span>
+            <span>{t('flashcard.tapToFlip', 'Tap to flip')}</span>
           </div>
         </div>
 
         {/* Back of card */}
         <div className="flashcard-card-face flashcard-card-back">
           <div className="flashcard-content">
-            <div className="flashcard-label">Answer</div>
+            <div className="flashcard-label">{t('flashcard.answer', 'Answer')}</div>
             <div className="flashcard-text">{flashcard.back}</div>
           </div>
           <div className="flashcard-flip-instruction">
             <FlipIcon />
-            <span>Tap to flip back</span>
+            <span>{t('flashcard.tapToFlipBack', 'Tap to flip back')}</span>
           </div>
         </div>
       </div>
@@ -278,7 +278,7 @@ function ChatFlashcard(props) {
       {/* Review Buttons (only show when flipped) */}
       {isFlipped && !reviewed && (
         <div className="flashcard-review-section">
-          <div className="flashcard-review-prompt">How well did you know this?</div>
+          <div className="flashcard-review-prompt">{t('flashcard.howWellKnow', 'How well did you know this?')}</div>
           <div className="flashcard-review-buttons">
             <button
               className="flashcard-review-btn flashcard-review-again"
@@ -288,7 +288,7 @@ function ChatFlashcard(props) {
               }}
             >
               <span className="review-btn-icon">😔</span>
-              <span className="review-btn-text">Again</span>
+              <span className="review-btn-text">{t('flashcard.again', 'Again')}</span>
             </button>
             <button
               className="flashcard-review-btn flashcard-review-good"
@@ -298,7 +298,7 @@ function ChatFlashcard(props) {
               }}
             >
               <span className="review-btn-icon">✅</span>
-              <span className="review-btn-text">Know it</span>
+              <span className="review-btn-text">{t('flashcard.knowIt', 'Know it')}</span>
             </button>
           </div>
         </div>
@@ -310,12 +310,12 @@ function ChatFlashcard(props) {
           {flashcard.userReview?.knowIt ? (
             <>
               <span className="feedback-icon">✅</span>
-              <span>Great! Keep it up!</span>
+              <span>{t('flashcard.greatKeepUp', 'Great! Keep it up!')}</span>
             </>
           ) : (
             <>
               <span className="feedback-icon">📝</span>
-              <span>No worries, you'll get it next time!</span>
+              <span>{t('flashcard.noWorriesNextTime', "No worries, you'll get it next time!")}</span>
             </>
           )}
         </div>
@@ -325,7 +325,7 @@ function ChatFlashcard(props) {
       <div className="flashcard-compact-navigation">
         {showSkipButton && (
           <button className="flashcard-nav-btn flashcard-skip-btn" onClick={handleSkip}>
-            Skip for now
+            {t('flashcard.skipForNow', 'Skip for now')}
           </button>
         )}
         {showNextButton && (
@@ -333,7 +333,7 @@ function ChatFlashcard(props) {
             className="flashcard-nav-btn flashcard-next-btn"
             onClick={handleNext}
           >
-            {isLastCard ? 'View Results' : 'Next Card'}
+            {isLastCard ? t('flashcard.viewResults', 'View Results') : t('flashcard.nextCard', 'Next Card')}
           </button>
         )}
       </div>
@@ -351,7 +351,7 @@ function ChatFlashcard(props) {
             <div className="flashcard-streaming-dot"></div>
             <div className="flashcard-streaming-dot"></div>
           </div>
-          <span className="flashcard-streaming-text">Generating flashcards...</span>
+          <span className="flashcard-streaming-text">{t('flashcard.generatingFlashcards', 'Generating flashcards...')}</span>
         </div>
       )}
 
@@ -359,12 +359,12 @@ function ChatFlashcard(props) {
         {totalCards > 1 && !showResults && (
           <div className="flashcard-compact-header">
             <h3 className="flashcard-compact-title">
-              Flashcards
+              {t('flashcard.title', 'Flashcards')}
             </h3>
             <button
               className="flashcard-expand-btn"
               onClick={handleExpandModal}
-              title="Expand to fullscreen"
+              title={t('flashcard.expandToFullscreen', 'Expand to fullscreen')}
             >
               <ExpandIcon />
             </button>
@@ -444,11 +444,11 @@ function ChatFlashcard(props) {
     <div className="flashcard-modal-overlay" onClick={handleCloseModal}>
       <div className="flashcard-modal-content" onClick={(e) => e.stopPropagation()}>
         <div className="flashcard-modal-header">
-          <h2 className="flashcard-modal-title">Flashcards</h2>
+          <h2 className="flashcard-modal-title">{t('flashcard.title', 'Flashcards')}</h2>
           <button
             className="flashcard-modal-close"
             onClick={handleCloseModal}
-            title="Close fullscreen"
+            title={t('flashcard.closeFullscreen', 'Close fullscreen')}
           >
             <CloseIcon />
           </button>

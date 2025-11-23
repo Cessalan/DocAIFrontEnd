@@ -256,6 +256,58 @@ const resources = {
         generalTopic: "General"
       },
 
+      // Flashcard Interface
+      flashcard: {
+        title: "Flashcards",
+        loading: "Loading flashcard...",
+        question: "Question",
+        answer: "Answer",
+        tapToFlip: "Tap to flip",
+        tapToFlipBack: "Tap to flip back",
+        hint: "Hint",
+        howWellKnow: "How well did you know this?",
+        again: "Again",
+        knowIt: "Know it",
+        greatKeepUp: "Great! Keep it up!",
+        noWorriesNextTime: "No worries, you'll get it next time!",
+        skipForNow: "Skip for now",
+        nextCard: "Next Card",
+        viewResults: "View Results",
+        mastered: "mastered",
+        generatingFlashcards: "Generating flashcards...",
+        expandToFullscreen: "Expand to fullscreen",
+        closeFullscreen: "Close fullscreen"
+      },
+
+      // Flashcard Navigation
+      flashcardNavigation: {
+        cards: "Cards",
+        status: "Status:",
+        new: "New",
+        learning: "Learning",
+        mastered: "Mastered"
+      },
+
+      // Flashcard Feedback
+      flashcardFeedback: {
+        title: "Quick Feedback",
+        leaveFeedback: "Leave Feedback",
+        submitted: "Feedback sent!",
+        question: "How is your flashcard experience?",
+        whatWrong: "Oh no! What went wrong?",
+        whatLike: "What do you like most?",
+        thanks: "Thanks for your help!",
+        ratingBad: "Bad",
+        ratingOkay: "Okay",
+        ratingGood: "Good",
+        tooHard: "Too Hard",
+        confusing: "Confusing",
+        bugs: "Bugs",
+        content: "Content",
+        design: "Design",
+        learning: "Learning"
+      },
+
       // Onboarding
       onboarding: {
         intro: "To better understand your needs, please answer these quick questions ✨",
@@ -551,6 +603,58 @@ const resources = {
         of: "sur",
         aiAdapts: "L'IA s'adapte à tes besoins et crée des quiz personnalisés",
         generalTopic: "Général"
+      },
+
+      // Flashcard Interface
+      flashcard: {
+        title: "Cartes mémoire",
+        loading: "Chargement de la carte mémoire...",
+        question: "Question",
+        answer: "Réponse",
+        tapToFlip: "Toucher pour retourner",
+        tapToFlipBack: "Toucher pour retourner",
+        hint: "Indice",
+        howWellKnow: "À quel point connaissiez-vous cela?",
+        again: "À revoir",
+        knowIt: "Je le sais",
+        greatKeepUp: "Super! Continue comme ça!",
+        noWorriesNextTime: "Pas de souci, tu réussiras la prochaine fois!",
+        skipForNow: "Passer pour l'instant",
+        nextCard: "Carte suivante",
+        viewResults: "Voir les résultats",
+        mastered: "maîtrisé",
+        generatingFlashcards: "Génération des cartes mémoire...",
+        expandToFullscreen: "Agrandir en plein écran",
+        closeFullscreen: "Fermer le plein écran"
+      },
+
+      // Flashcard Navigation
+      flashcardNavigation: {
+        cards: "Cartes",
+        status: "Statut:",
+        new: "Nouveau",
+        learning: "En apprentissage",
+        mastered: "Maîtrisé"
+      },
+
+      // Flashcard Feedback
+      flashcardFeedback: {
+        title: "Commentaire rapide",
+        leaveFeedback: "Laisser un commentaire",
+        submitted: "Commentaire envoyé!",
+        question: "Comment se passent tes cartes mémoire?",
+        whatWrong: "Oh non! Qu'est-ce qui ne va pas?",
+        whatLike: "Qu'est-ce que tu aimes le plus?",
+        thanks: "Merci pour ton aide!",
+        ratingBad: "Mauvais",
+        ratingOkay: "Correct",
+        ratingGood: "Bon",
+        tooHard: "Trop difficile",
+        confusing: "Confus",
+        bugs: "Bogues",
+        content: "Contenu",
+        design: "Design",
+        learning: "Apprentissage"
       },
 
       // Onboarding

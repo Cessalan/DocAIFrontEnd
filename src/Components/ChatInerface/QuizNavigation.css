@@ -328,8 +328,25 @@
     padding: 12px;
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
     border: 1px solid rgba(0, 0, 0, 0.06);
-    z-index: 9999;
+    z-index: 10000;
     animation: popoverSlideIn 0.2s ease-out;
+    transform-origin: bottom left;
+}
+
+/* Portal version (rendered to body) - always on top */
+.feedback-popover-portal {
+    position: fixed !important;
+    z-index: 10001 !important;
+    transform-origin: left center;
+    bottom: auto !important;
+    left: auto !important;
+}
+
+/* Position above the button when in modal or when it would be cut off */
+.quiz-modal-content .feedback-popover,
+.quiz-modal-scroll-wrapper .feedback-popover {
+    bottom: calc(100% + 8px);
+    z-index: 10001;
 }
 
 @keyframes popoverSlideIn {

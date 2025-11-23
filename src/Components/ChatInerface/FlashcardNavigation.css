@@ -273,6 +273,11 @@
   animation: popoverSlideIn 0.2s ease-out;
 }
 
+/* Ensure popover appears above modal content and doesn't get cut off */
+.flashcard-modal-content .feedback-popover {
+  z-index: 100000;
+}
+
 @keyframes popoverSlideIn {
   from {
     opacity: 0;

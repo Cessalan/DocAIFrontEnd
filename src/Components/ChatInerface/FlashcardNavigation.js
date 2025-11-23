@@ -1,8 +1,10 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './FlashcardNavigation.css';
 import FlashcardFeedback from './FlashcardFeedback';
 
 function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackSubmit, hasGivenFeedback, feedbackData }) {
+  const { t } = useTranslation();
   const isDev = process.env.NODE_ENV === 'development';
   if (!flashcards || flashcards.length === 0) {
     return null;
@@ -16,7 +18,7 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackS
 
   return (
     <div className="flashcard-navigation">
-      <div className="flashcard-nav-title">Cards</div>
+      <div className="flashcard-nav-title">{t('flashcardNavigation.cards', 'Cards')}</div>
       <div className="flashcard-nav-list">
         {flashcards.map((card, index) => {
           const isActive = index === currentIndex;
@@ -60,18 +62,18 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackS
 
       {/* Legend */}
       <div className="flashcard-nav-legend">
-        <div className="flashcard-legend-title">Status:</div>
+        <div className="flashcard-legend-title">{t('flashcardNavigation.status', 'Status:')}</div>
         <div className="flashcard-legend-item">
           <span className="flashcard-legend-icon">🆕</span>
-          <span className="flashcard-legend-text">New</span>
+          <span className="flashcard-legend-text">{t('flashcardNavigation.new', 'New')}</span>
         </div>
         <div className="flashcard-legend-item">
           <span className="flashcard-legend-icon">📘</span>
-          <span className="flashcard-legend-text">Learning</span>
+          <span className="flashcard-legend-text">{t('flashcardNavigation.learning', 'Learning')}</span>
         </div>
         <div className="flashcard-legend-item">
           <span className="flashcard-legend-icon">✅</span>
-          <span className="flashcard-legend-text">Mastered</span>
+          <span className="flashcard-legend-text">{t('flashcardNavigation.mastered', 'Mastered')}</span>
         </div>
       </div>
 
