@@ -1,8 +1,8 @@
 import { auth } from '../Firebase/config';
+import { API_BASE_URL } from './config';
 
-const FAST_API_BASE = "http://127.0.0.1:8000";
-//const FAST_API_BASE ="https://ragfastapi-1075876064685.europe-west1.run.app";
-const header ={"Content-Type": "application/json"};
+const FAST_API_BASE = API_BASE_URL;
+const header = {"Content-Type": "application/json"};
 
 // not used
 export const ask_llm = async(userPrompt,chatHistory,documents,chat_id) => 

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { handleSignOut } from "../../Firebase/auth";
-import { db } from "../../Firebase/config";
+import { db, auth } from "../../Firebase/config";
 import {
   collection,
   query,
@@ -9,7 +9,9 @@ import {
   getDocs,
   addDoc,
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  doc,
+  getDoc
 } from "firebase/firestore";
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat } from "../../Services/FireBaseServiceChats.js";
@@ -37,6 +39,16 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
   // Feedback viewer state (dev mode only)
   const [showFeedbackViewer, setShowFeedbackViewer] = useState(false);
 
+  // Dev mode: Toggle between viewing all chats or only user's chats
+  const [viewAllChats, setViewAllChats] = useState(() => {
+    // Check localStorage for saved preference (dev mode only)
+    if (isDevelopment) {
+      const saved = localStorage.getItem('viewAllChats');
+      return saved === 'true';
+    }
+    return false; // Non-dev users always see only their chats
+  });
+
   // Apply dark mode class to body
   useEffect(() => {
     if (isDarkMode) {
@@ -51,11 +63,20 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
   const handleDarkModeToggle = () => {
     setIsDarkMode(prev => !prev);
   };
+
+  const handleViewModeToggle = () => {
+    const newValue = !viewAllChats;
+    setViewAllChats(newValue);
+    // Save preference to localStorage (dev mode only)
+    if (isDevelopment) {
+      localStorage.setItem('viewAllChats', newValue);
+    }
+  };
   
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [hoveredChatId, setHoveredChatId] = useState(null);
-  
+
   // translation
   const { t } = useTranslation();
 
@@ -76,7 +97,7 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
   // Load file counts for all chats
   const loadFileCountsForAllChats = async (chatList) => {
     const counts = {};
-    
+
     // Use Promise.all to load counts concurrently
     const countPromises = chatList.map(async (chat) => {
       const count = await loadFileCountForChat(chat.id);
@@ -91,31 +112,39 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
   // Load all chats AND their file counts
   useEffect(() => {
     if (!user) return;
-  
+
     const chatsRef = collection(db, "chats");
 
-    const chatQuery = query(
-      chatsRef,
-      //where("userId", "==", user.uid), // get only chats for current user
-      orderBy("updatedAt", "desc")     // sort by most recent
-    );
-  
+    // Build query based on view mode
+    // In dev mode with viewAllChats=true: show all chats
+    // Otherwise: show only user's chats
+    const chatQuery = isDevelopment && viewAllChats
+      ? query(
+          chatsRef,
+          orderBy("updatedAt", "desc")  // All chats, sorted by most recent
+        )
+      : query(
+          chatsRef,
+          where("userId", "==", user.uid), // Only user's chats
+          orderBy("updatedAt", "desc")     // Sorted by most recent
+        );
+
     const unsubscribe = onSnapshot(chatQuery, async (snapshot) => {
       const updatedChats = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       setChats(updatedChats);
-      
+
       // Load file counts for all chats
       if (updatedChats.length > 0) {
         await loadFileCountsForAllChats(updatedChats);
       }
     });
-  
+
     // Cleanup listener on unmount
     return () => unsubscribe();
-  }, [user]);
+  }, [user, viewAllChats, isDevelopment]); // Re-run when viewAllChats changes
   
 
   const handleNewChat = async () => {
@@ -131,10 +160,10 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
 
     setChats([{ id: newChatId, ...newChat }, ...chats]);
     setActiveChatId(newChatId);
-    
+
     // Initialize file count for new chat
     setChatFileCounts(prev => ({ ...prev, [newChatId]: 0 }));
-    
+
     if (onChatSelected) onChatSelected(newChatId);
   };
 
@@ -214,7 +243,7 @@ const getchatDate = (timestamp) => {
       <div className="sidebar-header">
         <div className="sidebar-title">{t('side.chats')}</div>
       </div>
-            
+
       <button className="new-chat-button" onClick={handleNewChat}>
         + {t('side.newChat')}
       </button>  
@@ -253,15 +282,19 @@ const getchatDate = (timestamp) => {
                 <div className="conversation-header">
                   <span className="conversation-name">{chat.title}</span>
                   
-                  {/* Metadata row: date + userId */}
+                  {/* Metadata row: date + user info (only show in dev mode when viewing all chats) */}
                   <div className="conversation-metadata">
                     <span className="conversation-time">
                       {getchatDate(chat.updatedAt)}
                     </span>
-                    <span className="conversation-metadata-separator">•</span>
-                    <span className="conversation-user-id">
-                      {chat.userId}
-                    </span>
+                    {isDevelopment && viewAllChats && (
+                      <>
+                        <span className="conversation-metadata-separator">•</span>
+                        <span className="conversation-user-id">
+                          {chat.userId}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -285,9 +318,28 @@ const getchatDate = (timestamp) => {
           onFeedbackSubmit={handleFeedbackSubmit}
         />
         {isDevelopment && (
-          <div className="nav-item" onClick={() => setShowFeedbackViewer(true)}>
-            🔍 View Feedbacks (Dev)
-          </div>
+          <>
+            <div className="nav-item" onClick={() => setShowFeedbackViewer(true)}>
+              🔍 View Feedbacks (Dev)
+            </div>
+            {/* Dev Mode: View Toggle */}
+            <div className="chat-view-toggle-container">
+              <button
+                className="chat-view-toggle"
+                onClick={handleViewModeToggle}
+                aria-label={viewAllChats ? 'Switch to my chats only' : 'Switch to all chats'}
+              >
+                <div className={`toggle-track ${viewAllChats ? 'all-chats' : 'my-chats'}`}>
+                  <div className="toggle-thumb">
+                    {viewAllChats ? '👥' : '👤'}
+                  </div>
+                </div>
+                <span className="toggle-label">
+                  {viewAllChats ? 'All Chats' : 'My Chats'}
+                </span>
+              </button>
+            </div>
+          </>
         )}
         <div className="nav-item" onClick={handleSignOut}>
           {t('side.logout')} ⏻

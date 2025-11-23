@@ -307,7 +307,7 @@ const resources = {
       // Chat Interface
       chat: {
         title: "NurseQuiz",
-        uploadFile: "Commencez par téléverser votre contenu de cours📄",
+        uploadFile: "Commences par téléverser le contenu de ton cours📄",
         uploadDocument: "Téléverser",
         placeholder: "Message...",
         addFile: "Ajouter des fichiers",

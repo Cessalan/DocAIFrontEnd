@@ -180,6 +180,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
   // Track which questions have been submitted (prevent double-submit)
   const submittedAnswersRef = useRef(new Set());
   const hasInitiallyScrolledRef = useRef(false);
+  const lastUserMessageRef = useRef(null); // Track last user message for scrolling
   // Track upload message ID for synchronous updates
   const uploadMessageIdRef = useRef(null);
   // 🆕 Track insights accumulation to avoid race conditions
@@ -244,24 +245,24 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     const container = messagesContainerRef.current;
     if (!container) return true;
 
-    const threshold = 100; // pixels from bottom
+    const threshold = 150; // pixels from bottom
     const { scrollTop, scrollHeight, clientHeight } = container;
     return scrollHeight - scrollTop - clientHeight < threshold;
   }, []);
 
-  // Scroll to bottom using messagesEndRef (more reliable than scrollHeight)
-  const scrollToBottom = useCallback((behavior = 'auto') => {
-    // Try scrollIntoView first (most reliable)
-    if (messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior, block: 'end' });
-    }
-    // Fallback to scrollTop method
-    else if (messagesContainerRef.current) {
-      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
-    }
+  // Scroll to bottom - simple and reliable
+  const scrollToBottom = useCallback((behavior = 'smooth') => {
+    requestAnimationFrame(() => {
+      if (messagesContainerRef.current) {
+        messagesContainerRef.current.scrollTo({
+          top: messagesContainerRef.current.scrollHeight,
+          behavior: behavior
+        });
+      }
+    });
   }, []);
 
-  // Handle scroll event to show/hide button
+  // Handle scroll event to show/hide scroll button
   const handleScroll = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -270,56 +271,47 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     setShowScrollButton(!isAtBottom);
   }, [isNearBottom]);
 
-  // Initial scroll to bottom ONLY on first load
+  // Initial scroll to bottom on first load
   useEffect(() => {
     if (chatMessages.length > 0 && !hasInitiallyScrolledRef.current) {
       const container = messagesContainerRef.current;
       if (!container) return;
 
-      // IMMEDIATE first scroll - prevents flash of content at wrong position
+      // Scroll immediately
       scrollToBottom('auto');
 
-      let lastHeight = 0;
-      let stableCount = 0;
-
-      // Keep checking and re-scrolling as content loads (quizzes, images, etc.)
-      const checkHeight = () => {
-        const currentHeight = container.scrollHeight;
-
-        if (currentHeight === lastHeight) {
-          stableCount++;
-          if (stableCount >= 3) {
-            // Height stable, final scroll and we're done
-            scrollToBottom('auto');
-            hasInitiallyScrolledRef.current = true;
-            setIsInitialLoadComplete(true); // Show content now!
-            return;
-          }
-        } else {
-          // Height changed, scroll again and reset counter
-          scrollToBottom('auto');
-          stableCount = 0;
-        }
-
-        lastHeight = currentHeight;
-
-        // Keep checking until stable
-        if (stableCount < 3) {
-          setTimeout(checkHeight, 100);
-        }
-      };
-
-      // Start checking after initial render
-      setTimeout(checkHeight, 100);
+      // Mark as complete after a short delay
+      setTimeout(() => {
+        hasInitiallyScrolledRef.current = true;
+        setIsInitialLoadComplete(true);
+      }, 300);
     }
   }, [chatMessages.length, scrollToBottom]);
 
-  // Auto-scroll on new messages only if already at bottom
+  // Auto-scroll when new messages arrive (like ChatGPT)
   useEffect(() => {
-    if (chatMessages.length > 0 && isNearBottom()) {
+    if (chatMessages.length > 0 && hasInitiallyScrolledRef.current) {
+      if (!isAiTyping) {
+        // User just sent a message - scroll it to the TOP of viewport
+        if (lastUserMessageRef.current) {
+          requestAnimationFrame(() => {
+            lastUserMessageRef.current?.scrollIntoView({
+              behavior: 'smooth',
+              block: 'start', // Position at TOP of viewport
+              inline: 'nearest'
+            });
+          });
+        }
+      }
+    }
+  }, [chatMessages.length, isAiTyping]);
+
+  // Auto-scroll during streaming (when message content updates, not just length)
+  useEffect(() => {
+    if (isAiTyping && hasInitiallyScrolledRef.current) {
       scrollToBottom('auto');
     }
-  }, [chatMessages, isNearBottom, scrollToBottom]);
+  }, [chatMessages, isAiTyping, scrollToBottom]);
 
   const setLoadingState = useCallback((key, value) => {
     setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -499,21 +491,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     fetchFiles();
   }, [currentChatID]);
 
-  // Auto-scroll on new messages (but not during streaming)
-  useEffect(() => {
-    if (!isAiTyping) {
-      var lastMessage = chatMessages[chatMessages.length - 1];
-      if (lastMessage && lastMessage.type !== "quiz") {
-        scrollToBottom();
-      }
-
-    }
-  }, [chatMessages.length, isAiTyping, scrollToBottom]); // scroll down only if a new message is added at the bottom and once the AI finishes typing
-
-
   const { t, i18n } = useTranslation();
 
-  const currentLanguage = i18n.language;
+  const currentLanguage = i18n.language || 'en'; // Fallback to 'en' if language is not yet initialized
 
   // ============================================
   // MESSAGE HANDLING
@@ -553,6 +533,17 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
 
     setChatMessages(prev => [...prev, newUserMessage]);
     setUserInputText('');
+
+    // Scroll user message to top of viewport (ChatGPT style)
+    setTimeout(() => {
+      if (lastUserMessageRef.current) {
+        lastUserMessageRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
 
     // Save to Firebase
     const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
@@ -750,6 +741,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
                 return msg;
               })
             );
+
             return;
           }
 
@@ -1494,7 +1486,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
       const results = await upload_files_with_progress(
         files,
         resolvedChatId,
-        (update) => handleUploadProgress(update, fileTracker, resolvedChatId)
+        (update) => handleUploadProgress(update, fileTracker, resolvedChatId),
+        currentLanguage
       );
 
       // All files completed
@@ -2182,19 +2175,28 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
 
               // Regular messages
               if (typeof message.content === 'string' && message.content.trim()) {
+                // Check if this is the last user message
+                const isLastUserMessage = message.role === 'user' &&
+                  chatMessages.findIndex(m => m.id === message.id) ===
+                  chatMessages.map((m, i) => m.role === 'user' ? i : -1).filter(i => i !== -1).pop();
+
                 return (
-                  <ChatMessage
+                  <div
                     key={message.id}
-                    message={message}
-                    onOptionClick={handlePostDocumentUploadOption}
-                    onQuizAnswerSelect={handleQuizAnswerSelect}
-                    uploadedFilesList={uploadedFilesList}
-                    onQuizVisibilityChange={handleQuizVisibilityChange}
-                    onQuizInteraction={handleQuizInteraction}
-                    isActiveQuiz={message.id === activeQuizId}
-                    onFeedbackSubmit={handleQuizFeedback}
-                    onSendMessage={handleSendNewUserMessage}
-                  />
+                    ref={isLastUserMessage ? lastUserMessageRef : null}
+                  >
+                    <ChatMessage
+                      message={message}
+                      onOptionClick={handlePostDocumentUploadOption}
+                      onQuizAnswerSelect={handleQuizAnswerSelect}
+                      uploadedFilesList={uploadedFilesList}
+                      onQuizVisibilityChange={handleQuizVisibilityChange}
+                      onQuizInteraction={handleQuizInteraction}
+                      isActiveQuiz={message.id === activeQuizId}
+                      onFeedbackSubmit={handleQuizFeedback}
+                      onSendMessage={handleSendNewUserMessage}
+                    />
+                  </div>
                 );
               }
 

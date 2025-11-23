@@ -1,7 +1,6 @@
 // WebSocketManager.js - Replace FastAPICall.js functions
 
-const WS_BASE = "ws://127.0.0.1:8000";
-//const WS_BASE = "wss://ragfastapi-1075876064685.europe-west1.run.app";
+import { WS_BASE_URL } from './config';
 
 class WebSocketManager {
   constructor() {
@@ -25,7 +24,7 @@ class WebSocketManager {
 
   createConnection(chatId) {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`${WS_BASE}/ws/${chatId}`);
+      const ws = new WebSocket(`${WS_BASE_URL}/ws/${chatId}`);
       
       ws.onopen = () => {
         console.log(`✅ WebSocket connected for chat ${chatId}`);

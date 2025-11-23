@@ -143,11 +143,12 @@
 }
 
 /* ============================================
-   MESSAGES CONTAINER
+   MESSAGES CONTAINER - ChatGPT Style
    ============================================ */
 .messages-container {
   flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: var(--spacing-2xl);
   padding-bottom: 150px;
   /* Extra bottom padding to prevent input overlap */
@@ -157,20 +158,13 @@
   /* Increased from 16px for better message separation */
   background: transparent;
   position: relative;
-  /* Start at bottom by default */
-  overflow-anchor: none;
+  /* Allow browser scroll anchoring to keep position during dynamic content */
+  overflow-anchor: auto;
 }
 
 /* Hide scrollbar when loading */
 .messages-container:has(.chat-loading-overlay) {
   overflow: hidden;
-}
-
-/* Push content to bottom initially */
-.messages-container::before {
-  content: '';
-  flex: 1;
-  min-height: 0;
 }
 
 .messages-container::-webkit-scrollbar {
