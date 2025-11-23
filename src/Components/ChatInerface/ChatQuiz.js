@@ -8,6 +8,21 @@ import { useTranslation } from 'react-i18next';
 // Constants
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+// Helper function to clean justification text
+function sanitizeJustification(justification) {
+  if (!justification) return '';
+
+  // Remove unwanted instruction text that might slip through from backend
+  let cleaned = justification
+    .replace(/Use this EXACT format with html:\s*/gi, '')
+    .replace(/Use this format with html:\s*/gi, '')
+    .replace(/\[1-2 sentences.*?\]/gi, '')
+    .replace(/\[1 sentence.*?\]/gi, '')
+    .trim();
+
+  return cleaned;
+}
+
 // Icon Components
 function CheckmarkIcon() {
   return (
@@ -71,14 +86,19 @@ function ChatQuiz(props) {
   const [showFeedback, setShowFeedback] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
+  const [submittedFeedback, setSubmittedFeedback] = useState(feedbackData);
 
   const handleFeedbackSubmit = (data) => {
     console.log('Quiz Feedback Submitted:', data);
     setFeedbackGiven(true);
+    setSubmittedFeedback(data);
     if (onFeedbackSubmit) {
       onFeedbackSubmit(messageId, data);
     }
   };
+
+  // Development mode detection
+  const isDevelopment = process.env.NODE_ENV === 'development';
 
   // Use parent-controlled modal state if provided, otherwise use local state
   const [localModalOpen, setLocalModalOpen] = useState(false);
@@ -406,23 +426,20 @@ function ChatQuiz(props) {
 
             {/* Feedback */}
             {effectiveShowFeedback && correctIndex !== -1 && (
-              <div className={`quiz-compact-feedback ${displaySelectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
+              <div className={`quiz-compact-feedback ${(displaySelectedIndex !== null && displaySelectedIndex === correctIndex) ? 'correct' : 'incorrect'}`}>
                 <div className="feedback-header">
-                  <span className={`feedback-status ${displaySelectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
-                    {displaySelectedIndex === correctIndex
-                      ? (currentLanguage === 'fr' ? '✓ Bonne réponse!' : '✓ Correct!')
-                      : (currentLanguage === 'fr' ? '✗ Incorrect' : '✗ Incorrect')
+                  <span className={`feedback-status ${(displaySelectedIndex !== null && displaySelectedIndex === correctIndex) ? 'correct' : 'incorrect'}`}>
+                    {(displaySelectedIndex !== null && displaySelectedIndex === correctIndex)
+                      ? (currentLanguage === 'fr' ? '✓ Bonne réponse!' : '✓ That\'s right!')
+                      : (currentLanguage === 'fr' ? '✗ Pas tout à fait' : '✗ Not quite')
                     }
                   </span>
                 </div>
 
                 <div className="feedback-rationale-container">
-                  <div className="feedback-rationale-label">
-                    💡 {currentLanguage === 'fr' ? 'Explication' : 'Rationale'}
-                  </div>
                   <div
                     className="feedback-rationale-content"
-                    dangerouslySetInnerHTML={{ __html: quiz.justification }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeJustification(quiz.justification) }}
                   />
                 </div>
               </div>
@@ -489,6 +506,30 @@ function ChatQuiz(props) {
     <>
       {renderQuizContent(false)}
       {renderModal()}
+
+      {/* Dev Mode: Show collected feedback below quiz */}
+      {isDevelopment && submittedFeedback && (
+        <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(249, 115, 22, 0.08)', border: '1px solid rgba(249, 115, 22, 0.3)', borderRadius: '8px', fontSize: '13px' }}>
+          <div style={{ fontWeight: '600', color: '#ea580c', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ background: '#f97316', color: 'white', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', fontWeight: '700' }}>DEV</span>
+            Quiz Feedback Collected
+          </div>
+          <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
+            <div>
+              <span style={{ fontWeight: '600', color: '#9a3412' }}>Rating: </span>
+              <span style={{ color: '#ea580c' }}>
+                {submittedFeedback.rating === 'bad' && '☹️ Bad'}
+                {submittedFeedback.rating === 'neutral' && '😐 Neutral'}
+                {submittedFeedback.rating === 'good' && '😄 Good'}
+              </span>
+            </div>
+            <div>
+              <span style={{ fontWeight: '600', color: '#9a3412' }}>Detail: </span>
+              <span style={{ color: '#ea580c' }}>{submittedFeedback.detail}</span>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

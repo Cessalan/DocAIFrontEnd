@@ -195,7 +195,8 @@
 .scroll-to-bottom-btn {
   position: fixed;
   bottom: 100px;
-  right: 40px;
+  left: 50%;
+  margin-left: -24px;
   width: 48px;
   height: 48px;
   border-radius: var(--radius-full);
@@ -212,13 +213,14 @@
   transition: all var(--transition-normal);
   z-index: 100;
   animation: fadeInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
 }
 
 .scroll-to-bottom-btn:hover {
   transform: translateY(-4px) scale(1.05);
   background: rgba(173, 125, 195, 0.2);
   border-color: var(--primary-purple);
-  box-shadow: 
+  box-shadow:
     var(--shadow-lg),
     0 0 20px rgba(173, 125, 195, 0.3);
 }
@@ -250,9 +252,18 @@
 @media (max-width: 768px) {
   .scroll-to-bottom-btn {
     bottom: 80px;
-    right: 20px;
+    left: 50%;
+    margin-left: -22px;
     width: 44px;
     height: 44px;
+  }
+
+  .scroll-to-bottom-btn:hover {
+    transform: translateY(-4px) scale(1.05);
+  }
+
+  .scroll-to-bottom-btn:active {
+    transform: translateY(-2px) scale(1.02);
   }
 }
 

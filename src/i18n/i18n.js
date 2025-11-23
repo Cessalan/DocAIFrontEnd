@@ -225,6 +225,8 @@ const resources = {
 
       // Quiz Results Analytics
       quizAnalytics: {
+        perfect: "Perfect Score!",
+        perfectMsg: "Flawless! Ready for a bigger challenge?",
         outstanding: "Outstanding!",
         outstandingMsg: "You're mastering this material!",
         excellent: "Excellent!",
@@ -278,6 +280,24 @@ const resources = {
           message: "Thanks for setting up your profile. You're ready to start learning!",
           button: "Start Learning"
         }
+      },
+
+      // Feedback
+      feedback: {
+        buttonText: "Share Feedback",
+        modalTitle: "We'd love to hear from you!",
+        typeLabel: "What's this about?",
+        typeGeneral: "General",
+        typeBug: "Bug Report",
+        typeFeature: "Feature Request",
+        typeOther: "Other",
+        messageLabel: "Your message",
+        placeholder: "Share your thoughts, suggestions, or report an issue...",
+        submit: "Send Feedback",
+        submitting: "Sending...",
+        submitError: "Failed to submit feedback. Please try again.",
+        successTitle: "Thank you!",
+        successMessage: "Your feedback helps us improve. We appreciate you taking the time!"
       }
     }
   },
@@ -502,6 +522,8 @@ const resources = {
 
       // Quiz Results Analytics
       quizAnalytics: {
+        perfect: "Score parfait!",
+        perfectMsg: "Impeccable! Prêt pour un plus grand défi?",
         outstanding: "Exceptionnel!",
         outstandingMsg: "Tu maîtrises cette matière!",
         excellent: "Excellent!",
@@ -555,6 +577,24 @@ const resources = {
           message: "Merci d'avoir configuré votre profil. Vous êtes prêt à apprendre!",
           button: "Commencer l'apprentissage"
         }
+      },
+
+      // Feedback
+      feedback: {
+        buttonText: "Partager un retour",
+        modalTitle: "Votre avis nous intéresse!",
+        typeLabel: "De quoi s'agit-il?",
+        typeGeneral: "Général",
+        typeBug: "Signaler un bug",
+        typeFeature: "Suggestion",
+        typeOther: "Autre",
+        messageLabel: "Votre message",
+        placeholder: "Partagez vos pensées, suggestions, ou signalez un problème...",
+        submit: "Envoyer le retour",
+        submitting: "Envoi en cours...",
+        submitError: "Échec de l'envoi. Veuillez réessayer.",
+        successTitle: "Merci!",
+        successMessage: "Votre retour nous aide à améliorer l'application. Nous apprécions votre temps!"
       }
     }
   }

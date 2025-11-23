@@ -14,6 +14,9 @@ import {
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat } from "../../Services/FireBaseServiceChats.js";
 import DarkModeToggle from './DarkModeToggle';
+import FeedbackButton from './FeedbackButton';
+import FeedbackViewer from './FeedbackViewer';
+import { SubmitFeedback } from '../../Services/FeedbackService';
 import '../../index.css';
 
 // translation
@@ -21,12 +24,18 @@ import { useTranslation } from 'react-i18next';
 
 const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
 
+  // Development mode detection
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
     // Check localStorage for saved preference
     const saved = localStorage.getItem('darkMode');
     return saved === 'true';
   });
+
+  // Feedback viewer state (dev mode only)
+  const [showFeedbackViewer, setShowFeedbackViewer] = useState(false);
 
   // Apply dark mode class to body
   useEffect(() => {
@@ -140,14 +149,14 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
 
   const handleDeleteChat = async (e, chatId) => {
     e.stopPropagation(); // Prevent chat selection
-    
+
     if (!window.confirm("Supprimer ce chat? Cette action est irréversible.")) {
       return;
     }
 
     try {
       await DeleteChat(chatId);
-      
+
       // If deleted chat was active, clear selection
       if (activeChatId === chatId) {
         setActiveChatId(null);
@@ -155,6 +164,16 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
       }
     } catch (error) {
       alert("Échec de la suppression: " + error.message);
+    }
+  };
+
+  const handleFeedbackSubmit = async (feedbackData) => {
+    try {
+      await SubmitFeedback(feedbackData);
+      console.log("✅ Feedback submitted successfully");
+    } catch (error) {
+      console.error("❌ Error submitting feedback:", error);
+      throw error;
     }
   };
 
@@ -259,10 +278,26 @@ const getchatDate = (timestamp) => {
 
       <div className="sidebar-footer">
         <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />
+        <FeedbackButton
+          userId={user?.uid}
+          userEmail={user?.email}
+          activeChatId={activeChatId}
+          onFeedbackSubmit={handleFeedbackSubmit}
+        />
+        {isDevelopment && (
+          <div className="nav-item" onClick={() => setShowFeedbackViewer(true)}>
+            🔍 View Feedbacks (Dev)
+          </div>
+        )}
         <div className="nav-item" onClick={handleSignOut}>
           {t('side.logout')} ⏻
         </div>
       </div>
+
+      {/* Feedback Viewer Modal (Dev Mode Only) */}
+      {showFeedbackViewer && (
+        <FeedbackViewer onClose={() => setShowFeedbackViewer(false)} />
+      )}
     </>
   );
 };

@@ -16,7 +16,8 @@ const QuizResultsAnalytics = ({
   onStartTargetedPractice,
   onReview
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const currentLanguage = i18n.language;
 
   const percentage = totalQuestions > 0
     ? Math.round((correctAnswers / totalQuestions) * 100)
@@ -69,12 +70,48 @@ const QuizResultsAnalytics = ({
 
   // Get performance tier
   const getPerformanceTier = () => {
-    if (percentage >= 90) return { color: 'outstanding', emoji: '🏆', title: t('quizAnalytics.outstanding') };
-    if (percentage >= 80) return { color: 'excellent', emoji: '🌟', title: t('quizAnalytics.excellent') };
-    if (percentage >= 70) return { color: 'good', emoji: '🎉', title: t('quizAnalytics.wellDone') };
-    if (percentage >= 60) return { color: 'moderate', emoji: '💪', title: t('quizAnalytics.keepGoing') };
-    if (percentage >= 50) return { color: 'review', emoji: '📚', title: t('quizAnalytics.reviewTime') };
-    return { color: 'study', emoji: '📖', title: t('quizAnalytics.letsReview') };
+    if (percentage === 100) return {
+      color: 'perfect',
+      emoji: '🎯',
+      title: t('quizAnalytics.perfect'),
+      message: t('quizAnalytics.perfectMsg')
+    };
+    if (percentage >= 90) return {
+      color: 'outstanding',
+      emoji: '🏆',
+      title: t('quizAnalytics.outstanding'),
+      message: t('quizAnalytics.outstandingMsg')
+    };
+    if (percentage >= 80) return {
+      color: 'excellent',
+      emoji: '🌟',
+      title: t('quizAnalytics.excellent'),
+      message: t('quizAnalytics.excellentMsg')
+    };
+    if (percentage >= 70) return {
+      color: 'good',
+      emoji: '🎉',
+      title: t('quizAnalytics.wellDone'),
+      message: t('quizAnalytics.wellDoneMsg')
+    };
+    if (percentage >= 60) return {
+      color: 'moderate',
+      emoji: '💪',
+      title: t('quizAnalytics.keepGoing'),
+      message: t('quizAnalytics.keepGoingMsg')
+    };
+    if (percentage >= 50) return {
+      color: 'review',
+      emoji: '📚',
+      title: t('quizAnalytics.reviewTime'),
+      message: t('quizAnalytics.reviewTimeMsg')
+    };
+    return {
+      color: 'study',
+      emoji: '📖',
+      title: t('quizAnalytics.letsReview'),
+      message: t('quizAnalytics.letsReviewMsg')
+    };
   };
 
   const performance = getPerformanceTier();
@@ -94,7 +131,7 @@ const QuizResultsAnalytics = ({
 
       // Empathetic prompt based on performance level
       if (percentage < 50) {
-        return t('common.language') === 'fr'
+        return currentLanguage === 'fr'
           ? `Je comprends que cela peut être difficile, mais ne te décourage pas. Nous allons travailler ensemble sur ces sujets : ${topicDetails}.
 
           Peux-tu m'aider à m'améliorer ? Crée un quiz de pratique ciblé de 5 questions qui :
@@ -114,7 +151,7 @@ const QuizResultsAnalytics = ({
 
           I really want to understand these concepts. Help me progress step by step.`;
       } else if (percentage < 70) {
-        return t('common.language') === 'fr'
+        return currentLanguage === 'fr'
           ? `J'ai obtenu ${percentage}% - pas mal, mais je sais que je peux faire mieux ! J'ai besoin de plus de pratique sur : ${topicDetails}.
 
           Aide-moi à maîtriser ces sujets avec 5 questions ciblées. Fais-les challengeantes mais justes, et donne-moi des explications qui m'aident vraiment à comprendre où je me trompe.`
@@ -122,7 +159,7 @@ const QuizResultsAnalytics = ({
 
           Help me master these topics with 5 targeted questions. Make them challenging but fair, and give me explanations that really help me understand where I'm going wrong.`;
       } else if (percentage < 85) {
-        return t('common.language') === 'fr'
+        return currentLanguage === 'fr'
           ? `Bonne nouvelle ! J'ai obtenu ${percentage}%. Cependant, je veux perfectionner ces domaines : ${topicDetails}.
 
           Crée 5 questions de pratique avancées sur ces sujets pour m'aider à atteindre la maîtrise complète. Je suis prêt pour un défi !`
@@ -130,7 +167,7 @@ const QuizResultsAnalytics = ({
 
           Create 5 advanced practice questions on these topics to help me achieve complete mastery. I'm ready for a challenge!`;
       } else {
-        return t('common.language') === 'fr'
+        return currentLanguage === 'fr'
           ? `Excellent travail ! ${percentage}% ! Mais je veux être impeccable. Aide-moi à perfectionner : ${topicDetails}.
 
           Donne-moi 5 questions expertes sur ces sujets - vraiment difficiles, pour que je puisse atteindre 100% de maîtrise.`
@@ -142,11 +179,11 @@ const QuizResultsAnalytics = ({
 
     // Fallback if no specific topics (shouldn't normally happen)
     if (percentage >= 80) {
-      return t('common.language') === 'fr'
+      return currentLanguage === 'fr'
         ? `Je viens de scorer ${percentage}% sur un quiz! Donne-moi 5 questions plus avancées pour me challenger davantage.`
         : `I just scored ${percentage}% on a quiz! Give me 5 more advanced questions to challenge me further.`;
     } else {
-      return t('common.language') === 'fr'
+      return currentLanguage === 'fr'
         ? `Je viens de scorer ${percentage}% sur un quiz. Peux-tu m'aider à m'améliorer avec 5 questions ciblées sur mes points faibles?`
         : `I just scored ${percentage}% on a quiz. Can you help me improve with 5 targeted questions on my weak areas?`;
     }
@@ -157,7 +194,7 @@ const QuizResultsAnalytics = ({
     console.log("📊 Weak topics:", weakTopics);
 
     // Simple intent message - backend will analyze last quiz and generate everything
-    const simpleIntent = t('common.language') === 'fr'
+    const simpleIntent = currentLanguage === 'fr'
       ? "Je veux pratiquer mes points faibles du dernier quiz"
       : "I want to practice my weak areas from the last quiz";
 
@@ -214,8 +251,8 @@ const QuizResultsAnalytics = ({
           </div>
         </div>
         <div className="score-title">
-          <h3>Let's review!</h3>
-          <p>Take time to review the material!</p>
+          <h3>{performance.emoji} {performance.title}</h3>
+          <p>{performance.message}</p>
         </div>
       </div>
 
@@ -286,12 +323,17 @@ const QuizResultsAnalytics = ({
 
       {/* Action Buttons - Compact */}
       <div className="actions-compact">
-        {weakTopics.length > 0 && (
+        {weakTopics.length > 0 ? (
           <button className="action-btn primary" onClick={handlePracticeWeakTopics}>
             <span className="btn-icon">🎯</span>
             <span className="btn-text">{t('quizAnalytics.practiceWeakTopics')}</span>
           </button>
-        )}
+        ) : percentage >= 90 ? (
+          <button className="action-btn primary" onClick={handleChallengeMore}>
+            <span className="btn-icon">🚀</span>
+            <span className="btn-text">{t('quizAnalytics.challengeMore')}</span>
+          </button>
+        ) : null}
         {onReview && (
           <button className="action-btn secondary" onClick={onReview}>
             <span className="btn-icon">👁️</span>

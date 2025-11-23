@@ -367,4 +367,55 @@ export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
   }
 };
 
+/**
+ * Get all quiz feedbacks from all chats (DEV MODE ONLY)
+ * @returns {Promise<Array>} - Array of quiz feedback objects
+ */
+export const GetAllQuizFeedbacks = async () => {
+  try {
+    console.log("📥 Fetching all quiz feedbacks...");
+
+    const chatsRef = collection(db, "chats");
+    const chatsSnapshot = await getDocs(chatsRef);
+
+    const allFeedbacks = [];
+
+    // Iterate through each chat
+    for (const chatDoc of chatsSnapshot.docs) {
+      const chatId = chatDoc.id;
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const messagesSnapshot = await getDocs(messagesRef);
+
+      // Find messages with feedbackData
+      messagesSnapshot.docs.forEach(messageDoc => {
+        const messageData = messageDoc.data();
+        if (messageData.feedbackData) {
+          allFeedbacks.push({
+            id: messageDoc.id,
+            chatId,
+            messageId: messageData.id || messageDoc.id,
+            feedbackData: messageData.feedbackData,
+            timestamp: messageData.feedbackData.submittedAt,
+            quizContent: messageData.content || messageData.text || 'N/A'
+          });
+        }
+      });
+    }
+
+    // Sort by timestamp descending (newest first)
+    allFeedbacks.sort((a, b) => {
+      const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp) || new Date(0);
+      const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp) || new Date(0);
+      return timeB - timeA;
+    });
+
+    console.log(`✅ Fetched ${allFeedbacks.length} quiz feedbacks`);
+    return allFeedbacks;
+
+  } catch (error) {
+    console.error("❌ Error fetching quiz feedbacks:", error);
+    throw error;
+  }
+};
+
 export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };

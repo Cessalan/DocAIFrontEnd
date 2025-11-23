@@ -911,18 +911,25 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
         setIsAiTyping(false);
         setStreamingStatus(null);
 
-        // Mark any streaming messages as stopped
+        // Remove or finalize streaming messages
         setChatMessages(prev =>
-          prev.map(msg =>
-            msg.isStreaming
-              ? {
+          prev.map(msg => {
+            if (msg.isStreaming) {
+              // If message has content, keep it but mark as stopped
+              // If no content (empty), just mark it complete without showing anything
+              if (msg.content && msg.content.trim()) {
+                return {
                   ...msg,
-                  content: msg.content || t('chat.streamingStopped', 'Streaming stopped by user'),
                   isStreaming: false,
                   stopped: true
-                }
-              : msg
-          )
+                };
+              } else {
+                // For empty messages (like quiz placeholders), remove them
+                return null;
+              }
+            }
+            return msg;
+          }).filter(Boolean) // Remove null entries
         );
       } else {
         console.error('❌ Failed to send stop request');

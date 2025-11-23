@@ -9,10 +9,15 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
     const [rating, setRating] = useState(null);
 
     const handleToggle = () => {
-        if (hasSubmitted) return; // Prevent opening if already submitted
+        if (hasSubmitted) return; // Don't open if already submitted
         setIsOpen(!isOpen);
         if (!isOpen) setFeedbackStep('initial');
     };
+
+    // Hide the entire component if feedback has been submitted
+    if (hasSubmitted) {
+        return null;
+    }
 
     const handleRating = (value) => {
         setRating(value);
@@ -38,12 +43,11 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
         <div className="quiz-feedback-container">
             {/* Trigger Button */}
             <button
-                className={`feedback-trigger-btn ${isOpen ? 'active' : ''} ${hasSubmitted ? 'submitted' : ''}`}
+                className={`feedback-trigger-btn ${isOpen ? 'active' : ''}`}
                 onClick={handleToggle}
-                title={hasSubmitted ? t('quizFeedback.submitted', 'Feedback sent!') : t('quizFeedback.leaveFeedback', 'Leave Feedback')}
-                disabled={hasSubmitted}
+                title={t('quizFeedback.leaveFeedback', 'Leave Feedback')}
             >
-                <span className="feedback-icon">{hasSubmitted ? '✓' : '💬'}</span>
+                <span className="feedback-icon">💬</span>
             </button>
 
             {/* Popover Content */}
