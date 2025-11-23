@@ -61,6 +61,7 @@ import {
   warmUpWebSocket,
   closeWebSocketConnection,
   setupWebSocketKeepalive,
+  cancelWebSocketStream, // Add this for stop button
 } from '../../Services/WebSocketManager.js';
 
 // Styles
@@ -103,6 +104,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [streamingStatus, setStreamingStatus] = useState(null);
   const [isFilesModalVisible, setIsFilesModalVisible] = useState(false);
+  const [isStreaming, setIsStreaming] = useState(false); // Track if actively streaming
 
   // Upload insights state
   const [uploadInsights, setUploadInsights] = useState([]);
@@ -560,6 +562,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     // Prepare for streaming
     setIsAiTyping(true);
     setStreamingStatus(null);
+    setIsStreaming(true); // Mark as actively streaming
 
     const streamingMessageId = `streaming-${Date.now()}`;
     const placeholderMessage = {
@@ -836,6 +839,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
         // Complete callback - handles end of stream
         async () => {
           setStreamingStatus(null);
+          setIsStreaming(false); // Streaming complete
 
           // Check if this was a quiz (don't save quiz as text)
           if (isQuizGeneratingRef.current) {
@@ -868,6 +872,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     } catch (error) {
       console.error("WebSocket streaming error:", error);
       setStreamingStatus(null);
+      setIsStreaming(false); // Streaming stopped due to error
 
       setChatMessages(prev =>
         prev.map(msg =>
@@ -884,6 +889,50 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
 
       setIsAiTyping(false);
       setConnectionStatus('error');
+    }
+  };
+
+  // ============================================
+  // STOP STREAMING HANDLER
+  // ============================================
+
+  const handleStopStreaming = async () => {
+    console.log('🛑 User requested to stop streaming');
+
+    try {
+      // Send cancel message via WebSocket
+      const success = await cancelWebSocketStream(currentChatID);
+
+      if (success) {
+        console.log('✅ Stop request sent successfully');
+
+        // Immediately update UI state
+        setIsStreaming(false);
+        setIsAiTyping(false);
+        setStreamingStatus(null);
+
+        // Mark any streaming messages as stopped
+        setChatMessages(prev =>
+          prev.map(msg =>
+            msg.isStreaming
+              ? {
+                  ...msg,
+                  content: msg.content || t('chat.streamingStopped', 'Streaming stopped by user'),
+                  isStreaming: false,
+                  stopped: true
+                }
+              : msg
+          )
+        );
+      } else {
+        console.error('❌ Failed to send stop request');
+      }
+    } catch (error) {
+      console.error('❌ Error stopping stream:', error);
+      // Still update UI even if backend call fails
+      setIsStreaming(false);
+      setIsAiTyping(false);
+      setStreamingStatus(null);
     }
   };
 
@@ -2180,24 +2229,38 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
                 </button>
               </div>
 
-              {/* Send button on the right */}
-              <button type="submit"
-                className={`send-button-icon ${isSystemBusy() ? 'send-button-busy' : ''}`}
-                disabled={!userInputText.trim() || isSystemBusy()}
-                title={t('chat.send')}>
-                {isSystemBusy() ? (
-                  <div className="pulsing-dots">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                  </div>
-                ) : (
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="22" y1="2" x2="11" y2="13"></line>
-                    <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+              {/* Send or Stop button on the right */}
+              {isStreaming ? (
+                // Stop button when streaming
+                <button
+                  type="button"
+                  className="stop-button-icon"
+                  onClick={handleStopStreaming}
+                  title={t('chat.stopStreaming', 'Stop streaming')}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <rect x="6" y="6" width="12" height="12" rx="2" />
                   </svg>
-                )}
-              </button>
+                </button>
+              ) : (
+                // Send button when not streaming
+                <button type="submit"
+                  className={`send-button-icon ${isSystemBusy() ? 'send-button-busy' : ''}`}
+                  disabled={!userInputText.trim() || isSystemBusy()}
+                  title={t('chat.send')}>
+                  {isSystemBusy() ? (
+                    <div className="pulsing-dots">
+                      <span></span>
+                      <span></span>
+                      <span></span>
+                    </div>
+                  ) : (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <line x1="22" y1="2" x2="11" y2="13"></line>
+                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                    </svg>
+                  )}
+                </button>
+              )}
             </div>
           </div>
         </form>

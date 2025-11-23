@@ -117,6 +117,26 @@ class WebSocketManager {
   sendPing(chatId) {
     this.sendMessage(chatId, { type: 'ping' });
   }
+
+  // Cancel ongoing streaming
+  async cancelStream(chatId) {
+    try {
+      console.log(`🛑 Cancelling stream for chat ${chatId}`);
+      const success = await this.sendMessage(chatId, {
+        type: 'cancel_stream',
+        chat_id: chatId
+      });
+
+      if (success) {
+        console.log(`✅ Cancel request sent for chat ${chatId}`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Failed to cancel stream for chat ${chatId}:`, error);
+      return false;
+    }
+  }
 }
 
 // Global instance
@@ -302,5 +322,10 @@ export const setupWebSocketKeepalive = (chatId, intervalMs = 30000) => {
   return setInterval(() => {
     wsManager.sendPing(chatId);
   }, intervalMs);
+};
+
+// Cancel ongoing stream
+export const cancelWebSocketStream = async (chatId) => {
+  return await wsManager.cancelStream(chatId);
 };
 

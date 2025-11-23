@@ -933,6 +933,51 @@
   height: 20px;
 }
 
+/* Stop button - appears when streaming */
+.stop-button-icon {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 10px;
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  min-width: 40px;
+  min-height: 40px;
+  flex-shrink: 0;
+  animation: pulse-red 2s ease-in-out infinite;
+}
+
+.stop-button-icon:hover {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5);
+  animation: none;
+}
+
+.stop-button-icon:active {
+  transform: scale(0.95);
+}
+
+.stop-button-icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Pulse animation for stop button */
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
+  }
+  50% {
+    box-shadow: 0 2px 16px rgba(239, 68, 68, 0.6);
+  }
+}
+
 /* Old send button - keep for compatibility */
 .send-button {
   background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
@@ -1520,6 +1565,17 @@ body.dark-mode .send-button-icon {
 body.dark-mode .send-button-icon:hover:not(:disabled) {
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+}
+
+/* Stop button - Dark mode */
+body.dark-mode .stop-button-icon {
+  background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+  box-shadow: 0 2px 8px rgba(248, 113, 113, 0.4);
+}
+
+body.dark-mode .stop-button-icon:hover {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 4px 12px rgba(248, 113, 113, 0.6);
 }
 
 body.dark-mode .upload-button {
