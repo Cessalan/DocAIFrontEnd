@@ -1209,19 +1209,53 @@ body.dark-mode .message-delete-button:hover {
   /* Softer, more rounded */
   padding: 14px 18px;
   /* Comfortable padding */
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   /* Subtle floating shadow */
+  position: relative;
+}
+
+/* Premium glow effect on focus */
+.input-wrapper-container::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(135deg,
+    rgba(173, 125, 195, 0.15),
+    rgba(217, 184, 244, 0.15),
+    rgba(173, 125, 195, 0.15));
+  border-radius: 26px;
+  opacity: 0;
+  transition: opacity 0.4s ease;
+  z-index: -1;
+  filter: blur(8px);
+}
+
+.input-wrapper-container:focus-within::before {
+  opacity: 1;
+  animation: gentleGlowPulse 3s ease-in-out infinite;
+}
+
+@keyframes gentleGlowPulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
 }
 
 .input-wrapper-container:focus-within {
-  border-color: rgba(173, 125, 195, 0.3);
+  border-color: rgba(173, 125, 195, 0.4);
   /* Purple accent on focus */
   background: #ffffff;
-  box-shadow: 0 2px 8px rgba(173, 125, 195, 0.08);
-  /* Subtle shadow with less purple tint */
-  transform: translateY(-0.5px);
-  /* Very subtle lift effect */
+  box-shadow: 0 4px 20px rgba(173, 125, 195, 0.12),
+              0 0 0 3px rgba(173, 125, 195, 0.05);
+  /* Layered shadow with subtle ring */
+  transform: translateY(-1px);
+  /* Gentle lift effect */
 }
 
 .message-textarea {
@@ -1232,12 +1266,53 @@ body.dark-mode .message-delete-button:hover {
   resize: none;
   font-family: inherit;
   font-size: 16px;
-  line-height: 1.5;
+  line-height: 1.6;
   color: var(--text-primary);
   font-weight: 400;
   min-height: 24px;
-  max-height: 200px;
-  overflow-y: auto;
+  max-height: none;
+  overflow-y: hidden;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  z-index: 1;
+  position: relative;
+  box-sizing: border-box;
+}
+
+/* Premium scrollbar for textarea - gentle and soft */
+.message-textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.message-textarea::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 10px;
+  margin: 4px 0;
+}
+
+.message-textarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    rgba(173, 125, 195, 0.25) 0%,
+    rgba(173, 125, 195, 0.35) 100%);
+  border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.message-textarea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+    rgba(173, 125, 195, 0.45) 0%,
+    rgba(173, 125, 195, 0.55) 100%);
+  border: 1px solid transparent;
+}
+
+.message-textarea::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg,
+    rgba(173, 125, 195, 0.6) 0%,
+    rgba(173, 125, 195, 0.7) 100%);
 }
 
 .message-textarea::placeholder {
@@ -1386,7 +1461,7 @@ body.dark-mode .message-delete-button:hover {
   padding: 10px;
   border-radius: 50%;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
   box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
   display: flex;
   align-items: center;
@@ -1396,16 +1471,28 @@ body.dark-mode .message-delete-button:hover {
   flex-shrink: 0;
 }
 
+.send-button-icon:not(:disabled) {
+  transform: scale(1.08);
+  box-shadow: 0 3px 12px rgba(173, 125, 195, 0.35);
+}
+
 .send-button-icon:hover:not(:disabled) {
   background: linear-gradient(135deg, var(--primary-purple-hover) 0%, var(--primary-purple-dark) 100%);
-  transform: scale(1.05);
-  box-shadow: 0 4px 12px rgba(173, 125, 195, 0.4);
+  transform: scale(1.15);
+  box-shadow: 0 4px 14px rgba(173, 125, 195, 0.45);
 }
 
 .send-button-icon:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
-  transform: none;
+  transform: scale(0.92);
+  box-shadow: 0 1px 4px rgba(173, 125, 195, 0.15);
+}
+
+/* Disabled send button icon tilted */
+.send-button-icon:disabled svg {
+  transform: rotate(-45deg);
+  /* Tilted when disabled */
 }
 
 .send-button-icon.send-button-busy {
@@ -1415,6 +1502,15 @@ body.dark-mode .message-delete-button:hover {
 .send-button-icon svg {
   width: 20px;
   height: 20px;
+  transform: rotate(-45deg);
+  /* Default tilted paper plane */
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Straighten the send icon when ready to send */
+.send-button-icon:not(:disabled) svg {
+  transform: rotate(0deg);
+  /* Straighten up when enabled */
 }
 
 /* Stop button - appears when streaming */
@@ -2035,14 +2131,50 @@ body.dark-mode .input-wrapper-container {
   /* Fully opaque - no transparency */
   border: 1.5px solid rgba(255, 255, 255, 0.1);
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Dark mode glow effect */
+body.dark-mode .input-wrapper-container::before {
+  background: linear-gradient(135deg,
+    rgba(139, 92, 246, 0.2),
+    rgba(167, 139, 250, 0.2),
+    rgba(139, 92, 246, 0.2));
+  filter: blur(12px);
+}
+
+body.dark-mode .input-wrapper-container:focus-within::before {
+  opacity: 1;
+  animation: gentleGlowPulseDark 3s ease-in-out infinite;
+}
+
+@keyframes gentleGlowPulseDark {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
 }
 
 body.dark-mode .input-wrapper-container:focus-within {
-  border-color: rgba(139, 92, 246, 0.5);
-  background: rgb(52, 53, 65);
-  /* Fully opaque - no transparency */
-  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.6);
+  background: rgb(40, 41, 52);
+  /* Darker background when typing */
+  box-shadow: 0 4px 24px rgba(139, 92, 246, 0.3),
+              0 0 0 3px rgba(139, 92, 246, 0.1);
   transform: translateY(-1px);
+}
+
+/* Even darker when user has typed text */
+body.dark-mode .input-wrapper-container:has(.message-textarea:not(:placeholder-shown)) {
+  background: rgb(35, 36, 45);
+  /* Much darker when text is present */
+  border-color: rgba(139, 92, 246, 0.7);
+  box-shadow: 0 6px 28px rgba(139, 92, 246, 0.35),
+              0 0 0 3px rgba(139, 92, 246, 0.15);
 }
 
 body.dark-mode .message-textarea {
@@ -2053,6 +2185,29 @@ body.dark-mode .message-textarea {
 body.dark-mode .message-textarea::placeholder {
   color: rgba(255, 255, 255, 0.4);
   font-weight: 400;
+}
+
+/* Dark mode textarea scrollbar - softer purple glow */
+body.dark-mode .message-textarea::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+body.dark-mode .message-textarea::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg,
+    rgba(139, 92, 246, 0.3) 0%,
+    rgba(139, 92, 246, 0.4) 100%);
+}
+
+body.dark-mode .message-textarea::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg,
+    rgba(139, 92, 246, 0.5) 0%,
+    rgba(139, 92, 246, 0.6) 100%);
+}
+
+body.dark-mode .message-textarea::-webkit-scrollbar-thumb:active {
+  background: linear-gradient(180deg,
+    rgba(139, 92, 246, 0.7) 0%,
+    rgba(139, 92, 246, 0.8) 100%);
 }
 
 body.dark-mode .input-wrapper {
@@ -2088,11 +2243,25 @@ body.dark-mode .send-button:hover:not(:disabled) {
 body.dark-mode .send-button-icon {
   background: linear-gradient(135deg, #8b5cf6, #6b46c1);
   box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+  transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+body.dark-mode .send-button-icon:not(:disabled) {
+  background: linear-gradient(135deg, #a78bfa, #8b5cf6);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
+  transform: scale(1.12);
 }
 
 body.dark-mode .send-button-icon:hover:not(:disabled) {
   background: linear-gradient(135deg, #7c3aed, #5b21b6);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+  transform: scale(1.18);
+}
+
+body.dark-mode .send-button-icon:disabled {
+  opacity: 0.35;
+  transform: scale(0.9);
+  box-shadow: 0 1px 4px rgba(139, 92, 246, 0.2);
 }
 
 /* Stop button - Dark mode */

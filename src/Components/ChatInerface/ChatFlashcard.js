@@ -187,7 +187,21 @@ function ChatFlashcard(props) {
   };
 
   const handleCloseModal = () => {
-    setModalOpen(false);
+    // Add closing class for smooth animation
+    const modalContent = document.querySelector('.flashcard-modal-content');
+    const modalOverlay = document.querySelector('.flashcard-modal-overlay');
+
+    if (modalContent && modalOverlay) {
+      modalContent.classList.add('closing');
+      modalOverlay.classList.add('closing');
+
+      // Wait for animation to complete before actually closing
+      setTimeout(() => {
+        setModalOpen(false);
+      }, 400); // Match animation duration (0.4s)
+    } else {
+      setModalOpen(false);
+    }
   };
 
   const handleNavigation = (index) => {

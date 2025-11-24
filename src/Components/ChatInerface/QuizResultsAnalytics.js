@@ -193,26 +193,36 @@ const QuizResultsAnalytics = ({
     console.log("🎯 Practice Weak Topics clicked");
     console.log("📊 Weak topics:", weakTopics);
 
-    // Simple intent message - backend will analyze last quiz and generate everything
-    const simpleIntent = currentLanguage === 'fr'
-      ? "Je veux pratiquer mes points faibles du dernier quiz"
-      : "I want to practice my weak areas from the last quiz";
+    // Create clean backend request using i18n templates
+    const correctLabel = t('quizAnalytics.correct').toLowerCase();
+    const topicDetails = weakTopics.map(topic =>
+      `${topic.topic} (${topic.correct}/${topic.total} ${correctLabel} - ${topic.percentage}%)`
+    ).join(', ');
 
-    console.log("📝 Sending simple intent:", simpleIntent);
+    const backendPrompt = t('quizAnalytics.practiceWeakPrompt', { topics: topicDetails });
+
+    console.log("📝 Sending backend prompt:", backendPrompt);
+    console.log("🌍 Current language:", currentLanguage);
     console.log("🔗 onStartTargetedPractice exists:", !!onStartTargetedPractice);
 
     if (onStartTargetedPractice) {
-      console.log("✅ Calling onStartTargetedPractice with simple intent");
-      onStartTargetedPractice(simpleIntent);
+      console.log("✅ Calling onStartTargetedPractice with backend prompt");
+      onStartTargetedPractice(backendPrompt);
     } else {
       console.error("❌ onStartTargetedPractice is not defined!");
     }
   };
 
   const handleChallengeMore = () => {
-    const prompt = generateTargetedPrompt();
+    // Create clean backend request using i18n template
+    const backendPrompt = t('quizAnalytics.challengePrompt');
+
+    console.log("🚀 Challenge More clicked");
+    console.log("📝 Sending challenge prompt:", backendPrompt);
+    console.log("🌍 Current language:", currentLanguage);
+
     if (onStartTargetedPractice) {
-      onStartTargetedPractice(prompt);
+      onStartTargetedPractice(backendPrompt);
     }
   };
 

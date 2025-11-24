@@ -106,7 +106,7 @@ function ChatQuiz(props) {
   const setModalOpen = onModalChange || setLocalModalOpen;
 
   // Translation
-  const { i18n } = useTranslation();
+  const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
 
   // Computed values
@@ -198,8 +198,23 @@ function ChatQuiz(props) {
 
   const handleCloseModal = useCallback(() => {
     console.log('🔍 Closing modal');
-    setModalOpen(false);
-    document.body.style.overflow = '';
+    // Add closing class for smooth animation
+    const modalContent = document.querySelector('.quiz-modal-content');
+    const modalOverlay = document.querySelector('.quiz-modal-overlay');
+
+    if (modalContent && modalOverlay) {
+      modalContent.classList.add('closing');
+      modalOverlay.classList.add('closing');
+
+      // Wait for animation to complete before actually closing
+      setTimeout(() => {
+        setModalOpen(false);
+        document.body.style.overflow = '';
+      }, 400); // Match animation duration (0.4s)
+    } else {
+      setModalOpen(false);
+      document.body.style.overflow = '';
+    }
   }, [setModalOpen]);
 
   // Early return after all hooks
@@ -214,8 +229,8 @@ function ChatQuiz(props) {
     return (
       <div className="quiz-review-container">
         <div className="quiz-review-header">
-          <h3>📋 {currentLanguage === 'fr' ? 'Révision des réponses' : 'Answer Review'}</h3>
-          <p>{correctCount}/{allQuizzes.length} correct</p>
+          <h3>📋 {t('quiz.answerReview')}</h3>
+          <p>{correctCount}/{allQuizzes.length} {t('quiz.correct')}</p>
         </div>
 
         <div className="quiz-review-list">
@@ -236,7 +251,7 @@ function ChatQuiz(props) {
                 <div className="review-item-answers">
                   <div className="review-answer your-answer">
                     <span className="answer-label">
-                      {currentLanguage === 'fr' ? 'Votre réponse:' : 'Your answer:'}
+                      {t('quiz.yourAnswer')}
                     </span>
                     <span className={`answer-text ${answerIsCorrect ? 'correct' : 'incorrect'}`}>
                       {answer ? `${OPTION_LETTERS[answer.selectedOptionIndex]} ${answer.selectedOptionText}` : 'No answer'}
@@ -245,7 +260,7 @@ function ChatQuiz(props) {
                   {!answerIsCorrect && (
                     <div className="review-answer correct-answer">
                       <span className="answer-label">
-                        {currentLanguage === 'fr' ? 'Bonne réponse:' : 'Correct answer:'}
+                        {t('quiz.correctAnswer')}
                       </span>
                       <span className="answer-text correct">
                         {OPTION_LETTERS[qCorrectIndex]} {q.answer}
@@ -321,10 +336,10 @@ function ChatQuiz(props) {
             <div className="quiz-compact-header">
               <div className="quiz-compact-title-row">
                 <span className="quiz-compact-title">
-                  {currentLanguage === 'fr' ? 'Question' : 'Question'} {quizIndex + 1} {currentLanguage === 'fr' ? 'sur' : 'of'} {totalQuestions}
+                  {t('quiz.question')} {quizIndex + 1} {t('quiz.of')} {totalQuestions}
                   {isReviewing && (
                     <span className="review-badge">
-                      {currentLanguage === 'fr' ? ' (Révision)' : ' (Review)'}
+                      {' ('}{t('quiz.review')}{')'}
                     </span>
                   )}
                 </span>
@@ -430,8 +445,8 @@ function ChatQuiz(props) {
                 <div className="feedback-header">
                   <span className={`feedback-status ${(displaySelectedIndex !== null && displaySelectedIndex === correctIndex) ? 'correct' : 'incorrect'}`}>
                     {(displaySelectedIndex !== null && displaySelectedIndex === correctIndex)
-                      ? (currentLanguage === 'fr' ? '✓ Bonne réponse!' : '✓ That\'s right!')
-                      : (currentLanguage === 'fr' ? '✗ Pas tout à fait' : '✗ Not quite')
+                      ? `✓ ${t('quiz.thatsRight')}`
+                      : `✗ ${t('quiz.notQuite')}`
                     }
                   </span>
                 </div>
@@ -452,7 +467,7 @@ function ChatQuiz(props) {
                 onClick={onSkip}
                 type="button"
               >
-                {currentLanguage === 'fr' ? 'Passer la question →' : 'Skip Question →'}
+                {t('quiz.skipQuestion')} →
               </button>
             )}
 
@@ -464,8 +479,8 @@ function ChatQuiz(props) {
                 type="button"
               >
                 {isLastQuestion
-                  ? (currentLanguage === 'fr' ? 'Voir les résultats →' : 'View Results →')
-                  : (currentLanguage === 'fr' ? 'Question suivante →' : 'Next Question →')
+                  ? `${t('quiz.viewResults')} →`
+                  : `${t('quiz.nextQuestion')} →`
                 }
               </button>
             )}

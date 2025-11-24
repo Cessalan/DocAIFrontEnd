@@ -175,6 +175,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
   const documentFileInputRef = useRef(null);
+  const textareaRef = useRef(null); // Premium textarea ref for auto-resize
   const isQuizGeneratingRef = useRef(false);
   // in case the user answers quiz while its being loaded and streamed
   const pendingQuizAnswersRef = useRef({});
@@ -340,6 +341,31 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       }
     }
   }, [chatMessages, isAiTyping, scrollToBottom, isNearBottom]);
+
+  // Premium textarea auto-resize - ChatGPT/Gemini style
+  useEffect(() => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    // Reset height to 'auto' first to get the natural scrollHeight
+    textarea.style.height = 'auto';
+
+    // Calculate scroll height for content
+    const scrollHeight = textarea.scrollHeight;
+
+    // Set height between min (24px) and max (300px)
+    const newHeight = Math.max(24, Math.min(scrollHeight, 300));
+
+    // Apply new height
+    textarea.style.height = `${newHeight}px`;
+
+    // Show scrollbar only when max height is reached
+    if (scrollHeight > 300) {
+      textarea.style.overflowY = 'auto';
+    } else {
+      textarea.style.overflowY = 'hidden';
+    }
+  }, [userInputText]);
 
   const setLoadingState = useCallback((key, value) => {
     setLoadingStates(prev => ({ ...prev, [key]: value }));
@@ -1071,18 +1097,40 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         setChatMessages(prev =>
           prev.map(msg => {
             if (msg.isStreaming) {
-              // If message has content, keep it but mark as stopped
-              // If no content (empty), just mark it complete without showing anything
+              // Handle quiz messages - finalize with whatever was generated
+              if (msg.type === 'quiz' && msg.quizData && msg.quizData.length > 0) {
+                console.log(`🛑 Finalizing quiz with ${msg.quizData.length} questions`);
+                return {
+                  ...msg,
+                  isStreaming: false,
+                  stopped: true,
+                  content: `Quiz stopped - ${msg.quizData.length} questions generated`
+                };
+              }
+
+              // Handle flashcard messages - finalize with whatever was generated
+              if (msg.type === 'flashcard' && msg.flashcardData && msg.flashcardData.length > 0) {
+                console.log(`🛑 Finalizing flashcards with ${msg.flashcardData.length} cards`);
+                return {
+                  ...msg,
+                  isStreaming: false,
+                  stopped: true,
+                  content: `Flashcards stopped - ${msg.flashcardData.length} cards generated`
+                };
+              }
+
+              // Handle regular text messages - keep if has content
               if (msg.content && msg.content.trim()) {
                 return {
                   ...msg,
                   isStreaming: false,
                   stopped: true
                 };
-              } else {
-                // For empty messages (like quiz placeholders), remove them
-                return null;
               }
+
+              // Empty messages with no data - remove them
+              console.log(`🛑 Removing empty streaming message: ${msg.id}`);
+              return null;
             }
             return msg;
           }).filter(Boolean) // Remove null entries
@@ -2497,9 +2545,12 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           <div className="input-wrapper-container">
             {/* Textarea */}
             <textarea
+              ref={textareaRef}
               placeholder="Message..."
               value={userInputText}
-              onChange={(e) => setUserInputText(e.target.value)}
+              onChange={(e) => {
+                setUserInputText(e.target.value);
+              }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
@@ -2507,7 +2558,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                   e.currentTarget.form?.requestSubmit();
                 }
               }}
-              rows={1}
               className="message-textarea"
             />
 

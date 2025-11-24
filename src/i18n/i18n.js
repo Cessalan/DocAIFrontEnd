@@ -144,7 +144,19 @@ const resources = {
         50: "💪 Halfway there! Keep it up!",
         75: "🔥 Finish strong! You can do it!",
         90: "🏁 Almost done! Keep going!",
-        100: "🎉 Complete! Excellent work!"
+        100: "🎉 Complete! Excellent work!",
+        question: "Question",
+        of: "of",
+        review: "Review",
+        correct: "correct",
+        correctAnswer: "Correct answer:",
+        yourAnswer: "Your answer:",
+        answerReview: "Answer Review",
+        thatsRight: "That's right!",
+        notQuite: "Not quite",
+        skipQuestion: "Skip Question",
+        nextQuestion: "Next Question",
+        viewResults: "View Results"
       },
 
       // Quiz Sticky Progress Bar
@@ -253,7 +265,9 @@ const resources = {
         reviewQuiz: "Review Quiz",
         of: "of",
         aiAdapts: "AI adapts to your needs and creates personalized quizzes",
-        generalTopic: "General"
+        generalTopic: "General",
+        practiceWeakPrompt: "Create a 5-question practice quiz on my weak areas: {{topics}}",
+        challengePrompt: "Create a 5-question quiz with harder questions to challenge me more"
       },
 
       // Flashcard Interface
@@ -487,13 +501,26 @@ const resources = {
         practicetitle: "Continue!",
         practicemessage: "Concentre-toi sur les explications ci-dessus!",
         reviewtitle: "Temps de révision!",
+        reviewQuiz: "Revoir le quiz",
         reviewmessage: "Un peu plus de pratique t'aidera!",
         moderatetitle: "Continue!",
         25: "✨ Tu t'en sors très bien!",
         50: "💪 À mi-chemin! Ne lâche rien!",
-        75: "🔥 Finish strong! You can do it!",
-        90: "🏁 Almost done! Keep going!",
-        100: "🎉 Terminé! Excellent travail!"
+        75: "🔥 Termine en force! Tu peux le faire!",
+        90: "🏁 Presque fini! Continue!",
+        100: "🎉 Terminé! Excellent travail!",
+        question: "Question",
+        of: "sur",
+        review: "Révision",
+        correct: "correct",
+        correctAnswer: "Bonne réponse:",
+        yourAnswer: "Votre réponse:",
+        answerReview: "Révision des réponses",
+        thatsRight: "Bonne réponse!",
+        notQuite: "Pas tout à fait",
+        skipQuestion: "Passer la question",
+        nextQuestion: "Question suivante",
+        viewResults: "Voir les résultats"
       },
 
       // Quiz Sticky Progress Bar
@@ -602,7 +629,9 @@ const resources = {
         reviewQuiz: "Revoir le quiz",
         of: "sur",
         aiAdapts: "L'IA s'adapte à tes besoins et crée des quiz personnalisés",
-        generalTopic: "Général"
+        generalTopic: "Général",
+        practiceWeakPrompt: "Crée un quiz de pratique de 5 questions sur mes points faibles : {{topics}}",
+        challengePrompt: "Crée un quiz de 5 questions plus difficiles pour me challenger davantage"
       },
 
       // Flashcard Interface
