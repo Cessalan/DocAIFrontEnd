@@ -193,6 +193,13 @@ export const ask_llm_websocket = async (
 
 // Handle incoming WebSocket messages with full quiz streaming support
 function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd) {
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+  console.log('📨 WEBSOCKET MESSAGE RECEIVED');
+  console.log('   Type:', message.type);
+  console.log('   Data keys:', Object.keys(message.data || {}));
+  console.log('   Full message:', JSON.stringify(message, null, 2).substring(0, 500));
+  console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
   const { type, data } = message;
 
   switch (type) {
@@ -204,12 +211,19 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       break;
 
     case 'stream_chunk':
+      console.log('🔵 STREAM_CHUNK event');
+      console.log('   data.status:', data.status);
+      console.log('   data.answer_chunk:', data.answer_chunk?.substring(0, 50));
+      console.log('   data.chunk:', data.chunk?.substring(0, 50));
+
       // Handle all the streaming formats from your current implementation
       if (data.status) {
+        console.log('   → Routing to onStatusUpdate');
         // Handle status updates (quiz generation, study sheets, etc.)
         onStatusUpdate(data);
-      } 
+      }
       else if (data.answer_chunk) {
+        console.log('   → Routing to onTokenReceived (answer_chunk)');
         // Handle regular text streaming
         onTokenReceived(data.answer_chunk);
       } 

@@ -487,34 +487,51 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           return isFlashcardOrQuiz && isCompleted && notInFirebase;
         });
 
+        // 3. 🆕 CRITICAL FIX: Keep streaming messages that are actively being streamed
+        const activeStreamingMessages = prev.filter(msg => {
+          const isActivelyStreaming = msg.isStreaming === true; // Only preserve ACTIVE streams
+          const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
+
+          if (isActivelyStreaming && notInFirebase) {
+            console.log(`🔄 Preserving STREAMING message ${msg.id} (actively streaming)`);
+          }
+
+          // Only preserve if BOTH conditions are true
+          return isActivelyStreaming && notInFirebase;
+        });
+
         console.log(`🔍 Messages to preserve from state:`, {
           uploadMessages: activeUploadMessages.length,
           pendingFlashcards: pendingSaveMessages.filter(m => m.type === 'flashcard').length,
-          pendingQuizzes: pendingSaveMessages.filter(m => m.type === 'quiz').length
+          pendingQuizzes: pendingSaveMessages.filter(m => m.type === 'quiz').length,
+          streamingMessages: activeStreamingMessages.length
         });
 
-        if (activeUploadMessages.length === 0 && pendingSaveMessages.length === 0) {
+        if (activeUploadMessages.length === 0 && pendingSaveMessages.length === 0 && activeStreamingMessages.length === 0) {
           // No active messages to preserve, just use Firebase data
           return loadedMessages;
         }
 
-        // 3. Merge: Remove these message types from Firebase data to avoid duplicates
+        // 4. Merge: Remove these message types from Firebase data to avoid duplicates
         const firebaseWithoutPending = loadedMessages.filter(msg =>
           msg.type !== 'upload_loading' &&
-          !pendingSaveMessages.some(pending => pending.id === msg.id)
+          !pendingSaveMessages.some(pending => pending.id === msg.id) &&
+          !activeStreamingMessages.some(streaming => streaming.id === msg.id)
         );
 
-        // 4. Combine: Firebase messages + active uploads + pending saves
+        // 5. Combine: Firebase messages + active uploads + pending saves + streaming messages
         const result = [
           ...firebaseWithoutPending,
           ...activeUploadMessages,
-          ...pendingSaveMessages
+          ...pendingSaveMessages,
+          ...activeStreamingMessages
         ];
 
         console.log('🔄 Merged messages:', {
           fromFirebase: firebaseWithoutPending.length,
           activeUploads: activeUploadMessages.length,
           pendingSaves: pendingSaveMessages.length,
+          streamingMessages: activeStreamingMessages.length,
           total: result.length
         });
 
@@ -593,6 +610,14 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       timestamp: new Date()
     };
 
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    console.log('✨ CREATING STREAMING PLACEHOLDER');
+    console.log('   - ID:', streamingMessageId);
+    console.log('   - isStreaming:', placeholderMessage.isStreaming);
+    console.log('   - role:', placeholderMessage.role);
+    console.log('   - type:', placeholderMessage.type || 'undefined');
+    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+
     // Add user message AND streaming placeholder immediately (optimistic UI)
     setChatMessages(prev => [...prev, newUserMessage, placeholderMessage]);
 
@@ -631,14 +656,20 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
           // Empathetic message start
           if (statusUpdate.status === "empathetic_message_start") {
-            console.log("💬 Empathetic message streaming started");
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            console.log("💬 EMPATHETIC MESSAGE START");
+            console.log("   - Removing generic placeholder:", streamingMessageId);
+            console.log("   - Creating empathetic message bubble");
 
             // Create a NEW message bubble for empathetic text
             empatheticMessageId = `empathetic-${Date.now()}`;
+            console.log("   - New empatheticMessageId:", empatheticMessageId);
 
             setChatMessages(prev => {
+              console.log("   - Messages before filter:", prev.length);
               // Remove the generic placeholder if it exists
               const filtered = prev.filter(msg => msg.id !== streamingMessageId);
+              console.log("   - Messages after filter:", filtered.length);
 
               return [...filtered, {
                 id: empatheticMessageId,
@@ -650,6 +681,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
               }];
             });
 
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             return;
           }
 
@@ -915,30 +947,44 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
         // Token callback - handles regular text streaming
         (chunk) => {
-          console.log('📦 Chunk received In chatInterface:', chunk);
+          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+          console.log('📦 CHUNK RECEIVED:', chunk);
+          console.log('📏 Current fullResponse length:', fullResponse.length);
+          console.log('🆔 streamingMessageId:', streamingMessageId);
+          console.log('🆔 empatheticMessageId:', empatheticMessageId);
+
           fullResponse = (fullResponse + chunk);
 
-          console.log('📏 fullResponse length:', fullResponse.length);
-          console.log('🆔 streamingMessageId:', streamingMessageId);
+          console.log('📏 NEW fullResponse length:', fullResponse.length);
 
           if (fullResponse.length > 0 && streamingStatus) {
             setStreamingStatus(null);
           }
 
           setChatMessages(prev => {
-            console.log('🔍 Total messages:', prev.length);
+            console.log('🔍 Total messages in state:', prev.length);
 
             const found = prev.find(m => m.id === streamingMessageId);
-            console.log('✅ Found message:', !!found, 'Type:', found?.type);
+            console.log('✅ Found streamingMessage:', !!found);
+            if (found) {
+              console.log('   - ID:', found.id);
+              console.log('   - Type:', found.type || 'undefined');
+              console.log('   - isStreaming:', found.isStreaming);
+              console.log('   - Content length:', found.content?.length || 0);
+            }
 
             const updated = prev.map(msg => {
               if (msg.id === streamingMessageId && msg.type !== 'quiz' && msg.type !== 'flashcard') {
-                console.log('🎨 UPDATING MESSAGE with content length:', fullResponse.length);
+                console.log('🎨 UPDATING MESSAGE');
+                console.log('   - Previous content length:', msg.content?.length || 0);
+                console.log('   - New content length:', fullResponse.length);
+                console.log('   - isStreaming: true');
                 return { ...msg, content: fullResponse, isStreaming: true };
               }
               return msg;
             });
 
+            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             return updated;
           });
         },
@@ -957,16 +1003,19 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           }
 
           // Only save text responses
+          // ✅ FIX: Reuse streamingMessageId to prevent duplicates
           const finalMessage = {
-            id: uuidv4(),
+            id: streamingMessageId, // Reuse the streaming placeholder ID
             role: "assistant",
             content: fullResponse,
             timestamp: new Date(),
             isStreaming: false
           };
 
+          console.log('💾 Saving final message with ID:', streamingMessageId);
           await AppendToChat(updatedChatId || currentChatID, finalMessage);
 
+          console.log('🔄 Updating streaming message to final (isStreaming: false)');
           setChatMessages(prev =>
             prev.map(msg =>
               msg.id === streamingMessageId ? finalMessage : msg
