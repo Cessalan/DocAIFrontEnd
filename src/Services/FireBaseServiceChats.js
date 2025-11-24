@@ -600,4 +600,62 @@ export const GetAllFlashcardFeedbacks = async () => {
   }
 };
 
+/**
+ * Delete a single message from a chat
+ * @param {string} chatId - The chat ID
+ * @param {string} messageId - The message ID to delete
+ * @returns {Promise<Object>} - Success status
+ */
+export const DeleteMessage = async (chatId, messageId) => {
+  try {
+    console.log("🗑️ Deleting message:", messageId, "from chat:", chatId);
+
+    let messageRef;
+    let messageDoc;
+    let actualDocId;
+
+    // STEP 1: Try direct access using messageId as Firebase document ID
+    try {
+      messageRef = doc(db, "chats", chatId, "messages", messageId);
+      messageDoc = await getDoc(messageRef);
+
+      if (messageDoc.exists()) {
+        console.log("Found message via direct access");
+        actualDocId = messageId;
+      }
+    } catch (directAccessError) {
+      console.log("Direct access failed, will try query approach");
+    }
+
+    // STEP 2: If direct access failed, query for document with matching id field
+    if (!messageDoc || !messageDoc.exists()) {
+      console.log("Querying for message with id field:", messageId);
+
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const q = query(messagesRef, where("id", "==", messageId));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.empty) {
+        throw new Error(`Message not found: ${messageId} in chat: ${chatId}`);
+      }
+
+      messageDoc = querySnapshot.docs[0];
+      actualDocId = messageDoc.id;
+      messageRef = doc(db, "chats", chatId, "messages", actualDocId);
+
+      console.log("Found message via query, Firebase doc ID:", actualDocId);
+    }
+
+    // Delete the message
+    await deleteDoc(messageRef);
+    console.log("✅ Message deleted successfully:", actualDocId);
+
+    return { success: true, docId: actualDocId };
+
+  } catch (error) {
+    console.error("❌ Error deleting message:", error);
+    throw error;
+  }
+};
+
 export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };

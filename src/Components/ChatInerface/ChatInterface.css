@@ -303,6 +303,160 @@ body.dark-mode .nursing-icon {
   overflow-anchor: auto;
 }
 
+.streaming-logo {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 25;
+  overflow: visible;
+}
+
+.streaming-logo-svg {
+  width: 44px;
+  height: 44px;
+  filter: drop-shadow(0 2px 10px rgba(157, 126, 219, 0.5));
+  animation: geminiPulse 1.8s ease-in-out infinite;
+  overflow: visible;
+}
+
+/* Gemini-style gradient animation - fast color morphing */
+.streaming-logo-svg .gradient-stop-1 {
+  stop-color: #b794f6;
+  animation: colorShift1 1.8s ease-in-out infinite;
+}
+
+.streaming-logo-svg .gradient-stop-2 {
+  stop-color: #9d7edb;
+  animation: colorShift2 1.8s ease-in-out infinite;
+}
+
+.streaming-logo-svg .gradient-stop-3 {
+  stop-color: #7c5cbf;
+  animation: colorShift3 1.8s ease-in-out infinite;
+}
+
+/* Pulsing ring effect */
+.streaming-logo-svg .pulse-ring {
+  animation: ringPulse 1.8s ease-in-out infinite;
+}
+
+/* Heart breathing animation */
+.streaming-logo-svg .heart-shape {
+  animation: heartBreathe 1.8s ease-in-out infinite;
+  transform-origin: center center;
+}
+
+/* Cross ultra-fast spin around heart */
+.streaming-logo-svg .cross-group {
+  animation: crossSpin 0.6s linear infinite;
+  transform-origin: 60px 60px;
+  transform-box: fill-box;
+}
+
+/* Gemini-style pulse - smooth scale and glow */
+@keyframes geminiPulse {
+  0%, 100% {
+    transform: scale(1);
+    filter: drop-shadow(0 2px 8px rgba(157, 126, 219, 0.4));
+  }
+  50% {
+    transform: scale(1.05);
+    filter: drop-shadow(0 4px 16px rgba(157, 126, 219, 0.6));
+  }
+}
+
+/* Color morphing - gradient stop 1 */
+@keyframes colorShift1 {
+  0%, 100% { stop-color: #b794f6; }
+  33% { stop-color: #9d7edb; }
+  66% { stop-color: #c4b0f3; }
+}
+
+/* Color morphing - gradient stop 2 */
+@keyframes colorShift2 {
+  0%, 100% { stop-color: #9d7edb; }
+  33% { stop-color: #7c5cbf; }
+  66% { stop-color: #b794f6; }
+}
+
+/* Color morphing - gradient stop 3 */
+@keyframes colorShift3 {
+  0%, 100% { stop-color: #7c5cbf; }
+  33% { stop-color: #b794f6; }
+  66% { stop-color: #9d7edb; }
+}
+
+/* Pulsing outer ring */
+@keyframes ringPulse {
+  0%, 100% {
+    r: 35;
+    opacity: 0.2;
+  }
+  50% {
+    r: 38;
+    opacity: 0.4;
+  }
+}
+
+/* Heart breathing effect */
+@keyframes heartBreathe {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.03);
+  }
+}
+
+/* Cross fast spinning around heart */
+@keyframes crossSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Message avatar container */
+.message-avatar-container {
+  flex-shrink: 0;
+  /* Prevent avatar from shrinking */
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  /* Allow glow to extend beyond container */
+}
+
+/* StreamingLogo in message avatar context */
+.message-avatar-container .streaming-logo-svg {
+  width: 28px;
+  height: 28px;
+  overflow: visible;
+}
+
+/* StaticLogo in message avatar context */
+.message-avatar-container .static-logo-svg {
+  width: 28px;
+  height: 28px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 4px rgba(157, 126, 219, 0.3));
+}
+
+/* Static logo image sizing (fallback) */
+.message-avatar-container img {
+  display: block;
+}
+
 /* Hide scrollbar when loading */
 .messages-container:has(.chat-loading-overlay) {
   overflow: hidden;
@@ -674,6 +828,10 @@ body.dark-mode .nursing-icon {
   /* Breathing room above AI messages */
   padding-bottom: 20px;
   /* Breathing room below AI messages */
+  flex-direction: row;
+  /* Avatar on left, content on right */
+  align-items: flex-start;
+  gap: 12px;
 }
 
 /* Flashcard messages should be centered with minimum width */
@@ -765,6 +923,78 @@ body.dark-mode .nursing-icon {
   background: transparent;
   transform: none;
   box-shadow: none;
+}
+
+/* ============================================
+   DELETE MESSAGE BUTTON (DEV MODE + VIEW ALL CHATS)
+   Minimal, sleek design that appears on hover
+   ============================================ */
+.message-delete-button {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+  color: rgba(0, 0, 0, 0.4);
+  transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  z-index: 10;
+  opacity: 0;
+  animation: fadeIn 0.2s ease forwards;
+  font-weight: 300;
+  padding: 0;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.message:hover .message-delete-button {
+  opacity: 1;
+}
+
+.message-delete-button:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.2);
+  color: rgb(239, 68, 68);
+  transform: scale(1.05);
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15);
+}
+
+.message-delete-button:active {
+  transform: scale(0.95);
+  background: rgba(239, 68, 68, 0.15);
+}
+
+/* Dark mode support */
+body.dark-mode .message-delete-button {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .message-delete-button:hover {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: rgb(248, 113, 113);
 }
 
 /* User messages: Subtle bubble for distinction */
@@ -1993,4 +2223,92 @@ body.dark-mode .file-action-btn:hover {
 /* Lists - Dark */
 body.dark-mode .message-text ul>li::before {
   color: #a78bfa;
+}
+
+/* ============================================
+   STREAMING INDICATOR - Unified for Quiz & Flashcards
+   ============================================ */
+
+.streaming-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 24px;
+  background: rgba(157, 126, 219, 0.06);
+  border-radius: 20px;
+  margin-bottom: 16px;
+  backdrop-filter: blur(12px);
+  animation: slideInFromTop 0.3s ease-out, subtleGlow 2s ease-in-out infinite;
+  border: 1px solid rgba(157, 126, 219, 0.15);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.streaming-animation {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.streaming-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #b794f6 0%, #9d7edb 100%);
+  animation: streamingPulse 1.4s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(157, 126, 219, 0.4);
+}
+
+.streaming-dot:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.streaming-dot:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.streaming-dot:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.streaming-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #9d7edb;
+  letter-spacing: 0.5px;
+  text-transform: lowercase;
+  opacity: 0.9;
+}
+
+@keyframes streamingPulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+@keyframes slideInFromTop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes subtleGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 rgba(157, 126, 219, 0);
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(157, 126, 219, 0.15);
+  }
 }

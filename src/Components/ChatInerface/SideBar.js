@@ -24,7 +24,7 @@ import '../../index.css';
 // translation
 import { useTranslation } from 'react-i18next';
 
-const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
+const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => {
 
   // Development mode detection
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -48,6 +48,13 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
     }
     return false; // Non-dev users always see only their chats
   });
+
+  // Notify parent when viewAllChats changes
+  useEffect(() => {
+    if (onViewModeChange) {
+      onViewModeChange(viewAllChats);
+    }
+  }, [viewAllChats, onViewModeChange]);
 
   // Apply dark mode class to body
   useEffect(() => {

@@ -10,6 +10,9 @@ import QuizResultsAnalytics from "./QuizResultsAnalytics";
 import FlashcardFeedback from "./FlashcardFeedback";
 
 import QuizLoading from "./QuizLoading";
+import StreamingLogo from "./StreamingLogo";
+import StaticLogo from "./StaticLogo";
+import StreamingIndicator from "./StreamingIndicator";
 
 import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
@@ -33,7 +36,9 @@ const ChatMessage = ({
   onQuizInteraction,
   isActiveQuiz = false,
   onSendMessage,
-  onFeedbackSubmit
+  onFeedbackSubmit,
+  onDeleteMessage,
+  viewAllChatsMode = false
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -65,6 +70,13 @@ const ChatMessage = ({
 
   // Refs
   const progressBarRef = useRef(null);
+
+  // Hover state for delete button (dev mode only)
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Check if in development mode
+  const isDevelopment = process.env.NODE_ENV === 'development' ||
+                        window.location.hostname === 'localhost';
 
   // Parse quiz data
   const parsedQuizData = useMemo(() => {
@@ -590,16 +602,34 @@ const ChatMessage = ({
   const hasFlashcards = isAI && Array.isArray(parsedFlashcardData) && parsedFlashcardData.length > 0;
 
   return (
-    <div className={`message ${isUser ? "user-message" : "ai-message"} ${hasFlashcards ? "message-with-flashcards" : ""}`}>
+    <div
+      className={`message ${isUser ? "user-message" : "ai-message"} ${hasFlashcards ? "message-with-flashcards" : ""}`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       {/* Avatar */}
       {isAI && (
-        <div>
-          <img src="/LogoSimple.png" alt="Logo" width="30" />
+        <div className="message-avatar-container">
+          {message.isStreaming ? (
+            <StreamingLogo />
+          ) : (
+            <StaticLogo />
+          )}
         </div>
       )}
 
       {/* Content */}
       <div className="message-content">
+        {/* Delete Button (Dev Mode + View All Chats Only) */}
+        {isDevelopment && viewAllChatsMode && isHovered && onDeleteMessage && !message.isStreaming && (
+          <button
+            className="message-delete-button"
+            onClick={() => onDeleteMessage(message.id)}
+            title="Delete message"
+          >
+            ×
+          </button>
+        )}
 
         {/* Summary Display */}
         {isAI && message.type === "summary" && message.summaryData && (
@@ -611,6 +641,10 @@ const ChatMessage = ({
         {/* Quiz Display - Single Question Navigation */}
         {isAI && Array.isArray(parsedQuizData) && parsedQuizData.length > 0 && (
           <div className="message-text">
+            {/* Streaming Indicator - Above quiz */}
+            {message.isStreaming && !showResults && (
+              <StreamingIndicator type="quiz" />
+            )}
 
             {/* Quiz Content - Conditional Rendering */}
             <div className="quiz-single-view-container">
@@ -653,24 +687,6 @@ const ChatMessage = ({
                 <QuizLoading />
               )}
             </div>
-
-            {/* Streaming Indicator */}
-            {message.isStreaming && !showResults && (
-              <div className="quiz-streaming-indicator">
-                <div className="typing-indicator">
-                  <span className="blinking-dots">
-                    <h4>
-                      <strong>
-                        ✨ {i18n.language === 'fr' ? 'Génération du quiz...' : 'Generating quiz...'}
-                      </strong>
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </h4>
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
         )}
 

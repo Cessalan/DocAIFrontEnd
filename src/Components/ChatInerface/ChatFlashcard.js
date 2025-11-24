@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import './ChatFlashcard.css';
 import FlashcardNavigation from './FlashcardNavigation';
 import FlashcardResults from './FlashcardResults';
+import StreamingIndicator from './StreamingIndicator';
 import { useTranslation } from 'react-i18next';
 
 // Icon Components
@@ -345,14 +346,7 @@ function ChatFlashcard(props) {
     <div className="flashcard-compact-container glassmorphic">
       {/* Streaming Indicator - Above flashcard */}
       {isStreaming && (
-        <div className="flashcard-streaming-bar">
-          <div className="flashcard-streaming-animation">
-            <div className="flashcard-streaming-dot"></div>
-            <div className="flashcard-streaming-dot"></div>
-            <div className="flashcard-streaming-dot"></div>
-          </div>
-          <span className="flashcard-streaming-text">{t('flashcard.generatingFlashcards', 'Generating flashcards...')}</span>
-        </div>
+        <StreamingIndicator type="flashcard" />
       )}
 
       <div className="flashcard-compact-single">

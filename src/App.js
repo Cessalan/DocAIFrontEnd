@@ -16,6 +16,7 @@ import { useAuth } from "./Contexts/AuthContext/AuthContext";
 function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [selectedChatId, setSelectedChatId] = useState(null);
+  const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
 
   // Destructure isProfileComplete from useAuth
   const authContext = useAuth();
@@ -90,11 +91,21 @@ function ChatLayout() {
 
 
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
-        <SideBar user={user} onChatSelected={onSelectChat} onCloseSidebar={onCloseSidebar} />
+        <SideBar
+          user={user}
+          onChatSelected={onSelectChat}
+          onCloseSidebar={onCloseSidebar}
+          onViewModeChange={setViewAllChatsMode}
+        />
       </div>
 
       <div className={`main-content ${sidebarOpen ? 'shifted' : ''}`}>
-        <ChatInterface chatId={selectedChatId} onChatSelected={onSelectChat} onCloseSidebar={onCloseSidebar} />
+        <ChatInterface
+          chatId={selectedChatId}
+          onChatSelected={onSelectChat}
+          onCloseSidebar={onCloseSidebar}
+          viewAllChatsMode={viewAllChatsMode}
+        />
       </div>
 
       {!isProfileComplete && <OnboardingModal />}

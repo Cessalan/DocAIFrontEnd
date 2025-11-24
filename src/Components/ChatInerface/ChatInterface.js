@@ -42,7 +42,8 @@ import {
   GetFileMetadataByName,
   UpdateQuizAnswer,
   UpdateFlashcardReview,
-  SaveQuizFeedback
+  SaveQuizFeedback,
+  DeleteMessage
 } from '../../Services/FireBaseServiceChats.js';
 
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
@@ -81,7 +82,7 @@ import SuggestedPrompts from './SuggestedPrompts';
  * ChatInterface Component - A messenger-like interface for AI chat
  * Features: Text messaging with AI, File uploads, Quiz/Summary/Scenario generation
  */
-const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
+const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMode = false }) => {
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
@@ -576,27 +577,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
       content: messageToSend,
     };
 
-    setChatMessages(prev => [...prev, newUserMessage]);
     setUserInputText('');
 
-    // Scroll user message to top of viewport (ChatGPT style)
-    setTimeout(() => {
-      if (lastUserMessageRef.current) {
-        lastUserMessageRef.current.scrollIntoView({
-          behavior: 'smooth',
-          block: 'start',
-          inline: 'nearest'
-        });
-      }
-    }, 100);
-
-    // Save to Firebase
-    const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
-    if (updatedChatId && updatedChatId !== currentChatID) {
-      setChatId(updatedChatId);
-    }
-
-    // Prepare for streaming
+    // Prepare streaming placeholder IMMEDIATELY (before Firebase save)
     setIsAiTyping(true);
     setStreamingStatus(null);
     setIsStreaming(true); // Mark as actively streaming
@@ -610,7 +593,25 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
       timestamp: new Date()
     };
 
-    setChatMessages(prev => [...prev, placeholderMessage]);
+    // Add user message AND streaming placeholder immediately (optimistic UI)
+    setChatMessages(prev => [...prev, newUserMessage, placeholderMessage]);
+
+    // Scroll user message to top of viewport (ChatGPT style)
+    setTimeout(() => {
+      if (lastUserMessageRef.current) {
+        lastUserMessageRef.current.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+          inline: 'nearest'
+        });
+      }
+    }, 100);
+
+    // Save to Firebase (non-blocking for UI)
+    const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+    if (updatedChatId && updatedChatId !== currentChatID) {
+      setChatId(updatedChatId);
+    }
 
     let fullResponse = "";
     let empatheticMessageId = null; // Track empathetic message bubble
@@ -2089,6 +2090,40 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
     }
   }, [currentChatID]);
 
+  // ============================================
+  // MESSAGE DELETION HANDLING (DEV MODE)
+  // ============================================
+  const handleDeleteMessage = useCallback(async (messageId) => {
+    // Check if in development mode
+    const isDevelopment = process.env.NODE_ENV === 'development' ||
+                          window.location.hostname === 'localhost';
+
+    if (!isDevelopment) {
+      console.warn("Delete message is only available in development mode");
+      return;
+    }
+
+    // Confirm deletion
+    if (!window.confirm("Delete this message? This action cannot be undone.")) {
+      return;
+    }
+
+    try {
+      console.log("🗑️ Deleting message:", messageId);
+
+      // Delete from Firebase
+      await DeleteMessage(currentChatID, messageId);
+
+      // Update local state to remove the message
+      setChatMessages(prev => prev.filter(msg => msg.id !== messageId));
+
+      console.log("✅ Message deleted successfully");
+    } catch (error) {
+      console.error("❌ Failed to delete message:", error);
+      alert("Failed to delete message: " + error.message);
+    }
+  }, [currentChatID]);
+
   const hasMessages = chatMessages.length > 0;
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 
@@ -2256,6 +2291,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
                       isActiveQuiz={message.id === activeQuizId}
                       onFeedbackSubmit={handleQuizFeedback}
                       onSendMessage={handleSendNewUserMessage}
+                      onDeleteMessage={handleDeleteMessage}
+                      viewAllChatsMode={viewAllChatsMode}
                     />
                   </div>
                 );
@@ -2345,49 +2382,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
             </div>
           )}
 
-          {/* AI Typing Indicator - Hide when generating quiz/flashcards (they have their own indicators) */}
-          {isAiTyping &&
-           streamingStatus?.status !== 'generating_quiz' &&
-           streamingStatus?.status !== 'generating_flashcards' && (
-            <div className="message ai-message">
-              <div>
-                <img src="/LogoSimple.png" alt="Logo" width="30" />
-              </div>
-              <div className="chat-spinner">
-                <div className="typing-indicator">
-                  {streamingStatus?.status === 'processing' && (
-                    <>
-                      <GearEmoji size={20} /> {"  "}
-                    </>)
-                  }
-                  {streamingStatus?.status === 'thinking' && (
-                    <>
-                      <ThinkingEmoji size={20} /> {"  "}
-
-                    </>)
-                  }
-                  {streamingStatus?.status === 'retrieving' && (
-                    <>
-                      <ReadingEmoji size={20} /> {"  "}
-                      <strong>Entrain de lire tes documents</strong>
-                    </>)
-                  }
-                  {streamingStatus?.status === 'generating' && <PencilEmoji size={20} />}
-                  {streamingStatus?.status === 'complete' && '✅'}
-                  {streamingStatus?.status === 'error' && '❌ une erreur est survenue'}
-
-                  {(streamingStatus?.status !== 'complete' && streamingStatus?.status !== 'error') && (
-                    <span className="blinking-dots">
-                      <span></span>
-                      <span></span>
-                      <span></span>
-                    </span>
-                    // <GhostLoader/>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* AI Typing Indicator - Now handled by message avatars with isStreaming flag */}
 
 
 
