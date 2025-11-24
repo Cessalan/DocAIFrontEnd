@@ -2097,6 +2097,20 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar }) => {
       <div
         className={`chat-container ${activeStudySheet ? 'has-study-sheet' : ''}`}
       >
+        {/* Nursing Background Icons */}
+        <div className="nursing-icon">💊</div>
+        <div className="nursing-icon">🩺</div>
+        <div className="nursing-icon">💉</div>
+        <div className="nursing-icon">💗</div>
+        <div className="nursing-icon">🏥</div>
+        <div className="nursing-icon">⚕️</div>
+        <div className="nursing-icon">🩹</div>
+        <div className="nursing-icon">💝</div>
+        <div className="nursing-icon">🌡️</div>
+        <div className="nursing-icon">💕</div>
+        <div className="nursing-icon">🧬</div>
+        <div className="nursing-icon">💜</div>
+
         {/* Header */}
         <div className="chat-header">
           <h2 className="chat-header-title" onClick={() => setIsFilesModalVisible(true)}>

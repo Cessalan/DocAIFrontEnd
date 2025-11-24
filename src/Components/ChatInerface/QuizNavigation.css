@@ -333,13 +333,45 @@
     transform-origin: bottom left;
 }
 
-/* Portal version (rendered to body) - always on top */
+/* Portal version (rendered to body) - always on top and positioned near trigger */
 .feedback-popover-portal {
-    position: fixed !important;
-    z-index: 10001 !important;
-    transform-origin: left center;
-    bottom: auto !important;
-    left: auto !important;
+    position: fixed;
+    z-index: 99999;
+    transform-origin: center;
+    pointer-events: auto;
+}
+
+.feedback-popover-portal::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    width: 0;
+    height: 0;
+    transform: translateY(-50%);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.1));
+}
+
+.feedback-popover-portal.placement-right::after {
+    left: -8px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-right: 8px solid rgba(255, 255, 255, 0.98);
+}
+
+.feedback-popover-portal.placement-left::after {
+    right: -8px;
+    border-top: 8px solid transparent;
+    border-bottom: 8px solid transparent;
+    border-left: 8px solid rgba(255, 255, 255, 0.98);
+}
+
+/* Dark mode arrow */
+body.dark-mode .feedback-popover-portal.placement-right::after {
+    border-right-color: rgba(30, 33, 40, 0.98);
+}
+
+body.dark-mode .feedback-popover-portal.placement-left::after {
+    border-left-color: rgba(30, 33, 40, 0.98);
 }
 
 /* Position above the button when in modal or when it would be cut off */

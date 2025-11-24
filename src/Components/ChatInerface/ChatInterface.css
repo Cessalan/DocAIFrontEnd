@@ -68,6 +68,140 @@
   box-shadow: none;
   max-height: 100vh;
   transition: width var(--transition-normal);
+  position: relative;
+}
+
+/* Nursing Icons Background Container */
+.chat-container::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+/* Individual Nursing Icons */
+.nursing-icon {
+  position: absolute;
+  font-size: 24px;
+  opacity: 0.18;
+  pointer-events: none;
+  animation: floatNurse 20s infinite ease-in-out;
+  filter: blur(0.3px) drop-shadow(0 2px 4px rgba(173, 125, 195, 0.15));
+  transition: all 0.3s ease;
+  z-index: 0;
+}
+
+/* Dark mode - glowy effect */
+body.dark-mode .nursing-icon {
+  opacity: 0.16;
+  filter: blur(0.6px) drop-shadow(0 0 8px rgba(167, 139, 250, 0.4)) drop-shadow(0 0 14px rgba(167, 139, 250, 0.25));
+  text-shadow: 0 0 10px rgba(167, 139, 250, 0.5), 0 0 18px rgba(167, 139, 250, 0.3);
+}
+
+/* Stagger animations for each icon - LEFT SIDE ONLY */
+.nursing-icon:nth-child(1) {
+  top: 10%;
+  left: 2%;
+  animation-delay: 0s;
+  animation-duration: 25s;
+}
+
+.nursing-icon:nth-child(2) {
+  top: 25%;
+  left: 5%;
+  animation-delay: -5s;
+  animation-duration: 22s;
+}
+
+.nursing-icon:nth-child(3) {
+  top: 45%;
+  left: 1%;
+  animation-delay: -10s;
+  animation-duration: 28s;
+}
+
+.nursing-icon:nth-child(4) {
+  top: 60%;
+  left: 4%;
+  animation-delay: -15s;
+  animation-duration: 24s;
+}
+
+.nursing-icon:nth-child(5) {
+  top: 80%;
+  left: 3%;
+  animation-delay: -8s;
+  animation-duration: 26s;
+}
+
+.nursing-icon:nth-child(6) {
+  top: 92%;
+  left: 6%;
+  animation-delay: -12s;
+  animation-duration: 23s;
+}
+
+/* RIGHT SIDE ICONS */
+.nursing-icon:nth-child(7) {
+  top: 15%;
+  right: 2%;
+  animation-delay: -3s;
+  animation-duration: 27s;
+}
+
+.nursing-icon:nth-child(8) {
+  top: 35%;
+  right: 5%;
+  animation-delay: -18s;
+  animation-duration: 25s;
+}
+
+.nursing-icon:nth-child(9) {
+  top: 50%;
+  right: 1%;
+  animation-delay: -6s;
+  animation-duration: 29s;
+}
+
+.nursing-icon:nth-child(10) {
+  top: 68%;
+  right: 4%;
+  animation-delay: -14s;
+  animation-duration: 21s;
+}
+
+.nursing-icon:nth-child(11) {
+  top: 85%;
+  right: 3%;
+  animation-delay: -9s;
+  animation-duration: 24s;
+}
+
+.nursing-icon:nth-child(12) {
+  top: 5%;
+  right: 6%;
+  animation-delay: -16s;
+  animation-duration: 27s;
+}
+
+@keyframes floatNurse {
+  0%, 100% {
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
+  25% {
+    transform: translate(10px, -15px) rotate(5deg) scale(1.05);
+  }
+  50% {
+    transform: translate(-8px, -25px) rotate(-3deg) scale(0.98);
+  }
+  75% {
+    transform: translate(12px, -10px) rotate(4deg) scale(1.02);
+  }
 }
 
 /* When study sheet is open - adjust width */
@@ -127,6 +261,7 @@
   border-bottom: 1px solid rgba(173, 125, 195, 0.15);
   box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.5) inset;
   min-height: 60px;
+  position: relative;
 }
 
 .chat-header-title {
@@ -161,6 +296,8 @@
   /* Remove gap - each message will handle spacing */
   background: transparent;
   position: relative;
+  z-index: 1;
+  /* Above nursing icons */
   /* Smooth scrolling like ChatGPT */
   scroll-behavior: smooth;
   overflow-anchor: auto;
@@ -194,7 +331,7 @@
    ============================================ */
 .scroll-to-bottom-btn {
   position: fixed;
-  bottom: 100px;
+  bottom: 140px;
   left: 50%;
   margin-left: -24px;
   width: 48px;
@@ -211,7 +348,7 @@
   justify-content: center;
   color: var(--primary-purple);
   transition: all var(--transition-normal);
-  z-index: 100;
+  z-index: 150;
   animation: fadeInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   will-change: transform;
 }
@@ -252,7 +389,7 @@
 /* Mobile adjustment */
 @media (max-width: 768px) {
   .scroll-to-bottom-btn {
-    bottom: 80px;
+    bottom: 120px;
     left: 50%;
     margin-left: -22px;
     width: 44px;

@@ -9,6 +9,7 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
     const [feedbackStep, setFeedbackStep] = useState('initial'); // initial, rating, detail, thanks
     const [rating, setRating] = useState(null);
     const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+    const [popoverPlacement, setPopoverPlacement] = useState('right'); // right | left
     const triggerRef = useRef(null);
 
     const handleToggle = () => {
@@ -17,32 +18,59 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
         if (!isOpen) setFeedbackStep('initial');
     };
 
-    // Update popover position when opened
+    // Update popover position when opened and on scroll
     useEffect(() => {
-        if (isOpen && triggerRef.current) {
-            const rect = triggerRef.current.getBoundingClientRect();
-            const popoverWidth = 220;
-            const popoverHeight = 200;
+        const updatePosition = () => {
+            if (isOpen && triggerRef.current) {
+                const rect = triggerRef.current.getBoundingClientRect();
+                const popoverWidth = 220;
+                const popoverHeight = 200;
+                const spacing = 12; // Spacing from trigger button
+                const margin = 12;
 
-            let top = rect.top;
-            let left = rect.right + 8;
+                console.log('🎯 Button position:', {
+                    top: rect.top,
+                    left: rect.left,
+                    right: rect.right,
+                    bottom: rect.bottom,
+                    width: rect.width,
+                    height: rect.height
+                });
 
-            // Adjust if popover would go off bottom of screen
-            if (top + popoverHeight > window.innerHeight) {
-                top = window.innerHeight - popoverHeight - 10;
+                // Prefer to sit to the right of the button, vertically centered
+                let placement = 'right';
+                let left = rect.right + spacing;
+                let top = rect.top + (rect.height / 2) - (popoverHeight / 2);
+
+                // If it overflows on the right, flip to the left
+                if (left + popoverWidth + margin > window.innerWidth) {
+                    left = rect.left - popoverWidth - spacing;
+                    placement = 'left';
+                }
+
+                // Clamp within viewport horizontally and vertically
+                left = Math.max(margin, Math.min(left, window.innerWidth - popoverWidth - margin));
+                top = Math.max(margin, Math.min(top, window.innerHeight - popoverHeight - margin));
+
+                console.log('📍 Popover position:', { top, left });
+
+                setPopoverPosition({ top, left });
+                setPopoverPlacement(placement);
             }
+        };
 
-            // Adjust if popover would go off right of screen
-            if (left + popoverWidth > window.innerWidth) {
-                left = rect.left - popoverWidth - 8;
-            }
+        // Update position initially
+        updatePosition();
 
-            // Adjust if popover would go off top of screen
-            if (top < 10) {
-                top = 10;
-            }
+        // Update position on scroll (for chat interface scrolling)
+        if (isOpen) {
+            window.addEventListener('scroll', updatePosition, true);
+            window.addEventListener('resize', updatePosition);
 
-            setPopoverPosition({ top, left });
+            return () => {
+                window.removeEventListener('scroll', updatePosition, true);
+                window.removeEventListener('resize', updatePosition);
+            };
         }
     }, [isOpen]);
 
@@ -98,7 +126,7 @@ const QuizFeedback = ({ onFeedbackSubmit, hasSubmitted }) => {
 
         const popoverContent = (
             <div
-                className="feedback-popover feedback-popover-portal"
+                className={`feedback-popover feedback-popover-portal placement-${popoverPlacement}`}
                 style={{
                     position: 'fixed',
                     top: `${popoverPosition.top}px`,
