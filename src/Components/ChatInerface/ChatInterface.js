@@ -350,21 +350,14 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     // Reset height to 'auto' first to get the natural scrollHeight
     textarea.style.height = 'auto';
 
-    // Calculate scroll height for content
+    // Calculate scroll height for content and cap at ~55% viewport height
+    const maxHeight = Math.max(160, Math.floor(window.innerHeight * 0.55));
     const scrollHeight = textarea.scrollHeight;
+    const newHeight = Math.max(24, Math.min(scrollHeight, maxHeight));
 
-    // Set height between min (24px) and max (300px)
-    const newHeight = Math.max(24, Math.min(scrollHeight, 300));
-
-    // Apply new height
+    textarea.style.maxHeight = `${maxHeight}px`;
     textarea.style.height = `${newHeight}px`;
-
-    // Show scrollbar only when max height is reached
-    if (scrollHeight > 300) {
-      textarea.style.overflowY = 'auto';
-    } else {
-      textarea.style.overflowY = 'hidden';
-    }
+    textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   }, [userInputText]);
 
   const setLoadingState = useCallback((key, value) => {
