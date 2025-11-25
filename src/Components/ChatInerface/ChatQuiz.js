@@ -301,23 +301,8 @@ function ChatQuiz(props) {
 
     return (
       <div className={`quiz-compact-container glassmorphic ${inModal ? 'in-modal' : ''}`}>
-        {/* Side Navigation - Only show if we have multiple quizzes and not in review mode */}
-        {allQuizzes.length > 1 && !reviewMode && (
-          <div className="quiz-sidebar">
-            <QuizNavigation
-              questions={allQuizzes}
-              currentIndex={quizIndex}
-              onNavigate={onNavigate}
-              userAnswers={userAnswers}
-              skippedQuestions={skippedQuestions}
-              onFeedbackSubmit={handleFeedbackSubmit}
-              hasGivenFeedback={feedbackGiven}
-            />
-          </div>
-        )}
-
-        {/* Side Navigation for Review Mode (In Modal) */}
-        {allQuizzes.length > 1 && reviewMode && inModal && (
+        {/* Side Navigation - Only show in modal (fullscreen) */}
+        {inModal && allQuizzes.length > 1 && (
           <div className="quiz-sidebar">
             <QuizNavigation
               questions={allQuizzes}

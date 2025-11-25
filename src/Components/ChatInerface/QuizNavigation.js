@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import './QuizNavigation.css';
 import QuizFeedback from './QuizFeedback';
@@ -13,11 +13,26 @@ function QuizNavigation({
   hasGivenFeedback
 }) {
   const { t } = useTranslation();
+  const navListRef = useRef(null);
+  const currentItemRef = useRef(null);
 
-  // Map all questions without filtering
-  const filteredQuestions = useMemo(() => {
-    return questions.map((q, i) => ({ question: q, originalIndex: i }));
+  // Show ALL questions in a scrollable list
+  const visibleQuestions = useMemo(() => {
+    return questions.map((q, i) => ({
+      question: q,
+      originalIndex: i
+    }));
   }, [questions]);
+
+  // Auto-scroll to current question
+  useEffect(() => {
+    if (currentItemRef.current && navListRef.current) {
+      currentItemRef.current.scrollIntoView({
+        behavior: 'smooth',
+        block: 'nearest'
+      });
+    }
+  }, [currentIndex]);
 
   return (
     <div className="quiz-navigation compact">
@@ -44,8 +59,8 @@ function QuizNavigation({
 
       <div className="quiz-nav-divider"></div>
 
-      <div className="quiz-nav-list">
-        {filteredQuestions.map(({ question, originalIndex }) => {
+      <div className="quiz-nav-list" ref={navListRef}>
+        {visibleQuestions.map(({ question, originalIndex }) => {
           const isCurrent = originalIndex === currentIndex;
           const answer = userAnswers.find(a => a.quizIndex === originalIndex) || (question.userSelection ? { isCorrect: question.userSelection.isCorrect } : null);
           const isAnswered = !!answer;
@@ -72,6 +87,7 @@ function QuizNavigation({
           return (
             <button
               key={originalIndex}
+              ref={isCurrent ? currentItemRef : null}
               className={`quiz-nav-item ${statusClass}`}
               onClick={() => onNavigate(originalIndex)}
               aria-label={`${t('quizNavigation.questionPrefix')}${originalIndex + 1}`}

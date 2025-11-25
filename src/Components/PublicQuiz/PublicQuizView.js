@@ -66,6 +66,16 @@ function PublicQuizView() {
     setShowResults(false);
   };
 
+  // Extract unique topics from all quizzes
+  const allTopics = useMemo(() => {
+    if (!quizData?.quizzes) return [];
+    const topics = new Set();
+    quizData.quizzes.forEach(quiz => {
+      if (quiz.topic) topics.add(quiz.topic);
+    });
+    return Array.from(topics);
+  }, [quizData]);
+
   // Calculate user's analytics from their answers
   const userAnalytics = useMemo(() => {
     if (!showResults || userAnswers.length === 0) return null;
@@ -170,13 +180,25 @@ function PublicQuizView() {
       <div className="public-quiz-container">
         <div className="public-quiz-header">
         <div className="brand">
-          <h1>📚 NurseQuiz AI</h1>
+          <img src="/LogoSimple.png" alt="NurseQuiz AI" className="brand-logo" />
+          <h1>NurseQuiz AI</h1>
         </div>
         <div className="quiz-info">
           <h2>{quizData.topic}</h2>
-          <p className="quiz-meta">
-            {quizData.totalQuestions} Questions • Shared Quiz
-          </p>
+          <div className="quiz-meta">
+            <span>{quizData.totalQuestions} Questions</span>
+            <span className="meta-divider">•</span>
+            <span>Shared Quiz</span>
+          </div>
+          {allTopics.length > 0 && (
+            <div className="quiz-topics">
+              <div className="topics-list">
+                {allTopics.map((topic, idx) => (
+                  <span key={idx} className="topic-tag">{topic}</span>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

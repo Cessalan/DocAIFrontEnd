@@ -4,22 +4,22 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 12px 24px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border: none;
+  padding: 12px 28px;
+  background: rgba(0, 0, 0, 0.05);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #2d3748;
+  border: 1.5px solid rgba(0, 0, 0, 0.12);
   border-radius: 12px;
-  font-size: 0.95rem;
+  font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow:
-    0 4px 12px rgba(102, 126, 234, 0.25),
-    0 2px 4px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   margin-top: 12px;
   width: 100%;
-  max-width: 200px;
+  max-width: none;
 }
 
 .share-quiz-btn .btn-content {
@@ -40,7 +40,7 @@
   background: linear-gradient(
     90deg,
     transparent,
-    rgba(255, 255, 255, 0.3),
+    rgba(0, 0, 0, 0.05),
     transparent
   );
   transition: left 0.5s ease;
@@ -48,9 +48,10 @@
 
 .share-quiz-btn:hover:not(.disabled):not(.loading) {
   transform: translateY(-2px);
-  box-shadow:
-    0 6px 20px rgba(102, 126, 234, 0.35),
-    0 3px 6px rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.18);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12);
+  color: #1a202c;
 }
 
 .share-quiz-btn:hover:not(.disabled):not(.loading) .btn-shine {
@@ -59,9 +60,7 @@
 
 .share-quiz-btn:active:not(.disabled):not(.loading) {
   transform: translateY(0);
-  box-shadow:
-    0 2px 8px rgba(102, 126, 234, 0.25),
-    0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
 }
 
 .share-quiz-btn.disabled {
@@ -88,8 +87,8 @@
 .share-spinner {
   width: 16px;
   height: 16px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-top-color: white;
+  border: 2px solid rgba(0, 0, 0, 0.15);
+  border-top-color: #2d3748;
   border-radius: 50%;
   animation: spin 0.8s linear infinite;
 }
@@ -610,4 +609,37 @@ body.dark-mode .share-modal-close:hover {
 
 body.dark-mode .header-icon {
   background: linear-gradient(135deg, #ad7dc3 0%, #b39ddb 100%);
+}
+
+/* Dark mode - Share Quiz Button */
+body.dark-mode .share-quiz-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .share-quiz-btn:hover:not(.disabled):not(.loading) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .share-quiz-btn:active:not(.disabled):not(.loading) {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .share-quiz-btn .btn-shine {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.15),
+    transparent
+  );
+}
+
+body.dark-mode .share-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: white;
 }
