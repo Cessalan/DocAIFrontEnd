@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
 import { Navigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -343,7 +343,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   }, [chatMessages, isAiTyping, scrollToBottom, isNearBottom]);
 
   // Premium textarea auto-resize - ChatGPT/Gemini style
-  useEffect(() => {
+  useLayoutEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
@@ -353,10 +353,15 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     // Calculate scroll height for content and cap at ~55% viewport height
     const maxHeight = Math.max(160, Math.floor(window.innerHeight * 0.55));
     const scrollHeight = textarea.scrollHeight;
-    const newHeight = Math.max(24, Math.min(scrollHeight, maxHeight));
+
+    // Ensure we don't shrink below a minimum height (e.g. 24px or 40px depending on CSS)
+    // But allow it to grow.
+    const newHeight = Math.min(scrollHeight, maxHeight);
 
     textarea.style.maxHeight = `${maxHeight}px`;
     textarea.style.height = `${newHeight}px`;
+
+    // Show scrollbar only if content exceeds max height
     textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   }, [userInputText]);
 
@@ -2186,7 +2191,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const handleDeleteMessage = useCallback(async (messageId) => {
     // Check if in development mode
     const isDevelopment = process.env.NODE_ENV === 'development' ||
-                          window.location.hostname === 'localhost';
+      window.location.hostname === 'localhost';
 
     if (!isDevelopment) {
       console.warn("Delete message is only available in development mode");
@@ -2539,6 +2544,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
             {/* Textarea */}
             <textarea
               ref={textareaRef}
+              rows={1}
               placeholder="Message..."
               value={userInputText}
               onChange={(e) => {
@@ -2633,40 +2639,41 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         </form>
 
         {/* Files Modal */}
-        {isFilesModalVisible && (
-          <div className="modal-overlay">
-            <div className="modal-content">
-              <div className="modal-header">
-                <h3>{t('chat.files')} 📁</h3>
-                <button
-                  className="close-button"
-                  onClick={() => setIsFilesModalVisible(false)}
-                >
-                  ×
-                </button>
-              </div>
-              <div className="modal-body">
-                {uploadedFilesList.length === 0 ? (
-                  <p className="no-files">{t('chat.noFiles')}</p>
-                ) : (
-                  <ul className="files-list">
-                    {uploadedFilesList.map(file => (
-                      <li key={file.id} className="file-item">
-                        <div className="file-info">
-                          <div className="file-icon">
-                            {file.isImage ? <SvgImageIcon /> : <SvgFileIcon />}
-                          </div>
-                          <div className="file-details">
-                            <div className="file-name">{file.name}</div>
-                            <div className="file-meta">
-                              <span className="file-size">{file.size}</span>
-                              <span className="file-date">{formatDate(file.uploadedAt)}</span>
+        {
+          isFilesModalVisible && (
+            <div className="modal-overlay">
+              <div className="modal-content">
+                <div className="modal-header">
+                  <h3>{t('chat.files')} 📁</h3>
+                  <button
+                    className="close-button"
+                    onClick={() => setIsFilesModalVisible(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+                <div className="modal-body">
+                  {uploadedFilesList.length === 0 ? (
+                    <p className="no-files">{t('chat.noFiles')}</p>
+                  ) : (
+                    <ul className="files-list">
+                      {uploadedFilesList.map(file => (
+                        <li key={file.id} className="file-item">
+                          <div className="file-info">
+                            <div className="file-icon">
+                              {file.isImage ? <SvgImageIcon /> : <SvgFileIcon />}
+                            </div>
+                            <div className="file-details">
+                              <div className="file-name">{file.name}</div>
+                              <div className="file-meta">
+                                <span className="file-size">{file.size}</span>
+                                <span className="file-date">{formatDate(file.uploadedAt)}</span>
+                              </div>
                             </div>
                           </div>
-                        </div>
 
-                        <div className="file-actions">
-                          {/* <button
+                          <div className="file-actions">
+                            {/* <button
                             className="file-action-btn"
                             onClick={() => handlePostDocumentUploadOption("Résumé", file.name)}
                             title={t('file.summarize')}
@@ -2680,45 +2687,48 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                           >
                             🧠 Quiz
                           </button> */}
-                          {/* <button
+                            {/* <button
                             className="file-action-btn"
                             onClick={() => handlePostDocumentUploadOption("Mise en situation", file.name)}
                             title={t('file.createScenario')}
                           >
                             🎭 {t('file.scenario')}
                           </button> */}
-                        </div>
-                      </li>
-                    ))}
-                  </ul>
-                )}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        )}
-      </div>
+          )
+        }
+      </div >
       {/* Study Guide Panel */}
-      {activeStudySheet && (
-        <div className="study-sheet-panel">
-          <div className="study-guide-content">
-            {/* <StudyGuideGenerator
+      {
+        activeStudySheet && (
+          <div className="study-sheet-panel">
+            <div className="study-guide-content">
+              {/* <StudyGuideGenerator
                   topic={activeStudyGuide.topic}
                   chatId={activeStudyGuide.chatId}
                   numSections={activeStudyGuide.num_sections}
                 />  */}
 
-            <StudySheetLivePreview
-              key={activeStudySheet.key}
-              topic={activeStudySheet.topic}
-              chatId={activeStudySheet.chatId}
-              onClose={handleCloseStudySheet}
-              websocketData={studySheetWebSocketData}
-            />
+              <StudySheetLivePreview
+                key={activeStudySheet.key}
+                topic={activeStudySheet.topic}
+                chatId={activeStudySheet.chatId}
+                onClose={handleCloseStudySheet}
+                websocketData={studySheetWebSocketData}
+              />
+            </div>
           </div>
-        </div>
 
-      )}
-    </div>
+        )
+      }
+    </div >
   );
 };
 
