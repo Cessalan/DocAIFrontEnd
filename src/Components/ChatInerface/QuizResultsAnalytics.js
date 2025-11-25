@@ -336,20 +336,29 @@ const QuizResultsAnalytics = ({
       {/* Action Buttons - Compact */}
       <div className="actions-compact">
         {weakTopics.length > 0 ? (
-          <button className="action-btn primary" onClick={handlePracticeWeakTopics}>
-            <span className="btn-icon">🎯</span>
-            <span className="btn-text">{t('quizAnalytics.practiceWeakTopics')}</span>
+          <button className="practice-btn" onClick={handlePracticeWeakTopics}>
+            <div className="btn-content">
+              <span className="btn-icon">🎯</span>
+              <span>{t('quizAnalytics.practiceWeakTopics')}</span>
+            </div>
+            <div className="btn-shine" />
           </button>
         ) : percentage >= 90 ? (
-          <button className="action-btn primary" onClick={handleChallengeMore}>
-            <span className="btn-icon">🚀</span>
-            <span className="btn-text">{t('quizAnalytics.challengeMore')}</span>
+          <button className="practice-btn" onClick={handleChallengeMore}>
+            <div className="btn-content">
+              <span className="btn-icon">🚀</span>
+              <span>{t('quizAnalytics.challengeMore')}</span>
+            </div>
+            <div className="btn-shine" />
           </button>
         ) : null}
         {onReview && (
-          <button className="action-btn secondary" onClick={onReview}>
-            <span className="btn-icon">👁️</span>
-            <span className="btn-text">{t('quizAnalytics.reviewQuiz')}</span>
+          <button className="review-quiz-btn" onClick={onReview}>
+            <div className="btn-content">
+              <span className="btn-icon">👁️</span>
+              <span>{t('quizAnalytics.reviewQuiz')}</span>
+            </div>
+            <div className="btn-shine" />
           </button>
         )}
         <ShareQuizButton

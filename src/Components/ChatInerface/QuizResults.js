@@ -187,33 +187,36 @@ const QuizResults = ({
           </span>
         </button>
 
-        {/* Review Button */}
-        {onReview && (
-          <button
-            className="quiz-results-review-button"
-            onClick={onReview}
-          >
-            <div className="btn-content">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
-                <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                <path d="M9 10h.01M15 10h.01M9.5 15.5s1.5 2 4.5 2 4.5-2 4.5-2"/>
-              </svg>
-              <span>{t('quiz.reviewQuiz')}</span>
-            </div>
-            <div className="btn-shine" />
-          </button>
-        )}
+        {/* Review and Share buttons in a row */}
+        <div className="quiz-results-button-row">
+          {/* Review Button */}
+          {onReview && (
+            <button
+              className="quiz-results-review-button"
+              onClick={onReview}
+            >
+              <div className="btn-content">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  <path d="M9 10h.01M15 10h.01M9.5 15.5s1.5 2 4.5 2 4.5-2 4.5-2"/>
+                </svg>
+                <span>{t('quiz.reviewQuiz')}</span>
+              </div>
+              <div className="btn-shine" />
+            </button>
+          )}
 
-        {/* Share Button */}
-        {quizData && (
-          <ShareQuizButton
-            quizData={{
-              messageId: messageId,
-              quizzes: quizData,
-              topic: quizData[0]?.topic || 'Nursing Quiz'
-            }}
-          />
-        )}
+          {/* Share Button */}
+          {quizData && (
+            <ShareQuizButton
+              quizData={{
+                messageId: messageId,
+                quizzes: quizData,
+                topic: quizData[0]?.topic || 'Nursing Quiz'
+              }}
+            />
+          )}
+        </div>
 
         <p className="quiz-results-cta-note">
           {currentLanguage === 'fr'
