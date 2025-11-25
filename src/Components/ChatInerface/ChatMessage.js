@@ -658,6 +658,7 @@ const ChatMessage = ({
                   longestStreak={quizStreak.longest}
                   onStartTargetedPractice={handleStartTargetedPractice}
                   onReview={handleReviewQuiz}
+                  messageId={message.id}
                 />
               ) : isWaitingForQuestion ? (
                 /* Loading State - Waiting for next question */

@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { Navigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, Link, useSearchParams } from "react-router-dom";
 import { handleCreateUserWithEmailAndPassword, handleSignInWithGoogleAccount, handleSignInWithAppleAccount } from "../../Firebase/auth";
 import { useAuth } from "../../Contexts/AuthContext/AuthContext";
 import { auth } from "../../Firebase/config";
@@ -20,9 +20,23 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
 
   const { isUserLoggedIn } = useAuth();
+  const [searchParams] = useSearchParams();
+
+  // Get redirect parameters
+  const returnTo = searchParams.get('returnTo');
+  const prompt = searchParams.get('prompt');
+  const quizTopic = searchParams.get('quizTopic');
 
   // translation
   const { t } = useTranslation();
+
+  // Store quiz context in sessionStorage for post-login redirect
+  useEffect(() => {
+    if (prompt && quizTopic) {
+      sessionStorage.setItem('pendingQuizPrompt', prompt);
+      sessionStorage.setItem('pendingQuizTopic', quizTopic);
+    }
+  }, [prompt, quizTopic]);
 
   const handleSubmit = async (e) => {
 
@@ -73,7 +87,7 @@ const Signup = () => {
 
   return (
     <div className="login-container">
-      {isUserLoggedIn && <Navigate to="/" replace={true} />}
+      {isUserLoggedIn && <Navigate to={returnTo || "/"} replace={true} />}
       
       <h2>{t("signup.title")}</h2>
 

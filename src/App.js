@@ -7,6 +7,7 @@ import Login from "./Components/Auth/Login";
 import Signup from "./Components/Auth/SignUp";
 import ForgotPassword from "./Components/Auth/ForgotPassword";
 import ProtectedRoute from "./Components/Auth/ProtectedRoute";
+import PublicQuizView from "./Components/PublicQuiz/PublicQuizView";
 import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
@@ -116,10 +117,11 @@ function ChatLayout() {
 function App() {
   return (
     <Routes>
-      {/* Public Route */}
+      {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/quiz/:shareId" element={<PublicQuizView />} />
 
 
       {/* Protected Chat Layout */}

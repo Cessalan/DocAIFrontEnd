@@ -364,6 +364,33 @@ const resources = {
         submitError: "Failed to submit feedback. Please try again.",
         successTitle: "Thank you!",
         successMessage: "Your feedback helps us improve. We appreciate you taking the time!"
+      },
+
+      // Quiz Sharing
+      quizShare: {
+        buttonText: "Share Quiz",
+        creatingLink: "Creating link...",
+        modalTitle: "Share Quiz",
+        challengeMessage: "Challenge Message",
+        messagePlaceholder: "Add a personal message...",
+        copyMessage: "Copy Message",
+        copyLink: "Copy Link",
+        copied: "Copied!",
+        shareVia: "Share via",
+        socialTwitter: "Twitter",
+        socialFacebook: "Facebook",
+        socialWhatsApp: "WhatsApp",
+        socialEmail: "Email",
+        socialInstagram: "Instagram",
+        socialTikTok: "TikTok",
+        instagramMessage: "Link copied to clipboard! Instagram app will open. Paste the link in your story or post.\n\nClick OK to continue to Instagram, or Cancel to stay here.",
+        tiktokMessage: "Link copied to clipboard! TikTok app will open. Paste the link in your video description.\n\nClick OK to continue to TikTok, or Cancel to stay here.",
+        viralMessage90: "🏆 I just scored {{percentage}}% on this {{topic}}! Think you can beat my score? 💪",
+        viralMessage80: "🌟 I got {{percentage}}% on this {{topic}}! Can you do better? Try it out! 🎯",
+        viralMessage70: "📚 I scored {{percentage}}% on this {{topic}}. Challenge yourself and see how you do! 🚀",
+        viralMessageDefault: "💪 I'm practicing {{topic}} and got {{percentage}}%. Join me and let's improve together! 📖",
+        defaultQuizName: "Nursing Quiz",
+        defaultMessage: "Check out this nursing quiz!"
       }
     }
   },
@@ -728,6 +755,33 @@ const resources = {
         submitError: "Échec de l'envoi. Veuillez réessayer.",
         successTitle: "Merci!",
         successMessage: "Votre retour nous aide à améliorer l'application. Nous apprécions votre temps!"
+      },
+
+      // Quiz Sharing
+      quizShare: {
+        buttonText: "Partager le quiz",
+        creatingLink: "Création du lien...",
+        modalTitle: "Partager le quiz",
+        challengeMessage: "Message de défi",
+        messagePlaceholder: "Ajouter un message personnel...",
+        copyMessage: "Copier le message",
+        copyLink: "Copier le lien",
+        copied: "Copié!",
+        shareVia: "Partager via",
+        socialTwitter: "Twitter",
+        socialFacebook: "Facebook",
+        socialWhatsApp: "WhatsApp",
+        socialEmail: "Courriel",
+        socialInstagram: "Instagram",
+        socialTikTok: "TikTok",
+        instagramMessage: "Lien copié dans le presse-papiers! L'application Instagram va s'ouvrir. Colle le lien dans ta story ou publication.\n\nClique OK pour continuer vers Instagram, ou Annuler pour rester ici.",
+        tiktokMessage: "Lien copié dans le presse-papiers! L'application TikTok va s'ouvrir. Colle le lien dans la description de ta vidéo.\n\nClique OK pour continuer vers TikTok, ou Annuler pour rester ici.",
+        viralMessage90: "🏆 Je viens de marquer {{percentage}}% sur ce {{topic}}! Penses-tu pouvoir battre mon score? 💪",
+        viralMessage80: "🌟 J'ai obtenu {{percentage}}% sur ce {{topic}}! Peux-tu faire mieux? Essaie-le! 🎯",
+        viralMessage70: "📚 J'ai marqué {{percentage}}% sur ce {{topic}}. Lance-toi le défi et vois comment tu t'en sors! 🚀",
+        viralMessageDefault: "💪 Je pratique {{topic}} et j'ai obtenu {{percentage}}%. Rejoins-moi et améliorons-nous ensemble! 📖",
+        defaultQuizName: "Quiz d'infirmière",
+        defaultMessage: "Découvre ce quiz d'infirmière!"
       }
     }
   }

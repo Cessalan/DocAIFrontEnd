@@ -102,6 +102,23 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const [userInputText, setUserInputText] = useState('');
   const [uploadedFilesList, setUploadedFilesList] = useState([]);
 
+  // Check for pending quiz prompt from signup flow
+  useEffect(() => {
+    const pendingPrompt = sessionStorage.getItem('pendingQuizPrompt');
+    const pendingTopic = sessionStorage.getItem('pendingQuizTopic');
+
+    if (pendingPrompt && !chatId) {
+      // Pre-fill the input with the practice prompt
+      setUserInputText(pendingPrompt);
+
+      // Clear from sessionStorage
+      sessionStorage.removeItem('pendingQuizPrompt');
+      sessionStorage.removeItem('pendingQuizTopic');
+
+      console.log('📚 Pre-filled practice prompt from quiz share:', pendingTopic);
+    }
+  }, [chatId]);
+
   // UI state
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [streamingStatus, setStreamingStatus] = useState(null);

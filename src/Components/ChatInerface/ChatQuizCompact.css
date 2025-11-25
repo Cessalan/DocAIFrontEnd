@@ -937,10 +937,55 @@
   }
 }
 
-.quiz-modal-close {
+/* Modal Header Actions */
+.quiz-modal-header-actions {
   position: absolute;
   top: 10px;
+  left: 10px;
   right: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 10000;
+  animation: fadeInButton 0.35s ease-out 0.25s both;
+  gap: 12px;
+}
+
+.quiz-modal-header-actions .share-quiz-btn {
+  margin-top: 0;
+  max-width: 140px;
+  padding: 8px 14px;
+  font-size: 0.8rem;
+  background: rgba(107, 70, 193, 0.08);
+  box-shadow: none;
+  border: 1px solid rgba(107, 70, 193, 0.15);
+}
+
+.quiz-modal-header-actions .share-quiz-btn .btn-content {
+  gap: 6px;
+}
+
+.quiz-modal-header-actions .share-quiz-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.quiz-modal-header-actions .share-quiz-btn:hover:not(.disabled):not(.loading) {
+  background: rgba(107, 70, 193, 0.12);
+  box-shadow: 0 2px 8px rgba(107, 70, 193, 0.15);
+  transform: translateY(-1px);
+}
+
+.quiz-modal-header-actions .share-quiz-btn:active:not(.disabled):not(.loading) {
+  transform: translateY(0);
+  background: rgba(107, 70, 193, 0.1);
+}
+
+.quiz-modal-header-actions .share-quiz-btn .btn-shine {
+  display: none;
+}
+
+.quiz-modal-close {
   background: rgba(107, 70, 193, 0.1);
   border: none;
   border-radius: 6px;
@@ -948,8 +993,7 @@
   cursor: pointer;
   color: #6b46c1;
   transition: all 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 10000;
-  animation: fadeInButton 0.35s ease-out 0.25s both;
+  flex-shrink: 0;
 }
 
 @keyframes fadeInButton {

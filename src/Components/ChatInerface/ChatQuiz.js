@@ -3,6 +3,7 @@ import { createPortal } from "react-dom";
 import './ChatInterface.css';
 import './ChatQuizCompact.css';
 import QuizNavigation from './QuizNavigation';
+import ShareQuizButton from './ShareQuizButton';
 import { useTranslation } from 'react-i18next';
 
 // Constants
@@ -494,17 +495,41 @@ function ChatQuiz(props) {
   function renderModal() {
     if (!modalOpen) return null;
 
+    // Prepare quiz data for sharing
+    const quizDataForSharing = {
+      quizzes: allQuizzes,
+      topic: quiz?.topic || 'Quiz',
+      totalQuestions: totalQuestions
+    };
+
+    // Prepare user results for sharing
+    const userResultsForSharing = {
+      totalQuestions: totalQuestions,
+      correctAnswers: userAnswers.filter(a => a.isCorrect).length,
+      incorrectAnswers: userAnswers.filter(a => !a.isCorrect).length,
+      percentage: totalQuestions > 0
+        ? Math.round((userAnswers.filter(a => a.isCorrect).length / totalQuestions) * 100)
+        : 0
+    };
+
     const modalContent = (
       <div className="quiz-modal-overlay" onClick={handleCloseModal}>
         <div className="quiz-modal-content" onClick={e => e.stopPropagation()}>
-          <button
-            className="quiz-modal-close"
-            onClick={handleCloseModal}
-            aria-label="Close"
-            type="button"
-          >
-            <CloseIcon />
-          </button>
+          <div className="quiz-modal-header-actions">
+            <ShareQuizButton
+              quizData={quizDataForSharing}
+              userResults={userResultsForSharing}
+              disabled={false}
+            />
+            <button
+              className="quiz-modal-close"
+              onClick={handleCloseModal}
+              aria-label="Close"
+              type="button"
+            >
+              <CloseIcon />
+            </button>
+          </div>
 
           <div className="quiz-modal-scroll-wrapper">
             {reviewMode ? renderQuizContent(true) : renderQuizContent(true)}

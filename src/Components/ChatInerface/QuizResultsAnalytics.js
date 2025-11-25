@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import './QuizResultsAnalytics.css';
 import { useTranslation } from 'react-i18next';
+import ShareQuizButton from './ShareQuizButton';
 
 /**
  * QuizResultsAnalytics Component
@@ -14,7 +15,8 @@ const QuizResultsAnalytics = ({
   incorrectAnswers,
   longestStreak,
   onStartTargetedPractice,
-  onReview
+  onReview,
+  messageId // New prop for sharing
 }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
@@ -350,6 +352,22 @@ const QuizResultsAnalytics = ({
             <span className="btn-text">{t('quizAnalytics.reviewQuiz')}</span>
           </button>
         )}
+        <ShareQuizButton
+          quizData={{
+            messageId: messageId,
+            quizzes: quizData,
+            topic: quizData[0]?.topic || 'Nursing Quiz'
+          }}
+          userResults={{
+            totalQuestions,
+            correctAnswers,
+            incorrectAnswers,
+            percentage,
+            weakTopics: weakTopics.map(t => t.topic),
+            strongTopics: topics.filter(t => t.percentage >= 80).map(t => t.topic)
+          }}
+          autoOpen={true}
+        />
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import React from 'react';
 import './ChatQuiz.css';
 import { useTranslation } from 'react-i18next';
+import ShareQuizButton from './ShareQuizButton';
 
 /**
  * QuizResults Component
@@ -24,7 +25,9 @@ const QuizResults = ({
   incorrectAnswers,
   longestStreak,
   onStartTargetedPractice,
-  onReview
+  onReview,
+  quizData, // New prop for sharing
+  messageId // New prop for sharing
 }) => {
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
@@ -192,6 +195,17 @@ const QuizResults = ({
           >
             {t('quiz.reviewQuiz')}
           </button>
+        )}
+
+        {/* Share Button */}
+        {quizData && (
+          <ShareQuizButton
+            quizData={{
+              messageId: messageId,
+              quizzes: quizData,
+              topic: quizData[0]?.topic || 'Nursing Quiz'
+            }}
+          />
         )}
 
         <p className="quiz-results-cta-note">
