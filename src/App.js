@@ -8,6 +8,7 @@ import Signup from "./Components/Auth/SignUp";
 import ForgotPassword from "./Components/Auth/ForgotPassword";
 import ProtectedRoute from "./Components/Auth/ProtectedRoute";
 import PublicQuizView from "./Components/PublicQuiz/PublicQuizView";
+import QuizRoomLanding from "./Components/QuizRoom/QuizRoomLanding";
 import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
@@ -123,6 +124,8 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/quiz/:shareId" element={<PublicQuizView />} />
 
+      {/* Quiz Room Landing - Public */}
+      <Route path="/start" element={<QuizRoomLanding />} />
 
       {/* Protected Chat Layout */}
       <Route
