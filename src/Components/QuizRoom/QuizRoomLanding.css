@@ -161,8 +161,9 @@
 }
 
 .theme-toggle-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: rgba(255, 255, 255, 0.7);
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
 }
 
 .theme-toggle-btn:active {
@@ -170,11 +171,12 @@
 }
 
 .theme-toggle-btn svg {
-  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1), filter 0.3s ease;
 }
 
 .theme-toggle-btn:hover svg {
   transform: rotate(15deg);
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.6));
 }
 
 /* Light mode theme toggle */
@@ -183,20 +185,13 @@ body:not(.dark-mode) .theme-toggle-btn {
 }
 
 body:not(.dark-mode) .theme-toggle-btn:hover {
-  background: rgba(0, 0, 0, 0.05);
-  color: rgba(0, 0, 0, 0.6);
+  background: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+  box-shadow: 0 0 12px rgba(100, 116, 139, 0.3);
 }
 
-/* Theme toggle in light mode media query */
-@media (prefers-color-scheme: light) {
-  .theme-toggle-btn {
-    color: rgba(0, 0, 0, 0.35);
-  }
-
-  .theme-toggle-btn:hover {
-    background: rgba(0, 0, 0, 0.05);
-    color: rgba(0, 0, 0, 0.6);
-  }
+body:not(.dark-mode) .theme-toggle-btn:hover svg {
+  filter: drop-shadow(0 0 3px rgba(100, 116, 139, 0.4));
 }
 
 .quiz-landing-wrapper {
