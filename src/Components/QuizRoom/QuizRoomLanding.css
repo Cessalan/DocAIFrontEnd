@@ -189,6 +189,29 @@
 
 .nurse-quiz-mascot {
   pointer-events: none;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Mascot fly away animation on click - anime style */
+.landing-mascot.spinning .nurse-quiz-mascot {
+  animation: mascotFlyAway 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+}
+
+@keyframes mascotFlyAway {
+  0% {
+    transform: translateY(0) scale(1) translateZ(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translateY(10px) scale(1.1, 0.9) translateZ(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-200px) scale(0.5) translateZ(0);
+    opacity: 0;
+  }
 }
 
 /* ============================================

@@ -1,10 +1,32 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 
 /**
  * NurseQuizMascot - Cute, round, bouncy heart mascot with halo
  * More 3D, plump, and adorable
+ * Now with eye tracking for hovering cards!
+ *
+ * @param {string} lookDirection - 'center', 'left', 'right', 'down-left', 'down-center', 'down-right'
  */
-const NurseQuizMascot = ({ size = 200, className = '' }) => {
+const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' }) => {
+  // Calculate eye offsets based on look direction
+  const eyeOffset = useMemo(() => {
+    switch (lookDirection) {
+      case 'left':
+        return { x: -4, y: 0 };
+      case 'right':
+        return { x: 4, y: 0 };
+      case 'down-left':
+        return { x: -3, y: 3 };
+      case 'down-center':
+        return { x: 0, y: 4 };
+      case 'down-right':
+        return { x: 3, y: 3 };
+      case 'up':
+        return { x: 0, y: -3 };
+      default:
+        return { x: 0, y: 0 };
+    }
+  }, [lookDirection]);
   return (
     <div
       className={`nurse-quiz-mascot ${className}`}
@@ -92,11 +114,26 @@ const NurseQuizMascot = ({ size = 200, className = '' }) => {
             <stop offset="100%" stopColor="#0f0f1a"/>
           </radialGradient>
 
-          {/* Foot 3D gradient */}
-          <radialGradient id="footGrad3D" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#fff5fa"/>
-            <stop offset="50%" stopColor="#ffd6ed"/>
+          {/* Foot 3D gradient - more depth */}
+          <radialGradient id="footGrad3D" cx="30%" cy="25%" r="75%">
+            <stop offset="0%" stopColor="#fff8fc"/>
+            <stop offset="30%" stopColor="#ffebf5"/>
+            <stop offset="60%" stopColor="#ffd6ed"/>
             <stop offset="100%" stopColor="#f9a8d4"/>
+          </radialGradient>
+
+          {/* Foot bottom shadow gradient */}
+          <linearGradient id="footShadowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#e879a9" stopOpacity="0"/>
+            <stop offset="70%" stopColor="#d85a94" stopOpacity="0.2"/>
+            <stop offset="100%" stopColor="#c9247a" stopOpacity="0.35"/>
+          </linearGradient>
+
+          {/* Toe highlight gradient */}
+          <radialGradient id="toeGrad" cx="50%" cy="30%" r="60%">
+            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9"/>
+            <stop offset="60%" stopColor="#fff5fa" stopOpacity="0.5"/>
+            <stop offset="100%" stopColor="#ffd6ed" stopOpacity="0"/>
           </radialGradient>
 
           {/* Filters */}
@@ -289,58 +326,94 @@ const NurseQuizMascot = ({ size = 200, className = '' }) => {
             </g>
           </g>
 
-          {/* CUTE FACE */}
+          {/* CUTE FACE - softer, more integrated */}
           <g>
-            {/* Left eye - bigger and rounder */}
+            {/* Subtle face area shadow for depth */}
+            <ellipse cx="150" cy="160" rx="50" ry="35" fill="#d85a94" opacity="0.08"/>
+
+            {/* Left eye - softer, rounder */}
             <g>
-              <ellipse cx="118" cy="150" rx="18" ry="20" fill="url(#eyeGrad)"/>
-              {/* Big shine */}
-              <ellipse cx="110" cy="142" rx="7" ry="8" fill="#ffffff"/>
-              {/* Small shine */}
-              <circle cx="122" cy="154" r="4" fill="#ffffff" opacity="0.85"/>
-              {/* Colored reflection */}
-              <circle cx="115" cy="162" r="2.5" fill="#67e8f9" opacity="0.5"/>
+              {/* Eye socket shadow - stays fixed */}
+              <ellipse cx="118" cy="152" rx="20" ry="22" fill="#d85a94" opacity="0.15"/>
+              {/* Eye white/sclera - stays fixed */}
+              <ellipse cx="118" cy="150" rx="16" ry="18" fill="#1a1a2e"/>
+              {/* Soft outer glow to blend */}
+              <ellipse cx="118" cy="150" rx="16" ry="18" fill="none" stroke="#ffaad9" strokeWidth="2" opacity="0.3"/>
+              {/* Pupil group - moves with look direction */}
+              <g style={{ transition: 'transform 0.15s ease-out', transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+                {/* Main pupil */}
+                <ellipse cx="118" cy="150" rx="12" ry="14" fill="url(#eyeGrad)"/>
+                {/* Big shine */}
+                <ellipse cx="111" cy="143" rx="5" ry="6" fill="#ffffff"/>
+                {/* Small shine */}
+                <circle cx="120" cy="152" r="3" fill="#ffffff" opacity="0.8"/>
+                {/* Pink reflection - matches body */}
+                <circle cx="115" cy="158" r="2" fill="#fda4af" opacity="0.6"/>
+              </g>
             </g>
 
             {/* Right eye */}
             <g>
-              <ellipse cx="182" cy="150" rx="18" ry="20" fill="url(#eyeGrad)"/>
-              <ellipse cx="174" cy="142" rx="7" ry="8" fill="#ffffff"/>
-              <circle cx="186" cy="154" r="4" fill="#ffffff" opacity="0.85"/>
-              <circle cx="179" cy="162" r="2.5" fill="#67e8f9" opacity="0.5"/>
+              {/* Eye socket shadow - stays fixed */}
+              <ellipse cx="182" cy="152" rx="20" ry="22" fill="#d85a94" opacity="0.15"/>
+              {/* Eye white/sclera - stays fixed */}
+              <ellipse cx="182" cy="150" rx="16" ry="18" fill="#1a1a2e"/>
+              {/* Soft outer glow to blend */}
+              <ellipse cx="182" cy="150" rx="16" ry="18" fill="none" stroke="#ffaad9" strokeWidth="2" opacity="0.3"/>
+              {/* Pupil group - moves with look direction */}
+              <g style={{ transition: 'transform 0.15s ease-out', transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+                {/* Main pupil */}
+                <ellipse cx="182" cy="150" rx="12" ry="14" fill="url(#eyeGrad)"/>
+                {/* Big shine */}
+                <ellipse cx="175" cy="143" rx="5" ry="6" fill="#ffffff"/>
+                {/* Small shine */}
+                <circle cx="184" cy="152" r="3" fill="#ffffff" opacity="0.8"/>
+                {/* Pink reflection - matches body */}
+                <circle cx="179" cy="158" r="2" fill="#fda4af" opacity="0.6"/>
+              </g>
             </g>
 
-            {/* Happy eyebrows - subtle arcs */}
+            {/* Happy eyebrows - more subtle, pink tinted */}
             <path
-              d="M98 128 Q118 120 138 126"
-              stroke="#e879a9"
-              strokeWidth="2.5"
+              d="M100 130 Q118 123 136 128"
+              stroke="#d85a94"
+              strokeWidth="2"
               strokeLinecap="round"
               fill="none"
-              opacity="0.25"
+              opacity="0.2"
             />
             <path
-              d="M162 126 Q182 120 202 128"
-              stroke="#e879a9"
-              strokeWidth="2.5"
+              d="M164 128 Q182 123 200 130"
+              stroke="#d85a94"
+              strokeWidth="2"
               strokeLinecap="round"
               fill="none"
-              opacity="0.25"
+              opacity="0.2"
             />
           </g>
 
-          {/* BIG HAPPY SMILE */}
+          {/* BIG HAPPY SMILE - warmer color */}
           <g>
+            {/* Smile shadow for depth */}
             <path
-              d="M118 182 Q150 210 182 182"
-              stroke="#1a1a2e"
-              strokeWidth="7"
+              d="M120 184 Q150 210 180 184"
+              stroke="#c9247a"
+              strokeWidth="8"
+              strokeLinecap="round"
+              fill="none"
+              opacity="0.2"
+            />
+            {/* Main smile - warmer dark pink instead of pure dark */}
+            <path
+              d="M120 182 Q150 208 180 182"
+              stroke="#4a1a2e"
+              strokeWidth="6"
               strokeLinecap="round"
               fill="none"
             />
-            {/* Smile shine */}
+            {/* Smile inner highlight */}
             <path
-              d="M122 180 Q150 205 178 180"
+              d="M124 181 Q150 203 176 181"
               stroke="#ffffff"
               strokeWidth="2"
               strokeLinecap="round"
@@ -349,40 +422,101 @@ const NurseQuizMascot = ({ size = 200, className = '' }) => {
             />
           </g>
 
-          {/* ROUNDER BLUSH CHEEKS */}
-          <ellipse cx="85" cy="172" rx="18" ry="14" fill="url(#blushGrad3D)"/>
-          <ellipse cx="215" cy="172" rx="18" ry="14" fill="url(#blushGrad3D)"/>
+          {/* ROUNDER BLUSH CHEEKS - more integrated */}
+          {/* Left cheek - layered for softer blend */}
+          <g>
+            <ellipse cx="85" cy="170" rx="22" ry="16" fill="#ff6b9d" opacity="0.15"/>
+            <ellipse cx="85" cy="172" rx="16" ry="12" fill="url(#blushGrad3D)"/>
+            <ellipse cx="82" cy="169" rx="6" ry="4" fill="#ffffff" opacity="0.25"/>
+          </g>
+          {/* Right cheek */}
+          <g>
+            <ellipse cx="215" cy="170" rx="22" ry="16" fill="#ff6b9d" opacity="0.15"/>
+            <ellipse cx="215" cy="172" rx="16" ry="12" fill="url(#blushGrad3D)"/>
+            <ellipse cx="212" cy="169" rx="6" ry="4" fill="#ffffff" opacity="0.25"/>
+          </g>
 
-          {/* BOUNCY ROUND FEET */}
+          {/* CUTE DETAILED FEET */}
           {/* Left foot */}
           <g>
-            <ellipse
-              cx="120"
-              cy="248"
-              rx="26"
-              ry="22"
+            {/* Foot shadow underneath */}
+            <ellipse cx="120" cy="258" rx="22" ry="8" fill="#00000015"/>
+
+            {/* Main foot shape - rounder, more organic */}
+            <path
+              d="M94 248
+                 C94 235, 105 228, 120 228
+                 C135 228, 146 235, 146 248
+                 C146 260, 135 268, 120 268
+                 C105 268, 94 260, 94 248Z"
               fill="url(#footGrad3D)"
               stroke="url(#outlineGrad3D)"
-              strokeWidth="4"
+              strokeWidth="3.5"
             />
-            {/* Foot gloss */}
-            <ellipse cx="112" cy="240" rx="12" ry="8" fill="#ffffff" opacity="0.5"/>
-            <ellipse cx="108" cy="244" rx="6" ry="4" fill="#ffffff" opacity="0.3"/>
+
+            {/* Bottom shadow for 3D depth */}
+            <path
+              d="M98 255 C98 260, 108 266, 120 266 C132 266, 142 260, 142 255 C142 262, 132 268, 120 268 C108 268, 98 262, 98 255Z"
+              fill="url(#footShadowGrad)"
+            />
+
+            {/* Toe bumps - cute rounded toes */}
+            <ellipse cx="106" cy="262" rx="8" ry="6" fill="url(#footGrad3D)" stroke="url(#outlineGrad3D)" strokeWidth="2"/>
+            <ellipse cx="120" cy="264" rx="9" ry="7" fill="url(#footGrad3D)" stroke="url(#outlineGrad3D)" strokeWidth="2"/>
+            <ellipse cx="134" cy="262" rx="8" ry="6" fill="url(#footGrad3D)" stroke="url(#outlineGrad3D)" strokeWidth="2"/>
+
+            {/* Toe highlights */}
+            <ellipse cx="104" cy="259" rx="4" ry="3" fill="url(#toeGrad)"/>
+            <ellipse cx="118" cy="260" rx="5" ry="3.5" fill="url(#toeGrad)"/>
+            <ellipse cx="132" cy="259" rx="4" ry="3" fill="url(#toeGrad)"/>
+
+            {/* Main foot gloss highlights */}
+            <ellipse cx="110" cy="238" rx="14" ry="9" fill="#ffffff" opacity="0.55"/>
+            <ellipse cx="105" cy="242" rx="7" ry="5" fill="#ffffff" opacity="0.35"/>
+
+            {/* Tiny sparkle accent */}
+            <circle cx="130" cy="235" r="2" fill="#ffffff" opacity="0.6"/>
           </g>
 
           {/* Right foot */}
           <g>
-            <ellipse
-              cx="180"
-              cy="248"
-              rx="26"
-              ry="22"
+            {/* Foot shadow underneath */}
+            <ellipse cx="180" cy="258" rx="22" ry="8" fill="#00000015"/>
+
+            {/* Main foot shape */}
+            <path
+              d="M154 248
+                 C154 235, 165 228, 180 228
+                 C195 228, 206 235, 206 248
+                 C206 260, 195 268, 180 268
+                 C165 268, 154 260, 154 248Z"
               fill="url(#footGrad3D)"
               stroke="url(#outlineGrad3D)"
-              strokeWidth="4"
+              strokeWidth="3.5"
             />
-            <ellipse cx="172" cy="240" rx="12" ry="8" fill="#ffffff" opacity="0.5"/>
-            <ellipse cx="168" cy="244" rx="6" ry="4" fill="#ffffff" opacity="0.3"/>
+
+            {/* Bottom shadow for 3D depth */}
+            <path
+              d="M158 255 C158 260, 168 266, 180 266 C192 266, 202 260, 202 255 C202 262, 192 268, 180 268 C168 268, 158 262, 158 255Z"
+              fill="url(#footShadowGrad)"
+            />
+
+            {/* Toe bumps */}
+            <ellipse cx="166" cy="262" rx="8" ry="6" fill="url(#footGrad3D)" stroke="url(#outlineGrad3D)" strokeWidth="2"/>
+            <ellipse cx="180" cy="264" rx="9" ry="7" fill="url(#footGrad3D)" stroke="url(#outlineGrad3D)" strokeWidth="2"/>
+            <ellipse cx="194" cy="262" rx="8" ry="6" fill="url(#footGrad3D)" stroke="url(#outlineGrad3D)" strokeWidth="2"/>
+
+            {/* Toe highlights */}
+            <ellipse cx="164" cy="259" rx="4" ry="3" fill="url(#toeGrad)"/>
+            <ellipse cx="178" cy="260" rx="5" ry="3.5" fill="url(#toeGrad)"/>
+            <ellipse cx="192" cy="259" rx="4" ry="3" fill="url(#toeGrad)"/>
+
+            {/* Main foot gloss highlights */}
+            <ellipse cx="170" cy="238" rx="14" ry="9" fill="#ffffff" opacity="0.55"/>
+            <ellipse cx="165" cy="242" rx="7" ry="5" fill="#ffffff" opacity="0.35"/>
+
+            {/* Tiny sparkle accent */}
+            <circle cx="190" cy="235" r="2" fill="#ffffff" opacity="0.6"/>
           </g>
 
           {/* Floating mini heart */}

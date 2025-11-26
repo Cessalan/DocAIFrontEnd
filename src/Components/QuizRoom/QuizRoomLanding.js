@@ -14,6 +14,28 @@ const QuizRoomLanding = () => {
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [pressedCard, setPressedCard] = useState(null);
+  const [hoveredCard, setHoveredCard] = useState(null);
+  const [isSpinning, setIsSpinning] = useState(false);
+
+  // Map hovered card to mascot look direction
+  const getMascotLookDirection = () => {
+    switch (hoveredCard) {
+      case 'login':
+        return 'right'; // Login is top-right
+      case 'signup':
+        return 'right'; // Signup is top-right
+      case 'upload':
+        return 'down-center'; // Primary CTA is centered below
+      case 'nclex':
+        return 'down-left'; // NCLEX is on the left
+      case 'tutor':
+        return 'down-center'; // Tutor is in the center
+      case 'challenge':
+        return 'down-right'; // Challenge is on the right
+      default:
+        return 'center';
+    }
+  };
 
   // Handle card press for haptic-like feedback
   const handleCardPress = (cardId) => {
@@ -27,6 +49,23 @@ const QuizRoomLanding = () => {
     setPressedCard(null);
   };
 
+  // Handle card hover for mascot eye tracking
+  const handleCardHover = (cardId) => {
+    setHoveredCard(cardId);
+  };
+
+  const handleCardHoverEnd = () => {
+    setHoveredCard(null);
+  };
+
+  // Trigger mascot fly away animation
+  const triggerMascotSpin = () => {
+    if (!isSpinning) {
+      setIsSpinning(true);
+      setTimeout(() => setIsSpinning(false), 400); // Match animation duration
+    }
+  };
+
   // Navigate to app (if logged in) or signup (if not)
   const navigateWithAction = (action) => {
     sessionStorage.setItem('landingAction', action);
@@ -37,11 +76,17 @@ const QuizRoomLanding = () => {
     }
   };
 
+  // Delayed navigation with fly away animation
+  const handleDelayedNavigation = (callback) => {
+    triggerMascotSpin();
+    setTimeout(callback, 350); // Slight delay to see the fly away
+  };
+
   // Navigation handlers
-  const handleStudyNCLEX = () => navigateWithAction('quiz');
-  const handleUploadNotes = () => navigateWithAction('upload');
-  const handleTalkToTutor = () => navigateWithAction('tutor');
-  const handleDailyChallenge = () => navigateWithAction('daily');
+  const handleStudyNCLEX = () => handleDelayedNavigation(() => navigateWithAction('quiz'));
+  const handleUploadNotes = () => handleDelayedNavigation(() => navigateWithAction('upload'));
+  const handleTalkToTutor = () => handleDelayedNavigation(() => navigateWithAction('tutor'));
+  const handleDailyChallenge = () => handleDelayedNavigation(() => navigateWithAction('daily'));
 
   return (
     <div className="quiz-landing-page">
@@ -56,13 +101,17 @@ const QuizRoomLanding = () => {
         <div className="landing-auth-header">
           <button
             className="auth-header-btn login-btn"
-            onClick={() => navigate('/login')}
+            onClick={() => handleDelayedNavigation(() => navigate('/login'))}
+            onMouseEnter={() => handleCardHover('login')}
+            onMouseLeave={handleCardHoverEnd}
           >
             {t('landing.login', 'Log in')}
           </button>
           <button
             className="auth-header-btn signup-btn"
-            onClick={() => navigate('/signup')}
+            onClick={() => handleDelayedNavigation(() => navigate('/signup'))}
+            onMouseEnter={() => handleCardHover('signup')}
+            onMouseLeave={handleCardHoverEnd}
           >
             {t('landing.signup', 'Sign up')}
           </button>
@@ -72,8 +121,8 @@ const QuizRoomLanding = () => {
       <div className="quiz-landing-wrapper">
         <div className="quiz-landing-content">
           {/* Mascot */}
-          <div className="landing-mascot">
-            <NurseQuizMascot size={120} />
+          <div className={`landing-mascot ${isSpinning ? 'spinning' : ''}`}>
+            <NurseQuizMascot size={120} lookDirection={getMascotLookDirection()} />
           </div>
 
           {/* Welcome Header */}
@@ -96,7 +145,8 @@ const QuizRoomLanding = () => {
               onClick={handleUploadNotes}
               onMouseDown={() => handleCardPress('upload')}
               onMouseUp={handleCardRelease}
-              onMouseLeave={handleCardRelease}
+              onMouseEnter={() => handleCardHover('upload')}
+              onMouseLeave={() => { handleCardRelease(); handleCardHoverEnd(); }}
               onTouchStart={() => handleCardPress('upload')}
               onTouchEnd={handleCardRelease}
               aria-label={t('landing.uploadNotes', 'Upload Your Notes')}
@@ -135,7 +185,8 @@ const QuizRoomLanding = () => {
                 onClick={handleStudyNCLEX}
                 onMouseDown={() => handleCardPress('nclex')}
                 onMouseUp={handleCardRelease}
-                onMouseLeave={handleCardRelease}
+                onMouseEnter={() => handleCardHover('nclex')}
+                onMouseLeave={() => { handleCardRelease(); handleCardHoverEnd(); }}
                 onTouchStart={() => handleCardPress('nclex')}
                 onTouchEnd={handleCardRelease}
                 aria-label={t('landing.studyNCLEX', 'Study for NCLEX')}
@@ -162,7 +213,8 @@ const QuizRoomLanding = () => {
               onClick={handleTalkToTutor}
               onMouseDown={() => handleCardPress('tutor')}
               onMouseUp={handleCardRelease}
-              onMouseLeave={handleCardRelease}
+              onMouseEnter={() => handleCardHover('tutor')}
+              onMouseLeave={() => { handleCardRelease(); handleCardHoverEnd(); }}
               onTouchStart={() => handleCardPress('tutor')}
               onTouchEnd={handleCardRelease}
               aria-label={t('landing.talkToTutor', 'Talk to Tutor')}
@@ -199,7 +251,8 @@ const QuizRoomLanding = () => {
               onClick={handleDailyChallenge}
               onMouseDown={() => handleCardPress('challenge')}
               onMouseUp={handleCardRelease}
-              onMouseLeave={handleCardRelease}
+              onMouseEnter={() => handleCardHover('challenge')}
+              onMouseLeave={() => { handleCardRelease(); handleCardHoverEnd(); }}
               onTouchStart={() => handleCardPress('challenge')}
               onTouchEnd={handleCardRelease}
               aria-label={t('landing.dailyChallenge', "Take Today's Challenge")}
