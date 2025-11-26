@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
@@ -16,6 +16,39 @@ const QuizRoomLanding = () => {
   const [pressedCard, setPressedCard] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
   const [isSpinning, setIsSpinning] = useState(false);
+  const [isExiting, setIsExiting] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
+
+  // Sync dark mode with app's localStorage setting or browser preference
+  useEffect(() => {
+    const savedDarkMode = localStorage.getItem('darkMode');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+    // Use localStorage if set, otherwise use browser preference
+    const shouldBeDark = savedDarkMode !== null ? savedDarkMode === 'true' : prefersDark;
+
+    if (shouldBeDark) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+
+    // Listen for browser theme changes (only if no localStorage preference)
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handler = (e) => {
+      if (localStorage.getItem('darkMode') === null) {
+        if (e.matches) {
+          document.body.classList.add('dark-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+        }
+      }
+    };
+    mediaQuery.addEventListener('change', handler);
+
+    return () => mediaQuery.removeEventListener('change', handler);
+  }, []);
+
 
   // Map hovered card to mascot look direction
   const getMascotLookDirection = () => {
@@ -62,8 +95,27 @@ const QuizRoomLanding = () => {
   const triggerMascotSpin = () => {
     if (!isSpinning) {
       setIsSpinning(true);
-      setTimeout(() => setIsSpinning(false), 400); // Match animation duration
+      setTimeout(() => setIsSpinning(false), 500); // Match animation duration
     }
+  };
+
+  // Trigger anime-style page exit animation
+  const triggerPageExit = (callback) => {
+    if (isExiting) return;
+
+    setIsExiting(true);
+    setShowFlash(true);
+    triggerMascotSpin();
+
+    // Haptic feedback for mobile
+    if (navigator.vibrate) {
+      navigator.vibrate([10, 50, 20]);
+    }
+
+    // Navigate after animation completes (longer for gentle, smooth feel)
+    setTimeout(() => {
+      callback();
+    }, 750);
   };
 
   // Navigate to app (if logged in) or signup (if not)
@@ -76,10 +128,9 @@ const QuizRoomLanding = () => {
     }
   };
 
-  // Delayed navigation with fly away animation
+  // Delayed navigation with anime exit animation
   const handleDelayedNavigation = (callback) => {
-    triggerMascotSpin();
-    setTimeout(callback, 350); // Slight delay to see the fly away
+    triggerPageExit(callback);
   };
 
   // Navigation handlers
@@ -89,7 +140,10 @@ const QuizRoomLanding = () => {
   const handleDailyChallenge = () => handleDelayedNavigation(() => navigateWithAction('daily'));
 
   return (
-    <div className="quiz-landing-page">
+    <div className={`quiz-landing-page ${isExiting ? 'exiting' : ''}`}>
+      {/* Anime exit flash overlay */}
+      {showFlash && <div className="page-exit-flash" />}
+
       {/* Ambient background glow */}
       <div className="landing-ambient-glow" />
 

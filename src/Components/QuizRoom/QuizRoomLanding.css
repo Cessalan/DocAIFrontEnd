@@ -196,22 +196,292 @@
 
 /* Mascot fly away animation on click - anime style */
 .landing-mascot.spinning .nurse-quiz-mascot {
-  animation: mascotFlyAway 0.4s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
+  animation: mascotFlyAway 0.5s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;
 }
 
 @keyframes mascotFlyAway {
   0% {
-    transform: translateY(0) scale(1) translateZ(0);
+    transform: translateY(0) scale(1) rotate(0deg) translateZ(0);
     opacity: 1;
   }
-  20% {
-    transform: translateY(10px) scale(1.1, 0.9) translateZ(0);
+  15% {
+    transform: translateY(15px) scale(1.2, 0.8) rotate(-5deg) translateZ(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translateY(5px) scale(0.9, 1.1) rotate(5deg) translateZ(0);
     opacity: 1;
   }
   100% {
-    transform: translateY(-200px) scale(0.5) translateZ(0);
+    transform: translateY(-300px) scale(0.3) rotate(-15deg) translateZ(0);
     opacity: 0;
   }
+}
+
+/* ============================================
+   ANIME-STYLE PAGE EXIT ANIMATION
+   Triggered when navigating away
+   ============================================ */
+
+.quiz-landing-page.exiting {
+  pointer-events: none;
+}
+
+/* Speed lines background effect - subtle */
+.quiz-landing-page.exiting::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0px,
+    transparent 40px,
+    rgba(139, 92, 246, 0.04) 40px,
+    rgba(139, 92, 246, 0.04) 42px
+  );
+  animation: speedLines 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+  pointer-events: none;
+  z-index: 100;
+}
+
+@keyframes speedLines {
+  0% {
+    opacity: 0;
+    transform: translateX(-10%);
+  }
+  20% {
+    opacity: 0.5;
+  }
+  60% {
+    opacity: 0.3;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(100vw);
+  }
+}
+
+/* Whole content swoosh exit - gentle version */
+.quiz-landing-page.exiting .quiz-landing-wrapper {
+  animation: animeExit 0.8s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes animeExit {
+  0% {
+    transform: translateX(0) translateY(0) scale(1);
+    opacity: 1;
+  }
+  15% {
+    transform: translateX(-10px) translateY(-3px) scale(1.005);
+    opacity: 1;
+  }
+  40% {
+    transform: translateX(10vw) translateY(-5px) scale(1);
+    opacity: 0.95;
+  }
+  70% {
+    transform: translateX(50vw) translateY(-2px) scale(0.98);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(105vw) translateY(0) scale(0.96) rotate(1deg);
+    opacity: 0;
+  }
+}
+
+/* Nav fade - gentle upward drift */
+.quiz-landing-page.exiting .landing-nav {
+  animation: navExit 0.6s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes navExit {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(-15px);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(-40px);
+    opacity: 0;
+  }
+}
+
+/* Ambient glow - gentle fade */
+.quiz-landing-page.exiting .landing-ambient-glow {
+  animation: glowFade 0.7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes glowFade {
+  0% {
+    transform: translateX(-50%) scale(1);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateX(-50%) scale(1.2);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateX(-50%) scale(1.5);
+    opacity: 0;
+  }
+}
+
+/* Cards stagger exit - gentle glide out */
+.quiz-landing-page.exiting .landing-action-card {
+  animation: cardFlyOut 0.7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+/* Primary CTA gets a special, smoother exit animation */
+.quiz-landing-page.exiting .primary-card {
+  animation: primaryCardExit 0.85s cubic-bezier(0.25, 0.1, 0.25, 1) forwards !important;
+}
+
+.quiz-landing-page.exiting .landing-secondary-actions .landing-action-card:nth-child(1) {
+  animation-delay: 0.05s;
+}
+
+.quiz-landing-page.exiting .landing-secondary-actions .landing-action-card:nth-child(2) {
+  animation-delay: 0.1s;
+}
+
+.quiz-landing-page.exiting .landing-secondary-actions .landing-action-card:nth-child(3) {
+  animation-delay: 0.15s;
+}
+
+/* Smooth primary card exit - gentle, floaty animation */
+@keyframes primaryCardExit {
+  0% {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1);
+  }
+  /* Gentle lift - like being picked up */
+  8% {
+    transform: translateX(0) translateY(-4px) scale(1.01) rotate(0deg);
+    opacity: 1;
+    filter: brightness(1.02);
+  }
+  /* Soft anticipation - barely noticeable pull back */
+  18% {
+    transform: translateX(-8px) translateY(-6px) scale(1.015) rotate(-0.3deg);
+    opacity: 1;
+    filter: brightness(1.04);
+  }
+  /* Begin gliding - gentle start */
+  35% {
+    transform: translateX(5vw) translateY(-8px) scale(1.005) rotate(0.2deg);
+    opacity: 1;
+    filter: brightness(1.03);
+  }
+  /* Smooth cruise */
+  55% {
+    transform: translateX(25vw) translateY(-5px) scale(0.99) rotate(0.5deg);
+    opacity: 0.95;
+    filter: brightness(1.01);
+  }
+  /* Gentle acceleration */
+  75% {
+    transform: translateX(55vw) translateY(-2px) scale(0.97) rotate(0.8deg);
+    opacity: 0.7;
+    filter: brightness(1);
+  }
+  /* Soft fade out */
+  100% {
+    transform: translateX(105vw) translateY(0) scale(0.95) rotate(1deg);
+    opacity: 0;
+    filter: brightness(1);
+  }
+}
+
+@keyframes cardFlyOut {
+  0% {
+    transform: translateX(0) translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  12% {
+    transform: translateX(-5px) translateY(-3px) scale(1.01) rotate(-0.2deg);
+    opacity: 1;
+  }
+  35% {
+    transform: translateX(8vw) translateY(-5px) scale(1) rotate(0.1deg);
+    opacity: 0.95;
+  }
+  65% {
+    transform: translateX(40vw) translateY(-3px) scale(0.98) rotate(0.3deg);
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateX(105vw) translateY(0) scale(0.95) rotate(0.5deg);
+    opacity: 0;
+  }
+}
+
+/* Social proof fade - gentle */
+.quiz-landing-page.exiting .landing-social-proof {
+  animation: fadeUpOut 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+.quiz-landing-page.exiting .landing-footer {
+  animation: fadeUpOut 0.5s cubic-bezier(0.25, 0.1, 0.25, 1) 0.08s forwards;
+}
+
+@keyframes fadeUpOut {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  60% {
+    transform: translateY(-10px);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+}
+
+/* Flash overlay - subtle glow */
+.page-exit-flash {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: radial-gradient(circle at center, rgba(139, 92, 246, 0.2) 0%, transparent 60%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 99;
+  animation: exitFlash 0.7s cubic-bezier(0.25, 0.1, 0.25, 1) forwards;
+}
+
+@keyframes exitFlash {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  25% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  60% {
+    opacity: 0.4;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.6);
+  }
+}
+
+/* Light mode exit flash */
+body:not(.dark-mode) .page-exit-flash {
+  background: radial-gradient(circle at center, rgba(155, 111, 176, 0.5) 0%, transparent 70%);
 }
 
 /* ============================================
@@ -289,6 +559,12 @@
     0 4px 16px rgba(124, 58, 237, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+  /* Smoother transition for primary card */
+  transition:
+    transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1),
+    background 0.3s ease,
+    border-color 0.3s ease !important;
 }
 
 .primary-card .action-icon-wrapper {
@@ -893,29 +1169,50 @@ body:not(.dark-mode) .landing-action-card {
 body:not(.dark-mode) .primary-card {
   background: linear-gradient(
     135deg,
-    #9b6fb0 0%,
-    #8b5ca0 50%,
-    #7a4d90 100%
+    #8b5cf6 0%,
+    #7c3aed 50%,
+    #6d28d9 100%
   ) !important;
-  border-color: rgba(173, 125, 195, 0.5) !important;
+  border-color: rgba(139, 92, 246, 0.5) !important;
   box-shadow:
-    0 8px 32px rgba(155, 111, 176, 0.35),
-    0 4px 16px rgba(139, 92, 160, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.25);
+    0 10px 40px rgba(124, 58, 237, 0.3),
+    0 6px 20px rgba(109, 40, 217, 0.22),
+    0 0 0 1px rgba(139, 92, 246, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  animation: lightModeCTAPulse 2s ease-in-out infinite;
+}
+
+@keyframes lightModeCTAPulse {
+  0%, 100% {
+    box-shadow:
+      0 10px 40px rgba(124, 58, 237, 0.3),
+      0 6px 20px rgba(109, 40, 217, 0.22),
+      0 0 0 1px rgba(139, 92, 246, 0.08),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  }
+  50% {
+    box-shadow:
+      0 12px 50px rgba(124, 58, 237, 0.38),
+      0 8px 25px rgba(109, 40, 217, 0.3),
+      0 0 20px rgba(139, 92, 246, 0.2),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  }
 }
 
 body:not(.dark-mode) .primary-card:hover {
   background: linear-gradient(
     135deg,
-    #ad7dc3 0%,
-    #9b6fb0 50%,
-    #8b5ca0 100%
+    #a78bfa 0%,
+    #8b5cf6 50%,
+    #7c3aed 100%
   ) !important;
-  border-color: rgba(196, 157, 212, 0.6) !important;
+  border-color: rgba(167, 139, 250, 0.6) !important;
   box-shadow:
-    0 12px 40px rgba(155, 111, 176, 0.45),
-    0 6px 20px rgba(139, 92, 160, 0.35),
+    0 16px 50px rgba(124, 58, 237, 0.4),
+    0 8px 25px rgba(109, 40, 217, 0.32),
+    0 0 30px rgba(139, 92, 246, 0.28),
     inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  animation: none;
 }
 
 body:not(.dark-mode) .primary-card .action-icon-wrapper {
@@ -929,6 +1226,7 @@ body:not(.dark-mode) .primary-card .action-icon {
 
 body:not(.dark-mode) .primary-card .action-title {
   color: #ffffff;
+  font-weight: 650;
 }
 
 body:not(.dark-mode) .primary-card .action-description {
@@ -1036,6 +1334,373 @@ body:not(.dark-mode) .challenge-card .icon-glow.challenge-glow {
 
 body:not(.dark-mode) .footer-text {
   color: rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   AUTO-DETECT BROWSER THEME
+   Applies light mode when browser prefers light
+   ============================================ */
+
+@media (prefers-color-scheme: light) {
+  .quiz-landing-page {
+    background:
+      radial-gradient(ellipse 80% 50% at 80% 0%, rgba(196, 181, 253, 0.18) 0%, transparent 50%),
+      radial-gradient(ellipse 60% 60% at 0% 80%, rgba(167, 139, 250, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 60%),
+      linear-gradient(160deg, #fdfbff 0%, #f9f7fc 15%, #f6f3fa 35%, #f2eef7 55%, #eee9f4 75%, #e9e3f0 100%);
+  }
+
+  .landing-ambient-glow {
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 40%, transparent 70%);
+  }
+
+  .login-btn {
+    background: transparent;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .login-btn:hover {
+    background: rgba(0, 0, 0, 0.04);
+    border-color: rgba(0, 0, 0, 0.2);
+    color: #000000;
+  }
+
+  .signup-btn {
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.25);
+  }
+
+  .signup-btn:hover {
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+  }
+
+  .brand-name {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landing-slogan {
+    color: #1a1a2e;
+  }
+
+  .slogan-highlight {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landing-subtitle {
+    color: rgba(0, 0, 0, 0.55);
+  }
+
+  .landing-action-card {
+    background: #ffffff;
+    border-color: rgba(173, 125, 195, 0.15);
+    box-shadow: 0 8px 32px rgba(155, 111, 176, 0.08), 0 4px 16px rgba(155, 111, 176, 0.06), 0 1px 3px rgba(0, 0, 0, 0.04);
+  }
+
+  .primary-card {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%) !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 10px 40px rgba(124, 58, 237, 0.3), 0 6px 20px rgba(109, 40, 217, 0.22), 0 0 0 1px rgba(139, 92, 246, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    animation: lightModeCTAPulse 2s ease-in-out infinite;
+  }
+
+  .primary-card:hover {
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%) !important;
+    border-color: rgba(167, 139, 250, 0.6) !important;
+    box-shadow: 0 16px 50px rgba(124, 58, 237, 0.4), 0 8px 25px rgba(109, 40, 217, 0.32), 0 0 30px rgba(139, 92, 246, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+    animation: none;
+  }
+
+  .primary-card .action-icon-wrapper {
+    background: rgba(255, 255, 255, 0.2);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .primary-card .action-icon {
+    color: #ffffff;
+  }
+
+  .primary-card .action-title {
+    color: #ffffff;
+    font-weight: 650;
+  }
+
+  .primary-card .action-description {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
+  .landing-action-card:hover {
+    background: #ffffff;
+    border-color: rgba(173, 125, 195, 0.25);
+    box-shadow: 0 16px 40px rgba(155, 111, 176, 0.12), 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .card-shine {
+    background: linear-gradient(90deg, transparent 0%, rgba(155, 111, 176, 0.08) 50%, transparent 100%);
+  }
+
+  .action-icon-wrapper {
+    background: linear-gradient(145deg, rgba(155, 111, 176, 0.08) 0%, rgba(155, 111, 176, 0.04) 100%);
+    border-color: rgba(155, 111, 176, 0.1);
+  }
+
+  .landing-action-card:hover .action-icon-wrapper {
+    background: linear-gradient(145deg, rgba(155, 111, 176, 0.12) 0%, rgba(155, 111, 176, 0.06) 100%);
+    border-color: rgba(155, 111, 176, 0.15);
+  }
+
+  .icon-glow {
+    background: radial-gradient(circle, rgba(155, 111, 176, 0.1) 0%, transparent 70%);
+  }
+
+  .action-icon {
+    color: #9b6fb0;
+  }
+
+  .landing-action-card:hover .action-icon {
+    color: #8b5ca0;
+  }
+
+  .action-title {
+    color: #2d2d3a;
+  }
+
+  .landing-action-card:hover .action-title {
+    color: #1f1f1f;
+  }
+
+  .action-description {
+    color: rgba(0, 0, 0, 0.45);
+  }
+
+  .landing-action-card:hover .action-description {
+    color: rgba(0, 0, 0, 0.6);
+  }
+
+  .challenge-card .action-icon-wrapper {
+    background: linear-gradient(145deg, rgba(234, 88, 12, 0.1) 0%, rgba(234, 88, 12, 0.05) 100%);
+    border-color: rgba(234, 88, 12, 0.1);
+  }
+
+  .challenge-card .action-icon {
+    color: #ea580c;
+  }
+
+  .challenge-card:hover .action-icon {
+    color: #f97316;
+  }
+
+  .challenge-card:hover {
+    border-color: rgba(234, 88, 12, 0.25);
+    box-shadow: 0 16px 40px rgba(234, 88, 12, 0.1), 0 4px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .challenge-card .icon-glow.challenge-glow {
+    background: radial-gradient(circle, rgba(234, 88, 12, 0.15) 0%, transparent 70%);
+  }
+
+  .badge-icon {
+    color: #9b6fb0;
+  }
+
+  .badge-text {
+    color: rgba(0, 0, 0, 0.5);
+  }
+
+  .social-proof-divider {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  .footer-text {
+    color: rgba(0, 0, 0, 0.4);
+  }
+}
+
+/* ============================================
+   AUTO-DETECT BROWSER DARK THEME
+   Enforces dark mode when browser prefers dark
+   ============================================ */
+
+@media (prefers-color-scheme: dark) {
+  .quiz-landing-page {
+    background: linear-gradient(145deg, #0d0d10 0%, #15151a 50%, #1a1a20 100%);
+  }
+
+  .landing-ambient-glow {
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%);
+  }
+
+  .login-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .login-btn:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ffffff;
+  }
+
+  .signup-btn {
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  }
+
+  .signup-btn:hover {
+    background: linear-gradient(135deg, #9d6ffa 0%, #8b5cf6 100%);
+    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  }
+
+  .brand-name {
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landing-slogan {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .slogan-highlight {
+    background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .landing-subtitle {
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  .landing-action-card {
+    background: rgba(255, 255, 255, 0.03);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+
+  .primary-card {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.15) 100%) !important;
+    border-color: rgba(139, 92, 246, 0.3) !important;
+    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    animation: none;
+  }
+
+  .primary-card:hover {
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%) !important;
+    border-color: rgba(139, 92, 246, 0.5) !important;
+    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+  }
+
+  .primary-card .action-icon-wrapper {
+    background: rgba(139, 92, 246, 0.15);
+    border-color: rgba(139, 92, 246, 0.2);
+  }
+
+  .primary-card .action-icon {
+    color: #a78bfa;
+  }
+
+  .primary-card .action-title {
+    color: #ffffff;
+    font-weight: 600;
+  }
+
+  .primary-card .action-description {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .landing-action-card:hover {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+  }
+
+  .card-shine {
+    background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
+  }
+
+  .action-icon-wrapper {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+
+  .landing-action-card:hover .action-icon-wrapper {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+
+  .icon-glow {
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+  }
+
+  .action-icon {
+    color: #a78bfa;
+  }
+
+  .landing-action-card:hover .action-icon {
+    color: #c4b5fd;
+  }
+
+  .action-title {
+    color: rgba(255, 255, 255, 0.95);
+  }
+
+  .landing-action-card:hover .action-title {
+    color: #ffffff;
+  }
+
+  .action-description {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .landing-action-card:hover .action-description {
+    color: rgba(255, 255, 255, 0.7);
+  }
+
+  .challenge-card .action-icon-wrapper {
+    background: rgba(251, 146, 60, 0.1);
+    border-color: rgba(251, 146, 60, 0.15);
+  }
+
+  .challenge-card .action-icon {
+    color: #fb923c;
+  }
+
+  .challenge-card:hover .action-icon {
+    color: #fdba74;
+  }
+
+  .challenge-card:hover {
+    border-color: rgba(251, 146, 60, 0.3);
+    box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  .challenge-card .icon-glow.challenge-glow {
+    background: radial-gradient(circle, rgba(251, 146, 60, 0.2) 0%, transparent 70%);
+  }
+
+  .badge-icon {
+    color: #a78bfa;
+  }
+
+  .badge-text {
+    color: rgba(255, 255, 255, 0.5);
+  }
+
+  .social-proof-divider {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  .footer-text {
+    color: rgba(255, 255, 255, 0.35);
+  }
 }
 
 /* ============================================

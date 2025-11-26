@@ -27,6 +27,27 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
         return { x: 0, y: 0 };
     }
   }, [lookDirection]);
+
+  // Calculate body rotation and tilt based on look direction
+  // Only subtle movement for action cards, no movement for nav buttons
+  const bodyTransform = useMemo(() => {
+    switch (lookDirection) {
+      case 'left':
+        return { rotate: 0, translateX: 0, translateY: 0 }; // No body turn for nav
+      case 'right':
+        return { rotate: 0, translateX: 0, translateY: 0 }; // No body turn for nav
+      case 'down-left':
+        return { rotate: -3, translateX: -1, translateY: 1 };
+      case 'down-center':
+        return { rotate: 0, translateX: 0, translateY: 2 };
+      case 'down-right':
+        return { rotate: 3, translateX: 1, translateY: 1 };
+      case 'up':
+        return { rotate: 0, translateX: 0, translateY: -1 };
+      default:
+        return { rotate: 0, translateX: 0, translateY: 0 };
+    }
+  }, [lookDirection]);
   return (
     <div
       className={`nurse-quiz-mascot ${className}`}
@@ -157,6 +178,14 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
           </filter>
         </defs>
 
+        {/* Body rotation wrapper - subtle lean towards look direction */}
+        <g
+          style={{
+            transformOrigin: '150px 170px',
+            transition: 'transform 0.6s cubic-bezier(0.25, 0.1, 0.25, 1)',
+            transform: `rotate(${bodyTransform.rotate}deg) translate(${bodyTransform.translateX}px, ${bodyTransform.translateY}px)`
+          }}
+        >
         {/* Bouncy floating animation group */}
         <g>
           {/* More bouncy float animation */}
@@ -531,6 +560,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
               <animateTransform attributeName="transform" type="scale" values="1;1.15;1" dur="1.8s" repeatCount="indefinite" additive="sum"/>
             </path>
           </g>
+        </g>
         </g>
       </svg>
     </div>
