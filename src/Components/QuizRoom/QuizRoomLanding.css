@@ -784,16 +784,31 @@ body:not(.dark-mode) .social-proof-divider {
    ============================================ */
 
 body:not(.dark-mode) .quiz-landing-page {
-  background: linear-gradient(145deg, #f8f6fc 0%, #f3f0f8 50%, #ede8f4 100%);
+  background:
+    /* Soft gradient orbs for depth */
+    radial-gradient(ellipse 80% 50% at 80% 0%, rgba(196, 181, 253, 0.18) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 60% at 0% 80%, rgba(167, 139, 250, 0.12) 0%, transparent 50%),
+    radial-gradient(ellipse 50% 40% at 50% 50%, rgba(139, 92, 246, 0.05) 0%, transparent 60%),
+    /* Base gradient - warmer cream to soft lavender */
+    linear-gradient(
+      160deg,
+      #fdfbff 0%,
+      #f9f7fc 15%,
+      #f6f3fa 35%,
+      #f2eef7 55%,
+      #eee9f4 75%,
+      #e9e3f0 100%
+    );
 }
 
 body:not(.dark-mode) .landing-ambient-glow {
-  background: radial-gradient(
-    circle,
-    rgba(155, 111, 176, 0.1) 0%,
-    rgba(155, 111, 176, 0.04) 40%,
-    transparent 70%
-  );
+  background:
+    radial-gradient(
+      ellipse 70% 50% at 50% 40%,
+      rgba(167, 139, 250, 0.15) 0%,
+      rgba(155, 111, 176, 0.06) 50%,
+      transparent 70%
+    );
 }
 
 body:not(.dark-mode) .login-btn {
