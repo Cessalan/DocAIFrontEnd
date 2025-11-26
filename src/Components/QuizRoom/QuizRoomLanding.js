@@ -198,16 +198,16 @@ const QuizRoomLanding = () => {
       // Start exit animation sequence
       setMascotIsExitingFloat(true);
 
-      // After exit animation, switch to returning state
+      // After exit animation, return to hero position
       floatExitTimeout.current = setTimeout(() => {
         setMascotIsFloating(false);
         setMascotIsExitingFloat(false);
         setMascotIsReturning(true);
 
-        // Clear returning state after animation completes
+        // Clear returning state quickly
         setTimeout(() => {
           setMascotIsReturning(false);
-        }, 500);
+        }, 50);
       }, 350); // Match CSS animation duration
     }
 
