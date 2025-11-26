@@ -290,6 +290,170 @@ body:not(.dark-mode) .theme-toggle-btn:hover {
   backface-visibility: hidden;
 }
 
+/* Brain mascot styles */
+.brain-mascot {
+  pointer-events: none;
+  will-change: transform;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  position: relative;
+}
+
+.science-brain-mascot {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 40px;
+}
+
+/* Brain explosion animation */
+.brain-mascot.exploding .brain-svg-exploding {
+  animation: brainPop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes brainPop {
+  0% {
+    transform: scale(1);
+  }
+  30% {
+    transform: scale(1.25);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+  70% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Explosion particles container */
+.brain-explosion-particles {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Circle particles */
+.brain-explosion-particles .particle {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  animation: particleExplode 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.particle-0 { background: #ff6b9d; animation-delay: 0s; }
+.particle-1 { background: #a855f7; animation-delay: 0.02s; }
+.particle-2 { background: #06b6d4; animation-delay: 0.04s; }
+.particle-3 { background: #fbbf24; animation-delay: 0.06s; }
+.particle-4 { background: #f472b6; animation-delay: 0.08s; }
+.particle-5 { background: #34d399; animation-delay: 0.1s; }
+.particle-6 { background: #ff6b9d; animation-delay: 0.12s; }
+.particle-7 { background: #a855f7; animation-delay: 0.14s; }
+.particle-8 { background: #06b6d4; animation-delay: 0.16s; }
+.particle-9 { background: #fbbf24; animation-delay: 0.18s; }
+.particle-10 { background: #f472b6; animation-delay: 0.2s; }
+.particle-11 { background: #34d399; animation-delay: 0.22s; }
+
+.particle-0 { --angle: 0deg; --distance: 80px; }
+.particle-1 { --angle: 30deg; --distance: 90px; }
+.particle-2 { --angle: 60deg; --distance: 75px; }
+.particle-3 { --angle: 90deg; --distance: 85px; }
+.particle-4 { --angle: 120deg; --distance: 70px; }
+.particle-5 { --angle: 150deg; --distance: 95px; }
+.particle-6 { --angle: 180deg; --distance: 80px; }
+.particle-7 { --angle: 210deg; --distance: 85px; }
+.particle-8 { --angle: 240deg; --distance: 75px; }
+.particle-9 { --angle: 270deg; --distance: 90px; }
+.particle-10 { --angle: 300deg; --distance: 70px; }
+.particle-11 { --angle: 330deg; --distance: 85px; }
+
+@keyframes particleExplode {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(0) scale(0);
+    opacity: 1;
+  }
+  20% {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(var(--distance) * -0.3)) scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--angle)) translateY(calc(var(--distance) * -1)) scale(0);
+    opacity: 0;
+  }
+}
+
+/* Star particles */
+.brain-explosion-particles .star-particle {
+  position: absolute;
+  font-size: 18px;
+  color: #fbbf24;
+  animation: starExplode 0.9s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+  text-shadow: 0 0 8px rgba(251, 191, 36, 0.6);
+}
+
+.star-0 { --star-angle: 15deg; --star-distance: 100px; animation-delay: 0.05s; color: #fbbf24; }
+.star-1 { --star-angle: 75deg; --star-distance: 110px; animation-delay: 0.1s; color: #f472b6; }
+.star-2 { --star-angle: 135deg; --star-distance: 95px; animation-delay: 0.15s; color: #a855f7; }
+.star-3 { --star-angle: 195deg; --star-distance: 105px; animation-delay: 0.2s; color: #06b6d4; }
+.star-4 { --star-angle: 255deg; --star-distance: 100px; animation-delay: 0.08s; color: #34d399; }
+.star-5 { --star-angle: 315deg; --star-distance: 110px; animation-delay: 0.12s; color: #ff6b9d; }
+.star-6 { --star-angle: 45deg; --star-distance: 90px; animation-delay: 0.18s; color: #fbbf24; }
+.star-7 { --star-angle: 225deg; --star-distance: 95px; animation-delay: 0.22s; color: #a855f7; }
+
+@keyframes starExplode {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--star-angle)) translateY(0) scale(0) rotate(0deg);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) rotate(var(--star-angle)) translateY(calc(var(--star-distance) * -0.4)) scale(1.3) rotate(180deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--star-angle)) translateY(calc(var(--star-distance) * -1)) scale(0) rotate(360deg);
+    opacity: 0;
+  }
+}
+
+/* Spark particles - smaller, faster */
+.brain-explosion-particles .spark-particle {
+  position: absolute;
+  width: 4px;
+  height: 16px;
+  border-radius: 2px;
+  animation: sparkExplode 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+.spark-0 { background: linear-gradient(to bottom, #fff, #ff6b9d); --spark-angle: 20deg; --spark-distance: 60px; }
+.spark-1 { background: linear-gradient(to bottom, #fff, #a855f7); --spark-angle: 80deg; --spark-distance: 65px; }
+.spark-2 { background: linear-gradient(to bottom, #fff, #06b6d4); --spark-angle: 140deg; --spark-distance: 55px; }
+.spark-3 { background: linear-gradient(to bottom, #fff, #fbbf24); --spark-angle: 200deg; --spark-distance: 60px; }
+.spark-4 { background: linear-gradient(to bottom, #fff, #f472b6); --spark-angle: 260deg; --spark-distance: 65px; }
+.spark-5 { background: linear-gradient(to bottom, #fff, #34d399); --spark-angle: 320deg; --spark-distance: 55px; }
+
+@keyframes sparkExplode {
+  0% {
+    transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(0) scaleY(0);
+    opacity: 1;
+  }
+  30% {
+    transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(calc(var(--spark-distance) * -0.5)) scaleY(1.5);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(-50%, -50%) rotate(var(--spark-angle)) translateY(calc(var(--spark-distance) * -1)) scaleY(0.3);
+    opacity: 0;
+  }
+}
+
 /* Mascot fly away animation on click - anime style */
 .landing-mascot.spinning .nurse-quiz-mascot {
   animation: mascotFlyAway 0.5s cubic-bezier(0.36, 0, 0.66, -0.56) forwards;

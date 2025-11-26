@@ -3,10 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import NurseQuizMascot from './NurseQuizMascot';
+import BrainMascot from './BrainMascot';
 import './QuizRoomLanding.css';
 
 // Animated counter component
-const AnimatedCounter = ({ target, duration = 2000, suffix = '%' }) => {
+const AnimatedCounter = ({ target, duration = 2000, suffix = '%', onComplete }) => {
   const [count, setCount] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
   const ref = useRef(null);
@@ -31,6 +32,10 @@ const AnimatedCounter = ({ target, duration = 2000, suffix = '%' }) => {
                 requestAnimationFrame(animate);
               } else {
                 setCount(target);
+                // Notify parent that animation is complete
+                if (onComplete) {
+                  onComplete();
+                }
               }
             };
             requestAnimationFrame(animate);
@@ -45,7 +50,7 @@ const AnimatedCounter = ({ target, duration = 2000, suffix = '%' }) => {
     }
 
     return () => observer.disconnect();
-  }, [target, duration, hasAnimated]);
+  }, [target, duration, hasAnimated, onComplete]);
 
   return <span ref={ref}>{count}{suffix}</span>;
 };
@@ -78,6 +83,26 @@ const QuizRoomLanding = () => {
   const [mascotIsExcited, setMascotIsExcited] = useState(false);
   const [mascotIsSurprised, setMascotIsSurprised] = useState(false);
   const floatExitTimeout = useRef(null);
+
+  // Brain mascot explosion state
+  const [brainIsExploding, setBrainIsExploding] = useState(false);
+  const [completedCounters, setCompletedCounters] = useState(0);
+  const totalCounters = 3;
+
+  // Handle counter completion - trigger explosion when all 3 are done
+  const handleCounterComplete = useCallback(() => {
+    setCompletedCounters(prev => {
+      const newCount = prev + 1;
+      if (newCount >= totalCounters && !brainIsExploding) {
+        setBrainIsExploding(true);
+        // Reset explosion after animation
+        setTimeout(() => {
+          setBrainIsExploding(false);
+        }, 1000);
+      }
+      return newCount;
+    });
+  }, [brainIsExploding]);
 
   // Dark mode state - check localStorage first, then browser preference
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -726,6 +751,11 @@ const QuizRoomLanding = () => {
           ============================================ */}
       <section className="science-section">
         <div className="science-container">
+          {/* Brain Mascot */}
+          <div className="science-brain-mascot">
+            <BrainMascot size={140} isExploding={brainIsExploding} />
+          </div>
+
           <h2 className="science-title">{t('landing.scienceTitle', 'Backed by Science')}</h2>
           <p className="science-subtitle">{t('landing.scienceSubtitle', 'Research-proven methods for better learning outcomes')}</p>
 
@@ -738,7 +768,7 @@ const QuizRoomLanding = () => {
                   <path d="M17 6H23V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className="stat-number"><AnimatedCounter target={73} duration={2000} /></div>
+              <div className="stat-number"><AnimatedCounter target={73} duration={2000} onComplete={handleCounterComplete} /></div>
               <h3 className="stat-title">{t('landing.stat1Title', 'Score 73% Higher')}</h3>
               <p className="stat-description">{t('landing.stat1Desc', 'Students using AI-powered interactive quizzes score 73% higher on exams than those using traditional study methods')}</p>
               <span className="stat-source">{t('landing.stat1Source', 'Educational Technology Research, 2024')}</span>
@@ -754,7 +784,7 @@ const QuizRoomLanding = () => {
                   <path d="M8 12H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
                 </svg>
               </div>
-              <div className="stat-number"><AnimatedCounter target={85} duration={2200} /></div>
+              <div className="stat-number"><AnimatedCounter target={85} duration={2200} onComplete={handleCounterComplete} /></div>
               <h3 className="stat-title">{t('landing.stat2Title', 'Remember 85% More')}</h3>
               <p className="stat-description">{t('landing.stat2Desc', 'Students using active learning methods show 85% better retention compared to passive study methods')}</p>
               <span className="stat-source">{t('landing.stat2Source', 'Journal of Educational Psychology, 2023')}</span>
@@ -768,7 +798,7 @@ const QuizRoomLanding = () => {
                   <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
                 </svg>
               </div>
-              <div className="stat-number"><AnimatedCounter target={30} duration={1800} /></div>
+              <div className="stat-number"><AnimatedCounter target={30} duration={1800} onComplete={handleCounterComplete} /></div>
               <h3 className="stat-title">{t('landing.stat3Title', 'Save 30% Study Time')}</h3>
               <p className="stat-description">{t('landing.stat3Desc', 'AI-generated study materials reduce preparation time by 30% while maintaining learning effectiveness')}</p>
               <span className="stat-source">{t('landing.stat3Source', 'Learning Technology Review, 2024')}</span>
