@@ -133,6 +133,62 @@
   transform: translateY(0);
 }
 
+/* Theme toggle button - subtle, unobtrusive */
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  -webkit-tap-highlight-color: transparent;
+  margin-right: 4px;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-btn svg {
+  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
+
+.theme-toggle-btn:hover svg {
+  transform: rotate(15deg);
+}
+
+/* Light mode theme toggle */
+body:not(.dark-mode) .theme-toggle-btn {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+body:not(.dark-mode) .theme-toggle-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.6);
+}
+
+/* Theme toggle in light mode media query */
+@media (prefers-color-scheme: light) {
+  .theme-toggle-btn {
+    color: rgba(0, 0, 0, 0.35);
+  }
+
+  .theme-toggle-btn:hover {
+    background: rgba(0, 0, 0, 0.05);
+    color: rgba(0, 0, 0, 0.6);
+  }
+}
+
 .quiz-landing-wrapper {
   width: 100%;
   max-width: 460px;
@@ -1522,6 +1578,204 @@ body:not(.dark-mode) .footer-text {
 }
 
 /* ============================================
+   DARK MODE CLASS STYLES
+   Applied when body has .dark-mode class
+   (for toggle button functionality)
+   ============================================ */
+
+body.dark-mode .quiz-landing-page {
+  background: linear-gradient(145deg, #0d0d10 0%, #15151a 50%, #1a1a20 100%);
+}
+
+body.dark-mode .landing-ambient-glow {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.03) 40%, transparent 70%);
+}
+
+body.dark-mode .login-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body.dark-mode .login-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+body.dark-mode .signup-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .signup-btn:hover {
+  background: linear-gradient(135deg, #9d6ffa 0%, #8b5cf6 100%);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .brand-name {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.dark-mode .landing-slogan {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+body.dark-mode .slogan-highlight {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 50%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+body.dark-mode .landing-subtitle {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .landing-action-card {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+body.dark-mode .primary-card {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%) !important;
+  border-color: rgba(167, 139, 250, 0.5) !important;
+  box-shadow:
+    0 8px 32px rgba(139, 92, 246, 0.4),
+    0 4px 16px rgba(124, 58, 237, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
+  animation: none;
+}
+
+body.dark-mode .primary-card:hover {
+  background: linear-gradient(135deg, #9d6ffa 0%, #8b5cf6 50%, #7c3aed 100%) !important;
+  border-color: rgba(196, 181, 253, 0.6) !important;
+  box-shadow:
+    0 12px 40px rgba(139, 92, 246, 0.5),
+    0 6px 20px rgba(124, 58, 237, 0.4),
+    0 0 60px rgba(139, 92, 246, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
+}
+
+body.dark-mode .primary-card .action-icon-wrapper {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+body.dark-mode .primary-card .action-icon {
+  color: #ffffff !important;
+}
+
+body.dark-mode .primary-card .action-title {
+  color: #ffffff !important;
+  font-weight: 600;
+}
+
+body.dark-mode .primary-card .action-description {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .landing-action-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3), 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .card-shine {
+  background: linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.03) 50%, transparent 100%);
+}
+
+body.dark-mode .action-icon-wrapper {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .landing-action-card:hover .action-icon-wrapper {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .icon-glow {
+  background: radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%);
+}
+
+body.dark-mode .action-icon {
+  color: #a78bfa;
+}
+
+body.dark-mode .landing-action-card:hover .action-icon {
+  color: #c4b5fd;
+}
+
+body.dark-mode .action-title {
+  color: rgba(255, 255, 255, 0.95);
+}
+
+body.dark-mode .landing-action-card:hover .action-title {
+  color: #ffffff;
+}
+
+body.dark-mode .action-description {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .landing-action-card:hover .action-description {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+body.dark-mode .challenge-card .action-icon-wrapper {
+  background: rgba(251, 146, 60, 0.1);
+  border-color: rgba(251, 146, 60, 0.15);
+}
+
+body.dark-mode .challenge-card .action-icon {
+  color: #fb923c;
+}
+
+body.dark-mode .challenge-card:hover .action-icon {
+  color: #fdba74;
+}
+
+body.dark-mode .challenge-card:hover {
+  border-color: rgba(251, 146, 60, 0.3);
+  box-shadow: 0 8px 32px rgba(251, 146, 60, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .challenge-card .icon-glow.challenge-glow {
+  background: radial-gradient(circle, rgba(251, 146, 60, 0.2) 0%, transparent 70%);
+}
+
+body.dark-mode .badge-icon {
+  color: #a78bfa;
+}
+
+body.dark-mode .badge-text {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .social-proof-divider {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .footer-text {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+body.dark-mode .theme-toggle-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* ============================================
    AUTO-DETECT BROWSER DARK THEME
    Enforces dark mode when browser prefers dark
    ============================================ */
@@ -1586,34 +1840,42 @@ body:not(.dark-mode) .footer-text {
   }
 
   .primary-card {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(124, 58, 237, 0.15) 100%) !important;
-    border-color: rgba(139, 92, 246, 0.3) !important;
-    box-shadow: 0 8px 32px rgba(139, 92, 246, 0.2), 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1) !important;
+    background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 50%, #6d28d9 100%) !important;
+    border-color: rgba(167, 139, 250, 0.5) !important;
+    box-shadow:
+      0 8px 32px rgba(139, 92, 246, 0.4),
+      0 4px 16px rgba(124, 58, 237, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2),
+      inset 0 -1px 0 rgba(0, 0, 0, 0.1) !important;
     animation: none;
   }
 
   .primary-card:hover {
-    background: linear-gradient(135deg, rgba(139, 92, 246, 0.3) 0%, rgba(124, 58, 237, 0.2) 100%) !important;
-    border-color: rgba(139, 92, 246, 0.5) !important;
-    box-shadow: 0 12px 40px rgba(139, 92, 246, 0.3), 0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+    background: linear-gradient(135deg, #9d6ffa 0%, #8b5cf6 50%, #7c3aed 100%) !important;
+    border-color: rgba(196, 181, 253, 0.6) !important;
+    box-shadow:
+      0 12px 40px rgba(139, 92, 246, 0.5),
+      0 6px 20px rgba(124, 58, 237, 0.4),
+      0 0 60px rgba(139, 92, 246, 0.25),
+      inset 0 1px 0 rgba(255, 255, 255, 0.25) !important;
   }
 
   .primary-card .action-icon-wrapper {
-    background: rgba(139, 92, 246, 0.15);
-    border-color: rgba(139, 92, 246, 0.2);
+    background: rgba(255, 255, 255, 0.15) !important;
+    border-color: rgba(255, 255, 255, 0.2) !important;
   }
 
   .primary-card .action-icon {
-    color: #a78bfa;
+    color: #ffffff !important;
   }
 
   .primary-card .action-title {
-    color: #ffffff;
+    color: #ffffff !important;
     font-weight: 600;
   }
 
   .primary-card .action-description {
-    color: rgba(255, 255, 255, 0.7);
+    color: rgba(255, 255, 255, 0.85);
   }
 
   .landing-action-card:hover {

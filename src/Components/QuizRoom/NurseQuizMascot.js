@@ -96,11 +96,13 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
             <stop offset="100%" stopColor="#ffaad9"/>
           </radialGradient>
 
-          {/* Halo gradient - ethereal cyan */}
+          {/* Halo gradient - ethereal cyan - more vibrant */}
           <linearGradient id="haloGrad3D" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#7dd3fc"/>
-            <stop offset="50%" stopColor="#22d3ee"/>
-            <stop offset="100%" stopColor="#7dd3fc"/>
+            <stop offset="0%" stopColor="#67e8f9"/>
+            <stop offset="30%" stopColor="#22d3ee"/>
+            <stop offset="50%" stopColor="#06b6d4"/>
+            <stop offset="70%" stopColor="#22d3ee"/>
+            <stop offset="100%" stopColor="#67e8f9"/>
           </linearGradient>
 
           {/* Sparkle gradient */}
@@ -159,9 +161,11 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
 
           {/* Filters */}
           <filter id="haloGlow3D" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="4" result="blur1"/>
-            <feGaussianBlur stdDeviation="10" result="blur2"/>
+            <feGaussianBlur stdDeviation="3" result="blur1"/>
+            <feGaussianBlur stdDeviation="8" result="blur2"/>
+            <feGaussianBlur stdDeviation="15" result="blur3"/>
             <feMerge>
+              <feMergeNode in="blur3"/>
               <feMergeNode in="blur2"/>
               <feMergeNode in="blur1"/>
               <feMergeNode in="SourceGraphic"/>
@@ -215,42 +219,75 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
             />
           </ellipse>
 
-          {/* HALO */}
+          {/* HALO - more visible, floating higher */}
           <g filter="url(#haloGlow3D)">
+            {/* Separate float animation for halo */}
+            <animateTransform
+              attributeName="transform"
+              type="translate"
+              values="0,0; 0,-3; 0,0; 0,-1; 0,0"
+              dur="2.5s"
+              repeatCount="indefinite"
+              calcMode="spline"
+              keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
+            />
+            {/* Outer glow ring */}
             <ellipse
               cx="150"
-              cy="52"
+              cy="38"
+              rx="52"
+              ry="16"
+              fill="none"
+              stroke="#22d3ee"
+              strokeWidth="12"
+              opacity="0.3"
+            />
+            {/* Main halo ring */}
+            <ellipse
+              cx="150"
+              cy="38"
               rx="48"
               ry="14"
               fill="none"
               stroke="url(#haloGrad3D)"
-              strokeWidth="7"
+              strokeWidth="8"
               strokeLinecap="round"
             >
               <animate
                 attributeName="opacity"
-                values="0.7;1;0.7"
+                values="0.85;1;0.85"
                 dur="2s"
                 repeatCount="indefinite"
               />
               <animateTransform
                 attributeName="transform"
                 type="rotate"
-                values="-2 150 52; 2 150 52; -2 150 52"
+                values="-3 150 38; 3 150 38; -3 150 38"
                 dur="3s"
                 repeatCount="indefinite"
               />
             </ellipse>
+            {/* Inner highlight ring */}
+            <ellipse
+              cx="150"
+              cy="36"
+              rx="44"
+              ry="11"
+              fill="none"
+              stroke="#ffffff"
+              strokeWidth="2"
+              opacity="0.5"
+            />
             {/* Inner halo ring */}
             <ellipse
               cx="150"
-              cy="52"
+              cy="38"
               rx="40"
               ry="10"
               fill="none"
-              stroke="#a5f3fc"
-              strokeWidth="2"
-              opacity="0.4"
+              stroke="#67e8f9"
+              strokeWidth="3"
+              opacity="0.6"
             />
           </g>
 
