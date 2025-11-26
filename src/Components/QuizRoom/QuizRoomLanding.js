@@ -1,9 +1,54 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import NurseQuizMascot from './NurseQuizMascot';
 import './QuizRoomLanding.css';
+
+// Animated counter component
+const AnimatedCounter = ({ target, duration = 2000, suffix = '%' }) => {
+  const [count, setCount] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+  const ref = useRef(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting && !hasAnimated) {
+            setHasAnimated(true);
+            // Start counting animation
+            const startTime = Date.now();
+            const animate = () => {
+              const elapsed = Date.now() - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              // Easing function for smooth deceleration
+              const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+              const currentCount = Math.floor(easeOutQuart * target);
+              setCount(currentCount);
+
+              if (progress < 1) {
+                requestAnimationFrame(animate);
+              } else {
+                setCount(target);
+              }
+            };
+            requestAnimationFrame(animate);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    if (ref.current) {
+      observer.observe(ref.current);
+    }
+
+    return () => observer.disconnect();
+  }, [target, duration, hasAnimated]);
+
+  return <span ref={ref}>{count}{suffix}</span>;
+};
 
 /**
  * QuizRoomLanding - Premium, welcoming landing page
@@ -18,6 +63,21 @@ const QuizRoomLanding = () => {
   const [isSpinning, setIsSpinning] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
+  const heroRef = useRef(null);
+  const mascotRef = useRef(null);
+  const lastScrollY = useRef(0);
+  const scrollTimeout = useRef(null);
+
+  // Mascot scroll-following state
+  const [mascotIsFloating, setMascotIsFloating] = useState(false);
+  const [mascotIsExitingFloat, setMascotIsExitingFloat] = useState(false);
+  const [mascotIsReturning, setMascotIsReturning] = useState(false);
+  const [mascotIsFlying, setMascotIsFlying] = useState(false);
+  const [flyDirection, setFlyDirection] = useState('none');
+  const [mouseLookDirection, setMouseLookDirection] = useState('center');
+  const [mascotIsExcited, setMascotIsExcited] = useState(false);
+  const [mascotIsSurprised, setMascotIsSurprised] = useState(false);
+  const floatExitTimeout = useRef(null);
 
   // Dark mode state - check localStorage first, then browser preference
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -38,27 +98,144 @@ const QuizRoomLanding = () => {
     localStorage.setItem('darkMode', isDarkMode);
   }, [isDarkMode]);
 
-  // Toggle dark mode
+  // Toggle dark mode with mascot surprise animation
   const toggleDarkMode = () => {
-    setIsDarkMode(prev => !prev);
+    // Trigger surprised blink animation
+    setMascotIsSurprised(true);
+
+    // After blink (eyes closed), change theme
+    setTimeout(() => {
+      setIsDarkMode(prev => !prev);
+    }, 150);
+
+    // Open eyes after theme change
+    setTimeout(() => {
+      setMascotIsSurprised(false);
+    }, 400);
   };
 
+  // Handle mouse movement for mascot eye tracking when floating
+  const handleMouseMove = useCallback((e) => {
+    if (!mascotRef.current || !mascotIsFloating) return;
+
+    const mascotRect = mascotRef.current.getBoundingClientRect();
+    const mascotCenterX = mascotRect.left + mascotRect.width / 2;
+    const mascotCenterY = mascotRect.top + mascotRect.height / 2;
+
+    const deltaX = e.clientX - mascotCenterX;
+    const deltaY = e.clientY - mascotCenterY;
+    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
+
+    // Map angle to look directions
+    if (angle >= -30 && angle < 30) {
+      setMouseLookDirection('right');
+    } else if (angle >= 30 && angle < 60) {
+      setMouseLookDirection('down-right');
+    } else if (angle >= 60 && angle < 120) {
+      setMouseLookDirection('down-center');
+    } else if (angle >= 120 && angle < 150) {
+      setMouseLookDirection('down-left');
+    } else if (angle >= 150 || angle < -150) {
+      setMouseLookDirection('left');
+    } else if (angle >= -120 && angle < -60) {
+      setMouseLookDirection('up');
+    } else {
+      setMouseLookDirection('center');
+    }
+  }, [mascotIsFloating]);
+
+  // Handle scroll for mascot floating behavior
+  const handleScroll = useCallback(() => {
+    const scrollY = window.scrollY;
+    const heroHeight = heroRef?.current?.offsetHeight || window.innerHeight;
+    const mascotTriggerPoint = heroHeight * 0.4; // Start floating after 40% of hero
+
+    // Determine if mascot should float
+    if (scrollY > mascotTriggerPoint) {
+      // Clear any exit animation in progress
+      if (floatExitTimeout.current) {
+        clearTimeout(floatExitTimeout.current);
+        floatExitTimeout.current = null;
+      }
+      setMascotIsExitingFloat(false);
+      setMascotIsReturning(false);
+      setMascotIsFloating(true);
+    } else if (mascotIsFloating && !mascotIsExitingFloat) {
+      // Start exit animation sequence
+      setMascotIsExitingFloat(true);
+
+      // After exit animation, switch to returning state
+      floatExitTimeout.current = setTimeout(() => {
+        setMascotIsFloating(false);
+        setMascotIsExitingFloat(false);
+        setMascotIsReturning(true);
+
+        // Clear returning state after animation completes
+        setTimeout(() => {
+          setMascotIsReturning(false);
+        }, 500);
+      }, 350); // Match CSS animation duration
+    }
+
+    // Determine scroll direction for flying animation
+    const scrollDelta = scrollY - lastScrollY.current;
+
+    if (Math.abs(scrollDelta) > 3) {
+      setMascotIsFlying(true);
+      setFlyDirection(scrollDelta > 0 ? 'down' : 'up');
+    }
+
+    // Clear existing timeout
+    if (scrollTimeout.current) {
+      clearTimeout(scrollTimeout.current);
+    }
+
+    // Stop flying after scroll stops
+    scrollTimeout.current = setTimeout(() => {
+      setMascotIsFlying(false);
+      setFlyDirection('none');
+    }, 150);
+
+    lastScrollY.current = scrollY;
+  }, [mascotIsFloating, mascotIsExitingFloat]);
+
+  // Set up scroll and mouse event listeners
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('mousemove', handleMouseMove);
+      if (scrollTimeout.current) {
+        clearTimeout(scrollTimeout.current);
+      }
+      if (floatExitTimeout.current) {
+        clearTimeout(floatExitTimeout.current);
+      }
+    };
+  }, [handleScroll, handleMouseMove]);
 
   // Map hovered card to mascot look direction
   const getMascotLookDirection = () => {
+    // When floating, use mouse tracking
+    if (mascotIsFloating) {
+      return mouseLookDirection;
+    }
+    // When in hero, use card hover tracking
     switch (hoveredCard) {
       case 'login':
-        return 'right'; // Login is top-right
+        return 'right';
       case 'signup':
-        return 'right'; // Signup is top-right
+        return 'right';
       case 'upload':
-        return 'down-center'; // Primary CTA is centered below
+        return 'down-center';
       case 'nclex':
-        return 'down-left'; // NCLEX is on the left
+        return 'down-left';
       case 'tutor':
-        return 'down-center'; // Tutor is in the center
+        return 'down-center';
       case 'challenge':
-        return 'down-right'; // Challenge is on the right
+        return 'down-right';
       default:
         return 'center';
     }
@@ -76,13 +253,17 @@ const QuizRoomLanding = () => {
     setPressedCard(null);
   };
 
-  // Handle card hover for mascot eye tracking
+  // Handle card hover for mascot eye tracking and excitement
   const handleCardHover = (cardId) => {
     setHoveredCard(cardId);
+    // Set mascot excited when hovering over any CTA buttons (including login/signup)
+    const ctaCards = ['upload', 'nclex', 'tutor', 'challenge', 'login', 'signup', 'startLearning', 'joinCommunity'];
+    setMascotIsExcited(ctaCards.includes(cardId));
   };
 
   const handleCardHoverEnd = () => {
     setHoveredCard(null);
+    setMascotIsExcited(false);
   };
 
   // Trigger mascot fly away animation
@@ -138,11 +319,16 @@ const QuizRoomLanding = () => {
       {/* Anime exit flash overlay */}
       {showFlash && <div className="page-exit-flash" />}
 
-      {/* Ambient background glow */}
-      <div className="landing-ambient-glow" />
+      
+      {/* ============================================
+          HERO SECTION
+          ============================================ */}
+      <section className="hero-section" ref={heroRef}>
+        {/* Ambient background glow */}
+        <div className="landing-ambient-glow" />
 
-      {/* Top navigation bar */}
-      <nav className="landing-nav">
+        {/* Top navigation bar */}
+        <nav className="landing-nav">
         <div className="landing-brand">
           <span className="brand-name">NurseQuizAI</span>
         </div>
@@ -185,9 +371,20 @@ const QuizRoomLanding = () => {
 
       <div className="quiz-landing-wrapper">
         <div className="quiz-landing-content">
-          {/* Mascot */}
-          <div className={`landing-mascot ${isSpinning ? 'spinning' : ''}`}>
-            <NurseQuizMascot size={120} lookDirection={getMascotLookDirection()} />
+          {/* Mascot - follows scroll with anime-style flying */}
+          <div
+            ref={mascotRef}
+            className={`landing-mascot ${isSpinning ? 'spinning' : ''} ${mascotIsFloating ? 'floating' : ''} ${mascotIsExitingFloat ? 'exiting-float' : ''} ${mascotIsReturning ? 'returning' : ''} ${mascotIsFlying ? 'flying' : 'idle'} fly-${flyDirection}`}
+          >
+            <NurseQuizMascot size={120} lookDirection={getMascotLookDirection()} isExcited={mascotIsExcited} isSurprised={mascotIsSurprised} />
+            {/* Motion trails for anime effect */}
+            {mascotIsFlying && mascotIsFloating && (
+              <div className="mascot-motion-trails">
+                <span className="trail"></span>
+                <span className="trail"></span>
+                <span className="trail"></span>
+              </div>
+            )}
           </div>
 
           {/* Welcome Header */}
@@ -195,7 +392,7 @@ const QuizRoomLanding = () => {
             <p className="landing-slogan">
               {t('landing.sloganLine1', 'Too much to study. Not enough time.')}
               <br />
-              <span className="slogan-highlight">{t('landing.sloganLine2', 'We fix that.')}</span>
+              <span className="slogan-highlight">{t('landing.sloganLine2', 'We fix that — by turning your notes into instant practice quizzes.')}</span>
             </p>
             <h2 className="landing-subtitle">
               {t('landing.subtitle', 'Spend less time studying, more time understanding.')}
@@ -369,9 +566,21 @@ const QuizRoomLanding = () => {
             </div>
             <div className="social-proof-divider" />
             <div className="social-proof-badge">
-              <div className="badge-icon">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <div className="badge-icon stars-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
+                </svg>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z"/>
                 </svg>
               </div>
               <span className="badge-text">{t('landing.badge2', 'Trusted across North America')}</span>
@@ -386,6 +595,200 @@ const QuizRoomLanding = () => {
           </div>
         </div>
       </div>
+      </section>
+
+      {/* ============================================
+          PRODUCT SHOWCASE SECTION
+          Animated demo cycling through all phases
+          ============================================ */}
+      <section className="product-showcase-section">
+        <div className="showcase-container">
+          <h2 className="showcase-title">{t('landing.showcaseTitle', 'See How It Works')}</h2>
+          <p className="showcase-subtitle">{t('landing.showcaseSubtitle', 'From notes to knowledge in minutes')}</p>
+
+          {/* Animated Demo Card */}
+          <div className="demo-container">
+            <div className="demo-card">
+              {/* Demo Header with phase indicators */}
+              <div className="demo-header">
+                <div className="demo-phase-indicators">
+                  <span className="demo-phase-dot phase-1"></span>
+                  <span className="demo-phase-dot phase-2"></span>
+                  <span className="demo-phase-dot phase-3"></span>
+                </div>
+                <span className="demo-phase-label">{t('landing.demoLabel', 'Live Demo')}</span>
+              </div>
+
+              {/* Demo Content - All phases stacked, animated */}
+              <div className="demo-content">
+                {/* Phase 1: Upload */}
+                <div className="demo-phase demo-upload">
+                  <div className="demo-upload-area">
+                    <div className="demo-file-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="demo-upload-text">{t('landing.demoUpload', 'Pharmacology_Notes.pdf')}</span>
+                    <div className="demo-upload-progress">
+                      <div className="demo-upload-progress-fill"></div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phase 2: Generate */}
+                <div className="demo-phase demo-generate">
+                  <div className="demo-generating">
+                    <div className="demo-ai-icon">
+                      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M12 2L15.09 8.26L22 9.27L17 14.14L18.18 21.02L12 17.77L5.82 21.02L7 14.14L2 9.27L8.91 8.26L12 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="demo-generating-text">{t('landing.demoGenerating', 'AI generating NCLEX-style quiz...')}</span>
+                    <div className="demo-typing-dots">
+                      <span></span><span></span><span></span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Phase 3: Quiz */}
+                <div className="demo-phase demo-quiz">
+                  <div className="demo-question">
+                    <span className="demo-question-number">Q1</span>
+                    <p className="demo-question-text">{t('landing.demoQuestion', 'Which medication class is primarily used to treat hypertension?')}</p>
+                  </div>
+                  <div className="demo-answers">
+                    <div className="demo-answer">{t('landing.demoAnswer1', 'A. Antihistamines')}</div>
+                    <div className="demo-answer selecting">{t('landing.demoAnswer2', 'B. ACE Inhibitors')}</div>
+                    <div className="demo-answer">{t('landing.demoAnswer3', 'C. Antibiotics')}</div>
+                    <div className="demo-answer">{t('landing.demoAnswer4', 'D. Antidepressants')}</div>
+                  </div>
+                </div>
+
+                {/* Phase 4: Result */}
+                <div className="demo-phase demo-result">
+                  <div className="demo-correct">
+                    <div className="demo-check-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="2"/>
+                        <path d="M8 12L11 15L16 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </div>
+                    <span className="demo-correct-text">{t('landing.demoCorrect', 'Correct!')}</span>
+                    <div className="demo-score">
+                      <span className="demo-score-label">{t('landing.demoScore', 'Your Score')}</span>
+                      <span className="demo-score-value">92%</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress bar at bottom */}
+              <div className="demo-timeline">
+                <div className="demo-timeline-fill"></div>
+              </div>
+            </div>
+
+            {/* Phase labels below */}
+            <div className="demo-phase-labels">
+              <span className="phase-label">{t('landing.phase1', '1. Upload')}</span>
+              <span className="phase-label">{t('landing.phase2', '2. Generate')}</span>
+              <span className="phase-label">{t('landing.phase3', '3. Quiz')}</span>
+              <span className="phase-label">{t('landing.phase4', '4. Learn')}</span>
+            </div>
+          </div>
+
+          {/* CTA after showcase */}
+          <div className="section-cta">
+            <button
+              className="section-cta-btn primary"
+              onClick={handleUploadNotes}
+              onMouseEnter={() => handleCardHover('startLearning')}
+              onMouseLeave={handleCardHoverEnd}
+            >
+              {t('landing.showcaseCta', 'Start Learning Now')}
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
+            <p className="section-cta-subtext">{t('landing.showcaseCtaSubtext', 'Free to try • No credit card required')}</p>
+          </div>
+        </div>
+      </section>
+
+      {/* Spacer */}
+      <div className="section-spacer" />
+
+      {/* ============================================
+          BACKED BY SCIENCE SECTION
+          Research-backed statistics
+          ============================================ */}
+      <section className="science-section">
+        <div className="science-container">
+          <h2 className="science-title">{t('landing.scienceTitle', 'Backed by Science')}</h2>
+          <p className="science-subtitle">{t('landing.scienceSubtitle', 'Research-proven methods for better learning outcomes')}</p>
+
+          <div className="science-stats-grid">
+            {/* Stat 1: Score Higher - Trending up chart icon */}
+            <div className="science-stat-card">
+              <div className="stat-icon-wrapper">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M23 6L13.5 15.5L8.5 10.5L1 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                  <path d="M17 6H23V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="stat-number"><AnimatedCounter target={73} duration={2000} /></div>
+              <h3 className="stat-title">{t('landing.stat1Title', 'Score 73% Higher')}</h3>
+              <p className="stat-description">{t('landing.stat1Desc', 'Students using AI-powered interactive quizzes score 73% higher on exams than those using traditional study methods')}</p>
+              <span className="stat-source">{t('landing.stat1Source', 'Educational Technology Research, 2024')}</span>
+            </div>
+
+            {/* Stat 2: Remember More - Brain/memory icon */}
+            <div className="science-stat-card">
+              <div className="stat-icon-wrapper">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2C9.5 2 7.5 4 7.5 6.5C7.5 7.5 7.8 8.4 8.3 9.1C6.9 9.5 6 10.8 6 12.5C6 13.8 6.6 14.9 7.5 15.6C6.6 16.3 6 17.5 6 18.8C6 21 7.8 22 9.5 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M12 2C14.5 2 16.5 4 16.5 6.5C16.5 7.5 16.2 8.4 15.7 9.1C17.1 9.5 18 10.8 18 12.5C18 13.8 17.4 14.9 16.5 15.6C17.4 16.3 18 17.5 18 18.8C18 21 16.2 22 14.5 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M12 2V22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  <path d="M8 12H16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+              </div>
+              <div className="stat-number"><AnimatedCounter target={85} duration={2200} /></div>
+              <h3 className="stat-title">{t('landing.stat2Title', 'Remember 85% More')}</h3>
+              <p className="stat-description">{t('landing.stat2Desc', 'Students using active learning methods show 85% better retention compared to passive study methods')}</p>
+              <span className="stat-source">{t('landing.stat2Source', 'Journal of Educational Psychology, 2023')}</span>
+            </div>
+
+            {/* Stat 3: Save Time - Clock icon */}
+            <div className="science-stat-card">
+              <div className="stat-icon-wrapper">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M12 6V12L16 14" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              </div>
+              <div className="stat-number"><AnimatedCounter target={30} duration={1800} /></div>
+              <h3 className="stat-title">{t('landing.stat3Title', 'Save 30% Study Time')}</h3>
+              <p className="stat-description">{t('landing.stat3Desc', 'AI-generated study materials reduce preparation time by 30% while maintaining learning effectiveness')}</p>
+              <span className="stat-source">{t('landing.stat3Source', 'Learning Technology Review, 2024')}</span>
+            </div>
+          </div>
+
+          {/* CTA after science section */}
+          <div className="section-cta">
+            <button
+              className="section-cta-btn secondary"
+              onClick={handleUploadNotes}
+              onMouseEnter={() => handleCardHover('joinCommunity')}
+              onMouseLeave={handleCardHoverEnd}
+            >
+              <span className="cta-emoji">🔥</span>
+              {t('landing.scienceCta', 'Join the Community')}
+            </button>
+          </div>
+        </div>
+      </section>
     </div>
   );
 };

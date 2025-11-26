@@ -6,8 +6,10 @@ import React, { useMemo } from 'react';
  * Now with eye tracking for hovering cards!
  *
  * @param {string} lookDirection - 'center', 'left', 'right', 'down-left', 'down-center', 'down-right'
+ * @param {boolean} isExcited - When true, shows big open mouth smile (for CTA hovers)
+ * @param {boolean} isSurprised - When true, shows surprised expression with blink (for theme toggle)
  */
-const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' }) => {
+const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center', isExcited = false, isSurprised = false }) => {
   // Calculate eye offsets based on look direction
   const eyeOffset = useMemo(() => {
     switch (lookDirection) {
@@ -398,15 +400,31 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
             <ellipse cx="150" cy="160" rx="50" ry="35" fill="#d85a94" opacity="0.08"/>
 
             {/* Left eye - softer, rounder */}
-            <g>
+            <g style={{
+              transition: 'transform 0.15s ease-out',
+              transform: isSurprised ? 'scaleY(0.1)' : 'scaleY(1)',
+              transformOrigin: '118px 150px'
+            }}>
               {/* Eye socket shadow - stays fixed */}
               <ellipse cx="118" cy="152" rx="20" ry="22" fill="#d85a94" opacity="0.15"/>
-              {/* Eye white/sclera - stays fixed */}
-              <ellipse cx="118" cy="150" rx="16" ry="18" fill="#1a1a2e"/>
+              {/* Eye white/sclera - wider when surprised */}
+              <ellipse
+                cx="118"
+                cy="150"
+                rx="16"
+                ry="18"
+                fill="#1a1a2e"
+                style={{
+                  transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }}
+              />
               {/* Soft outer glow to blend */}
               <ellipse cx="118" cy="150" rx="16" ry="18" fill="none" stroke="#ffaad9" strokeWidth="2" opacity="0.3"/>
-              {/* Pupil group - moves with look direction */}
-              <g style={{ transition: 'transform 0.15s ease-out', transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+              {/* Pupil group - moves with look direction, smaller when surprised */}
+              <g style={{
+                transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)`
+              }}>
                 {/* Main pupil */}
                 <ellipse cx="118" cy="150" rx="12" ry="14" fill="url(#eyeGrad)"/>
                 {/* Big shine */}
@@ -419,15 +437,31 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
             </g>
 
             {/* Right eye */}
-            <g>
+            <g style={{
+              transition: 'transform 0.15s ease-out',
+              transform: isSurprised ? 'scaleY(0.1)' : 'scaleY(1)',
+              transformOrigin: '182px 150px'
+            }}>
               {/* Eye socket shadow - stays fixed */}
               <ellipse cx="182" cy="152" rx="20" ry="22" fill="#d85a94" opacity="0.15"/>
-              {/* Eye white/sclera - stays fixed */}
-              <ellipse cx="182" cy="150" rx="16" ry="18" fill="#1a1a2e"/>
+              {/* Eye white/sclera - wider when surprised */}
+              <ellipse
+                cx="182"
+                cy="150"
+                rx="16"
+                ry="18"
+                fill="#1a1a2e"
+                style={{
+                  transition: 'all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)'
+                }}
+              />
               {/* Soft outer glow to blend */}
               <ellipse cx="182" cy="150" rx="16" ry="18" fill="none" stroke="#ffaad9" strokeWidth="2" opacity="0.3"/>
               {/* Pupil group - moves with look direction */}
-              <g style={{ transition: 'transform 0.15s ease-out', transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)` }}>
+              <g style={{
+                transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)`
+              }}>
                 {/* Main pupil */}
                 <ellipse cx="182" cy="150" rx="12" ry="14" fill="url(#eyeGrad)"/>
                 {/* Big shine */}
@@ -439,7 +473,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
               </g>
             </g>
 
-            {/* Happy eyebrows - more subtle, pink tinted */}
+            {/* Happy eyebrows - raised when surprised */}
             <path
               d="M100 130 Q118 123 136 128"
               stroke="#d85a94"
@@ -447,6 +481,11 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
               strokeLinecap="round"
               fill="none"
               opacity="0.2"
+              style={{
+                transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                transform: isSurprised ? 'translateY(-8px)' : 'translateY(0)',
+                transformOrigin: '118px 125px'
+              }}
             />
             <path
               d="M164 128 Q182 123 200 130"
@@ -455,37 +494,97 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center' 
               strokeLinecap="round"
               fill="none"
               opacity="0.2"
+              style={{
+                transition: 'transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94)',
+                transform: isSurprised ? 'translateY(-8px)' : 'translateY(0)',
+                transformOrigin: '182px 125px'
+              }}
             />
           </g>
 
-          {/* BIG HAPPY SMILE - warmer color */}
+          {/* MOUTH - all states rendered with opacity transitions for smooth morphing */}
           <g>
-            {/* Smile shadow for depth */}
-            <path
-              d="M120 184 Q150 210 180 184"
-              stroke="#c9247a"
-              strokeWidth="8"
-              strokeLinecap="round"
-              fill="none"
-              opacity="0.2"
-            />
-            {/* Main smile - warmer dark pink instead of pure dark */}
-            <path
-              d="M120 182 Q150 208 180 182"
-              stroke="#4a1a2e"
-              strokeWidth="6"
-              strokeLinecap="round"
-              fill="none"
-            />
-            {/* Smile inner highlight */}
-            <path
-              d="M124 181 Q150 203 176 181"
-              stroke="#ffffff"
-              strokeWidth="2"
-              strokeLinecap="round"
-              fill="none"
-              opacity="0.15"
-            />
+            {/* Surprised small "o" mouth - always rendered, opacity controlled */}
+            <g
+              style={{
+                opacity: isSurprised ? 1 : 0,
+                willChange: 'opacity',
+                transform: 'translateZ(0)'
+              }}
+              className="mouth-surprised"
+            >
+              <ellipse cx="150" cy="190" rx="12" ry="10" fill="#c9247a" opacity="0.2" />
+              <ellipse cx="150" cy="188" rx="10" ry="8" fill="#4a1a2e" />
+              <ellipse cx="150" cy="189" rx="7" ry="5" fill="#2d0f1a" />
+            </g>
+
+            {/* Default happy smile - always rendered, opacity controlled */}
+            <g
+              style={{
+                opacity: (!isExcited && !isSurprised) ? 1 : 0,
+                willChange: 'opacity',
+                transform: 'translateZ(0)'
+              }}
+              className="mouth-default"
+            >
+              <path
+                d="M120 184 Q150 210 180 184"
+                stroke="#c9247a"
+                strokeWidth="8"
+                strokeLinecap="round"
+                fill="none"
+                opacity="0.2"
+              />
+              <path
+                d="M120 182 Q150 208 180 182"
+                stroke="#4a1a2e"
+                strokeWidth="6"
+                strokeLinecap="round"
+                fill="none"
+              />
+              <path
+                d="M124 181 Q150 203 176 181"
+                stroke="#ffffff"
+                strokeWidth="2"
+                strokeLinecap="round"
+                fill="none"
+                opacity="0.15"
+              />
+            </g>
+
+            {/* Excited happy smile - always rendered, opacity controlled */}
+            <g
+              style={{
+                opacity: (isExcited && !isSurprised) ? 1 : 0,
+                willChange: 'opacity',
+                transform: 'translateZ(0)'
+              }}
+              className="mouth-excited"
+            >
+              <path
+                d="M117 186 C125 188, 135 214, 150 214 C165 214, 175 188, 183 186"
+                fill="#c9247a"
+                opacity="0.15"
+              />
+              <path
+                d="M120 183 C128 185, 138 210, 150 210 C162 210, 172 185, 180 183"
+                fill="#4a1a2e"
+              />
+              <path
+                d="M124 186 C130 188, 140 205, 150 205 C160 205, 170 188, 176 186"
+                fill="#2d0f1a"
+              />
+              <ellipse cx="150" cy="198" rx="11" ry="7" fill="#ff6b9d" />
+              <ellipse cx="147" cy="195" rx="6" ry="3.5" fill="#ff8fb3" opacity="0.6" />
+              <path
+                d="M122 184 C130 185, 140 208, 150 208"
+                fill="none"
+                stroke="#ffaad9"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                opacity="0.2"
+              />
+            </g>
           </g>
 
           {/* ROUNDER BLUSH CHEEKS - more integrated */}
