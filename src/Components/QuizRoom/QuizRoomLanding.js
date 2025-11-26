@@ -171,6 +171,15 @@ const QuizRoomLanding = () => {
 
   // Handle scroll for mascot floating behavior
   const handleScroll = useCallback(() => {
+    // Disable floating mascot on mobile (768px and below)
+    const isMobile = window.innerWidth <= 768;
+    if (isMobile) {
+      setMascotIsFloating(false);
+      setMascotIsExitingFloat(false);
+      setMascotIsReturning(false);
+      return;
+    }
+
     const scrollY = window.scrollY;
     const heroHeight = heroRef?.current?.offsetHeight || window.innerHeight;
     const mascotTriggerPoint = heroHeight * 0.4; // Start floating after 40% of hero

@@ -636,22 +636,424 @@ body:not(.dark-mode) .mascot-motion-trails .trail {
   background: radial-gradient(circle, rgba(139, 92, 246, 0.25) 0%, transparent 70%);
 }
 
-/* Mobile - smaller and closer to edge */
+/* ============================================
+   MOBILE RESPONSIVE - 768px and below
+   Comprehensive mobile optimizations
+   ============================================ */
 @media (max-width: 768px) {
+  /* Disable floating mascot entirely on mobile */
   .landing-mascot.floating {
-    right: 15px;
-    transform: translateY(-50%) scale(0.8);
+    position: static !important;
+    top: auto !important;
+    right: auto !important;
+    left: auto !important;
+    transform: none !important;
+    z-index: auto !important;
+    animation: none !important;
   }
 
-  .landing-mascot.floating.idle {
-    animation: mascotFloatIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  .landing-mascot.floating.idle,
+  .landing-mascot.floating.flying {
+    animation: none !important;
   }
-}
 
-/* Hide floating mascot on very small screens */
-@media (max-width: 480px) {
-  .landing-mascot.floating {
+  .mascot-motion-trails {
+    display: none !important;
+  }
+
+  /* Hero section mobile */
+  .hero-section {
+    min-height: auto;
+    padding: 80px 20px 40px;
+  }
+
+  .landing-ambient-glow {
+    width: 350px;
+    height: 350px;
+    top: 10%;
+  }
+
+  /* Navigation mobile */
+  .landing-nav {
+    padding: 14px 16px;
+  }
+
+  .brand-name {
+    font-size: 16px;
+  }
+
+  .landing-auth-header {
+    gap: 8px;
+  }
+
+  .auth-header-btn {
+    padding: 8px 16px;
+    font-size: 13px;
+    border-radius: 10px;
+  }
+
+  .theme-toggle-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .theme-toggle-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Mascot mobile - centered and sized appropriately */
+  .landing-mascot {
+    margin-bottom: 0;
+  }
+
+  .landing-mascot .nurse-quiz-mascot {
+    transform: scale(0.9);
+  }
+
+  /* Typography mobile */
+  .landing-slogan {
+    font-size: 22px;
+    line-height: 1.4;
+    text-align: center;
+  }
+
+  .slogan-highlight {
+    font-size: inherit;
+  }
+
+  .landing-subtitle {
+    font-size: 14px;
+    line-height: 1.5;
+    text-align: center;
+    max-width: 320px;
+    margin: 0 auto;
+  }
+
+  /* Action cards mobile */
+  .landing-actions-grid {
+    gap: 12px;
+  }
+
+  .primary-card {
+    padding: 16px 20px !important;
+    border-radius: 16px;
+  }
+
+  .primary-card .action-icon-wrapper {
+    width: 50px;
+    height: 50px;
+  }
+
+  .primary-card .action-title {
+    font-size: 15px;
+  }
+
+  /* Secondary cards - stack better on tablet */
+  .landing-secondary-actions {
+    gap: 10px;
+  }
+
+  .secondary-card {
+    padding: 16px 12px !important;
+    border-radius: 14px;
+  }
+
+  .secondary-card .action-icon-wrapper {
+    width: 42px;
+    height: 42px;
+  }
+
+  .secondary-card .action-title {
+    font-size: 11px;
+  }
+
+  .secondary-card .action-description {
+    font-size: 10px;
     display: none;
+  }
+
+  /* Social proof mobile */
+  .landing-social-proof {
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .social-proof-badge {
+    padding: 8px 16px;
+  }
+
+  .social-proof-divider {
+    display: none;
+  }
+
+  .badge-text {
+    font-size: 12px;
+  }
+
+  /* Footer mobile */
+  .landing-footer {
+    margin-top: 20px;
+  }
+
+  .footer-text {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  /* ============================================
+     SHOWCASE SECTION MOBILE
+     ============================================ */
+  .product-showcase-section {
+    padding: 50px 16px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .showcase-container {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .showcase-title {
+    font-size: 24px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .showcase-subtitle {
+    font-size: 14px;
+    margin-bottom: 30px;
+    text-align: center;
+  }
+
+  .demo-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto;
+  }
+
+  .demo-card {
+    border-radius: 16px;
+    width: 100%;
+  }
+
+  .demo-header {
+    padding: 12px 16px;
+  }
+
+  .demo-content {
+    min-height: 280px;
+    padding: 20px 16px;
+  }
+
+  .demo-phase-labels {
+    margin-top: 16px;
+    gap: 8px;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .phase-label {
+    font-size: 11px;
+    padding: 6px 10px;
+  }
+
+  /* Demo phases mobile */
+  .demo-upload-text {
+    font-size: 14px;
+  }
+
+  .demo-generating-text {
+    font-size: 14px;
+  }
+
+  .demo-question-text {
+    font-size: 14px;
+    line-height: 1.4;
+  }
+
+  .demo-answer {
+    font-size: 13px;
+    padding: 10px 14px;
+  }
+
+  .demo-correct-text {
+    font-size: 20px;
+  }
+
+  .demo-score-value {
+    font-size: 28px;
+  }
+
+  /* Section CTA mobile */
+  .section-cta {
+    margin-top: 30px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .section-cta-btn {
+    padding: 14px 28px;
+    font-size: 15px;
+    width: 100%;
+    max-width: 300px;
+    margin: 0 auto;
+    justify-content: center;
+  }
+
+  .section-cta-btn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .section-cta-subtext {
+    font-size: 12px;
+    text-align: center;
+  }
+
+  /* Section spacer mobile */
+  .section-spacer {
+    height: 40px;
+  }
+
+  /* ============================================
+     SCIENCE SECTION MOBILE
+     ============================================ */
+  .science-section {
+    padding: 50px 16px;
+    display: flex;
+    justify-content: center;
+  }
+
+  .science-container {
+    width: 100%;
+    max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Brain mascot mobile */
+  .science-brain-mascot {
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+  }
+
+  .science-brain-mascot .brain-mascot {
+    transform: scale(0.85);
+  }
+
+  /* Reduce explosion particle distances on mobile */
+  .brain-explosion-particles .particle {
+    width: 8px;
+    height: 8px;
+  }
+
+  .particle-0 { --distance: 50px; }
+  .particle-1 { --distance: 55px; }
+  .particle-2 { --distance: 45px; }
+  .particle-3 { --distance: 52px; }
+  .particle-4 { --distance: 42px; }
+  .particle-5 { --distance: 58px; }
+  .particle-6 { --distance: 50px; }
+  .particle-7 { --distance: 52px; }
+  .particle-8 { --distance: 45px; }
+  .particle-9 { --distance: 55px; }
+  .particle-10 { --distance: 42px; }
+  .particle-11 { --distance: 52px; }
+
+  .brain-explosion-particles .star-particle {
+    font-size: 14px;
+  }
+
+  .star-0 { --star-distance: 65px; }
+  .star-1 { --star-distance: 70px; }
+  .star-2 { --star-distance: 60px; }
+  .star-3 { --star-distance: 68px; }
+  .star-4 { --star-distance: 65px; }
+  .star-5 { --star-distance: 70px; }
+  .star-6 { --star-distance: 58px; }
+  .star-7 { --star-distance: 62px; }
+
+  .brain-explosion-particles .spark-particle {
+    width: 3px;
+    height: 12px;
+  }
+
+  .spark-0 { --spark-distance: 40px; }
+  .spark-1 { --spark-distance: 42px; }
+  .spark-2 { --spark-distance: 38px; }
+  .spark-3 { --spark-distance: 40px; }
+  .spark-4 { --spark-distance: 42px; }
+  .spark-5 { --spark-distance: 38px; }
+
+  .science-title {
+    font-size: 24px;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .science-subtitle {
+    font-size: 14px;
+    margin-bottom: 32px;
+    max-width: 320px;
+    text-align: center;
+  }
+
+  /* Science stats grid - single column on mobile, centered */
+  .science-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    width: 100%;
+    max-width: 380px;
+    margin: 0 auto;
+  }
+
+  .science-stat-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+    text-align: center;
+  }
+
+  .stat-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    margin: 0 auto 12px;
+  }
+
+  .stat-icon-wrapper svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .stat-number {
+    font-size: 42px;
+    margin-bottom: 4px;
+  }
+
+  .stat-title {
+    font-size: 16px;
+    margin-bottom: 8px;
+  }
+
+  .stat-description {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .stat-source {
+    font-size: 10px;
+    margin-top: 12px;
   }
 }
 
@@ -3911,6 +4313,8 @@ body:not(.dark-mode) .stat-source {
   .science-stats-grid {
     grid-template-columns: 1fr;
     gap: 16px;
+    max-width: 380px;
+    margin: 0 auto;
   }
 
   .science-stat-card {
@@ -3940,6 +4344,7 @@ body:not(.dark-mode) .stat-source {
     font-size: 15px;
     width: 100%;
     max-width: 280px;
+    margin: 0 auto;
     justify-content: center;
   }
 
