@@ -1,10 +1,20 @@
-import React, { useState, useCallback, useMemo } from 'react';
+import React, { useState, useCallback, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import HospitalHallway from './HospitalHallway';
 import SerumTube from './SerumTube';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import './DedicatedQuizPage.css';
+
+// WebSocket imports for game mode
+import {
+  sendGameQuizRequest,
+  sendGameDeliver,
+  sendGameRetry,
+  setupGameMessageListener,
+  warmUpWebSocket,
+  closeWebSocketConnection
+} from '../../Services/WebSocketManager';
 
 // Constants
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -106,6 +116,10 @@ function BackArrowIcon() {
  *
  * As the user answers correctly, they walk down a hospital hallway
  * toward Room 217, where a child patient awaits their help.
+ *
+ * Supports two modes:
+ * 1. Static mode: Quiz data passed via location.state.quizzes
+ * 2. Game mode: Questions streamed via WebSocket (location.state.isGameMode = true)
  */
 function DedicatedQuizPage() {
   const { t } = useTranslation();
@@ -113,11 +127,63 @@ function DedicatedQuizPage() {
   const navigate = useNavigate();
   const [isDarkMode] = useDarkMode();
 
-  // Get quiz data from location state or use demo data
-  const quizData = location.state?.quizzes || DEMO_QUIZ_DATA;
+  // ------------------------------------------
+  // Extract props from navigation state
+  // ------------------------------------------
+  const isGameMode = location.state?.isGameMode || false;
+  const chatId = location.state?.chatId || null;
   const quizTitle = location.state?.title || 'Room 217';
+  const fromUpload = location.state?.fromUpload || false;
 
-  // Quiz state
+  // For static mode, use passed data or demo
+  const staticQuizData = location.state?.quizzes || DEMO_QUIZ_DATA;
+
+  // ------------------------------------------
+  // REFRESH PROTECTION: Prevent re-sending requests on page refresh
+  // When a user refreshes, location.state persists but we shouldn't
+  // start a new quiz session - redirect them back to start
+  // ------------------------------------------
+  useEffect(() => {
+    // Only applies to game mode with fromUpload flag
+    if (!isGameMode || !fromUpload || !chatId) return;
+
+    // Check if this session was already started
+    const sessionKey = `quiz_session_${chatId}`;
+    const existingSession = sessionStorage.getItem(sessionKey);
+
+    if (existingSession) {
+      // This is a page refresh - session already exists but state is lost
+      // Redirect back to start page instead of sending new request
+      console.log('🔄 Page refresh detected - redirecting to start');
+      navigate('/start', { replace: true });
+      return;
+    }
+
+    // Mark this session as started
+    sessionStorage.setItem(sessionKey, 'started');
+
+    // Clean up session marker when user leaves the quiz
+    return () => {
+      // Don't remove immediately - only remove when navigating away properly
+      // The session key will persist until browser tab is closed
+    };
+  }, [isGameMode, fromUpload, chatId, navigate]);
+
+  // ------------------------------------------
+  // Game mode state (streaming questions)
+  // ------------------------------------------
+  const [streamedQuestions, setStreamedQuestions] = useState([]);
+  const [isLoading, setIsLoading] = useState(isGameMode); // Loading until first question arrives
+  const [loadingMessage, setLoadingMessage] = useState('Connecting...');
+  const [gameError, setGameError] = useState(null);
+
+  // Serum tracking for game mode
+  const [serumCollected, setSerumCollected] = useState(0);
+  const [serumRequired, setSerumRequired] = useState(100);
+
+  // ------------------------------------------
+  // Quiz state (shared between modes)
+  // ------------------------------------------
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [revealed, setRevealed] = useState(false);
@@ -128,14 +194,19 @@ function DedicatedQuizPage() {
   // Cinematic state
   const [showPatientMessage, setShowPatientMessage] = useState(false);
   const [messagePhase, setMessagePhase] = useState(0);
-  const [cinematicPhase, setCinematicPhase] = useState(0); // 0: initial, 1: serum moving, 2: delivered, 3: light spills, 4: black screen, 5: final message
+  const [cinematicPhase, setCinematicPhase] = useState(0);
 
-  // Serum tube state
+  // Serum tube animation state
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // Current question
+  // ------------------------------------------
+  // Determine quiz data source
+  // ------------------------------------------
+  const quizData = isGameMode ? streamedQuestions : staticQuizData;
   const currentQuestion = quizData[currentQuestionIndex];
-  const totalQuestions = quizData.length;
+  const totalQuestions = isGameMode
+    ? (streamedQuestions.length > 0 ? streamedQuestions.length : 5) // Estimate 5 if still loading
+    : staticQuizData.length;
 
   // Calculate correct answers
   const correctCount = useMemo(() => {
@@ -158,6 +229,140 @@ function DedicatedQuizPage() {
     if (!currentQuestion) return -1;
     return currentQuestion.options.findIndex(opt => opt === currentQuestion.answer);
   }, [currentQuestion]);
+
+  // ------------------------------------------
+  // GAME MODE: WebSocket connection and streaming
+  // ------------------------------------------
+  useEffect(() => {
+    // Only run in game mode with a valid chatId
+    if (!isGameMode || !chatId) return;
+
+    // Check if this is a page refresh (session already exists)
+    // If so, don't start the game - the refresh protection effect will handle redirect
+    if (fromUpload) {
+      const sessionKey = `quiz_session_${chatId}`;
+      const existingSession = sessionStorage.getItem(sessionKey);
+      if (existingSession) {
+        console.log('🔄 Refresh detected in WebSocket effect - skipping');
+        return;
+      }
+    }
+
+    let isMounted = true;
+
+    const startGameQuiz = async () => {
+      try {
+        console.log('🎮 Starting game mode for chat:', chatId);
+        setLoadingMessage('Connecting to server...');
+
+        // Step 1: Connect to WebSocket
+        await warmUpWebSocket(chatId);
+
+        if (!isMounted) return;
+        setLoadingMessage('Generating questions from your notes...');
+
+        // Step 2: Set up message handlers
+        setupGameMessageListener(chatId, {
+          // Called when game state is initialized
+          onInitialized: ({ serumCollected: initialSerum, serumRequired: required }) => {
+            if (!isMounted) return;
+            console.log(`🧪 Game initialized: ${initialSerum}/${required}mL`);
+            setSerumCollected(initialSerum);
+            setSerumRequired(required);
+          },
+
+          // Called while questions are being generated
+          onGenerating: ({ current, total }) => {
+            if (!isMounted) return;
+            setLoadingMessage(`Generating question ${current} of ${total}...`);
+          },
+
+          // Called when a question is ready
+          onQuestionReady: ({ question, isFirst }) => {
+            if (!isMounted) return;
+            console.log(`✅ Received question ${question.index + 1}:`, question.question.substring(0, 50) + '...');
+
+            // Add question to our list
+            setStreamedQuestions(prev => [...prev, question]);
+
+            // Hide loading when first question arrives
+            if (isFirst) {
+              setIsLoading(false);
+            }
+          },
+
+          // Called when all questions are generated
+          onQuizComplete: ({ totalQuestions }) => {
+            if (!isMounted) return;
+            console.log(`🎮 Quiz complete! ${totalQuestions} questions received`);
+          },
+
+          // Called if child is saved (enough serum)
+          onChildSaved: ({ serumDelivered, attempts, message }) => {
+            if (!isMounted) return;
+            console.log(`🎉 Child saved! ${serumDelivered}mL delivered in ${attempts} attempts`);
+            // The cinematic ending will handle this
+          },
+
+          // Called if more serum is needed
+          onNeedMoreSerum: ({ serumCollected: total, serumNeeded, message }) => {
+            if (!isMounted) return;
+            console.log(`⚠️ Need ${serumNeeded}mL more serum`);
+            setSerumCollected(total);
+            // TODO: Show retry UI
+          },
+
+          // Called on errors
+          onError: (errorMessage) => {
+            if (!isMounted) return;
+            console.error('❌ Game error:', errorMessage);
+            setGameError(errorMessage);
+            setIsLoading(false);
+          }
+        });
+
+        // Step 3: Request quiz questions
+        const success = await sendGameQuizRequest(chatId, 5, 'medium');
+
+        if (!success && isMounted) {
+          setGameError('Failed to start quiz. Please try again.');
+          setIsLoading(false);
+        }
+
+      } catch (error) {
+        console.error('❌ Failed to start game:', error);
+        if (isMounted) {
+          setGameError('Failed to connect. Please try again.');
+          setIsLoading(false);
+        }
+      }
+    };
+
+    startGameQuiz();
+
+    // Cleanup on unmount
+    return () => {
+      isMounted = false;
+      if (chatId) {
+        closeWebSocketConnection(chatId);
+      }
+    };
+  }, [isGameMode, chatId, fromUpload]);
+
+  // ------------------------------------------
+  // GAME MODE: Handle quiz completion and serum delivery
+  // ------------------------------------------
+  const handleGameComplete = useCallback(async () => {
+    if (!isGameMode || !chatId) return;
+
+    // Calculate serum from correct answers in this session
+    const sessionSerum = correctCount * 20; // 20mL per correct answer
+
+    console.log(`🧪 Quiz finished! Earned ${sessionSerum}mL this session`);
+
+    // Send delivery request to server
+    await sendGameDeliver(chatId, sessionSerum);
+  }, [isGameMode, chatId, correctCount]);
 
   // Handle answer selection
   const handleSelect = useCallback((index) => {
@@ -196,15 +401,27 @@ function DedicatedQuizPage() {
     }, 300);
   }, [revealed, correctIndex, currentQuestionIndex, currentQuestion]);
 
+  // ------------------------------------------
   // Handle next question
+  // ------------------------------------------
   const handleNext = useCallback(() => {
     if (currentQuestionIndex < totalQuestions - 1) {
+      // Move to next question - reset selection state
       setCurrentQuestionIndex(prev => prev + 1);
       setSelectedIndex(null);
       setRevealed(false);
       setShowFeedback(false);
     } else {
-      // Quiz complete - trigger cinematic ending sequence
+      // ------------------------------------------
+      // Quiz complete - trigger ending sequence
+      // ------------------------------------------
+
+      // In game mode, first tell the server we're done and delivering serum
+      if (isGameMode) {
+        handleGameComplete();
+      }
+
+      // Start cinematic ending sequence
       setQuizComplete(true);
 
       // Cinematic sequence timeline:
@@ -230,7 +447,7 @@ function DedicatedQuizPage() {
         setTimeout(() => setMessagePhase(3), 4500);
       }, 8000);
     }
-  }, [currentQuestionIndex, totalQuestions]);
+  }, [currentQuestionIndex, totalQuestions, isGameMode, handleGameComplete]);
 
   // Handle restart
   const handleRestart = useCallback(() => {
@@ -247,10 +464,154 @@ function DedicatedQuizPage() {
 
   // Handle back navigation
   const handleBack = useCallback(() => {
+    // Clear session marker so user can start a fresh quiz next time
+    if (chatId) {
+      sessionStorage.removeItem(`quiz_session_${chatId}`);
+    }
     navigate(-1);
-  }, [navigate]);
+  }, [navigate, chatId]);
 
-  // Render cinematic results screen
+  // ------------------------------------------
+  // Handle game mode retry (when not enough serum)
+  // ------------------------------------------
+  const handleRetry = useCallback(async () => {
+    if (!isGameMode || !chatId) return;
+
+    // Reset quiz state for a new round
+    setCurrentQuestionIndex(0);
+    setSelectedIndex(null);
+    setRevealed(false);
+    setShowFeedback(false);
+    setUserAnswers([]);
+    setQuizComplete(false);
+    setShowPatientMessage(false);
+    setMessagePhase(0);
+    setCinematicPhase(0);
+    setStreamedQuestions([]);
+    setIsLoading(true);
+    setLoadingMessage('Preparing new questions...');
+    setGameError(null);
+
+    // Request new quiz questions (serum persists on server)
+    try {
+      const success = await sendGameRetry(chatId, 5, 'medium');
+      if (!success) {
+        setGameError('Failed to start retry. Please try again.');
+        setIsLoading(false);
+      }
+    } catch (error) {
+      console.error('❌ Retry failed:', error);
+      setGameError('Failed to connect. Please try again.');
+      setIsLoading(false);
+    }
+  }, [isGameMode, chatId]);
+
+  // ------------------------------------------
+  // RENDER: Loading screen (game mode only)
+  // Shows while waiting for first question to stream in
+  // ------------------------------------------
+  if (isLoading && isGameMode) {
+    return (
+      <div className={`dedicated-quiz-page loading-page ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+        {/* Hospital hallway background - start at 0% */}
+        <HospitalHallway progress={0} />
+
+        {/* Floating controls */}
+        <div className="quiz-floating-controls">
+          <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
+            <BackArrowIcon />
+          </button>
+          <ThemeToggle />
+        </div>
+
+        {/* Loading content */}
+        <div className="loading-overlay">
+          <div className="loading-content glassmorphic">
+            {/* Animated serum tube */}
+            <div className="loading-serum">
+              <SerumTube
+                correctCount={0}
+                totalQuestions={5}
+                size={120}
+              />
+            </div>
+
+            {/* Loading message */}
+            <div className="loading-text">
+              <h2 className="loading-title">Preparing Your Quiz</h2>
+              <p className="loading-message">{loadingMessage}</p>
+            </div>
+
+            {/* Animated dots */}
+            <div className="loading-dots">
+              <span className="dot"></span>
+              <span className="dot"></span>
+              <span className="dot"></span>
+            </div>
+
+            {/* Tip while waiting */}
+            <p className="loading-tip">
+              A child in Room 217 needs your help. Each correct answer adds serum to save them.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ------------------------------------------
+  // RENDER: Error screen (game mode only)
+  // Shows when connection fails or quiz generation fails
+  // ------------------------------------------
+  if (gameError && isGameMode) {
+    return (
+      <div className={`dedicated-quiz-page error-page ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+        {/* Hospital hallway background */}
+        <HospitalHallway progress={0} />
+
+        {/* Floating controls */}
+        <div className="quiz-floating-controls">
+          <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
+            <BackArrowIcon />
+          </button>
+          <ThemeToggle />
+        </div>
+
+        {/* Error content */}
+        <div className="error-overlay">
+          <div className="error-content glassmorphic">
+            {/* Error icon */}
+            <div className="error-icon">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M12 8v4" />
+                <path d="M12 16h.01" />
+              </svg>
+            </div>
+
+            {/* Error message */}
+            <h2 className="error-title">Connection Lost</h2>
+            <p className="error-message">{gameError}</p>
+
+            {/* Actions */}
+            <div className="error-actions">
+              <button className="retry-btn" onClick={handleRetry}>
+                Try Again
+              </button>
+              <button className="back-btn" onClick={handleBack}>
+                Go Back
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ------------------------------------------
+  // RENDER: Cinematic results screen
+  // Shows after quiz is complete
+  // ------------------------------------------
   if (quizComplete) {
     return (
       <div className={`dedicated-quiz-page results-page cinematic phase-${cinematicPhase} ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
@@ -472,9 +833,10 @@ function DedicatedQuizPage() {
                     {selectedIndex === correctIndex ? 'Correct' : 'Incorrect'}
                   </span>
                   {currentQuestion?.justification && (
-                    <p className="feedback-explanation">
-                      {currentQuestion.justification}
-                    </p>
+                    <div
+                      className="feedback-explanation"
+                      dangerouslySetInnerHTML={{ __html: currentQuestion.justification }}
+                    />
                   )}
                 </div>
               </div>

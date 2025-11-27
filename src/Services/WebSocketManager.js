@@ -328,3 +328,231 @@ export const cancelWebSocketStream = async (chatId) => {
   return await wsManager.cancelStream(chatId);
 };
 
+
+// ============================================================================
+// GAME MODE FUNCTIONS
+// These handle the gamified quiz flow where users collect serum
+// by answering questions correctly to save a sick child.
+//
+// Usage Flow:
+//   1. Call sendGameQuizRequest() to start streaming questions
+//   2. Frontend validates answers client-side (answer included in question)
+//   3. Track serum locally (20mL per correct answer)
+//   4. Call sendGameDeliver() with total serum when quiz ends
+//   5. If not enough, call sendGameRetry() for more questions
+// ============================================================================
+
+/**
+ * Start a game quiz - streams questions via WebSocket
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {number} questionCount - Number of questions (default: 5)
+ * @param {string} difficulty - Question difficulty: "easy", "medium", "hard" (default: "medium")
+ * @param {function} onMessage - Callback for handling streamed messages
+ * @returns {Promise<boolean>} - True if request sent successfully
+ *
+ * Message types you'll receive in onMessage:
+ *   - game_initialized: { serumCollected, serumRequired }
+ *   - game_generating: { current, total }
+ *   - game_question_ready: { question: { index, question, options, answer, justification, topic, serumValue }, quizId, isFirst }
+ *   - game_quiz_complete: { totalQuestions }
+ */
+export const sendGameQuizRequest = async (chatId, questionCount = 5, difficulty = "medium", onMessage = null) => {
+  try {
+    // Make sure we're connected
+    await wsManager.getConnection(chatId);
+
+    // Set up message listener if provided
+    if (onMessage) {
+      wsManager.setupMessageListener(chatId, onMessage);
+    }
+
+    // Send the game quiz request
+    const success = await wsManager.sendMessage(chatId, {
+      type: "game_quiz",
+      questionCount,
+      difficulty
+    });
+
+    if (success) {
+      console.log(`🎮 Game quiz request sent for chat ${chatId}`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send game quiz request:`, error);
+    return false;
+  }
+};
+
+/**
+ * Deliver serum after completing a quiz
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {number} serumCollected - Amount of serum collected THIS quiz (not cumulative)
+ * @returns {Promise<boolean>} - True if request sent successfully
+ *
+ * Message types you'll receive:
+ *   - game_child_saved: { serumDelivered, attempts, message } - SUCCESS!
+ *   - game_need_more_serum: { serumCollected, serumRequired, serumNeeded, attempts, message } - Need retry
+ */
+export const sendGameDeliver = async (chatId, serumCollected) => {
+  try {
+    const success = await wsManager.sendMessage(chatId, {
+      type: "game_deliver",
+      serumCollected
+    });
+
+    if (success) {
+      console.log(`🧪 Delivery request sent: ${serumCollected}mL`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send delivery request:`, error);
+    return false;
+  }
+};
+
+/**
+ * Request a retry quiz (serum persists!)
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {number} questionCount - Number of questions for retry (default: 5)
+ * @param {string} difficulty - Question difficulty (default: "medium")
+ * @returns {Promise<boolean>} - True if request sent successfully
+ *
+ * Message types you'll receive:
+ *   - game_retry_starting: { serumCollected, serumRequired, serumNeeded, message }
+ *   - Then same as sendGameQuizRequest (game_initialized, game_question_ready, etc.)
+ */
+export const sendGameRetry = async (chatId, questionCount = 5, difficulty = "medium") => {
+  try {
+    const success = await wsManager.sendMessage(chatId, {
+      type: "game_retry",
+      questionCount,
+      difficulty
+    });
+
+    if (success) {
+      console.log(`🔄 Retry request sent for chat ${chatId}`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send retry request:`, error);
+    return false;
+  }
+};
+
+/**
+ * Set up a listener specifically for game messages
+ * Useful when you want to handle game events separately
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {object} handlers - Object with handler functions for each game status
+ *
+ * Example:
+ * setupGameMessageListener(chatId, {
+ *   onInitialized: ({ serumCollected, serumRequired }) => { ... },
+ *   onQuestionReady: ({ question, quizId, isFirst }) => { ... },
+ *   onQuizComplete: ({ totalQuestions }) => { ... },
+ *   onChildSaved: ({ serumDelivered, attempts, message }) => { ... },
+ *   onNeedMoreSerum: ({ serumCollected, serumRequired, serumNeeded }) => { ... },
+ *   onError: (errorMessage) => { ... }
+ * });
+ */
+export const setupGameMessageListener = (chatId, handlers = {}) => {
+  wsManager.setupMessageListener(chatId, (message) => {
+    const { type, data } = message;
+
+    // Handle errors
+    if (type === "error") {
+      if (handlers.onError) {
+        handlers.onError(message.message || "Unknown error");
+      }
+      return;
+    }
+
+    // Only process stream_chunk messages
+    if (type !== "stream_chunk" || !data) return;
+
+    const status = data.status;
+
+    switch (status) {
+      case "game_initialized":
+        if (handlers.onInitialized) {
+          handlers.onInitialized({
+            serumCollected: data.serumCollected,
+            serumRequired: data.serumRequired
+          });
+        }
+        break;
+
+      case "game_generating":
+        if (handlers.onGenerating) {
+          handlers.onGenerating({
+            current: data.current,
+            total: data.total
+          });
+        }
+        break;
+
+      case "game_question_ready":
+        if (handlers.onQuestionReady) {
+          handlers.onQuestionReady({
+            question: data.question,
+            quizId: data.quizId,
+            isFirst: data.isFirst
+          });
+        }
+        break;
+
+      case "game_quiz_complete":
+        if (handlers.onQuizComplete) {
+          handlers.onQuizComplete({
+            totalQuestions: data.totalQuestions
+          });
+        }
+        break;
+
+      case "game_child_saved":
+        if (handlers.onChildSaved) {
+          handlers.onChildSaved({
+            serumDelivered: data.serumDelivered,
+            attempts: data.attempts,
+            message: data.message
+          });
+        }
+        break;
+
+      case "game_need_more_serum":
+        if (handlers.onNeedMoreSerum) {
+          handlers.onNeedMoreSerum({
+            serumCollected: data.serumCollected,
+            serumRequired: data.serumRequired,
+            serumNeeded: data.serumNeeded,
+            attempts: data.attempts,
+            message: data.message
+          });
+        }
+        break;
+
+      case "game_retry_starting":
+        if (handlers.onRetryStarting) {
+          handlers.onRetryStarting({
+            serumCollected: data.serumCollected,
+            serumRequired: data.serumRequired,
+            serumNeeded: data.serumNeeded,
+            message: data.message
+          });
+        }
+        break;
+
+      default:
+        // Unknown game status - might be chat-related
+        console.log("Unknown game status:", status);
+    }
+  });
+};
+

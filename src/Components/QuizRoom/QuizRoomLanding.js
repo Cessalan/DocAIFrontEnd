@@ -6,6 +6,13 @@ import NurseQuizMascot from './NurseQuizMascot';
 import BrainMascot from './BrainMascot';
 import './QuizRoomLanding.css';
 
+// Firebase imports for creating game chat
+import { db, auth } from '../../Firebase/config';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+
+// API imports for file upload
+import { upload_files_with_progress } from '../../Services/FastAPICalls';
+
 // Animated counter component
 const AnimatedCounter = ({ target, duration = 2000, suffix = '%', onComplete }) => {
   const [count, setCount] = useState(0);
@@ -355,75 +362,90 @@ const QuizRoomLanding = () => {
   };
 
   // Handle file selection
+  // This uploads the file, embeds it, then navigates to the quiz page
+  // where questions will be streamed via WebSocket
   const handleFileSelected = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Start processing phase
+    // Start processing phase - show loading overlay
     setUploadPhase('processing');
 
-    // Simulate quiz generation (replace with real API call)
     try {
-      await new Promise(resolve => setTimeout(resolve, 2500));
+      // ------------------------------------------
+      // Step 1: Generate a unique chat ID for this game session
+      // ------------------------------------------
+      const gameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
+      console.log('🎮 Starting game session:', gameId);
 
-      // Demo quiz data
-      const quiz = {
-        title: file.name.replace(/\.[^/.]+$/, ''),
-        questions: [
-          {
-            question: "A nurse is caring for a patient with diabetes. What is the priority nursing intervention?",
-            options: ["Administer insulin as scheduled", "Monitor blood glucose levels", "Provide dietary education", "Assess for complications"],
-            answer: "Monitor blood glucose levels",
-            topic: "Diabetes Management",
-            justification: "Monitoring blood glucose is the priority as it guides all other interventions."
-          },
-          {
-            question: "Which assessment finding indicates hypovolemic shock?",
-            options: ["Bradycardia", "Hypertension", "Tachycardia with weak pulse", "Flushed skin"],
-            answer: "Tachycardia with weak pulse",
-            topic: "Shock Assessment",
-            justification: "Tachycardia with weak pulse indicates compensatory response to decreased blood volume."
-          },
-          {
-            question: "A patient is prescribed warfarin. Which lab value should be monitored?",
-            options: ["Hemoglobin", "INR", "Creatinine", "Potassium"],
-            answer: "INR",
-            topic: "Anticoagulation",
-            justification: "INR monitors warfarin therapy effectiveness."
-          },
-          {
-            question: "What intervention is most appropriate for a patient with pneumonia?",
-            options: ["Restrict fluids", "Supine position", "Deep breathing exercises", "Limit ambulation"],
-            answer: "Deep breathing exercises",
-            topic: "Respiratory Care",
-            justification: "Deep breathing helps mobilize secretions and improve lung expansion."
-          },
-          {
-            question: "Which statement about heart failure indicates patient understanding?",
-            options: ["Weigh myself weekly", "Eat salt freely", "Call doctor if I gain 3 lbs in one day", "Leg swelling is normal"],
-            answer: "Call doctor if I gain 3 lbs in one day",
-            topic: "Heart Failure",
-            justification: "Rapid weight gain indicates fluid retention requiring immediate attention."
-          }
-        ]
-      };
+      // ------------------------------------------
+      // Step 2: Create the game chat document in Firestore
+      // This stores the game state (serum, attempts, etc.)
+      // ------------------------------------------
+      const userId = auth.currentUser?.uid || 'anonymous';
+      const chatRef = doc(db, 'chats', gameId);
 
-      // Navigate directly to quiz
+      await setDoc(chatRef, {
+        userId,
+        title: file.name.replace(/\.[^/.]+$/, ''), // Use filename as title
+        type: 'game', // Mark this as a game session
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+        // Initialize game state
+        gameState: {
+          status: 'uploading',
+          serumCollected: 0,
+          serumRequired: 100,
+          attempts: 0,
+          completedAt: null
+        }
+      });
+
+      console.log('✅ Game chat document created');
+
+      // ------------------------------------------
+      // Step 3: Upload the file and embed it
+      // This uses the existing upload endpoint
+      // ------------------------------------------
+      console.log('📤 Uploading file:', file.name);
+
+      await upload_files_with_progress(
+        [file],           // Files array (just one file)
+        gameId,           // Chat ID we just created
+        (update) => {     // Progress callback
+          // You could update UI here if needed
+          console.log('Upload progress:', update);
+        },
+        'english'         // Language for processing
+      );
+
+      console.log('✅ File uploaded and embedded');
+
+      // ------------------------------------------
+      // Step 4: Navigate to the quiz page
+      // The quiz page will connect via WebSocket and stream questions
+      // ------------------------------------------
       setUploadPhase('idle');
+
       navigate('/quiz/play', {
         state: {
-          quizzes: quiz.questions,
-          title: quiz.title,
-          fromUpload: true
+          chatId: gameId,                           // The game session ID
+          title: file.name.replace(/\.[^/.]+$/, ''), // Quiz title from filename
+          fromUpload: true,                          // Flag to indicate streaming mode
+          isGameMode: true                           // Enable game features (serum, etc.)
         }
       });
 
     } catch (error) {
+      // Handle errors gracefully
       setUploadPhase('idle');
-      console.error('Quiz generation failed:', error);
+      console.error('❌ Game setup failed:', error);
+
+      // Show user-friendly error (you could add a toast notification here)
+      alert('Failed to process your file. Please try again.');
     }
 
-    // Reset file input
+    // Reset file input so the same file can be selected again
     e.target.value = '';
   };
 
