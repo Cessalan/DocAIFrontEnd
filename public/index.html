@@ -633,15 +633,183 @@
         .seo-section:nth-child(5) { animation-delay: 0.4s; }
         .seo-section:nth-child(6) { animation-delay: 0.5s; }
         .seo-section:nth-child(7) { animation-delay: 0.6s; }
+
+        /* ============================================
+           LIGHT MODE OVERRIDES
+           When body does NOT have .dark-mode class
+           ============================================ */
+        body:not(.dark-mode) .seo-content {
+            background: linear-gradient(145deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-ambient-glow {
+            background: radial-gradient(
+                circle,
+                rgba(139, 92, 246, 0.08) 0%,
+                rgba(139, 92, 246, 0.03) 40%,
+                transparent 70%
+            );
+        }
+
+        body:not(.dark-mode) .seo-h1 {
+            background: linear-gradient(135deg, #1e293b 0%, #7c3aed 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        body:not(.dark-mode) .seo-h2 {
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-h3 {
+            color: #7c3aed;
+        }
+
+        body:not(.dark-mode) .seo-p {
+            color: #475569;
+        }
+
+        body:not(.dark-mode) .seo-p strong {
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-feature-list li {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.08);
+            color: #475569;
+        }
+
+        body:not(.dark-mode) .seo-feature-list li:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        body:not(.dark-mode) .seo-steps li {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-steps li:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+        }
+
+        body:not(.dark-mode) .seo-steps li strong {
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-table-wrapper {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-table th {
+            background: rgba(139, 92, 246, 0.1);
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-table td {
+            color: #475569;
+            border-bottom-color: rgba(0, 0, 0, 0.06);
+        }
+
+        body:not(.dark-mode) .seo-table tr:hover td {
+            background: rgba(139, 92, 246, 0.03);
+        }
+
+        body:not(.dark-mode) .seo-check {
+            color: #059669;
+        }
+
+        body:not(.dark-mode) .seo-cross {
+            color: #94a3b8;
+        }
+
+        body:not(.dark-mode) .seo-highlight {
+            color: #7c3aed;
+        }
+
+        body:not(.dark-mode) .seo-testimonial {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-testimonial:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 12px 40px rgba(139, 92, 246, 0.1);
+        }
+
+        body:not(.dark-mode) .seo-testimonial::before {
+            color: #a78bfa;
+        }
+
+        body:not(.dark-mode) .seo-testimonial-text {
+            color: #475569;
+        }
+
+        body:not(.dark-mode) .seo-testimonial-author {
+            color: #7c3aed;
+        }
+
+        body:not(.dark-mode) .seo-faq-item {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-faq-item:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        body:not(.dark-mode) .seo-pricing-card {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-pricing-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 16px 48px rgba(139, 92, 246, 0.12);
+        }
+
+        body:not(.dark-mode) .seo-pricing-card.featured {
+            border-color: #8b5cf6;
+            background: linear-gradient(145deg, rgba(139, 92, 246, 0.08) 0%, rgba(255, 255, 255, 0.9) 100%);
+        }
+
+        body:not(.dark-mode) .seo-pricing-name {
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-pricing-price {
+            color: #7c3aed;
+        }
+
+        body:not(.dark-mode) .seo-pricing-price span {
+            color: #64748b;
+        }
+
+        body:not(.dark-mode) .seo-pricing-desc {
+            color: #64748b;
+        }
+
+        body:not(.dark-mode) .seo-footer {
+            color: #64748b;
+            border-top-color: rgba(0, 0, 0, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-section::after {
+            background: linear-gradient(90deg, transparent, #a78bfa, transparent);
+        }
+
     </style>
 </head>
 <body>
-    <!-- React App Mount Point -->
+    <!-- React App Mount Point - PRIMARY: Users see this first -->
     <div id="root"></div>
 
-    <!-- SEO Content - Visible to crawlers & users with JS disabled -->
-    <noscript>
-    <div class="seo-content">
+    <!-- SEO Content - VISIBLE: Below React app, for both users and Google -->
+    <div class="seo-content" id="seo-fallback">
         <div class="seo-ambient-glow"></div>
 
         <section class="seo-section">
@@ -841,6 +1009,5 @@
             <p>2025 NurseQuizAI - The #1 AI Nursing Study App for NCLEX & OIIQ Preparation</p>
         </footer>
     </div>
-    </noscript>
 </body>
 </html>
