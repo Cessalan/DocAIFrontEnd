@@ -1,8 +1,9 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import HospitalHallway from './HospitalHallway';
 import SerumTube from './SerumTube';
+import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import './DedicatedQuizPage.css';
 
 // Constants
@@ -110,6 +111,7 @@ function DedicatedQuizPage() {
   const { t } = useTranslation();
   const location = useLocation();
   const navigate = useNavigate();
+  const [isDarkMode] = useDarkMode();
 
   // Get quiz data from location state or use demo data
   const quizData = location.state?.quizzes || DEMO_QUIZ_DATA;
@@ -234,14 +236,17 @@ function DedicatedQuizPage() {
   // Render cinematic results screen
   if (quizComplete) {
     return (
-      <div className="dedicated-quiz-page results-page cinematic">
+      <div className={`dedicated-quiz-page results-page cinematic ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
         {/* Hospital hallway background at final stage - always 100% since we reached the room */}
         <HospitalHallway progress={100} isComplete={true} />
 
-        {/* Floating back button */}
-        <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
-          <BackArrowIcon />
-        </button>
+        {/* Floating controls */}
+        <div className="quiz-floating-controls">
+          <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
+            <BackArrowIcon />
+          </button>
+          <ThemeToggle />
+        </div>
 
         {/* Cinematic overlay content */}
         <div className="cinematic-results">
@@ -304,14 +309,17 @@ function DedicatedQuizPage() {
   }
 
   return (
-    <div className="dedicated-quiz-page cinematic">
+    <div className={`dedicated-quiz-page cinematic ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
       {/* Hospital hallway background - progress based on questions answered */}
       <HospitalHallway progress={hallwayProgress} />
 
-      {/* Floating back button */}
-      <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
-        <BackArrowIcon />
-      </button>
+      {/* Floating controls */}
+      <div className="quiz-floating-controls">
+        <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
+          <BackArrowIcon />
+        </button>
+        <ThemeToggle />
+      </div>
 
       {/* Main content */}
       <main className="quiz-page-main cinematic-layout">
@@ -414,16 +422,27 @@ function DedicatedQuizPage() {
             {/* Feedback */}
             {showFeedback && (
               <div className={`quiz-feedback ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
-                <div className="feedback-header">
-                  <span className={`feedback-status ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
-                    {selectedIndex === correctIndex ? '✓ Correct!' : '✗ Not quite'}
-                  </span>
+                <div className="feedback-icon-wrapper">
+                  {selectedIndex === correctIndex ? (
+                    <div className="feedback-icon correct">
+                      <CheckmarkIcon />
+                    </div>
+                  ) : (
+                    <div className="feedback-icon incorrect">
+                      <XMarkIcon />
+                    </div>
+                  )}
                 </div>
-                {currentQuestion?.justification && (
-                  <div className="feedback-explanation">
-                    {currentQuestion.justification}
-                  </div>
-                )}
+                <div className="feedback-content">
+                  <span className={`feedback-status ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
+                    {selectedIndex === correctIndex ? 'Correct' : 'Incorrect'}
+                  </span>
+                  {currentQuestion?.justification && (
+                    <p className="feedback-explanation">
+                      {currentQuestion.justification}
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 

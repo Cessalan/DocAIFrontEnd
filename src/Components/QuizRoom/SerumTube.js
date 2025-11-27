@@ -1,8 +1,8 @@
 import React, { useMemo, useEffect, useState } from 'react';
 
 /**
- * SerumTube - Realistic animated science test tube that fills with glowing liquid
- * as the user answers questions correctly.
+ * SerumTube - Realistic science lab test tube with glowing serum
+ * Features proper borosilicate glass appearance and lab aesthetics
  */
 const SerumTube = ({
   correctCount = 0,
@@ -15,6 +15,16 @@ const SerumTube = ({
   const [showCelebration, setShowCelebration] = useState(false);
   const [prevCorrectCount, setPrevCorrectCount] = useState(correctCount);
   const [glowIntensity, setGlowIntensity] = useState(0);
+  const [isDarkMode, setIsDarkMode] = useState(() => document.body.classList.contains('dark-mode'));
+
+  // Listen for dark mode changes
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDarkMode(document.body.classList.contains('dark-mode'));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+    return () => observer.disconnect();
+  }, []);
 
   // Calculate fill percentage
   const fillPercentage = useMemo(() => {
@@ -28,7 +38,6 @@ const SerumTube = ({
       setShowBubbles(true);
       setGlowIntensity(1);
 
-      // Check if we hit a milestone
       const prevPercentage = (prevCorrectCount / totalQuestions) * 100;
       const newPercentage = (correctCount / totalQuestions) * 100;
 
@@ -50,100 +59,126 @@ const SerumTube = ({
     }
   }, [correctCount, prevCorrectCount, totalQuestions]);
 
-  // Dimensions
-  const tubeWidth = size * 0.32;
+  // Dimensions - taller and thinner like a real test tube
+  const tubeWidth = size * 0.25;
   const tubeHeight = size;
-  const viewBoxWidth = 140;
-  const viewBoxHeight = 380;
+  const viewBoxWidth = 120;
+  const viewBoxHeight = 400;
+
+  // Tube geometry - narrower, taller proportions
+  const tubeOuterLeft = 35;
+  const tubeOuterRight = 85;
+  const tubeInnerLeft = 40;
+  const tubeInnerRight = 80;
+  const tubeTop = 50;
+  const tubeBottom = 370;
+  const roundedBottom = 355;
 
   // Liquid calculations
-  const tubeInnerTop = 65;
-  const tubeInnerBottom = 340;
-  const liquidMaxHeight = tubeInnerBottom - tubeInnerTop;
+  const liquidMaxHeight = roundedBottom - tubeTop - 20;
   const liquidHeight = (fillPercentage / 100) * liquidMaxHeight;
-  const liquidTop = tubeInnerBottom - liquidHeight;
+  const liquidTop = roundedBottom - liquidHeight;
+
+  // Glass thickness visual
+  const glassThickness = 5;
 
   return (
     <div
       className={`serum-tube-container ${className} ${showCelebration ? 'celebrating' : ''} ${fillPercentage >= 100 ? 'complete' : ''}`}
-      style={{ width: tubeWidth + 60, height: tubeHeight + 40 }}
+      style={{ width: tubeWidth + 80, height: tubeHeight + 30 }}
     >
       <svg
-        width={tubeWidth + 60}
-        height={tubeHeight + 40}
+        width={tubeWidth + 80}
+        height={tubeHeight + 30}
         viewBox={`0 0 ${viewBoxWidth} ${viewBoxHeight}`}
         style={{ overflow: 'visible' }}
       >
         <defs>
-          {/* Realistic glass gradient */}
-          <linearGradient id="glassBody" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.15)" />
-            <stop offset="15%" stopColor="rgba(255,255,255,0.08)" />
-            <stop offset="50%" stopColor="rgba(255,255,255,0.03)" />
-            <stop offset="85%" stopColor="rgba(255,255,255,0.08)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0.12)" />
+          {/* Borosilicate glass gradient - realistic lab glass */}
+          <linearGradient id="labGlassGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            {isDarkMode ? (
+              <>
+                <stop offset="0%" stopColor="rgba(180,200,220,0.35)" />
+                <stop offset="20%" stopColor="rgba(200,215,230,0.15)" />
+                <stop offset="50%" stopColor="rgba(210,225,240,0.08)" />
+                <stop offset="80%" stopColor="rgba(200,215,230,0.15)" />
+                <stop offset="100%" stopColor="rgba(180,200,220,0.3)" />
+              </>
+            ) : (
+              <>
+                <stop offset="0%" stopColor="rgba(70,90,120,0.45)" />
+                <stop offset="20%" stopColor="rgba(90,110,140,0.25)" />
+                <stop offset="50%" stopColor="rgba(120,140,170,0.12)" />
+                <stop offset="80%" stopColor="rgba(90,110,140,0.25)" />
+                <stop offset="100%" stopColor="rgba(70,90,120,0.4)" />
+              </>
+            )}
           </linearGradient>
 
-          {/* Glass edge highlight */}
-          <linearGradient id="glassEdgeLeft" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.4)" />
+          {/* Glass rim gradient */}
+          <linearGradient id="rimGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+            {isDarkMode ? (
+              <>
+                <stop offset="0%" stopColor="rgba(150,170,200,0.6)" />
+                <stop offset="50%" stopColor="rgba(200,220,240,0.3)" />
+                <stop offset="100%" stopColor="rgba(150,170,200,0.5)" />
+              </>
+            ) : (
+              <>
+                <stop offset="0%" stopColor="rgba(60,80,110,0.7)" />
+                <stop offset="50%" stopColor="rgba(100,130,170,0.4)" />
+                <stop offset="100%" stopColor="rgba(60,80,110,0.6)" />
+              </>
+            )}
+          </linearGradient>
+
+          {/* Left glass highlight - reflection */}
+          <linearGradient id="glassHighlightLeft" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor={isDarkMode ? "rgba(255,255,255,0.5)" : "rgba(255,255,255,0.8)"} />
             <stop offset="100%" stopColor="rgba(255,255,255,0)" />
           </linearGradient>
 
-          <linearGradient id="glassEdgeRight" x1="100%" y1="0%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.25)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+          {/* Right glass shadow */}
+          <linearGradient id="glassShadowRight" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(0,0,0,0)" />
+            <stop offset="100%" stopColor={isDarkMode ? "rgba(0,0,0,0.15)" : "rgba(50,70,100,0.25)"} />
           </linearGradient>
 
-          {/* Glowing cyan liquid gradient */}
-          <linearGradient id="liquidGradient" x1="0%" y1="100%" x2="0%" y2="0%">
-            <stop offset="0%" stopColor="#0891b2" />
-            <stop offset="20%" stopColor="#06b6d4" />
-            <stop offset="50%" stopColor="#22d3ee" />
-            <stop offset="80%" stopColor="#67e8f9" />
-            <stop offset="100%" stopColor="#a5f3fc" />
+          {/* Serum/liquid gradient - bioluminescent cyan */}
+          <linearGradient id="serumGradient" x1="0%" y1="100%" x2="0%" y2="0%">
+            <stop offset="0%" stopColor="#0e7490" />
+            <stop offset="30%" stopColor="#0891b2" />
+            <stop offset="60%" stopColor="#06b6d4" />
+            <stop offset="85%" stopColor="#22d3ee" />
+            <stop offset="100%" stopColor="#67e8f9" />
           </linearGradient>
 
-          {/* Liquid glow */}
-          <radialGradient id="liquidGlow" cx="50%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#67e8f9" stopOpacity="0.9" />
-            <stop offset="50%" stopColor="#22d3ee" stopOpacity="0.6" />
-            <stop offset="100%" stopColor="#0891b2" stopOpacity="0.4" />
+          {/* Serum horizontal gradient for depth */}
+          <linearGradient id="serumDepth" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" stopColor="rgba(0,0,0,0.15)" />
+            <stop offset="30%" stopColor="rgba(255,255,255,0.1)" />
+            <stop offset="50%" stopColor="rgba(255,255,255,0.2)" />
+            <stop offset="70%" stopColor="rgba(255,255,255,0.1)" />
+            <stop offset="100%" stopColor="rgba(0,0,0,0.1)" />
+          </linearGradient>
+
+          {/* Meniscus gradient */}
+          <radialGradient id="meniscusGlow" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stopColor="#a5f3fc" stopOpacity="0.9" />
+            <stop offset="50%" stopColor="#22d3ee" stopOpacity="0.7" />
+            <stop offset="100%" stopColor="#06b6d4" stopOpacity="0.5" />
           </radialGradient>
 
-          {/* Liquid shine overlay */}
-          <linearGradient id="liquidShine" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0)" />
-            <stop offset="20%" stopColor="rgba(255,255,255,0.3)" />
-            <stop offset="35%" stopColor="rgba(255,255,255,0.1)" />
-            <stop offset="100%" stopColor="rgba(255,255,255,0)" />
-          </linearGradient>
-
-          {/* Cork/stopper gradient */}
-          <linearGradient id="corkGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#e8d5b7" />
-            <stop offset="20%" stopColor="#d4b896" />
-            <stop offset="50%" stopColor="#c4a67a" />
-            <stop offset="80%" stopColor="#a8895e" />
-            <stop offset="100%" stopColor="#8b7049" />
-          </linearGradient>
-
-          <linearGradient id="corkSide" x1="0%" y1="0%" x2="100%" y2="0%">
-            <stop offset="0%" stopColor="#a8895e" />
-            <stop offset="50%" stopColor="#c4a67a" />
-            <stop offset="100%" stopColor="#8b7049" />
-          </linearGradient>
-
-          {/* Glow filter for liquid */}
-          <filter id="liquidGlowFilter" x="-50%" y="-50%" width="200%" height="200%">
-            <feGaussianBlur stdDeviation="4" result="blur" />
+          {/* Glow filter */}
+          <filter id="serumGlow" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur" />
             <feComposite in="SourceGraphic" in2="blur" operator="over" />
           </filter>
 
-          {/* Strong glow for celebration */}
-          <filter id="strongGlow" x="-100%" y="-100%" width="300%" height="300%">
-            <feGaussianBlur stdDeviation="8" result="blur1" />
-            <feGaussianBlur stdDeviation="16" result="blur2" />
+          {/* Strong glow for milestones */}
+          <filter id="celebrationGlow" x="-100%" y="-100%" width="300%" height="300%">
+            <feGaussianBlur stdDeviation="6" result="blur1" />
+            <feGaussianBlur stdDeviation="12" result="blur2" />
             <feMerge>
               <feMergeNode in="blur2" />
               <feMergeNode in="blur1" />
@@ -151,190 +186,174 @@ const SerumTube = ({
             </feMerge>
           </filter>
 
-          {/* Clip path for liquid inside tube */}
-          <clipPath id="tubeInterior">
+          {/* Clip path for liquid */}
+          <clipPath id="tubeClip">
             <path d={`
-              M 35 ${tubeInnerTop}
-              L 35 320
-              Q 35 345 70 345
-              Q 105 345 105 320
-              L 105 ${tubeInnerTop}
+              M ${tubeInnerLeft} ${tubeTop + 15}
+              L ${tubeInnerLeft} ${roundedBottom - 20}
+              Q ${tubeInnerLeft} ${tubeBottom - 15} 60 ${tubeBottom - 15}
+              Q ${tubeInnerRight} ${tubeBottom - 15} ${tubeInnerRight} ${roundedBottom - 20}
+              L ${tubeInnerRight} ${tubeTop + 15}
               Z
             `} />
           </clipPath>
 
           {/* Bubble gradient */}
-          <radialGradient id="bubbleGrad" cx="30%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="rgba(255,255,255,0.9)" />
-            <stop offset="50%" stopColor="rgba(167,243,252,0.4)" />
-            <stop offset="100%" stopColor="rgba(34,211,238,0.1)" />
+          <radialGradient id="bubbleGradient" cx="30%" cy="30%" r="70%">
+            <stop offset="0%" stopColor="rgba(255,255,255,0.95)" />
+            <stop offset="40%" stopColor="rgba(165,243,252,0.5)" />
+            <stop offset="100%" stopColor="rgba(34,211,238,0.2)" />
           </radialGradient>
         </defs>
 
-        {/* Tube shadow on ground */}
+        {/* Tube stand/holder base */}
         <ellipse
-          cx="70"
-          cy="365"
-          rx="35"
-          ry="8"
-          fill="rgba(0,0,0,0.3)"
-          filter="url(#liquidGlowFilter)"
+          cx="60"
+          cy={tubeBottom + 5}
+          rx="25"
+          ry="6"
+          fill={isDarkMode ? "rgba(80,80,90,0.5)" : "rgba(100,110,130,0.4)"}
+        />
+        <rect
+          x="50"
+          y={tubeBottom - 10}
+          width="20"
+          height="15"
+          rx="2"
+          fill={isDarkMode ? "rgba(100,100,110,0.6)" : "rgba(80,90,110,0.5)"}
         />
 
-        {/* Cork/Stopper */}
-        <g className="cork">
-          {/* Cork body */}
-          <rect
-            x="42"
-            y="20"
-            width="56"
-            height="35"
-            rx="4"
-            fill="url(#corkGradient)"
-          />
-          {/* Cork bottom rim */}
-          <ellipse cx="70" cy="55" rx="28" ry="6" fill="#a8895e" />
-          <ellipse cx="70" cy="53" rx="26" ry="5" fill="#c4a67a" />
-          {/* Cork top */}
-          <ellipse cx="70" cy="20" rx="28" ry="6" fill="#d4b896" />
-          <ellipse cx="70" cy="18" rx="24" ry="4" fill="#e8d5b7" />
-          {/* Cork texture lines */}
-          {[0, 1, 2, 3].map(i => (
-            <line
-              key={i}
-              x1={50 + i * 12}
-              y1="25"
-              x2={50 + i * 12}
-              y2="50"
-              stroke="#8b7049"
-              strokeWidth="0.5"
-              opacity="0.3"
-            />
-          ))}
-        </g>
-
-        {/* Main glass tube */}
-        <g className="tube-glass">
-          {/* Tube neck */}
+        {/* Main glass tube body */}
+        <g className="tube-body">
+          {/* Outer glass wall */}
           <path
             d={`
-              M 40 55
-              L 40 65
-              L 30 75
-              L 30 320
-              Q 30 350 70 350
-              Q 110 350 110 320
-              L 110 75
-              L 100 65
-              L 100 55
+              M ${tubeOuterLeft} ${tubeTop}
+              L ${tubeOuterLeft} ${roundedBottom - 15}
+              Q ${tubeOuterLeft} ${tubeBottom} 60 ${tubeBottom}
+              Q ${tubeOuterRight} ${tubeBottom} ${tubeOuterRight} ${roundedBottom - 15}
+              L ${tubeOuterRight} ${tubeTop}
             `}
-            fill="url(#glassBody)"
-            stroke="rgba(255,255,255,0.2)"
-            strokeWidth="1"
+            fill="url(#labGlassGradient)"
+            stroke={isDarkMode ? "rgba(180,200,220,0.4)" : "rgba(70,90,120,0.5)"}
+            strokeWidth="1.5"
           />
 
-          {/* Inner glass effect */}
+          {/* Inner wall indication */}
           <path
             d={`
-              M 35 65
-              L 35 320
-              Q 35 345 70 345
-              Q 105 345 105 320
-              L 105 65
+              M ${tubeInnerLeft} ${tubeTop + 5}
+              L ${tubeInnerLeft} ${roundedBottom - 20}
+              Q ${tubeInnerLeft} ${tubeBottom - 15} 60 ${tubeBottom - 15}
+              Q ${tubeInnerRight} ${tubeBottom - 15} ${tubeInnerRight} ${roundedBottom - 20}
+              L ${tubeInnerRight} ${tubeTop + 5}
             `}
             fill="none"
-            stroke="rgba(255,255,255,0.1)"
+            stroke={isDarkMode ? "rgba(200,220,240,0.2)" : "rgba(100,130,170,0.25)"}
             strokeWidth="1"
+          />
+
+          {/* Flared rim at top */}
+          <path
+            d={`
+              M ${tubeOuterLeft - 3} ${tubeTop}
+              Q ${tubeOuterLeft - 5} ${tubeTop - 8} ${tubeOuterLeft} ${tubeTop - 12}
+              L ${tubeOuterRight} ${tubeTop - 12}
+              Q ${tubeOuterRight + 5} ${tubeTop - 8} ${tubeOuterRight + 3} ${tubeTop}
+              Z
+            `}
+            fill="url(#rimGradient)"
+            stroke={isDarkMode ? "rgba(180,200,220,0.5)" : "rgba(70,90,120,0.6)"}
+            strokeWidth="1"
+          />
+
+          {/* Rim top edge */}
+          <ellipse
+            cx="60"
+            cy={tubeTop - 12}
+            rx="28"
+            ry="4"
+            fill="none"
+            stroke={isDarkMode ? "rgba(200,220,240,0.6)" : "rgba(90,110,140,0.7)"}
+            strokeWidth="1.5"
           />
         </g>
 
-        {/* Liquid inside tube */}
-        <g clipPath="url(#tubeInterior)">
-          {/* Main liquid body with glow */}
-          <g filter={showCelebration || glowIntensity > 0 ? "url(#strongGlow)" : undefined}>
+        {/* Liquid/Serum inside tube */}
+        <g clipPath="url(#tubeClip)">
+          {/* Main liquid body */}
+          <g filter={showCelebration || glowIntensity > 0 ? "url(#celebrationGlow)" : "url(#serumGlow)"}>
             <rect
-              x="35"
+              x={tubeInnerLeft}
               y={liquidTop}
-              width="70"
-              height={liquidHeight + 30}
-              fill="url(#liquidGradient)"
+              width={tubeInnerRight - tubeInnerLeft}
+              height={liquidHeight + 40}
+              fill="url(#serumGradient)"
+              style={{
+                transition: 'y 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
+              }}
+            />
+            {/* Depth overlay */}
+            <rect
+              x={tubeInnerLeft}
+              y={liquidTop}
+              width={tubeInnerRight - tubeInnerLeft}
+              height={liquidHeight + 40}
+              fill="url(#serumDepth)"
               style={{
                 transition: 'y 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
               }}
             />
           </g>
 
-          {/* Liquid surface meniscus */}
+          {/* Meniscus - curved liquid surface */}
           {fillPercentage > 0 && (
             <ellipse
-              cx="70"
+              cx="60"
               cy={liquidTop}
-              rx="34"
-              ry="8"
-              fill="url(#liquidGlow)"
+              rx="19"
+              ry="6"
+              fill="url(#meniscusGlow)"
               style={{
                 transition: 'cy 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
               }}
             >
               <animate
                 attributeName="ry"
-                values="8;10;8"
-                dur="3s"
+                values="6;8;6"
+                dur="2.5s"
                 repeatCount="indefinite"
               />
             </ellipse>
           )}
 
-          {/* Liquid shine/reflection */}
-          {fillPercentage > 0 && (
-            <rect
-              x="40"
-              y={liquidTop + 5}
-              width="15"
-              height={liquidHeight - 10}
-              fill="url(#liquidShine)"
-              opacity="0.6"
-              style={{
-                transition: 'y 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)'
-              }}
-            />
-          )}
-
           {/* Animated bubbles when filling */}
           {showBubbles && (
             <g className="rising-bubbles">
-              {[...Array(12)].map((_, i) => {
-                const bubbleX = 45 + Math.random() * 50;
-                const bubbleSize = 3 + Math.random() * 6;
-                const delay = i * 0.08;
-                const duration = 0.8 + Math.random() * 0.4;
+              {[...Array(10)].map((_, i) => {
+                const bubbleX = tubeInnerLeft + 5 + Math.random() * (tubeInnerRight - tubeInnerLeft - 10);
+                const bubbleSize = 2 + Math.random() * 4;
+                const delay = i * 0.1;
+                const duration = 0.7 + Math.random() * 0.4;
                 return (
                   <circle
                     key={i}
                     cx={bubbleX}
-                    cy={tubeInnerBottom - 10}
+                    cy={roundedBottom - 20}
                     r={bubbleSize}
-                    fill="url(#bubbleGrad)"
+                    fill="url(#bubbleGradient)"
                   >
                     <animate
                       attributeName="cy"
-                      from={tubeInnerBottom - 10}
-                      to={liquidTop - 20}
-                      dur={`${duration}s`}
-                      begin={`${delay}s`}
-                      fill="freeze"
-                    />
-                    <animate
-                      attributeName="r"
-                      from={bubbleSize}
-                      to={bubbleSize * 0.5}
+                      from={roundedBottom - 20}
+                      to={liquidTop - 10}
                       dur={`${duration}s`}
                       begin={`${delay}s`}
                       fill="freeze"
                     />
                     <animate
                       attributeName="opacity"
-                      from="0.8"
+                      from="0.9"
                       to="0"
                       dur={`${duration}s`}
                       begin={`${delay}s`}
@@ -346,31 +365,25 @@ const SerumTube = ({
             </g>
           )}
 
-          {/* Ambient bubbles in liquid */}
-          {fillPercentage > 15 && (
+          {/* Ambient bubbles */}
+          {fillPercentage > 20 && (
             <g className="ambient-bubbles">
-              {[...Array(6)].map((_, i) => {
-                const baseX = 45 + (i * 10);
-                const baseY = liquidTop + liquidHeight * 0.3 + (i * 15);
-                const size = 2 + (i % 3);
+              {[...Array(4)].map((_, i) => {
+                const baseX = tubeInnerLeft + 8 + (i * 8);
+                const baseY = liquidTop + liquidHeight * 0.4 + (i * 20);
+                const size = 1.5 + (i % 2);
                 return (
                   <circle
                     key={i}
                     cx={baseX}
                     r={size}
-                    fill="url(#bubbleGrad)"
-                    opacity="0.6"
+                    fill="url(#bubbleGradient)"
+                    opacity="0.7"
                   >
                     <animate
                       attributeName="cy"
-                      values={`${baseY};${baseY - 30};${baseY}`}
-                      dur={`${2.5 + i * 0.3}s`}
-                      repeatCount="indefinite"
-                    />
-                    <animate
-                      attributeName="opacity"
-                      values="0.6;0.9;0.6"
-                      dur={`${2.5 + i * 0.3}s`}
+                      values={`${baseY};${baseY - 25};${baseY}`}
+                      dur={`${2 + i * 0.4}s`}
                       repeatCount="indefinite"
                     />
                   </circle>
@@ -381,79 +394,75 @@ const SerumTube = ({
         </g>
 
         {/* Glass reflections/highlights */}
-        <g className="glass-reflections">
-          {/* Main left highlight */}
+        <g className="glass-highlights">
+          {/* Main left highlight streak */}
           <path
             d={`
-              M 33 80
-              L 33 300
-              Q 34 310 38 310
-              L 38 80
+              M ${tubeOuterLeft + 2} ${tubeTop + 10}
+              L ${tubeOuterLeft + 2} ${roundedBottom - 30}
+              Q ${tubeOuterLeft + 3} ${roundedBottom - 20} ${tubeOuterLeft + 6} ${roundedBottom - 15}
+              L ${tubeOuterLeft + 8} ${roundedBottom - 15}
+              Q ${tubeOuterLeft + 5} ${roundedBottom - 20} ${tubeOuterLeft + 5} ${roundedBottom - 30}
+              L ${tubeOuterLeft + 5} ${tubeTop + 10}
               Z
             `}
-            fill="url(#glassEdgeLeft)"
+            fill="url(#glassHighlightLeft)"
           />
 
-          {/* Secondary highlight */}
-          <path
-            d={`
-              M 42 90
-              Q 44 200 42 280
-              L 44 280
-              Q 46 200 44 90
-              Z
-            `}
-            fill="rgba(255,255,255,0.15)"
-          />
-
-          {/* Right subtle edge */}
-          <path
-            d={`
-              M 107 80
-              L 107 300
-              Q 106 310 102 310
-              L 102 80
-              Z
-            `}
-            fill="url(#glassEdgeRight)"
-            opacity="0.5"
-          />
-
-          {/* Top rim highlight */}
-          <ellipse
-            cx="70"
-            cy="65"
-            rx="32"
-            ry="4"
-            fill="none"
-            stroke="rgba(255,255,255,0.3)"
+          {/* Secondary thin highlight */}
+          <line
+            x1={tubeOuterLeft + 8}
+            y1={tubeTop + 20}
+            x2={tubeOuterLeft + 8}
+            y2={roundedBottom - 40}
+            stroke={isDarkMode ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.45)"}
             strokeWidth="1"
+          />
+
+          {/* Right shadow edge */}
+          <path
+            d={`
+              M ${tubeOuterRight - 2} ${tubeTop + 10}
+              L ${tubeOuterRight - 2} ${roundedBottom - 30}
+              Q ${tubeOuterRight - 3} ${roundedBottom - 20} ${tubeOuterRight - 6} ${roundedBottom - 15}
+              L ${tubeOuterRight - 8} ${roundedBottom - 15}
+              Q ${tubeOuterRight - 5} ${roundedBottom - 20} ${tubeOuterRight - 5} ${roundedBottom - 30}
+              L ${tubeOuterRight - 5} ${tubeTop + 10}
+              Z
+            `}
+            fill="url(#glassShadowRight)"
           />
         </g>
 
-        {/* Measurement marks */}
-        <g className="measurements" opacity="0.4">
-          {[25, 50, 75, 100].map((mark, i) => {
-            const y = tubeInnerBottom - (mark / 100) * liquidMaxHeight;
+        {/* Measurement graduations - etched into glass */}
+        <g className="graduations" opacity={isDarkMode ? "0.5" : "0.8"}>
+          {[20, 40, 60, 80, 100].map((mark, i) => {
+            const y = roundedBottom - 20 - ((mark / 100) * liquidMaxHeight);
+            const isMain = mark % 50 === 0;
             return (
               <g key={i}>
+                {/* Graduation line */}
                 <line
-                  x1="108"
+                  x1={tubeOuterRight + 2}
                   y1={y}
-                  x2="118"
+                  x2={tubeOuterRight + (isMain ? 12 : 8)}
                   y2={y}
-                  stroke="rgba(255,255,255,0.5)"
-                  strokeWidth="1.5"
+                  stroke={isDarkMode ? "rgba(180,200,220,0.6)" : "rgba(60,80,110,0.7)"}
+                  strokeWidth={isMain ? "1.5" : "1"}
                 />
-                <text
-                  x="122"
-                  y={y + 4}
-                  fill="rgba(255,255,255,0.4)"
-                  fontSize="11"
-                  fontFamily="system-ui"
-                >
-                  {mark}%
-                </text>
+                {/* Label for main marks */}
+                {isMain && (
+                  <text
+                    x={tubeOuterRight + 15}
+                    y={y + 4}
+                    fill={isDarkMode ? "rgba(180,200,220,0.7)" : "rgba(60,80,110,0.85)"}
+                    fontSize="10"
+                    fontFamily="system-ui, -apple-system, sans-serif"
+                    fontWeight="500"
+                  >
+                    {mark === 100 ? 'mL' : mark}
+                  </text>
+                )}
               </g>
             );
           })}
@@ -462,118 +471,47 @@ const SerumTube = ({
         {/* Celebration particles */}
         {showCelebration && (
           <g className="celebration">
-            {[...Array(16)].map((_, i) => {
-              const angle = (i / 16) * Math.PI * 2;
-              const distance = 70 + Math.random() * 40;
-              const endX = 70 + Math.cos(angle) * distance;
-              const endY = 180 + Math.sin(angle) * distance;
-              const colors = ['#22d3ee', '#a855f7', '#f472b6', '#67e8f9', '#c084fc', '#34d399'];
-              const size = 4 + Math.random() * 4;
+            {[...Array(12)].map((_, i) => {
+              const angle = (i / 12) * Math.PI * 2;
+              const distance = 50 + Math.random() * 30;
+              const endX = 60 + Math.cos(angle) * distance;
+              const endY = 200 + Math.sin(angle) * distance;
+              const colors = ['#22d3ee', '#a855f7', '#f472b6', '#67e8f9', '#c084fc'];
+              const size = 3 + Math.random() * 3;
               return (
                 <circle
                   key={i}
-                  cx="70"
-                  cy="180"
+                  cx="60"
+                  cy="200"
                   r={size}
                   fill={colors[i % colors.length]}
                 >
-                  <animate
-                    attributeName="cx"
-                    from="70"
-                    to={endX}
-                    dur="0.8s"
-                    fill="freeze"
-                    begin="0s"
-                  />
-                  <animate
-                    attributeName="cy"
-                    from="180"
-                    to={endY}
-                    dur="0.8s"
-                    fill="freeze"
-                    begin="0s"
-                  />
-                  <animate
-                    attributeName="opacity"
-                    from="1"
-                    to="0"
-                    dur="0.8s"
-                    fill="freeze"
-                    begin="0s"
-                  />
+                  <animate attributeName="cx" from="60" to={endX} dur="0.8s" fill="freeze" />
+                  <animate attributeName="cy" from="200" to={endY} dur="0.8s" fill="freeze" />
+                  <animate attributeName="opacity" from="1" to="0" dur="0.8s" fill="freeze" />
                 </circle>
-              );
-            })}
-            {/* Sparkle stars */}
-            {[...Array(8)].map((_, i) => {
-              const angle = (i / 8) * Math.PI * 2 + Math.PI / 8;
-              const distance = 50 + Math.random() * 30;
-              const endX = 70 + Math.cos(angle) * distance;
-              const endY = 180 + Math.sin(angle) * distance;
-              return (
-                <text
-                  key={`star-${i}`}
-                  x="70"
-                  y="180"
-                  fontSize="14"
-                  fill="#fcd34d"
-                  textAnchor="middle"
-                >
-                  ✦
-                  <animate
-                    attributeName="x"
-                    from="70"
-                    to={endX}
-                    dur="0.7s"
-                    fill="freeze"
-                  />
-                  <animate
-                    attributeName="y"
-                    from="180"
-                    to={endY}
-                    dur="0.7s"
-                    fill="freeze"
-                  />
-                  <animate
-                    attributeName="opacity"
-                    from="1"
-                    to="0"
-                    dur="0.7s"
-                    fill="freeze"
-                  />
-                  <animateTransform
-                    attributeName="transform"
-                    type="rotate"
-                    from="0 70 180"
-                    to="180 70 180"
-                    dur="0.7s"
-                    fill="freeze"
-                  />
-                </text>
               );
             })}
           </g>
         )}
 
-        {/* Ambient glow when liquid is present */}
+        {/* Ambient glow around liquid */}
         {fillPercentage > 0 && (
           <ellipse
-            cx="70"
+            cx="60"
             cy={liquidTop + liquidHeight / 2}
-            rx="50"
-            ry={liquidHeight / 2 + 20}
+            rx="30"
+            ry={liquidHeight / 2 + 15}
             fill="none"
             stroke="#22d3ee"
             strokeWidth="1"
-            opacity={0.15 + (fillPercentage / 100) * 0.2}
-            filter="url(#liquidGlowFilter)"
-            style={{
-              transition: 'all 0.8s ease'
-            }}
+            opacity={isDarkMode ? (0.2 + (fillPercentage / 100) * 0.2) : (0.1 + (fillPercentage / 100) * 0.15)}
+            filter="url(#serumGlow)"
+            style={{ transition: 'all 0.8s ease' }}
           >
             <animate
               attributeName="opacity"
-              values={`${0.15 + (fillPercentage / 100) * 0.2};${0.25 + (fillPercentage / 100) * 0.2};${0.15 + (fillPercentage / 100) * 0.2}`}
+              values={`${0.15 + (fillPercentage / 100) * 0.15};${0.25 + (fillPercentage / 100) * 0.15};${0.15 + (fillPercentage / 100) * 0.15}`}
               dur="3s"
               repeatCount="indefinite"
             />

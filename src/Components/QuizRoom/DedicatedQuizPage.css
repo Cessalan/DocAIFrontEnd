@@ -40,18 +40,26 @@
 }
 
 /* ============================================
-   FLOATING BACK BUTTON
+   FLOATING CONTROLS (Back Button + Theme Toggle)
    ============================================ */
 
-.quiz-back-button {
+.quiz-floating-controls {
   position: fixed;
   top: 20px;
   left: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 100;
+}
+
+.quiz-back-button {
   width: 42px;
   height: 42px;
   border-radius: 12px;
   background: rgba(30, 30, 38, 0.6);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.7);
   cursor: pointer;
@@ -59,7 +67,6 @@
   align-items: center;
   justify-content: center;
   transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  z-index: 100;
 }
 
 .quiz-back-button svg {
@@ -81,6 +88,17 @@
 
 .quiz-back-button:active {
   transform: scale(0.95);
+}
+
+/* Theme toggle button styling for quiz page context */
+.quiz-floating-controls .theme-toggle-btn {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(30, 30, 38, 0.6);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 /* ============================================
@@ -436,44 +454,103 @@
 }
 
 /* ============================================
-   FEEDBACK
+   FEEDBACK - Premium Card Design
    ============================================ */
 
 .quiz-feedback {
-  margin-top: 12px;
-  padding: 12px 14px;
-  border-radius: 10px;
-  animation: feedbackSlideIn 0.4s ease-out;
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  animation: feedbackSlideIn 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid transparent;
 }
 
 @keyframes feedbackSlideIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(12px) scale(0.98);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
 .quiz-feedback.correct {
-  background: rgba(16, 185, 129, 0.1);
-  border-left: 4px solid #34d399;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08));
+  border-color: rgba(16, 185, 129, 0.25);
+  box-shadow:
+    0 4px 20px rgba(16, 185, 129, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .quiz-feedback.incorrect {
-  background: rgba(239, 68, 68, 0.1);
-  border-left: 4px solid #f87171;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(249, 115, 22, 0.06));
+  border-color: rgba(239, 68, 68, 0.2);
+  box-shadow:
+    0 4px 20px rgba(239, 68, 68, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
-.feedback-header {
-  margin-bottom: 6px;
+.feedback-icon-wrapper {
+  flex-shrink: 0;
+}
+
+.feedback-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: iconPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) 0.1s both;
+}
+
+@keyframes iconPop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.feedback-icon.correct {
+  background: linear-gradient(135deg, #10b981, #06b6d4);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.35);
+}
+
+.feedback-icon.incorrect {
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
+}
+
+.feedback-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: white;
+  stroke-width: 3;
+  fill: none;
+}
+
+.feedback-content {
+  flex: 1;
+  min-width: 0;
 }
 
 .feedback-status {
-  font-size: 13px;
+  display: block;
+  font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.02em;
+  margin-bottom: 6px;
 }
 
 .feedback-status.correct {
@@ -485,9 +562,11 @@
 }
 
 .feedback-explanation {
-  font-size: 12px;
-  line-height: 1.5;
-  color: rgba(255, 255, 255, 0.8);
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0;
+  font-weight: 400;
 }
 
 /* ============================================
@@ -1215,6 +1294,298 @@
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.3);
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* ============================================
+   LIGHT MODE THEME - Premium Hospital Aesthetic
+   ============================================ */
+
+.dedicated-quiz-page.light-theme {
+  color: #1a1a2e;
+}
+
+/* Floating Controls - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-back-button,
+.dedicated-quiz-page.light-theme .quiz-theme-toggle {
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
+.dedicated-quiz-page.light-theme .quiz-back-button {
+  color: rgba(60, 60, 80, 0.8);
+}
+
+.dedicated-quiz-page.light-theme .quiz-back-button:hover,
+.dedicated-quiz-page.light-theme .quiz-theme-toggle:hover {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+.dedicated-quiz-page.light-theme .quiz-back-button:hover {
+  color: #6d28d9;
+}
+
+/* Quiz Card Header - Light Mode */
+.dedicated-quiz-page.light-theme .question-counter {
+  color: #1a1a2e;
+}
+
+.dedicated-quiz-page.light-theme .topic-badge {
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+}
+
+.dedicated-quiz-page.light-theme .topic-dot {
+  color: #7c3aed;
+}
+
+.dedicated-quiz-page.light-theme .topic-text {
+  color: #6d28d9;
+}
+
+.dedicated-quiz-page.light-theme .quiz-title {
+  color: rgba(60, 70, 90, 0.6);
+}
+
+/* Quiz Card - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-card,
+.dedicated-quiz-page.light-theme .quiz-card.glassmorphic {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(139, 92, 246, 0.12);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+}
+
+/* Question Text - Light Mode */
+.dedicated-quiz-page.light-theme .question-text {
+  color: #1a1a2e;
+}
+
+/* Quiz Options - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-option {
+  background: rgba(248, 250, 255, 0.9);
+  border: 1.5px solid rgba(139, 92, 246, 0.12);
+}
+
+.dedicated-quiz-page.light-theme .quiz-option::before {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.08), transparent);
+}
+
+.dedicated-quiz-page.light-theme .quiz-option:hover:not(.disabled) {
+  border-color: rgba(139, 92, 246, 0.4);
+  background: rgba(139, 92, 246, 0.06);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.12);
+}
+
+.dedicated-quiz-page.light-theme .option-letter {
+  background: rgba(139, 92, 246, 0.1);
+  color: #6d28d9;
+}
+
+.dedicated-quiz-page.light-theme .quiz-option:hover:not(.disabled) .option-letter {
+  background: rgba(139, 92, 246, 0.25);
+  color: #5b21b6;
+}
+
+.dedicated-quiz-page.light-theme .option-letter.selected {
+  background: rgba(139, 92, 246, 0.4);
+  color: #ffffff;
+}
+
+.dedicated-quiz-page.light-theme .option-text {
+  color: #2d2d44;
+}
+
+/* Correct Option - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-option.correct {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+}
+
+.dedicated-quiz-page.light-theme .quiz-option.correct .option-text {
+  color: #047857;
+}
+
+/* Incorrect Option - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-option.incorrect {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: #ef4444;
+}
+
+.dedicated-quiz-page.light-theme .quiz-option.incorrect .option-text {
+  color: #b91c1c;
+}
+
+/* Disabled Option - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-option.disabled {
+  opacity: 0.6;
+}
+
+/* Feedback - Light Mode */
+.dedicated-quiz-page.light-theme .quiz-feedback {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.dedicated-quiz-page.light-theme .quiz-feedback.correct {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(6, 182, 212, 0.06));
+  border-color: rgba(16, 185, 129, 0.3);
+  box-shadow:
+    0 4px 20px rgba(16, 185, 129, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.dedicated-quiz-page.light-theme .quiz-feedback.incorrect {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.08), rgba(249, 115, 22, 0.04));
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow:
+    0 4px 20px rgba(239, 68, 68, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+.dedicated-quiz-page.light-theme .feedback-status.correct {
+  color: #059669;
+}
+
+.dedicated-quiz-page.light-theme .feedback-status.incorrect {
+  color: #dc2626;
+}
+
+.dedicated-quiz-page.light-theme .feedback-explanation {
+  color: #4b5563;
+}
+
+/* Next Button - Light Mode */
+.dedicated-quiz-page.light-theme .next-button {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
+}
+
+.dedicated-quiz-page.light-theme .next-button:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+}
+
+/* Progress Hint - Light Mode */
+.dedicated-quiz-page.light-theme .progress-hint {
+  color: rgba(60, 70, 90, 0.6);
+}
+
+/* Serum Tube Score - Light Mode */
+.dedicated-quiz-page.light-theme .score-correct {
+  color: #0891b2;
+  text-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+}
+
+.dedicated-quiz-page.light-theme .score-divider {
+  color: rgba(60, 70, 90, 0.4);
+}
+
+.dedicated-quiz-page.light-theme .score-total {
+  color: rgba(60, 70, 90, 0.5);
+}
+
+/* Results Page - Light Mode */
+.dedicated-quiz-page.light-theme.results-page .cinematic-results {
+  color: #1a1a2e;
+}
+
+.dedicated-quiz-page.light-theme .delivery-label {
+  color: rgba(6, 182, 212, 0.9);
+}
+
+.dedicated-quiz-page.light-theme .message-text {
+  color: rgba(45, 55, 75, 0.8);
+}
+
+.dedicated-quiz-page.light-theme .message-quote {
+  color: #1a1a2e;
+  text-shadow: 0 0 30px rgba(139, 92, 246, 0.3);
+}
+
+.dedicated-quiz-page.light-theme .final-message {
+  color: #1a1a2e;
+}
+
+.dedicated-quiz-page.light-theme .stat-value {
+  background: linear-gradient(135deg, #0891b2, #7c3aed);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.dedicated-quiz-page.light-theme .stat-label {
+  color: rgba(60, 70, 90, 0.6);
+}
+
+/* Results Actions - Light Mode */
+.dedicated-quiz-page.light-theme .retry-btn {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  color: white;
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.25);
+}
+
+.dedicated-quiz-page.light-theme .retry-btn:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+}
+
+.dedicated-quiz-page.light-theme .back-btn {
+  background: rgba(255, 255, 255, 0.8);
+  color: #4b5563;
+  border: 1.5px solid rgba(139, 92, 246, 0.2);
+}
+
+.dedicated-quiz-page.light-theme .back-btn:hover {
+  background: rgba(139, 92, 246, 0.08);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #6d28d9;
+}
+
+/* Cinematic Results - Light Mode */
+.dedicated-quiz-page.light-theme .cinematic-results .retry-btn {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.15));
+  border: 1px solid rgba(6, 182, 212, 0.3);
+  color: #0891b2;
+}
+
+.dedicated-quiz-page.light-theme .cinematic-results .retry-btn:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(139, 92, 246, 0.25));
+  box-shadow: 0 4px 20px rgba(6, 182, 212, 0.15);
+}
+
+.dedicated-quiz-page.light-theme .cinematic-results .back-btn {
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(60, 70, 90, 0.15);
+  color: rgba(60, 70, 90, 0.7);
+}
+
+.dedicated-quiz-page.light-theme .cinematic-results .back-btn:hover {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(60, 70, 90, 0.25);
+  color: rgba(60, 70, 90, 0.9);
+}
+
+/* Scrollbar - Light Mode */
+.dedicated-quiz-page.light-theme::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.dedicated-quiz-page.light-theme::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.3), rgba(6, 182, 212, 0.2));
+}
+
+.dedicated-quiz-page.light-theme::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(139, 92, 246, 0.5), rgba(6, 182, 212, 0.4));
+}
+
+/* Tube Container Border - Light Mode */
+.dedicated-quiz-page.light-theme .tube-container {
+  border-top-color: rgba(139, 92, 246, 0.1);
 }
 
 /* ============================================

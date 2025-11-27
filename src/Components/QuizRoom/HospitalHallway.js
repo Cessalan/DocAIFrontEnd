@@ -2,12 +2,14 @@ import React, { useMemo } from 'react';
 import './HospitalHallway.css';
 
 /**
- * HospitalHallway - Premium hospital corridor visualization
- * Clean, modern medical facility aesthetic with smooth animations
+ * HospitalHallway - Premium HD hospital corridor visualization
+ * Features dark/light mode support matching QuizRoomLanding theme
+ * High-end hospital aesthetic with smooth animations
  */
 function HospitalHallway({ progress = 0, isComplete = false }) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
+  // Calculate current stage for lighting effects
   const stage = useMemo(() => {
     if (isComplete) return 5;
     if (clampedProgress >= 80) return 4;
@@ -17,23 +19,26 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
     return 0;
   }, [clampedProgress, isComplete]);
 
-  // Room numbers for the doors
+  // Room numbers for the doors - odd numbers like real hospitals
   const rooms = ['201', '203', '205', '207', '209', '211', '213', '215', '217'];
 
   return (
     <div className={`hospital-corridor stage-${stage}`}>
-      {/* Ambient light overlay */}
+      {/* Ambient lighting overlay */}
       <div className="ambient-light" />
 
-      {/* Scrolling container */}
+      {/* Pulsing ambient glow */}
+      <div className="ambient-glow" />
+
+      {/* Scrolling corridor container */}
       <div
         className="corridor-track"
         style={{ '--progress': clampedProgress }}
       >
-        {/* Ceiling */}
+        {/* Ceiling with recessed lighting */}
         <div className="corridor-ceiling">
           <div className="ceiling-panels">
-            {[...Array(12)].map((_, i) => (
+            {[...Array(14)].map((_, i) => (
               <div key={i} className="ceiling-panel">
                 <div className={`ceiling-light ${stage >= 1 ? 'on' : ''}`}>
                   <div className="light-tube" />
@@ -45,64 +50,108 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
           </div>
         </div>
 
-        {/* Main wall */}
+        {/* Main wall section */}
         <div className="corridor-wall">
           {/* Upper wall section */}
           <div className="wall-upper" />
 
-          {/* Accent stripe */}
+          {/* Glass accent stripe */}
           <div className="wall-accent" />
 
           {/* Lower wall section */}
           <div className="wall-lower" />
 
-          {/* Handrail */}
+          {/* Metal handrail */}
           <div className="handrail">
             <div className="handrail-bar" />
-            {[...Array(20)].map((_, i) => (
-              <div key={i} className="handrail-bracket" style={{ left: `${i * 5}%` }} />
+            {[...Array(24)].map((_, i) => (
+              <div
+                key={i}
+                className="handrail-bracket"
+                style={{ left: `${i * 4.2}%` }}
+              />
             ))}
           </div>
 
-          {/* Doors */}
+          {/* Premium Hospital Doors */}
           {rooms.map((roomNum, index) => (
             <div
               key={roomNum}
-              className={`corridor-door ${roomNum === '217' ? 'destination' : ''} ${roomNum === '217' && stage >= 4 ? 'approaching' : ''} ${roomNum === '217' && isComplete ? 'arrived' : ''}`}
-              style={{ left: `${8 + index * 10}%` }}
+              className={`corridor-door ${
+                roomNum === '217' ? 'destination' : ''
+              } ${
+                roomNum === '217' && stage >= 4 ? 'approaching' : ''
+              } ${
+                roomNum === '217' && isComplete ? 'arrived' : ''
+              }`}
+              style={{ left: `${7 + index * 10}%` }}
             >
-              {/* Door frame */}
+              {/* Premium door frame with molding */}
               <div className="door-frame">
-                {/* Door surface */}
+                {/* Frame top cap */}
+                <div className="frame-cap" />
+
+                {/* Frame left pillar */}
+                <div className="frame-pillar left" />
+
+                {/* Frame right pillar */}
+                <div className="frame-pillar right" />
+
+                {/* Main door surface */}
                 <div className="door-surface">
-                  {/* Door panels */}
-                  <div className="door-panel-top" />
-                  <div className="door-panel-bottom" />
-
-                  {/* Window */}
-                  <div className="door-window">
-                    <div className="window-reflection" />
+                  {/* Vision panel (window) with wire glass */}
+                  <div className="door-vision-panel">
+                    <div className="vision-glass">
+                      <div className="wire-pattern" />
+                      <div className="glass-reflection" />
+                      <div className="glass-inner-glow" />
+                    </div>
+                    <div className="vision-frame" />
                   </div>
 
-                  {/* Handle assembly */}
-                  <div className="handle-plate">
-                    <div className="door-handle" />
+                  {/* Push plate */}
+                  <div className="door-push-plate">
+                    <div className="push-plate-texture" />
                   </div>
+
+                  {/* Premium lever handle */}
+                  <div className="door-handle-assembly">
+                    <div className="handle-escutcheon">
+                      <div className="handle-keyhole" />
+                    </div>
+                    <div className="handle-lever">
+                      <div className="lever-grip" />
+                    </div>
+                  </div>
+
+                  {/* Door edge detail */}
+                  <div className="door-edge" />
+
+                  {/* Subtle door seam */}
+                  <div className="door-seam" />
                 </div>
 
-                {/* Room number */}
-                <div className="room-plate">
-                  <span>{roomNum}</span>
+                {/* Digital room number display */}
+                <div className="room-number-display">
+                  <div className="display-screen">
+                    <span className="room-number">{roomNum}</span>
+                  </div>
+                  <div className="display-indicator" />
+                </div>
+
+                {/* Door status light */}
+                <div className="door-status-light">
+                  <div className="status-led" />
                 </div>
               </div>
 
-              {/* Glow effect for 217 */}
+              {/* Glow effect for destination room 217 */}
               {roomNum === '217' && <div className="door-glow" />}
             </div>
           ))}
         </div>
 
-        {/* Floor */}
+        {/* Floor section */}
         <div className="corridor-floor">
           <div className="floor-surface" />
           <div className="floor-reflection" />
@@ -110,24 +159,11 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
         </div>
       </div>
 
-      {/* Serum presence indicator */}
+      {/* Serum presence indicator glow */}
       <div className="serum-presence" />
 
-      {/* Vignette */}
+      {/* Cinematic vignette overlay */}
       <div className="corridor-vignette" />
-
-      {/* Progress indicator */}
-      <div className="corridor-progress">
-        <div className="progress-bar">
-          <div
-            className="progress-fill"
-            style={{ transform: `scaleX(${clampedProgress / 100})` }}
-          />
-        </div>
-        <span className="progress-label">
-          {isComplete ? 'Room 217' : `${Math.round(clampedProgress)}%`}
-        </span>
-      </div>
     </div>
   );
 }
