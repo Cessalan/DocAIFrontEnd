@@ -128,6 +128,7 @@ function DedicatedQuizPage() {
   // Cinematic state
   const [showPatientMessage, setShowPatientMessage] = useState(false);
   const [messagePhase, setMessagePhase] = useState(0);
+  const [cinematicPhase, setCinematicPhase] = useState(0); // 0: initial, 1: serum moving, 2: delivered, 3: light spills, 4: black screen, 5: final message
 
   // Serum tube state
   const [isAnimating, setIsAnimating] = useState(false);
@@ -203,16 +204,31 @@ function DedicatedQuizPage() {
       setRevealed(false);
       setShowFeedback(false);
     } else {
-      // Quiz complete - trigger cinematic ending
+      // Quiz complete - trigger cinematic ending sequence
       setQuizComplete(true);
-      // Start the patient message sequence after a delay
+
+      // Cinematic sequence timeline:
+      // Phase 1: Serum glides toward door (2s delay, then animation)
+      setTimeout(() => setCinematicPhase(1), 1000);
+
+      // Phase 2: Serum delivered - enters door
+      setTimeout(() => setCinematicPhase(2), 3500);
+
+      // Phase 3: Light spills out from door
+      setTimeout(() => setCinematicPhase(3), 5000);
+
+      // Phase 4: Fade to black
+      setTimeout(() => setCinematicPhase(4), 6500);
+
+      // Phase 5: Final message appears
       setTimeout(() => {
+        setCinematicPhase(5);
         setShowPatientMessage(true);
         // Progress through message phases
-        setTimeout(() => setMessagePhase(1), 2000);
-        setTimeout(() => setMessagePhase(2), 4000);
-        setTimeout(() => setMessagePhase(3), 6000);
-      }, 2000);
+        setTimeout(() => setMessagePhase(1), 1500);
+        setTimeout(() => setMessagePhase(2), 3000);
+        setTimeout(() => setMessagePhase(3), 4500);
+      }, 8000);
     }
   }, [currentQuestionIndex, totalQuestions]);
 
@@ -226,6 +242,7 @@ function DedicatedQuizPage() {
     setQuizComplete(false);
     setShowPatientMessage(false);
     setMessagePhase(0);
+    setCinematicPhase(0);
   }, []);
 
   // Handle back navigation
@@ -236,35 +253,52 @@ function DedicatedQuizPage() {
   // Render cinematic results screen
   if (quizComplete) {
     return (
-      <div className={`dedicated-quiz-page results-page cinematic ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
+      <div className={`dedicated-quiz-page results-page cinematic phase-${cinematicPhase} ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
         {/* Hospital hallway background at final stage - always 100% since we reached the room */}
         <HospitalHallway progress={100} isComplete={true} />
 
-        {/* Floating controls */}
-        <div className="quiz-floating-controls">
-          <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
-            <BackArrowIcon />
-          </button>
-          <ThemeToggle />
-        </div>
+        {/* Floating controls - hidden during early cinematic phases */}
+        {cinematicPhase >= 5 && (
+          <div className="quiz-floating-controls">
+            <button className="quiz-back-button" onClick={handleBack} aria-label="Go back">
+              <BackArrowIcon />
+            </button>
+            <ThemeToggle />
+          </div>
+        )}
+
+        {/* Black overlay for fade to black effect */}
+        <div className={`cinematic-black-overlay ${cinematicPhase >= 4 ? 'visible' : ''}`} />
+
+        {/* Light spill effect from door */}
+        <div className={`door-light-spill ${cinematicPhase >= 3 ? 'visible' : ''}`} />
 
         {/* Cinematic overlay content */}
         <div className="cinematic-results">
-          {/* Serum delivery animation */}
-          <div className={`serum-delivery ${showPatientMessage ? 'delivered' : ''}`}>
-            <SerumTube
-              correctCount={correctCount}
-              totalQuestions={totalQuestions}
-              size={160}
-            />
-            <div className="delivery-label">
-              {correctCount > 0 ? `${correctCount} doses delivered` : 'No serum collected'}
+          {/* Serum delivery animation - glides toward door */}
+          <div className={`serum-delivery phase-${cinematicPhase} ${cinematicPhase >= 2 ? 'delivered' : ''}`}>
+            <div className="serum-tube-wrapper">
+              <SerumTube
+                correctCount={correctCount}
+                totalQuestions={totalQuestions}
+                size={cinematicPhase >= 1 ? 120 : 160}
+              />
             </div>
+            {cinematicPhase < 2 && (
+              <div className="delivery-label">
+                {correctCount > 0 ? `${correctCount} doses ready` : 'No serum collected'}
+              </div>
+            )}
           </div>
 
-          {/* Patient message sequence */}
-          {showPatientMessage && (
+          {/* Patient message sequence - only after fade to black */}
+          {cinematicPhase >= 5 && showPatientMessage && (
             <div className="patient-message-container">
+              <div className="cinematic-header">
+                <span className="serum-delivered-text">Serum delivered.</span>
+                <span className="kept-alive-text">You kept him alive today.</span>
+              </div>
+
               <div className={`patient-message ${messagePhase >= 1 ? 'visible' : ''}`}>
                 <p className="message-text">His eyes flutter open...</p>
               </div>
@@ -296,10 +330,10 @@ function DedicatedQuizPage() {
 
             <div className="results-actions">
               <button className="retry-btn" onClick={handleRestart}>
-                Return Tomorrow
+                Save Eli again tomorrow
               </button>
               <button className="back-btn" onClick={handleBack}>
-                Leave Hospital
+                Review answers
               </button>
             </div>
           </div>

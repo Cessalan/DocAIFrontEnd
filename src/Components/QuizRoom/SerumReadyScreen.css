@@ -1,0 +1,453 @@
+/* ============================================
+   SERUM READY SCREEN - Pre-Quiz Transition
+   "Your Serum Is Ready" cinematic reveal
+   ============================================ */
+
+.serum-ready-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    rgba(10, 12, 20, 0.99) 0%,
+    rgba(15, 18, 28, 1) 50%,
+    rgba(10, 14, 24, 0.99) 100%
+  );
+  animation: readyFadeIn 0.8s ease-out;
+}
+
+@keyframes readyFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.serum-ready-screen.exiting {
+  animation: readyFadeToBlack 1.5s ease-in forwards;
+}
+
+@keyframes readyFadeToBlack {
+  0% {
+    opacity: 1;
+    background-color: transparent;
+  }
+  60% {
+    opacity: 1;
+    background-color: rgba(0, 0, 0, 0.9);
+  }
+  100% {
+    opacity: 0;
+    background-color: rgba(0, 0, 0, 1);
+  }
+}
+
+/* Ambient background */
+.ready-ambient {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 50% 30%,
+      rgba(6, 182, 212, 0.1) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 30% 70%,
+      rgba(139, 92, 246, 0.06) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      ellipse 50% 40% at 70% 60%,
+      rgba(34, 211, 238, 0.05) 0%,
+      transparent 40%
+    );
+  pointer-events: none;
+}
+
+/* Heartbeat overlay on exit */
+.heartbeat-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  pointer-events: none;
+}
+
+.heartbeat-pulse {
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    circle,
+    rgba(220, 38, 38, 0.15) 0%,
+    rgba(220, 38, 38, 0.05) 30%,
+    transparent 60%
+  );
+  animation: heartbeatPulse 0.6s ease-out infinite;
+}
+
+@keyframes heartbeatPulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1.2);
+    opacity: 0;
+  }
+}
+
+/* Main content */
+.ready-content {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding: 40px;
+  max-width: 600px;
+  text-align: center;
+}
+
+/* Title container */
+.ready-title-container {
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ready-title-container.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.ready-title {
+  font-size: 42px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-shadow: 0 0 40px rgba(6, 182, 212, 0.3);
+}
+
+.title-glow {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 120%;
+  height: 150%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(6, 182, 212, 0.15) 0%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Tube container */
+.ready-tube-container {
+  opacity: 0;
+  transform: translateY(30px) scale(0.9);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-delay: 0.2s;
+}
+
+.ready-tube-container.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+/* Description */
+.ready-description {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  transition-delay: 0.1s;
+}
+
+.ready-description.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.description-main {
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.75);
+  margin: 0 0 8px 0;
+  line-height: 1.6;
+}
+
+.description-sub {
+  font-size: 16px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0 0 20px 0;
+  line-height: 1.6;
+}
+
+.room-highlight {
+  color: rgba(139, 92, 246, 0.95);
+  font-weight: 600;
+  text-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+}
+
+/* Quiz info badges */
+.quiz-info {
+  display: flex;
+  gap: 16px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.quiz-info-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.quiz-info-badge svg {
+  color: rgba(34, 211, 238, 0.7);
+}
+
+/* Action button */
+.ready-action {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: all 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.ready-action.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.start-quiz-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 40px;
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(139, 92, 246, 0.2));
+  border: 1px solid rgba(6, 182, 212, 0.4);
+  border-radius: 14px;
+  cursor: pointer;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+.start-quiz-btn:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.3), rgba(139, 92, 246, 0.3));
+  border-color: rgba(6, 182, 212, 0.6);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.2);
+}
+
+.start-quiz-btn:active {
+  transform: translateY(0);
+}
+
+.start-quiz-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-text {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0.02em;
+}
+
+.btn-arrow {
+  font-size: 20px;
+  color: rgba(34, 211, 238, 0.9);
+  transition: transform 0.3s ease;
+}
+
+.start-quiz-btn:hover .btn-arrow {
+  transform: translateX(4px);
+}
+
+.btn-shine {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 100%
+  );
+  transition: left 0.5s ease;
+}
+
+.start-quiz-btn:hover .btn-shine {
+  left: 100%;
+}
+
+/* Vignette */
+.ready-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 40%,
+    rgba(0, 0, 0, 0.5) 100%
+  );
+  pointer-events: none;
+}
+
+/* ============================================
+   LIGHT MODE
+   ============================================ */
+
+body:not(.dark-mode) .serum-ready-screen {
+  background: linear-gradient(
+    135deg,
+    rgba(245, 248, 255, 0.99) 0%,
+    rgba(240, 245, 255, 1) 50%,
+    rgba(245, 250, 255, 0.99) 100%
+  );
+}
+
+body:not(.dark-mode) .ready-ambient {
+  background:
+    radial-gradient(
+      ellipse 60% 40% at 50% 30%,
+      rgba(6, 182, 212, 0.15) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 40% 30% at 30% 70%,
+      rgba(139, 92, 246, 0.1) 0%,
+      transparent 50%
+    );
+}
+
+body:not(.dark-mode) .ready-title {
+  color: rgba(20, 20, 40, 0.95);
+  text-shadow: 0 0 40px rgba(6, 182, 212, 0.2);
+}
+
+body:not(.dark-mode) .title-glow {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(6, 182, 212, 0.1) 0%,
+    transparent 70%
+  );
+}
+
+body:not(.dark-mode) .description-main {
+  color: rgba(30, 30, 50, 0.8);
+}
+
+body:not(.dark-mode) .description-sub {
+  color: rgba(60, 60, 80, 0.7);
+}
+
+body:not(.dark-mode) .room-highlight {
+  color: rgba(124, 58, 237, 0.95);
+}
+
+body:not(.dark-mode) .quiz-info-badge {
+  background: rgba(255, 255, 255, 0.8);
+  border-color: rgba(139, 92, 246, 0.15);
+  color: rgba(60, 60, 80, 0.8);
+}
+
+body:not(.dark-mode) .quiz-info-badge svg {
+  color: rgba(6, 182, 212, 0.9);
+}
+
+body:not(.dark-mode) .start-quiz-btn {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(139, 92, 246, 0.15));
+  border-color: rgba(6, 182, 212, 0.4);
+}
+
+body:not(.dark-mode) .start-quiz-btn:hover {
+  background: linear-gradient(135deg, rgba(6, 182, 212, 0.25), rgba(139, 92, 246, 0.25));
+  border-color: rgba(6, 182, 212, 0.6);
+  box-shadow: 0 8px 30px rgba(6, 182, 212, 0.15);
+}
+
+body:not(.dark-mode) .btn-text {
+  color: rgba(20, 20, 40, 0.95);
+}
+
+body:not(.dark-mode) .btn-arrow {
+  color: rgba(6, 182, 212, 1);
+}
+
+body:not(.dark-mode) .ready-vignette {
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(255, 255, 255, 0.4) 100%
+  );
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .ready-content {
+    padding: 24px;
+    gap: 24px;
+  }
+
+  .ready-title {
+    font-size: 32px;
+  }
+
+  .description-main {
+    font-size: 16px;
+  }
+
+  .description-sub {
+    font-size: 14px;
+  }
+
+  .quiz-info {
+    gap: 10px;
+  }
+
+  .quiz-info-badge {
+    font-size: 12px;
+    padding: 6px 12px;
+  }
+
+  .start-quiz-btn {
+    padding: 14px 32px;
+  }
+
+  .btn-text {
+    font-size: 16px;
+  }
+}

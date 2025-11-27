@@ -1200,18 +1200,100 @@
   text-align: center;
 }
 
-/* Serum delivery section */
+/* ============================================
+   CINEMATIC ENDING OVERLAYS
+   ============================================ */
+
+/* Black overlay for fade to black effect */
+.cinematic-black-overlay {
+  position: fixed;
+  inset: 0;
+  background: #000;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 50;
+  transition: opacity 1.5s ease-in;
+}
+
+.cinematic-black-overlay.visible {
+  opacity: 1;
+}
+
+/* Light spill effect from door */
+.door-light-spill {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 60%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse 80% 120% at 100% 50%,
+    rgba(255, 220, 150, 0.4) 0%,
+    rgba(255, 200, 120, 0.2) 30%,
+    rgba(255, 180, 100, 0.1) 50%,
+    transparent 70%
+  );
+  opacity: 0;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 1.5s ease-out;
+}
+
+.door-light-spill.visible {
+  opacity: 1;
+  animation: lightFlicker 0.5s ease-in-out 2;
+}
+
+@keyframes lightFlicker {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* Serum delivery section - Enhanced cinematic animation */
 .serum-delivery {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  transition: all 1s ease;
+  transition: all 2.5s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
 }
 
-.serum-delivery.delivered {
-  opacity: 0.6;
-  transform: scale(0.9);
+.serum-tube-wrapper {
+  transition: transform 2.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 1s ease;
+}
+
+/* Phase 0: Initial position (center) */
+.serum-delivery.phase-0 {
+  transform: translateX(0) translateY(0);
+}
+
+/* Phase 1: Serum glides toward door (right side) */
+.serum-delivery.phase-1 {
+  transform: translateX(40vw) translateY(-10vh) scale(0.8);
+}
+
+.serum-delivery.phase-1 .serum-tube-wrapper {
+  animation: tubeFloat 1.5s ease-in-out infinite;
+}
+
+@keyframes tubeFloat {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(2deg); }
+}
+
+/* Phase 2: Delivered - enters door */
+.serum-delivery.phase-2 {
+  transform: translateX(55vw) translateY(-15vh) scale(0.5);
+  opacity: 0;
+}
+
+/* Phase 3+: Hidden */
+.serum-delivery.phase-3,
+.serum-delivery.phase-4,
+.serum-delivery.phase-5 {
+  opacity: 0;
+  pointer-events: none;
 }
 
 .delivery-label {
@@ -1219,6 +1301,7 @@
   color: rgba(34, 211, 238, 0.8);
   font-weight: 500;
   letter-spacing: 0.5px;
+  transition: opacity 0.5s ease;
 }
 
 /* Patient message sequence */
@@ -1228,6 +1311,52 @@
   align-items: center;
   gap: 16px;
   min-height: 120px;
+  animation: containerFadeIn 1s ease-out;
+}
+
+@keyframes containerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Cinematic header text */
+.cinematic-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.serum-delivered-text {
+  font-size: 32px;
+  font-weight: 700;
+  color: rgba(34, 211, 238, 0.95);
+  text-shadow: 0 0 30px rgba(34, 211, 238, 0.5);
+  letter-spacing: 0.02em;
+  animation: deliveredPulse 2s ease-in-out infinite;
+}
+
+@keyframes deliveredPulse {
+  0%, 100% {
+    text-shadow: 0 0 20px rgba(34, 211, 238, 0.4);
+  }
+  50% {
+    text-shadow: 0 0 40px rgba(34, 211, 238, 0.6);
+  }
+}
+
+.kept-alive-text {
+  font-size: 18px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.7);
+  letter-spacing: 0.05em;
 }
 
 .patient-message {

@@ -185,6 +185,7 @@ function App() {
 
       {/* Dedicated Quiz Page - Public (can be accessed with quiz data) */}
       <Route path="/quiz-room" element={<DedicatedQuizPage />} />
+      <Route path="/quiz/play" element={<DedicatedQuizPage />} />
 
       {/* Protected Chat Layout */}
       <Route

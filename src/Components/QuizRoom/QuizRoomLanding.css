@@ -4421,3 +4421,87 @@ body:not(.dark-mode) .landing-action-card:focus-visible {
     font-weight: 700;
   }
 }
+
+/* ============================================
+   SIMPLE LOADING OVERLAY
+   Clean, minimal loading state for quiz generation
+   ============================================ */
+
+.simple-loading-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(13, 13, 16, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  animation: simpleOverlayFadeIn 0.3s ease-out;
+}
+
+@keyframes simpleOverlayFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.simple-loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  text-align: center;
+  padding: 40px;
+}
+
+.simple-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(139, 92, 246, 0.2);
+  border-top-color: #8b5cf6;
+  border-radius: 50%;
+  animation: simpleSpinnerRotate 1s linear infinite;
+}
+
+@keyframes simpleSpinnerRotate {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.simple-loading-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.simple-loading-subtext {
+  font-size: 14px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.5);
+  margin: 0;
+}
+
+/* Light mode */
+body:not(.dark-mode) .simple-loading-overlay {
+  background: rgba(255, 255, 255, 0.95);
+}
+
+body:not(.dark-mode) .simple-loading-spinner {
+  border-color: rgba(139, 92, 246, 0.15);
+  border-top-color: #8b5cf6;
+}
+
+body:not(.dark-mode) .simple-loading-text {
+  color: rgba(30, 30, 50, 0.95);
+}
+
+body:not(.dark-mode) .simple-loading-subtext {
+  color: rgba(60, 60, 80, 0.6);
+}

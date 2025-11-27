@@ -89,6 +89,10 @@ const QuizRoomLanding = () => {
   const [completedCounters, setCompletedCounters] = useState(0);
   const totalCounters = 3;
 
+  // Direct upload flow state
+  const [uploadPhase, setUploadPhase] = useState('idle'); // 'idle' | 'processing'
+  const fileInputRef = useRef(null);
+
   // Handle counter completion - trigger explosion when all 3 are done
   const handleCounterComplete = useCallback(() => {
     setCompletedCounters(prev => {
@@ -344,12 +348,110 @@ const QuizRoomLanding = () => {
 
   // Navigation handlers
   const handleStudyNCLEX = () => handleDelayedNavigation(() => navigateWithAction('quiz'));
-  const handleUploadNotes = () => handleDelayedNavigation(() => navigateWithAction('upload'));
+
+  // Direct file upload - opens file picker immediately
+  const handleUploadNotes = () => {
+    fileInputRef.current?.click();
+  };
+
+  // Handle file selection
+  const handleFileSelected = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Start processing phase
+    setUploadPhase('processing');
+
+    // Simulate quiz generation (replace with real API call)
+    try {
+      await new Promise(resolve => setTimeout(resolve, 2500));
+
+      // Demo quiz data
+      const quiz = {
+        title: file.name.replace(/\.[^/.]+$/, ''),
+        questions: [
+          {
+            question: "A nurse is caring for a patient with diabetes. What is the priority nursing intervention?",
+            options: ["Administer insulin as scheduled", "Monitor blood glucose levels", "Provide dietary education", "Assess for complications"],
+            answer: "Monitor blood glucose levels",
+            topic: "Diabetes Management",
+            justification: "Monitoring blood glucose is the priority as it guides all other interventions."
+          },
+          {
+            question: "Which assessment finding indicates hypovolemic shock?",
+            options: ["Bradycardia", "Hypertension", "Tachycardia with weak pulse", "Flushed skin"],
+            answer: "Tachycardia with weak pulse",
+            topic: "Shock Assessment",
+            justification: "Tachycardia with weak pulse indicates compensatory response to decreased blood volume."
+          },
+          {
+            question: "A patient is prescribed warfarin. Which lab value should be monitored?",
+            options: ["Hemoglobin", "INR", "Creatinine", "Potassium"],
+            answer: "INR",
+            topic: "Anticoagulation",
+            justification: "INR monitors warfarin therapy effectiveness."
+          },
+          {
+            question: "What intervention is most appropriate for a patient with pneumonia?",
+            options: ["Restrict fluids", "Supine position", "Deep breathing exercises", "Limit ambulation"],
+            answer: "Deep breathing exercises",
+            topic: "Respiratory Care",
+            justification: "Deep breathing helps mobilize secretions and improve lung expansion."
+          },
+          {
+            question: "Which statement about heart failure indicates patient understanding?",
+            options: ["Weigh myself weekly", "Eat salt freely", "Call doctor if I gain 3 lbs in one day", "Leg swelling is normal"],
+            answer: "Call doctor if I gain 3 lbs in one day",
+            topic: "Heart Failure",
+            justification: "Rapid weight gain indicates fluid retention requiring immediate attention."
+          }
+        ]
+      };
+
+      // Navigate directly to quiz
+      setUploadPhase('idle');
+      navigate('/quiz/play', {
+        state: {
+          quizzes: quiz.questions,
+          title: quiz.title,
+          fromUpload: true
+        }
+      });
+
+    } catch (error) {
+      setUploadPhase('idle');
+      console.error('Quiz generation failed:', error);
+    }
+
+    // Reset file input
+    e.target.value = '';
+  };
+
   const handleTalkToTutor = () => handleDelayedNavigation(() => navigateWithAction('tutor'));
   const handleDailyChallenge = () => handleDelayedNavigation(() => navigateWithAction('daily'));
 
   return (
     <div className={`quiz-landing-page ${isExiting ? 'exiting' : ''}`}>
+      {/* Hidden file input for direct upload */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.md"
+        onChange={handleFileSelected}
+        style={{ display: 'none' }}
+      />
+
+      {/* Simple Loading Overlay - shows while generating quiz */}
+      {uploadPhase === 'processing' && (
+        <div className="simple-loading-overlay">
+          <div className="simple-loading-content">
+            <div className="simple-loading-spinner" />
+            <p className="simple-loading-text">Generating NCLEX-style questions...</p>
+            <p className="simple-loading-subtext">Analyzing your notes</p>
+          </div>
+        </div>
+      )}
+
       {/* Anime exit flash overlay */}
       {showFlash && <div className="page-exit-flash" />}
 
@@ -828,6 +930,7 @@ const QuizRoomLanding = () => {
           </div>
         </div>
       </section>
+
     </div>
   );
 };

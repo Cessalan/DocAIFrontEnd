@@ -1,0 +1,10 @@
+/* ============================================
+   QUIZ FLOW CONTROLLER
+   Container for the entire quiz generation flow
+   ============================================ */
+
+.quiz-flow-controller {
+  position: fixed;
+  inset: 0;
+  z-index: 900;
+}
