@@ -16,6 +16,7 @@ const SerumTube = ({
   const [prevCorrectCount, setPrevCorrectCount] = useState(correctCount);
   const [glowIntensity, setGlowIntensity] = useState(0);
   const [isDarkMode, setIsDarkMode] = useState(() => document.body.classList.contains('dark-mode'));
+  const [isHovered, setIsHovered] = useState(false);
 
   // Listen for dark mode changes
   useEffect(() => {
@@ -84,9 +85,15 @@ const SerumTube = ({
 
   return (
     <div
-      className={`serum-tube-container ${className} ${showCelebration ? 'celebrating' : ''} ${fillPercentage >= 100 ? 'complete' : ''}`}
+      className={`serum-tube-container ${className} ${showCelebration ? 'celebrating' : ''} ${fillPercentage >= 100 ? 'complete' : ''} ${isHovered ? 'hovered' : ''}`}
       style={{ width: tubeWidth + 80, height: tubeHeight + 30 }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
+      {/* Hover tooltip */}
+      <div className={`serum-tube-tooltip ${isHovered ? 'visible' : ''}`}>
+        <span className="tooltip-text">The patient in Room 217 needs 1 tube a day to survive</span>
+      </div>
       <svg
         width={tubeWidth + 80}
         height={tubeHeight + 30}

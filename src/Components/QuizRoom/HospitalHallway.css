@@ -262,299 +262,163 @@
   );
 }
 
-/* ============================================
-   HANDRAIL - Premium Metal with Purple Accent
-   ============================================ */
-
-.handrail {
-  position: absolute;
-  top: 63%;
-  left: 0;
-  right: 0;
-  height: 24px;
-  z-index: 2;
-}
-
-.handrail-bar {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 12px;
-  background: linear-gradient(180deg,
-    rgba(80, 80, 100, 0.9) 0%,
-    rgba(100, 100, 125, 0.95) 30%,
-    rgba(110, 110, 135, 0.95) 50%,
-    rgba(100, 100, 125, 0.95) 70%,
-    rgba(70, 70, 90, 0.9) 100%
-  );
-  border-radius: 6px;
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.4),
-    inset 0 2px 4px rgba(255, 255, 255, 0.1),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.2),
-    0 0 15px rgba(139, 92, 246, 0.1);
-  border: 1px solid rgba(139, 92, 246, 0.15);
-}
-
-.handrail-bracket {
-  position: absolute;
-  top: 12px;
-  width: 8px;
-  height: 16px;
-  background: linear-gradient(90deg,
-    rgba(60, 60, 80, 0.9) 0%,
-    rgba(90, 90, 115, 0.95) 50%,
-    rgba(60, 60, 80, 0.9) 100%
-  );
-  border-radius: 0 0 3px 3px;
-  transform: translateX(-50%);
-  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.35);
-}
 
 /* ============================================
-   DOORS - PREMIUM HIGH-END HOSPITAL STYLE
-   Realistic 3D commercial hospital door design
+   DOORS - SLIM ELEGANT MODERN DESIGN
+   Refined thin frame aesthetic
    ============================================ */
 
 .corridor-door {
   position: absolute;
-  top: 3%;
-  width: 8%;
-  height: 94%;
+  top: 5%;
+  width: 7%;
+  height: 92%;
   transform: translateX(-50%);
-  filter: drop-shadow(0 8px 20px rgba(0, 0, 0, 0.4));
+  filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.35));
 }
 
-/* Main door frame - Brushed stainless steel */
+/* Main door container - Clean frameless design */
 .door-frame {
   position: relative;
   width: 100%;
   height: 100%;
-  background: linear-gradient(90deg,
-    rgba(85, 90, 102, 0.99) 0%,
-    rgba(105, 112, 128, 0.99) 3%,
-    rgba(120, 128, 145, 0.99) 6%,
-    rgba(105, 112, 128, 0.99) 10%,
-    rgba(95, 102, 118, 0.99) 90%,
-    rgba(105, 112, 128, 0.99) 94%,
-    rgba(120, 128, 145, 0.99) 97%,
-    rgba(85, 90, 102, 0.99) 100%
-  );
-  border-radius: 4px 4px 0 0;
-  box-shadow:
-    8px 0 30px rgba(0, 0, 0, 0.35),
-    -8px 0 30px rgba(0, 0, 0, 0.35),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
 }
 
-/* Frame top cap - header trim with 3D depth */
-.frame-cap {
-  position: absolute;
-  top: 0;
-  left: -4%;
-  right: -4%;
-  height: 3.5%;
-  background: linear-gradient(180deg,
-    rgba(140, 148, 165, 0.99) 0%,
-    rgba(120, 128, 145, 0.99) 20%,
-    rgba(100, 108, 125, 0.99) 60%,
-    rgba(85, 92, 108, 0.99) 100%
-  );
-  border-radius: 5px 5px 0 0;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.35),
-    inset 0 2px 0 rgba(255, 255, 255, 0.25),
-    inset 0 -1px 2px rgba(0, 0, 0, 0.2);
-}
-
-/* Frame pillars - vertical trim with brushed metal effect */
-.frame-pillar {
-  position: absolute;
-  top: 3.5%;
-  width: 7%;
-  height: 96.5%;
-  background: linear-gradient(90deg,
-    rgba(90, 98, 115, 0.99) 0%,
-    rgba(115, 123, 142, 0.99) 25%,
-    rgba(125, 133, 152, 0.99) 50%,
-    rgba(115, 123, 142, 0.99) 75%,
-    rgba(90, 98, 115, 0.99) 100%
-  );
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
-    inset 0 2px 4px rgba(255, 255, 255, 0.1),
-    3px 0 10px rgba(0, 0, 0, 0.25);
-}
-
-.frame-pillar.left {
-  left: 0;
-  border-radius: 0 0 0 3px;
-  box-shadow:
-    inset 2px 0 4px rgba(255, 255, 255, 0.12),
-    inset -1px 0 2px rgba(0, 0, 0, 0.15),
-    3px 0 10px rgba(0, 0, 0, 0.2);
-}
-
-.frame-pillar.right {
-  right: 0;
-  border-radius: 0 0 3px 0;
-  box-shadow:
-    inset -2px 0 4px rgba(255, 255, 255, 0.08),
-    inset 1px 0 2px rgba(0, 0, 0, 0.2),
-    -3px 0 10px rgba(0, 0, 0, 0.2);
-}
-
-/* Door surface - Realistic wood grain laminate with 3D depth */
+/* Door surface - Clean panel with subtle depth */
 .door-surface {
   position: absolute;
-  top: 3.5%;
-  left: 7%;
-  right: 7%;
-  height: 96.5%;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
   background:
-    linear-gradient(90deg,
-      rgba(0, 0, 0, 0.12) 0%,
-      rgba(255, 255, 255, 0.02) 2%,
-      transparent 5%,
-      transparent 95%,
-      rgba(0, 0, 0, 0.08) 98%,
-      rgba(0, 0, 0, 0.15) 100%
-    ),
-    linear-gradient(180deg,
-      rgba(62, 68, 85, 0.99) 0%,
-      rgba(55, 60, 75, 0.99) 3%,
-      rgba(52, 57, 72, 0.99) 20%,
-      rgba(50, 55, 70, 0.99) 50%,
-      rgba(48, 52, 66, 0.99) 80%,
-      rgba(45, 48, 62, 0.99) 97%,
-      rgba(40, 43, 55, 0.99) 100%
+    radial-gradient(
+      ellipse 120% 80% at 30% 20%,
+      rgba(70, 78, 98, 0.99) 0%,
+      rgba(55, 62, 80, 0.99) 40%,
+      rgba(48, 54, 70, 0.99) 100%
     );
-  border-radius: 2px 2px 0 0;
+  border-radius: 8px;
   box-shadow:
-    inset 0 3px 6px rgba(255, 255, 255, 0.08),
-    inset 0 -2px 4px rgba(0, 0, 0, 0.2),
-    inset 2px 0 4px rgba(255, 255, 255, 0.03),
-    inset -2px 0 4px rgba(0, 0, 0, 0.1);
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 2px 6px rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15);
   overflow: hidden;
 }
 
-/* Subtle wood grain texture overlay */
+/* Subtle soft gradient overlay */
 .door-surface::before {
   content: '';
   position: absolute;
   inset: 0;
   background:
-    repeating-linear-gradient(
-      180deg,
-      transparent 0px,
-      transparent 4px,
-      rgba(255, 255, 255, 0.008) 4px,
-      rgba(255, 255, 255, 0.008) 5px,
-      transparent 5px,
-      transparent 12px
+    radial-gradient(
+      ellipse 80% 50% at 70% 80%,
+      rgba(139, 92, 246, 0.02) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 20% 30%,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 50%
     );
+  border-radius: inherit;
   pointer-events: none;
 }
 
-/* Door edge - 3D beveled hinge side */
+/* Door edge - Thin hinge side */
 .door-edge {
   position: absolute;
   top: 0;
   left: 0;
-  width: 4%;
+  width: 3%;
   height: 100%;
   background: linear-gradient(90deg,
-    rgba(35, 38, 48, 0.99) 0%,
-    rgba(45, 48, 58, 0.99) 40%,
-    rgba(52, 56, 68, 0.99) 100%
+    rgba(38, 42, 55, 0.99) 0%,
+    rgba(48, 52, 65, 0.99) 100%
   );
+  border-radius: 4px 0 0 3px;
   box-shadow:
-    inset -2px 0 4px rgba(0, 0, 0, 0.4),
-    inset 1px 0 2px rgba(255, 255, 255, 0.05);
+    inset -2px 0 4px rgba(0, 0, 0, 0.25);
 }
 
-/* Door seam line - gap between door and frame */
+/* Door seam line - Subtle gap */
 .door-seam {
   position: absolute;
-  top: 0;
+  top: 1%;
   right: 1%;
   width: 2px;
-  height: 100%;
+  height: 98%;
   background: linear-gradient(180deg,
-    rgba(0, 0, 0, 0.25) 0%,
-    rgba(0, 0, 0, 0.35) 20%,
-    rgba(0, 0, 0, 0.4) 50%,
-    rgba(0, 0, 0, 0.35) 80%,
-    rgba(0, 0, 0, 0.25) 100%
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.1) 100%
   );
-  box-shadow: 1px 0 2px rgba(255, 255, 255, 0.02);
+  border-radius: 1px;
 }
 
 /* ============================================
-   VISION PANEL - Wire Reinforced Safety Glass
-   Realistic hospital door window
+   VISION PANEL - Clean Rectangular Window
+   Simple elegant glass panel
    ============================================ */
 
 .door-vision-panel {
   position: absolute;
-  top: 7%;
+  top: 5%;
   left: 50%;
   transform: translateX(-50%);
   width: 55%;
-  height: 32%;
-  border-radius: 4px;
+  height: 28%;
+  border-radius: 6px;
   overflow: visible;
 }
 
-/* Outer frame bevel */
+/* Outer frame bevel - Thin elegant frame */
 .vision-frame {
   position: absolute;
   inset: -2px;
   background: linear-gradient(180deg,
-    rgba(80, 88, 105, 0.98) 0%,
-    rgba(70, 78, 95, 0.98) 50%,
-    rgba(60, 68, 85, 0.98) 100%
+    rgba(100, 110, 130, 0.98) 0%,
+    rgba(80, 90, 112, 0.98) 100%
   );
-  border-radius: 5px;
+  border-radius: 8px;
   box-shadow:
     inset 0 2px 3px rgba(255, 255, 255, 0.15),
-    inset 0 -2px 3px rgba(0, 0, 0, 0.25),
-    0 4px 12px rgba(0, 0, 0, 0.3);
+    inset 0 -2px 3px rgba(0, 0, 0, 0.15),
+    0 3px 10px rgba(0, 0, 0, 0.2);
   pointer-events: none;
   z-index: 1;
 }
 
-/* Inner frame lip */
+/* Inner frame lip - Subtle inner bevel */
 .vision-frame::before {
   content: '';
   position: absolute;
-  inset: 3px;
+  inset: 2px;
   background: linear-gradient(180deg,
     rgba(55, 62, 78, 0.98) 0%,
-    rgba(65, 72, 88, 0.98) 100%
+    rgba(65, 72, 90, 0.98) 100%
   );
-  border-radius: 3px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.4);
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
-/* Glass surface with realistic refraction */
+/* Glass surface - Clean glass with soft reflections */
 .vision-glass {
   position: absolute;
-  inset: 5px;
+  inset: 4px;
   background:
-    linear-gradient(135deg,
-      rgba(140, 170, 210, 0.45) 0%,
-      rgba(120, 150, 190, 0.35) 20%,
-      rgba(100, 135, 175, 0.32) 40%,
-      rgba(90, 125, 165, 0.35) 60%,
-      rgba(80, 115, 155, 0.38) 80%,
-      rgba(95, 130, 170, 0.42) 100%
+    radial-gradient(
+      ellipse 100% 80% at 30% 30%,
+      rgba(150, 180, 220, 0.45) 0%,
+      rgba(120, 155, 200, 0.35) 30%,
+      rgba(95, 130, 175, 0.3) 60%,
+      rgba(85, 120, 165, 0.32) 100%
     );
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
   box-shadow:
-    inset 0 0 20px rgba(100, 140, 190, 0.15),
+    inset 0 0 20px rgba(100, 140, 200, 0.15),
     inset 0 0 0 1px rgba(255, 255, 255, 0.08);
   z-index: 2;
 }
@@ -633,56 +497,40 @@
 }
 
 /* ============================================
-   PUSH PLATE - Brushed Stainless Steel
-   Professional hospital grade
+   PUSH PLATE - Slim Metal Plate
+   Clean minimal aesthetic
    ============================================ */
 
 .door-push-plate {
   position: absolute;
-  top: 43%;
+  top: 42%;
   left: 50%;
   transform: translateX(-50%);
-  width: 30%;
-  height: 20%;
-  background:
-    linear-gradient(90deg,
-      rgba(145, 152, 168, 0.98) 0%,
-      rgba(165, 172, 188, 0.98) 10%,
-      rgba(175, 182, 198, 0.98) 30%,
-      rgba(180, 188, 205, 0.98) 50%,
-      rgba(175, 182, 198, 0.98) 70%,
-      rgba(165, 172, 188, 0.98) 90%,
-      rgba(145, 152, 168, 0.98) 100%
-    );
-  border-radius: 5px;
+  width: 28%;
+  height: 14%;
+  background: linear-gradient(90deg,
+    rgba(160, 168, 188, 0.98) 0%,
+    rgba(180, 188, 208, 0.98) 50%,
+    rgba(160, 168, 188, 0.98) 100%
+  );
+  border-radius: 4px;
   box-shadow:
-    0 4px 15px rgba(0, 0, 0, 0.4),
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    inset 0 2px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
-    inset 2px 0 0 rgba(255, 255, 255, 0.15),
-    inset -2px 0 0 rgba(0, 0, 0, 0.1),
-    0 0 0 1px rgba(120, 128, 145, 0.6);
+    0 3px 10px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
 /* Brushed metal texture */
 .push-plate-texture {
   position: absolute;
-  inset: 3px;
-  background:
-    repeating-linear-gradient(
-      180deg,
-      transparent 0px,
-      transparent 1px,
-      rgba(255, 255, 255, 0.03) 1px,
-      rgba(255, 255, 255, 0.03) 2px
-    ),
-    linear-gradient(180deg,
-      rgba(255, 255, 255, 0.08) 0%,
-      transparent 30%,
-      rgba(0, 0, 0, 0.05) 100%
-    );
-  border-radius: 3px;
+  inset: 2px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.03) 100%
+  );
+  border-radius: 2px;
 }
 
 /* Raised edge detail */
@@ -690,175 +538,36 @@
   content: '';
   position: absolute;
   inset: 0;
-  border-radius: 3px;
+  border-radius: 2px;
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   DOOR HANDLE - Minimalist Bar
+   Clean simple aesthetic
+   ============================================ */
+
+.door-handle {
+  position: absolute;
+  top: 54%;
+  right: 5%;
+  width: 20%;
+  height: 3%;
+  background: linear-gradient(180deg,
+    rgba(200, 208, 228, 0.98) 0%,
+    rgba(170, 178, 200, 0.98) 50%,
+    rgba(150, 158, 182, 0.98) 100%
+  );
+  border-radius: 50px;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
     inset 0 -1px 0 rgba(0, 0, 0, 0.1);
 }
 
 /* ============================================
-   HANDLE ASSEMBLY - Commercial Lever Handle
-   Realistic 3D hospital door hardware
-   ============================================ */
-
-.door-handle-assembly {
-  position: absolute;
-  top: 52%;
-  right: 10%;
-  transform: translateY(-50%);
-  width: 28%;
-  height: 16%;
-}
-
-/* Escutcheon plate (backplate) - heavy duty style */
-.handle-escutcheon {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  transform: translateY(-50%);
-  width: 55%;
-  height: 100%;
-  background:
-    linear-gradient(90deg,
-      rgba(155, 162, 180, 0.99) 0%,
-      rgba(175, 182, 200, 0.99) 20%,
-      rgba(185, 192, 210, 0.99) 50%,
-      rgba(175, 182, 200, 0.99) 80%,
-      rgba(155, 162, 180, 0.99) 100%
-    );
-  border-radius: 6px;
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.45),
-    0 2px 4px rgba(0, 0, 0, 0.3),
-    inset 0 2px 0 rgba(255, 255, 255, 0.45),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(130, 138, 155, 0.5);
-}
-
-/* Escutcheon inner bevel */
-.handle-escutcheon::before {
-  content: '';
-  position: absolute;
-  inset: 3px;
-  background: linear-gradient(180deg,
-    rgba(190, 198, 218, 0.98) 0%,
-    rgba(170, 178, 198, 0.98) 50%,
-    rgba(160, 168, 188, 0.98) 100%
-  );
-  border-radius: 4px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.15);
-}
-
-/* Keyhole cylinder */
-.handle-keyhole {
-  position: absolute;
-  bottom: 18%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 30%;
-  height: 22%;
-  background:
-    radial-gradient(
-      ellipse at 30% 30%,
-      rgba(80, 85, 98, 0.98) 0%,
-      rgba(50, 55, 68, 0.98) 50%,
-      rgba(35, 38, 48, 0.98) 100%
-    );
-  border-radius: 50%;
-  box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.6),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.1),
-    0 1px 2px rgba(0, 0, 0, 0.3);
-  z-index: 2;
-}
-
-/* Keyhole slot */
-.handle-keyhole::after {
-  content: '';
-  position: absolute;
-  top: 35%;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 35%;
-  height: 45%;
-  background: rgba(20, 22, 28, 0.95);
-  border-radius: 2px 2px 4px 4px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
-}
-
-/* Lever handle - cylindrical 3D effect */
-.handle-lever {
-  position: absolute;
-  top: 25%;
-  left: 40%;
-  width: 150%;
-  height: 50%;
-  background:
-    linear-gradient(180deg,
-      rgba(210, 218, 235, 0.99) 0%,
-      rgba(190, 198, 218, 0.99) 15%,
-      rgba(170, 178, 198, 0.99) 35%,
-      rgba(155, 163, 183, 0.99) 50%,
-      rgba(145, 153, 173, 0.99) 65%,
-      rgba(160, 168, 188, 0.99) 85%,
-      rgba(140, 148, 168, 0.99) 100%
-    );
-  border-radius: 4px 12px 12px 4px;
-  box-shadow:
-    0 5px 15px rgba(0, 0, 0, 0.45),
-    0 2px 4px rgba(0, 0, 0, 0.35),
-    inset 0 2px 0 rgba(255, 255, 255, 0.5),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.2),
-    inset 0 0 0 1px rgba(180, 188, 205, 0.3);
-  transform-origin: left center;
-}
-
-/* Lever return curve at end */
-.lever-grip {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 25%;
-  height: 100%;
-  background:
-    linear-gradient(180deg,
-      rgba(200, 208, 228, 0.99) 0%,
-      rgba(180, 188, 208, 0.99) 30%,
-      rgba(165, 173, 193, 0.99) 50%,
-      rgba(155, 163, 183, 0.99) 70%,
-      rgba(145, 153, 173, 0.99) 100%
-    );
-  border-radius: 0 12px 12px 0;
-  box-shadow:
-    inset -3px 0 6px rgba(0, 0, 0, 0.15),
-    inset 2px 0 4px rgba(255, 255, 255, 0.2),
-    inset 0 2px 0 rgba(255, 255, 255, 0.3),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.15);
-}
-
-/* Lever grip end cap */
-.lever-grip::after {
-  content: '';
-  position: absolute;
-  right: 8%;
-  top: 20%;
-  width: 50%;
-  height: 60%;
-  background:
-    linear-gradient(90deg,
-      rgba(175, 183, 203, 0.98) 0%,
-      rgba(195, 203, 223, 0.98) 50%,
-      rgba(175, 183, 203, 0.98) 100%
-    );
-  border-radius: 8px;
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.15),
-    0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
-/* ============================================
-   ROOM NUMBER DISPLAY - Digital/Backlit
+   ROOM NUMBER DISPLAY - Compact Badge
    ============================================ */
 
 .room-number-display {
@@ -871,28 +580,28 @@
 }
 
 .display-screen {
-  padding: 5px 14px 4px;
+  padding: 4px 12px 3px;
   background: linear-gradient(180deg,
-    rgba(18, 18, 28, 0.98) 0%,
-    rgba(12, 12, 20, 0.98) 100%
+    rgba(25, 28, 40, 0.98) 0%,
+    rgba(18, 20, 32, 0.98) 100%
   );
-  border-radius: 4px;
+  border-radius: 6px;
   border: 1px solid rgba(139, 92, 246, 0.2);
   box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.5),
+    0 2px 8px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.05),
-    0 0 20px rgba(139, 92, 246, 0.15);
+    0 0 15px rgba(139, 92, 246, 0.12);
 }
 
 .room-number {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
   color: rgba(167, 139, 250, 0.95);
-  letter-spacing: 2.5px;
+  letter-spacing: 2px;
   text-shadow:
-    0 0 10px rgba(139, 92, 246, 0.7),
-    0 0 20px rgba(139, 92, 246, 0.4);
+    0 0 10px rgba(139, 92, 246, 0.6),
+    0 0 20px rgba(139, 92, 246, 0.3);
 }
 
 .display-indicator {
@@ -900,44 +609,51 @@
   bottom: -3px;
   left: 50%;
   transform: translateX(-50%);
-  width: 30%;
+  width: 35%;
   height: 2px;
-  background: rgba(139, 92, 246, 0.6);
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.6) 30%,
+    rgba(139, 92, 246, 0.6) 70%,
+    transparent 100%
+  );
   border-radius: 1px;
-  box-shadow: 0 0 6px rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.4);
 }
 
 /* ============================================
-   DOOR STATUS LIGHT - Occupancy Indicator
+   DOOR STATUS LIGHT - Small Indicator
    ============================================ */
 
 .door-status-light {
   position: absolute;
-  top: 7%;
-  right: 8%;
+  top: 5%;
+  right: 10%;
   width: 8%;
   height: 2.5%;
-  background: rgba(30, 30, 42, 0.9);
-  border-radius: 3px;
+  background: linear-gradient(180deg,
+    rgba(35, 38, 50, 0.95) 0%,
+    rgba(28, 30, 42, 0.95) 100%
+  );
+  border-radius: 10px;
   padding: 2px;
   box-shadow:
-    inset 0 1px 2px rgba(0, 0, 0, 0.4),
-    0 1px 0 rgba(255, 255, 255, 0.05);
+    inset 0 1px 2px rgba(0, 0, 0, 0.3);
 }
 
 .status-led {
   width: 100%;
   height: 100%;
   background: radial-gradient(
-    ellipse at center,
-    rgba(74, 222, 128, 0.9) 0%,
-    rgba(34, 197, 94, 0.8) 50%,
-    rgba(22, 163, 74, 0.7) 100%
+    ellipse at 40% 40%,
+    rgba(100, 230, 140, 0.95) 0%,
+    rgba(74, 222, 128, 0.85) 50%,
+    rgba(34, 197, 94, 0.75) 100%
   );
-  border-radius: 2px;
+  border-radius: 8px;
   box-shadow:
-    0 0 8px rgba(74, 222, 128, 0.6),
-    0 0 15px rgba(34, 197, 94, 0.3);
+    0 0 8px rgba(74, 222, 128, 0.5),
+    0 0 15px rgba(34, 197, 94, 0.25);
   animation: ledPulse 3s ease-in-out infinite;
 }
 
@@ -1424,102 +1140,48 @@ body:not(.dark-mode) .wall-lower {
   );
 }
 
-/* Handrail - Light mode */
-body:not(.dark-mode) .handrail-bar {
-  background: linear-gradient(180deg,
-    rgba(200, 200, 215, 0.95) 0%,
-    rgba(180, 180, 200, 0.98) 30%,
-    rgba(190, 190, 208, 0.98) 50%,
-    rgba(180, 180, 200, 0.98) 70%,
-    rgba(165, 165, 185, 0.95) 100%
-  );
-  box-shadow:
-    0 3px 10px rgba(0, 0, 0, 0.15),
-    inset 0 2px 4px rgba(255, 255, 255, 0.5),
-    inset 0 -1px 3px rgba(0, 0, 0, 0.1),
-    0 0 12px rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.1);
-}
-
-body:not(.dark-mode) .handrail-bracket {
-  background: linear-gradient(90deg,
-    rgba(170, 170, 190, 0.95) 0%,
-    rgba(195, 195, 215, 0.98) 50%,
-    rgba(170, 170, 190, 0.95) 100%
-  );
-  box-shadow: 2px 3px 6px rgba(0, 0, 0, 0.12);
-}
-
-/* Door frame - Light mode */
-body:not(.dark-mode) .door-frame {
-  background: linear-gradient(90deg,
-    rgba(180, 185, 198, 0.98) 0%,
-    rgba(195, 200, 215, 0.98) 8%,
-    rgba(195, 200, 215, 0.98) 92%,
-    rgba(180, 185, 198, 0.98) 100%
-  );
-  box-shadow:
-    6px 0 20px rgba(0, 0, 0, 0.15),
-    -6px 0 20px rgba(0, 0, 0, 0.15),
-    inset 0 0 0 1px rgba(255, 255, 255, 0.3);
-}
-
-body:not(.dark-mode) .frame-cap {
-  background: linear-gradient(180deg,
-    rgba(210, 215, 228, 0.98) 0%,
-    rgba(195, 200, 215, 0.98) 50%,
-    rgba(185, 190, 205, 0.98) 100%
-  );
-  box-shadow:
-    0 2px 6px rgba(0, 0, 0, 0.12),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
-}
-
-body:not(.dark-mode) .frame-pillar {
-  background: linear-gradient(90deg,
-    rgba(185, 190, 205, 0.98) 0%,
-    rgba(205, 210, 225, 0.98) 40%,
-    rgba(195, 200, 215, 0.98) 100%
-  );
-  box-shadow:
-    inset 0 0 0 1px rgba(255, 255, 255, 0.2),
-    2px 0 6px rgba(0, 0, 0, 0.08);
-}
-
-/* Door surface - Light mode (Hospital blue) */
+/* Door surface - Light mode (Clean hospital blue) */
 body:not(.dark-mode) .door-surface {
-  background: linear-gradient(180deg,
-    rgba(85, 135, 185, 0.98) 0%,
-    rgba(75, 125, 175, 0.98) 20%,
-    rgba(70, 120, 168, 0.98) 80%,
-    rgba(65, 112, 160, 0.98) 100%
-  );
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 30% 20%,
+      rgba(100, 155, 210, 0.98) 0%,
+      rgba(80, 135, 190, 0.98) 40%,
+      rgba(65, 120, 175, 0.98) 100%
+    );
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.15),
-    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+    0 4px 15px rgba(0, 0, 0, 0.15),
+    inset 0 2px 6px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.08);
 }
 
 body:not(.dark-mode) .door-edge {
   background: linear-gradient(90deg,
-    rgba(55, 95, 140, 0.98) 0%,
-    rgba(70, 115, 160, 0.98) 100%
+    rgba(55, 100, 150, 0.98) 0%,
+    rgba(65, 110, 160, 0.98) 100%
   );
 }
 
 body:not(.dark-mode) .vision-frame {
-  border-color: rgba(180, 185, 200, 0.98);
+  background: linear-gradient(180deg,
+    rgba(120, 135, 165, 0.98) 0%,
+    rgba(100, 115, 145, 0.98) 100%
+  );
   box-shadow:
-    inset 0 0 0 1px rgba(160, 165, 180, 0.95),
-    0 2px 6px rgba(0, 0, 0, 0.12);
+    inset 0 2px 3px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.1),
+    0 3px 8px rgba(0, 0, 0, 0.12);
 }
 
 body:not(.dark-mode) .vision-glass {
-  background: linear-gradient(165deg,
-    rgba(180, 215, 245, 0.55) 0%,
-    rgba(160, 200, 235, 0.5) 25%,
-    rgba(150, 190, 225, 0.52) 50%,
-    rgba(140, 180, 215, 0.55) 100%
-  );
+  background:
+    radial-gradient(
+      ellipse 100% 80% at 30% 30%,
+      rgba(190, 218, 248, 0.55) 0%,
+      rgba(165, 198, 235, 0.45) 30%,
+      rgba(140, 178, 220, 0.4) 60%,
+      rgba(130, 168, 210, 0.42) 100%
+    );
 }
 
 body:not(.dark-mode) .wire-pattern {
@@ -1548,128 +1210,37 @@ body:not(.dark-mode) .glass-reflection {
   );
 }
 
-/* Push plate - Light mode (warmer silver tones) */
+/* Push plate - Light mode (slim elegant silver) */
 body:not(.dark-mode) .door-push-plate {
-  background: linear-gradient(90deg,
-    rgba(180, 185, 200, 0.99) 0%,
-    rgba(200, 205, 220, 0.99) 20%,
-    rgba(210, 215, 230, 0.99) 50%,
-    rgba(200, 205, 220, 0.99) 80%,
-    rgba(180, 185, 200, 0.99) 100%
+  background: linear-gradient(180deg,
+    rgba(225, 230, 245, 0.98) 0%,
+    rgba(205, 212, 232, 0.98) 50%,
+    rgba(195, 202, 222, 0.98) 100%
   );
   box-shadow:
-    0 3px 8px rgba(0, 0, 0, 0.2),
-    0 2px 4px rgba(0, 0, 0, 0.15),
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.12),
-    inset 2px 0 0 rgba(255, 255, 255, 0.2),
-    inset -2px 0 0 rgba(0, 0, 0, 0.08),
-    0 0 0 1px rgba(150, 155, 175, 0.5);
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
 }
 
 body:not(.dark-mode) .push-plate-texture {
-  background:
-    repeating-linear-gradient(
-      180deg,
-      transparent 0px,
-      transparent 1px,
-      rgba(255, 255, 255, 0.05) 1px,
-      rgba(255, 255, 255, 0.05) 2px
-    ),
-    linear-gradient(180deg,
-      rgba(255, 255, 255, 0.12) 0%,
-      transparent 30%,
-      rgba(0, 0, 0, 0.03) 100%
-    );
-}
-
-/* Handle assembly - Light mode (polished chrome look) */
-body:not(.dark-mode) .handle-escutcheon {
-  background:
-    linear-gradient(90deg,
-      rgba(175, 182, 200, 0.99) 0%,
-      rgba(195, 202, 220, 0.99) 20%,
-      rgba(210, 217, 235, 0.99) 50%,
-      rgba(195, 202, 220, 0.99) 80%,
-      rgba(175, 182, 200, 0.99) 100%
-    );
-  box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.2),
-    inset 0 2px 0 rgba(255, 255, 255, 0.55),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.15),
-    0 0 0 1px rgba(160, 168, 185, 0.4);
-}
-
-body:not(.dark-mode) .handle-escutcheon::before {
   background: linear-gradient(180deg,
-    rgba(215, 222, 240, 0.98) 0%,
-    rgba(195, 202, 222, 0.98) 50%,
-    rgba(185, 192, 212, 0.98) 100%
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%
   );
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-body:not(.dark-mode) .handle-keyhole {
-  background:
-    radial-gradient(
-      ellipse at 30% 30%,
-      rgba(100, 105, 120, 0.98) 0%,
-      rgba(70, 75, 90, 0.98) 50%,
-      rgba(50, 55, 68, 0.98) 100%
-    );
+/* Door handle - Light mode (minimalist bar) */
+body:not(.dark-mode) .door-handle {
+  background: linear-gradient(180deg,
+    rgba(230, 235, 250, 0.98) 0%,
+    rgba(200, 208, 228, 0.98) 50%,
+    rgba(185, 192, 215, 0.98) 100%
+  );
   box-shadow:
-    inset 0 2px 4px rgba(0, 0, 0, 0.5),
-    inset 0 -1px 2px rgba(255, 255, 255, 0.15),
-    0 1px 2px rgba(0, 0, 0, 0.2);
-}
-
-body:not(.dark-mode) .handle-lever {
-  background:
-    linear-gradient(180deg,
-      rgba(230, 235, 250, 0.99) 0%,
-      rgba(210, 218, 238, 0.99) 15%,
-      rgba(190, 198, 220, 0.99) 35%,
-      rgba(175, 183, 205, 0.99) 50%,
-      rgba(165, 173, 195, 0.99) 65%,
-      rgba(180, 188, 210, 0.99) 85%,
-      rgba(160, 168, 190, 0.99) 100%
-    );
-  box-shadow:
-    0 5px 15px rgba(0, 0, 0, 0.3),
-    0 2px 4px rgba(0, 0, 0, 0.25),
-    inset 0 2px 0 rgba(255, 255, 255, 0.6),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.15),
-    inset 0 0 0 1px rgba(200, 208, 228, 0.3);
-}
-
-body:not(.dark-mode) .lever-grip {
-  background:
-    linear-gradient(180deg,
-      rgba(220, 228, 248, 0.99) 0%,
-      rgba(200, 208, 230, 0.99) 30%,
-      rgba(185, 193, 215, 0.99) 50%,
-      rgba(175, 183, 205, 0.99) 70%,
-      rgba(165, 173, 195, 0.99) 100%
-    );
-  box-shadow:
-    inset -3px 0 6px rgba(0, 0, 0, 0.1),
-    inset 2px 0 4px rgba(255, 255, 255, 0.25),
-    inset 0 2px 0 rgba(255, 255, 255, 0.35),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.1);
-}
-
-body:not(.dark-mode) .lever-grip::after {
-  background:
-    linear-gradient(90deg,
-      rgba(195, 203, 225, 0.98) 0%,
-      rgba(220, 228, 248, 0.98) 50%,
-      rgba(195, 203, 225, 0.98) 100%
-    );
-  box-shadow:
-    inset 0 2px 0 rgba(255, 255, 255, 0.4),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.1),
-    0 2px 4px rgba(0, 0, 0, 0.15);
+    0 2px 5px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
 }
 
 body:not(.dark-mode) .display-screen {

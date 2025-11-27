@@ -620,7 +620,80 @@
   flex-direction: column;
   align-items: center;
   gap: 12px;
-  transition: transform 0.3s ease;
+  transition: transform 0.3s ease, filter 0.3s ease;
+  cursor: pointer;
+  position: relative;
+}
+
+.serum-tube-container.hovered {
+  transform: scale(1.02);
+  filter: brightness(1.1) drop-shadow(0 0 20px rgba(34, 211, 238, 0.4));
+}
+
+.serum-tube-container.hovered svg {
+  filter: drop-shadow(0 0 15px rgba(34, 211, 238, 0.5));
+}
+
+/* Serum tube tooltip */
+.serum-tube-tooltip {
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 15px);
+  transform: translateY(-50%) translateX(-10px);
+  background: rgba(15, 18, 28, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid rgba(34, 211, 238, 0.25);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.4),
+    0 0 20px rgba(34, 211, 238, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  z-index: 100;
+  width: 180px;
+}
+
+.serum-tube-tooltip.visible {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+.serum-tube-tooltip::before {
+  content: '';
+  position: absolute;
+  left: -8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 8px solid transparent;
+  border-right-color: rgba(15, 18, 28, 0.95);
+  border-left: none;
+}
+
+.serum-tube-tooltip::after {
+  content: '';
+  position: absolute;
+  left: -7px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 7px solid transparent;
+  border-right-color: rgba(34, 211, 238, 0.25);
+  border-left: none;
+  z-index: -1;
+}
+
+.tooltip-text {
+  display: block;
+  font-size: 13px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+  font-weight: 500;
+  text-align: center;
 }
 
 .serum-tube-container.celebrating {
@@ -1586,6 +1659,32 @@
 /* Tube Container Border - Light Mode */
 .dedicated-quiz-page.light-theme .tube-container {
   border-top-color: rgba(139, 92, 246, 0.1);
+}
+
+/* Serum Tube Hover - Light Mode */
+.dedicated-quiz-page.light-theme .serum-tube-container.hovered {
+  filter: brightness(1.05) drop-shadow(0 0 15px rgba(6, 182, 212, 0.3));
+}
+
+.dedicated-quiz-page.light-theme .serum-tube-tooltip {
+  background: rgba(255, 255, 255, 0.95);
+  border-color: rgba(6, 182, 212, 0.3);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 0 20px rgba(6, 182, 212, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dedicated-quiz-page.light-theme .serum-tube-tooltip::before {
+  border-right-color: rgba(255, 255, 255, 0.95);
+}
+
+.dedicated-quiz-page.light-theme .serum-tube-tooltip::after {
+  border-right-color: rgba(6, 182, 212, 0.3);
+}
+
+.dedicated-quiz-page.light-theme .tooltip-text {
+  color: #1a1a2e;
 }
 
 /* ============================================

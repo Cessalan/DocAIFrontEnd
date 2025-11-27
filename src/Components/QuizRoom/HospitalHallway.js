@@ -61,18 +61,6 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
           {/* Lower wall section */}
           <div className="wall-lower" />
 
-          {/* Metal handrail */}
-          <div className="handrail">
-            <div className="handrail-bar" />
-            {[...Array(24)].map((_, i) => (
-              <div
-                key={i}
-                className="handrail-bracket"
-                style={{ left: `${i * 4.2}%` }}
-              />
-            ))}
-          </div>
-
           {/* Premium Hospital Doors */}
           {rooms.map((roomNum, index) => (
             <div
@@ -86,17 +74,8 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
               }`}
               style={{ left: `${7 + index * 10}%` }}
             >
-              {/* Premium door frame with molding */}
+              {/* Clean door panel */}
               <div className="door-frame">
-                {/* Frame top cap */}
-                <div className="frame-cap" />
-
-                {/* Frame left pillar */}
-                <div className="frame-pillar left" />
-
-                {/* Frame right pillar */}
-                <div className="frame-pillar right" />
-
                 {/* Main door surface */}
                 <div className="door-surface">
                   {/* Vision panel (window) with wire glass */}
@@ -114,15 +93,8 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
                     <div className="push-plate-texture" />
                   </div>
 
-                  {/* Premium lever handle */}
-                  <div className="door-handle-assembly">
-                    <div className="handle-escutcheon">
-                      <div className="handle-keyhole" />
-                    </div>
-                    <div className="handle-lever">
-                      <div className="lever-grip" />
-                    </div>
-                  </div>
+                  {/* Minimalist door handle */}
+                  <div className="door-handle" />
 
                   {/* Door edge detail */}
                   <div className="door-edge" />
