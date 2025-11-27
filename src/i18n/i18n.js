@@ -174,6 +174,7 @@ const resources = {
       side: {
         chats: "Chats",
         newChat: "New chat",
+        expandSidebar: "Expand sidebar",
         usage: "Analytics",
         logout: "Logout"
       },
@@ -565,6 +566,7 @@ const resources = {
       side: {
         chats: "Discussions",
         newChat: "Nouveau chat",
+        expandSidebar: "Ouvrir le menu",
         usage: "Analytiques",
         logout: "Déconnexion"
       },

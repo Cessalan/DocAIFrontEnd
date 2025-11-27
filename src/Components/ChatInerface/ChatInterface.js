@@ -1379,7 +1379,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           return {
             ...msg,
             quizData: mergedQuizData,
-            content: `Voici votre quiz (${quizData.length} questions)`,
+            content: currentLanguage === 'fr' ? `Voici votre quiz (${quizData.length} questions)` : `Here's your quiz (${quizData.length} questions)`,
             isStreaming: false,
             timestamp: new Date()
           };
@@ -1407,7 +1407,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       role: 'assistant',
       type: 'quiz',
       quizData: mergedQuizData,
-      content: `Votre quiz (${quizData.length} questions)`,
+      content: currentLanguage === 'fr' ? `Votre quiz (${quizData.length} questions)` : `Your quiz (${quizData.length} questions)`,
       isStreaming: false,
       timestamp: new Date()
     };
@@ -2133,7 +2133,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         id: uuidv4(),
         role: "assistant",
         type: "scenario",
-        content: "Voici votre mise en situation",
+        content: currentLanguage === 'fr' ? "Voici votre mise en situation" : "Here's your scenario",
         scenarioData: scenarioResult.scenario,
         file: { name: fileName },
         timestamp: new Date()

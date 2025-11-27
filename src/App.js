@@ -3,12 +3,14 @@ import { Routes, Route } from "react-router-dom";
 
 import ChatInterface from "./Components/ChatInerface/ChatInterface";
 import SideBar from "./Components/ChatInerface/SideBar";
+import CollapsedSidebarRail from "./Components/ChatInerface/CollapsedSidebarRail";
 import Login from "./Components/Auth/Login";
 import Signup from "./Components/Auth/SignUp";
 import ForgotPassword from "./Components/Auth/ForgotPassword";
 import ProtectedRoute from "./Components/Auth/ProtectedRoute";
 import PublicQuizView from "./Components/PublicQuiz/PublicQuizView";
 import QuizRoomLanding from "./Components/QuizRoom/QuizRoomLanding";
+import DedicatedQuizPage from "./Components/QuizRoom/DedicatedQuizPage";
 import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
@@ -19,6 +21,25 @@ function ChatLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [selectedChatId, setSelectedChatId] = useState(null);
   const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
+
+  // Dark mode state for collapsed rail
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+
+  // Listen for dark mode changes from SideBar
+  useEffect(() => {
+    const checkDarkMode = () => {
+      setIsDarkMode(document.body.classList.contains('dark-mode'));
+    };
+
+    // Create observer to watch for class changes on body
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Destructure isProfileComplete from useAuth
   const authContext = useAuth();
@@ -81,16 +102,51 @@ function ChatLayout() {
     }
   };
 
+  // Handle new chat from collapsed rail
+  const handleNewChatFromRail = async () => {
+    // Import Firestore functions inline to create a new chat
+    const { collection, addDoc, serverTimestamp } = await import('firebase/firestore');
+    const { db } = await import('./Firebase/config');
+
+    if (!user) return;
+
+    const newChat = {
+      userId: user.uid,
+      title: "Chat ...",
+      description: "New conversation started.",
+      updatedAt: serverTimestamp()
+    };
+
+    try {
+      const docRef = await addDoc(collection(db, "chats"), newChat);
+      setSelectedChatId(docRef.id);
+      // Optionally open the sidebar to show the new chat
+      setSidebarOpen(true);
+    } catch (error) {
+      console.error("Error creating new chat from rail:", error);
+    }
+  };
 
   return (
     <div className="app-wrapper">
 
-      <div >
-        <button className="sidebar-toggle" onClick={toggleSidebar}>
-          {sidebarOpen ? '×' : '☰'}
-        </button>
-      </div>
+      {/* Toggle button - show on mobile always, or on desktop when sidebar is open */}
+      {(isMobile() || sidebarOpen) && (
+        <div>
+          <button className="sidebar-toggle" onClick={toggleSidebar}>
+            {sidebarOpen ? '×' : '☰'}
+          </button>
+        </div>
+      )}
 
+      {/* Collapsed sidebar rail - shown when sidebar is closed (desktop only) */}
+      {!sidebarOpen && !isMobile() && (
+        <CollapsedSidebarRail
+          onExpandSidebar={() => setSidebarOpen(true)}
+          onNewChat={handleNewChatFromRail}
+          isDarkMode={isDarkMode}
+        />
+      )}
 
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <SideBar
@@ -101,7 +157,7 @@ function ChatLayout() {
         />
       </div>
 
-      <div className={`main-content ${sidebarOpen ? 'shifted' : ''}`}>
+      <div className={`main-content ${sidebarOpen ? 'shifted' : 'rail-shifted'}`}>
         <ChatInterface
           chatId={selectedChatId}
           onChatSelected={onSelectChat}
@@ -126,6 +182,9 @@ function App() {
 
       {/* Quiz Room Landing - Public */}
       <Route path="/start" element={<QuizRoomLanding />} />
+
+      {/* Dedicated Quiz Page - Public (can be accessed with quiz data) */}
+      <Route path="/quiz-room" element={<DedicatedQuizPage />} />
 
       {/* Protected Chat Layout */}
       <Route

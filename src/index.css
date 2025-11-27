@@ -522,9 +522,18 @@ body.dark-mode .app-wrapper {
   margin-left: 320px;
 }
 
+/* Shifted for collapsed sidebar rail (desktop only) */
+.main-content.rail-shifted {
+  margin-left: 60px;
+}
+
 /* Prevent content jump on mobile */
 @media (max-width: 768px) {
   .main-content.shifted {
+    margin-left: 0;
+  }
+
+  .main-content.rail-shifted {
     margin-left: 0;
   }
 }
