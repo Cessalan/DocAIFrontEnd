@@ -489,6 +489,17 @@ export const setupGameMessageListener = (chatId, handlers = {}) => {
         }
         break;
 
+      case "game_loading_documents":
+        if (handlers.onGenerating) {
+          // Reuse onGenerating to show "Loading documents..." message
+          handlers.onGenerating({
+            current: 0,
+            total: 0,
+            message: data.message || "Loading your documents..."
+          });
+        }
+        break;
+
       case "game_generating":
         if (handlers.onGenerating) {
           handlers.onGenerating({

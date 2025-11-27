@@ -4,7 +4,8 @@
       "Bash(npm run build:*)",
       "Bash(npm start)",
       "Bash(pgrep:*)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(findstr:*)"
     ],
     "deny": [],
     "ask": []

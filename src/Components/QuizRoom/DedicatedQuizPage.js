@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import HospitalHallway from './HospitalHallway';
 import SerumTube from './SerumTube';
+import NurseQuizMascot from './NurseQuizMascot';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import './DedicatedQuizPage.css';
 
@@ -173,6 +174,7 @@ function DedicatedQuizPage() {
   // Game mode state (streaming questions)
   // ------------------------------------------
   const [streamedQuestions, setStreamedQuestions] = useState([]);
+  const [expectedQuestionCount, setExpectedQuestionCount] = useState(5); // Default, updated from server
   const [isLoading, setIsLoading] = useState(isGameMode); // Loading until first question arrives
   const [loadingMessage, setLoadingMessage] = useState('Connecting...');
   const [gameError, setGameError] = useState(null);
@@ -204,8 +206,10 @@ function DedicatedQuizPage() {
   // ------------------------------------------
   const quizData = isGameMode ? streamedQuestions : staticQuizData;
   const currentQuestion = quizData[currentQuestionIndex];
+  // Use expectedQuestionCount for stable UI during streaming
+  // Only switch to actual length after all questions are received
   const totalQuestions = isGameMode
-    ? (streamedQuestions.length > 0 ? streamedQuestions.length : 5) // Estimate 5 if still loading
+    ? expectedQuestionCount
     : staticQuizData.length;
 
   // Calculate correct answers
@@ -237,17 +241,6 @@ function DedicatedQuizPage() {
     // Only run in game mode with a valid chatId
     if (!isGameMode || !chatId) return;
 
-    // Check if this is a page refresh (session already exists)
-    // If so, don't start the game - the refresh protection effect will handle redirect
-    if (fromUpload) {
-      const sessionKey = `quiz_session_${chatId}`;
-      const existingSession = sessionStorage.getItem(sessionKey);
-      if (existingSession) {
-        console.log('🔄 Refresh detected in WebSocket effect - skipping');
-        return;
-      }
-    }
-
     let isMounted = true;
 
     const startGameQuiz = async () => {
@@ -271,10 +264,19 @@ function DedicatedQuizPage() {
             setSerumRequired(required);
           },
 
-          // Called while questions are being generated
-          onGenerating: ({ current, total }) => {
+          // Called while questions are being generated (or loading documents)
+          onGenerating: ({ current, total, message }) => {
             if (!isMounted) return;
-            setLoadingMessage(`Generating question ${current} of ${total}...`);
+            // Use custom message if provided (e.g., "Loading your documents...")
+            if (message) {
+              setLoadingMessage(message);
+            } else if (current && total) {
+              setLoadingMessage(`Generating question ${current} of ${total}...`);
+              // Update expected count from server (prevents layout shift)
+              if (total > 0) {
+                setExpectedQuestionCount(total);
+              }
+            }
           },
 
           // Called when a question is ready
@@ -292,9 +294,13 @@ function DedicatedQuizPage() {
           },
 
           // Called when all questions are generated
-          onQuizComplete: ({ totalQuestions }) => {
+          onQuizComplete: ({ totalQuestions: finalCount }) => {
             if (!isMounted) return;
-            console.log(`🎮 Quiz complete! ${totalQuestions} questions received`);
+            console.log(`🎮 Quiz complete! ${finalCount} questions received`);
+            // Finalize the expected count to match actual received
+            if (finalCount > 0) {
+              setExpectedQuestionCount(finalCount);
+            }
           },
 
           // Called if child is saved (enough serum)
@@ -524,35 +530,36 @@ function DedicatedQuizPage() {
           <ThemeToggle />
         </div>
 
-        {/* Loading content */}
+        {/* Loading content - Premium design with mascot */}
         <div className="loading-overlay">
-          <div className="loading-content glassmorphic">
-            {/* Animated serum tube */}
-            <div className="loading-serum">
-              <SerumTube
-                correctCount={0}
-                totalQuestions={5}
-                size={120}
-              />
+          <div className="loading-content-premium">
+            {/* Mascot with floating animation */}
+            <div className="loading-mascot">
+              <NurseQuizMascot size={140} isExcited={true} />
             </div>
 
-            {/* Loading message */}
-            <div className="loading-text">
-              <h2 className="loading-title">Preparing Your Quiz</h2>
-              <p className="loading-message">{loadingMessage}</p>
+            {/* Loading text section */}
+            <div className="loading-text-section">
+              <h2 className="loading-title-premium">Preparing Your Quiz</h2>
+              <p className="loading-status">{loadingMessage}</p>
+
+              {/* Premium progress indicator */}
+              <div className="loading-progress-bar">
+                <div className="loading-progress-glow"></div>
+              </div>
             </div>
 
-            {/* Animated dots */}
-            <div className="loading-dots">
-              <span className="dot"></span>
-              <span className="dot"></span>
-              <span className="dot"></span>
+            {/* Mission briefing */}
+            <div className="loading-mission">
+              <div className="mission-icon">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+                </svg>
+              </div>
+              <p className="mission-text">
+                A child in Room 217 needs your help. Answer correctly to collect serum and save them.
+              </p>
             </div>
-
-            {/* Tip while waiting */}
-            <p className="loading-tip">
-              A child in Room 217 needs your help. Each correct answer adds serum to save them.
-            </p>
           </div>
         </div>
       </div>
