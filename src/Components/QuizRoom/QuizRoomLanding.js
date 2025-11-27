@@ -600,7 +600,7 @@ const QuizRoomLanding = () => {
               </div>
               <div className="hero-feature-text">
                 <span className="hero-feature-title">{t('landing.studyNCLEX', 'NCLEX Prep')}</span>
-                <span className="hero-feature-subtitle">{t('landing.nclexSubtitle', '10,000+ Next-Gen questions & rationales')}</span>
+                <span className="hero-feature-subtitle">{t('landing.nclexSubtitle', 'AI-generated questions • Progress tracking')}</span>
               </div>
             </button>
 

@@ -1009,5 +1009,61 @@
             <p>2025 NurseQuizAI - The #1 AI Nursing Study App for NCLEX & OIIQ Preparation</p>
         </footer>
     </div>
+
+    <script>
+        // Show SEO content only on actual landing page (not logged-in chat)
+        (function() {
+            var seoContent = document.getElementById('seo-fallback');
+            if (!seoContent) return;
+
+            function hideSEO() {
+                seoContent.style.position = 'absolute';
+                seoContent.style.left = '-9999px';
+                seoContent.style.top = '-9999px';
+                seoContent.style.width = '1px';
+                seoContent.style.height = '1px';
+                seoContent.style.overflow = 'hidden';
+            }
+
+            function showSEO() {
+                seoContent.style.position = '';
+                seoContent.style.left = '';
+                seoContent.style.top = '';
+                seoContent.style.width = '';
+                seoContent.style.height = '';
+                seoContent.style.overflow = '';
+            }
+
+            function isLandingPageVisible() {
+                // Check if the landing page component is rendered
+                // Landing page has .quiz-landing-page class
+                return document.querySelector('.quiz-landing-page') !== null;
+            }
+
+            function updateVisibility() {
+                if (isLandingPageVisible()) {
+                    showSEO();
+                } else {
+                    hideSEO();
+                }
+            }
+
+            // Initially hide - will show once landing page is detected
+            hideSEO();
+
+            // Watch for DOM changes to detect landing page
+            var observer = new MutationObserver(function() {
+                updateVisibility();
+            });
+
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true
+            });
+
+            // Also check periodically as backup
+            setInterval(updateVisibility, 500);
+        })();
+    </script>
 </body>
 </html>
