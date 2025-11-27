@@ -1479,6 +1479,495 @@ body:not(.dark-mode) .page-exit-flash {
   margin-top: -4px;
 }
 
+/* Most Popular Badge - BRIGHT & ATTENTION-GRABBING */
+.popular-badge {
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%);
+  color: #000000;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 5px 12px;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  box-shadow:
+    0 0 12px rgba(251, 191, 36, 0.8),
+    0 0 24px rgba(251, 191, 36, 0.4),
+    0 4px 12px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  animation: badgePulseGlow 1.5s ease-in-out infinite;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+@keyframes badgePulseGlow {
+  0%, 100% {
+    box-shadow:
+      0 0 12px rgba(251, 191, 36, 0.8),
+      0 0 24px rgba(251, 191, 36, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.3);
+    transform: scale(1);
+  }
+  50% {
+    box-shadow:
+      0 0 20px rgba(251, 191, 36, 1),
+      0 0 40px rgba(251, 191, 36, 0.6),
+      0 6px 16px rgba(0, 0, 0, 0.3);
+    transform: scale(1.05);
+  }
+}
+
+/* Light mode badge */
+body:not(.dark-mode) .popular-badge {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ea580c 100%);
+  color: #000000;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+}
+
+/* Make NCLEX card slightly highlighted */
+.nclex-card {
+  border-color: rgba(245, 158, 11, 0.3) !important;
+}
+
+.nclex-card:hover {
+  border-color: rgba(245, 158, 11, 0.5) !important;
+}
+
+/* ============================================
+   HERO CTA SECTION
+   Upload button + paste notes area
+   ============================================ */
+.hero-cta-section {
+  width: 100%;
+  max-width: 500px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeInUp 0.6s ease-out 0.2s both;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  width: 100%;
+  padding: 22px 40px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  color: #ffffff;
+  font-size: 18px;
+  font-weight: 600;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.4);
+}
+
+.hero-upload-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 30px rgba(139, 92, 246, 0.5);
+}
+
+.hero-upload-btn:active,
+.hero-upload-btn.pressed {
+  transform: translateY(0) scale(0.98);
+}
+
+.upload-btn-icon {
+  width: 26px;
+  height: 26px;
+}
+
+/* ============================================
+   HERO FEATURES - Inline compact cards
+   ============================================ */
+.hero-features {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 28px;
+  flex-wrap: wrap;
+  animation: fadeInUp 0.6s ease-out 0.3s both;
+}
+
+.hero-feature-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 22px;
+  background: rgba(30, 30, 38, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.hero-feature-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.15);
+}
+
+.hero-feature-card:active,
+.hero-feature-card.pressed {
+  transform: translateY(0) scale(0.98);
+}
+
+.hero-feature-card .popular-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  font-size: 8px;
+  padding: 3px 8px;
+  border-radius: 8px;
+}
+
+.hero-feature-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: rgba(139, 92, 246, 0.15);
+  border-radius: 10px;
+  color: #a78bfa;
+}
+
+.hero-feature-title {
+  font-size: 15px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.hero-feature-text {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.hero-feature-subtitle {
+  font-size: 10px;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.6);
+  white-space: nowrap;
+}
+
+body:not(.dark-mode) .hero-feature-subtitle {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* Feature card color variants */
+.hero-feature-card.nclex-card {
+  border-color: rgba(245, 158, 11, 0.25);
+  /* Make NCLEX card ~18% wider */
+  padding-left: 28px;
+  padding-right: 28px;
+}
+
+.hero-feature-card.nclex-card:hover {
+  border-color: rgba(245, 158, 11, 0.5);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.1);
+}
+
+.hero-feature-card.nclex-card .hero-feature-icon {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.hero-feature-card.tutor-card .hero-feature-icon {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.hero-feature-card.challenge-card .hero-feature-icon {
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+}
+
+/* Light mode */
+body:not(.dark-mode) .hero-feature-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+body:not(.dark-mode) .hero-feature-card:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+  box-shadow: 0 8px 24px rgba(139, 92, 246, 0.1);
+}
+
+body:not(.dark-mode) .hero-feature-card.nclex-card {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+body:not(.dark-mode) .hero-feature-card.nclex-card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+/* Mobile responsiveness */
+@media (max-width: 600px) {
+  .hero-features {
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .hero-feature-card {
+    width: 100%;
+    max-width: 280px;
+    justify-content: center;
+  }
+}
+
+/* Divider */
+.hero-divider {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.divider-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+}
+
+.divider-text {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: lowercase;
+}
+
+/* Paste Area */
+.hero-paste-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.paste-textarea {
+  width: 100%;
+  padding: 16px;
+  background: rgba(30, 30, 38, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 14px;
+  font-family: inherit;
+  resize: none;
+  transition: all 0.3s ease;
+}
+
+.paste-textarea::placeholder {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+.paste-textarea:focus {
+  outline: none;
+  border-color: rgba(139, 92, 246, 0.5);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.paste-generate-btn {
+  align-self: flex-end;
+  padding: 10px 20px;
+  background: rgba(139, 92, 246, 0.15);
+  color: #a78bfa;
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.paste-generate-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* Light mode adjustments */
+body:not(.dark-mode) .paste-textarea {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: #1e293b;
+}
+
+body:not(.dark-mode) .paste-textarea::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+body:not(.dark-mode) .divider-line {
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.15), transparent);
+}
+
+body:not(.dark-mode) .divider-text {
+  color: rgba(0, 0, 0, 0.5);
+}
+
+/* ============================================
+   FEATURES SECTION
+   NCLEX Prep, Talk to Tutor, Daily Challenge
+   ============================================ */
+.features-section {
+  padding: 80px 24px;
+  background: linear-gradient(180deg, transparent 0%, rgba(139, 92, 246, 0.03) 100%);
+}
+
+.features-container {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.features-title {
+  text-align: center;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin-bottom: 40px;
+}
+
+body:not(.dark-mode) .features-title {
+  color: #1e293b;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+}
+
+.feature-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 32px 24px;
+  background: linear-gradient(145deg, rgba(38, 38, 46, 0.9) 0%, rgba(32, 32, 40, 0.95) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.15);
+}
+
+.feature-card:active,
+.feature-card.pressed {
+  transform: translateY(0) scale(0.98);
+}
+
+.feature-card .popular-badge {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+}
+
+.feature-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-radius: 16px;
+  margin-bottom: 16px;
+  color: #a78bfa;
+}
+
+.feature-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  margin: 0 0 8px 0;
+}
+
+.feature-description {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.6);
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Light mode */
+body:not(.dark-mode) .feature-card {
+  background: rgba(255, 255, 255, 0.9);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body:not(.dark-mode) .feature-card:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+  box-shadow: 0 12px 40px rgba(139, 92, 246, 0.1);
+}
+
+body:not(.dark-mode) .feature-title {
+  color: #1e293b;
+}
+
+body:not(.dark-mode) .feature-description {
+  color: #64748b;
+}
+
+body:not(.dark-mode) .feature-icon {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%);
+  color: #7c3aed;
+}
+
+/* Feature card specific colors */
+.feature-card.nclex-card {
+  border-color: rgba(245, 158, 11, 0.2);
+}
+
+.feature-card.nclex-card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+  box-shadow: 0 12px 40px rgba(245, 158, 11, 0.1);
+}
+
+.feature-card.nclex-card .feature-icon {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+  color: #f59e0b;
+}
+
+.feature-card.tutor-card .feature-icon {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+  color: #3b82f6;
+}
+
+.feature-card.challenge-card .feature-icon {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+  color: #ef4444;
+}
+
 .landing-action-card {
   display: flex;
   flex-direction: column;
@@ -1817,8 +2306,9 @@ body:not(.dark-mode) .page-exit-flash {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  padding: 12px 0;
+  gap: 12px;
+  padding: 8px 0;
+  margin-top: 20px;
   animation: badgesFadeIn 0.5s ease 0.35s both;
 }
 
@@ -1836,8 +2326,8 @@ body:not(.dark-mode) .page-exit-flash {
 .social-proof-badge {
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 10px 18px;
+  gap: 8px;
+  padding: 8px 14px;
   background: rgba(139, 92, 246, 0.08);
   border-radius: 100px;
   border: 1px solid rgba(139, 92, 246, 0.15);
@@ -1854,8 +2344,8 @@ body:not(.dark-mode) .page-exit-flash {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 22px;
   background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%);
   border-radius: 50%;
   color: #a78bfa;
@@ -1870,8 +2360,16 @@ body:not(.dark-mode) .page-exit-flash {
   color: #fbbf24;
 }
 
+.badge-icon.heart-nurses-icon {
+  width: auto;
+  height: auto;
+  background: none;
+  border-radius: 0;
+  gap: 4px;
+}
+
 .badge-text {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 600;
   color: rgba(255, 255, 255, 0.7);
   letter-spacing: 0.2px;
