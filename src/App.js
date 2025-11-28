@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Routes, Route } from "react-router-dom";
+import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 
 import ChatInterface from "./Components/ChatInerface/ChatInterface";
 import SideBar from "./Components/ChatInerface/SideBar";
@@ -18,9 +18,19 @@ import OnboardingModal from "./Components/Onboarding/OnboardingModal";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
 
 function ChatLayout() {
+  const { chatId: urlChatId } = useParams(); // Get chatId from URL
+  const navigate = useNavigate();
+
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
-  const [selectedChatId, setSelectedChatId] = useState(null);
+  const [selectedChatId, setSelectedChatId] = useState(urlChatId || null);
   const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
+
+  // Sync selectedChatId with URL param when it changes
+  useEffect(() => {
+    if (urlChatId && urlChatId !== selectedChatId) {
+      setSelectedChatId(urlChatId);
+    }
+  }, [urlChatId, selectedChatId]);
 
   // Dark mode state for collapsed rail
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -97,6 +107,11 @@ function ChatLayout() {
 
     setSelectedChatId(chatId);
 
+    // Update URL to reflect the selected chat
+    if (chatId) {
+      navigate(`/c/${chatId}`);
+    }
+
     if (isMobile()) {
       toggleSidebar();
     }
@@ -120,6 +135,8 @@ function ChatLayout() {
     try {
       const docRef = await addDoc(collection(db, "chats"), newChat);
       setSelectedChatId(docRef.id);
+      // Navigate to the new chat URL
+      navigate(`/c/${docRef.id}`);
       // Optionally open the sidebar to show the new chat
       setSidebarOpen(true);
     } catch (error) {
@@ -180,16 +197,27 @@ function App() {
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/quiz/:shareId" element={<PublicQuizView />} />
 
-      {/* Quiz Room Landing - Public */}
+      {/* Home / Landing Page - Public */}
+      <Route path="/" element={<QuizRoomLanding />} />
       <Route path="/start" element={<QuizRoomLanding />} />
 
       {/* Dedicated Quiz Page - Public (can be accessed with quiz data) */}
       <Route path="/quiz-room" element={<DedicatedQuizPage />} />
       <Route path="/quiz/play" element={<DedicatedQuizPage />} />
 
-      {/* Protected Chat Layout */}
+      {/* Protected Chat Layout - with chat ID in URL */}
       <Route
-        path="/*"
+        path="/c/:chatId"
+        element={
+          <ProtectedRoute>
+            <ChatLayout />
+          </ProtectedRoute>
+        }
+      />
+
+      {/* Protected Chat Layout - without specific chat (new chat view) */}
+      <Route
+        path="/c"
         element={
           <ProtectedRoute>
             <ChatLayout />

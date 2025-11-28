@@ -300,11 +300,10 @@
         }
 
         /* ============================================
-           STEPS LIST
+           STEPS LIST - WITH ICONS
            ============================================ */
         .seo-steps {
             list-style: none;
-            counter-reset: step-counter;
             display: flex;
             flex-direction: column;
             gap: 20px;
@@ -312,107 +311,212 @@
         }
 
         .seo-steps li {
-            counter-increment: step-counter;
             display: flex;
             align-items: flex-start;
-            gap: 20px;
-            padding: 24px;
-            background: var(--seo-bg-card);
-            border: 1px solid var(--seo-border-subtle);
+            gap: 24px;
+            padding: 28px 32px;
+            background: linear-gradient(145deg, rgba(25, 25, 32, 0.9) 0%, rgba(20, 20, 26, 0.95) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             border-radius: var(--seo-radius-lg);
             transition: all var(--seo-transition);
         }
 
         .seo-steps li:hover {
-            border-color: var(--seo-border-accent);
-            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.3);
+            box-shadow: 0 8px 32px rgba(139, 92, 246, 0.12);
+            transform: translateY(-2px);
         }
 
-        .seo-steps li::before {
-            content: counter(step-counter);
+        .step-icon {
             flex-shrink: 0;
-            width: 40px;
-            height: 40px;
+            width: 56px;
+            height: 56px;
             background: linear-gradient(135deg, var(--seo-primary) 0%, var(--seo-primary-dark) 100%);
-            border-radius: 50%;
+            border-radius: 16px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 1.125rem;
+            box-shadow: 0 4px 16px var(--seo-primary-glow);
+        }
+
+        .step-icon svg {
+            width: 28px;
+            height: 28px;
             color: white;
-            box-shadow: 0 4px 12px var(--seo-primary-glow);
+        }
+
+        .seo-steps li > div:last-child {
+            flex: 1;
+            padding-top: 4px;
         }
 
         .seo-steps li strong {
             color: var(--seo-text-primary);
             display: block;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
+            font-size: 1.125rem;
+        }
+
+        .seo-steps li > div:last-child {
+            color: var(--seo-text-secondary);
+            font-size: 0.9375rem;
+            line-height: 1.6;
         }
 
         /* ============================================
-           COMPARISON TABLE
+           COMPARISON TABLE - CLEAN PREMIUM DESIGN
            ============================================ */
         .seo-table-wrapper {
             overflow-x: auto;
             margin: 32px 0;
             border-radius: var(--seo-radius-lg);
-            border: 1px solid var(--seo-border-subtle);
-            background: var(--seo-bg-card);
+            background: linear-gradient(145deg, rgba(20, 20, 28, 0.9) 0%, rgba(15, 15, 20, 0.95) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.15);
+            box-shadow:
+                0 4px 24px rgba(0, 0, 0, 0.3),
+                inset 0 1px 0 rgba(255, 255, 255, 0.03);
         }
 
         .seo-table {
             width: 100%;
             border-collapse: collapse;
-            font-size: 0.875rem;
+            font-size: 0.9375rem;
         }
 
         .seo-table th,
         .seo-table td {
-            padding: 16px 20px;
+            padding: 20px 28px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .seo-table th:first-child,
+        .seo-table td:first-child {
             text-align: left;
-            border-bottom: 1px solid var(--seo-border-subtle);
+            padding-left: 32px;
         }
 
         .seo-table th {
-            background: rgba(139, 92, 246, 0.1);
-            color: var(--seo-text-primary);
+            background: rgba(139, 92, 246, 0.08);
+            color: rgba(255, 255, 255, 0.6);
             font-weight: 600;
-            font-size: 0.8125rem;
+            font-size: 0.6875rem;
             text-transform: uppercase;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.12em;
+            padding: 16px 28px;
         }
 
-        .seo-table th:first-child {
-            border-radius: var(--seo-radius-lg) 0 0 0;
+        /* Featured column - NurseQuizAI with gradient highlight */
+        .seo-table th.featured-col {
+            background: linear-gradient(180deg, rgba(139, 92, 246, 0.2) 0%, rgba(139, 92, 246, 0.08) 100%);
+            color: var(--seo-primary-light);
+            position: relative;
         }
 
-        .seo-table th:last-child {
-            border-radius: 0 var(--seo-radius-lg) 0 0;
+        .seo-table td.featured-col {
+            background: rgba(139, 92, 246, 0.04);
+            border-left: 1px solid rgba(139, 92, 246, 0.1);
+            border-right: 1px solid rgba(139, 92, 246, 0.1);
+        }
+
+        .seo-table tbody tr:first-child td.featured-col {
+            border-top: none;
         }
 
         .seo-table td {
-            color: var(--seo-text-secondary);
+            color: rgba(255, 255, 255, 0.7);
         }
 
-        .seo-table tr:last-child td {
+        .seo-table td:first-child {
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 500;
+        }
+
+        .seo-table tbody tr:last-child td {
             border-bottom: none;
         }
 
-        .seo-table tr:hover td {
+        .seo-table tbody tr {
+            transition: background 0.2s ease;
+        }
+
+        .seo-table tbody tr:hover {
             background: rgba(255, 255, 255, 0.02);
         }
 
+        .seo-table tbody tr:hover td.featured-col {
+            background: rgba(139, 92, 246, 0.08);
+        }
+
+        /* Check indicator - clean green checkmark */
         .seo-check {
-            color: var(--seo-success);
+            color: #34d399;
             font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
 
+        .seo-check::before {
+            content: '✓';
+            font-size: 0.875rem;
+            font-weight: 700;
+        }
+
+        /* Cross indicator - subtle X */
         .seo-cross {
-            color: var(--seo-text-muted);
+            color: rgba(255, 255, 255, 0.35);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
 
+        .seo-cross::before {
+            content: '✗';
+            font-size: 0.875rem;
+        }
+
+        /* Price highlight */
         .seo-highlight {
+            color: #a78bfa;
+            font-weight: 700;
+            font-size: 1.125rem;
+        }
+
+        /* Competitor pricing - muted */
+        .seo-competitor-price {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 0.875rem;
+        }
+
+        /* Result callout - clean card */
+        .seo-table-result {
+            margin-top: 28px;
+            padding: 24px 32px;
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 100%);
+            border: 1px solid rgba(139, 92, 246, 0.2);
+            border-radius: var(--seo-radius-lg);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .seo-table-result::before {
+            content: '💡';
+            font-size: 1.75rem;
+            flex-shrink: 0;
+        }
+
+        .seo-table-result p {
+            margin: 0;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1.0625rem;
+            line-height: 1.5;
+        }
+
+        .seo-table-result strong {
             color: var(--seo-primary-light);
             font-weight: 600;
         }
@@ -593,6 +697,19 @@
             .seo-steps li {
                 flex-direction: column;
                 gap: 16px;
+                padding: 24px;
+                align-items: center;
+                text-align: center;
+            }
+
+            .step-icon {
+                width: 64px;
+                height: 64px;
+            }
+
+            .step-icon svg {
+                width: 32px;
+                height: 32px;
             }
 
             .seo-table {
@@ -602,6 +719,12 @@
             .seo-table th,
             .seo-table td {
                 padding: 12px 14px;
+            }
+
+            .seo-table-result {
+                flex-direction: column;
+                text-align: center;
+                gap: 12px;
             }
 
             .seo-pricing-cards {
@@ -687,7 +810,7 @@
         }
 
         body:not(.dark-mode) .seo-steps li {
-            background: rgba(255, 255, 255, 0.8);
+            background: #ffffff;
             border-color: rgba(0, 0, 0, 0.08);
         }
 
@@ -700,14 +823,28 @@
             color: #1e293b;
         }
 
+        body:not(.dark-mode) .seo-steps li > div:last-child {
+            color: #475569;
+        }
+
+        body:not(.dark-mode) .step-icon {
+            box-shadow: 0 4px 16px rgba(139, 92, 246, 0.25);
+        }
+
         body:not(.dark-mode) .seo-table-wrapper {
-            background: rgba(255, 255, 255, 0.8);
+            background: #ffffff;
             border-color: rgba(0, 0, 0, 0.08);
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
         }
 
         body:not(.dark-mode) .seo-table th {
-            background: rgba(139, 92, 246, 0.1);
-            color: #1e293b;
+            background: #f8fafc;
+            color: #64748b;
+        }
+
+        body:not(.dark-mode) .seo-table th.featured-col {
+            background: linear-gradient(180deg, rgba(139, 92, 246, 0.12) 0%, rgba(139, 92, 246, 0.04) 100%);
+            color: #7c3aed;
         }
 
         body:not(.dark-mode) .seo-table td {
@@ -715,8 +852,22 @@
             border-bottom-color: rgba(0, 0, 0, 0.06);
         }
 
-        body:not(.dark-mode) .seo-table tr:hover td {
+        body:not(.dark-mode) .seo-table td:first-child {
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-table td.featured-col {
             background: rgba(139, 92, 246, 0.03);
+            border-left-color: rgba(139, 92, 246, 0.08);
+            border-right-color: rgba(139, 92, 246, 0.08);
+        }
+
+        body:not(.dark-mode) .seo-table tr:hover td {
+            background: rgba(0, 0, 0, 0.02);
+        }
+
+        body:not(.dark-mode) .seo-table tr:hover td.featured-col {
+            background: rgba(139, 92, 246, 0.06);
         }
 
         body:not(.dark-mode) .seo-check {
@@ -728,6 +879,23 @@
         }
 
         body:not(.dark-mode) .seo-highlight {
+            color: #7c3aed;
+        }
+
+        body:not(.dark-mode) .seo-competitor-price {
+            color: #94a3b8;
+        }
+
+        body:not(.dark-mode) .seo-table-result {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.08) 0%, rgba(139, 92, 246, 0.02) 100%);
+            border-color: rgba(139, 92, 246, 0.15);
+        }
+
+        body:not(.dark-mode) .seo-table-result p {
+            color: #1e293b;
+        }
+
+        body:not(.dark-mode) .seo-table-result strong {
             color: #7c3aed;
         }
 
@@ -834,18 +1002,39 @@
             <h2 class="seo-h2">How NurseQuizAI Works</h2>
             <ol class="seo-steps">
                 <li>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <polyline points="17 8 12 3 7 8"/>
+                            <line x1="12" y1="3" x2="12" y2="15"/>
+                        </svg>
+                    </div>
                     <div>
                         <strong>Upload Your Materials</strong>
                         Upload your nursing notes, PDFs, lecture slides, or any study material you have.
                     </div>
                 </li>
                 <li>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2a4 4 0 0 1 4 4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2 4 4 0 0 1 4-4z"/>
+                            <path d="M8 8v10c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8"/>
+                            <path d="M9 12h6"/>
+                            <path d="M9 16h6"/>
+                        </svg>
+                    </div>
                     <div>
                         <strong>AI Generates Questions</strong>
                         Our AI analyzes your content and creates NCLEX-style questions, flashcards, and summaries in under 15 seconds.
                     </div>
                 </li>
                 <li>
+                    <div class="step-icon">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                            <polyline points="22 4 12 14.01 9 11.01"/>
+                        </svg>
+                    </div>
                     <div>
                         <strong>Study Smarter, Pass Faster</strong>
                         Use active recall and spaced repetition to lock in knowledge. Track your progress and focus on weak areas.
@@ -875,7 +1064,7 @@
                     <thead>
                         <tr>
                             <th>Feature</th>
-                            <th>NurseQuizAI</th>
+                            <th class="featured-col">NurseQuizAI</th>
                             <th>UWorld</th>
                             <th>Archer</th>
                             <th>Quizlet</th>
@@ -884,45 +1073,45 @@
                     <tbody>
                         <tr>
                             <td>Turn notes/PDFs into quizzes</td>
-                            <td class="seo-check">Yes</td>
-                            <td class="seo-cross">No</td>
-                            <td class="seo-cross">No</td>
-                            <td class="seo-cross">No</td>
+                            <td class="featured-col"><span class="seo-check">Yes</span></td>
+                            <td><span class="seo-cross">No</span></td>
+                            <td><span class="seo-cross">No</span></td>
+                            <td><span class="seo-cross">No</span></td>
                         </tr>
                         <tr>
                             <td>Price per month</td>
-                            <td class="seo-highlight">$9.99</td>
-                            <td>$139+</td>
-                            <td>$89</td>
-                            <td>Free (manual)</td>
+                            <td class="featured-col"><span class="seo-highlight">$9.99</span></td>
+                            <td class="seo-competitor-price">$139+</td>
+                            <td class="seo-competitor-price">$89</td>
+                            <td class="seo-competitor-price">Free (manual)</td>
                         </tr>
                         <tr>
                             <td>AI explanations & rationales</td>
-                            <td class="seo-check">Unlimited</td>
+                            <td class="featured-col"><span class="seo-check">Unlimited</span></td>
                             <td>Limited</td>
                             <td>Limited</td>
-                            <td class="seo-cross">No</td>
+                            <td><span class="seo-cross">No</span></td>
                         </tr>
                         <tr>
                             <td>Spaced repetition built-in</td>
-                            <td class="seo-check">Yes</td>
-                            <td class="seo-cross">No</td>
-                            <td class="seo-cross">No</td>
-                            <td class="seo-check">Manual</td>
+                            <td class="featured-col"><span class="seo-check">Yes</span></td>
+                            <td><span class="seo-cross">No</span></td>
+                            <td><span class="seo-cross">No</span></td>
+                            <td>Manual</td>
                         </tr>
                         <tr>
                             <td>24/7 AI Tutor Chat</td>
-                            <td class="seo-check">Yes</td>
-                            <td class="seo-cross">No</td>
-                            <td class="seo-cross">No</td>
-                            <td class="seo-cross">No</td>
+                            <td class="featured-col"><span class="seo-check">Yes</span></td>
+                            <td><span class="seo-cross">No</span></td>
+                            <td><span class="seo-cross">No</span></td>
+                            <td><span class="seo-cross">No</span></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
-            <p class="seo-p">
-                <strong>Result:</strong> Students who switch to NurseQuizAI save $100-$400 and 15-20 hours/week while scoring higher.
-            </p>
+            <div class="seo-table-result">
+                <p><strong>Result:</strong> Students who switch to NurseQuizAI save $100-$400 and 15-20 hours/week while scoring higher.</p>
+            </div>
         </section>
 
         <section class="seo-section">

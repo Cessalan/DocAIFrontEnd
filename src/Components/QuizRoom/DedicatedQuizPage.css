@@ -2462,3 +2462,231 @@
     width: 100%;
   }
 }
+
+/* ============================================
+   LOGIN PROMPT MODAL
+   Shown when anonymous user tries to answer
+   ============================================ */
+
+.login-prompt-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.login-prompt-modal {
+  position: relative;
+  max-width: 420px;
+  width: 100%;
+  padding: 40px 32px;
+  border-radius: 24px;
+  text-align: center;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.login-prompt-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.login-prompt-close:hover {
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.login-prompt-mascot {
+  margin-bottom: 20px;
+}
+
+.login-prompt-title {
+  font-size: 24px;
+  font-weight: 700;
+  color: #fff;
+  margin: 0 0 12px 0;
+  letter-spacing: -0.02em;
+}
+
+.login-prompt-message {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.login-prompt-benefits {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 28px 0;
+  text-align: left;
+}
+
+.login-prompt-benefits li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.85);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.login-prompt-benefits li:last-child {
+  border-bottom: none;
+}
+
+.login-prompt-benefits li svg {
+  flex-shrink: 0;
+  color: #22d3ee;
+}
+
+.login-prompt-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-prompt-btn {
+  width: 100%;
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.login-prompt-btn.primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #06b6d4 100%);
+  color: #fff;
+  box-shadow: 0 4px 20px rgba(139, 92, 246, 0.3);
+}
+
+.login-prompt-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 30px rgba(139, 92, 246, 0.4);
+}
+
+.login-prompt-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.login-prompt-btn.secondary:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+/* Light theme adjustments */
+.light-theme .login-prompt-overlay {
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.light-theme .login-prompt-modal {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+}
+
+.light-theme .login-prompt-close {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.5);
+}
+
+.light-theme .login-prompt-close:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.8);
+}
+
+.light-theme .login-prompt-title {
+  color: #1a1a2e;
+}
+
+.light-theme .login-prompt-message {
+  color: rgba(0, 0, 0, 0.6);
+}
+
+.light-theme .login-prompt-benefits li {
+  color: rgba(0, 0, 0, 0.75);
+  border-bottom-color: rgba(0, 0, 0, 0.08);
+}
+
+.light-theme .login-prompt-benefits li svg {
+  color: #8b5cf6;
+}
+
+.light-theme .login-prompt-btn.secondary {
+  background: rgba(0, 0, 0, 0.05);
+  color: rgba(0, 0, 0, 0.75);
+  border-color: rgba(0, 0, 0, 0.1);
+}
+
+.light-theme .login-prompt-btn.secondary:hover {
+  background: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.9);
+}
+
+/* Mobile responsive for login prompt */
+@media (max-width: 480px) {
+  .login-prompt-modal {
+    padding: 32px 24px;
+    margin: 16px;
+  }
+
+  .login-prompt-title {
+    font-size: 20px;
+  }
+
+  .login-prompt-message {
+    font-size: 14px;
+  }
+
+  .login-prompt-benefits li {
+    font-size: 13px;
+  }
+}

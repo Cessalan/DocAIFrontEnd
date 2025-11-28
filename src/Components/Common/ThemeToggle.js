@@ -3,12 +3,28 @@ import './ThemeToggle.css';
 
 /**
  * Custom hook to detect and toggle dark mode
- * Uses MutationObserver to detect body.dark-mode class changes
+ * Uses localStorage for persistence and MutationObserver for cross-component sync
  */
 export function useDarkMode() {
   const [isDark, setIsDark] = useState(() => {
+    // First check localStorage for saved preference
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme !== null) {
+      return savedTheme === 'true';
+    }
+    // Fall back to body class if no saved preference
     return document.body.classList.contains('dark-mode');
   });
+
+  // Apply theme to body on mount and when isDark changes
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('darkMode');
+    if (savedTheme !== null) {
+      const shouldBeDark = savedTheme === 'true';
+      document.body.classList.toggle('dark-mode', shouldBeDark);
+      setIsDark(shouldBeDark);
+    }
+  }, []);
 
   useEffect(() => {
     const observer = new MutationObserver((mutations) => {

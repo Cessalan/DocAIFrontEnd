@@ -2,6 +2,8 @@ import { useState } from "react";
 import { handlePasswordReset } from "../../Firebase/auth";
 import { auth } from "../../Firebase/config";
 import { Link } from "react-router-dom";
+import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
+import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './AuthPage.css' // Reuse same styling
 
 const ForgotPassword = () => {
@@ -9,6 +11,9 @@ const ForgotPassword = () => {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  // Theme
+  const [isDarkMode] = useDarkMode();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,34 +34,46 @@ const ForgotPassword = () => {
   };
 
   return (
-    <div className="login-container">
-      <h2>Reset Your Password</h2>
+    <div className={`auth-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      {/* Theme toggle in corner */}
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
 
-      {error && <div className="error-message">{error}</div>}
-      {message && <div className="success-message">{message}</div>}
-
-      <form onSubmit={handleSubmit} className="login-form">
-        <div className="input-group">
-          <label htmlFor="email">Email Address</label>
-          <input
-            type="email"
-            id="email"
-            placeholder="Enter your email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
+      <div className="login-container">
+        {/* Mascot */}
+        <div className="auth-mascot">
+          <NurseQuizMascot size={90} lookDirection="down-center" />
         </div>
 
-        <button type="submit" className="login-button" disabled={loading}>
-          {loading ? 'Sending...' : 'Send Reset Email'}
-        </button>
-      </form>
+        <h2>Reset Your Password</h2>
 
-      <div className="login-links">
-        <p>
-          Remembered your password? <Link to="/login">Login</Link>
-        </p>
+        {error && <div className="error-message">{error}</div>}
+        {message && <div className="success-message">{message}</div>}
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="input-group">
+            <label htmlFor="email">Email Address</label>
+            <input
+              type="email"
+              id="email"
+              placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? 'Sending...' : 'Send Reset Email'}
+          </button>
+        </form>
+
+        <div className="login-links">
+          <p>
+            Remembered your password? <Link to="/login">Login</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

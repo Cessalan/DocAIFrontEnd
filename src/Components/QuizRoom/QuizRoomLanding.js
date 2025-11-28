@@ -338,11 +338,11 @@ const QuizRoomLanding = () => {
     }, 750);
   };
 
-  // Navigate to app (if logged in) or signup (if not)
+  // Navigate to chat interface (if logged in) or signup (if not)
   const navigateWithAction = (action) => {
     sessionStorage.setItem('landingAction', action);
     if (currentUser) {
-      navigate('/');
+      navigate('/c');
     } else {
       navigate('/signup');
     }

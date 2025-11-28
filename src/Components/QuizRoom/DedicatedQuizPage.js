@@ -7,6 +7,9 @@ import NurseQuizMascot from './NurseQuizMascot';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import './DedicatedQuizPage.css';
 
+// Auth imports
+import { useAuth } from '../../Contexts/AuthContext/AuthContext';
+
 // WebSocket imports for game mode
 import {
   sendGameQuizRequest,
@@ -127,6 +130,11 @@ function DedicatedQuizPage() {
   const location = useLocation();
   const navigate = useNavigate();
   const [isDarkMode] = useDarkMode();
+  const { currentUser } = useAuth();
+
+  // Login prompt state - shown when anonymous user tries to answer
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [pendingAnswerIndex, setPendingAnswerIndex] = useState(null);
 
   // ------------------------------------------
   // Extract props from navigation state
@@ -139,14 +147,24 @@ function DedicatedQuizPage() {
   // For static mode, use passed data or demo
   const staticQuizData = location.state?.quizzes || DEMO_QUIZ_DATA;
 
+  // Check if user is returning from login (flag set by Login/SignUp page)
+  const returningFromLogin = location.state?.returningFromLogin || false;
+
   // ------------------------------------------
   // REFRESH PROTECTION: Prevent re-sending requests on page refresh
   // When a user refreshes, location.state persists but we shouldn't
   // start a new quiz session - redirect them back to start
+  // EXCEPTION: If user is returning from login, allow them to continue
   // ------------------------------------------
   useEffect(() => {
     // Only applies to game mode with fromUpload flag
     if (!isGameMode || !fromUpload || !chatId) return;
+
+    // If returning from login, don't treat this as a refresh
+    if (returningFromLogin) {
+      console.log('🔓 Returning from login - allowing session to continue');
+      return;
+    }
 
     // Check if this session was already started
     const sessionKey = `quiz_session_${chatId}`;
@@ -168,7 +186,7 @@ function DedicatedQuizPage() {
       // Don't remove immediately - only remove when navigating away properly
       // The session key will persist until browser tab is closed
     };
-  }, [isGameMode, fromUpload, chatId, navigate]);
+  }, [isGameMode, fromUpload, chatId, navigate, returningFromLogin]);
 
   // ------------------------------------------
   // Game mode state (streaming questions)
@@ -370,10 +388,67 @@ function DedicatedQuizPage() {
     await sendGameDeliver(chatId, sessionSerum);
   }, [isGameMode, chatId, correctCount]);
 
-  // Handle answer selection
-  const handleSelect = useCallback((index) => {
-    if (revealed) return;
+  // ------------------------------------------
+  // LOGIN PROMPT: Handle navigation to login/signup
+  // Stores quiz state so user can return after authenticating
+  // ------------------------------------------
+  const handleLoginRedirect = useCallback(() => {
+    // Store the current quiz state so we can resume after login
+    const quizState = {
+      chatId,
+      title: quizTitle,
+      isGameMode,
+      fromUpload,
+      // Store current progress
+      currentQuestionIndex,
+      userAnswers,
+      streamedQuestions,
+      pendingAnswerIndex,
+      // Timestamp to expire old sessions
+      timestamp: Date.now()
+    };
+    sessionStorage.setItem('pendingQuizState', JSON.stringify(quizState));
 
+    // Navigate to login with return URL
+    navigate('/login', {
+      state: {
+        returnTo: '/quiz/play',
+        message: 'Sign in to save your progress and continue the quiz'
+      }
+    });
+  }, [chatId, quizTitle, isGameMode, fromUpload, currentQuestionIndex, userAnswers, streamedQuestions, pendingAnswerIndex, navigate]);
+
+  const handleSignupRedirect = useCallback(() => {
+    // Store the current quiz state so we can resume after signup
+    const quizState = {
+      chatId,
+      title: quizTitle,
+      isGameMode,
+      fromUpload,
+      currentQuestionIndex,
+      userAnswers,
+      streamedQuestions,
+      pendingAnswerIndex,
+      timestamp: Date.now()
+    };
+    sessionStorage.setItem('pendingQuizState', JSON.stringify(quizState));
+
+    navigate('/signup', {
+      state: {
+        returnTo: '/quiz/play',
+        message: 'Create an account to save your progress'
+      }
+    });
+  }, [chatId, quizTitle, isGameMode, fromUpload, currentQuestionIndex, userAnswers, streamedQuestions, pendingAnswerIndex, navigate]);
+
+  // Close the login prompt modal
+  const handleCloseLoginPrompt = useCallback(() => {
+    setShowLoginPrompt(false);
+    setPendingAnswerIndex(null);
+  }, []);
+
+  // Process the answer after user is authenticated
+  const processAnswer = useCallback((index) => {
     setSelectedIndex(index);
     setRevealed(true);
 
@@ -405,7 +480,22 @@ function DedicatedQuizPage() {
     setTimeout(() => {
       setShowFeedback(true);
     }, 300);
-  }, [revealed, correctIndex, currentQuestionIndex, currentQuestion]);
+  }, [correctIndex, currentQuestionIndex, currentQuestion]);
+
+  // Handle answer selection - checks auth first
+  const handleSelect = useCallback((index) => {
+    if (revealed) return;
+
+    // If user is not logged in, show login prompt
+    if (!currentUser) {
+      setPendingAnswerIndex(index);
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    // User is authenticated, process the answer
+    processAnswer(index);
+  }, [revealed, currentUser, processAnswer]);
 
   // ------------------------------------------
   // Handle next question
@@ -858,6 +948,64 @@ function DedicatedQuizPage() {
           </div>
         </div>
       </main>
+
+      {/* Login Prompt Modal - shown when anonymous user tries to answer */}
+      {showLoginPrompt && (
+        <div className="login-prompt-overlay" onClick={handleCloseLoginPrompt}>
+          <div className="login-prompt-modal glassmorphic" onClick={(e) => e.stopPropagation()}>
+            {/* Close button */}
+            <button className="login-prompt-close" onClick={handleCloseLoginPrompt} aria-label="Close">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            {/* Mascot */}
+            <div className="login-prompt-mascot">
+              <NurseQuizMascot size={100} isExcited={true} />
+            </div>
+
+            {/* Content */}
+            <h2 className="login-prompt-title">Sign in to Continue</h2>
+            <p className="login-prompt-message">
+              Create a free account to save your progress and track your learning journey.
+            </p>
+
+            {/* Benefits list */}
+            <ul className="login-prompt-benefits">
+              <li>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Save your quiz progress
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Track your learning stats
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                Access your uploaded notes anytime
+              </li>
+            </ul>
+
+            {/* Action buttons */}
+            <div className="login-prompt-actions">
+              <button className="login-prompt-btn primary" onClick={handleSignupRedirect}>
+                Create Free Account
+              </button>
+              <button className="login-prompt-btn secondary" onClick={handleLoginRedirect}>
+                I already have an account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -233,8 +233,8 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       formData.append('files', file); // 'files' plural matches backend
     });
     formData.append('chat_id', chatId);
-    formData.append('user_id', auth.currentUser?.uid || '');
-    formData.append('language',language)
+    formData.append('user_id', auth.currentUser?.uid || 'anonymous');
+    formData.append('language', language || 'english')
 
     // Send request
     const response = await fetch(`${FAST_API_BASE}/chat/upload-files`, {
