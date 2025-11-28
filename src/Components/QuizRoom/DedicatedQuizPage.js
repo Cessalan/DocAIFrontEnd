@@ -521,17 +521,17 @@ function DedicatedQuizPage() {
       setQuizComplete(true);
 
       // Cinematic sequence timeline:
-      // Phase 1: Serum glides toward door (2s delay, then animation)
-      setTimeout(() => setCinematicPhase(1), 1000);
+      // Phase 1: Serum glides toward door (1.5s delay, then animation)
+      setTimeout(() => setCinematicPhase(1), 1500);
 
-      // Phase 2: Serum delivered - enters door
-      setTimeout(() => setCinematicPhase(2), 3500);
+      // Phase 2: Serum delivered - enters door (serum reaches door)
+      setTimeout(() => setCinematicPhase(2), 4500);
 
-      // Phase 3: Light spills out from door
-      setTimeout(() => setCinematicPhase(3), 5000);
+      // Phase 3: Light spills out from door (door opens, light shines)
+      setTimeout(() => setCinematicPhase(3), 6000);
 
-      // Phase 4: Fade to black
-      setTimeout(() => setCinematicPhase(4), 6500);
+      // Phase 4: Fade to black (cinematic transition)
+      setTimeout(() => setCinematicPhase(4), 8000);
 
       // Phase 5: Final message appears
       setTimeout(() => {
@@ -541,7 +541,7 @@ function DedicatedQuizPage() {
         setTimeout(() => setMessagePhase(1), 1500);
         setTimeout(() => setMessagePhase(2), 3000);
         setTimeout(() => setMessagePhase(3), 4500);
-      }, 8000);
+      }, 10000);
     }
   }, [currentQuestionIndex, totalQuestions, isGameMode, handleGameComplete]);
 
@@ -712,8 +712,8 @@ function DedicatedQuizPage() {
   if (quizComplete) {
     return (
       <div className={`dedicated-quiz-page results-page cinematic phase-${cinematicPhase} ${isDarkMode ? 'dark-theme' : 'light-theme'}`}>
-        {/* Hospital hallway background at final stage - always 100% since we reached the room */}
-        <HospitalHallway progress={100} isComplete={true} />
+        {/* Hospital hallway background at final stage - door opens when serum arrives (phase 2+) */}
+        <HospitalHallway progress={100} isComplete={cinematicPhase >= 3} doorOpen={cinematicPhase >= 2} />
 
         {/* Floating controls - hidden during early cinematic phases */}
         {cinematicPhase >= 5 && (

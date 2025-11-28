@@ -5,8 +5,12 @@ import './HospitalHallway.css';
  * HospitalHallway - Premium HD hospital corridor visualization
  * Features dark/light mode support matching QuizRoomLanding theme
  * High-end hospital aesthetic with smooth animations
+ *
+ * @param {number} progress - Progress through the hallway (0-100)
+ * @param {boolean} isComplete - Whether the quiz is complete (stage 5)
+ * @param {boolean} doorOpen - Whether room 217's door should be open (for cinematic)
  */
-function HospitalHallway({ progress = 0, isComplete = false }) {
+function HospitalHallway({ progress = 0, isComplete = false, doorOpen = false }) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
 
   // Calculate current stage for lighting effects
@@ -70,7 +74,7 @@ function HospitalHallway({ progress = 0, isComplete = false }) {
               } ${
                 roomNum === '217' && stage >= 4 ? 'approaching' : ''
               } ${
-                roomNum === '217' && isComplete ? 'arrived' : ''
+                roomNum === '217' && (isComplete || doorOpen) ? 'arrived' : ''
               }`}
               style={{ left: `${7 + index * 10}%` }}
             >
