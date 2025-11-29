@@ -11,6 +11,7 @@ import ProtectedRoute from "./Components/Auth/ProtectedRoute";
 import PublicQuizView from "./Components/PublicQuiz/PublicQuizView";
 import QuizRoomLanding from "./Components/QuizRoom/QuizRoomLanding";
 import DedicatedQuizPage from "./Components/QuizRoom/DedicatedQuizPage";
+import QuestionBankAdmin from "./Components/Admin/QuestionBankAdmin";
 import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
@@ -188,6 +189,9 @@ function ChatLayout() {
   );
 }
 
+// Check if we're in development mode
+const isDev = process.env.NODE_ENV === 'development';
+
 function App() {
   return (
     <Routes>
@@ -196,6 +200,11 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/quiz/:shareId" element={<PublicQuizView />} />
+
+      {/* Admin Routes - DEV ONLY */}
+      {isDev && (
+        <Route path="/admin/question-bank" element={<QuestionBankAdmin />} />
+      )}
 
       {/* Home / Landing Page - Public */}
       <Route path="/" element={<QuizRoomLanding />} />
