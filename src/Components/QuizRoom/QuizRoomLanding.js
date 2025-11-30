@@ -8,6 +8,7 @@ import './QuizRoomLanding.css';
 
 // Firebase imports for creating game chat
 import { db, auth } from '../../Firebase/config';
+import { handleSignOut } from '../../Firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 // API imports for file upload
@@ -508,22 +509,33 @@ const QuizRoomLanding = () => {
               </svg>
             )}
           </button>
-          <button
-            className="auth-header-btn login-btn"
-            onClick={() => handleDelayedNavigation(() => navigate('/login'))}
-            onMouseEnter={() => handleCardHover('login')}
-            onMouseLeave={handleCardHoverEnd}
-          >
-            {t('landing.login', 'Log in')}
-          </button>
-          <button
-            className="auth-header-btn signup-btn"
-            onClick={() => handleDelayedNavigation(() => navigate('/signup'))}
-            onMouseEnter={() => handleCardHover('signup')}
-            onMouseLeave={handleCardHoverEnd}
-          >
-            {t('landing.signup', 'Sign up')}
-          </button>
+          {currentUser ? (
+            <button
+              className="auth-header-btn logout-btn"
+              onClick={handleSignOut}
+            >
+              {t('landing.logout', 'Log out')}
+            </button>
+          ) : (
+            <>
+              <button
+                className="auth-header-btn login-btn"
+                onClick={() => handleDelayedNavigation(() => navigate('/login'))}
+                onMouseEnter={() => handleCardHover('login')}
+                onMouseLeave={handleCardHoverEnd}
+              >
+                {t('landing.login', 'Log in')}
+              </button>
+              <button
+                className="auth-header-btn signup-btn"
+                onClick={() => handleDelayedNavigation(() => navigate('/signup'))}
+                onMouseEnter={() => handleCardHover('signup')}
+                onMouseLeave={handleCardHoverEnd}
+              >
+                {t('landing.signup', 'Sign up')}
+              </button>
+            </>
+          )}
         </div>
       </nav>
 

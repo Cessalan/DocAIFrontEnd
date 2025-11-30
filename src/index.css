@@ -494,14 +494,41 @@ body.dark-mode .app-wrapper {
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   margin-bottom: 4px;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 13px;
+  font-weight: 500;
   background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item svg {
+  opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .nav-item:hover {
   background: rgba(173, 125, 195, 0.08);
   color: var(--primary-purple-dark);
+}
+
+.nav-item:hover svg {
+  opacity: 1;
+}
+
+.nav-item.logout-item {
+  justify-content: space-between;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+}
+
+.nav-item.logout-item:hover {
+  color: #6b7280;
+  background: transparent;
 }
 
 /* ============================================
@@ -762,6 +789,15 @@ body.dark-mode .nav-item {
 body.dark-mode .nav-item:hover {
   background: rgba(107, 70, 193, 0.2);
   color: #a78bfa;
+}
+
+body.dark-mode .nav-item.logout-item {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .nav-item.logout-item:hover {
+  color: #d1d5db;
+  background: transparent;
 }
 
 /* Loading Message Box - Dark */

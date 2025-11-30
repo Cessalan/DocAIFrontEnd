@@ -4,7 +4,11 @@ import './ChatInterface.css';
 import './ChatQuizCompact.css';
 import QuizNavigation from './QuizNavigation';
 import ShareQuizButton from './ShareQuizButton';
+import SATAQuestion from './SATAQuestion';
+import CaseStudyQuestion from './CaseStudyQuestion';
+import UnfoldingCaseStudy from './UnfoldingCaseStudy';
 import { useTranslation } from 'react-i18next';
+import { getQuestionType } from '../../utils/quizScoring';
 
 // Constants
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -281,6 +285,156 @@ function ChatQuiz(props) {
   function renderQuizContent(inModal) {
     if (!quiz) return null;
 
+    // Detect question type (mcq, sata, etc.)
+    const questionType = getQuestionType(quiz);
+
+    // For SATA questions, render the specialized SATA component
+    if (questionType === 'sata') {
+      // Get previous answer for review mode
+      const previousAnswer = userAnswers.find(a => a.quizIndex === quizIndex);
+
+      return (
+        <div className={`quiz-compact-container glassmorphic ${inModal ? 'in-modal' : ''}`}>
+          {/* Side Navigation - Only show in modal (fullscreen) */}
+          {inModal && allQuizzes.length > 1 && (
+            <div className="quiz-sidebar">
+              <QuizNavigation
+                questions={allQuizzes}
+                currentIndex={quizIndex}
+                onNavigate={onNavigate}
+                userAnswers={userAnswers}
+                skippedQuestions={skippedQuestions}
+                onFeedbackSubmit={handleFeedbackSubmit}
+                hasGivenFeedback={feedbackGiven}
+              />
+            </div>
+          )}
+
+          <div className="quiz-main-content">
+            <SATAQuestion
+              quiz={quiz}
+              quizIndex={quizIndex}
+              totalQuestions={totalQuestions}
+              onAnswerSelect={onAnswerSelect}
+              onNext={onNext}
+              onSkip={onSkip}
+              isLastQuestion={isLastQuestion}
+              inModal={inModal}
+              reviewMode={reviewMode}
+              previousAnswer={previousAnswer}
+              onOpenModal={!inModal ? handleOpenModal : undefined}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // For Case Study / Ordering questions, render the CaseStudyQuestion component
+    // Note: CaseStudyQuestion handles its own glassmorphic styling, so we use a plain wrapper
+    if (questionType === 'casestudy' || questionType === 'ordering' || questionType === 'bowtie') {
+      // Get previous answer for review mode
+      const previousAnswer = userAnswers.find(a => a.quizIndex === quizIndex);
+
+      return (
+        <div className={`quiz-compact-container case-study-wrapper ${inModal ? 'in-modal' : ''}`}>
+          {/* Side Navigation - Only show in modal (fullscreen) */}
+          {inModal && allQuizzes.length > 1 && (
+            <div className="quiz-sidebar">
+              <QuizNavigation
+                questions={allQuizzes}
+                currentIndex={quizIndex}
+                onNavigate={onNavigate}
+                userAnswers={userAnswers}
+                skippedQuestions={skippedQuestions}
+                onFeedbackSubmit={handleFeedbackSubmit}
+                hasGivenFeedback={feedbackGiven}
+              />
+            </div>
+          )}
+
+          <div className="quiz-main-content">
+            <CaseStudyQuestion
+              quiz={quiz}
+              quizIndex={quizIndex}
+              totalQuestions={totalQuestions}
+              onAnswerSelect={onAnswerSelect}
+              onNext={onNext}
+              onSkip={onSkip}
+              isLastQuestion={isLastQuestion}
+              inModal={inModal}
+              reviewMode={reviewMode}
+              previousAnswer={previousAnswer}
+              onOpenModal={!inModal ? handleOpenModal : undefined}
+            />
+          </div>
+        </div>
+      );
+    }
+
+    // For Unfolding Case Study (NGN 6-item format), render the specialized component
+    // This is an advanced format with multiple items, two-column layout, and mixed question types
+    if (questionType === 'unfoldingCase' || questionType === 'unfoldingcase') {
+      // Get previous answers for this case (could be multiple items)
+      const previousAnswer = userAnswers.find(a => a.quizIndex === quizIndex);
+
+      return (
+        <div className={`quiz-compact-container case-study-wrapper ${inModal ? 'in-modal' : ''}`}>
+          {/* Side Navigation - Only show in modal (fullscreen) */}
+          {inModal && allQuizzes.length > 1 && (
+            <div className="quiz-sidebar">
+              <QuizNavigation
+                questions={allQuizzes}
+                currentIndex={quizIndex}
+                onNavigate={onNavigate}
+                userAnswers={userAnswers}
+                skippedQuestions={skippedQuestions}
+                onFeedbackSubmit={handleFeedbackSubmit}
+                hasGivenFeedback={feedbackGiven}
+              />
+            </div>
+          )}
+
+          <div className="quiz-main-content">
+            <UnfoldingCaseStudy
+              question={quiz}
+              questionIndex={quizIndex}
+              inModal={inModal}
+              onAnswerChange={(answers) => {
+                // Handle answer changes for all 6 items
+                if (onAnswerSelect) {
+                  onAnswerSelect({
+                    quizIndex,
+                    questionText: quiz.scenario?.patientInfo || 'Unfolding Case Study',
+                    selectedAnswers: answers,
+                    questionType: 'unfoldingCase',
+                    timestamp: new Date()
+                  });
+                }
+              }}
+              showResults={reviewMode}
+              userAnswers={previousAnswer?.selectedAnswers || []}
+            />
+
+            {/* Next Button - for navigating between quiz questions */}
+            {onNext && (
+              <button
+                className="quiz-compact-next-btn"
+                onClick={onNext}
+                type="button"
+                style={{ marginTop: '16px' }}
+              >
+                {isLastQuestion
+                  ? `${t('quiz.viewResults')} →`
+                  : `${t('quiz.nextQuestion')} →`
+                }
+              </button>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // Default: MCQ (Multiple Choice Question) rendering
     // In review mode, we always show the answer and feedback
     const isReviewing = reviewMode;
     const effectiveRevealed = revealed || isReviewing;

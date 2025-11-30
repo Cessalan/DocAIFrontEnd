@@ -1236,19 +1236,42 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         prev.map(msg => {
           if (msg.id !== answerData.messageId || msg.type !== 'quiz') return msg;
 
-          const updatedQuizData = (msg.quizData || []).map((q, idx) =>
-            idx === answerData.quizIndex
-              ? {
+          const updatedQuizData = (msg.quizData || []).map((q, idx) => {
+            if (idx !== answerData.quizIndex) return q;
+
+            // Handle both MCQ and SATA question types
+            const questionType = answerData.questionType || q.questionType || 'mcq';
+
+            if (questionType === 'sata') {
+              // SATA question: multiple selections with scoring
+              return {
                 ...q,
                 userSelection: {
+                  questionType: 'sata',
+                  selectedOptions: answerData.selectedOptions || [],
+                  correctOptions: answerData.correctOptions || [],
+                  isCorrect: answerData.isCorrect,
+                  score: answerData.score || 0,
+                  maxScore: answerData.maxScore || 0,
+                  percentage: answerData.percentage || 0,
+                  scoreResult: answerData.scoreResult || null,
+                  timestamp: answerData.timestamp
+                }
+              };
+            } else {
+              // MCQ question: single selection
+              return {
+                ...q,
+                userSelection: {
+                  questionType: 'mcq',
                   selectedIndex: answerData.selectedOptionIndex,
                   selectedOptionText: answerData.selectedOptionText,
                   isCorrect: answerData.isCorrect,
                   timestamp: answerData.timestamp
                 }
-              }
-              : q
-          );
+              };
+            }
+          });
 
           console.log("  ✓ Updated UI state for Q" + (answerData.quizIndex + 1));
           return { ...msg, quizData: updatedQuizData };

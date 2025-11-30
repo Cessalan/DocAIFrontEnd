@@ -5,6 +5,8 @@ import HospitalHallway from './HospitalHallway';
 import SerumTube from './SerumTube';
 import NurseQuizMascot from './NurseQuizMascot';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
+import SATAQuestion from '../ChatInerface/SATAQuestion';
+import { getQuestionType } from '../../utils/quizScoring';
 import './DedicatedQuizPage.css';
 
 // Auth imports
@@ -230,9 +232,17 @@ function DedicatedQuizPage() {
     ? expectedQuestionCount
     : staticQuizData.length;
 
-  // Calculate correct answers
+  // Calculate correct answers (handles both MCQ and SATA with partial credit)
   const correctCount = useMemo(() => {
-    return userAnswers.filter(a => a.isCorrect).length;
+    return userAnswers.reduce((total, answer) => {
+      if (answer.questionType === 'sata') {
+        // For SATA, add the partial score (score/maxScore gives 0-1 range)
+        // We count it as "correct" if they got >= 50% of the options right
+        return total + (answer.percentage >= 50 ? 1 : 0);
+      }
+      // For MCQ, it's binary (correct or not)
+      return total + (answer.isCorrect ? 1 : 0);
+    }, 0);
   }, [userAnswers]);
 
   // Calculate hallway progress based on questions ANSWERED (not correct)
@@ -447,7 +457,7 @@ function DedicatedQuizPage() {
     setPendingAnswerIndex(null);
   }, []);
 
-  // Process the answer after user is authenticated
+  // Process the answer after user is authenticated (MCQ)
   const processAnswer = useCallback((index) => {
     setSelectedIndex(index);
     setRevealed(true);
@@ -466,6 +476,7 @@ function DedicatedQuizPage() {
     // Record answer
     const answerData = {
       questionIndex: currentQuestionIndex,
+      questionType: 'mcq',
       selectedIndex: index,
       selectedText: currentQuestion.options[index],
       correctIndex: correctIndex,
@@ -481,6 +492,41 @@ function DedicatedQuizPage() {
       setShowFeedback(true);
     }, 300);
   }, [correctIndex, currentQuestionIndex, currentQuestion]);
+
+  // Process SATA answer (called from SATAQuestion component)
+  const processSATAAnswer = useCallback((answerData) => {
+    setRevealed(true);
+
+    // Trigger tube animation based on score percentage
+    if (answerData.percentage >= 50) {
+      setIsAnimating(true);
+      setTimeout(() => setIsAnimating(false), 1200);
+      if (answerData.percentage >= 80 && navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+    }
+
+    // Record answer with SATA-specific data
+    const satAnswerData = {
+      questionIndex: currentQuestionIndex,
+      questionType: 'sata',
+      selectedOptions: answerData.selectedOptions,
+      correctOptions: answerData.correctOptions,
+      scoreResult: answerData.scoreResult,
+      isCorrect: answerData.isCorrect,
+      score: answerData.score,
+      maxScore: answerData.maxScore,
+      percentage: answerData.percentage,
+      timestamp: answerData.timestamp
+    };
+
+    setUserAnswers(prev => [...prev, satAnswerData]);
+
+    // Show feedback after short delay
+    setTimeout(() => {
+      setShowFeedback(true);
+    }, 300);
+  }, [currentQuestionIndex]);
 
   // Handle answer selection - checks auth first
   const handleSelect = useCallback((index) => {
@@ -836,116 +882,135 @@ function DedicatedQuizPage() {
 
         {/* Center - Quiz content */}
         <div className="quiz-content-area">
-          <div className="quiz-card glassmorphic">
-            {/* Compact header inside card */}
-            <div className="quiz-card-header">
-              <div className="header-left-section">
-                <span className="question-counter">
-                  Question {currentQuestionIndex + 1} of {totalQuestions}
-                </span>
-                {currentQuestion?.topic && (
-                  <div className="topic-badge">
-                    <span className="topic-dot"></span>
-                    <span className="topic-text">{currentQuestion.topic}</span>
-                  </div>
-                )}
-              </div>
-              <span className="quiz-title">Room 217</span>
+          {/* Detect question type and render appropriate component */}
+          {currentQuestion && getQuestionType(currentQuestion) === 'sata' ? (
+            /* SATA Question - Select All That Apply */
+            <div className="quiz-card glassmorphic sata-wrapper">
+              <SATAQuestion
+                quiz={currentQuestion}
+                quizIndex={currentQuestionIndex}
+                totalQuestions={totalQuestions}
+                onAnswerSelect={processSATAAnswer}
+                onNext={handleNext}
+                isLastQuestion={currentQuestionIndex >= totalQuestions - 1}
+                inModal={false}
+                reviewMode={false}
+                previousAnswer={userAnswers.find(a => a.questionIndex === currentQuestionIndex)}
+              />
             </div>
-
-            {/* Question */}
-            <div className="question-text">
-              {currentQuestion?.question}
-            </div>
-
-            {/* Options */}
-            <div className="options-container">
-              {currentQuestion?.options?.map((option, index) => {
-                const isSelected = index === selectedIndex;
-                const isAnswer = index === correctIndex;
-
-                let optionClass = 'quiz-option';
-                if (revealed) {
-                  if (isAnswer) {
-                    optionClass += ' correct';
-                  } else if (isSelected) {
-                    optionClass += ' incorrect';
-                  } else {
-                    optionClass += ' disabled';
-                  }
-                }
-                if (isSelected) {
-                  optionClass += ' selected';
-                }
-
-                return (
-                  <div
-                    key={index}
-                    className={optionClass}
-                    onClick={() => handleSelect(index)}
-                    role="button"
-                    tabIndex={revealed ? -1 : 0}
-                    onKeyDown={(e) => {
-                      if (!revealed && (e.key === 'Enter' || e.key === ' ')) {
-                        handleSelect(index);
-                      }
-                    }}
-                  >
-                    <span className={`option-letter ${isSelected ? 'selected' : ''} ${revealed && isAnswer ? 'correct' : ''}`}>
-                      {OPTION_LETTERS[index]}
-                    </span>
-                    <span className="option-text">{option}</span>
-
-                    {revealed && isAnswer && (
-                      <span className="option-icon checkmark">
-                        <CheckmarkIcon />
-                      </span>
-                    )}
-                    {revealed && !isAnswer && isSelected && (
-                      <span className="option-icon x-mark">
-                        <XMarkIcon />
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Feedback */}
-            {showFeedback && (
-              <div className={`quiz-feedback ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
-                <div className="feedback-icon-wrapper">
-                  {selectedIndex === correctIndex ? (
-                    <div className="feedback-icon correct">
-                      <CheckmarkIcon />
-                    </div>
-                  ) : (
-                    <div className="feedback-icon incorrect">
-                      <XMarkIcon />
-                    </div>
-                  )}
-                </div>
-                <div className="feedback-content">
-                  <span className={`feedback-status ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
-                    {selectedIndex === correctIndex ? 'Correct' : 'Incorrect'}
+          ) : (
+            /* MCQ Question - Multiple Choice (Default) */
+            <div className="quiz-card glassmorphic">
+              {/* Compact header inside card */}
+              <div className="quiz-card-header">
+                <div className="header-left-section">
+                  <span className="question-counter">
+                    Question {currentQuestionIndex + 1} of {totalQuestions}
                   </span>
-                  {currentQuestion?.justification && (
-                    <div
-                      className="feedback-explanation"
-                      dangerouslySetInnerHTML={{ __html: currentQuestion.justification }}
-                    />
+                  {currentQuestion?.topic && (
+                    <div className="topic-badge">
+                      <span className="topic-dot"></span>
+                      <span className="topic-text">{currentQuestion.topic}</span>
+                    </div>
                   )}
                 </div>
+                <span className="quiz-title">Room 217</span>
               </div>
-            )}
 
-            {/* Next button */}
-            {showFeedback && (
-              <button className="next-button" onClick={handleNext}>
-                {currentQuestionIndex < totalQuestions - 1 ? 'Continue →' : 'Enter Room 217 →'}
-              </button>
-            )}
-          </div>
+              {/* Question */}
+              <div className="question-text">
+                {currentQuestion?.question}
+              </div>
+
+              {/* Options */}
+              <div className="options-container">
+                {currentQuestion?.options?.map((option, index) => {
+                  const isSelected = index === selectedIndex;
+                  const isAnswer = index === correctIndex;
+
+                  let optionClass = 'quiz-option';
+                  if (revealed) {
+                    if (isAnswer) {
+                      optionClass += ' correct';
+                    } else if (isSelected) {
+                      optionClass += ' incorrect';
+                    } else {
+                      optionClass += ' disabled';
+                    }
+                  }
+                  if (isSelected) {
+                    optionClass += ' selected';
+                  }
+
+                  return (
+                    <div
+                      key={index}
+                      className={optionClass}
+                      onClick={() => handleSelect(index)}
+                      role="button"
+                      tabIndex={revealed ? -1 : 0}
+                      onKeyDown={(e) => {
+                        if (!revealed && (e.key === 'Enter' || e.key === ' ')) {
+                          handleSelect(index);
+                        }
+                      }}
+                    >
+                      <span className={`option-letter ${isSelected ? 'selected' : ''} ${revealed && isAnswer ? 'correct' : ''}`}>
+                        {OPTION_LETTERS[index]}
+                      </span>
+                      <span className="option-text">{option}</span>
+
+                      {revealed && isAnswer && (
+                        <span className="option-icon checkmark">
+                          <CheckmarkIcon />
+                        </span>
+                      )}
+                      {revealed && !isAnswer && isSelected && (
+                        <span className="option-icon x-mark">
+                          <XMarkIcon />
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Feedback */}
+              {showFeedback && (
+                <div className={`quiz-feedback ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
+                  <div className="feedback-icon-wrapper">
+                    {selectedIndex === correctIndex ? (
+                      <div className="feedback-icon correct">
+                        <CheckmarkIcon />
+                      </div>
+                    ) : (
+                      <div className="feedback-icon incorrect">
+                        <XMarkIcon />
+                      </div>
+                    )}
+                  </div>
+                  <div className="feedback-content">
+                    <span className={`feedback-status ${selectedIndex === correctIndex ? 'correct' : 'incorrect'}`}>
+                      {selectedIndex === correctIndex ? 'Correct' : 'Incorrect'}
+                    </span>
+                    {currentQuestion?.justification && (
+                      <div
+                        className="feedback-explanation"
+                        dangerouslySetInnerHTML={{ __html: currentQuestion.justification }}
+                      />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Next button */}
+              {showFeedback && (
+                <button className="next-button" onClick={handleNext}>
+                  {currentQuestionIndex < totalQuestions - 1 ? 'Continue →' : 'Enter Room 217 →'}
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </main>
 

@@ -442,17 +442,46 @@ export const stream_summary = async(chat_id, file_name, language, onTokenReceive
     }
 };
 
-export const generate_quiz = async(chat_id, file_name,currentLanguage) => {
+/**
+ * Generates a quiz from uploaded content
+ *
+ * @param {string} chat_id - The chat/session ID
+ * @param {string} file_name - Name of the uploaded file to generate quiz from
+ * @param {string} currentLanguage - Language for the quiz ('english' or 'french')
+ * @param {Object} options - Optional configuration
+ * @param {number} options.num_questions - Number of questions to generate (default: 15)
+ * @param {string[]} options.question_types - Types of questions to include (default: ['mcq'])
+ *   Supported types: 'mcq' (multiple choice), 'sata' (select all that apply)
+ * @returns {Promise<Object[]>} Array of question objects
+ *
+ * @example
+ * // Generate MCQ-only quiz (default)
+ * const quiz = await generate_quiz(chatId, filename, 'english');
+ *
+ * @example
+ * // Generate mixed quiz with SATA questions
+ * const quiz = await generate_quiz(chatId, filename, 'english', {
+ *   num_questions: 10,
+ *   question_types: ['mcq', 'sata']
+ * });
+ */
+export const generate_quiz = async(chat_id, file_name, currentLanguage, options = {}) => {
+  // Destructure options with defaults
+  const {
+    num_questions = 15,
+    question_types = ['mcq']  // Default to MCQ only for backward compatibility
+  } = options;
 
-   const requestBody = JSON.stringify({
-    chat_id:chat_id,
-    filename:file_name,
-    quiz_type: "mcq",
-    num_questions :15,
-    language:currentLanguage
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    filename: file_name,
+    quiz_type: question_types.length === 1 ? question_types[0] : 'mixed',
+    question_types: question_types,  // Array of types to generate
+    num_questions: num_questions,
+    language: currentLanguage
   });
 
-  try{
+  try {
     const response = await fetch(`${FAST_API_BASE}/chat/generate-quiz`, {
       method: "POST",
       headers: {
@@ -461,21 +490,19 @@ export const generate_quiz = async(chat_id, file_name,currentLanguage) => {
       body: requestBody
     });
 
-     if (!response.ok) {
+    if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Quiz Generation request failed with status ${response.status}: ${errorText}`);
     }
 
     const quiz_json = await response.json();
-    console.log("Fast API response quiz generation: ", quiz_json)
+    console.log("Fast API response quiz generation: ", quiz_json);
     return quiz_json;
 
-  }catch(error)
-  {
-       console.error("Error during quiz generation:", error);
-      throw error;
+  } catch(error) {
+    console.error("Error during quiz generation:", error);
+    throw error;
   }
-
 }
 
 export const generate_flashcards = async(chat_id, file_name, currentLanguage, num_cards = 15) => {

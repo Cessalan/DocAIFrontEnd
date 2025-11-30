@@ -1,5 +1,7 @@
 ﻿import React from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../../Contexts/AuthContext/AuthContext';
+import { handleSignOut } from '../../Firebase/auth';
 
 const styles = {
   page: {
@@ -83,6 +85,16 @@ const styles = {
     fontWeight: 700,
     border: '1px dashed rgba(148, 163, 184, 0.45)',
   },
+  logoutBtn: {
+    background: 'transparent',
+    color: '#94a3b8',
+    padding: '8px 14px',
+    borderRadius: '8px',
+    border: 'none',
+    cursor: 'pointer',
+    fontSize: '14px',
+    fontWeight: 500,
+  },
   featureList: {
     listStyle: 'none',
     margin: '0 0 12px',
@@ -113,6 +125,8 @@ const styles = {
 };
 
 const IndexPage = () => {
+  const { isUserLoggedIn } = useAuth();
+
   const featureList = [
     'Turn notes and PDFs into NCLEX-style quizzes',
     'Review rationales and track weaker topics',
@@ -136,9 +150,18 @@ const IndexPage = () => {
         </p>
 
         <div style={styles.ctas}>
-          <Link to="/signup" style={styles.primaryBtn}>Start free</Link>
-          <Link to="/login" style={styles.secondaryBtn}>Log in</Link>
-          <Link to="/start" style={styles.ghostBtn}>Try a sample quiz</Link>
+          {isUserLoggedIn ? (
+            <>
+              <Link to="/start" style={styles.primaryBtn}>Go to Dashboard</Link>
+              <button onClick={handleSignOut} style={styles.logoutBtn}>Log out</button>
+            </>
+          ) : (
+            <>
+              <Link to="/signup" style={styles.primaryBtn}>Start free</Link>
+              <Link to="/login" style={styles.secondaryBtn}>Log in</Link>
+              <Link to="/start" style={styles.ghostBtn}>Try a sample quiz</Link>
+            </>
+          )}
         </div>
 
         <ul style={styles.featureList}>

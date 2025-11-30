@@ -143,6 +143,26 @@
   transform: translateY(0);
 }
 
+.logout-btn {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 13px;
+  padding: 8px 14px;
+}
+
+.logout-btn:hover {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+body:not(.dark-mode) .logout-btn {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+body:not(.dark-mode) .logout-btn:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
 /* Theme toggle button - subtle, unobtrusive */
 .theme-toggle-btn {
   display: flex;

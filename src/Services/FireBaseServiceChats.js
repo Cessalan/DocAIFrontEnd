@@ -219,15 +219,40 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
     }
 
     // Update the specific quiz question with user selection
-    quizData[quizIndex] = {
-      ...quizData[quizIndex],
-      userSelection: {
+    // Handle both MCQ and SATA question types
+    const questionType = userSelection.questionType || quizData[quizIndex].questionType || 'mcq';
+
+    let userSelectionData;
+
+    if (questionType === 'sata') {
+      // SATA question: multiple selections with partial scoring
+      userSelectionData = {
+        questionType: 'sata',
+        selectedOptions: userSelection.selectedOptions || [],
+        correctOptions: userSelection.correctOptions || [],
+        isCorrect: userSelection.isCorrect,
+        score: userSelection.score || 0,
+        maxScore: userSelection.maxScore || 0,
+        percentage: userSelection.percentage || 0,
+        scoreResult: userSelection.scoreResult || null,
+        timestamp: userSelection.timestamp,
+        timeToAnswer: userSelection.timeToAnswer || null
+      };
+    } else {
+      // MCQ question: single selection
+      userSelectionData = {
+        questionType: 'mcq',
         selectedOption: userSelection.selectedOptionText,
         selectedIndex: userSelection.selectedOptionIndex,
         isCorrect: userSelection.isCorrect,
         timestamp: userSelection.timestamp,
         timeToAnswer: userSelection.timeToAnswer || null
-      }
+      };
+    }
+
+    quizData[quizIndex] = {
+      ...quizData[quizIndex],
+      userSelection: userSelectionData
     };
 
     // Update the message document using the correct Firebase document reference

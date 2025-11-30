@@ -367,6 +367,27 @@ const resources = {
         successMessage: "Your feedback helps us improve. We appreciate you taking the time!"
       },
 
+      // SATA (Select All That Apply) Questions
+      sata: {
+        instructions: "Select all that apply",
+        submitAnswer: "Submit Answer",
+        selectAtLeast: "Select at least one option",
+        selected: "selected",
+        correctlySelected: "Correctly selected",
+        incorrectlySelected: "Incorrectly selected",
+        shouldHaveSelected: "Should have selected",
+        partialCredit: "Partial Credit",
+        score: "Score",
+        outOf: "out of",
+        perfect: "Perfect!",
+        // Feedback messages based on score percentage
+        feedback100: "Excellent! You identified all correct options!",
+        feedback80: "Great job! You got most of them right.",
+        feedback60: "Good effort! Review the missed options.",
+        feedback40: "Keep practicing! Focus on the rationale.",
+        feedback0: "Review the material and try again."
+      },
+
       // Quiz Sharing
       quizShare: {
         buttonText: "Share Quiz",
@@ -757,6 +778,27 @@ const resources = {
         submitError: "Échec de l'envoi. Veuillez réessayer.",
         successTitle: "Merci!",
         successMessage: "Votre retour nous aide à améliorer l'application. Nous apprécions votre temps!"
+      },
+
+      // SATA (Select All That Apply) Questions
+      sata: {
+        instructions: "Sélectionnez toutes les réponses applicables",
+        submitAnswer: "Soumettre la réponse",
+        selectAtLeast: "Sélectionnez au moins une option",
+        selected: "sélectionné(s)",
+        correctlySelected: "Correctement sélectionné",
+        incorrectlySelected: "Sélection incorrecte",
+        shouldHaveSelected: "Aurait dû être sélectionné",
+        partialCredit: "Crédit partiel",
+        score: "Score",
+        outOf: "sur",
+        perfect: "Parfait!",
+        // Messages de rétroaction basés sur le pourcentage
+        feedback100: "Excellent! Tu as identifié toutes les bonnes options!",
+        feedback80: "Très bien! Tu as eu la plupart des bonnes réponses.",
+        feedback60: "Bon effort! Revois les options manquées.",
+        feedback40: "Continue à pratiquer! Concentre-toi sur les explications.",
+        feedback0: "Revois la matière et réessaie."
       },
 
       // Quiz Sharing

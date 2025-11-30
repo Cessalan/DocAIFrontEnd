@@ -1,43 +1,44 @@
 /* ============================================
    FEEDBACK BUTTON IN SIDEBAR
+   Uses nav-item class from index.css for consistent styling
    ============================================ */
 
 .feedback-button-wrapper {
-  /* No extra margin/padding - matches nav-item */
+  /* Inherits nav-item styles */
 }
 
-.feedback-button {
-  display: flex;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
-  padding: 10px 12px;
-  background: transparent;
-  color: #5f6368;
-  border: none;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-size: 14px;
-  font-weight: 400;
-  width: 100%;
-  text-align: left;
+.feedback-button-wrapper .feedback-text {
+  font-size: 13px;
 }
 
-.feedback-button:hover {
-  background: rgba(0, 0, 0, 0.04);
-  border-radius: 8px;
+/* Special CTA styling for feedback button */
+.feedback-cta {
+  color: #8b5cf6 !important;
+  font-weight: 500 !important;
 }
 
-.feedback-button:active {
-  background: rgba(0, 0, 0, 0.08);
+.feedback-cta svg {
+  opacity: 1 !important;
+  color: #f59e0b;
 }
 
-.feedback-icon {
-  font-size: 14px;
+.feedback-cta:hover {
+  background: rgba(139, 92, 246, 0.1) !important;
+  color: #7c3aed !important;
 }
 
-.feedback-text {
-  font-size: 14px;
+/* Dark mode */
+body.dark-mode .feedback-cta {
+  color: #a78bfa !important;
+}
+
+body.dark-mode .feedback-cta svg {
+  color: #fbbf24;
+}
+
+body.dark-mode .feedback-cta:hover {
+  background: rgba(167, 139, 250, 0.15) !important;
+  color: #c4b5fd !important;
 }
 
 /* ============================================
