@@ -2,12 +2,20 @@
 
 import { WS_BASE_URL } from './config';
 
+// ============================================================================
+// COST OPTIMIZATION: Connect-on-demand WebSocket pattern
+// - Opens connection only when sending a message
+// - Closes immediately after stream completes
+// - No persistent connections = minimal Cloud Run billing
+// ============================================================================
+
 class WebSocketManager {
   constructor() {
     this.connections = new Map(); // chat_id -> WebSocket
     this.reconnectAttempts = new Map(); // chat_id -> number
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // Start with 1 second
+    this.maxReconnectAttempts = 2; // Reduced - don't waste resources on retries
+    this.reconnectDelay = 1000;
+    this.autoCloseOnComplete = true; // COST OPTIMIZATION: Close after stream ends
   }
 
   // Get or create WebSocket connection for a chat
@@ -25,7 +33,7 @@ class WebSocketManager {
   createConnection(chatId) {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`${WS_BASE_URL}/ws/${chatId}`);
-      
+
       ws.onopen = () => {
         console.log(`✅ WebSocket connected for chat ${chatId}`);
         this.connections.set(chatId, ws);
@@ -41,9 +49,12 @@ class WebSocketManager {
       ws.onclose = (event) => {
         console.log(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
         this.connections.delete(chatId);
-        
-        // Attempt reconnection if not a clean close
-        if (event.code !== 1000) {
+
+        // COST OPTIMIZATION: Don't auto-reconnect - connect on-demand only
+        // Only attempt reconnection during active streaming (code !== 1000)
+        // and only if we're in the middle of a request
+        if (event.code !== 1000 && event.code !== 1001) {
+          // Abnormal close during streaming - limited retry
           this.attemptReconnection(chatId);
         }
       };
@@ -52,12 +63,13 @@ class WebSocketManager {
 
   async attemptReconnection(chatId) {
     const attempts = this.reconnectAttempts.get(chatId) || 0;
-    
+
+    // COST OPTIMIZATION: Very limited retries
     if (attempts < this.maxReconnectAttempts) {
-      const delay = this.reconnectDelay * Math.pow(2, attempts); // Exponential backoff
-      
-      console.log(`🔄 Attempting reconnection ${attempts + 1}/${this.maxReconnectAttempts} for chat ${chatId} in ${delay}ms`);
-      
+      const delay = this.reconnectDelay * Math.pow(2, attempts);
+
+      console.log(`🔄 Reconnection attempt ${attempts + 1}/${this.maxReconnectAttempts} for chat ${chatId} in ${delay}ms`);
+
       setTimeout(async () => {
         try {
           this.reconnectAttempts.set(chatId, attempts + 1);
@@ -67,7 +79,8 @@ class WebSocketManager {
         }
       }, delay);
     } else {
-      console.error(`❌ Max reconnection attempts reached for chat ${chatId}`);
+      console.log(`⚡ Reconnection skipped for ${chatId} - will connect on next message`);
+      this.reconnectAttempts.delete(chatId);
     }
   }
 
@@ -158,9 +171,9 @@ export const ask_llm_websocket = async (
     // Get WebSocket connection
     const ws = await wsManager.getConnection(chat_id);
 
-    // Set up message listener
+    // Set up message listener with chat_id for auto-close on complete
     wsManager.setupMessageListener(chat_id, (message) => {
-      handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd);
+      handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd, chat_id);
     });
 
     // Send chat message
@@ -192,8 +205,10 @@ export const ask_llm_websocket = async (
 };
 
 // Handle incoming WebSocket messages with full quiz streaming support
-function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd) {
+// COST OPTIMIZATION: Returns true when stream is complete (to trigger connection close)
+function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd, chatId) {
   const { type, data } = message;
+  let streamComplete = false;
 
   switch (type) {
     case 'status':
@@ -212,14 +227,14 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       else if (data.answer_chunk) {
         // Handle regular text streaming
         onTokenReceived(data.answer_chunk);
-      } 
+      }
       else if (data.html) {
         // Handle study sheet generation
         onStatusUpdate({
           status: "studysheet_generated",
           html: data.html
         });
-      } 
+      }
       else if (data.type === "study_guide_trigger") {
         // Handle study guide trigger
         onStatusUpdate({
@@ -280,26 +295,36 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       break;
 
     case 'stream_complete':
+      streamComplete = true;
       if (onStreamEnd) {
         onStreamEnd();
+      }
+      // COST OPTIMIZATION: Close connection after stream completes
+      if (chatId && wsManager.autoCloseOnComplete) {
+        console.log(`⚡ Stream complete - closing connection for ${chatId}`);
+        setTimeout(() => {
+          wsManager.closeConnection(chatId);
+        }, 100); // Small delay to ensure all data is processed
       }
       break;
 
     case 'error':
-      onStatusUpdate({ 
-        status: "error", 
-        message: message.message 
+      onStatusUpdate({
+        status: "error",
+        message: message.message
       });
       break;
 
     case 'pong':
-      // Handle keepalive response
+      // Handle keepalive response - but we shouldn't get these with auto-close
       console.log('🏓 Received pong');
       break;
 
     default:
       console.warn('Unknown WebSocket message type:', type);
   }
+
+  return streamComplete;
 }
 
 // Utility functions
@@ -317,7 +342,14 @@ export const closeWebSocketConnection = (chatId) => {
 };
 
 // Setup periodic keepalive (call this when app starts)
-export const setupWebSocketKeepalive = (chatId, intervalMs = 30000) => {
+// COST OPTIMIZATION: Disabled by default - keepalive wastes Cloud Run resources
+// The backend now has a 3-minute idle timeout. Only enable if you need longer sessions.
+// When enabled, use 120000ms (2 min) to stay under the 3-min server timeout
+export const setupWebSocketKeepalive = (chatId, intervalMs = 120000, enabled = false) => {
+  if (!enabled) {
+    console.log('⚡ WebSocket keepalive disabled for cost optimization');
+    return null;
+  }
   return setInterval(() => {
     wsManager.sendPing(chatId);
   }, intervalMs);

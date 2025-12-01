@@ -221,6 +221,10 @@ function DedicatedQuizPage() {
   // Serum tube animation state
   const [isAnimating, setIsAnimating] = useState(false);
 
+  // DEV MODE: For testing animations without going through quiz
+  const [devMode, setDevMode] = useState(false);
+  const [devCorrectCount, setDevCorrectCount] = useState(3); // Simulated correct answers
+
   // ------------------------------------------
   // Determine quiz data source
   // ------------------------------------------
@@ -233,7 +237,9 @@ function DedicatedQuizPage() {
     : staticQuizData.length;
 
   // Calculate correct answers (handles both MCQ and SATA with partial credit)
+  // In dev mode, use devCorrectCount instead
   const correctCount = useMemo(() => {
+    if (devMode) return devCorrectCount;
     return userAnswers.reduce((total, answer) => {
       if (answer.questionType === 'sata') {
         // For SATA, add the partial score (score/maxScore gives 0-1 range)
@@ -243,7 +249,7 @@ function DedicatedQuizPage() {
       // For MCQ, it's binary (correct or not)
       return total + (answer.isCorrect ? 1 : 0);
     }, 0);
-  }, [userAnswers]);
+  }, [userAnswers, devMode, devCorrectCount]);
 
   // Calculate hallway progress based on questions ANSWERED (not correct)
   // This way you always walk toward the room regardless of answers
@@ -567,17 +573,17 @@ function DedicatedQuizPage() {
       setQuizComplete(true);
 
       // Cinematic sequence timeline:
-      // Phase 1: Serum glides toward door (1.5s delay, then animation)
+      // Phase 1: Serum moves in front of door 217
       setTimeout(() => setCinematicPhase(1), 1500);
 
-      // Phase 2: Serum delivered - enters door (serum reaches door)
-      setTimeout(() => setCinematicPhase(2), 4500);
+      // Phase 2: Door opens (serum waits in front)
+      setTimeout(() => setCinematicPhase(2), 3500);
 
-      // Phase 3: Light spills out from door (door opens, light shines)
+      // Phase 3: Door fully open - serum enters through doorway
       setTimeout(() => setCinematicPhase(3), 6000);
 
       // Phase 4: Fade to black (cinematic transition)
-      setTimeout(() => setCinematicPhase(4), 8000);
+      setTimeout(() => setCinematicPhase(4), 8500);
 
       // Phase 5: Final message appears
       setTimeout(() => {
@@ -587,7 +593,7 @@ function DedicatedQuizPage() {
         setTimeout(() => setMessagePhase(1), 1500);
         setTimeout(() => setMessagePhase(2), 3000);
         setTimeout(() => setMessagePhase(3), 4500);
-      }, 10000);
+      }, 10500);
     }
   }, [currentQuestionIndex, totalQuestions, isGameMode, handleGameComplete]);
 
@@ -647,6 +653,56 @@ function DedicatedQuizPage() {
       setIsLoading(false);
     }
   }, [isGameMode, chatId]);
+
+  // ------------------------------------------
+  // DEV MODE: Functions to test animations
+  // ------------------------------------------
+  const devStartCinematic = useCallback(() => {
+    setDevMode(true);
+    setQuizComplete(true);
+    setCinematicPhase(0);
+    setShowPatientMessage(false);
+    setMessagePhase(0);
+
+    // Run the cinematic sequence
+    // Phase 1: Serum moves in front of door
+    setTimeout(() => setCinematicPhase(1), 1500);
+    // Phase 2: Door opens (serum waits)
+    setTimeout(() => setCinematicPhase(2), 3500);
+    // Phase 3: Serum enters through open door
+    setTimeout(() => setCinematicPhase(3), 6000);
+    // Phase 4: Fade to black
+    setTimeout(() => setCinematicPhase(4), 8500);
+    // Phase 5: Messages appear
+    setTimeout(() => {
+      setCinematicPhase(5);
+      setShowPatientMessage(true);
+      setTimeout(() => setMessagePhase(1), 1500);
+      setTimeout(() => setMessagePhase(2), 3000);
+      setTimeout(() => setMessagePhase(3), 4500);
+    }, 10500);
+  }, []);
+
+  const devSetPhase = useCallback((phase) => {
+    setDevMode(true);
+    setQuizComplete(true);
+    setCinematicPhase(phase);
+    if (phase >= 5) {
+      setShowPatientMessage(true);
+      setMessagePhase(3);
+    } else {
+      setShowPatientMessage(false);
+      setMessagePhase(0);
+    }
+  }, []);
+
+  const devReset = useCallback(() => {
+    setDevMode(false);
+    setQuizComplete(false);
+    setCinematicPhase(0);
+    setShowPatientMessage(false);
+    setMessagePhase(0);
+  }, []);
 
   // ------------------------------------------
   // RENDER: Loading screen (game mode only)
@@ -858,6 +914,46 @@ function DedicatedQuizPage() {
         </button>
         <ThemeToggle />
       </div>
+
+      {/* DEV MODE CONTROLS - Only visible in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="dev-controls">
+          <div className="dev-controls-header">
+            <span>🛠 Dev Controls</span>
+          </div>
+          <div className="dev-controls-body">
+            <div className="dev-control-group">
+              <label>Correct Answers:</label>
+              <input
+                type="range"
+                min="0"
+                max="5"
+                value={devCorrectCount}
+                onChange={(e) => setDevCorrectCount(Number(e.target.value))}
+              />
+              <span>{devCorrectCount}/5</span>
+            </div>
+            <button className="dev-btn" onClick={devStartCinematic}>
+              ▶ Play Cinematic
+            </button>
+            <div className="dev-phase-buttons">
+              <span>Jump to Phase:</span>
+              {[0, 1, 2, 3, 4, 5].map((phase) => (
+                <button
+                  key={phase}
+                  className={`dev-phase-btn ${cinematicPhase === phase && quizComplete ? 'active' : ''}`}
+                  onClick={() => devSetPhase(phase)}
+                >
+                  {phase}
+                </button>
+              ))}
+            </div>
+            <button className="dev-btn reset" onClick={devReset}>
+              ↺ Reset
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <main className="quiz-page-main cinematic-layout">

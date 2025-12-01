@@ -8,6 +8,9 @@ const OnboardingModal = () => {
     const { t } = useTranslation();
     const { currentUser, setIsProfileComplete, setUserProfile } = useAuth();
     const [step, setStep] = useState(1);
+
+    // Development mode detection
+    const isDevelopment = process.env.NODE_ENV === 'development';
     const [isLoading, setIsLoading] = useState(false);
     const [loadingMessage, setLoadingMessage] = useState('onboarding.processing.analyzing');
     const [formData, setFormData] = useState({
@@ -61,6 +64,27 @@ const OnboardingModal = () => {
 
     const handleStartLearning = () => {
         setIsProfileComplete(true);
+    };
+
+    // Dev mode: Skip onboarding entirely
+    const handleSkipOnboarding = async () => {
+        try {
+            const profileData = {
+                onboarding: {
+                    studyGoal: 'Skipped (Dev)',
+                    reviewFormat: 'Skipped (Dev)'
+                },
+                email: currentUser.email,
+                displayName: currentUser.displayName || '',
+                photoURL: currentUser.photoURL || ''
+            };
+
+            await createUserProfile(currentUser.uid, profileData);
+            setUserProfile(profileData);
+            setIsProfileComplete(true);
+        } catch (error) {
+            console.error("Error skipping onboarding:", error);
+        }
     };
 
     return (
@@ -152,6 +176,16 @@ const OnboardingModal = () => {
                                 <div className={`progress-dot ${step >= 1 ? 'active' : ''}`}></div>
                                 <div className={`progress-dot ${step >= 2 ? 'active' : ''}`}></div>
                             </div>
+                        )}
+
+                        {/* Dev mode skip button */}
+                        {isDevelopment && step < 3 && (
+                            <button
+                                className="onboarding-skip-btn"
+                                onClick={handleSkipOnboarding}
+                            >
+                                ⏭️ Skip (Dev)
+                            </button>
                         )}
                     </>
                 )}

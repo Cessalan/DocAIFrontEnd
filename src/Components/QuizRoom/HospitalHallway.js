@@ -1,5 +1,6 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import './HospitalHallway.css';
+import PatientBedSVG from './PatientBedSVG';
 
 /**
  * HospitalHallway - Premium HD hospital corridor visualization
@@ -10,8 +11,12 @@ import './HospitalHallway.css';
  * @param {boolean} isComplete - Whether the quiz is complete (stage 5)
  * @param {boolean} doorOpen - Whether room 217's door should be open (for cinematic)
  */
-function HospitalHallway({ progress = 0, isComplete = false, doorOpen = false }) {
+function HospitalHallway({ progress = 0, isComplete = false, doorOpen = false, patientVariant }) {
   const clampedProgress = Math.min(100, Math.max(0, progress));
+
+  // Random patient variant (0-5) - only randomize once on mount if not provided
+  const [randomVariant] = useState(() => Math.floor(Math.random() * 6));
+  const actualPatientVariant = patientVariant !== undefined ? patientVariant : randomVariant;
 
   // Calculate current stage for lighting effects
   const stage = useMemo(() => {
@@ -123,6 +128,30 @@ function HospitalHallway({ progress = 0, isComplete = false, doorOpen = false })
 
               {/* Glow effect for destination room 217 */}
               {roomNum === '217' && <div className="door-glow" />}
+
+              {/* Room interior - only for room 217, revealed when door opens */}
+              {roomNum === '217' && (
+                <div className="room-interior">
+                  <div className="room-back-wall" />
+                  <div className="room-floor" />
+                  <div className="room-ceiling-light" />
+                  {/* Hopeful glow burst effect */}
+                  <div className="hope-glow-burst" />
+                  {/* Floating dust motes / particles of light */}
+                  <div className="room-particles">
+                    <div className="particle p1" />
+                    <div className="particle p2" />
+                    <div className="particle p3" />
+                    <div className="particle p4" />
+                    <div className="particle p5" />
+                    <div className="particle p6" />
+                    <div className="particle p7" />
+                    <div className="particle p8" />
+                  </div>
+{/* Hospital bed with patient - Dynamic patient variant */}
+                  <PatientBedSVG variant={actualPatientVariant} />
+                </div>
+              )}
             </div>
           ))}
         </div>

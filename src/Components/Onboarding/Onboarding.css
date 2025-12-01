@@ -274,3 +274,32 @@ body.dark-mode .loading-text {
 .onboarding-start-btn:active {
     transform: translateY(1px);
 }
+
+/* Dev Mode Skip Button */
+.onboarding-skip-btn {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px dashed #ef4444;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    opacity: 0.7;
+}
+
+.onboarding-skip-btn:hover {
+    opacity: 1;
+    background: rgba(239, 68, 68, 0.2);
+    transform: scale(1.05);
+}
+
+body.dark-mode .onboarding-skip-btn {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border-color: #f87171;
+}

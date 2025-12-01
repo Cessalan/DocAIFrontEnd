@@ -794,43 +794,689 @@
     transform: perspective(800px) rotateY(0deg);
   }
   100% {
-    transform: perspective(800px) rotateY(-75deg);
+    transform: perspective(800px) rotateY(-88deg);
   }
 }
 
-/* Light spilling out from inside the room when door opens */
-.corridor-door.arrived::after {
-  content: '';
+/* ============================================
+   ROOM 217 INTERIOR - Revealed when door opens
+   Premium 3D hospital room with depth and realism
+   ============================================ */
+
+.room-interior {
   position: absolute;
-  top: 5%;
+  top: 0;
   left: 0;
   width: 100%;
-  height: 92%;
-  background: linear-gradient(
-    90deg,
-    rgba(255, 220, 150, 0.9) 0%,
-    rgba(255, 200, 120, 0.6) 30%,
-    rgba(255, 180, 100, 0.3) 60%,
-    transparent 100%
-  );
-  border-radius: 8px;
+  height: 100%;
+  z-index: -2;
   opacity: 0;
-  animation: roomLightReveal 2s ease-out 0.8s forwards;
-  pointer-events: none;
-  z-index: -1;
+  overflow: hidden;
+  border-radius: 4px 0 0 4px;
+  transition: opacity 1s ease-out;
+  /* 3D perspective for depth - contained within door */
+  perspective: 300px;
+  transform-style: preserve-3d;
+  /* Clip to door boundaries */
+  clip-path: inset(0 0 0 0);
 }
 
-@keyframes roomLightReveal {
+/* Show room interior when door is in arrived state */
+.corridor-door.arrived .room-interior {
+  opacity: 1;
+  animation: roomRevealPulse 3s ease-out forwards;
+}
+
+@keyframes roomRevealPulse {
   0% {
     opacity: 0;
-    transform: scaleX(0);
-    transform-origin: left;
+    filter: brightness(0.3);
+  }
+  30% {
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* Room back wall - creates depth with 3D transform */
+.room-back-wall {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Recessed wall effect - darker towards back for depth */
+  background:
+    /* Vignette for depth */
+    radial-gradient(
+      ellipse 80% 70% at 50% 40%,
+      rgba(50, 45, 62, 1) 0%,
+      rgba(38, 34, 50, 1) 50%,
+      rgba(25, 22, 38, 1) 100%
+    );
+  /* Push back for depth illusion */
+  transform: translateZ(-40px) scale(1.2);
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.7),
+    inset 0 -15px 30px rgba(0, 0, 0, 0.4),
+    inset 0 15px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Left wall shadow - creates corner depth */
+.room-back-wall::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 12, 25, 0.9) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Right wall shadow - creates corner depth */
+.room-back-wall::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(15, 12, 25, 0.9) 100%
+  );
+  pointer-events: none;
+}
+
+/* Room floor - with perspective depth */
+.room-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background:
+    /* Floor tile pattern hint */
+    repeating-linear-gradient(
+      90deg,
+      rgba(40, 36, 52, 0.25) 0px,
+      rgba(40, 36, 52, 0.25) 1px,
+      transparent 1px,
+      transparent 15px
+    ),
+    /* Floor gradient - receding into room */
+    linear-gradient(
+      180deg,
+      rgba(35, 32, 48, 1) 0%,
+      rgba(45, 42, 60, 1) 40%,
+      rgba(55, 50, 70, 1) 100%
+    );
+  /* Subtle floor angle for depth */
+  transform-origin: bottom center;
+  box-shadow:
+    inset 0 15px 30px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Ceiling light fixture - more realistic */
+.room-ceiling-light {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 8%;
+  /* Fluorescent light fixture */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 245, 0.98) 0%,
+    rgba(255, 248, 235, 0.95) 50%,
+    rgba(255, 245, 225, 0.9) 100%
+  );
+  border-radius: 3px;
+  box-shadow:
+    0 0 25px rgba(255, 248, 230, 0.8),
+    0 0 50px rgba(255, 240, 210, 0.5),
+    0 0 80px rgba(255, 230, 190, 0.3),
+    0 3px 15px rgba(255, 245, 220, 0.6);
+  z-index: 3;
+}
+
+/* Dramatic light pulse animation when room is revealed */
+.corridor-door.arrived .room-ceiling-light {
+  animation: ceilingLightDrama 4s ease-out forwards;
+}
+
+@keyframes ceilingLightDrama {
+  0% {
+    box-shadow:
+      0 0 30px rgba(255, 245, 220, 0.3),
+      0 0 60px rgba(255, 235, 200, 0.2);
+  }
+  20% {
+    box-shadow:
+      0 0 60px rgba(255, 245, 220, 1),
+      0 0 120px rgba(255, 235, 200, 0.8),
+      0 0 200px rgba(255, 220, 170, 0.5),
+      0 20px 60px rgba(255, 240, 210, 0.8);
+  }
+  40% {
+    box-shadow:
+      0 0 50px rgba(255, 245, 220, 0.9),
+      0 0 100px rgba(255, 235, 200, 0.6),
+      0 0 160px rgba(255, 220, 170, 0.3),
+      0 10px 40px rgba(255, 240, 210, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 30px rgba(255, 245, 220, 0.7),
+      0 0 60px rgba(255, 235, 200, 0.4),
+      0 0 100px rgba(255, 220, 170, 0.2),
+      0 5px 20px rgba(255, 240, 210, 0.5);
+  }
+}
+
+/* Light cone from ceiling */
+.room-ceiling-light::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150%;
+  height: 600%;
+  background: radial-gradient(
+    ellipse 50% 100% at 50% 0%,
+    rgba(255, 248, 225, 0.2) 0%,
+    rgba(255, 240, 210, 0.1) 30%,
+    rgba(255, 230, 195, 0.04) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Window on back wall - adds realism and light source */
+.room-interior::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  right: 10%;
+  width: 20%;
+  height: 25%;
+  /* Window with blinds partially open */
+  background:
+    /* Blind slats */
+    repeating-linear-gradient(
+      180deg,
+      rgba(55, 50, 70, 0.95) 0px,
+      rgba(55, 50, 70, 0.95) 2px,
+      rgba(90, 130, 175, 0.35) 2px,
+      rgba(90, 130, 175, 0.35) 5px
+    );
+  border: 2px solid rgba(65, 60, 80, 1);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 15px rgba(100, 150, 200, 0.2),
+    0 0 20px rgba(100, 150, 200, 0.08);
+  z-index: 1;
+}
+
+/* ============================================
+   HOPE GLOW BURST - Dopamine hit effect
+   Warm expanding glow when serum arrives
+   ============================================ */
+
+.hope-glow-burst {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 230, 170, 0.9) 0%,
+    rgba(255, 210, 130, 0.5) 30%,
+    rgba(255, 190, 100, 0.2) 60%,
+    transparent 80%
+  );
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.corridor-door.arrived .hope-glow-burst {
+  animation: hopeGlowExpand 3s ease-out 0.8s forwards;
+}
+
+@keyframes hopeGlowExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  20% {
+    width: 80%;
+    height: 80%;
+    opacity: 1;
+  }
+  40% {
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+  }
+  70% {
+    width: 120%;
+    height: 120%;
+    opacity: 0.4;
+  }
+  100% {
+    width: 130%;
+    height: 130%;
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   FLOATING PARTICLES - Dust motes in light
+   Creates magical/hopeful atmosphere
+   ============================================ */
+
+.room-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.particle {
+  position: absolute;
+  background: radial-gradient(
+    circle,
+    rgba(255, 245, 220, 0.9) 0%,
+    rgba(255, 235, 200, 0.5) 50%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.corridor-door.arrived .particle {
+  animation: particleFloat 8s ease-in-out infinite;
+}
+
+/* Different sizes, positions, and timings for each particle */
+.p1 { width: 3px; height: 3px; left: 25%; top: 55%; animation-delay: 0s; }
+.p2 { width: 2px; height: 2px; left: 40%; top: 65%; animation-delay: 0.4s; }
+.p3 { width: 4px; height: 4px; left: 50%; top: 50%; animation-delay: 0.8s; }
+.p4 { width: 2px; height: 2px; left: 60%; top: 60%; animation-delay: 1.2s; }
+.p5 { width: 3px; height: 3px; left: 70%; top: 48%; animation-delay: 1.6s; }
+.p6 { width: 2px; height: 2px; left: 30%; top: 42%; animation-delay: 2s; }
+.p7 { width: 2px; height: 2px; left: 55%; top: 38%; animation-delay: 2.4s; }
+.p8 { width: 3px; height: 3px; left: 45%; top: 32%; animation-delay: 2.8s; }
+
+@keyframes particleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  15% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-15px) scale(1);
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.4);
+  }
+}
+
+/* Subtle shimmer on particles */
+.corridor-door.arrived .p1,
+.corridor-door.arrived .p3,
+.corridor-door.arrived .p5,
+.corridor-door.arrived .p7 {
+  animation: particleFloat 8s ease-in-out infinite, particleShimmer 2s ease-in-out infinite;
+}
+
+@keyframes particleShimmer {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+}
+
+/* Base silhouette styling */
+.room-silhouette {
+  position: absolute;
+  z-index: 2;
+}
+
+/* ============================================
+   PERSON SILHOUETTES - Natural human shapes
+   Using separate head/body for realistic look
+   ============================================ */
+
+.person-silhouette {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Subtle breathing animation */
+  animation: personBreathe 3s ease-in-out infinite;
+}
+
+/* Stagger the breathing so they're not all in sync */
+.person-doctor { animation-delay: 0s; }
+.person-nurse { animation-delay: 0.8s; }
+.person-family { animation-delay: 1.5s; }
+.person-back-1 { animation-delay: 0.3s; }
+.person-back-2 { animation-delay: 1.2s; }
+.person-back-3 { animation-delay: 0.6s; }
+
+@keyframes personBreathe {
+  0%, 100% {
+    transform: scaleY(1) translateY(0);
+    opacity: inherit;
+  }
+  50% {
+    transform: scaleY(1.008) translateY(-0.5px);
+    opacity: inherit;
+  }
+}
+
+/* Common head styling - natural oval */
+.person-head {
+  background: rgba(22, 18, 30, 0.92);
+  border-radius: 50%;
+  position: relative;
+}
+
+/* Common body styling */
+.person-body {
+  background: rgba(22, 18, 30, 0.92);
+  position: relative;
+  margin-top: -2px;
+}
+
+/* DOCTOR - standing at head of bed (left side) */
+.person-doctor {
+  left: 0%;
+  bottom: 6%;
+  width: 18%;
+  height: 52%;
+}
+
+.person-doctor .person-head {
+  width: 40%;
+  height: 14%;
+  /* Natural head shape */
+  border-radius: 48% 48% 45% 45%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.person-doctor .person-body {
+  width: 60%;
+  height: 84%;
+  /* Natural body shape */
+  border-radius: 35% 35% 5% 5%;
+  background: linear-gradient(180deg, rgba(20, 16, 28, 0.95) 0%, rgba(25, 20, 35, 0.92) 100%);
+  /* Simplified body shape */
+  clip-path: polygon(
+    10% 0%, 90% 0%,
+    95% 8%, 92% 40%,
+    85% 60%, 82% 75%,
+    85% 100%, 58% 100%,
+    52% 72%, 48% 72%,
+    42% 100%, 15% 100%,
+    18% 75%, 15% 60%,
+    8% 40%, 5% 8%
+  );
+  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* NURSE - standing at foot of bed (right side) */
+.person-nurse {
+  right: 0%;
+  bottom: 6%;
+  width: 15%;
+  height: 48%;
+}
+
+.person-nurse .person-head {
+  width: 44%;
+  height: 15%;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.person-nurse .person-body {
+  width: 62%;
+  height: 83%;
+  border-radius: 32% 32% 5% 5%;
+  background: linear-gradient(180deg, rgba(22, 18, 32, 0.93) 0%, rgba(26, 22, 38, 0.9) 100%);
+  clip-path: polygon(
+    12% 0%, 88% 0%,
+    94% 10%, 90% 45%,
+    84% 60%, 80% 75%,
+    82% 100%, 56% 100%,
+    52% 72%, 48% 72%,
+    44% 100%, 18% 100%,
+    20% 75%, 16% 60%,
+    10% 45%, 6% 10%
+  );
+  box-shadow: -1px 0 4px rgba(0, 0, 0, 0.25);
+}
+
+/* FAMILY MEMBER - beside the bed, seated/shorter */
+.person-family {
+  right: 16%;
+  bottom: 5%;
+  width: 13%;
+  height: 38%;
+}
+
+.person-family .person-head {
+  width: 50%;
+  height: 20%;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: rgba(24, 20, 35, 0.9);
+}
+
+.person-family .person-body {
+  width: 68%;
+  height: 78%;
+  border-radius: 28% 28% 8% 8%;
+  background: linear-gradient(180deg, rgba(24, 20, 35, 0.9) 0%, rgba(28, 24, 40, 0.88) 100%);
+  clip-path: polygon(
+    12% 0%, 88% 0%,
+    94% 12%, 90% 55%,
+    85% 72%, 82% 100%, 56% 100%,
+    50% 74%, 44% 100%, 18% 100%,
+    15% 72%, 10% 55%,
+    6% 12%
+  );
+}
+
+/* ============================================
+   BACK ROW PEOPLE - Smaller, further away
+   Creates depth illusion
+   ============================================ */
+
+/* Back person 1 - behind bed, left side */
+.person-back-1 {
+  left: 28%;
+  bottom: 48%;
+  width: 9%;
+  height: 20%;
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.person-back-1 .person-head {
+  width: 55%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(28, 24, 40, 0.8);
+}
+
+.person-back-1 .person-body {
+  width: 75%;
+  height: 76%;
+  border-radius: 30% 30% 5% 5%;
+  background: rgba(28, 24, 40, 0.8);
+  clip-path: polygon(
+    15% 0%, 85% 0%,
+    92% 15%, 88% 60%,
+    82% 100%, 56% 100%,
+    50% 68%, 44% 100%, 18% 100%,
+    12% 60%, 8% 15%
+  );
+}
+
+/* Back person 2 - behind bed, center */
+.person-back-2 {
+  left: 45%;
+  bottom: 50%;
+  width: 8%;
+  height: 18%;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.person-back-2 .person-head {
+  width: 58%;
+  height: 24%;
+  border-radius: 50%;
+  background: rgba(30, 26, 44, 0.75);
+}
+
+.person-back-2 .person-body {
+  width: 78%;
+  height: 74%;
+  border-radius: 28% 28% 5% 5%;
+  background: rgba(30, 26, 44, 0.75);
+  clip-path: polygon(
+    14% 0%, 86% 0%,
+    92% 14%, 88% 58%,
+    82% 100%, 56% 100%,
+    50% 66%, 44% 100%, 18% 100%,
+    12% 58%, 8% 14%
+  );
+}
+
+/* Back person 3 - behind bed, right side */
+.person-back-3 {
+  right: 28%;
+  bottom: 49%;
+  width: 8%;
+  height: 19%;
+  opacity: 0.52;
+  z-index: 1;
+}
+
+.person-back-3 .person-head {
+  width: 56%;
+  height: 23%;
+  border-radius: 50%;
+  background: rgba(26, 22, 38, 0.78);
+}
+
+.person-back-3 .person-body {
+  width: 76%;
+  height: 75%;
+  border-radius: 29% 29% 5% 5%;
+  background: rgba(26, 22, 38, 0.78);
+  clip-path: polygon(
+    14% 0%, 86% 0%,
+    93% 14%, 89% 58%,
+    83% 100%, 56% 100%,
+    50% 67%, 44% 100%, 17% 100%,
+    11% 58%, 7% 14%
+  );
+}
+
+/* ============================================
+   HOSPITAL BED SVG - Detailed realistic silhouette
+   ============================================ */
+
+.hospital-bed-svg {
+  position: absolute;
+  left: 5%;
+  bottom: 5%;
+  width: 90%;
+  height: 55%;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* Show bed when room is revealed */
+.corridor-door.arrived .hospital-bed-svg {
+  opacity: 1;
+  animation: bedFadeIn 1.5s ease-out 0.3s forwards;
+}
+
+@keyframes bedFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
   }
   100% {
     opacity: 1;
-    transform: scaleX(1.5);
-    transform-origin: left;
+    transform: translateY(0) scale(1);
   }
+}
+
+/* Heart rate monitor animation */
+.hospital-bed-svg .monitor path[stroke="rgba(100,220,150,0.9)"] {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+}
+
+.corridor-door.arrived .hospital-bed-svg .monitor path[stroke="rgba(100,220,150,0.9)"] {
+  animation: heartbeatLine 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeatLine {
+  0% {
+    stroke-dashoffset: 30;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Light mode adjustments */
+body:not(.dark-mode) .hospital-bed-svg {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
 }
 
 .corridor-door.arrived .door-glow {

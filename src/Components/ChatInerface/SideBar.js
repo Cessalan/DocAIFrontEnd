@@ -40,6 +40,7 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => 
 
   // Feedback viewer state (dev mode only)
   const [showFeedbackViewer, setShowFeedbackViewer] = useState(false);
+  const [exportingOnboarding, setExportingOnboarding] = useState(false);
 
   // Dev mode: Toggle between viewing all chats or only user's chats
   const [viewAllChats, setViewAllChats] = useState(() => {
@@ -215,6 +216,43 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => 
     }
   };
 
+  // Export all users' onboarding data to JSON (dev mode only)
+  const handleExportOnboarding = async () => {
+    setExportingOnboarding(true);
+    try {
+      const usersRef = collection(db, "users");
+      const snapshot = await getDocs(usersRef);
+
+      const onboardingData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Only extract onboarding data, exclude email and displayName
+        return {
+          odtOfUSer: doc.id,
+          onboarding: data.onboarding || null
+        };
+      }).filter(item => item.onboarding !== null); // Only include users with onboarding data
+
+      // Create and download JSON file
+      const jsonString = JSON.stringify(onboardingData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `onboarding-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log(`✅ Exported onboarding data for ${onboardingData.length} users`);
+    } catch (error) {
+      console.error("❌ Error exporting onboarding data:", error);
+      alert("Failed to export onboarding data: " + error.message);
+    } finally {
+      setExportingOnboarding(false);
+    }
+  };
+
   // Assume 'chat' is a document retrieved from Firestore, 
 // and 'updatedAt' is a Firebase Timestamp field.
 
@@ -330,6 +368,13 @@ const getchatDate = (timestamp) => {
           <>
             <div className="nav-item" onClick={() => setShowFeedbackViewer(true)}>
               🔍 View Feedbacks (Dev)
+            </div>
+            <div
+              className="nav-item"
+              onClick={handleExportOnboarding}
+              style={{ opacity: exportingOnboarding ? 0.6 : 1 }}
+            >
+              {exportingOnboarding ? '⏳ Exporting...' : '📤 Export Onboarding (Dev)'}
             </div>
             {/* Dev Mode: View Toggle */}
             <div className="chat-view-toggle-container">
