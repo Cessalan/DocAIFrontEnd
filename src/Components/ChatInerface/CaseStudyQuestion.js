@@ -59,7 +59,7 @@ const TAB_KEYS = {
 function DragHandleIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z"/>
+      <path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
     </svg>
   );
 }
@@ -88,6 +88,10 @@ function ExpandIcon() {
     </svg>
   );
 }
+
+// ============================================
+// SORTABLE ITEM COMPONENT
+// ============================================
 
 // ============================================
 // SORTABLE ITEM COMPONENT
@@ -128,7 +132,7 @@ function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectP
       <span className="drag-handle">
         <DragHandleIcon />
       </span>
-      <span className="drag-item-number">{index + 1}</span>
+      {/* Index number removed as per user request */}
       <span className="drag-item-text">{item.text}</span>
 
       {isRevealed && (
@@ -193,12 +197,6 @@ function CaseStudyQuestion({
         distance: 8,
       },
     }),
-    useSensor(TouchSensor, {
-      activationConstraint: {
-        delay: 150,
-        tolerance: 8,
-      },
-    }),
     useSensor(KeyboardSensor, {
       coordinateGetter: sortableKeyboardCoordinates,
     })
@@ -208,11 +206,61 @@ function CaseStudyQuestion({
   // Derived Values
   // ----------------------------------------
 
-  // Get correct order from quiz
+  // Normalize options with stable IDs
+  const normalizedOptions = useMemo(() => {
+    if (!quiz?.options) return [];
+    return quiz.options.map((item, index) => {
+      if (typeof item === 'string') {
+        return { id: item, text: item, original: item };
+      }
+      // Ensure object has ID
+      // Use existing ID, or text as ID (if unique enough), or fallback to index-based
+      // We prefer text over index because correctOrder might not have same index
+      const id = item.id || (item.text ? `text-${item.text.substring(0, 20)}-${index}` : `item-${index}`);
+      return {
+        ...item,
+        id,
+        text: item.text || item.content || JSON.stringify(item),
+        original: item
+      };
+    });
+  }, [quiz?.options]);
+
+  // Get correct order from quiz, mapped to our normalized IDs
   const correctOrder = useMemo(() => {
     if (!quiz?.correctOrder) return [];
-    return quiz.correctOrder.map(item => item.id);
-  }, [quiz?.correctOrder]);
+
+    return quiz.correctOrder.map(correctItem => {
+      // 1. If it's a string, it might be an ID or the text itself
+      if (typeof correctItem === 'string') {
+        // Check if it matches an ID in our normalized options
+        const matchById = normalizedOptions.find(opt => opt.id === correctItem);
+        if (matchById) return matchById.id;
+
+        // Check if it matches text
+        const matchByText = normalizedOptions.find(opt => opt.text === correctItem);
+        if (matchByText) return matchByText.id;
+
+        return correctItem; // Fallback
+      }
+
+      // 2. If it's an object, try to match by ID or Text or Reference
+      if (correctItem.id) {
+        const matchById = normalizedOptions.find(opt => opt.id === correctItem.id);
+        if (matchById) return matchById.id;
+        return correctItem.id;
+      }
+
+      // Match by text content
+      const text = correctItem.text || correctItem.content;
+      if (text) {
+        const matchByText = normalizedOptions.find(opt => opt.text === text);
+        if (matchByText) return matchByText.id;
+      }
+
+      return null;
+    }).filter(Boolean); // Remove nulls
+  }, [quiz?.correctOrder, normalizedOptions]);
 
   // Progress bar style
   const progressStyle = useMemo(() => {
@@ -222,11 +270,12 @@ function CaseStudyQuestion({
 
   // Check if user has reordered (can submit)
   const hasReordered = useMemo(() => {
-    if (!quiz?.options || items.length === 0) return false;
-    const initialOrder = quiz.options.map(item => item.id);
-    const currentOrder = items.map(item => item.id);
-    return JSON.stringify(initialOrder) !== JSON.stringify(currentOrder);
-  }, [quiz?.options, items]);
+    if (!normalizedOptions || items.length === 0) return false;
+
+    const initialIds = normalizedOptions.map(item => item.id);
+    const currentIds = items.map(item => item.id);
+    return JSON.stringify(initialIds) !== JSON.stringify(currentIds);
+  }, [normalizedOptions, items]);
 
   // Memoize item IDs for SortableContext
   const itemIds = useMemo(() => items.map(item => item.id), [items]);
@@ -242,7 +291,10 @@ function CaseStudyQuestion({
   useEffect(() => {
     // Skip if no quiz or already initialized for this quiz
     if (!quiz?.options) return;
-    if (initializedQuizRef.current === quizId) return;
+
+    if (initializedQuizRef.current === quizId) {
+      return;
+    }
 
     // Mark as initialized
     initializedQuizRef.current = quizId;
@@ -250,22 +302,23 @@ function CaseStudyQuestion({
     if (previousAnswer && previousAnswer.userOrder) {
       // Restore previous answer order
       const orderedItems = previousAnswer.userOrder.map(id => {
-        return quiz.options.find(item => item.id === id) || { id, text: '' };
+        return normalizedOptions.find(item => item.id === id) || { id, text: 'Unknown Item' };
       });
+
       setItems(orderedItems);
       setRevealed(true);
       setShowFeedback(true);
       setScoreResult(previousAnswer.scoreResult || null);
     } else {
-      // Initialize with options
-      setItems([...quiz.options]);
+      // Initialize with normalized options
+      setItems(normalizedOptions);
       setRevealed(false);
       setShowFeedback(false);
       setScoreResult(null);
     }
     // Reset to first tab
     setActiveTab(TAB_KEYS.NURSES_NOTES);
-  }, [quizId, quiz?.options, previousAnswer]);
+  }, [quizId, quiz?.options, previousAnswer, normalizedOptions]);
 
   // ----------------------------------------
   // Handlers
@@ -275,7 +328,9 @@ function CaseStudyQuestion({
     const { active, over } = event;
 
     // Only process if we have valid active and over targets
-    if (!active || !over) return;
+    if (!active || !over) {
+      return;
+    }
 
     // Only reorder if dropped on a different item
     if (active.id !== over.id) {
@@ -284,10 +339,14 @@ function CaseStudyQuestion({
         const newIndex = prevItems.findIndex(item => item.id === over.id);
 
         // Safety check: ensure both indices are valid
-        if (oldIndex === -1 || newIndex === -1) return prevItems;
+        if (oldIndex === -1 || newIndex === -1) {
+          return prevItems;
+        }
 
-        return arrayMove(prevItems, oldIndex, newIndex);
+        const newItems = arrayMove(prevItems, oldIndex, newIndex);
+        return newItems;
       });
+    } else {
     }
   }, []);
 

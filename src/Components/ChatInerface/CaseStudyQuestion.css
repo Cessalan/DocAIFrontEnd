@@ -50,6 +50,7 @@
     opacity: 0;
     transform: translateY(8px);
   }
+
   to {
     opacity: 1;
     transform: translateY(0);
@@ -61,8 +62,13 @@
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 /* ============================================
@@ -396,15 +402,35 @@
 }
 
 @keyframes correctPulse {
-  0% { transform: scale(1); }
-  50% { transform: scale(1.01); }
-  100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.01);
+  }
+
+  100% {
+    transform: scale(1);
+  }
 }
 
 @keyframes incorrectShake {
-  0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-3px); }
-  40%, 80% { transform: translateX(3px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  20%,
+  60% {
+    transform: translateX(-3px);
+  }
+
+  40%,
+  80% {
+    transform: translateX(3px);
+  }
 }
 
 /* Drag Handle */
@@ -490,9 +516,19 @@
 }
 
 @keyframes iconPop {
-  0% { transform: scale(0) rotate(-90deg); opacity: 0; }
-  60% { transform: scale(1.1) rotate(5deg); }
-  100% { transform: scale(1) rotate(0); opacity: 1; }
+  0% {
+    transform: scale(0) rotate(-90deg);
+    opacity: 0;
+  }
+
+  60% {
+    transform: scale(1.1) rotate(5deg);
+  }
+
+  100% {
+    transform: scale(1) rotate(0);
+    opacity: 1;
+  }
 }
 
 .drag-item-status.correct {
@@ -608,8 +644,15 @@
 }
 
 @keyframes feedbackSlideUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .case-study-feedback.correct {
@@ -644,9 +687,17 @@
   gap: 6px;
 }
 
-.feedback-status.correct { color: #38a169; }
-.feedback-status.partial { color: #dd6b20; }
-.feedback-status.incorrect { color: #e53e3e; }
+.feedback-status.correct {
+  color: #38a169;
+}
+
+.feedback-status.partial {
+  color: #dd6b20;
+}
+
+.feedback-status.incorrect {
+  color: #e53e3e;
+}
 
 .feedback-score {
   font-size: 13px;
@@ -739,8 +790,15 @@
 }
 
 @keyframes buttonAppear {
-  0% { opacity: 0; transform: translateY(12px); }
-  100% { opacity: 1; transform: translateY(0); }
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .case-study-next-btn:hover {
@@ -1004,6 +1062,7 @@
    ============================================ */
 
 @media (prefers-reduced-motion: reduce) {
+
   .case-study-container.glassmorphic,
   .case-study-drag-item,
   .case-study-feedback,
@@ -1225,9 +1284,17 @@ body.dark-mode .feedback-score {
   color: #e5e7eb;
 }
 
-body.dark-mode .feedback-status.correct { color: #34d399; }
-body.dark-mode .feedback-status.partial { color: #fbbf24; }
-body.dark-mode .feedback-status.incorrect { color: #f87171; }
+body.dark-mode .feedback-status.correct {
+  color: #34d399;
+}
+
+body.dark-mode .feedback-status.partial {
+  color: #fbbf24;
+}
+
+body.dark-mode .feedback-status.incorrect {
+  color: #f87171;
+}
 
 body.dark-mode .correct-order-section {
   background: rgba(50, 53, 62, 0.5);
