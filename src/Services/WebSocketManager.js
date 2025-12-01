@@ -1,14 +1,21 @@
 // WebSocketManager.js - Replace FastAPICall.js functions
 
-const WS_BASE = "ws://127.0.0.1:8000";
-// const WS_BASE = "wss://ragfastapi-1075876064685.europe-west1.run.app";
+import { WS_BASE_URL } from './config';
+
+// ============================================================================
+// COST OPTIMIZATION: Connect-on-demand WebSocket pattern
+// - Opens connection only when sending a message
+// - Closes immediately after stream completes
+// - No persistent connections = minimal Cloud Run billing
+// ============================================================================
 
 class WebSocketManager {
   constructor() {
     this.connections = new Map(); // chat_id -> WebSocket
     this.reconnectAttempts = new Map(); // chat_id -> number
-    this.maxReconnectAttempts = 5;
-    this.reconnectDelay = 1000; // Start with 1 second
+    this.maxReconnectAttempts = 2; // Reduced - don't waste resources on retries
+    this.reconnectDelay = 1000;
+    this.autoCloseOnComplete = true; // COST OPTIMIZATION: Close after stream ends
   }
 
   // Get or create WebSocket connection for a chat
@@ -25,8 +32,8 @@ class WebSocketManager {
 
   createConnection(chatId) {
     return new Promise((resolve, reject) => {
-      const ws = new WebSocket(`${WS_BASE}/ws/${chatId}`);
-      
+      const ws = new WebSocket(`${WS_BASE_URL}/ws/${chatId}`);
+
       ws.onopen = () => {
         console.log(`✅ WebSocket connected for chat ${chatId}`);
         this.connections.set(chatId, ws);
@@ -42,9 +49,12 @@ class WebSocketManager {
       ws.onclose = (event) => {
         console.log(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
         this.connections.delete(chatId);
-        
-        // Attempt reconnection if not a clean close
-        if (event.code !== 1000) {
+
+        // COST OPTIMIZATION: Don't auto-reconnect - connect on-demand only
+        // Only attempt reconnection during active streaming (code !== 1000)
+        // and only if we're in the middle of a request
+        if (event.code !== 1000 && event.code !== 1001) {
+          // Abnormal close during streaming - limited retry
           this.attemptReconnection(chatId);
         }
       };
@@ -53,12 +63,13 @@ class WebSocketManager {
 
   async attemptReconnection(chatId) {
     const attempts = this.reconnectAttempts.get(chatId) || 0;
-    
+
+    // COST OPTIMIZATION: Very limited retries
     if (attempts < this.maxReconnectAttempts) {
-      const delay = this.reconnectDelay * Math.pow(2, attempts); // Exponential backoff
-      
-      console.log(`🔄 Attempting reconnection ${attempts + 1}/${this.maxReconnectAttempts} for chat ${chatId} in ${delay}ms`);
-      
+      const delay = this.reconnectDelay * Math.pow(2, attempts);
+
+      console.log(`🔄 Reconnection attempt ${attempts + 1}/${this.maxReconnectAttempts} for chat ${chatId} in ${delay}ms`);
+
       setTimeout(async () => {
         try {
           this.reconnectAttempts.set(chatId, attempts + 1);
@@ -68,7 +79,8 @@ class WebSocketManager {
         }
       }, delay);
     } else {
-      console.error(`❌ Max reconnection attempts reached for chat ${chatId}`);
+      console.log(`⚡ Reconnection skipped for ${chatId} - will connect on next message`);
+      this.reconnectAttempts.delete(chatId);
     }
   }
 
@@ -117,6 +129,26 @@ class WebSocketManager {
   sendPing(chatId) {
     this.sendMessage(chatId, { type: 'ping' });
   }
+
+  // Cancel ongoing streaming
+  async cancelStream(chatId) {
+    try {
+      console.log(`🛑 Cancelling stream for chat ${chatId}`);
+      const success = await this.sendMessage(chatId, {
+        type: 'cancel_stream',
+        chat_id: chatId
+      });
+
+      if (success) {
+        console.log(`✅ Cancel request sent for chat ${chatId}`);
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error(`Failed to cancel stream for chat ${chatId}:`, error);
+      return false;
+    }
+  }
 }
 
 // Global instance
@@ -139,12 +171,18 @@ export const ask_llm_websocket = async (
     // Get WebSocket connection
     const ws = await wsManager.getConnection(chat_id);
 
-    // Set up message listener
+    // Set up message listener with chat_id for auto-close on complete
     wsManager.setupMessageListener(chat_id, (message) => {
-      handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd);
+      handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd, chat_id);
     });
 
     // Send chat message
+    console.log('📤 Sending message to backend:', {
+      type: 'chat_message',
+      input: userPrompt.substring(0, 100) + '...',
+      chat_id: chat_id
+    });
+
     const success = await wsManager.sendMessage(chat_id, {
       type: 'chat_message',
       input: userPrompt,
@@ -154,8 +192,11 @@ export const ask_llm_websocket = async (
     });
 
     if (!success) {
+      console.error('❌ Failed to send message to backend');
       throw new Error('Failed to send message via WebSocket');
     }
+
+    console.log('✅ Message sent successfully to backend');
 
   } catch (error) {
     console.error('WebSocket chat error:', error);
@@ -164,8 +205,10 @@ export const ask_llm_websocket = async (
 };
 
 // Handle incoming WebSocket messages with full quiz streaming support
-function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd) {
+// COST OPTIMIZATION: Returns true when stream is complete (to trigger connection close)
+function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd, chatId) {
   const { type, data } = message;
+  let streamComplete = false;
 
   switch (type) {
     case 'status':
@@ -180,18 +223,18 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       if (data.status) {
         // Handle status updates (quiz generation, study sheets, etc.)
         onStatusUpdate(data);
-      } 
+      }
       else if (data.answer_chunk) {
         // Handle regular text streaming
         onTokenReceived(data.answer_chunk);
-      } 
+      }
       else if (data.html) {
         // Handle study sheet generation
         onStatusUpdate({
           status: "studysheet_generated",
           html: data.html
         });
-      } 
+      }
       else if (data.type === "study_guide_trigger") {
         // Handle study guide trigger
         onStatusUpdate({
@@ -200,6 +243,24 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
         });
       }
       // Handle quiz-specific streaming
+      else if (data.status === "empathetic_message_start") {
+        // Signal start of empathetic message streaming
+        onStatusUpdate({
+          status: "empathetic_message_start",
+          message: data.message
+        });
+      }
+      else if (data.status === "empathetic_message_chunk") {
+        // Stream empathetic message chunks
+        onTokenReceived(data.chunk);
+      }
+      else if (data.status === "empathetic_message_complete") {
+        // Signal empathetic message complete
+        onStatusUpdate({
+          status: "empathetic_message_complete",
+          full_message: data.full_message
+        });
+      }
       else if (data.status === "quiz_generating") {
         onStatusUpdate({
           status: "quiz_generating",
@@ -223,29 +284,47 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
           total_generated: data.total_generated
         });
       }
+
+      if (data.status === "suggested_prompts" && data.suggestions) {
+        console.log("📝 Received suggestions:", data.suggestions);
+        onStatusUpdate({
+          status: "suggested_prompts",
+          suggestions: data.suggestions,
+        });
+      }
       break;
 
     case 'stream_complete':
+      streamComplete = true;
       if (onStreamEnd) {
         onStreamEnd();
+      }
+      // COST OPTIMIZATION: Close connection after stream completes
+      if (chatId && wsManager.autoCloseOnComplete) {
+        console.log(`⚡ Stream complete - closing connection for ${chatId}`);
+        setTimeout(() => {
+          wsManager.closeConnection(chatId);
+        }, 100); // Small delay to ensure all data is processed
       }
       break;
 
     case 'error':
-      onStatusUpdate({ 
-        status: "error", 
-        message: message.message 
+      onStatusUpdate({
+        status: "error",
+        message: message.message
       });
       break;
 
     case 'pong':
-      // Handle keepalive response
+      // Handle keepalive response - but we shouldn't get these with auto-close
       console.log('🏓 Received pong');
       break;
 
     default:
       console.warn('Unknown WebSocket message type:', type);
   }
+
+  return streamComplete;
 }
 
 // Utility functions
@@ -263,21 +342,260 @@ export const closeWebSocketConnection = (chatId) => {
 };
 
 // Setup periodic keepalive (call this when app starts)
-export const setupWebSocketKeepalive = (chatId, intervalMs = 30000) => {
+// COST OPTIMIZATION: Disabled by default - keepalive wastes Cloud Run resources
+// The backend now has a 3-minute idle timeout. Only enable if you need longer sessions.
+// When enabled, use 120000ms (2 min) to stay under the 3-min server timeout
+export const setupWebSocketKeepalive = (chatId, intervalMs = 120000, enabled = false) => {
+  if (!enabled) {
+    console.log('⚡ WebSocket keepalive disabled for cost optimization');
+    return null;
+  }
   return setInterval(() => {
     wsManager.sendPing(chatId);
   }, intervalMs);
 };
 
-// Backward compatibility - keep existing HTTP functions as fallbacks
-export {
-  embed_docs,
-  generate_title,
-  generate_summary,
-  stream_summary,
-  generate_quiz,
-  generate_scenario,
-  generate_study_guide_plan,
-  search_for_study_guide,
-  generate_study_guide_section
-} from './FastAPICall.js';
+// Cancel ongoing stream
+export const cancelWebSocketStream = async (chatId) => {
+  return await wsManager.cancelStream(chatId);
+};
+
+
+// ============================================================================
+// GAME MODE FUNCTIONS
+// These handle the gamified quiz flow where users collect serum
+// by answering questions correctly to save a sick child.
+//
+// Usage Flow:
+//   1. Call sendGameQuizRequest() to start streaming questions
+//   2. Frontend validates answers client-side (answer included in question)
+//   3. Track serum locally (20mL per correct answer)
+//   4. Call sendGameDeliver() with total serum when quiz ends
+//   5. If not enough, call sendGameRetry() for more questions
+// ============================================================================
+
+/**
+ * Start a game quiz - streams questions via WebSocket
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {number} questionCount - Number of questions (default: 5)
+ * @param {string} difficulty - Question difficulty: "easy", "medium", "hard" (default: "medium")
+ * @param {function} onMessage - Callback for handling streamed messages
+ * @returns {Promise<boolean>} - True if request sent successfully
+ *
+ * Message types you'll receive in onMessage:
+ *   - game_initialized: { serumCollected, serumRequired }
+ *   - game_generating: { current, total }
+ *   - game_question_ready: { question: { index, question, options, answer, justification, topic, serumValue }, quizId, isFirst }
+ *   - game_quiz_complete: { totalQuestions }
+ */
+export const sendGameQuizRequest = async (chatId, questionCount = 5, difficulty = "medium", onMessage = null) => {
+  try {
+    // Make sure we're connected
+    await wsManager.getConnection(chatId);
+
+    // Set up message listener if provided
+    if (onMessage) {
+      wsManager.setupMessageListener(chatId, onMessage);
+    }
+
+    // Send the game quiz request
+    const success = await wsManager.sendMessage(chatId, {
+      type: "game_quiz",
+      questionCount,
+      difficulty
+    });
+
+    if (success) {
+      console.log(`🎮 Game quiz request sent for chat ${chatId}`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send game quiz request:`, error);
+    return false;
+  }
+};
+
+/**
+ * Deliver serum after completing a quiz
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {number} serumCollected - Amount of serum collected THIS quiz (not cumulative)
+ * @returns {Promise<boolean>} - True if request sent successfully
+ *
+ * Message types you'll receive:
+ *   - game_child_saved: { serumDelivered, attempts, message } - SUCCESS!
+ *   - game_need_more_serum: { serumCollected, serumRequired, serumNeeded, attempts, message } - Need retry
+ */
+export const sendGameDeliver = async (chatId, serumCollected) => {
+  try {
+    const success = await wsManager.sendMessage(chatId, {
+      type: "game_deliver",
+      serumCollected
+    });
+
+    if (success) {
+      console.log(`🧪 Delivery request sent: ${serumCollected}mL`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send delivery request:`, error);
+    return false;
+  }
+};
+
+/**
+ * Request a retry quiz (serum persists!)
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {number} questionCount - Number of questions for retry (default: 5)
+ * @param {string} difficulty - Question difficulty (default: "medium")
+ * @returns {Promise<boolean>} - True if request sent successfully
+ *
+ * Message types you'll receive:
+ *   - game_retry_starting: { serumCollected, serumRequired, serumNeeded, message }
+ *   - Then same as sendGameQuizRequest (game_initialized, game_question_ready, etc.)
+ */
+export const sendGameRetry = async (chatId, questionCount = 5, difficulty = "medium") => {
+  try {
+    const success = await wsManager.sendMessage(chatId, {
+      type: "game_retry",
+      questionCount,
+      difficulty
+    });
+
+    if (success) {
+      console.log(`🔄 Retry request sent for chat ${chatId}`);
+    }
+
+    return success;
+  } catch (error) {
+    console.error(`Failed to send retry request:`, error);
+    return false;
+  }
+};
+
+/**
+ * Set up a listener specifically for game messages
+ * Useful when you want to handle game events separately
+ *
+ * @param {string} chatId - The chat/game session ID
+ * @param {object} handlers - Object with handler functions for each game status
+ *
+ * Example:
+ * setupGameMessageListener(chatId, {
+ *   onInitialized: ({ serumCollected, serumRequired }) => { ... },
+ *   onQuestionReady: ({ question, quizId, isFirst }) => { ... },
+ *   onQuizComplete: ({ totalQuestions }) => { ... },
+ *   onChildSaved: ({ serumDelivered, attempts, message }) => { ... },
+ *   onNeedMoreSerum: ({ serumCollected, serumRequired, serumNeeded }) => { ... },
+ *   onError: (errorMessage) => { ... }
+ * });
+ */
+export const setupGameMessageListener = (chatId, handlers = {}) => {
+  wsManager.setupMessageListener(chatId, (message) => {
+    const { type, data } = message;
+
+    // Handle errors
+    if (type === "error") {
+      if (handlers.onError) {
+        handlers.onError(message.message || "Unknown error");
+      }
+      return;
+    }
+
+    // Only process stream_chunk messages
+    if (type !== "stream_chunk" || !data) return;
+
+    const status = data.status;
+
+    switch (status) {
+      case "game_initialized":
+        if (handlers.onInitialized) {
+          handlers.onInitialized({
+            serumCollected: data.serumCollected,
+            serumRequired: data.serumRequired
+          });
+        }
+        break;
+
+      case "game_loading_documents":
+        if (handlers.onGenerating) {
+          // Reuse onGenerating to show "Loading documents..." message
+          handlers.onGenerating({
+            current: 0,
+            total: 0,
+            message: data.message || "Loading your documents..."
+          });
+        }
+        break;
+
+      case "game_generating":
+        if (handlers.onGenerating) {
+          handlers.onGenerating({
+            current: data.current,
+            total: data.total
+          });
+        }
+        break;
+
+      case "game_question_ready":
+        if (handlers.onQuestionReady) {
+          handlers.onQuestionReady({
+            question: data.question,
+            quizId: data.quizId,
+            isFirst: data.isFirst
+          });
+        }
+        break;
+
+      case "game_quiz_complete":
+        if (handlers.onQuizComplete) {
+          handlers.onQuizComplete({
+            totalQuestions: data.totalQuestions
+          });
+        }
+        break;
+
+      case "game_child_saved":
+        if (handlers.onChildSaved) {
+          handlers.onChildSaved({
+            serumDelivered: data.serumDelivered,
+            attempts: data.attempts,
+            message: data.message
+          });
+        }
+        break;
+
+      case "game_need_more_serum":
+        if (handlers.onNeedMoreSerum) {
+          handlers.onNeedMoreSerum({
+            serumCollected: data.serumCollected,
+            serumRequired: data.serumRequired,
+            serumNeeded: data.serumNeeded,
+            attempts: data.attempts,
+            message: data.message
+          });
+        }
+        break;
+
+      case "game_retry_starting":
+        if (handlers.onRetryStarting) {
+          handlers.onRetryStarting({
+            serumCollected: data.serumCollected,
+            serumRequired: data.serumRequired,
+            serumNeeded: data.serumNeeded,
+            message: data.message
+          });
+        }
+        break;
+
+      default:
+        // Unknown game status - might be chat-related
+        console.log("Unknown game status:", status);
+    }
+  });
+};
+

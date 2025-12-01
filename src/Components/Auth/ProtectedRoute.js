@@ -1,14 +1,15 @@
 // ProtectedRoute.jsx
-import { Navigate } from 'react-router-dom';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
+import QuizRoomLanding from '../QuizRoom/QuizRoomLanding';
 
 const ProtectedRoute = ({ children }) => {
 
   const { isUserLoggedIn, isLoading } = useAuth();
 
-  //if (isLoading) return null; // Or a loading spinner
+  if (isLoading) return null; // Avoid flashing the landing page while auth loads
 
-  return isUserLoggedIn ? children : <Navigate to="/login" replace />;
+  // Show landing page for unauthenticated users (no redirect)
+  return isUserLoggedIn ? children : <QuizRoomLanding />;
 };
 
 export default ProtectedRoute;

@@ -1,7 +1,9 @@
-import { useState } from "react";
-import { Navigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, Link, useLocation, useNavigate } from "react-router-dom";
 import { handleSignInWithEMailAndPassword,handleSignInWithGoogleAccount, handleSignInWithAppleAccount } from "../../Firebase/auth";
 import { useAuth } from "../../Contexts/AuthContext/AuthContext";
+import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
+import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './AuthPage.css'
 
 // translation
@@ -11,23 +13,27 @@ const Login = () => {
   // State for form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  
+
   // State for handling errors
   const [error, setError] = useState('');
-  
+
   // State for tracking login process
   const [loading, setLoading] = useState(false);
-  
+
   // Get authentication context
   const { isUserLoggedIn } = useAuth();
 
-  // translation
-  const { t, i18n } = useTranslation();
+  // Theme
+  const [isDarkMode] = useDarkMode();
 
-  // Add this to see what's happening
-console.log('Detected language:', i18n.language);
-console.log('Browser language:', navigator.language);
-console.log('Available languages:', Object.keys(i18n.store.data));
+  // Get location for return redirect
+  const location = useLocation();
+  const navigate = useNavigate();
+  const returnTo = location.state?.returnTo;
+  const returnMessage = location.state?.message;
+
+  // translation
+  const { t } = useTranslation();
 
   const handleSubmit = async(e) => {
     
@@ -43,11 +49,11 @@ console.log('Available languages:', Object.keys(i18n.store.data));
        setLoading(true);
 
        // Attempt to sign in with Firebase
-       // This will trigger the onAuthStateChanged listener 
+       // This will trigger the onAuthStateChanged listener
        await handleSignInWithEMailAndPassword(email, password);
 
-       // Navigate to the home page after successful login
-       Navigate('/');
+       // Navigate to the chat interface after successful login
+       navigate('/c');
      
       }catch(error)
       {
@@ -65,8 +71,8 @@ console.log('Available languages:', Object.keys(i18n.store.data));
     try{
       await handleSignInWithGoogleAccount();
 
-      // Navigate to the home page after successful login
-      Navigate('/');
+      // Navigate to the chat interface after successful login
+      navigate('/c');
 
     }catch(error){
       console.error("Error signing in with Google:", error);
@@ -80,7 +86,7 @@ console.log('Available languages:', Object.keys(i18n.store.data));
       setError('');
       setLoading(true);
       await handleSignInWithAppleAccount();
-      Navigate('/');
+      navigate('/c');
     }catch(error){
       console.error("Error signing in with Apple:", error);
       setError(error.message);
@@ -89,14 +95,71 @@ console.log('Available languages:', Object.keys(i18n.store.data));
     }
   }
 
+  // Handle redirect after successful login
+  useEffect(() => {
+    if (isUserLoggedIn && returnTo) {
+      // Check if there's pending quiz state to restore
+      const pendingQuizState = sessionStorage.getItem('pendingQuizState');
+      if (pendingQuizState) {
+        try {
+          const quizState = JSON.parse(pendingQuizState);
+          // Check if the session is still valid (less than 30 minutes old)
+          const isValid = Date.now() - quizState.timestamp < 30 * 60 * 1000;
+          if (isValid) {
+            // Navigate back to quiz with restored state
+            // Include returningFromLogin flag to bypass refresh protection
+            navigate(returnTo, {
+              state: {
+                chatId: quizState.chatId,
+                title: quizState.title,
+                isGameMode: quizState.isGameMode,
+                fromUpload: quizState.fromUpload,
+                returningFromLogin: true  // Important: tells quiz page this is not a refresh
+              },
+              replace: true
+            });
+            // Clear the pending state after using it
+            sessionStorage.removeItem('pendingQuizState');
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to restore quiz state:', e);
+        }
+        // Clear invalid session
+        sessionStorage.removeItem('pendingQuizState');
+      }
+      // If no valid pending state, just navigate to returnTo
+      navigate(returnTo, { replace: true });
+    }
+  }, [isUserLoggedIn, returnTo, navigate]);
+
   return (
-    <div className="login-container">
+    <div className={`auth-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      {/* Only redirect to home if logged in AND no returnTo specified */}
+      {isUserLoggedIn && !returnTo && <Navigate to="/c" replace = {true} />}
 
-      {isUserLoggedIn && <Navigate to="/" replace = {true} />}
-       <h2>{t('login.title')}</h2>
+      {/* Theme toggle in corner */}
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
 
-      {/* Display error message if there is one */}
-      {error && <div className="error-message">{error}</div>}
+      <div className="login-container">
+        {/* Mascot */}
+        <div className="auth-mascot">
+          <NurseQuizMascot size={90} isExcited={true} />
+        </div>
+
+        {/* Show return message if present */}
+        {returnMessage && !isUserLoggedIn && (
+          <div className="return-message">
+            {returnMessage}
+          </div>
+        )}
+
+        <h2>{t('login.title')}</h2>
+
+        {/* Display error message if there is one */}
+        {error && <div className="error-message">{error}</div>}
   
       <form onSubmit={handleSubmit} className="login-form">
         <div className="input-group">
@@ -166,14 +229,15 @@ console.log('Available languages:', Object.keys(i18n.store.data));
             <span>{t('login.apple')}</span>
       </button> */}
   
-      {/* Additional links */}
-      <div className="login-links">
-        <p>
-          {t('login.noAccount')} <a href="/signup"> {t('login.signup')} </a>
-        </p>
-        <p>
-          <a href="/forgot-password">{t('login.forgotPassword')}</a>
-        </p>
+        {/* Additional links */}
+        <div className="login-links">
+          <p>
+            {t('login.noAccount')} <a href="/signup"> {t('login.signup')} </a>
+          </p>
+          <p>
+            <a href="/forgot-password">{t('login.forgotPassword')}</a>
+          </p>
+        </div>
       </div>
     </div>
   );

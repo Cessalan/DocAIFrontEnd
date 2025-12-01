@@ -1,0 +1,1191 @@
+/**
+ * ============================================
+ * SATA QUESTION STYLES
+ * ============================================
+ *
+ * Styling for Select All That Apply (SATA) questions.
+ * Design matches the existing ChatQuizCompact.css purple
+ * glassmorphic theme for visual cohesion.
+ *
+ * Color Palette:
+ * - Primary Purple: #6b46c1, #9f7aea
+ * - Correct Green: #48bb78, #38a169
+ * - Incorrect Red: #fc8181, #e53e3e
+ * - Missed/Warning Orange: #ed8936, #dd6b20
+ * - Text: #1a202c, #2d3748
+ *
+ * @author NurseQuiz Team
+ * @version 1.0.0
+ */
+
+/* ============================================
+   CONTAINER - GLASSMORPHIC BASE
+   ============================================ */
+
+.sata-container.glassmorphic {
+  background: rgba(254, 250, 255, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 12px;
+  padding: 14px;
+  margin-top: 12px;
+  box-shadow: 0 4px 16px rgba(173, 125, 195, 0.15);
+  border: 1px solid rgba(233, 216, 253, 0.8);
+  font-family: "Segoe UI", -apple-system, sans-serif;
+  position: relative;
+  animation: sataSlideIn 0.3s ease-out;
+}
+
+.sata-container.in-modal {
+  margin: 0;
+  box-shadow: none;
+  border: none;
+  background: transparent;
+  backdrop-filter: none;
+  padding: 24px 32px;
+}
+
+@keyframes sataSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Smooth transition for question changes */
+.sata-content-wrapper {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ============================================
+   HEADER
+   ============================================ */
+
+.sata-header {
+  margin-bottom: 8px;
+}
+
+.sata-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 5px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sata-title {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b46c1;
+}
+
+.review-badge {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9f7aea;
+}
+
+/* Header Actions Container */
+.sata-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* SATA Type Badge - Distinguishes from MCQ */
+.sata-type-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(159, 122, 234, 0.2), rgba(107, 70, 193, 0.2));
+  border: 1.5px solid rgba(107, 70, 193, 0.35);
+  border-radius: 12px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b46c1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* Expand Button for Fullscreen */
+.sata-expand-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  background: rgba(107, 70, 193, 0.08);
+  border: 1.5px solid rgba(107, 70, 193, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sata-expand-btn:hover {
+  background: rgba(107, 70, 193, 0.15);
+  border-color: rgba(107, 70, 193, 0.35);
+  transform: scale(1.05);
+}
+
+.sata-expand-btn:active {
+  transform: scale(0.95);
+}
+
+.sata-expand-btn svg {
+  width: 14px;
+  height: 14px;
+  stroke: #6b46c1;
+  stroke-width: 2;
+}
+
+.sata-progress-track {
+  height: 3px;
+  background: rgba(233, 216, 253, 0.6);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.sata-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #9f7aea, #6b46c1);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+/* ============================================
+   TOPIC BADGE
+   ============================================ */
+
+.sata-topic-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.12), rgba(159, 122, 234, 0.12));
+  border: 1.5px solid rgba(107, 70, 193, 0.25);
+  border-radius: 20px;
+  margin-bottom: 12px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(107, 70, 193, 0.08);
+}
+
+.sata-topic-badge:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.15);
+}
+
+.topic-badge-icon {
+  font-size: 16px;
+  line-height: 1;
+}
+
+.topic-badge-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b46c1;
+}
+
+/* ============================================
+   QUESTION TEXT
+   ============================================ */
+
+.sata-question {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a202c;
+  line-height: 1.4;
+  margin-bottom: 10px;
+}
+
+/* ============================================
+   HINT TEXT (Before submission)
+   ============================================ */
+
+.sata-hint {
+  font-size: 11px;
+  color: #6b46c1;
+  font-weight: 500;
+  margin-bottom: 8px;
+  padding: 6px 10px;
+  background: rgba(107, 70, 193, 0.08);
+  border-radius: 6px;
+  display: inline-block;
+}
+
+/* ============================================
+   OPTIONS LIST - CHECKBOX STYLE
+   ============================================ */
+
+.sata-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.sata-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: rgba(249, 245, 253, 0.8);
+  border: 1.5px solid rgba(224, 214, 245, 0.8);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  min-height: 40px;
+  user-select: none;
+}
+
+.sata-option:hover:not(.disabled):not([aria-disabled="true"]) {
+  background: rgba(241, 233, 252, 0.9);
+  border-color: #d6bcfa;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(173, 125, 195, 0.12);
+}
+
+.sata-option:active:not(.disabled):not([aria-disabled="true"]) {
+  transform: scale(0.99);
+}
+
+.sata-option:focus-visible {
+  outline: 2px solid #6b46c1;
+  outline-offset: 2px;
+}
+
+/* Selected State */
+.sata-option.selected {
+  background: rgba(233, 216, 253, 0.5);
+  border: 2px solid #9f7aea;
+  animation: optionSelect 0.3s ease;
+}
+
+@keyframes optionSelect {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.01); }
+  100% { transform: scale(1); }
+}
+
+/* Disabled State */
+.sata-option.disabled,
+.sata-option[aria-disabled="true"] {
+  cursor: default;
+  opacity: 0.5;
+}
+
+/* ============================================
+   REVEALED STATES - CORRECT/INCORRECT/MISSED
+   ============================================ */
+
+/* Correctly Selected */
+.sata-option.correct {
+  background: rgba(198, 246, 213, 0.9);
+  border-color: #48bb78;
+  animation: correctPulse 0.5s ease;
+  box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2);
+}
+
+@keyframes correctPulse {
+  0% { transform: scale(1); box-shadow: 0 2px 8px rgba(72, 187, 120, 0.15); }
+  50% { transform: scale(1.01); box-shadow: 0 4px 16px rgba(72, 187, 120, 0.25); }
+  100% { transform: scale(1); box-shadow: 0 4px 16px rgba(72, 187, 120, 0.2); }
+}
+
+.sata-option.correct .sata-option-text {
+  color: #22543d;
+}
+
+/* Incorrectly Selected */
+.sata-option.incorrect {
+  background: rgba(254, 215, 215, 0.9);
+  border-color: #fc8181;
+  animation: incorrectShake 0.4s ease;
+  box-shadow: 0 4px 16px rgba(252, 129, 129, 0.2);
+}
+
+@keyframes incorrectShake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-3px); }
+  40%, 80% { transform: translateX(3px); }
+}
+
+.sata-option.incorrect .sata-option-text {
+  color: #742a2a;
+}
+
+/* Missed (Should have selected) */
+.sata-option.missed {
+  background: rgba(254, 235, 200, 0.9);
+  border-color: #ed8936;
+  animation: missedHighlight 0.5s ease;
+  box-shadow: 0 4px 16px rgba(237, 137, 54, 0.2);
+}
+
+@keyframes missedHighlight {
+  0% { background: rgba(254, 235, 200, 0); border-color: transparent; }
+  100% { background: rgba(254, 235, 200, 0.9); border-color: #ed8936; }
+}
+
+.sata-option.missed .sata-option-text {
+  color: #744210;
+}
+
+/* ============================================
+   CHECKBOX COMPONENT
+   ============================================ */
+
+.sata-checkbox {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #9f7aea;
+  transition: all 0.2s ease;
+}
+
+.sata-checkbox.checked {
+  color: #6b46c1;
+}
+
+.checkbox-icon {
+  width: 18px;
+  height: 18px;
+  stroke: currentColor;
+  transition: all 0.2s ease;
+}
+
+.checkbox-icon.checked {
+  animation: checkboxPop 0.3s ease;
+}
+
+@keyframes checkboxPop {
+  0% { transform: scale(0.8); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Checkbox colors in revealed states */
+.sata-option.correct .sata-checkbox { color: #38a169; }
+.sata-option.incorrect .sata-checkbox { color: #e53e3e; }
+.sata-option.missed .sata-checkbox { color: #dd6b20; }
+
+/* ============================================
+   OPTION LETTER
+   ============================================ */
+
+.sata-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(233, 216, 253, 0.8);
+  color: #6b46c1;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+}
+
+.sata-letter.selected {
+  background: #9f7aea;
+  color: white;
+}
+
+.sata-letter.correct {
+  background: #38a169;
+  color: white;
+}
+
+.sata-letter.incorrect {
+  background: #e53e3e;
+  color: white;
+}
+
+.sata-letter.missed {
+  background: #dd6b20;
+  color: white;
+}
+
+/* ============================================
+   OPTION TEXT
+   ============================================ */
+
+.sata-option-text {
+  flex: 1;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #2d3748;
+}
+
+/* ============================================
+   STATUS ICONS (After Reveal)
+   ============================================ */
+
+.sata-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  margin-left: auto;
+  animation: iconPop 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+@keyframes iconPop {
+  0% { transform: scale(0) rotate(-90deg); opacity: 0; }
+  60% { transform: scale(1.1) rotate(5deg); }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
+.sata-icon.checkmark {
+  background: #38a169;
+  box-shadow: 0 2px 8px rgba(56, 161, 105, 0.4);
+}
+
+.sata-icon.x-mark {
+  background: #e53e3e;
+  box-shadow: 0 2px 8px rgba(229, 62, 62, 0.4);
+}
+
+.sata-icon.missed {
+  background: #dd6b20;
+  box-shadow: 0 2px 8px rgba(221, 107, 32, 0.4);
+}
+
+.sata-icon svg {
+  width: 12px;
+  height: 12px;
+  stroke: white;
+  stroke-width: 2.5;
+  fill: none;
+}
+
+/* ============================================
+   SUBMIT BUTTON
+   ============================================ */
+
+.sata-submit-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #6b46c1, #9f7aea);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+}
+
+.sata-submit-btn.enabled:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(107, 70, 193, 0.4);
+  background: linear-gradient(135deg, #553c9a, #805ad5);
+}
+
+.sata-submit-btn.enabled:active {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.35);
+}
+
+.sata-submit-btn.disabled {
+  background: rgba(107, 70, 193, 0.3);
+  color: rgba(255, 255, 255, 0.6);
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.sata-submit-btn:focus-visible {
+  outline: 3px solid #9f7aea;
+  outline-offset: 2px;
+}
+
+.submit-count {
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.9;
+}
+
+/* ============================================
+   SCORE DISPLAY - Minimalist premium style
+   ============================================ */
+
+.sata-score-display {
+  display: none; /* Hide the separate score display - integrated into feedback */
+}
+
+/* ============================================
+   FEEDBACK SECTION - Premium minimalist
+   ============================================ */
+
+.sata-feedback {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 10px;
+  animation: feedbackSlideUp 0.35s ease-out;
+  background: rgba(255, 255, 255, 0.6);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+@keyframes feedbackSlideUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.sata-feedback.correct {
+  background: rgba(240, 255, 244, 0.7);
+  border-color: rgba(72, 187, 120, 0.2);
+}
+
+.sata-feedback.partial {
+  background: rgba(255, 251, 245, 0.7);
+  border-color: rgba(237, 137, 54, 0.2);
+}
+
+.sata-feedback.incorrect {
+  background: rgba(255, 248, 248, 0.7);
+  border-color: rgba(229, 62, 62, 0.2);
+}
+
+.feedback-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.feedback-status {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.feedback-status.correct { color: #38a169; }
+.feedback-status.partial { color: #dd6b20; }
+.feedback-status.incorrect { color: #e53e3e; }
+
+.feedback-score {
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a5568;
+  padding: 2px 10px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 12px;
+}
+
+/* ============================================
+   BREAKDOWN LEGEND - Compact inline
+   ============================================ */
+
+.sata-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.breakdown-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-weight: 500;
+}
+
+.breakdown-item.correct {
+  background: rgba(72, 187, 120, 0.12);
+  color: #2f855a;
+}
+
+.breakdown-item.incorrect {
+  background: rgba(229, 62, 62, 0.12);
+  color: #c53030;
+}
+
+.breakdown-item.missed {
+  background: rgba(237, 137, 54, 0.12);
+  color: #c05621;
+}
+
+.breakdown-icon {
+  font-size: 10px;
+}
+
+.breakdown-label {
+  font-weight: 500;
+}
+
+.breakdown-count {
+  font-weight: 700;
+  margin-left: 2px;
+}
+
+/* ============================================
+   RATIONALE/JUSTIFICATION
+   ============================================ */
+
+.feedback-rationale-container {
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.feedback-rationale-content {
+  font-size: 11px;
+  line-height: 1.5;
+  color: #2d3748;
+  max-height: 100px;
+  overflow-y: auto;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: #d6bcfa transparent;
+}
+
+.feedback-rationale-content::-webkit-scrollbar {
+  width: 3px;
+}
+
+.feedback-rationale-content::-webkit-scrollbar-thumb {
+  background: #d6bcfa;
+  border-radius: 2px;
+}
+
+.feedback-rationale-content strong,
+.feedback-rationale-content b {
+  color: #553c9a;
+  font-weight: 600;
+}
+
+/* ============================================
+   NEXT BUTTON
+   ============================================ */
+
+.sata-next-btn {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #48bb78, #38a169);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+  animation: buttonAppear 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) 0.25s both;
+}
+
+@keyframes buttonAppear {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.sata-next-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(72, 187, 120, 0.35);
+}
+
+.sata-next-btn:active {
+  transform: translateY(-1px);
+}
+
+.sata-next-btn:focus-visible {
+  outline: 3px solid #9f7aea;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   SKIP BUTTON
+   ============================================ */
+
+.sata-skip-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 14px;
+  background: transparent;
+  color: #6b46c1;
+  border: 1.5px solid rgba(107, 70, 193, 0.3);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sata-skip-btn:hover {
+  background: rgba(107, 70, 193, 0.08);
+  border-color: rgba(107, 70, 193, 0.5);
+}
+
+.sata-skip-btn:active {
+  transform: scale(0.98);
+}
+
+.sata-skip-btn:focus-visible {
+  outline: 3px solid #9f7aea;
+  outline-offset: 2px;
+}
+
+/* ============================================
+   IN-MODAL ADJUSTMENTS
+   ============================================ */
+
+.sata-container.in-modal .sata-title {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.sata-container.in-modal .sata-question {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.sata-container.in-modal .sata-option {
+  padding: 10px 12px;
+  min-height: 38px;
+}
+
+.sata-container.in-modal .sata-option-text {
+  font-size: 12px;
+}
+
+.sata-container.in-modal .feedback-rationale-content {
+  max-height: 200px;
+  font-size: 12px;
+}
+
+/* ============================================
+   RESPONSIVE - MOBILE
+   ============================================ */
+
+@media (max-width: 640px) {
+  .sata-container.glassmorphic {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .sata-title-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .sata-type-badge {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  .sata-question {
+    font-size: 13px;
+    margin-bottom: 8px;
+  }
+
+  .sata-options {
+    gap: 5px;
+  }
+
+  .sata-option {
+    padding: 8px 10px;
+    gap: 8px;
+    min-height: 36px;
+  }
+
+  .sata-checkbox {
+    width: 18px;
+    height: 18px;
+  }
+
+  .checkbox-icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .sata-letter {
+    width: 20px;
+    height: 20px;
+    font-size: 10px;
+  }
+
+  .sata-option-text {
+    font-size: 11px;
+  }
+
+  .sata-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .sata-icon svg {
+    width: 10px;
+    height: 10px;
+  }
+
+  .sata-score-display {
+    padding: 10px;
+  }
+
+  .score-label {
+    font-size: 12px;
+  }
+
+  .sata-feedback {
+    padding: 10px;
+  }
+
+  .sata-breakdown {
+    gap: 6px;
+    padding: 6px;
+  }
+
+  .breakdown-item {
+    font-size: 10px;
+    padding: 3px 6px;
+  }
+
+  .feedback-rationale-content {
+    font-size: 10px;
+    max-height: 80px;
+  }
+
+  .sata-next-btn {
+    padding: 9px 12px;
+    font-size: 12px;
+  }
+
+  .sata-submit-btn {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+
+  .submit-count {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 375px) {
+  .sata-container.glassmorphic {
+    padding: 10px;
+  }
+
+  .sata-question {
+    font-size: 12px;
+  }
+
+  .sata-option {
+    padding: 6px 8px;
+  }
+
+  .sata-letter {
+    width: 18px;
+    height: 18px;
+    font-size: 9px;
+  }
+
+  .sata-option-text {
+    font-size: 10px;
+  }
+
+  .feedback-rationale-content {
+    max-height: 60px;
+    font-size: 9px;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .sata-container.glassmorphic,
+  .sata-option,
+  .sata-feedback,
+  .sata-score-display,
+  .sata-next-btn,
+  .sata-submit-btn,
+  .sata-skip-btn {
+    animation: none !important;
+  }
+
+  .sata-option:hover,
+  .sata-next-btn:hover,
+  .sata-submit-btn:hover,
+  .sata-skip-btn:hover,
+  .sata-expand-btn:hover {
+    transform: none;
+  }
+
+  .sata-progress-fill,
+  .score-bar-fill {
+    transition: width 0.2s linear;
+  }
+}
+
+@media (prefers-contrast: high) {
+  .sata-option {
+    border-width: 2px;
+  }
+
+  .sata-container.glassmorphic {
+    border-width: 2px;
+  }
+
+  .sata-option.correct,
+  .sata-option.incorrect,
+  .sata-option.missed {
+    border-width: 3px;
+  }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+body.dark-mode .sata-container.glassmorphic {
+  background: linear-gradient(135deg, rgba(30, 30, 35, 0.98), rgba(35, 35, 42, 0.98));
+  border: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .sata-title {
+  color: #ddd6fe;
+}
+
+body.dark-mode .sata-type-badge {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.25), rgba(167, 139, 250, 0.25));
+  border-color: rgba(139, 92, 246, 0.5);
+  color: #c4b5fd;
+}
+
+body.dark-mode .sata-topic-badge {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(167, 139, 250, 0.2));
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .topic-badge-text {
+  color: #c4b5fd;
+}
+
+body.dark-mode .sata-question {
+  color: #f9fafb;
+}
+
+body.dark-mode .sata-hint {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+}
+
+body.dark-mode .sata-option {
+  background: rgba(50, 53, 62, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+body.dark-mode .sata-option:hover:not(.disabled):not([aria-disabled="true"]) {
+  background: rgba(60, 63, 72, 0.9);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .sata-option.selected {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: #a78bfa;
+}
+
+body.dark-mode .sata-option.correct {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.35), rgba(5, 150, 105, 0.35));
+  border-color: #34d399;
+}
+
+body.dark-mode .sata-option.incorrect {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(220, 38, 38, 0.35));
+  border-color: #f87171;
+}
+
+body.dark-mode .sata-option.missed {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.35), rgba(217, 119, 6, 0.35));
+  border-color: #fbbf24;
+}
+
+body.dark-mode .sata-option-text {
+  color: #f3f4f6;
+}
+
+body.dark-mode .sata-option.correct .sata-option-text,
+body.dark-mode .sata-option.incorrect .sata-option-text,
+body.dark-mode .sata-option.missed .sata-option-text {
+  color: #ffffff;
+}
+
+body.dark-mode .sata-checkbox {
+  color: #a78bfa;
+}
+
+body.dark-mode .sata-checkbox.checked {
+  color: #c4b5fd;
+}
+
+body.dark-mode .sata-letter {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e5e7eb;
+}
+
+body.dark-mode .sata-letter.selected {
+  background: #8b5cf6;
+  color: #ffffff;
+}
+
+body.dark-mode .sata-letter.correct {
+  background: #10b981;
+}
+
+body.dark-mode .sata-letter.incorrect {
+  background: #ef4444;
+}
+
+body.dark-mode .sata-letter.missed {
+  background: #f59e0b;
+}
+
+body.dark-mode .sata-submit-btn {
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.35);
+}
+
+body.dark-mode .sata-submit-btn.enabled:hover {
+  background: linear-gradient(135deg, #7c3aed, #8b5cf6);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.45);
+}
+
+body.dark-mode .sata-submit-btn.disabled {
+  background: rgba(139, 92, 246, 0.25);
+  color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .sata-feedback {
+  background: rgba(40, 42, 50, 0.95);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .sata-feedback.correct {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(52, 211, 153, 0.25);
+}
+
+body.dark-mode .sata-feedback.partial {
+  background: rgba(245, 158, 11, 0.1);
+  border-color: rgba(251, 191, 36, 0.25);
+}
+
+body.dark-mode .sata-feedback.incorrect {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+body.dark-mode .feedback-header {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .feedback-score {
+  background: rgba(255, 255, 255, 0.1);
+  color: #e5e7eb;
+}
+
+body.dark-mode .feedback-status.correct { color: #34d399; }
+body.dark-mode .feedback-status.partial { color: #fbbf24; }
+body.dark-mode .feedback-status.incorrect { color: #f87171; }
+
+body.dark-mode .sata-breakdown {
+  background: transparent;
+}
+
+body.dark-mode .breakdown-item.correct {
+  background: rgba(16, 185, 129, 0.2);
+  color: #6ee7b7;
+}
+
+body.dark-mode .breakdown-item.incorrect {
+  background: rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+body.dark-mode .breakdown-item.missed {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+}
+
+body.dark-mode .feedback-rationale-container {
+  background: transparent;
+}
+
+body.dark-mode .feedback-rationale-content {
+  color: #e5e7eb;
+}
+
+body.dark-mode .feedback-rationale-content strong,
+body.dark-mode .feedback-rationale-content b {
+  color: #ffffff;
+}
+
+body.dark-mode .sata-next-btn {
+  background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .sata-next-btn:hover {
+  background: linear-gradient(135deg, #7c3aed, #6d28d9);
+  box-shadow: 0 6px 16px rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .sata-expand-btn {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .sata-expand-btn:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.5);
+}
+
+body.dark-mode .sata-expand-btn svg {
+  stroke: #a78bfa;
+}
+
+body.dark-mode .sata-skip-btn {
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.3);
+}
+
+body.dark-mode .sata-skip-btn:hover {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(167, 139, 250, 0.5);
+}

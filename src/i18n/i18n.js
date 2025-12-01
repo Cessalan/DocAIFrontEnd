@@ -1,281 +1,855 @@
-// 1. Create src/i18n/i18n.js
+// src/i18n/i18n.js
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
 
-// Translation files
 const resources = {
   en: {
     translation: {
-      // Navigation
-      "nav.home": "Home",
-      "nav.about": "About",
-      "nav.contact": "Contact",
-      "nav.services": "Services",
-      
-      // Common
-      "common.loading": "Loading...",
-      "common.save": "Save",
-      "common.cancel": "Cancel",
-      "common.submit": "Submit",
-      "common.search": "Search",
-      "common.welcome": "Welcome",
-      
-      // Messages
-      "message.success": "Operation successful!",
-      "message.error": "Something went wrong",
-      "message.confirm": "Are you sure?",
-      
-      // Forms
-      "form.name": "Name",
-      "form.email": "Email",
-      "form.password": "Password",
-      "form.login": "Login",
-      "form.register": "Register",
-      
-      // Content
-      "content.title": "Welcome to Our App",
-      "content.description": "This is a bilingual React application with i18next support.",
-      "content.changeLanguage": "Change Language",
-      
       // Chat Interface
-      "chat.title": "NurseQuiz",
-      "chat.uploadFile": "Start by uploading your course content📄",
-      "chat.uploadDocument": "Upload",
-      "chat.message.placeholder": "Message...",
-      "chat.addFile": "Add a file",
-      "chat.filesInMemory": "Files in memory",
-      "chat.files": "Notes",
-      "chat.noFiles": "No files uploaded",
-      "chat.aiTyping": "AI is typing...",
-      "chat.send":"Send", 
-      "chat.studysheet":"Study Sheet",
-      "chat.studysheetgenerated":"Here is your study sheet",
-      'chat.clickToView':"Click to view",
+      chat: {
+        title: "NurseQuiz",
+        uploadFile: "Start by uploading your course content📄",
+        uploadDocument: "Upload",
+        placeholder: "Message...",
+        addFile: "Add files",
+        filesInMemory: "Files in memory",
+        files: "Notes",
+        noFiles: "No files uploaded",
+        aiTyping: "AI is typing...",
+        send: "Send",
+        studysheet: "Study Sheet",
+        studysheetgenerated: "Here is your study sheet",
+        clickToView: "Click to view",
+        filesReceived: "Files received, what's next?",
+        fileReceived: "File received, what's next?",
+        continuelearning: "Continue learning",
+        uploading: "Uploading"
+      },
 
-      //sidebar
-      "side.chats":"Chats",
-      "side.newChat":"New chat", 
-      "side.usage":"Usage",
-      "side.logout":"Logout",
-      
-      // File actions
-      "file.summary": "Summary",
-      "file.quiz": "🧠 Quiz", 
-      "file.scenario": "Scenario",
-      "file.summarize": "Summarize file",
-      "file.generateQuiz": "Generate quiz",
-      "file.createScenario": "Create scenario",
-      
-      // Loading messages
-      "loading.generatingQuiz": "Generating quiz",
-      "loading.savingFile": "Saving your file",
-      "loading.analyzingContent": "Analyzing your file content",
-      "loading.writingSummary": "Writing you a summary", 
-      "loading.creatingSituation": "Cooking up a scenario for you",
-      "loading.readingDocuments": "Reading your documents...",
-      
-      // Messages
-      "message.fileReceived": "I received the file \"{{fileName}}\". What do you want to do with it?",
-      "message.fileUploading": "Uploading file: {{fileName}}...",
-      "message.fileUploaded": "File uploaded: {{fileName}}",
-      "message.summaryGenerated": "We summarized {{fileName}}, which would have taken about {{readingTime}} min to read.\\nYou saved **{{savedTime}} min**. ⏱️",
-      "message.quizReady": "Here is your quiz",
-      "message.scenarioReady": "Here is your scenario",
-      "message.error": "An error occurred. Please try again.",
-      "message.summary":"summary",
-      "message.goodanswer":"Right Answer",
-      "message.badanswer": "Wrong answer",
-      "message.explanation":"Explanation",
-      "message":
-       {
-          "summarydone":"I summarized {{filename}} that would have taken you {{readingTime}} min to read.\n  You saved {{savedTime}} min"
-       },
-        "message.generatingQuiz":"Generating the quiz",
+      // Common UI Elements
+      common: {
+        loading: "Loading...",
+        save: "Save",
+        cancel: "Cancel",
+        submit: "Submit",
+        search: "Search",
+        welcome: "Welcome"
+      },
 
-      "upload.started":"File upload has started",
-      "upload.failed":"File upload failed",
-      "upload.uploaded":"File uploaded",
-      "upload.received":"I received your file",
-      "upload.question":"What do you want to do?",
+      // Content/Landing
+      content: {
+        title: "Welcome to Our App",
+        description: "This is a bilingual React application with i18next support.",
+        changeLanguage: "Change Language"
+      },
 
-      "loading":{
-        "quiz":"Creating your quiz",
-        "summary":"Summarizing your file"
+      // File Actions
+      file: {
+        summary: "Summary",
+        quiz: "🧠 Quiz",
+        scenario: "Scenario",
+        summarize: "Summarize file",
+        generateQuiz: "Generate quiz",
+        createScenario: "Create scenario"
+      },
+
+      // Forms
+      form: {
+        name: "Name",
+        email: "Email",
+        password: "Password",
+        login: "Login",
+        register: "Register"
+      },
+
+      // Loading States
+      loading: {
+        justAmoment: "Just a moment ...",
+        analyzing: "Analyzing documents...",
+        finishingUp: "Finishing up...",
+        complete: "Analysis complete",
+        documentUploaded: "Document uploaded",
+        documentsUploaded: "Documents uploaded",
+        file: "file",
+        files: "files",
+        filesProcessed: "files processed",
+        fileProcessed: "file processed",
+        topicsFound: "topics identified",
+        conceptsFound: "concepts extracted",
+        generatingQuiz: "Generating quiz",
+        savingFile: "Saving your file",
+        analyzingContent: "Analyzing your file content",
+        writingSummary: "Writing you a summary",
+        creatingSituation: "Cooking up a scenario for you",
+        readingDocuments: "Reading your documents...",
+        quiz: "Creating your quiz",
+        summary: "Summarizing your file"
       },
 
       // Login
-      "login.title":"Login to NurseQuiz",
-      "login.email":"Email",
-      "login.emailPlaceHolder":"Enter your email",
-      "login.password":"Password",
-      "login.passwordPlaceHolder":"Enter your password",
-      "login.loading":"Logging in...",
-      "login.login":"Login",
-      "login.google":"Continue with Google",
-      "login.apple":"Continue with Apple",
-      "login.noAccount":"Don't have an account?",
-      "login.signup":"Sign Up",
-      "login.forgotPassword":"Forgot password",
-      "signup.title":"Create an account",
-      "signup.signup":"Sign up",
-      "signup.signupGoogle":"Continue with Google",
-      "signup.haveAccount":"You already have an account?",
-      "signup.login":"Log in",
+      login: {
+        title: "Login to NurseQuiz",
+        email: "Email",
+        emailPlaceHolder: "Enter your email",
+        password: "Password",
+        passwordPlaceHolder: "Enter your password",
+        loading: "Logging in...",
+        login: "Login",
+        google: "Continue with Google",
+        apple: "Continue with Apple",
+        noAccount: "Don't have an account?",
+        signup: "Sign Up",
+        forgotPassword: "Forgot password"
+      },
+
+      // Messages & Notifications
+      message: {
+        success: "Operation successful!",
+        error: "An error occurred. Please try again.",
+        confirm: "Are you sure?",
+        summary: "summary",
+        goodanswer: "Right Answer",
+        badanswer: "Wrong answer",
+        explanation: "Explanation",
+        fileReceived: "I received the file \"{{fileName}}\". What do you want to do with it?",
+        fileUploading: "Uploading file: {{fileName}}...",
+        fileUploaded: "File uploaded: {{fileName}}",
+        summaryGenerated: "We summarized {{fileName}}, which would have taken about {{readingTime}} min to read.\\nYou saved **{{savedTime}} min**. ⏱️",
+        summarydone: "I summarized {{filename}} that would have taken you {{readingTime}} min to read.\\n  You saved {{savedTime}} min",
+        quizReady: "Here is your quiz",
+        scenarioReady: "Here is your scenario",
+        generatingQuiz: "Generating the quiz"
+      },
+
+      // Navigation
+      nav: {
+        home: "Home",
+        about: "About",
+        contact: "Contact",
+        services: "Services"
+      },
+
+      // Quiz Interface
+      quiz: {
+        studytitle: "Let's review!",
+        studymessage: "Take time to review the material!",
+        practicetitle: "Keep trying!",
+        practicemessage: "Focus on the explanations above!",
+        reviewtitle: "Review time!",
+        reviewQuiz: "Review quiz",
+        reviewmessage: "A bit more practice will help!",
+        moderatetitle: "Keep going!",
+        25: "✨ You're doing great!",
+        50: "💪 Halfway there! Keep it up!",
+        75: "🔥 Finish strong! You can do it!",
+        90: "🏁 Almost done! Keep going!",
+        100: "🎉 Complete! Excellent work!",
+        question: "Question",
+        of: "of",
+        review: "Review",
+        correct: "correct",
+        correctAnswer: "Correct answer:",
+        yourAnswer: "Your answer:",
+        answerReview: "Answer Review",
+        thatsRight: "That's right!",
+        notQuite: "Not quite",
+        skipQuestion: "Skip Question",
+        nextQuestion: "Next Question",
+        viewResults: "View Results"
+      },
+
+      // Quiz Sticky Progress Bar
+      quizbarsticky: {
+        answered: "questions answered",
+        streak3msg: "🔥 On fire! 3 in a row!",
+        streak5msg: "🔥🔥 Amazing! Streak of 5!",
+        streak10msg: "🔥🔥🔥 LEGENDARY! Streak of 10!",
+        streak3txt: "ON FIRE",
+        streak5txt: "AMAZING",
+        streak10txt: "LEGENDARY"
+      },
+
+      // Sidebar
+      side: {
+        chats: "Chats",
+        newChat: "New chat",
+        expandSidebar: "Expand sidebar",
+        usage: "Analytics",
+        logout: "Logout"
+      },
+
+      // Sign Up
+      signup: {
+        title: "Create an account",
+        passwordConfirm: "Confirm your password",
+        signup: "Create my account",
+        signupGoogle: "Use my Google account",
+        haveAccount: "Already registered?",
+        login: "Sign in"
+      },
+
+      // Study Sheet
+      studysheet: {
+        loading: "Preparing your study sheet...",
+        building: "Creating study sheet"
+      },
+
+      // Upload
+      upload: {
+        started: "Sending file",
+        failed: "Error during file upload",
+        uploaded: "File sent",
+        received: "I received your file",
+        question: "",
+        uploading: "Uploading:"
+      },
+
+      // Quiz Navigation
+      quizNavigation: {
+        title: "Quiz Navigation",
+        current: "Current",
+        correct: "Correct",
+        incorrect: "Incorrect",
+        skipped: "Skipped",
+        unanswered: "Unanswered",
+        questionPrefix: "Q"
+      },
+
+      // Quiz Feedback
+      quizFeedback: {
+        title: "Quick Feedback",
+        leaveFeedback: "Leave Feedback",
+        submitted: "Feedback sent!",
+        question: "How is your quiz experience?",
+        whatWrong: "Oh no! What went wrong?",
+        whatLike: "What do you like most?",
+        thanks: "Thanks for your help!",
+        ratingBad: "Bad",
+        ratingOkay: "Okay",
+        ratingGood: "Good",
+        tooHard: "Too Hard",
+        confusing: "Confusing",
+        bugs: "Bugs",
+        content: "Content",
+        design: "Design",
+        learning: "Learning"
+      },
+
+      // Quiz Results Analytics
+      quizAnalytics: {
+        perfect: "Perfect Score!",
+        perfectMsg: "Flawless! Ready for a bigger challenge?",
+        outstanding: "Outstanding!",
+        outstandingMsg: "You're mastering this material!",
+        excellent: "Excellent!",
+        excellentMsg: "Great work, keep it up!",
+        wellDone: "Well done!",
+        wellDoneMsg: "You're making good progress!",
+        keepGoing: "Keep going!",
+        keepGoingMsg: "You're getting there!",
+        reviewTime: "Review time!",
+        reviewTimeMsg: "A bit more practice will help!",
+        letsReview: "Let's review!",
+        letsReviewMsg: "Take time to review the material!",
+        correct: "Correct",
+        incorrect: "Incorrect",
+        bestStreak: "Best Streak",
+        topics: "Topics",
+        performanceByTopic: "Performance by Topic",
+        insights: "Insights",
+        strongAreas: "Strong Areas",
+        needsImprovement: "Needs Improvement",
+        practiceWeakTopics: "Practice Weak Topics",
+        challengeMore: "Challenge Me More",
+        tryAgain: "Try Again",
+        reviewQuiz: "Review Quiz",
+        of: "of",
+        aiAdapts: "AI adapts to your needs and creates personalized quizzes",
+        generalTopic: "General",
+        practiceWeakPrompt: "Create a 5-question practice quiz on my weak areas: {{topics}}",
+        challengePrompt: "Create a 5-question quiz with harder questions to challenge me more"
+      },
+
+      // Flashcard Interface
+      flashcard: {
+        title: "Flashcards",
+        loading: "Loading flashcard...",
+        question: "Question",
+        answer: "Answer",
+        tapToFlip: "Tap to flip",
+        tapToFlipBack: "Tap to flip back",
+        hint: "Hint",
+        howWellKnow: "How well did you know this?",
+        again: "Again",
+        knowIt: "Know it",
+        greatKeepUp: "Great! Keep it up!",
+        noWorriesNextTime: "No worries, you'll get it next time!",
+        skipForNow: "Skip for now",
+        nextCard: "Next Card",
+        viewResults: "View Results",
+        mastered: "mastered",
+        generatingFlashcards: "Generating flashcards...",
+        expandToFullscreen: "Expand to fullscreen",
+        closeFullscreen: "Close fullscreen"
+      },
+
+      // Flashcard Navigation
+      flashcardNavigation: {
+        cards: "Cards",
+        status: "Status:",
+        new: "New",
+        learning: "Learning",
+        mastered: "Mastered"
+      },
+
+      // Flashcard Feedback
+      flashcardFeedback: {
+        title: "Quick Feedback",
+        leaveFeedback: "Leave Feedback",
+        submitted: "Feedback sent!",
+        question: "How is your flashcard experience?",
+        whatWrong: "Oh no! What went wrong?",
+        whatLike: "What do you like most?",
+        thanks: "Thanks for your help!",
+        ratingBad: "Bad",
+        ratingOkay: "Okay",
+        ratingGood: "Good",
+        tooHard: "Too Hard",
+        confusing: "Confusing",
+        bugs: "Bugs",
+        content: "Content",
+        design: "Design",
+        learning: "Learning"
+      },
+
+      // Onboarding
+      onboarding: {
+        intro: "To better understand your needs, please answer these quick questions ✨",
+        step1Title: "What is your main goal today?",
+        step2Title: "How do you use the questions?",
+        loading: "Setting up your profile...",
+        options: {
+          nclex: "NCLEX Prep 🏥",
+          courseExam: "Course Exam 📚",
+          generalReview: "General Review 💡",
+          flashcards: "Export to Flashcards (Anki/Quizlet) 🗂️",
+          trackProgress: "Track Progress Here 📈",
+          manual: "Print / Manual Copy 📝"
+        },
+        tracker: "Question {{current}} of {{total}}",
+        processing: {
+          analyzing: "Analyzing your preferences...",
+          personalizing: "Personalizing your experience..."
+        },
+        success: {
+          title: "All set! 🚀",
+          message: "Thanks for setting up your profile. You're ready to start learning!",
+          button: "Start Learning"
+        }
+      },
+
+      // Feedback
+      feedback: {
+        buttonText: "Share Feedback",
+        modalTitle: "We'd love to hear from you!",
+        typeLabel: "What's this about?",
+        typeGeneral: "General",
+        typeBug: "Bug Report",
+        typeFeature: "Feature Request",
+        typeOther: "Other",
+        messageLabel: "Your message",
+        placeholder: "Share your thoughts, suggestions, or report an issue...",
+        submit: "Send Feedback",
+        submitting: "Sending...",
+        submitError: "Failed to submit feedback. Please try again.",
+        successTitle: "Thank you!",
+        successMessage: "Your feedback helps us improve. We appreciate you taking the time!"
+      },
+
+      // SATA (Select All That Apply) Questions
+      sata: {
+        instructions: "Select all that apply",
+        submitAnswer: "Submit Answer",
+        selectAtLeast: "Select at least one option",
+        selected: "selected",
+        correctlySelected: "Correctly selected",
+        incorrectlySelected: "Incorrectly selected",
+        shouldHaveSelected: "Should have selected",
+        partialCredit: "Partial Credit",
+        score: "Score",
+        outOf: "out of",
+        perfect: "Perfect!",
+        // Feedback messages based on score percentage
+        feedback100: "Excellent! You identified all correct options!",
+        feedback80: "Great job! You got most of them right.",
+        feedback60: "Good effort! Review the missed options.",
+        feedback40: "Keep practicing! Focus on the rationale.",
+        feedback0: "Review the material and try again."
+      },
+
+      // Quiz Sharing
+      quizShare: {
+        buttonText: "Share Quiz",
+        creatingLink: "Creating link...",
+        modalTitle: "Share Quiz",
+        challengeMessage: "Challenge Message",
+        messagePlaceholder: "Add a personal message...",
+        copyMessage: "Copy Message",
+        copyLink: "Copy Link",
+        copied: "Copied!",
+        shareVia: "Share via",
+        socialTwitter: "Twitter",
+        socialFacebook: "Facebook",
+        socialWhatsApp: "WhatsApp",
+        socialEmail: "Email",
+        socialInstagram: "Instagram",
+        socialTikTok: "TikTok",
+        instagramMessage: "Link copied to clipboard! Instagram app will open. Paste the link in your story or post.\n\nClick OK to continue to Instagram, or Cancel to stay here.",
+        tiktokMessage: "Link copied to clipboard! TikTok app will open. Paste the link in your video description.\n\nClick OK to continue to TikTok, or Cancel to stay here.",
+        viralMessage90: "🏆 I just scored {{percentage}}% on this {{topic}}! Think you can beat my score? 💪",
+        viralMessage80: "🌟 I got {{percentage}}% on this {{topic}}! Can you do better? Try it out! 🎯",
+        viralMessage70: "📚 I scored {{percentage}}% on this {{topic}}. Challenge yourself and see how you do! 🚀",
+        viralMessageDefault: "💪 I'm practicing {{topic}} and got {{percentage}}%. Join me and let's improve together! 📖",
+        defaultQuizName: "Nursing Quiz",
+        defaultMessage: "Check out this nursing quiz!"
+      }
     }
   },
+
   fr: {
     translation: {
-      // Navigation
-      "nav.home": "Accueil",
-      "nav.about": "À propos",
-      "nav.contact": "Contact",
-      "nav.services": "Services",
-      
-      // Common
-      "common.loading": "Chargement...",
-      "common.save": "Enregistrer",
-      "common.cancel": "Annuler",
-      "common.submit": "Soumettre",
-      "common.search": "Rechercher",
-      "common.welcome": "Bienvenue",
-      
-      // Messages
-      "message.success": "Opération réussie !",
-      "message.error": "Quelque chose s'est mal passé",
-      "message.confirm": "Êtes-vous sûr ?",
-      "message.summary":"Résumé",
-      "message.goodanswer":"Bonne réponse",
-      "message.badanswer": "Mauvaise réponse",
-      "message.explanation":"Explication",
-      "message.summarydone":"J'ai résumé {{filename}} qui t'aurait pris environ {{readingTime}} min à lire.\n Tu as avez sauvé {{savedTime}} min",
-      
-      // Forms
-      "form.name": "Nom",
-      "form.email": "Email",
-      "form.password": "Mot de passe",
-      "form.login": "Connexion",
-      "form.register": "S'inscrire",
-      
-      // Content
-      "content.title": "Bienvenue dans notre application",
-      "content.description": "Il s'agit d'une application React bilingue avec support i18next.",
-      "content.changeLanguage": "Changer de langue",
-      
       // Chat Interface
-      "chat.title": "NurseQuiz",
-      "chat.uploadFile": "Commencez par téléverser le cotenu de votre cours 📄",
-      "chat.uploadDocument": "Téléverser",
-      "chat.message.placeholder": "Message...",
-      "chat.addFile": "Ajouter un fichier",
-      "chat.filesInMemory": "Fichiers en mémoire", 
-      "chat.files": "Notes de cours",
-      "chat.noFiles": "Aucun fichier téléversé",
-      "chat.aiTyping": "L'IA tape...",
-      "chat.send":"Envoyer", 
-      "chat.studysheet":"Fiche d'étude",
-      "chat.studysheetgenerated":"Voici ta fiche d'étude",
-      'chat.clickToView':"Cliques pour voir",
-      
-      // Side bar
-      //sidebar
-      "side.newChat":"nouveau chat",
-      "side.usage":"Analytiques",
-      "side.logout":"Déconnexion",
+      chat: {
+        title: "NurseQuiz",
+        uploadFile: "Commences par téléverser le contenu de ton cours📄",
+        uploadDocument: "Téléverser",
+        placeholder: "Message...",
+        addFile: "Ajouter des fichiers",
+        filesInMemory: "Fichiers en mémoire",
+        files: "Notes",
+        noFiles: "Aucun fichier téléversé",
+        aiTyping: "L'IA écrit...",
+        send: "Envoyer",
+        studysheet: "Feuille d'étude",
+        studysheetgenerated: "Voici votre feuille d'étude",
+        clickToView: "Cliquez pour voir",
+        filesReceived: "Fichiers reçus, quelle est la suite?",
+        fileReceived: "Fichier reçu, quelle est la suite?",
+        continuelearning: "Continuer l'apprentissage",
+        uploading: "Téléversement"
+      },
 
+      // Common UI Elements
+      common: {
+        loading: "Chargement...",
+        save: "Enregistrer",
+        cancel: "Annuler",
+        submit: "Soumettre",
+        search: "Rechercher",
+        welcome: "Bienvenue"
+      },
 
-      // File actions
-      "file.summary": " Résumé",
-      "file.quiz": " Quiz",
-      "file.scenario": "Mise en situation", 
-      "file.summarize": "Résumer le fichier",
-      "file.generateQuiz": "Générer un quiz",
-      "file.createScenario": "Créer une mise en situation",
-      
-      // Loading messages
-      "loading.generatingQuiz": "Entrain de générer un quiz",
-      "loading.savingFile": "Entrain d'enregistrer ton fichier", 
-      "loading.analyzingContent": "Entrain d'analyser le contenu de ton fichier",
-      "loading.writingSummary": "Entrain de t'écrire un résumé",
-      "loading.creatingSituation": "Entrain de te concocter une mise en situation",
-      "loading.readingDocuments": "Entrain de lire tes documents...",
-      
-      // Messages
-      "message.fileReceived": "J'ai bien reçu le fichier \"{{fileName}}\". Que veux-tu faire avec?",
-      "message.fileUploading": "Envoi du fichier: {{fileName}}...",
-      "message.fileUploaded": "Fichier téléversé: {{fileName}}",
-      "message.summaryGenerated": "Nous avons résumé {{fileName}}, qui aurait pris environ {{readingTime}} min à lire.\\nVous avez sauvé **{{savedTime}} min**. ⏱️",
-      "message.quizReady": "Voici votre quiz",
-      "message.scenarioReady": "Voici votre mise en situation", 
-      "message.error": "Une erreur est survenue. Veuillez réessayer.",
-      "message.generatingQuiz":"Entrain de générer le quiz",
+      // Content/Landing
+      content: {
+        title: "Bienvenue dans notre application",
+        description: "Ceci est une application React bilingue avec support i18next.",
+        changeLanguage: "Changer de langue"
+      },
 
-      // upload
-      "upload.started":"Envoi du fichier",
-      "upload.failed":"Erreur durant le téléversement du fichier",
-      "upload.uploaded":"Fichier envoyé",
-      "upload.received":"J'ai reçu ton fichier",
-      "upload.question":"",
+      // File Actions
+      file: {
+        summary: "Résumé",
+        quiz: "🧠 Quiz",
+        scenario: "Scénario",
+        summarize: "Résumer le fichier",
+        generateQuiz: "Générer un quiz",
+        createScenario: "Créer un scénario"
+      },
+
+      // Forms
+      form: {
+        name: "Nom",
+        email: "Courriel",
+        password: "Mot de passe",
+        login: "Connexion",
+        register: "S'inscrire"
+      },
+
+      // Loading States
+      loading: {
+        justAmoment: "Un instant...",
+        analyzing: "Analyse des documents...",
+        finishingUp: "Finalisation...",
+        complete: "Analyse terminée",
+        documentUploaded: "Document téléversé",
+        documentsUploaded: "Documents téléversés",
+        file: "fichier",
+        files: "fichiers",
+        filesProcessed: "fichiers traités",
+        fileProcessed: "fichier traité",
+        topicsFound: "sujets identifiés",
+        conceptsFound: "concepts extraits",
+        generatingQuiz: "Génération du quiz",
+        savingFile: "Sauvegarde de votre fichier",
+        analyzingContent: "Analyse du contenu de votre fichier",
+        writingSummary: "Rédaction d'un résumé",
+        creatingSituation: "Préparation d'un scénario pour vous",
+        readingDocuments: "Lecture de vos documents...",
+        quiz: "Création de votre quiz",
+        summary: "Résumé de votre fichier"
+      },
 
       // Login
-      "login.title":"Se connecter à NurseQuiz",
-      "login.email":"Email",
-      "login.emailPlaceHolder":"Entrez votre email",
-      "login.password":"Mot de passe",
-      "login.passwordPlaceHolder":"Entrez votre mot de passe",
-      "login.loading":"Connexion en cours...",
-      "login.login":"Se connecter",
-      "login.google":"Continuer avec Google",
-      "login.noAccount":"Pas de compte?",
-      "login.signup":"Créer un compte",
-      "login.forgotPassword":"Mot de passe oublié?",
-      "login.apple":"Continuer avec Apple",
+      login: {
+        title: "Connexion à NurseQuiz",
+        email: "Courriel",
+        emailPlaceHolder: "Entrez votre courriel",
+        password: "Mot de passe",
+        passwordPlaceHolder: "Entrez votre mot de passe",
+        loading: "Connexion en cours...",
+        login: "Se connecter",
+        google: "Continuer avec Google",
+        apple: "Continuer avec Apple",
+        noAccount: "Vous n'avez pas de compte?",
+        signup: "S'inscrire",
+        forgotPassword: "Mot de passe oublié"
+      },
 
-      "signup.title":"Créez un compte",
-      "signup.passwordConfirm":"Confirmez votre mot de passe",
-      "signup.signup":"Créer mon compte",
-      "signup.signupGoogle":"Utiliser mon compte google",
-      "signup.haveAccount":"Déjà inscris?",
-      "signup.login":"Se connecter"
-      
+      // Messages & Notifications
+      message: {
+        success: "Opération réussie!",
+        error: "Une erreur s'est produite. Veuillez réessayer.",
+        confirm: "Êtes-vous sûr?",
+        summary: "résumé",
+        goodanswer: "Bonne réponse",
+        badanswer: "Mauvaise réponse",
+        explanation: "Explication",
+        fileReceived: "J'ai reçu le fichier \"{{fileName}}\". Que voulez-vous en faire?",
+        fileUploading: "Téléversement du fichier: {{fileName}}...",
+        fileUploaded: "Fichier téléversé: {{fileName}}",
+        summaryGenerated: "Nous avons résumé {{fileName}}, ce qui aurait pris environ {{readingTime}} min à lire.\\nVous avez économisé **{{savedTime}} min**. ⏱️",
+        summarydone: "J'ai résumé {{filename}} qui vous aurait pris {{readingTime}} min à lire.\\n Vous avez économisé {{savedTime}} min",
+        quizReady: "Voici votre quiz",
+        scenarioReady: "Voici votre scénario",
+        generatingQuiz: "Génération du quiz"
+      },
+
+      // Navigation
+      nav: {
+        home: "Accueil",
+        about: "À propos",
+        contact: "Contact",
+        services: "Services"
+      },
+
+      // Quiz Interface
+      quiz: {
+        studytitle: "Révisons ensemble!",
+        studymessage: "Prenez le temps de réviser le matériel!",
+        practicetitle: "Continue!",
+        practicemessage: "Concentre-toi sur les explications ci-dessus!",
+        reviewtitle: "Temps de révision!",
+        reviewQuiz: "Revoir le quiz",
+        reviewmessage: "Un peu plus de pratique t'aidera!",
+        moderatetitle: "Continue!",
+        25: "✨ Tu t'en sors très bien!",
+        50: "💪 À mi-chemin! Ne lâche rien!",
+        75: "🔥 Termine en force! Tu peux le faire!",
+        90: "🏁 Presque fini! Continue!",
+        100: "🎉 Terminé! Excellent travail!",
+        question: "Question",
+        of: "sur",
+        review: "Révision",
+        correct: "correct",
+        correctAnswer: "Bonne réponse:",
+        yourAnswer: "Votre réponse:",
+        answerReview: "Révision des réponses",
+        thatsRight: "Bonne réponse!",
+        notQuite: "Pas tout à fait",
+        skipQuestion: "Passer la question",
+        nextQuestion: "Question suivante",
+        viewResults: "Voir les résultats"
+      },
+
+      // Quiz Sticky Progress Bar
+      quizbarsticky: {
+        answered: "questions répondues",
+        streak3msg: "🔥 En feu! 3 d'affilée!",
+        streak5msg: "🔥🔥 Incroyable! Série de 5!",
+        streak10msg: "🔥🔥🔥 LÉGENDAIRE! Série de 10!",
+        streak3txt: "EN FEU",
+        streak5txt: "INCROYABLE",
+        streak10txt: "LÉGENDAIRE"
+      },
+
+      // Sidebar
+      side: {
+        chats: "Discussions",
+        newChat: "Nouveau chat",
+        expandSidebar: "Ouvrir le menu",
+        usage: "Analytiques",
+        logout: "Déconnexion"
+      },
+
+      // Sign Up
+      signup: {
+        title: "Créez un compte",
+        passwordConfirm: "Confirmez votre mot de passe",
+        signup: "Créer mon compte",
+        signupGoogle: "Utiliser mon compte Google",
+        haveAccount: "Déjà inscrit?",
+        login: "Se connecter"
+      },
+
+      // Study Sheet
+      studysheet: {
+        loading: "Entrain de préparer ta feuille d'étude...",
+        building: "Création de la feuille d'étude"
+      },
+
+      // Upload
+      upload: {
+        started: "Envoi du fichier",
+        failed: "Erreur durant le téléversement du fichier",
+        uploaded: "Fichier envoyé",
+        received: "J'ai reçu ton fichier",
+        question: "",
+        uploading: "Entrain d'envoyer:"
+      },
+
+      // Quiz Navigation
+      quizNavigation: {
+        title: "Navigation du Quiz",
+        current: "Actuelle",
+        correct: "Correcte",
+        incorrect: "Incorrecte",
+        skipped: "Passée",
+        unanswered: "Non répondue",
+        questionPrefix: "Q"
+      },
+
+      // Quiz Feedback
+      quizFeedback: {
+        title: "Commentaire rapide",
+        leaveFeedback: "Laisser un commentaire",
+        submitted: "Commentaire envoyé!",
+        question: "Comment se passe ton quiz?",
+        whatWrong: "Oh non! Qu'est-ce qui ne va pas?",
+        whatLike: "Qu'est-ce que tu aimes le plus?",
+        thanks: "Merci pour ton aide!",
+        ratingBad: "Mauvais",
+        ratingOkay: "Correct",
+        ratingGood: "Bon",
+        tooHard: "Trop difficile",
+        confusing: "Confus",
+        bugs: "Bogues",
+        content: "Contenu",
+        design: "Design",
+        learning: "Apprentissage"
+      },
+
+      // Quiz Results Analytics
+      quizAnalytics: {
+        perfect: "Score parfait!",
+        perfectMsg: "Impeccable! Prêt pour un plus grand défi?",
+        outstanding: "Exceptionnel!",
+        outstandingMsg: "Tu maîtrises cette matière!",
+        excellent: "Excellent!",
+        excellentMsg: "Continue comme ça!",
+        wellDone: "Bien joué!",
+        wellDoneMsg: "Tu progresses bien!",
+        keepGoing: "Continue!",
+        keepGoingMsg: "Tu y arrives!",
+        reviewTime: "À réviser!",
+        reviewTimeMsg: "Un peu plus de pratique t'aidera!",
+        letsReview: "À réviser!",
+        letsReviewMsg: "Prends le temps de revoir la matière!",
+        correct: "Correct",
+        incorrect: "Incorrect",
+        bestStreak: "Meilleure série",
+        topics: "Sujets",
+        performanceByTopic: "Performance par sujet",
+        insights: "Analyse",
+        strongAreas: "Points forts",
+        needsImprovement: "À améliorer",
+        practiceWeakTopics: "Pratiquer les points faibles",
+        challengeMore: "Me challenger davantage",
+        tryAgain: "Recommencer",
+        reviewQuiz: "Revoir le quiz",
+        of: "sur",
+        aiAdapts: "L'IA s'adapte à tes besoins et crée des quiz personnalisés",
+        generalTopic: "Général",
+        practiceWeakPrompt: "Crée un quiz de pratique de 5 questions sur mes points faibles : {{topics}}",
+        challengePrompt: "Crée un quiz de 5 questions plus difficiles pour me challenger davantage"
+      },
+
+      // Flashcard Interface
+      flashcard: {
+        title: "Cartes mémoire",
+        loading: "Chargement de la carte mémoire...",
+        question: "Question",
+        answer: "Réponse",
+        tapToFlip: "Toucher pour retourner",
+        tapToFlipBack: "Toucher pour retourner",
+        hint: "Indice",
+        howWellKnow: "À quel point connaissiez-vous cela?",
+        again: "À revoir",
+        knowIt: "Je le sais",
+        greatKeepUp: "Super! Continue comme ça!",
+        noWorriesNextTime: "Pas de souci, tu réussiras la prochaine fois!",
+        skipForNow: "Passer pour l'instant",
+        nextCard: "Carte suivante",
+        viewResults: "Voir les résultats",
+        mastered: "maîtrisé",
+        generatingFlashcards: "Génération des cartes mémoire...",
+        expandToFullscreen: "Agrandir en plein écran",
+        closeFullscreen: "Fermer le plein écran"
+      },
+
+      // Flashcard Navigation
+      flashcardNavigation: {
+        cards: "Cartes",
+        status: "Statut:",
+        new: "Nouveau",
+        learning: "En apprentissage",
+        mastered: "Maîtrisé"
+      },
+
+      // Flashcard Feedback
+      flashcardFeedback: {
+        title: "Commentaire rapide",
+        leaveFeedback: "Laisser un commentaire",
+        submitted: "Commentaire envoyé!",
+        question: "Comment se passent tes cartes mémoire?",
+        whatWrong: "Oh non! Qu'est-ce qui ne va pas?",
+        whatLike: "Qu'est-ce que tu aimes le plus?",
+        thanks: "Merci pour ton aide!",
+        ratingBad: "Mauvais",
+        ratingOkay: "Correct",
+        ratingGood: "Bon",
+        tooHard: "Trop difficile",
+        confusing: "Confus",
+        bugs: "Bogues",
+        content: "Contenu",
+        design: "Design",
+        learning: "Apprentissage"
+      },
+
+      // Onboarding
+      onboarding: {
+        intro: "Pour mieux comprendre vos besoins, veuillez répondre à ces questions rapides ✨",
+        step1Title: "Quel est votre objectif aujourd'hui?",
+        step2Title: "Comment utilisez-vous les questions?",
+        loading: "Configuration de votre profil...",
+        options: {
+          nclex: "Préparation NCLEX 🏥",
+          courseExam: "Examen de cours 📚",
+          generalReview: "Révision générale 💡",
+          flashcards: "Exporter vers Flashcards (Anki/Quizlet) 🗂️",
+          trackProgress: "Suivre les progrès ici 📈",
+          manual: "Imprimer / Copie manuelle 📝"
+        },
+        tracker: "Question {{current}} sur {{total}}",
+        processing: {
+          analyzing: "Analyse de vos préférences...",
+          personalizing: "Personnalisation de votre expérience..."
+        },
+        success: {
+          title: "C'est tout bon! 🚀",
+          message: "Merci d'avoir configuré votre profil. Vous êtes prêt à apprendre!",
+          button: "Commencer l'apprentissage"
+        }
+      },
+
+      // Feedback
+      feedback: {
+        buttonText: "Partager un retour",
+        modalTitle: "Votre avis nous intéresse!",
+        typeLabel: "De quoi s'agit-il?",
+        typeGeneral: "Général",
+        typeBug: "Signaler un bug",
+        typeFeature: "Suggestion",
+        typeOther: "Autre",
+        messageLabel: "Votre message",
+        placeholder: "Partagez vos pensées, suggestions, ou signalez un problème...",
+        submit: "Envoyer le retour",
+        submitting: "Envoi en cours...",
+        submitError: "Échec de l'envoi. Veuillez réessayer.",
+        successTitle: "Merci!",
+        successMessage: "Votre retour nous aide à améliorer l'application. Nous apprécions votre temps!"
+      },
+
+      // SATA (Select All That Apply) Questions
+      sata: {
+        instructions: "Sélectionnez toutes les réponses applicables",
+        submitAnswer: "Soumettre la réponse",
+        selectAtLeast: "Sélectionnez au moins une option",
+        selected: "sélectionné(s)",
+        correctlySelected: "Correctement sélectionné",
+        incorrectlySelected: "Sélection incorrecte",
+        shouldHaveSelected: "Aurait dû être sélectionné",
+        partialCredit: "Crédit partiel",
+        score: "Score",
+        outOf: "sur",
+        perfect: "Parfait!",
+        // Messages de rétroaction basés sur le pourcentage
+        feedback100: "Excellent! Tu as identifié toutes les bonnes options!",
+        feedback80: "Très bien! Tu as eu la plupart des bonnes réponses.",
+        feedback60: "Bon effort! Revois les options manquées.",
+        feedback40: "Continue à pratiquer! Concentre-toi sur les explications.",
+        feedback0: "Revois la matière et réessaie."
+      },
+
+      // Quiz Sharing
+      quizShare: {
+        buttonText: "Partager le quiz",
+        creatingLink: "Création du lien...",
+        modalTitle: "Partager le quiz",
+        challengeMessage: "Message de défi",
+        messagePlaceholder: "Ajouter un message personnel...",
+        copyMessage: "Copier le message",
+        copyLink: "Copier le lien",
+        copied: "Copié!",
+        shareVia: "Partager via",
+        socialTwitter: "Twitter",
+        socialFacebook: "Facebook",
+        socialWhatsApp: "WhatsApp",
+        socialEmail: "Courriel",
+        socialInstagram: "Instagram",
+        socialTikTok: "TikTok",
+        instagramMessage: "Lien copié dans le presse-papiers! L'application Instagram va s'ouvrir. Colle le lien dans ta story ou publication.\n\nClique OK pour continuer vers Instagram, ou Annuler pour rester ici.",
+        tiktokMessage: "Lien copié dans le presse-papiers! L'application TikTok va s'ouvrir. Colle le lien dans la description de ta vidéo.\n\nClique OK pour continuer vers TikTok, ou Annuler pour rester ici.",
+        viralMessage90: "🏆 Je viens de marquer {{percentage}}% sur ce {{topic}}! Penses-tu pouvoir battre mon score? 💪",
+        viralMessage80: "🌟 J'ai obtenu {{percentage}}% sur ce {{topic}}! Peux-tu faire mieux? Essaie-le! 🎯",
+        viralMessage70: "📚 J'ai marqué {{percentage}}% sur ce {{topic}}. Lance-toi le défi et vois comment tu t'en sors! 🚀",
+        viralMessageDefault: "💪 Je pratique {{topic}} et j'ai obtenu {{percentage}}%. Rejoins-moi et améliorons-nous ensemble! 📖",
+        defaultQuizName: "Quiz d'infirmière",
+        defaultMessage: "Découvre ce quiz d'infirmière!"
+      }
     }
   }
 };
 
 i18n
-  // Detect user language
   .use(LanguageDetector)
-  // Pass the i18n instance to react-i18next
   .use(initReactI18next)
-  // Initialize i18next
   .init({
-    resources, 
-    // Language to use if no language is detected
+    resources,
     fallbackLng: 'en',
-    
-    load: 'languageOnly', 
-
-    // Debug mode (set to false in production)
+    load: 'languageOnly',
     debug: process.env.NODE_ENV === 'development',
-    
-    // Options for language detector
+
     detection: {
-      // Order of language detection
       order: ['localStorage', 'navigator', 'htmlTag'],
-      
-      // Cache user language
       caches: ['localStorage'],
-      
-      // Keys to lookup language from
       lookupLocalStorage: 'i18nextLng',
     },
-    
+
     interpolation: {
-      // React already escapes values to prevent XSS
       escapeValue: false,
     },
-    
-    // Namespace settings
+
     ns: ['translation'],
     defaultNS: 'translation',
   });

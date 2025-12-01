@@ -1,0 +1,2182 @@
+/* ============================================
+   HOSPITAL CORRIDOR - PREMIUM HD EDITION
+   Dark & Light Mode | Matches QuizRoomLanding theme
+   Ultra-smooth animations, glass morphism, premium feel
+   ============================================ */
+
+/* ============================================
+   BASE CONTAINER - DARK MODE (Default)
+   ============================================ */
+
+.hospital-corridor {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  background: linear-gradient(145deg, #0d0d10 0%, #15151a 50%, #1a1a20 100%);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ============================================
+   AMBIENT LIGHTING - Creates depth & atmosphere
+   ============================================ */
+
+.ambient-light {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(34, 211, 238, 0.04) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Purple ambient glow that pulses */
+.ambient-glow {
+  position: absolute;
+  top: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.08) 0%,
+    rgba(139, 92, 246, 0.03) 40%,
+    transparent 70%
+  );
+  pointer-events: none;
+  animation: ambientPulse 8s ease-in-out infinite;
+  z-index: 1;
+}
+
+@keyframes ambientPulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: translateX(-50%) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) scale(1.1);
+  }
+}
+
+/* ============================================
+   CORRIDOR TRACK - Scrolling Container
+   Ultra-smooth scrolling with premium easing
+   ============================================ */
+
+.corridor-track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 280%;
+  height: 100%;
+  transform: translateX(calc(var(--progress, 0) * -0.65%));
+  transition: transform 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+
+/* ============================================
+   CEILING - Modern Hospital with Recessed Lighting
+   ============================================ */
+
+.corridor-ceiling {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 14%;
+  background: linear-gradient(180deg,
+    #1a1a22 0%,
+    #22222c 60%,
+    #2a2a36 100%
+  );
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+.ceiling-panels {
+  display: flex;
+  height: 100%;
+}
+
+.ceiling-panel {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 10px;
+  border-right: 1px solid rgba(255, 255, 255, 0.03);
+  position: relative;
+}
+
+/* ============================================
+   CEILING LIGHTS - Premium Recessed Fixtures
+   ============================================ */
+
+.ceiling-light {
+  width: 65%;
+  height: 50%;
+  background: linear-gradient(180deg,
+    rgba(30, 30, 40, 0.9) 0%,
+    rgba(35, 35, 48, 0.9) 100%
+  );
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 6px 8px;
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.3);
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.03);
+}
+
+.light-tube {
+  width: 80%;
+  height: 5px;
+  background: rgba(40, 40, 55, 0.8);
+  border-radius: 3px;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+}
+
+.light-bloom {
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 250%;
+  height: 1000%;
+  background: radial-gradient(
+    ellipse at top center,
+    rgba(167, 139, 250, 0) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+}
+
+/* Lights ON state - Purple tinted glow */
+.ceiling-light.on .light-tube {
+  background: linear-gradient(180deg,
+    rgba(167, 139, 250, 0.95) 0%,
+    rgba(139, 92, 246, 0.9) 50%,
+    rgba(167, 139, 250, 0.95) 100%
+  );
+  box-shadow:
+    0 0 15px rgba(139, 92, 246, 0.7),
+    0 0 30px rgba(139, 92, 246, 0.4),
+    0 0 60px rgba(139, 92, 246, 0.2),
+    0 0 100px rgba(139, 92, 246, 0.1);
+}
+
+.ceiling-light.on .light-bloom {
+  background: radial-gradient(
+    ellipse at top center,
+    rgba(139, 92, 246, 0.15) 0%,
+    rgba(167, 139, 250, 0.06) 40%,
+    transparent 70%
+  );
+  opacity: 1;
+}
+
+/* Smooth flicker effect on stage 1 */
+.stage-1 .ceiling-light.on .light-tube {
+  animation: smoothFlicker 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes smoothFlicker {
+  0% { opacity: 0.15; }
+  12% { opacity: 0.95; }
+  20% { opacity: 0.35; }
+  35% { opacity: 1; }
+  48% { opacity: 0.65; }
+  60% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
+/* ============================================
+   WALL - Modern Hospital Glass/Metal Design
+   ============================================ */
+
+.corridor-wall {
+  position: absolute;
+  top: 14%;
+  left: 0;
+  right: 0;
+  height: 56%;
+  background: linear-gradient(180deg,
+    #1e1e28 0%,
+    #252530 50%,
+    #2a2a38 100%
+  );
+}
+
+.wall-upper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 42%;
+  background: linear-gradient(180deg,
+    rgba(35, 35, 48, 0.95) 0%,
+    rgba(40, 40, 55, 0.9) 100%
+  );
+  border-bottom: 1px solid rgba(139, 92, 246, 0.08);
+}
+
+/* Glass accent stripe */
+.wall-accent {
+  position: absolute;
+  top: 42%;
+  left: 0;
+  right: 0;
+  height: 5%;
+  background: linear-gradient(180deg,
+    rgba(139, 92, 246, 0.25) 0%,
+    rgba(124, 58, 237, 0.35) 50%,
+    rgba(139, 92, 246, 0.25) 100%
+  );
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 40px rgba(139, 92, 246, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.wall-lower {
+  position: absolute;
+  top: 47%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg,
+    rgba(30, 30, 42, 0.95) 0%,
+    rgba(35, 35, 50, 0.9) 100%
+  );
+}
+
+
+/* ============================================
+   DOORS - SLIM ELEGANT MODERN DESIGN
+   Refined thin frame aesthetic
+   ============================================ */
+
+.corridor-door {
+  position: absolute;
+  top: 5%;
+  width: 7%;
+  height: 92%;
+  transform: translateX(-50%);
+  filter: drop-shadow(0 8px 25px rgba(0, 0, 0, 0.35));
+}
+
+/* Main door container - Clean frameless design */
+.door-frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* Door surface - Clean panel with subtle depth */
+.door-surface {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 30% 20%,
+      rgba(70, 78, 98, 0.99) 0%,
+      rgba(55, 62, 80, 0.99) 40%,
+      rgba(48, 54, 70, 0.99) 100%
+    );
+  border-radius: 8px;
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    inset 0 2px 6px rgba(255, 255, 255, 0.08),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+}
+
+/* Subtle soft gradient overlay */
+.door-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 50% at 70% 80%,
+      rgba(139, 92, 246, 0.02) 0%,
+      transparent 60%
+    ),
+    radial-gradient(
+      ellipse 60% 40% at 20% 30%,
+      rgba(255, 255, 255, 0.03) 0%,
+      transparent 50%
+    );
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+/* Door edge - Thin hinge side */
+.door-edge {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 3%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(38, 42, 55, 0.99) 0%,
+    rgba(48, 52, 65, 0.99) 100%
+  );
+  border-radius: 4px 0 0 3px;
+  box-shadow:
+    inset -2px 0 4px rgba(0, 0, 0, 0.25);
+}
+
+/* Door seam line - Subtle gap */
+.door-seam {
+  position: absolute;
+  top: 1%;
+  right: 1%;
+  width: 2px;
+  height: 98%;
+  background: linear-gradient(180deg,
+    rgba(0, 0, 0, 0.1) 0%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.1) 100%
+  );
+  border-radius: 1px;
+}
+
+/* ============================================
+   VISION PANEL - Clean Rectangular Window
+   Simple elegant glass panel
+   ============================================ */
+
+.door-vision-panel {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 55%;
+  height: 28%;
+  border-radius: 6px;
+  overflow: visible;
+}
+
+/* Outer frame bevel - Thin elegant frame */
+.vision-frame {
+  position: absolute;
+  inset: -2px;
+  background: linear-gradient(180deg,
+    rgba(100, 110, 130, 0.98) 0%,
+    rgba(80, 90, 112, 0.98) 100%
+  );
+  border-radius: 8px;
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.15),
+    0 3px 10px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Inner frame lip - Subtle inner bevel */
+.vision-frame::before {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(180deg,
+    rgba(55, 62, 78, 0.98) 0%,
+    rgba(65, 72, 90, 0.98) 100%
+  );
+  border-radius: 6px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+/* Glass surface - Clean glass with soft reflections */
+.vision-glass {
+  position: absolute;
+  inset: 4px;
+  background:
+    radial-gradient(
+      ellipse 100% 80% at 30% 30%,
+      rgba(150, 180, 220, 0.45) 0%,
+      rgba(120, 155, 200, 0.35) 30%,
+      rgba(95, 130, 175, 0.3) 60%,
+      rgba(85, 120, 165, 0.32) 100%
+    );
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow:
+    inset 0 0 20px rgba(100, 140, 200, 0.15),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  z-index: 2;
+}
+
+/* Wire mesh pattern - more realistic */
+.wire-pattern {
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 6px,
+      rgba(200, 210, 230, 0.12) 6px,
+      rgba(200, 210, 230, 0.12) 7px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 6px,
+      rgba(200, 210, 230, 0.12) 6px,
+      rgba(200, 210, 230, 0.12) 7px
+    );
+  opacity: 0.85;
+}
+
+/* Primary glass reflection - bright streak */
+.glass-reflection {
+  position: absolute;
+  top: -40%;
+  left: -20%;
+  width: 60%;
+  height: 200%;
+  background: linear-gradient(125deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.15) 20%,
+    rgba(255, 255, 255, 0.05) 40%,
+    transparent 60%
+  );
+  transform: rotate(-20deg);
+  pointer-events: none;
+}
+
+/* Secondary reflection */
+.glass-reflection::before {
+  content: '';
+  position: absolute;
+  top: 60%;
+  left: 80%;
+  width: 40%;
+  height: 60%;
+  background: linear-gradient(145deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 60%
+  );
+  transform: rotate(10deg);
+}
+
+/* Interior light glow through glass */
+.glass-inner-glow {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(
+      ellipse 80% 60% at 50% 70%,
+      rgba(139, 92, 246, 0.12) 0%,
+      rgba(139, 92, 246, 0.05) 40%,
+      transparent 70%
+    ),
+    radial-gradient(
+      ellipse at 30% 25%,
+      rgba(200, 220, 255, 0.08) 0%,
+      transparent 50%
+    );
+  pointer-events: none;
+}
+
+/* ============================================
+   PUSH PLATE - Slim Metal Plate
+   Clean minimal aesthetic
+   ============================================ */
+
+.door-push-plate {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 28%;
+  height: 14%;
+  background: linear-gradient(90deg,
+    rgba(160, 168, 188, 0.98) 0%,
+    rgba(180, 188, 208, 0.98) 50%,
+    rgba(160, 168, 188, 0.98) 100%
+  );
+  border-radius: 4px;
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.3),
+    0 1px 3px rgba(0, 0, 0, 0.2),
+    inset 0 2px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* Brushed metal texture */
+.push-plate-texture {
+  position: absolute;
+  inset: 2px;
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.03) 100%
+  );
+  border-radius: 2px;
+}
+
+/* Raised edge detail */
+.push-plate-texture::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 2px;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   DOOR HANDLE - Minimalist Bar
+   Clean simple aesthetic
+   ============================================ */
+
+.door-handle {
+  position: absolute;
+  top: 54%;
+  right: 5%;
+  width: 20%;
+  height: 3%;
+  background: linear-gradient(180deg,
+    rgba(200, 208, 228, 0.98) 0%,
+    rgba(170, 178, 200, 0.98) 50%,
+    rgba(150, 158, 182, 0.98) 100%
+  );
+  border-radius: 50px;
+  box-shadow:
+    0 2px 6px rgba(0, 0, 0, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   ROOM NUMBER DISPLAY - Compact Badge
+   ============================================ */
+
+.room-number-display {
+  position: absolute;
+  top: -1%;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 0;
+  z-index: 5;
+}
+
+.display-screen {
+  padding: 4px 12px 3px;
+  background: linear-gradient(180deg,
+    rgba(25, 28, 40, 0.98) 0%,
+    rgba(18, 20, 32, 0.98) 100%
+  );
+  border-radius: 6px;
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05),
+    0 0 15px rgba(139, 92, 246, 0.12);
+}
+
+.room-number {
+  font-size: 10px;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+  color: rgba(167, 139, 250, 0.95);
+  letter-spacing: 2px;
+  text-shadow:
+    0 0 10px rgba(139, 92, 246, 0.6),
+    0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.display-indicator {
+  position: absolute;
+  bottom: -3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 35%;
+  height: 2px;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.6) 30%,
+    rgba(139, 92, 246, 0.6) 70%,
+    transparent 100%
+  );
+  border-radius: 1px;
+  box-shadow: 0 0 6px rgba(139, 92, 246, 0.4);
+}
+
+/* ============================================
+   DOOR STATUS LIGHT - Small Indicator
+   ============================================ */
+
+.door-status-light {
+  position: absolute;
+  top: 5%;
+  right: 10%;
+  width: 8%;
+  height: 2.5%;
+  background: linear-gradient(180deg,
+    rgba(35, 38, 50, 0.95) 0%,
+    rgba(28, 30, 42, 0.95) 100%
+  );
+  border-radius: 10px;
+  padding: 2px;
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.status-led {
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    ellipse at 40% 40%,
+    rgba(100, 230, 140, 0.95) 0%,
+    rgba(74, 222, 128, 0.85) 50%,
+    rgba(34, 197, 94, 0.75) 100%
+  );
+  border-radius: 8px;
+  box-shadow:
+    0 0 8px rgba(74, 222, 128, 0.5),
+    0 0 15px rgba(34, 197, 94, 0.25);
+  animation: ledPulse 3s ease-in-out infinite;
+}
+
+@keyframes ledPulse {
+  0%, 100% { opacity: 0.8; }
+  50% { opacity: 1; }
+}
+
+/* ============================================
+   ROOM 217 - Destination Door Special Effects
+   ============================================ */
+
+.corridor-door.destination .door-surface {
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.corridor-door.destination .room-number-display {
+  transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.corridor-door.destination .status-led {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(251, 191, 36, 0.9) 0%,
+    rgba(245, 158, 11, 0.8) 50%,
+    rgba(217, 119, 6, 0.7) 100%
+  );
+  box-shadow:
+    0 0 8px rgba(251, 191, 36, 0.6),
+    0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.door-glow {
+  position: absolute;
+  inset: -25px;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(34, 211, 238, 0) 0%,
+    transparent 70%
+  );
+  opacity: 0;
+  transition: all 1s cubic-bezier(0.16, 1, 0.3, 1);
+  pointer-events: none;
+  border-radius: 12px;
+  z-index: -1;
+}
+
+/* Approaching state - Cyan glow building */
+.corridor-door.approaching .door-surface {
+  background: linear-gradient(180deg,
+    rgba(60, 70, 90, 0.98) 0%,
+    rgba(55, 65, 85, 0.98) 20%,
+    rgba(52, 62, 82, 0.98) 80%,
+    rgba(48, 58, 78, 0.98) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 40px rgba(34, 211, 238, 0.2),
+    0 0 80px rgba(34, 211, 238, 0.1);
+}
+
+.corridor-door.approaching .vision-glass {
+  background: linear-gradient(165deg,
+    rgba(80, 180, 210, 0.4) 0%,
+    rgba(60, 160, 195, 0.35) 25%,
+    rgba(50, 150, 185, 0.38) 50%,
+    rgba(40, 140, 175, 0.4) 100%
+  );
+}
+
+.corridor-door.approaching .glass-inner-glow {
+  background: radial-gradient(
+    ellipse at 30% 30%,
+    rgba(34, 211, 238, 0.2) 0%,
+    transparent 60%
+  );
+}
+
+.corridor-door.approaching .display-screen {
+  background: linear-gradient(180deg,
+    rgba(10, 35, 45, 0.98) 0%,
+    rgba(8, 28, 38, 0.98) 100%
+  );
+  border-color: rgba(34, 211, 238, 0.35);
+  box-shadow:
+    0 3px 10px rgba(0, 0, 0, 0.5),
+    0 0 25px rgba(34, 211, 238, 0.3);
+}
+
+.corridor-door.approaching .room-number {
+  color: rgba(100, 220, 245, 0.98);
+  text-shadow:
+    0 0 12px rgba(34, 211, 238, 0.8),
+    0 0 25px rgba(34, 211, 238, 0.5);
+}
+
+.corridor-door.approaching .display-indicator {
+  background: rgba(34, 211, 238, 0.8);
+  box-shadow: 0 0 10px rgba(34, 211, 238, 0.7);
+}
+
+.corridor-door.approaching .status-led {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(34, 211, 238, 0.95) 0%,
+    rgba(6, 182, 212, 0.85) 50%,
+    rgba(8, 145, 178, 0.75) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(34, 211, 238, 0.7),
+    0 0 20px rgba(6, 182, 212, 0.4);
+  animation: none;
+}
+
+.corridor-door.approaching .door-glow {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(34, 211, 238, 0.18) 0%,
+    rgba(34, 211, 238, 0.06) 50%,
+    transparent 70%
+  );
+  opacity: 1;
+}
+
+/* Arrived state - Full glow with pulse */
+.corridor-door.arrived .door-surface {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.15),
+    0 0 60px rgba(34, 211, 238, 0.35),
+    0 0 120px rgba(34, 211, 238, 0.18);
+  /* Door opens inward - rotate on hinge */
+  transform-origin: left center;
+  animation: doorOpen 2s ease-out 0.5s forwards;
+}
+
+@keyframes doorOpen {
+  0% {
+    transform: perspective(800px) rotateY(0deg);
+  }
+  100% {
+    transform: perspective(800px) rotateY(-88deg);
+  }
+}
+
+/* ============================================
+   ROOM 217 INTERIOR - Revealed when door opens
+   Premium 3D hospital room with depth and realism
+   ============================================ */
+
+.room-interior {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -2;
+  opacity: 0;
+  overflow: hidden;
+  border-radius: 4px 0 0 4px;
+  transition: opacity 1s ease-out;
+  /* 3D perspective for depth - contained within door */
+  perspective: 300px;
+  transform-style: preserve-3d;
+  /* Clip to door boundaries */
+  clip-path: inset(0 0 0 0);
+}
+
+/* Show room interior when door is in arrived state */
+.corridor-door.arrived .room-interior {
+  opacity: 1;
+  animation: roomRevealPulse 3s ease-out forwards;
+}
+
+@keyframes roomRevealPulse {
+  0% {
+    opacity: 0;
+    filter: brightness(0.3);
+  }
+  30% {
+    opacity: 1;
+    filter: brightness(1.3);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+/* Room back wall - creates depth with 3D transform */
+.room-back-wall {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  /* Recessed wall effect - darker towards back for depth */
+  background:
+    /* Vignette for depth */
+    radial-gradient(
+      ellipse 80% 70% at 50% 40%,
+      rgba(50, 45, 62, 1) 0%,
+      rgba(38, 34, 50, 1) 50%,
+      rgba(25, 22, 38, 1) 100%
+    );
+  /* Push back for depth illusion */
+  transform: translateZ(-40px) scale(1.2);
+  box-shadow:
+    inset 0 0 40px rgba(0, 0, 0, 0.7),
+    inset 0 -15px 30px rgba(0, 0, 0, 0.4),
+    inset 0 15px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Left wall shadow - creates corner depth */
+.room-back-wall::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    rgba(15, 12, 25, 0.9) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Right wall shadow - creates corner depth */
+.room-back-wall::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(15, 12, 25, 0.9) 100%
+  );
+  pointer-events: none;
+}
+
+/* Room floor - with perspective depth */
+.room-floor {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40%;
+  background:
+    /* Floor tile pattern hint */
+    repeating-linear-gradient(
+      90deg,
+      rgba(40, 36, 52, 0.25) 0px,
+      rgba(40, 36, 52, 0.25) 1px,
+      transparent 1px,
+      transparent 15px
+    ),
+    /* Floor gradient - receding into room */
+    linear-gradient(
+      180deg,
+      rgba(35, 32, 48, 1) 0%,
+      rgba(45, 42, 60, 1) 40%,
+      rgba(55, 50, 70, 1) 100%
+    );
+  /* Subtle floor angle for depth */
+  transform-origin: bottom center;
+  box-shadow:
+    inset 0 15px 30px rgba(0, 0, 0, 0.5),
+    inset 0 0 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Ceiling light fixture - more realistic */
+.room-ceiling-light {
+  position: absolute;
+  top: 5%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 50%;
+  height: 8%;
+  /* Fluorescent light fixture */
+  background: linear-gradient(
+    180deg,
+    rgba(255, 252, 245, 0.98) 0%,
+    rgba(255, 248, 235, 0.95) 50%,
+    rgba(255, 245, 225, 0.9) 100%
+  );
+  border-radius: 3px;
+  box-shadow:
+    0 0 25px rgba(255, 248, 230, 0.8),
+    0 0 50px rgba(255, 240, 210, 0.5),
+    0 0 80px rgba(255, 230, 190, 0.3),
+    0 3px 15px rgba(255, 245, 220, 0.6);
+  z-index: 3;
+}
+
+/* Dramatic light pulse animation when room is revealed */
+.corridor-door.arrived .room-ceiling-light {
+  animation: ceilingLightDrama 4s ease-out forwards;
+}
+
+@keyframes ceilingLightDrama {
+  0% {
+    box-shadow:
+      0 0 30px rgba(255, 245, 220, 0.3),
+      0 0 60px rgba(255, 235, 200, 0.2);
+  }
+  20% {
+    box-shadow:
+      0 0 60px rgba(255, 245, 220, 1),
+      0 0 120px rgba(255, 235, 200, 0.8),
+      0 0 200px rgba(255, 220, 170, 0.5),
+      0 20px 60px rgba(255, 240, 210, 0.8);
+  }
+  40% {
+    box-shadow:
+      0 0 50px rgba(255, 245, 220, 0.9),
+      0 0 100px rgba(255, 235, 200, 0.6),
+      0 0 160px rgba(255, 220, 170, 0.3),
+      0 10px 40px rgba(255, 240, 210, 0.6);
+  }
+  100% {
+    box-shadow:
+      0 0 30px rgba(255, 245, 220, 0.7),
+      0 0 60px rgba(255, 235, 200, 0.4),
+      0 0 100px rgba(255, 220, 170, 0.2),
+      0 5px 20px rgba(255, 240, 210, 0.5);
+  }
+}
+
+/* Light cone from ceiling */
+.room-ceiling-light::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150%;
+  height: 600%;
+  background: radial-gradient(
+    ellipse 50% 100% at 50% 0%,
+    rgba(255, 248, 225, 0.2) 0%,
+    rgba(255, 240, 210, 0.1) 30%,
+    rgba(255, 230, 195, 0.04) 60%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Window on back wall - adds realism and light source */
+.room-interior::before {
+  content: '';
+  position: absolute;
+  top: 15%;
+  right: 10%;
+  width: 20%;
+  height: 25%;
+  /* Window with blinds partially open */
+  background:
+    /* Blind slats */
+    repeating-linear-gradient(
+      180deg,
+      rgba(55, 50, 70, 0.95) 0px,
+      rgba(55, 50, 70, 0.95) 2px,
+      rgba(90, 130, 175, 0.35) 2px,
+      rgba(90, 130, 175, 0.35) 5px
+    );
+  border: 2px solid rgba(65, 60, 80, 1);
+  border-radius: 2px;
+  box-shadow:
+    inset 0 0 15px rgba(100, 150, 200, 0.2),
+    0 0 20px rgba(100, 150, 200, 0.08);
+  z-index: 1;
+}
+
+/* ============================================
+   HOPE GLOW BURST - Dopamine hit effect
+   Warm expanding glow when serum arrives
+   ============================================ */
+
+.hope-glow-burst {
+  position: absolute;
+  top: 45%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 230, 170, 0.9) 0%,
+    rgba(255, 210, 130, 0.5) 30%,
+    rgba(255, 190, 100, 0.2) 60%,
+    transparent 80%
+  );
+  opacity: 0;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.corridor-door.arrived .hope-glow-burst {
+  animation: hopeGlowExpand 3s ease-out 0.8s forwards;
+}
+
+@keyframes hopeGlowExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  20% {
+    width: 80%;
+    height: 80%;
+    opacity: 1;
+  }
+  40% {
+    width: 100%;
+    height: 100%;
+    opacity: 0.8;
+  }
+  70% {
+    width: 120%;
+    height: 120%;
+    opacity: 0.4;
+  }
+  100% {
+    width: 130%;
+    height: 130%;
+    opacity: 0;
+  }
+}
+
+/* ============================================
+   FLOATING PARTICLES - Dust motes in light
+   Creates magical/hopeful atmosphere
+   ============================================ */
+
+.room-particles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 5;
+}
+
+.particle {
+  position: absolute;
+  background: radial-gradient(
+    circle,
+    rgba(255, 245, 220, 0.9) 0%,
+    rgba(255, 235, 200, 0.5) 50%,
+    transparent 100%
+  );
+  border-radius: 50%;
+  opacity: 0;
+}
+
+.corridor-door.arrived .particle {
+  animation: particleFloat 8s ease-in-out infinite;
+}
+
+/* Different sizes, positions, and timings for each particle */
+.p1 { width: 3px; height: 3px; left: 25%; top: 55%; animation-delay: 0s; }
+.p2 { width: 2px; height: 2px; left: 40%; top: 65%; animation-delay: 0.4s; }
+.p3 { width: 4px; height: 4px; left: 50%; top: 50%; animation-delay: 0.8s; }
+.p4 { width: 2px; height: 2px; left: 60%; top: 60%; animation-delay: 1.2s; }
+.p5 { width: 3px; height: 3px; left: 70%; top: 48%; animation-delay: 1.6s; }
+.p6 { width: 2px; height: 2px; left: 30%; top: 42%; animation-delay: 2s; }
+.p7 { width: 2px; height: 2px; left: 55%; top: 38%; animation-delay: 2.4s; }
+.p8 { width: 3px; height: 3px; left: 45%; top: 32%; animation-delay: 2.8s; }
+
+@keyframes particleFloat {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.6);
+  }
+  15% {
+    opacity: 0.7;
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateY(-15px) scale(1);
+  }
+  85% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-30px) scale(0.4);
+  }
+}
+
+/* Subtle shimmer on particles */
+.corridor-door.arrived .p1,
+.corridor-door.arrived .p3,
+.corridor-door.arrived .p5,
+.corridor-door.arrived .p7 {
+  animation: particleFloat 8s ease-in-out infinite, particleShimmer 2s ease-in-out infinite;
+}
+
+@keyframes particleShimmer {
+  0%, 100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+}
+
+/* Base silhouette styling */
+.room-silhouette {
+  position: absolute;
+  z-index: 2;
+}
+
+/* ============================================
+   PERSON SILHOUETTES - Natural human shapes
+   Using separate head/body for realistic look
+   ============================================ */
+
+.person-silhouette {
+  position: absolute;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  /* Subtle breathing animation */
+  animation: personBreathe 3s ease-in-out infinite;
+}
+
+/* Stagger the breathing so they're not all in sync */
+.person-doctor { animation-delay: 0s; }
+.person-nurse { animation-delay: 0.8s; }
+.person-family { animation-delay: 1.5s; }
+.person-back-1 { animation-delay: 0.3s; }
+.person-back-2 { animation-delay: 1.2s; }
+.person-back-3 { animation-delay: 0.6s; }
+
+@keyframes personBreathe {
+  0%, 100% {
+    transform: scaleY(1) translateY(0);
+    opacity: inherit;
+  }
+  50% {
+    transform: scaleY(1.008) translateY(-0.5px);
+    opacity: inherit;
+  }
+}
+
+/* Common head styling - natural oval */
+.person-head {
+  background: rgba(22, 18, 30, 0.92);
+  border-radius: 50%;
+  position: relative;
+}
+
+/* Common body styling */
+.person-body {
+  background: rgba(22, 18, 30, 0.92);
+  position: relative;
+  margin-top: -2px;
+}
+
+/* DOCTOR - standing at head of bed (left side) */
+.person-doctor {
+  left: 0%;
+  bottom: 6%;
+  width: 18%;
+  height: 52%;
+}
+
+.person-doctor .person-head {
+  width: 40%;
+  height: 14%;
+  /* Natural head shape */
+  border-radius: 48% 48% 45% 45%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.person-doctor .person-body {
+  width: 60%;
+  height: 84%;
+  /* Natural body shape */
+  border-radius: 35% 35% 5% 5%;
+  background: linear-gradient(180deg, rgba(20, 16, 28, 0.95) 0%, rgba(25, 20, 35, 0.92) 100%);
+  /* Simplified body shape */
+  clip-path: polygon(
+    10% 0%, 90% 0%,
+    95% 8%, 92% 40%,
+    85% 60%, 82% 75%,
+    85% 100%, 58% 100%,
+    52% 72%, 48% 72%,
+    42% 100%, 15% 100%,
+    18% 75%, 15% 60%,
+    8% 40%, 5% 8%
+  );
+  box-shadow: 1px 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* NURSE - standing at foot of bed (right side) */
+.person-nurse {
+  right: 0%;
+  bottom: 6%;
+  width: 15%;
+  height: 48%;
+}
+
+.person-nurse .person-head {
+  width: 44%;
+  height: 15%;
+  border-radius: 50%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.person-nurse .person-body {
+  width: 62%;
+  height: 83%;
+  border-radius: 32% 32% 5% 5%;
+  background: linear-gradient(180deg, rgba(22, 18, 32, 0.93) 0%, rgba(26, 22, 38, 0.9) 100%);
+  clip-path: polygon(
+    12% 0%, 88% 0%,
+    94% 10%, 90% 45%,
+    84% 60%, 80% 75%,
+    82% 100%, 56% 100%,
+    52% 72%, 48% 72%,
+    44% 100%, 18% 100%,
+    20% 75%, 16% 60%,
+    10% 45%, 6% 10%
+  );
+  box-shadow: -1px 0 4px rgba(0, 0, 0, 0.25);
+}
+
+/* FAMILY MEMBER - beside the bed, seated/shorter */
+.person-family {
+  right: 16%;
+  bottom: 5%;
+  width: 13%;
+  height: 38%;
+}
+
+.person-family .person-head {
+  width: 50%;
+  height: 20%;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+  background: rgba(24, 20, 35, 0.9);
+}
+
+.person-family .person-body {
+  width: 68%;
+  height: 78%;
+  border-radius: 28% 28% 8% 8%;
+  background: linear-gradient(180deg, rgba(24, 20, 35, 0.9) 0%, rgba(28, 24, 40, 0.88) 100%);
+  clip-path: polygon(
+    12% 0%, 88% 0%,
+    94% 12%, 90% 55%,
+    85% 72%, 82% 100%, 56% 100%,
+    50% 74%, 44% 100%, 18% 100%,
+    15% 72%, 10% 55%,
+    6% 12%
+  );
+}
+
+/* ============================================
+   BACK ROW PEOPLE - Smaller, further away
+   Creates depth illusion
+   ============================================ */
+
+/* Back person 1 - behind bed, left side */
+.person-back-1 {
+  left: 28%;
+  bottom: 48%;
+  width: 9%;
+  height: 20%;
+  opacity: 0.55;
+  z-index: 1;
+}
+
+.person-back-1 .person-head {
+  width: 55%;
+  height: 22%;
+  border-radius: 50%;
+  background: rgba(28, 24, 40, 0.8);
+}
+
+.person-back-1 .person-body {
+  width: 75%;
+  height: 76%;
+  border-radius: 30% 30% 5% 5%;
+  background: rgba(28, 24, 40, 0.8);
+  clip-path: polygon(
+    15% 0%, 85% 0%,
+    92% 15%, 88% 60%,
+    82% 100%, 56% 100%,
+    50% 68%, 44% 100%, 18% 100%,
+    12% 60%, 8% 15%
+  );
+}
+
+/* Back person 2 - behind bed, center */
+.person-back-2 {
+  left: 45%;
+  bottom: 50%;
+  width: 8%;
+  height: 18%;
+  opacity: 0.5;
+  z-index: 1;
+}
+
+.person-back-2 .person-head {
+  width: 58%;
+  height: 24%;
+  border-radius: 50%;
+  background: rgba(30, 26, 44, 0.75);
+}
+
+.person-back-2 .person-body {
+  width: 78%;
+  height: 74%;
+  border-radius: 28% 28% 5% 5%;
+  background: rgba(30, 26, 44, 0.75);
+  clip-path: polygon(
+    14% 0%, 86% 0%,
+    92% 14%, 88% 58%,
+    82% 100%, 56% 100%,
+    50% 66%, 44% 100%, 18% 100%,
+    12% 58%, 8% 14%
+  );
+}
+
+/* Back person 3 - behind bed, right side */
+.person-back-3 {
+  right: 28%;
+  bottom: 49%;
+  width: 8%;
+  height: 19%;
+  opacity: 0.52;
+  z-index: 1;
+}
+
+.person-back-3 .person-head {
+  width: 56%;
+  height: 23%;
+  border-radius: 50%;
+  background: rgba(26, 22, 38, 0.78);
+}
+
+.person-back-3 .person-body {
+  width: 76%;
+  height: 75%;
+  border-radius: 29% 29% 5% 5%;
+  background: rgba(26, 22, 38, 0.78);
+  clip-path: polygon(
+    14% 0%, 86% 0%,
+    93% 14%, 89% 58%,
+    83% 100%, 56% 100%,
+    50% 67%, 44% 100%, 17% 100%,
+    11% 58%, 7% 14%
+  );
+}
+
+/* ============================================
+   HOSPITAL BED SVG - Detailed realistic silhouette
+   ============================================ */
+
+.hospital-bed-svg {
+  position: absolute;
+  left: 5%;
+  bottom: 5%;
+  width: 90%;
+  height: 55%;
+  z-index: 2;
+  opacity: 0;
+  transition: opacity 0.8s ease-out;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+}
+
+/* Show bed when room is revealed */
+.corridor-door.arrived .hospital-bed-svg {
+  opacity: 1;
+  animation: bedFadeIn 1.5s ease-out 0.3s forwards;
+}
+
+@keyframes bedFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Heart rate monitor animation */
+.hospital-bed-svg .monitor path[stroke="rgba(100,220,150,0.9)"] {
+  stroke-dasharray: 30;
+  stroke-dashoffset: 30;
+}
+
+.corridor-door.arrived .hospital-bed-svg .monitor path[stroke="rgba(100,220,150,0.9)"] {
+  animation: heartbeatLine 1.5s ease-in-out infinite;
+}
+
+@keyframes heartbeatLine {
+  0% {
+    stroke-dashoffset: 30;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Light mode adjustments */
+body:not(.dark-mode) .hospital-bed-svg {
+  filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.3));
+}
+
+.corridor-door.arrived .door-glow {
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 220, 150, 0.4) 0%,
+    rgba(255, 200, 120, 0.2) 40%,
+    transparent 70%
+  );
+  opacity: 1;
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%, 100% {
+    opacity: 0.75;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+/* ============================================
+   FLOOR - Premium Polished Concrete/Epoxy
+   ============================================ */
+
+.corridor-floor {
+  position: absolute;
+  top: 70%;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+}
+
+.floor-surface {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg,
+    rgba(45, 45, 62, 0.95) 0%,
+    rgba(38, 38, 55, 0.95) 30%,
+    rgba(32, 32, 48, 0.95) 70%,
+    rgba(25, 25, 40, 0.95) 100%
+  );
+}
+
+/* Subtle floor grid pattern */
+.floor-surface::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    repeating-linear-gradient(90deg,
+      transparent 0px,
+      transparent 59px,
+      rgba(139, 92, 246, 0.03) 59px,
+      rgba(139, 92, 246, 0.03) 60px
+    ),
+    repeating-linear-gradient(0deg,
+      transparent 0px,
+      transparent 59px,
+      rgba(139, 92, 246, 0.03) 59px,
+      rgba(139, 92, 246, 0.03) 60px
+    );
+}
+
+.floor-reflection {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 40%;
+  background: linear-gradient(180deg,
+    rgba(139, 92, 246, 0.06) 0%,
+    rgba(139, 92, 246, 0.02) 50%,
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+/* Guiding light strip - Cyan accent */
+.floor-guideline {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(90deg,
+    rgba(34, 211, 238, 0.6) 0%,
+    rgba(34, 211, 238, 0.9) 50%,
+    rgba(34, 211, 238, 0.6) 100%
+  );
+  box-shadow:
+    0 0 12px rgba(34, 211, 238, 0.5),
+    0 0 25px rgba(34, 211, 238, 0.3),
+    0 0 50px rgba(34, 211, 238, 0.15);
+  border-radius: 2px;
+}
+
+/* ============================================
+   SERUM PRESENCE - Ambient Glow Effect
+   ============================================ */
+
+.serum-presence {
+  position: absolute;
+  bottom: 20%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 180px;
+  height: 100px;
+  background: radial-gradient(
+    ellipse at center bottom,
+    rgba(34, 211, 238, 0.12) 0%,
+    rgba(34, 211, 238, 0.04) 50%,
+    transparent 70%
+  );
+  pointer-events: none;
+  z-index: 5;
+  animation: serumFloat 4s ease-in-out infinite;
+}
+
+@keyframes serumFloat {
+  0%, 100% {
+    opacity: 0.5;
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(-8px);
+  }
+}
+
+/* ============================================
+   VIGNETTE - Cinematic Edge Darkening
+   ============================================ */
+
+.corridor-vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+    ellipse 70% 60% at 50% 50%,
+    transparent 20%,
+    rgba(10, 10, 16, 0.6) 100%
+  );
+  pointer-events: none;
+  z-index: 10;
+  transition: background 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.stage-4 .corridor-vignette,
+.stage-5 .corridor-vignette {
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 50%,
+    transparent 35%,
+    rgba(10, 10, 16, 0.5) 100%
+  );
+}
+
+/* ============================================
+   STAGE BRIGHTNESS PROGRESSION
+   ============================================ */
+
+.stage-0 .corridor-wall,
+.stage-0 .corridor-floor {
+  filter: brightness(0.5) saturate(0.8);
+}
+
+.stage-1 .corridor-wall,
+.stage-1 .corridor-floor {
+  filter: brightness(0.65) saturate(0.85);
+}
+
+.stage-2 .corridor-wall,
+.stage-2 .corridor-floor {
+  filter: brightness(0.78) saturate(0.9);
+}
+
+.stage-3 .corridor-wall,
+.stage-3 .corridor-floor {
+  filter: brightness(0.9) saturate(0.95);
+}
+
+.stage-4 .corridor-wall,
+.stage-4 .corridor-floor,
+.stage-5 .corridor-wall,
+.stage-5 .corridor-floor {
+  filter: brightness(1) saturate(1);
+}
+
+/* Smooth transition for all stages */
+.corridor-wall,
+.corridor-floor {
+  transition: filter 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ============================================
+   PROGRESS INDICATOR - Minimal Glass Style
+   ============================================ */
+
+.corridor-progress {
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  z-index: 20;
+}
+
+.progress-bar {
+  width: 160px;
+  height: 3px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 2px;
+  overflow: hidden;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg,
+    rgba(139, 92, 246, 0.8) 0%,
+    rgba(34, 211, 238, 0.9) 100%
+  );
+  border-radius: 2px;
+  transform-origin: left;
+  transition: transform 1s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow:
+    0 0 12px rgba(34, 211, 238, 0.5),
+    0 0 25px rgba(139, 92, 246, 0.3);
+}
+
+.progress-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+
+/* ============================================
+   LIGHT MODE STYLES
+   Clean, bright, professional hospital
+   ============================================ */
+
+body:not(.dark-mode) .hospital-corridor {
+  background: linear-gradient(145deg, #f8f9fc 0%, #eef0f5 50%, #e8eaf0 100%);
+}
+
+body:not(.dark-mode) .ambient-light {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(139, 92, 246, 0.06) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 50% 100%, rgba(34, 211, 238, 0.05) 0%, transparent 50%);
+}
+
+body:not(.dark-mode) .ambient-glow {
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.05) 0%,
+    rgba(139, 92, 246, 0.02) 40%,
+    transparent 70%
+  );
+}
+
+/* Ceiling - Light mode */
+body:not(.dark-mode) .corridor-ceiling {
+  background: linear-gradient(180deg,
+    #e8eaef 0%,
+    #dfe2e8 60%,
+    #d5d8e0 100%
+  );
+  border-bottom: 1px solid rgba(139, 92, 246, 0.12);
+}
+
+body:not(.dark-mode) .ceiling-panel {
+  border-right: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+body:not(.dark-mode) .ceiling-light {
+  background: linear-gradient(180deg,
+    rgba(240, 242, 248, 0.95) 0%,
+    rgba(230, 232, 240, 0.95) 100%
+  );
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 2px rgba(0, 0, 0, 0.08);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark-mode) .light-tube {
+  background: rgba(220, 225, 235, 0.9);
+}
+
+body:not(.dark-mode) .ceiling-light.on .light-tube {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.98) 0%,
+    rgba(245, 248, 255, 0.95) 50%,
+    rgba(255, 255, 255, 0.98) 100%
+  );
+  box-shadow:
+    0 0 15px rgba(255, 255, 255, 0.9),
+    0 0 30px rgba(139, 92, 246, 0.3),
+    0 0 60px rgba(139, 92, 246, 0.15);
+}
+
+body:not(.dark-mode) .ceiling-light.on .light-bloom {
+  background: radial-gradient(
+    ellipse at top center,
+    rgba(139, 92, 246, 0.08) 0%,
+    rgba(139, 92, 246, 0.03) 40%,
+    transparent 70%
+  );
+}
+
+/* Wall - Light mode */
+body:not(.dark-mode) .corridor-wall {
+  background: linear-gradient(180deg,
+    #f0f2f8 0%,
+    #e8eaf2 50%,
+    #e2e4ec 100%
+  );
+}
+
+body:not(.dark-mode) .wall-upper {
+  background: linear-gradient(180deg,
+    rgba(248, 250, 255, 0.98) 0%,
+    rgba(240, 242, 250, 0.95) 100%
+  );
+  border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+body:not(.dark-mode) .wall-accent {
+  background: linear-gradient(180deg,
+    rgba(139, 92, 246, 0.5) 0%,
+    rgba(124, 58, 237, 0.6) 50%,
+    rgba(139, 92, 246, 0.5) 100%
+  );
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.25),
+    0 0 40px rgba(139, 92, 246, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+body:not(.dark-mode) .wall-lower {
+  background: linear-gradient(180deg,
+    rgba(235, 238, 248, 0.98) 0%,
+    rgba(228, 230, 242, 0.95) 100%
+  );
+}
+
+/* Door surface - Light mode (Clean hospital blue) */
+body:not(.dark-mode) .door-surface {
+  background:
+    radial-gradient(
+      ellipse 120% 80% at 30% 20%,
+      rgba(100, 155, 210, 0.98) 0%,
+      rgba(80, 135, 190, 0.98) 40%,
+      rgba(65, 120, 175, 0.98) 100%
+    );
+  box-shadow:
+    0 4px 15px rgba(0, 0, 0, 0.15),
+    inset 0 2px 6px rgba(255, 255, 255, 0.15),
+    inset 0 -2px 4px rgba(0, 0, 0, 0.08);
+}
+
+body:not(.dark-mode) .door-edge {
+  background: linear-gradient(90deg,
+    rgba(55, 100, 150, 0.98) 0%,
+    rgba(65, 110, 160, 0.98) 100%
+  );
+}
+
+body:not(.dark-mode) .vision-frame {
+  background: linear-gradient(180deg,
+    rgba(120, 135, 165, 0.98) 0%,
+    rgba(100, 115, 145, 0.98) 100%
+  );
+  box-shadow:
+    inset 0 2px 3px rgba(255, 255, 255, 0.2),
+    inset 0 -2px 3px rgba(0, 0, 0, 0.1),
+    0 3px 8px rgba(0, 0, 0, 0.12);
+}
+
+body:not(.dark-mode) .vision-glass {
+  background:
+    radial-gradient(
+      ellipse 100% 80% at 30% 30%,
+      rgba(190, 218, 248, 0.55) 0%,
+      rgba(165, 198, 235, 0.45) 30%,
+      rgba(140, 178, 220, 0.4) 60%,
+      rgba(130, 168, 210, 0.42) 100%
+    );
+}
+
+body:not(.dark-mode) .wire-pattern {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent 0px,
+      transparent 8px,
+      rgba(100, 120, 150, 0.1) 8px,
+      rgba(100, 120, 150, 0.1) 9px
+    ),
+    repeating-linear-gradient(
+      90deg,
+      transparent 0px,
+      transparent 8px,
+      rgba(100, 120, 150, 0.1) 8px,
+      rgba(100, 120, 150, 0.1) 9px
+    );
+}
+
+body:not(.dark-mode) .glass-reflection {
+  background: linear-gradient(135deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0.12) 35%,
+    transparent 55%
+  );
+}
+
+/* Push plate - Light mode (slim elegant silver) */
+body:not(.dark-mode) .door-push-plate {
+  background: linear-gradient(180deg,
+    rgba(225, 230, 245, 0.98) 0%,
+    rgba(205, 212, 232, 0.98) 50%,
+    rgba(195, 202, 222, 0.98) 100%
+  );
+  box-shadow:
+    0 2px 8px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark-mode) .push-plate-texture {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.15) 0%,
+    transparent 50%
+  );
+}
+
+/* Door handle - Light mode (minimalist bar) */
+body:not(.dark-mode) .door-handle {
+  background: linear-gradient(180deg,
+    rgba(230, 235, 250, 0.98) 0%,
+    rgba(200, 208, 228, 0.98) 50%,
+    rgba(185, 192, 215, 0.98) 100%
+  );
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.6),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark-mode) .display-screen {
+  background: linear-gradient(180deg,
+    rgba(40, 50, 70, 0.98) 0%,
+    rgba(30, 40, 58, 0.98) 100%
+  );
+  border-color: rgba(139, 92, 246, 0.2);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.25),
+    0 0 15px rgba(139, 92, 246, 0.12);
+}
+
+body:not(.dark-mode) .room-number {
+  color: rgba(180, 200, 235, 0.98);
+  text-shadow:
+    0 0 8px rgba(139, 92, 246, 0.5),
+    0 0 15px rgba(139, 92, 246, 0.3);
+}
+
+/* Door 217 approaching - Light mode */
+body:not(.dark-mode) .corridor-door.approaching .door-surface {
+  background: linear-gradient(180deg,
+    rgba(75, 150, 195, 0.98) 0%,
+    rgba(65, 140, 185, 0.98) 20%,
+    rgba(60, 135, 178, 0.98) 80%,
+    rgba(55, 128, 170, 0.98) 100%
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 35px rgba(34, 211, 238, 0.2),
+    0 0 70px rgba(34, 211, 238, 0.1);
+}
+
+body:not(.dark-mode) .corridor-door.approaching .display-screen {
+  background: linear-gradient(180deg,
+    rgba(15, 50, 70, 0.98) 0%,
+    rgba(10, 40, 58, 0.98) 100%
+  );
+  border-color: rgba(34, 211, 238, 0.35);
+  box-shadow:
+    0 3px 8px rgba(0, 0, 0, 0.3),
+    0 0 20px rgba(34, 211, 238, 0.25);
+}
+
+body:not(.dark-mode) .corridor-door.approaching .room-number {
+  color: rgba(120, 220, 245, 0.98);
+  text-shadow:
+    0 0 10px rgba(34, 211, 238, 0.7),
+    0 0 20px rgba(34, 211, 238, 0.4);
+}
+
+/* Floor - Light mode */
+body:not(.dark-mode) .corridor-floor {
+  background: linear-gradient(180deg,
+    #e0e4ec 0%,
+    #d5d9e2 100%
+  );
+}
+
+body:not(.dark-mode) .floor-surface {
+  background: linear-gradient(180deg,
+    rgba(225, 230, 242, 0.98) 0%,
+    rgba(215, 220, 235, 0.98) 30%,
+    rgba(205, 210, 228, 0.98) 70%,
+    rgba(195, 200, 218, 0.98) 100%
+  );
+}
+
+body:not(.dark-mode) .floor-surface::before {
+  background:
+    repeating-linear-gradient(90deg,
+      transparent 0px,
+      transparent 59px,
+      rgba(139, 92, 246, 0.04) 59px,
+      rgba(139, 92, 246, 0.04) 60px
+    ),
+    repeating-linear-gradient(0deg,
+      transparent 0px,
+      transparent 59px,
+      rgba(139, 92, 246, 0.04) 59px,
+      rgba(139, 92, 246, 0.04) 60px
+    );
+}
+
+body:not(.dark-mode) .floor-reflection {
+  background: linear-gradient(180deg,
+    rgba(255, 255, 255, 0.4) 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+}
+
+body:not(.dark-mode) .floor-guideline {
+  background: linear-gradient(90deg,
+    rgba(34, 211, 238, 0.7) 0%,
+    rgba(34, 211, 238, 1) 50%,
+    rgba(34, 211, 238, 0.7) 100%
+  );
+  box-shadow:
+    0 0 10px rgba(34, 211, 238, 0.5),
+    0 0 20px rgba(34, 211, 238, 0.3),
+    0 0 40px rgba(34, 211, 238, 0.15);
+}
+
+/* Serum presence - Light mode */
+body:not(.dark-mode) .serum-presence {
+  background: radial-gradient(
+    ellipse at center bottom,
+    rgba(34, 211, 238, 0.1) 0%,
+    rgba(34, 211, 238, 0.03) 50%,
+    transparent 70%
+  );
+}
+
+/* Vignette - Light mode (much softer) */
+body:not(.dark-mode) .corridor-vignette {
+  background: radial-gradient(
+    ellipse 80% 70% at 50% 50%,
+    transparent 30%,
+    rgba(200, 205, 220, 0.4) 100%
+  );
+}
+
+body:not(.dark-mode) .stage-4 .corridor-vignette,
+body:not(.dark-mode) .stage-5 .corridor-vignette {
+  background: radial-gradient(
+    ellipse 85% 75% at 50% 50%,
+    transparent 40%,
+    rgba(200, 205, 220, 0.3) 100%
+  );
+}
+
+/* Stage brightness - Light mode */
+body:not(.dark-mode) .stage-0 .corridor-wall,
+body:not(.dark-mode) .stage-0 .corridor-floor {
+  filter: brightness(0.85) saturate(0.9);
+}
+
+body:not(.dark-mode) .stage-1 .corridor-wall,
+body:not(.dark-mode) .stage-1 .corridor-floor {
+  filter: brightness(0.9) saturate(0.92);
+}
+
+body:not(.dark-mode) .stage-2 .corridor-wall,
+body:not(.dark-mode) .stage-2 .corridor-floor {
+  filter: brightness(0.95) saturate(0.95);
+}
+
+body:not(.dark-mode) .stage-3 .corridor-wall,
+body:not(.dark-mode) .stage-3 .corridor-floor {
+  filter: brightness(0.98) saturate(0.98);
+}
+
+body:not(.dark-mode) .stage-4 .corridor-wall,
+body:not(.dark-mode) .stage-4 .corridor-floor,
+body:not(.dark-mode) .stage-5 .corridor-wall,
+body:not(.dark-mode) .stage-5 .corridor-floor {
+  filter: brightness(1) saturate(1);
+}
+
+/* Progress bar - Light mode */
+body:not(.dark-mode) .progress-bar {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+body:not(.dark-mode) .progress-label {
+  color: rgba(60, 70, 90, 0.7);
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .corridor-track {
+    width: 320%;
+    transform: translateX(calc(var(--progress, 0) * -0.7%));
+  }
+
+  .corridor-door {
+    width: 11%;
+  }
+
+  .display-screen {
+    padding: 3px 10px 2px;
+  }
+
+  .room-number {
+    font-size: 9px;
+    letter-spacing: 1.5px;
+  }
+
+  .corridor-progress {
+    bottom: 12px;
+  }
+
+  .progress-bar {
+    width: 120px;
+    height: 2px;
+  }
+
+  .progress-label {
+    font-size: 10px;
+  }
+
+  .ceiling-light {
+    width: 75%;
+    height: 45%;
+  }
+
+  .light-tube {
+    height: 4px;
+  }
+
+  .door-vision-panel {
+    height: 26%;
+  }
+
+  .door-push-plate {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .corridor-door {
+    width: 14%;
+  }
+
+  .door-vision-panel {
+    width: 48%;
+    height: 24%;
+  }
+
+  .door-handle-assembly {
+    width: 26%;
+  }
+
+  .progress-bar {
+    width: 100px;
+  }
+
+  .door-status-light {
+    display: none;
+  }
+}

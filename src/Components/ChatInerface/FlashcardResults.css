@@ -1,0 +1,526 @@
+/* ============================================
+   FLASHCARD RESULTS - COMPACT MACOS STYLE
+   Modern, minimal, no score circle
+   ============================================ */
+
+.flashcard-results-container {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 1rem;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  animation: resultsSlideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes resultsSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   HEADER - COMPACT TITLE ONLY
+   ============================================ */
+
+.flashcard-results-header {
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  animation: titleSlide 0.4s ease-out 0.1s backwards;
+}
+
+@keyframes titleSlide {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flashcard-results-title-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.flashcard-results-title {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  line-height: 1.3;
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  letter-spacing: -0.01em;
+}
+
+.flashcard-results-emoji {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.flashcard-results-message {
+  margin: 0.25rem 0 0 0;
+  font-size: 0.75rem;
+  color: #86868b;
+  line-height: 1.3;
+  font-weight: 400;
+}
+
+.flashcard-score-percentage-inline {
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+/* Tier Colors - Purple theme to match app */
+.tier-outstanding .flashcard-score-percentage-inline { color: #ff9500; }
+.tier-excellent .flashcard-score-percentage-inline { color: #9f7aea; }
+.tier-good .flashcard-score-percentage-inline { color: #30d158; }
+.tier-moderate .flashcard-score-percentage-inline { color: #6b46c1; }
+.tier-study .flashcard-score-percentage-inline { color: #ff9500; }
+
+/* Hide score circle elements */
+.flashcard-score-display,
+.flashcard-score-circle,
+.flashcard-progress-ring,
+.flashcard-progress-bar,
+.flashcard-score-text,
+.flashcard-score-label {
+  display: none;
+}
+
+/* ============================================
+   COMPACT STATS GRID - macOS CARDS
+   ============================================ */
+
+.flashcard-results-breakdown {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.flashcard-breakdown-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: statPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+}
+
+.flashcard-breakdown-item:nth-child(1) { animation-delay: 0.15s; }
+.flashcard-breakdown-item:nth-child(2) { animation-delay: 0.2s; }
+.flashcard-breakdown-item:nth-child(3) { animation-delay: 0.25s; }
+
+@keyframes statPop {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.flashcard-breakdown-item:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.08);
+  transform: translateY(-1px);
+}
+
+.flashcard-breakdown-icon {
+  font-size: 1.125rem;
+  line-height: 1;
+  opacity: 0.9;
+}
+
+.flashcard-breakdown-details {
+  width: 100%;
+}
+
+.flashcard-breakdown-count {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  line-height: 1;
+  margin-bottom: 0.125rem;
+  letter-spacing: -0.02em;
+}
+
+.flashcard-breakdown-label {
+  font-size: 0.625rem;
+  color: #86868b;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+/* macOS system colors for icons */
+.flashcard-breakdown-item.mastered .flashcard-breakdown-icon {
+  filter: brightness(1.1);
+}
+.flashcard-breakdown-item.learning .flashcard-breakdown-icon {
+  filter: brightness(1.05);
+}
+.flashcard-breakdown-item.new .flashcard-breakdown-icon {
+  opacity: 0.7;
+}
+
+/* ============================================
+   TOPIC BREAKDOWN - COMPACT BARS
+   ============================================ */
+
+.flashcard-topic-breakdown {
+  margin-bottom: 0.75rem;
+  animation: topicsSlide 0.3s ease-out 0.3s backwards;
+}
+
+@keyframes topicsSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flashcard-topic-title {
+  margin: 0 0 0.5rem 0;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #1a1a1a;
+  letter-spacing: -0.01em;
+}
+
+.flashcard-topic-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.flashcard-topic-item {
+  animation: barSlide 0.3s ease-out backwards;
+}
+
+.flashcard-topic-item:nth-child(1) { animation-delay: 0.35s; }
+.flashcard-topic-item:nth-child(2) { animation-delay: 0.4s; }
+.flashcard-topic-item:nth-child(3) { animation-delay: 0.45s; }
+.flashcard-topic-item:nth-child(4) { animation-delay: 0.5s; }
+
+@keyframes barSlide {
+  from {
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.flashcard-topic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.25rem;
+  gap: 0.5rem;
+}
+
+.flashcard-topic-name {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #1a1a1a;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.flashcard-topic-percentage {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b46c1;
+  flex-shrink: 0;
+  letter-spacing: -0.01em;
+}
+
+.flashcard-topic-progress {
+  height: 5px;
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.25rem;
+}
+
+.flashcard-topic-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #6b46c1 0%, #9f7aea 100%);
+  border-radius: 3px;
+  transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: barGrow 0.8s ease-out;
+}
+
+@keyframes barGrow {
+  from {
+    width: 0 !important;
+  }
+}
+
+.flashcard-topic-stats {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.6875rem;
+}
+
+.flashcard-topic-stats .count-correct {
+  color: #30d158;
+  font-weight: 600;
+}
+
+.flashcard-topic-stats .count-divider {
+  color: #d1d1d6;
+}
+
+.flashcard-topic-stats .count-total {
+  color: #86868b;
+  font-weight: 500;
+}
+
+/* ============================================
+   ACTION BUTTONS - macOS STYLE
+   ============================================ */
+
+.flashcard-results-actions {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.5rem;
+  animation: actionsSlide 0.3s ease-out 0.5s backwards;
+}
+
+@keyframes actionsSlide {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.flashcard-results-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.625rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: -0.01em;
+}
+
+.flashcard-continue-btn {
+  background: #6b46c1;
+  color: white;
+  box-shadow: 0 1px 3px rgba(107, 70, 193, 0.2);
+}
+
+.flashcard-continue-btn:hover {
+  background: #553c9a;
+  box-shadow: 0 2px 6px rgba(107, 70, 193, 0.3);
+  transform: translateY(-1px);
+}
+
+.flashcard-continue-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(107, 70, 193, 0.2);
+}
+
+.flashcard-review-btn {
+  background: rgba(0, 0, 0, 0.03);
+  color: #1a1a1a;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.flashcard-review-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.flashcard-review-btn:active {
+  transform: translateY(0);
+}
+
+.btn-icon {
+  font-size: 0.875rem;
+  line-height: 1;
+}
+
+.btn-text {
+  line-height: 1;
+}
+
+/* Hide footer */
+.flashcard-results-footer {
+  display: none;
+}
+
+/* ============================================
+   DARK MODE - macOS STYLE
+   ============================================ */
+
+body.dark-mode .flashcard-results-container {
+  background: rgba(30, 30, 30, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .flashcard-results-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .flashcard-results-title {
+  color: #f5f5f7;
+}
+
+body.dark-mode .flashcard-results-message {
+  color: #86868b;
+}
+
+body.dark-mode .flashcard-breakdown-item {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .flashcard-breakdown-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .flashcard-breakdown-count {
+  color: #f5f5f7;
+}
+
+body.dark-mode .flashcard-breakdown-label {
+  color: #86868b;
+}
+
+body.dark-mode .flashcard-topic-title {
+  color: #f5f5f7;
+}
+
+body.dark-mode .flashcard-topic-name {
+  color: #f5f5f7;
+}
+
+body.dark-mode .flashcard-topic-percentage {
+  color: #c4b5fd;
+}
+
+body.dark-mode .flashcard-topic-progress {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .flashcard-topic-progress-bar {
+  background: linear-gradient(90deg, #8b5cf6 0%, #a78bfa 100%);
+}
+
+body.dark-mode .flashcard-topic-stats .count-correct {
+  color: #32d74b;
+}
+
+body.dark-mode .flashcard-topic-stats .count-divider {
+  color: #48484a;
+}
+
+body.dark-mode .flashcard-topic-stats .count-total {
+  color: #86868b;
+}
+
+body.dark-mode .flashcard-continue-btn {
+  background: #8b5cf6;
+  box-shadow: 0 1px 3px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .flashcard-continue-btn:hover {
+  background: #a78bfa;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .flashcard-review-btn {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f5f5f7;
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .flashcard-review-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 640px) {
+  .flashcard-results-container {
+    padding: 1.25rem;
+  }
+
+  .flashcard-results-title {
+    font-size: 1.25rem;
+  }
+
+  .flashcard-results-emoji {
+    font-size: 1.25rem;
+  }
+
+  .flashcard-score-percentage-inline {
+    font-size: 1.5rem;
+  }
+
+  .flashcard-results-breakdown {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .flashcard-breakdown-count {
+    font-size: 1.5rem;
+  }
+
+  .flashcard-results-actions {
+    grid-template-columns: 1fr;
+  }
+}

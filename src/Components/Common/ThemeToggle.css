@@ -1,0 +1,74 @@
+/* Theme Toggle Button - Reusable Component */
+/* Matches the premium style from QuizRoomLanding */
+
+.theme-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.4);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.theme-toggle-btn:hover {
+  background: rgba(251, 191, 36, 0.15);
+  color: #fbbf24;
+  box-shadow: 0 0 16px rgba(251, 191, 36, 0.5);
+}
+
+.theme-toggle-btn:active {
+  transform: scale(0.95);
+}
+
+.theme-toggle-btn svg {
+  transition: transform 0.4s cubic-bezier(0.25, 0.1, 0.25, 1), filter 0.3s ease;
+}
+
+.theme-toggle-btn:hover svg {
+  transform: rotate(15deg);
+  filter: drop-shadow(0 0 4px rgba(251, 191, 36, 0.6));
+}
+
+/* Light mode styles */
+body:not(.dark-mode) .theme-toggle-btn {
+  color: rgba(0, 0, 0, 0.35);
+}
+
+body:not(.dark-mode) .theme-toggle-btn:hover {
+  background: rgba(100, 116, 139, 0.15);
+  color: #64748b;
+  box-shadow: 0 0 12px rgba(100, 116, 139, 0.3);
+}
+
+body:not(.dark-mode) .theme-toggle-btn:hover svg {
+  filter: drop-shadow(0 0 3px rgba(100, 116, 139, 0.4));
+}
+
+/* Dark mode explicit styles */
+body.dark-mode .theme-toggle-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .theme-toggle-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  .theme-toggle-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .theme-toggle-btn svg {
+    width: 16px;
+    height: 16px;
+  }
+}

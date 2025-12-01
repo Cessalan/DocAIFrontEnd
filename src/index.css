@@ -48,6 +48,14 @@ body {
   font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #f5f0fa;
+}
+
+/* Dark mode body background - seamless dark */
+body.dark-mode {
+  background: linear-gradient(135deg, #0f0f12 0%, #1a1a1e 100%);
+  margin: 0;
+  padding: 0;
 }
 
 code {
@@ -66,6 +74,12 @@ code {
   min-height: 100vh;
 }
 
+/* Dark mode app wrapper - seamless dark */
+body.dark-mode .app-wrapper {
+  background: linear-gradient(135deg, #0f0f12 0%, #1a1a1e 100%);
+  background-image: none;
+}
+
 /* ============================================
    SIDEBAR - NOTEBOOKLM INSPIRED WITH PURPLE ACCENT
    ============================================ */
@@ -74,21 +88,24 @@ code {
   top: 0;
   left: -340px;
   width: 320px;
-  height: calc(100vh - 32px);
+  height: 100vh;
   background: #ffffff;
   transition: all var(--transition-normal);
   z-index: 1000;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
-  border: 1px solid #e8e8e8;
+  border-right: 1px solid #e8e8e8;
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
   display: flex;
   flex-direction: column;
-  margin: 10px 0 16px 16px;
-  border-radius: var(--radius-2xl);
+  margin: 0;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .sidebar.open {
-  left: 16px;
+  left: 0;
 }
 
 /* ============================================
@@ -102,16 +119,85 @@ code {
   background: #ffffff;
   border-bottom: 1px solid #e8e8e8;
   min-height: 60px;
-  border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+  border-radius: 0;
 }
 
 .sidebar-title {
   font-size: 16px;
   font-weight: 500;
-  text-align:center;
+  text-align: center;
   color: var(--primary-purple-dark);
   letter-spacing: -0.2px;
   flex: 1;
+}
+
+/* Chat View Toggle - matches dark mode toggle styling */
+.chat-view-toggle-container {
+  padding: 0;
+  border: none;
+  margin: 0;
+}
+
+.chat-view-toggle {
+  width: 100%;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 0;
+  transition: all 0.2s ease;
+}
+
+.chat-view-toggle:hover {
+  background: rgba(173, 125, 195, 0.08);
+}
+
+.chat-view-toggle .toggle-track {
+  width: 38px;
+  height: 20px;
+  border-radius: 10px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.chat-view-toggle .toggle-track.my-chats {
+  background: linear-gradient(135deg, #9b6fb0, #ad7dc3);
+}
+
+.chat-view-toggle .toggle-track.all-chats {
+  background: linear-gradient(135deg, #663a82, #9b6fb0);
+}
+
+.chat-view-toggle .toggle-thumb {
+  position: absolute;
+  top: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.chat-view-toggle .toggle-track.my-chats .toggle-thumb {
+  left: 2px;
+}
+
+.chat-view-toggle .toggle-track.all-chats .toggle-thumb {
+  left: calc(100% - 18px);
+}
+
+.chat-view-toggle .toggle-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary, #374151);
 }
 
 .close-sidebar {
@@ -397,7 +483,7 @@ code {
 .sidebar-footer {
   padding: 12px 8px;
   background: #ffffff;
-  border-top: 1px solid #e8e8e8;
+  border-top: 1px solid transparent;
   border-radius: 0 0 var(--radius-2xl) var(--radius-2xl);
 }
 
@@ -408,14 +494,41 @@ code {
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
   margin-bottom: 4px;
-  font-size: 14px;
-  font-weight: 400;
+  font-size: 13px;
+  font-weight: 500;
   background: transparent;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.nav-item svg {
+  opacity: 0.6;
+  flex-shrink: 0;
 }
 
 .nav-item:hover {
   background: rgba(173, 125, 195, 0.08);
   color: var(--primary-purple-dark);
+}
+
+.nav-item:hover svg {
+  opacity: 1;
+}
+
+.nav-item.logout-item {
+  justify-content: space-between;
+  color: #9ca3af;
+  font-weight: 400;
+  margin-top: 4px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  border-radius: 0;
+}
+
+.nav-item.logout-item:hover {
+  color: #6b7280;
+  background: transparent;
 }
 
 /* ============================================
@@ -433,12 +546,21 @@ code {
 }
 
 .main-content.shifted {
-  margin-left: 352px;
+  margin-left: 320px;
+}
+
+/* Shifted for collapsed sidebar rail (desktop only) */
+.main-content.rail-shifted {
+  margin-left: 60px;
 }
 
 /* Prevent content jump on mobile */
 @media (max-width: 768px) {
   .main-content.shifted {
+    margin-left: 0;
+  }
+
+  .main-content.rail-shifted {
     margin-left: 0;
   }
 }
@@ -523,4 +645,217 @@ code {
 /* Add animation to conversation items */
 .conversation-item {
   animation: slideInFromLeft 0.3s ease;
+}
+
+/* ============================================
+   DARK MODE - SIDEBAR - PREMIUM EDITION
+   ============================================ */
+body.dark-mode .sidebar {
+  background: linear-gradient(135deg, rgba(20, 20, 25, 1), rgba(25, 25, 30, 1));
+  border-right-color: transparent;
+  border-left: none;
+  border-top: none;
+  border-bottom: none;
+  box-shadow: 4px 0 24px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .sidebar-header {
+  background: linear-gradient(135deg, rgba(25, 25, 30, 0.98), rgba(30, 30, 35, 0.98));
+  border-bottom-color: transparent;
+}
+
+body.dark-mode .sidebar-title {
+  color: #ddd6fe;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* Dark mode - chat view toggle */
+body.dark-mode .chat-view-toggle-container {
+  border: none;
+}
+
+body.dark-mode .chat-view-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .chat-view-toggle .toggle-label {
+  color: #e5e7eb;
+}
+
+body.dark-mode .chat-view-toggle .toggle-track.my-chats {
+  background: linear-gradient(135deg, #6b21a8, #7c3aed);
+}
+
+body.dark-mode .chat-view-toggle .toggle-track.all-chats {
+  background: linear-gradient(135deg, #4c1d95, #6b21a8);
+}
+
+body.dark-mode .new-chat-button {
+  background: transparent;
+  color: #a78bfa;
+  border-color: rgba(167, 139, 250, 0.3);
+  box-shadow: 0 1px 2px rgba(167, 139, 250, 0.05);
+  font-weight: 500;
+}
+
+body.dark-mode .new-chat-button:hover {
+  background: rgba(167, 139, 250, 0.08);
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 2px 4px rgba(167, 139, 250, 0.1);
+  transform: translateY(-1px);
+}
+
+body.dark-mode .conversations-list {
+  background: transparent;
+}
+
+body.dark-mode .conversation-item {
+  background: linear-gradient(135deg, rgba(40, 43, 50, 0.8), rgba(35, 38, 45, 0.8));
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .conversation-item:hover {
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.25), rgba(99, 62, 185, 0.25));
+  border-color: rgba(167, 139, 250, 0.5);
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
+  transform: translateX(2px);
+}
+
+body.dark-mode .conversation-item.active {
+  background: linear-gradient(135deg, rgba(107, 70, 193, 0.4), rgba(99, 62, 185, 0.4));
+  border-color: #a78bfa;
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .conversation-name {
+  color: #ffffff;
+  font-weight: 600;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .conversation-item.active .conversation-name {
+  color: #ffffff;
+  font-weight: 700;
+}
+
+body.dark-mode .conversation-item.active .conversation-time {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+body.dark-mode .conversation-item.active .conversation-user-id {
+  color: #c4b5fd;
+  font-weight: 600;
+}
+
+body.dark-mode .conversation-time {
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+body.dark-mode .conversation-user-id {
+  color: #e5e7eb;
+  font-weight: 500;
+}
+
+body.dark-mode .conversation-metadata-separator {
+  color: #9ca3af;
+}
+
+body.dark-mode .conversation-message {
+  color: #d1d5db;
+}
+
+body.dark-mode .file-count-badge {
+  background: rgba(107, 70, 193, 0.3);
+  border-color: rgba(107, 70, 193, 0.5);
+}
+
+body.dark-mode .file-count-number {
+  color: #a78bfa;
+}
+
+body.dark-mode .sidebar-footer {
+  background: rgba(30, 30, 30, 0.95);
+  border-top-color: transparent;
+}
+
+body.dark-mode .nav-item {
+  color: #9ca3af;
+}
+
+body.dark-mode .nav-item:hover {
+  background: rgba(107, 70, 193, 0.2);
+  color: #a78bfa;
+}
+
+body.dark-mode .nav-item.logout-item {
+  border-top-color: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .nav-item.logout-item:hover {
+  color: #d1d5db;
+  background: transparent;
+}
+
+/* Loading Message Box - Dark */
+body.dark-mode .loading-message-box {
+  background: rgba(45, 45, 50, 0.95);
+  border-color: rgba(107, 70, 193, 0.4);
+}
+
+body.dark-mode .loading-message-box.loading {
+  background: linear-gradient(
+    135deg,
+    rgba(45, 45, 50, 0.98),
+    rgba(55, 55, 60, 0.98)
+  );
+  border-color: rgba(107, 70, 193, 0.5);
+}
+
+body.dark-mode .loading-message-box.complete-with-insights {
+  background: linear-gradient(
+    135deg,
+    rgba(45, 45, 50, 0.98),
+    rgba(16, 185, 129, 0.1)
+  );
+  border-color: rgba(16, 185, 129, 0.4);
+}
+
+body.dark-mode .loading-text {
+  color: #a78bfa;
+}
+
+body.dark-mode .progress-stats {
+  background: rgba(55, 55, 60, 0.8);
+  border-color: rgba(107, 70, 193, 0.3);
+}
+
+body.dark-mode .stat-number {
+  color: #a78bfa;
+}
+
+body.dark-mode .stat-label {
+  color: #9ca3af;
+}
+
+body.dark-mode .insight-preview {
+  background: rgba(55, 55, 60, 0.6);
+  border-left-color: #a78bfa;
+}
+
+body.dark-mode .insight-text {
+  color: #e5e7eb;
+}
+
+body.dark-mode .insight-detail {
+  color: #9ca3af;
+}
+
+body.dark-mode .summary-preview {
+  background: rgba(55, 55, 60, 0.8);
+  border-left-color: #10b981;
+  color: #e5e7eb;
 }

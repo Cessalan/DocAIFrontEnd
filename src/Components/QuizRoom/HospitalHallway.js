@@ -1,0 +1,176 @@
+import React, { useMemo, useState } from 'react';
+import './HospitalHallway.css';
+import PatientBedSVG from './PatientBedSVG';
+
+/**
+ * HospitalHallway - Premium HD hospital corridor visualization
+ * Features dark/light mode support matching QuizRoomLanding theme
+ * High-end hospital aesthetic with smooth animations
+ *
+ * @param {number} progress - Progress through the hallway (0-100)
+ * @param {boolean} isComplete - Whether the quiz is complete (stage 5)
+ * @param {boolean} doorOpen - Whether room 217's door should be open (for cinematic)
+ */
+function HospitalHallway({ progress = 0, isComplete = false, doorOpen = false, patientVariant }) {
+  const clampedProgress = Math.min(100, Math.max(0, progress));
+
+  // Random patient variant (0-5) - only randomize once on mount if not provided
+  const [randomVariant] = useState(() => Math.floor(Math.random() * 6));
+  const actualPatientVariant = patientVariant !== undefined ? patientVariant : randomVariant;
+
+  // Calculate current stage for lighting effects
+  const stage = useMemo(() => {
+    if (isComplete) return 5;
+    if (clampedProgress >= 80) return 4;
+    if (clampedProgress >= 60) return 3;
+    if (clampedProgress >= 40) return 2;
+    if (clampedProgress >= 20) return 1;
+    return 0;
+  }, [clampedProgress, isComplete]);
+
+  // Room numbers for the doors - odd numbers like real hospitals
+  const rooms = ['201', '203', '205', '207', '209', '211', '213', '215', '217'];
+
+  return (
+    <div className={`hospital-corridor stage-${stage}`}>
+      {/* Ambient lighting overlay */}
+      <div className="ambient-light" />
+
+      {/* Pulsing ambient glow */}
+      <div className="ambient-glow" />
+
+      {/* Scrolling corridor container */}
+      <div
+        className="corridor-track"
+        style={{ '--progress': clampedProgress }}
+      >
+        {/* Ceiling with recessed lighting */}
+        <div className="corridor-ceiling">
+          <div className="ceiling-panels">
+            {[...Array(14)].map((_, i) => (
+              <div key={i} className="ceiling-panel">
+                <div className={`ceiling-light ${stage >= 1 ? 'on' : ''}`}>
+                  <div className="light-tube" />
+                  <div className="light-tube" />
+                  <div className="light-bloom" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main wall section */}
+        <div className="corridor-wall">
+          {/* Upper wall section */}
+          <div className="wall-upper" />
+
+          {/* Glass accent stripe */}
+          <div className="wall-accent" />
+
+          {/* Lower wall section */}
+          <div className="wall-lower" />
+
+          {/* Premium Hospital Doors */}
+          {rooms.map((roomNum, index) => (
+            <div
+              key={roomNum}
+              className={`corridor-door ${
+                roomNum === '217' ? 'destination' : ''
+              } ${
+                roomNum === '217' && stage >= 4 ? 'approaching' : ''
+              } ${
+                roomNum === '217' && (isComplete || doorOpen) ? 'arrived' : ''
+              }`}
+              style={{ left: `${7 + index * 10}%` }}
+            >
+              {/* Clean door panel */}
+              <div className="door-frame">
+                {/* Main door surface */}
+                <div className="door-surface">
+                  {/* Vision panel (window) with wire glass */}
+                  <div className="door-vision-panel">
+                    <div className="vision-glass">
+                      <div className="wire-pattern" />
+                      <div className="glass-reflection" />
+                      <div className="glass-inner-glow" />
+                    </div>
+                    <div className="vision-frame" />
+                  </div>
+
+                  {/* Push plate */}
+                  <div className="door-push-plate">
+                    <div className="push-plate-texture" />
+                  </div>
+
+                  {/* Minimalist door handle */}
+                  <div className="door-handle" />
+
+                  {/* Door edge detail */}
+                  <div className="door-edge" />
+
+                  {/* Subtle door seam */}
+                  <div className="door-seam" />
+                </div>
+
+                {/* Digital room number display */}
+                <div className="room-number-display">
+                  <div className="display-screen">
+                    <span className="room-number">{roomNum}</span>
+                  </div>
+                  <div className="display-indicator" />
+                </div>
+
+                {/* Door status light */}
+                <div className="door-status-light">
+                  <div className="status-led" />
+                </div>
+              </div>
+
+              {/* Glow effect for destination room 217 */}
+              {roomNum === '217' && <div className="door-glow" />}
+
+              {/* Room interior - only for room 217, revealed when door opens */}
+              {roomNum === '217' && (
+                <div className="room-interior">
+                  <div className="room-back-wall" />
+                  <div className="room-floor" />
+                  <div className="room-ceiling-light" />
+                  {/* Hopeful glow burst effect */}
+                  <div className="hope-glow-burst" />
+                  {/* Floating dust motes / particles of light */}
+                  <div className="room-particles">
+                    <div className="particle p1" />
+                    <div className="particle p2" />
+                    <div className="particle p3" />
+                    <div className="particle p4" />
+                    <div className="particle p5" />
+                    <div className="particle p6" />
+                    <div className="particle p7" />
+                    <div className="particle p8" />
+                  </div>
+{/* Hospital bed with patient - Dynamic patient variant */}
+                  <PatientBedSVG variant={actualPatientVariant} />
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Floor section */}
+        <div className="corridor-floor">
+          <div className="floor-surface" />
+          <div className="floor-reflection" />
+          <div className="floor-guideline" />
+        </div>
+      </div>
+
+      {/* Serum presence indicator glow */}
+      <div className="serum-presence" />
+
+      {/* Cinematic vignette overlay */}
+      <div className="corridor-vignette" />
+    </div>
+  );
+}
+
+export default HospitalHallway;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { handleSignOut } from "../../Firebase/auth";
-import { db } from "../../Firebase/config";
+import { db, auth } from "../../Firebase/config";
 import {
   collection,
   query,
@@ -9,21 +10,83 @@ import {
   getDocs,
   addDoc,
   serverTimestamp,
-  onSnapshot
+  onSnapshot,
+  doc,
+  getDoc
 } from "firebase/firestore";
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat } from "../../Services/FireBaseServiceChats.js";
+import DarkModeToggle from './DarkModeToggle';
+import FeedbackButton from './FeedbackButton';
+import FeedbackViewer from './FeedbackViewer';
+import { SubmitFeedback } from '../../Services/FeedbackService';
 import '../../index.css';
 
 // translation
 import { useTranslation } from 'react-i18next';
 
-const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
+const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => {
+  const navigate = useNavigate();
+
+  // Development mode detection
+  const isDevelopment = process.env.NODE_ENV === 'development';
+
+  // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    // Check localStorage for saved preference
+    const saved = localStorage.getItem('darkMode');
+    return saved === 'true';
+  });
+
+  // Feedback viewer state (dev mode only)
+  const [showFeedbackViewer, setShowFeedbackViewer] = useState(false);
+  const [exportingOnboarding, setExportingOnboarding] = useState(false);
+
+  // Dev mode: Toggle between viewing all chats or only user's chats
+  const [viewAllChats, setViewAllChats] = useState(() => {
+    // Check localStorage for saved preference (dev mode only)
+    if (isDevelopment) {
+      const saved = localStorage.getItem('viewAllChats');
+      return saved === 'true';
+    }
+    return false; // Non-dev users always see only their chats
+  });
+
+  // Notify parent when viewAllChats changes
+  useEffect(() => {
+    if (onViewModeChange) {
+      onViewModeChange(viewAllChats);
+    }
+  }, [viewAllChats, onViewModeChange]);
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    // Save preference
+    localStorage.setItem('darkMode', isDarkMode);
+  }, [isDarkMode]);
+
+  const handleDarkModeToggle = () => {
+    setIsDarkMode(prev => !prev);
+  };
+
+  const handleViewModeToggle = () => {
+    const newValue = !viewAllChats;
+    setViewAllChats(newValue);
+    // Save preference to localStorage (dev mode only)
+    if (isDevelopment) {
+      localStorage.setItem('viewAllChats', newValue);
+    }
+  };
   
   const [chats, setChats] = useState([]);
   const [activeChatId, setActiveChatId] = useState(null);
   const [hoveredChatId, setHoveredChatId] = useState(null);
-  
+
   // translation
   const { t } = useTranslation();
 
@@ -44,7 +107,7 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
   // Load file counts for all chats
   const loadFileCountsForAllChats = async (chatList) => {
     const counts = {};
-    
+
     // Use Promise.all to load counts concurrently
     const countPromises = chatList.map(async (chat) => {
       const count = await loadFileCountForChat(chat.id);
@@ -59,31 +122,39 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
   // Load all chats AND their file counts
   useEffect(() => {
     if (!user) return;
-  
+
     const chatsRef = collection(db, "chats");
 
-    const chatQuery = query(
-      chatsRef,
-      where("userId", "==", user.uid), // get only chats for current user
-      orderBy("updatedAt", "desc")     // sort by most recent
-    );
-  
+    // Build query based on view mode
+    // In dev mode with viewAllChats=true: show all chats
+    // Otherwise: show only user's chats
+    const chatQuery = isDevelopment && viewAllChats
+      ? query(
+          chatsRef,
+          orderBy("updatedAt", "desc")  // All chats, sorted by most recent
+        )
+      : query(
+          chatsRef,
+          where("userId", "==", user.uid), // Only user's chats
+          orderBy("updatedAt", "desc")     // Sorted by most recent
+        );
+
     const unsubscribe = onSnapshot(chatQuery, async (snapshot) => {
       const updatedChats = snapshot.docs.map(doc => ({
         id: doc.id,
         ...doc.data()
       }));
       setChats(updatedChats);
-      
+
       // Load file counts for all chats
       if (updatedChats.length > 0) {
         await loadFileCountsForAllChats(updatedChats);
       }
     });
-  
+
     // Cleanup listener on unmount
     return () => unsubscribe();
-  }, [user]);
+  }, [user, viewAllChats, isDevelopment]); // Re-run when viewAllChats changes
   
 
   const handleNewChat = async () => {
@@ -99,10 +170,10 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
 
     setChats([{ id: newChatId, ...newChat }, ...chats]);
     setActiveChatId(newChatId);
-    
+
     // Initialize file count for new chat
     setChatFileCounts(prev => ({ ...prev, [newChatId]: 0 }));
-    
+
     if (onChatSelected) onChatSelected(newChatId);
   };
 
@@ -117,14 +188,14 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
 
   const handleDeleteChat = async (e, chatId) => {
     e.stopPropagation(); // Prevent chat selection
-    
+
     if (!window.confirm("Supprimer ce chat? Cette action est irréversible.")) {
       return;
     }
 
     try {
       await DeleteChat(chatId);
-      
+
       // If deleted chat was active, clear selection
       if (activeChatId === chatId) {
         setActiveChatId(null);
@@ -132,6 +203,53 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar }) => {
       }
     } catch (error) {
       alert("Échec de la suppression: " + error.message);
+    }
+  };
+
+  const handleFeedbackSubmit = async (feedbackData) => {
+    try {
+      await SubmitFeedback(feedbackData);
+      console.log("✅ Feedback submitted successfully");
+    } catch (error) {
+      console.error("❌ Error submitting feedback:", error);
+      throw error;
+    }
+  };
+
+  // Export all users' onboarding data to JSON (dev mode only)
+  const handleExportOnboarding = async () => {
+    setExportingOnboarding(true);
+    try {
+      const usersRef = collection(db, "users");
+      const snapshot = await getDocs(usersRef);
+
+      const onboardingData = snapshot.docs.map(doc => {
+        const data = doc.data();
+        // Only extract onboarding data, exclude email and displayName
+        return {
+          odtOfUSer: doc.id,
+          onboarding: data.onboarding || null
+        };
+      }).filter(item => item.onboarding !== null); // Only include users with onboarding data
+
+      // Create and download JSON file
+      const jsonString = JSON.stringify(onboardingData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `onboarding-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log(`✅ Exported onboarding data for ${onboardingData.length} users`);
+    } catch (error) {
+      console.error("❌ Error exporting onboarding data:", error);
+      alert("Failed to export onboarding data: " + error.message);
+    } finally {
+      setExportingOnboarding(false);
     }
   };
 
@@ -172,7 +290,7 @@ const getchatDate = (timestamp) => {
       <div className="sidebar-header">
         <div className="sidebar-title">{t('side.chats')}</div>
       </div>
-            
+
       <button className="new-chat-button" onClick={handleNewChat}>
         + {t('side.newChat')}
       </button>  
@@ -196,7 +314,7 @@ const getchatDate = (timestamp) => {
               )}
               
               {/* Delete button - appears on hover */}
-              {/* {hoveredChatId === chat.id && (
+               {/* {hoveredChatId === chat.id && (
                 <button
                   className="delete-chat-button"
                   onClick={(e) => handleDeleteChat(e, chat.id)}
@@ -204,22 +322,26 @@ const getchatDate = (timestamp) => {
                 >
                   🗑️
                 </button>
-              )} */}
+              )}  */}
               
               <div className="conversation-details">
                 {/* Header section - now stacked vertically */}
                 <div className="conversation-header">
                   <span className="conversation-name">{chat.title}</span>
                   
-                  {/* Metadata row: date + userId */}
+                  {/* Metadata row: date + user info (only show in dev mode when viewing all chats) */}
                   <div className="conversation-metadata">
                     <span className="conversation-time">
                       {getchatDate(chat.updatedAt)}
                     </span>
-                    <span className="conversation-metadata-separator">•</span>
-                    <span className="conversation-user-id">
-                      {/* {chat.userId} */}
-                    </span>
+                    {isDevelopment && viewAllChats && (
+                      <>
+                        <span className="conversation-metadata-separator">•</span>
+                        <span className="conversation-user-id">
+                          {chat.userId}
+                        </span>
+                      </>
+                    )}
                   </div>
                 </div>
                 
@@ -235,10 +357,65 @@ const getchatDate = (timestamp) => {
       </div>
 
       <div className="sidebar-footer">
-        <div className="nav-item" onClick={handleSignOut}>
-          {t('side.logout')} ⏻
+        <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />
+        <FeedbackButton
+          userId={user?.uid}
+          userEmail={user?.email}
+          activeChatId={activeChatId}
+          onFeedbackSubmit={handleFeedbackSubmit}
+        />
+        {isDevelopment && (
+          <>
+            <div className="nav-item" onClick={() => setShowFeedbackViewer(true)}>
+              🔍 View Feedbacks (Dev)
+            </div>
+            <div
+              className="nav-item"
+              onClick={handleExportOnboarding}
+              style={{ opacity: exportingOnboarding ? 0.6 : 1 }}
+            >
+              {exportingOnboarding ? '⏳ Exporting...' : '📤 Export Onboarding (Dev)'}
+            </div>
+            {/* Dev Mode: View Toggle */}
+            <div className="chat-view-toggle-container">
+              <button
+                className="chat-view-toggle"
+                onClick={handleViewModeToggle}
+                aria-label={viewAllChats ? 'Switch to my chats only' : 'Switch to all chats'}
+              >
+                <div className={`toggle-track ${viewAllChats ? 'all-chats' : 'my-chats'}`}>
+                  <div className="toggle-thumb">
+                    {viewAllChats ? '👥' : '👤'}
+                  </div>
+                </div>
+                <span className="toggle-label">
+                  {viewAllChats ? 'All Chats' : 'My Chats'}
+                </span>
+              </button>
+            </div>
+          </>
+        )}
+        <div className="nav-item" onClick={() => navigate('/')}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+            <polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          {t('side.home', 'Home')}
+        </div>
+        <div className="nav-item logout-item" onClick={handleSignOut}>
+          {t('side.logout')}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
         </div>
       </div>
+
+      {/* Feedback Viewer Modal (Dev Mode Only) */}
+      {showFeedbackViewer && (
+        <FeedbackViewer onClose={() => setShowFeedbackViewer(false)} />
+      )}
     </>
   );
 };

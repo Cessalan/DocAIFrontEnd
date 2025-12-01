@@ -1,0 +1,447 @@
+/* ============================================
+   STICKY QUIZ PROGRESS BAR
+   Compact progress bar that sticks below chat header
+   ============================================ */
+
+.sticky-quiz-progress {
+  /* Positioning */
+  position: sticky;
+  top: 60px; /* Below chat header (60px height) */
+  z-index: 19; /* Below chat header (z-index: 20) */
+  
+  /* Layout */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 20px;
+  
+  /* Glassmorphic Design */
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  
+  /* Border & Shadow */
+  border-bottom: 1px solid rgba(173, 125, 195, 0.2);
+  box-shadow: 
+    0 2px 8px rgba(173, 125, 195, 0.1),
+    0 1px 0 0 rgba(255, 255, 255, 0.5) inset;
+  
+  /* Animation */
+  animation: stickySlideDown 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  
+  /* Smooth transitions */
+  transition: all 0.3s ease;
+}
+
+/* Slide down animation when sticky bar appears */
+@keyframes stickySlideDown {
+  0% {
+    opacity: 0;
+    transform: translateY(-60px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ============================================
+   CONTENT LAYOUT
+   ============================================ */
+
+.sticky-progress-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+/* LEFT SECTION: Progress Info */
+.sticky-progress-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #5a2d82;
+}
+
+.sticky-progress-icon {
+  font-size: 16px;
+  animation: iconBounce 2s ease-in-out infinite;
+}
+
+@keyframes iconBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-2px); }
+}
+
+.sticky-progress-text {
+  font-weight: 500;
+}
+
+.sticky-progress-text strong {
+  font-weight: 700;
+  color: #6b46c1;
+}
+
+.sticky-progress-percentage {
+  font-size: 16px;
+  font-weight: 700;
+  color: #6b46c1;
+  margin-left: 4px;
+}
+
+/* RIGHT SECTION: Score */
+.sticky-progress-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.sticky-stat-correct {
+  color: #38a169;
+}
+
+.sticky-stat-incorrect {
+  color: #e53e3e;
+}
+
+.sticky-stat-separator {
+  color: #cbd5e0;
+}
+
+/* ============================================
+   CENTER: STREAK COUNTER
+   ============================================ */
+
+.sticky-streak-counter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 14px;
+  
+  /* Gradient background based on streak level */
+  background: linear-gradient(135deg, #ff6b6b, #ff8c42);
+  color: white;
+  
+  /* Shadow */
+  box-shadow: 0 4px 12px rgba(255, 107, 107, 0.3);
+  
+  /* Initial appearance animation */
+  animation: streakAppear 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes streakAppear {
+  0% {
+    opacity: 0;
+    transform: scale(0.7);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Streak elements */
+.streak-fire {
+  font-size: 16px;
+  animation: fireFlicker 0.5s ease-in-out infinite;
+}
+
+@keyframes fireFlicker {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.streak-number {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.streak-text {
+  font-size: 11px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.95;
+}
+
+/* ============================================
+   STREAK ANIMATIONS
+   ============================================ */
+
+/* Pulse animation on streak increment */
+.sticky-streak-counter.pulse {
+  animation: streakPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes streakPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.5);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Break animation on streak reset */
+.sticky-streak-counter.break {
+  animation: streakBreak 0.6s ease-out;
+}
+
+@keyframes streakBreak {
+  0% { 
+    transform: translateX(0) scale(1);
+    opacity: 1;
+  }
+  25% { 
+    transform: translateX(-8px) rotate(-5deg);
+  }
+  50% { 
+    transform: translateX(8px) rotate(5deg);
+  }
+  75% { 
+    transform: translateX(-4px) rotate(-2deg);
+  }
+  100% { 
+    transform: translateX(0) scale(0.8);
+    opacity: 0;
+  }
+}
+
+/* Intense glow for high streaks (5+) */
+.sticky-streak-counter:has(.streak-number:contains("5")),
+.sticky-streak-counter:has(.streak-number:contains("6")),
+.sticky-streak-counter:has(.streak-number:contains("7")),
+.sticky-streak-counter:has(.streak-number:contains("8")),
+.sticky-streak-counter:has(.streak-number:contains("9")) {
+  background: linear-gradient(135deg, #ff6b6b, #ff5252);
+  animation: fireGlow 1s ease-in-out infinite;
+}
+
+@keyframes fireGlow {
+  0%, 100% { 
+    box-shadow: 0 4px 12px rgba(255, 107, 107, 0.4);
+  }
+  50% { 
+    box-shadow: 0 4px 20px rgba(255, 107, 107, 0.6);
+  }
+}
+
+/* Legendary streak (10+) */
+.sticky-streak-counter .streak-number {
+  position: relative;
+}
+
+/* ============================================
+   PROGRESS TRACK
+   ============================================ */
+
+.sticky-progress-track {
+  height: 6px;
+  background: #f3e8ff;
+  border-radius: 10px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.06);
+}
+
+.sticky-progress-fill {
+  height: 100%;
+  border-radius: 10px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.sticky-progress-shimmer {
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg, 
+    rgba(255, 255, 255, 0) 0%, 
+    rgba(255, 255, 255, 0.4) 50%, 
+    rgba(255, 255, 255, 0) 100%
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+/* ============================================
+   PROGRESS COLOR - NEUTRAL PURPLE
+   ============================================ */
+
+/* Always use neutral purple to show progress, not performance */
+.sticky-quiz-progress .sticky-progress-fill,
+.sticky-quiz-progress.progress .sticky-progress-fill {
+  background: linear-gradient(90deg, #b794f6 0%, #9f7aea 100%);
+  box-shadow: 0 2px 8px rgba(183, 148, 246, 0.3);
+}
+
+/* Keep old tier colors for reference (not used by default) */
+.sticky-quiz-progress.starting .sticky-progress-fill {
+  background: linear-gradient(90deg, #b794f6 0%, #9f7aea 100%);
+  box-shadow: 0 2px 8px rgba(183, 148, 246, 0.3);
+}
+
+.sticky-quiz-progress.building .sticky-progress-fill {
+  background: linear-gradient(90deg, #f6ad55 0%, #ed8936 100%);
+  box-shadow: 0 2px 8px rgba(246, 173, 85, 0.3);
+}
+
+.sticky-quiz-progress.momentum .sticky-progress-fill {
+  background: linear-gradient(90deg, #fbd38d 0%, #f6ad55 100%);
+  box-shadow: 0 2px 8px rgba(251, 211, 141, 0.3);
+}
+
+.sticky-quiz-progress.completing .sticky-progress-fill {
+  background: linear-gradient(90deg, #68d391 0%, #48bb78 100%);
+  box-shadow: 0 2px 8px rgba(104, 211, 145, 0.3);
+}
+
+/* ============================================
+   FLOATING TOAST FOR MILESTONES
+   ============================================ */
+
+.sticky-streak-toast {
+  position: fixed;
+  top: 120px; /* Below sticky bar */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  
+  /* Style */
+  background: linear-gradient(135deg, #ff6b6b, #ff8c42);
+  color: white;
+  padding: 16px 28px;
+  border-radius: 16px;
+  font-weight: 700;
+  font-size: 16px;
+  
+  /* Shadow & Glass */
+  box-shadow: 
+    0 8px 24px rgba(255, 107, 107, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  backdrop-filter: blur(10px);
+  
+  /* Animation */
+  animation: toastSlideIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes toastSlideIn {
+  0% {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px) scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0) scale(1);
+  }
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 768px) {
+  .sticky-quiz-progress {
+    top: 50px; /* Smaller header on mobile */
+    padding: 10px 16px;
+  }
+  
+  .sticky-progress-content {
+    gap: 12px;
+  }
+  
+  .sticky-progress-left,
+  .sticky-progress-right {
+    font-size: 12px;
+  }
+  
+  .sticky-progress-icon {
+    font-size: 14px;
+  }
+  
+  .sticky-progress-percentage {
+    font-size: 14px;
+  }
+  
+  .sticky-streak-counter {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+  
+  .streak-fire {
+    font-size: 14px;
+  }
+  
+  .streak-number {
+    font-size: 16px;
+  }
+  
+  .streak-text {
+    font-size: 9px;
+  }
+  
+  .sticky-progress-track {
+    height: 5px;
+  }
+  
+  .sticky-streak-toast {
+    top: 100px;
+    padding: 12px 20px;
+    font-size: 14px;
+  }
+}
+
+/* Compact view for very small screens */
+@media (max-width: 480px) {
+  .sticky-progress-content {
+    gap: 8px;
+  }
+  
+  /* Hide streak text on very small screens, keep icon + number */
+  .streak-text {
+    display: none;
+  }
+}
+
+/* ============================================
+   ACCESSIBILITY - REDUCED MOTION
+   ============================================ */
+
+@media (prefers-reduced-motion: reduce) {
+  .sticky-quiz-progress,
+  .sticky-streak-counter,
+  .sticky-streak-toast,
+  .sticky-progress-icon {
+    animation: none !important;
+  }
+  
+  .sticky-progress-shimmer {
+    display: none;
+  }
+  
+  .sticky-progress-fill {
+    transition: width 0.3s linear;
+  }
+  
+  .streak-fire {
+    animation: none;
+  }
+}

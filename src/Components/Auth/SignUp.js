@@ -1,8 +1,10 @@
-import { useState } from "react";
-import { Navigate, Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Navigate, Link, useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { handleCreateUserWithEmailAndPassword, handleSignInWithGoogleAccount, handleSignInWithAppleAccount } from "../../Firebase/auth";
 import { useAuth } from "../../Contexts/AuthContext/AuthContext";
 import { auth } from "../../Firebase/config";
+import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
+import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 
 import './AuthPage.css' // Reuse the same styles
 
@@ -20,9 +22,67 @@ const Signup = () => {
   const [loading, setLoading] = useState(false);
 
   const { isUserLoggedIn } = useAuth();
+  const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Theme
+  const [isDarkMode] = useDarkMode();
+
+  // Get redirect parameters - support both search params and location state
+  const returnTo = location.state?.returnTo || searchParams.get('returnTo');
+  const returnMessage = location.state?.message;
+  const prompt = searchParams.get('prompt');
+  const quizTopic = searchParams.get('quizTopic');
 
   // translation
   const { t } = useTranslation();
+
+  // Store quiz context in sessionStorage for post-login redirect
+  useEffect(() => {
+    if (prompt && quizTopic) {
+      sessionStorage.setItem('pendingQuizPrompt', prompt);
+      sessionStorage.setItem('pendingQuizTopic', quizTopic);
+    }
+  }, [prompt, quizTopic]);
+
+  // Handle redirect after successful signup (same logic as Login)
+  useEffect(() => {
+    if (isUserLoggedIn && returnTo) {
+      // Check if there's pending quiz state to restore
+      const pendingQuizState = sessionStorage.getItem('pendingQuizState');
+      if (pendingQuizState) {
+        try {
+          const quizState = JSON.parse(pendingQuizState);
+          // Check if the session is still valid (less than 30 minutes old)
+          const isValid = Date.now() - quizState.timestamp < 30 * 60 * 1000;
+          if (isValid) {
+            // Navigate back to quiz with restored state
+            // Include returningFromLogin flag to bypass refresh protection
+            navigate(returnTo, {
+              state: {
+                chatId: quizState.chatId,
+                title: quizState.title,
+                isGameMode: quizState.isGameMode,
+                fromUpload: quizState.fromUpload,
+                returningFromLogin: true  // Important: tells quiz page this is not a refresh
+              },
+              replace: true
+            });
+            // Clear the pending state after using it
+            sessionStorage.removeItem('pendingQuizState');
+            return;
+          }
+        } catch (e) {
+          console.error('Failed to restore quiz state:', e);
+        }
+        // Clear invalid session
+        sessionStorage.removeItem('pendingQuizState');
+      }
+      // If no valid pending state, just navigate to returnTo
+      navigate(returnTo, { replace: true });
+    }
+  }, [isUserLoggedIn, returnTo, navigate]);
 
   const handleSubmit = async (e) => {
 
@@ -62,7 +122,7 @@ const Signup = () => {
       setError('');
       setLoading(true);
       await handleSignInWithAppleAccount();
-      Navigate('/');
+      navigate('/c');
     }catch(error){
       console.error("Error signing in with Apple:", error);
       setError(error.message);
@@ -72,12 +132,32 @@ const Signup = () => {
   }
 
   return (
-    <div className="login-container">
-      {isUserLoggedIn && <Navigate to="/" replace={true} />}
-      
-      <h2>{t("signup.title")}</h2>
+    <div className={`auth-page ${isDarkMode ? 'dark-mode' : 'light-mode'}`}>
+      {/* Only redirect to home if logged in AND no returnTo specified */}
+      {/* If returnTo is set, the useEffect will handle the redirect with restored state */}
+      {isUserLoggedIn && !returnTo && <Navigate to="/c" replace={true} />}
 
-      {error && <div className="error-message">{error}</div>}
+      {/* Theme toggle in corner */}
+      <div className="auth-theme-toggle">
+        <ThemeToggle />
+      </div>
+
+      <div className="login-container">
+        {/* Mascot */}
+        <div className="auth-mascot">
+          <NurseQuizMascot size={90} isExcited={true} />
+        </div>
+
+        {/* Show return message if present */}
+        {returnMessage && !isUserLoggedIn && (
+          <div className="return-message">
+            {returnMessage}
+          </div>
+        )}
+
+        <h2>{t("signup.title")}</h2>
+
+        {error && <div className="error-message">{error}</div>}
 
       <form onSubmit={handleSubmit} className="login-form">
         <div className="input-group">
@@ -155,10 +235,11 @@ const Signup = () => {
             <span>{t('login.apple')}</span>
       </button> */}
 
-      <div className="login-links">
-        <p>
-          {t("signup.haveAccount")} <Link to="/login">{t("signup.login")} </Link>
-        </p>
+        <div className="login-links">
+          <p>
+            {t("signup.haveAccount")} <Link to="/login">{t("signup.login")} </Link>
+          </p>
+        </div>
       </div>
     </div>
   );

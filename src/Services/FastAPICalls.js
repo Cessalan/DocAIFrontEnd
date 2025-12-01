@@ -1,6 +1,8 @@
-const FAST_API_BASE = "http://127.0.0.1:8000";
-//const FAST_API_BASE ="https://ragfastapi-1075876064685.europe-west1.run.app";
-const header ={"Content-Type": "application/json"};
+import { auth } from '../Firebase/config';
+import { API_BASE_URL } from './config';
+
+const FAST_API_BASE = API_BASE_URL;
+const header = {"Content-Type": "application/json"};
 
 // not used
 export const ask_llm = async(userPrompt,chatHistory,documents,chat_id) => 
@@ -214,6 +216,96 @@ export const embed_docs = async (documents,chatId) => {
     return vectors;
 }
 
+
+/**
+ * Upload multiple files with streaming progress updates
+ * @param {File[]} files - Array of File objects from input
+ * @param {string} chatId - Current chat ID
+ * @param {Function} onProgress - Callback for progress updates (update) => {}
+ * @returns {Promise<Object>} Final results with all file metadata
+ */
+export const upload_files_with_progress = async (files, chatId, onProgress,language) => {
+  try {
+    
+    // Prepare FormData
+    const formData = new FormData();
+    files.forEach(file => {
+      formData.append('files', file); // 'files' plural matches backend
+    });
+    formData.append('chat_id', chatId);
+    formData.append('user_id', auth.currentUser?.uid || 'anonymous');
+    formData.append('language', language || 'english')
+
+    // Send request
+    const response = await fetch(`${FAST_API_BASE}/chat/upload-files`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
+    }
+
+    // Read streaming response
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+
+    let buffer = '';
+    const results = {
+      files: new Map(), // file_id -> file data
+      totalWords: 0,
+      completed: 0,
+      total: files.length
+    };
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) break;
+      
+      buffer += decoder.decode(value, { stream: true });
+      
+      // Process complete JSON lines
+      const lines = buffer.split('\n');
+      buffer = lines.pop(); // Keep incomplete line in buffer
+      
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        
+        try {
+          const update = JSON.parse(line);
+          
+          // Call progress callback
+          if (onProgress) {
+            onProgress(update);
+          }
+          
+          // Track completions
+          if (update.type === 'file_complete') {
+            results.files.set(update.file_id, update);
+            results.totalWords += update.word_count || 0;
+            results.completed += 1;
+          }
+          
+          // Handle errors
+          if (update.type === 'error') {
+            throw new Error(update.message);
+          }
+          
+        } catch (parseError) {
+          console.error('Failed to parse upload update:', line, parseError);
+        }
+      }
+    }
+
+    return results;
+
+  } catch (error) {
+    console.error('Upload error in FastAPICalls:', error);
+    throw error;
+  }
+};
 export const generate_title = async(message) => {
 
   const requestBody = JSON.stringify({
@@ -350,17 +442,46 @@ export const stream_summary = async(chat_id, file_name, language, onTokenReceive
     }
 };
 
-export const generate_quiz = async(chat_id, file_name,currentLanguage) => {
+/**
+ * Generates a quiz from uploaded content
+ *
+ * @param {string} chat_id - The chat/session ID
+ * @param {string} file_name - Name of the uploaded file to generate quiz from
+ * @param {string} currentLanguage - Language for the quiz ('english' or 'french')
+ * @param {Object} options - Optional configuration
+ * @param {number} options.num_questions - Number of questions to generate (default: 15)
+ * @param {string[]} options.question_types - Types of questions to include (default: ['mcq'])
+ *   Supported types: 'mcq' (multiple choice), 'sata' (select all that apply)
+ * @returns {Promise<Object[]>} Array of question objects
+ *
+ * @example
+ * // Generate MCQ-only quiz (default)
+ * const quiz = await generate_quiz(chatId, filename, 'english');
+ *
+ * @example
+ * // Generate mixed quiz with SATA questions
+ * const quiz = await generate_quiz(chatId, filename, 'english', {
+ *   num_questions: 10,
+ *   question_types: ['mcq', 'sata']
+ * });
+ */
+export const generate_quiz = async(chat_id, file_name, currentLanguage, options = {}) => {
+  // Destructure options with defaults
+  const {
+    num_questions = 15,
+    question_types = ['mcq']  // Default to MCQ only for backward compatibility
+  } = options;
 
-   const requestBody = JSON.stringify({
-    chat_id:chat_id,
-    filename:file_name,
-    quiz_type: "mcq",
-    num_questions :15,
-    language:currentLanguage
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    filename: file_name,
+    quiz_type: question_types.length === 1 ? question_types[0] : 'mixed',
+    question_types: question_types,  // Array of types to generate
+    num_questions: num_questions,
+    language: currentLanguage
   });
 
-  try{
+  try {
     const response = await fetch(`${FAST_API_BASE}/chat/generate-quiz`, {
       method: "POST",
       headers: {
@@ -369,21 +490,52 @@ export const generate_quiz = async(chat_id, file_name,currentLanguage) => {
       body: requestBody
     });
 
-     if (!response.ok) {
+    if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Quiz Generation request failed with status ${response.status}: ${errorText}`);
     }
 
     const quiz_json = await response.json();
-    console.log("Fast API response quiz generation: ", quiz_json)
+    console.log("Fast API response quiz generation: ", quiz_json);
     return quiz_json;
 
-  }catch(error)
-  {
-       console.error("Error during quiz generation:", error);
-      throw error;
+  } catch(error) {
+    console.error("Error during quiz generation:", error);
+    throw error;
   }
-  
+}
+
+export const generate_flashcards = async(chat_id, file_name, currentLanguage, num_cards = 15) => {
+
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    filename: file_name,
+    num_cards: num_cards,
+    language: currentLanguage
+  });
+
+  try {
+    const response = await fetch(`${FAST_API_BASE}/chat/generate-flashcards`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Flashcard Generation request failed with status ${response.status}: ${errorText}`);
+    }
+
+    const flashcard_json = await response.json();
+    console.log("Fast API response flashcard generation: ", flashcard_json);
+    return flashcard_json;
+
+  } catch(error) {
+    console.error("Error during flashcard generation:", error);
+    throw error;
+  }
 }
 
 export const generate_scenario = async(chat_id,file_name)=> {

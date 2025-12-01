@@ -1,0 +1,626 @@
+/* ============================================
+   FLASHCARD NAVIGATION - PREMIUM MINIMALIST
+   Clean, status-focused design
+   ============================================ */
+
+.flashcard-navigation {
+  background: transparent;
+  border-radius: 10px;
+  padding: 8px 6px;
+  box-shadow: none;
+  border: none;
+}
+
+.flashcard-nav-title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 10px;
+  padding: 0 2px;
+}
+
+/* Card List */
+.flashcard-nav-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.flashcard-nav-item {
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  background: #ffffff;
+  border: 1.5px solid rgba(173, 125, 195, 0.15);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  padding: 0 10px;
+  position: relative;
+  overflow: hidden;
+}
+
+.flashcard-nav-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.flashcard-nav-item:hover {
+  border-color: rgba(173, 125, 195, 0.3);
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(155, 111, 176, 0.1);
+}
+
+.flashcard-nav-item.active {
+  background: rgba(173, 125, 195, 0.08);
+  border-color: rgba(173, 125, 195, 0.4);
+  box-shadow: 0 2px 12px rgba(155, 111, 176, 0.15);
+}
+
+.flashcard-nav-number {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a202c;
+  min-width: 24px;
+}
+
+.flashcard-nav-icon {
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Status-specific styling - Premium colors with left accent */
+.flashcard-nav-status-new {
+  background: #ffffff;
+}
+
+.flashcard-nav-status-new::before {
+  background: #cbd5e0;
+}
+
+.flashcard-nav-status-learning {
+  background: rgba(246, 173, 85, 0.04);
+  border-color: rgba(246, 173, 85, 0.2);
+}
+
+.flashcard-nav-status-learning::before {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+}
+
+.flashcard-nav-status-mastered {
+  background: rgba(56, 161, 105, 0.04);
+  border-color: rgba(56, 161, 105, 0.2);
+}
+
+.flashcard-nav-status-mastered::before {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+}
+
+.flashcard-nav-status-know {
+  background: rgba(56, 161, 105, 0.04);
+  border-color: rgba(56, 161, 105, 0.2);
+}
+
+.flashcard-nav-status-know::before {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+}
+
+.flashcard-nav-status-again {
+  background: rgba(229, 62, 62, 0.04);
+  border-color: rgba(229, 62, 62, 0.2);
+}
+
+.flashcard-nav-status-again::before {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+}
+
+/* Legend */
+.flashcard-nav-legend {
+  border-top: 1px solid rgba(173, 125, 195, 0.12);
+  padding-top: 10px;
+  margin-top: 6px;
+}
+
+.flashcard-legend-title {
+  font-size: 9px;
+  font-weight: 700;
+  color: #666;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.flashcard-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  color: #2d3748;
+  margin-bottom: 6px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  transition: background 0.15s ease;
+}
+
+.flashcard-legend-item:hover {
+  background: rgba(173, 125, 195, 0.04);
+}
+
+.flashcard-legend-icon {
+  font-size: 14px;
+  width: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.flashcard-legend-text {
+  flex: 1;
+  font-weight: 500;
+}
+
+/* ============================================
+   FEEDBACK FOOTER
+   ============================================ */
+
+.flashcard-nav-footer {
+  margin-top: auto;
+  padding-top: 10px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+}
+
+.flashcard-feedback-container {
+  position: relative;
+}
+
+.feedback-trigger-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #6b46c1 0%, #9f7aea 100%);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
+  position: relative;
+  animation: feedbackPulse 2s infinite;
+}
+
+.feedback-trigger-btn.submitted {
+  animation: none;
+  box-shadow: 0 2px 6px rgba(107, 70, 193, 0.2);
+  background: linear-gradient(135deg, #805ad5 0%, #b794f4 100%);
+}
+
+.feedback-trigger-btn:hover,
+.feedback-trigger-btn.active {
+  transform: scale(1.1) translateY(-2px);
+  box-shadow: 0 6px 16px rgba(107, 70, 193, 0.4);
+  animation: none;
+}
+
+.feedback-icon {
+  font-size: 20px;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
+}
+
+/* Notification Dot */
+.feedback-trigger-btn::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 12px;
+  background: #f56565;
+  border: 2px solid white;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.feedback-trigger-btn.submitted::after {
+  transform: scale(0);
+  opacity: 0;
+}
+
+@keyframes feedbackPulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(107, 70, 193, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(107, 70, 193, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(107, 70, 193, 0);
+  }
+}
+
+/* Feedback Popover */
+.feedback-popover {
+  position: fixed;
+  bottom: auto;
+  left: auto;
+  width: 220px;
+  background: rgba(255, 255, 255, 0.98);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 12px;
+  padding: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  z-index: 99999;
+  animation: popoverSlideIn 0.2s ease-out;
+}
+
+/* Ensure popover appears above modal content and doesn't get cut off */
+.flashcard-modal-content .feedback-popover {
+  z-index: 100000;
+}
+
+@keyframes popoverSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.feedback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  padding-bottom: 6px;
+}
+
+.feedback-header h4 {
+  margin: 0;
+  font-size: 13px;
+  color: #553c9a;
+  font-weight: 600;
+}
+
+.close-btn {
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #a0aec0;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.close-btn:hover {
+  color: #553c9a;
+}
+
+.feedback-content p {
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  color: #4a5568;
+  line-height: 1.4;
+}
+
+.emoji-rating {
+  display: flex;
+  justify-content: space-around;
+}
+
+.emoji-rating button {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  transition: transform 0.2s;
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.emoji-rating button:hover {
+  transform: scale(1.2);
+  background: rgba(107, 70, 193, 0.1);
+}
+
+.feedback-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.feedback-options button {
+  padding: 6px 10px;
+  background: rgba(249, 245, 253, 0.8);
+  border: 1px solid rgba(224, 214, 245, 0.8);
+  border-radius: 6px;
+  font-size: 11px;
+  color: #553c9a;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: left;
+}
+
+.feedback-options button:hover {
+  background: #f3e8ff;
+  border-color: #d6bcfa;
+}
+
+.feedback-step-thanks {
+  text-align: center;
+  padding: 10px 0;
+  color: #48bb78;
+  font-weight: 600;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .flashcard-nav-list {
+    gap: 4px;
+  }
+
+  .flashcard-nav-item {
+    height: 36px;
+    padding: 0 8px;
+  }
+
+  .flashcard-nav-number {
+    font-size: 12px;
+  }
+
+  .flashcard-nav-icon {
+    font-size: 14px;
+  }
+}
+
+/* ============================================
+   DARK MODE - PREMIUM
+   ============================================ */
+
+body.dark-mode .flashcard-navigation {
+  background: transparent;
+  box-shadow: none;
+}
+
+body.dark-mode .flashcard-nav-title {
+  color: #999;
+}
+
+body.dark-mode .flashcard-nav-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .flashcard-nav-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .flashcard-nav-item.active {
+  background: rgba(124, 58, 237, 0.15);
+  border-color: rgba(124, 58, 237, 0.4);
+  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.3);
+}
+
+body.dark-mode .flashcard-nav-number {
+  color: #e5e5e5;
+}
+
+body.dark-mode .flashcard-nav-status-new {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .flashcard-nav-status-new::before {
+  background: rgba(203, 213, 224, 0.3);
+}
+
+body.dark-mode .flashcard-nav-status-learning {
+  background: rgba(246, 173, 85, 0.08);
+  border-color: rgba(246, 173, 85, 0.25);
+}
+
+body.dark-mode .flashcard-nav-status-learning::before {
+  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
+}
+
+body.dark-mode .flashcard-nav-status-mastered {
+  background: rgba(104, 211, 145, 0.08);
+  border-color: rgba(104, 211, 145, 0.25);
+}
+
+body.dark-mode .flashcard-nav-status-mastered::before {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+}
+
+body.dark-mode .flashcard-nav-status-know {
+  background: rgba(104, 211, 145, 0.08);
+  border-color: rgba(104, 211, 145, 0.25);
+}
+
+body.dark-mode .flashcard-nav-status-know::before {
+  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
+}
+
+body.dark-mode .flashcard-nav-status-again {
+  background: rgba(252, 129, 129, 0.08);
+  border-color: rgba(252, 129, 129, 0.25);
+}
+
+body.dark-mode .flashcard-nav-status-again::before {
+  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
+}
+
+body.dark-mode .flashcard-nav-legend {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .flashcard-legend-title {
+  color: #999;
+}
+
+body.dark-mode .flashcard-legend-item {
+  color: #ccc;
+}
+
+body.dark-mode .flashcard-legend-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .flashcard-legend-text {
+  color: #ccc;
+}
+
+body.dark-mode .flashcard-nav-footer {
+  border-top-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .feedback-popover {
+  background: rgba(30, 33, 40, 0.98);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .feedback-popover h4 {
+  color: #ddd6fe;
+}
+
+body.dark-mode .feedback-content p {
+  color: #e5e7eb;
+  font-weight: 450;
+}
+
+body.dark-mode .feedback-header {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .close-btn {
+  color: #9ca3af;
+}
+
+body.dark-mode .close-btn:hover {
+  color: #ddd6fe;
+}
+
+body.dark-mode .feedback-options button {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #ddd6fe;
+  font-weight: 500;
+}
+
+body.dark-mode .feedback-options button:hover {
+  background: rgba(139, 92, 246, 0.25);
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+/* ============================================
+   DEV MODE: FEEDBACK DISPLAY
+   ============================================ */
+
+.flashcard-feedback-dev-display {
+  margin-top: 12px;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  font-size: 12px;
+}
+
+.dev-feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: rgba(249, 115, 22, 0.15);
+  border-bottom: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.dev-badge {
+  background: #f97316;
+  color: white;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.dev-feedback-title {
+  font-size: 11px;
+  font-weight: 600;
+  color: #ea580c;
+}
+
+.dev-feedback-content {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dev-feedback-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dev-feedback-label {
+  font-weight: 600;
+  color: #9a3412;
+  min-width: 50px;
+}
+
+.dev-feedback-value {
+  color: #ea580c;
+  font-weight: 500;
+}
+
+/* Dark Mode */
+body.dark-mode .flashcard-feedback-dev-display {
+  background: rgba(251, 146, 60, 0.1);
+  border-color: rgba(251, 146, 60, 0.4);
+}
+
+body.dark-mode .dev-feedback-header {
+  background: rgba(251, 146, 60, 0.2);
+  border-bottom-color: rgba(251, 146, 60, 0.3);
+}
+
+body.dark-mode .dev-feedback-title {
+  color: #fb923c;
+}
+
+body.dark-mode .dev-feedback-label {
+  color: #fdba74;
+}
+
+body.dark-mode .dev-feedback-value {
+  color: #fb923c;
+}

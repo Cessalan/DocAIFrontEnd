@@ -1,0 +1,713 @@
+/**
+ * ============================================
+ * UnfoldingCaseStudy.css
+ * ============================================
+ *
+ * Styles for the NCLEX NGN-style Unfolding Case Study component.
+ *
+ * LAYOUT STRUCTURE:
+ * -----------------
+ * .unfolding-case-container
+ *   ├── .unfolding-header (title + item counter)
+ *   ├── .unfolding-patient-bar (patient info)
+ *   ├── .unfolding-progress-note (optional note)
+ *   ├── .unfolding-main-content (flex container)
+ *   │   ├── .unfolding-left-column (tabs + clinical data)
+ *   │   └── .unfolding-right-column (question + options)
+ *   └── .unfolding-footer (navigation + progress)
+ *
+ * COLOR SCHEME:
+ * -------------
+ * - Primary: #4A90A4 (teal/nursing blue)
+ * - Secondary: #6B8E23 (olive green for correct)
+ * - Error: #CD5C5C (coral red for incorrect)
+ * - Background: Glassmorphic dark with transparency
+ */
+
+/* ============================================
+   MAIN CONTAINER
+   ============================================ */
+
+.unfolding-case-container {
+  /* Glassmorphic styling matching the app theme */
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+
+  /* Layout */
+  width: 100%;
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 20px;
+
+  /* Typography */
+  font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+  color: #e0e0e0;
+
+  /* Smooth transitions */
+  transition: all 0.3s ease;
+}
+
+/* Modal mode: Larger and more prominent */
+.unfolding-case-container.in-modal {
+  max-width: 1100px;
+  min-width: 900px;
+  padding: 28px;
+}
+
+/* ============================================
+   HEADER: Title and Item Counter
+   ============================================ */
+
+.unfolding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.unfolding-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.title-icon {
+  font-size: 1.5rem;
+}
+
+.title-text {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.unfolding-item-counter {
+  background: linear-gradient(135deg, #4A90A4, #357a8a);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+/* ============================================
+   PATIENT INFO BAR
+   ============================================ */
+
+.unfolding-patient-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+
+  background: rgba(74, 144, 164, 0.15);
+  border: 1px solid rgba(74, 144, 164, 0.3);
+  border-radius: 10px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.patient-info,
+.patient-setting {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.patient-icon,
+.setting-icon {
+  font-size: 1.1rem;
+}
+
+.patient-text {
+  font-size: 1rem;
+  color: #e0e0e0;
+}
+
+.setting-text {
+  font-size: 0.9rem;
+  color: #a0c4cc;
+  font-style: italic;
+}
+
+/* ============================================
+   PROGRESS NOTE
+   ============================================ */
+
+.unfolding-progress-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+
+  background: rgba(255, 193, 7, 0.1);
+  border-left: 3px solid #ffc107;
+  border-radius: 0 8px 8px 0;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+}
+
+.note-icon {
+  font-size: 1rem;
+}
+
+.note-text {
+  font-size: 0.95rem;
+  color: #e0d4b0;
+  line-height: 1.5;
+}
+
+/* ============================================
+   MAIN CONTENT: Two-Column Layout
+   ============================================ */
+
+.unfolding-main-content {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 20px;
+
+  /* Ensure columns don't shrink below minimum */
+  min-height: 350px;
+}
+
+/* Left Column: Clinical Data */
+.unfolding-left-column {
+  flex: 0 0 45%;
+  max-width: 45%;
+
+  display: flex;
+  flex-direction: column;
+
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* Right Column: Question */
+.unfolding-right-column {
+  flex: 0 0 55%;
+  max-width: 55%;
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* ============================================
+   TABS (Left Column)
+   ============================================ */
+
+.unfolding-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.unfolding-tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+
+  color: #a0a0a0;
+  font-size: 0.85rem;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.unfolding-tab:hover {
+  background: rgba(74, 144, 164, 0.2);
+  border-color: rgba(74, 144, 164, 0.4);
+  color: #c0c0c0;
+}
+
+.unfolding-tab.active {
+  background: linear-gradient(135deg, #4A90A4, #357a8a);
+  border-color: #4A90A4;
+  color: white;
+}
+
+.tab-icon {
+  font-size: 0.9rem;
+}
+
+.tab-label {
+  font-weight: 500;
+}
+
+/* ============================================
+   TAB CONTENT (Left Column)
+   ============================================ */
+
+.unfolding-tab-content {
+  flex: 1;
+  padding: 16px;
+  overflow-y: auto;
+
+  /* Ensure consistent height */
+  min-height: 250px;
+  max-height: 400px;
+}
+
+.unfolding-tab-empty {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 20px;
+}
+
+.unfolding-text-content p {
+  margin: 0 0 12px 0;
+  line-height: 1.6;
+  color: #d0d0d0;
+}
+
+/* Vital Signs formatting */
+.unfolding-vitals {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.vital-item {
+  display: flex;
+  align-items: center;
+
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 10px 14px;
+
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  color: #a0d4a0;
+}
+
+/* Lab Results formatting */
+.unfolding-labs {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lab-item {
+  display: flex;
+  align-items: center;
+
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 3px solid #6B8E23;
+  padding: 8px 12px;
+
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  color: #c0c0c0;
+}
+
+/* ============================================
+   QUESTION TYPE BADGE
+   ============================================ */
+
+.unfolding-question-type {
+  margin-bottom: 8px;
+}
+
+.type-badge {
+  display: inline-block;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.type-badge.sata {
+  background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+  color: white;
+}
+
+.type-badge.mcq {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+}
+
+/* ============================================
+   QUESTION TEXT
+   ============================================ */
+
+.unfolding-question-text {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #ffffff;
+  padding: 16px;
+
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  border-left: 4px solid #4A90A4;
+}
+
+/* ============================================
+   OPTIONS
+   ============================================ */
+
+.unfolding-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.unfolding-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+
+  color: #d0d0d0;
+  font-size: 0.95rem;
+  text-align: left;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.unfolding-option:hover:not(:disabled) {
+  background: rgba(74, 144, 164, 0.15);
+  border-color: rgba(74, 144, 164, 0.4);
+  transform: translateX(4px);
+}
+
+.unfolding-option.selected {
+  background: rgba(74, 144, 164, 0.25);
+  border-color: #4A90A4;
+  color: #ffffff;
+}
+
+.unfolding-option:disabled {
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+
+/* Option indicators (radio/checkbox) */
+.option-indicator {
+  flex-shrink: 0;
+  font-size: 1.2rem;
+}
+
+.checkbox,
+.radio {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.2);
+  color: transparent;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.checkbox {
+  border-radius: 4px;
+}
+
+.radio {
+  border-radius: 50%;
+}
+
+.checkbox.checked,
+.radio.checked {
+  background: #4A90A4;
+  border-color: #4A90A4;
+  color: white;
+}
+
+.option-text {
+  flex: 1;
+  line-height: 1.5;
+}
+
+/* Result states */
+.unfolding-option.correct {
+  background: rgba(107, 142, 35, 0.3);
+  border-color: #6B8E23;
+}
+
+.unfolding-option.correct .checkbox,
+.unfolding-option.correct .radio {
+  background: #6B8E23;
+  border-color: #6B8E23;
+  color: white;
+}
+
+.unfolding-option.correct-missed {
+  background: rgba(107, 142, 35, 0.15);
+  border-color: rgba(107, 142, 35, 0.5);
+  border-style: dashed;
+}
+
+.unfolding-option.incorrect {
+  background: rgba(205, 92, 92, 0.3);
+  border-color: #CD5C5C;
+}
+
+.unfolding-option.incorrect .checkbox,
+.unfolding-option.incorrect .radio {
+  background: #CD5C5C;
+  border-color: #CD5C5C;
+  color: white;
+}
+
+/* ============================================
+   JUSTIFICATION
+   ============================================ */
+
+.unfolding-justification {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 16px;
+  margin-top: 12px;
+}
+
+.unfolding-justification h4 {
+  margin: 0 0 12px 0;
+  color: #4A90A4;
+  font-size: 1rem;
+}
+
+.justification-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #c0c0c0;
+}
+
+.justification-content strong {
+  color: #ffffff;
+}
+
+/* ============================================
+   FOOTER: Navigation and Progress
+   ============================================ */
+
+.unfolding-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Progress bar */
+.unfolding-progress {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4A90A4, #6B8E23);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  font-size: 0.85rem;
+  color: #a0a0a0;
+  white-space: nowrap;
+}
+
+/* Navigation buttons */
+.unfolding-navigation {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.nav-button {
+  padding: 10px 20px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+
+  color: #d0d0d0;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.nav-button:hover:not(:disabled) {
+  background: rgba(74, 144, 164, 0.2);
+  border-color: #4A90A4;
+  color: white;
+}
+
+.nav-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.nav-button.submit {
+  background: linear-gradient(135deg, #6B8E23, #556B2F);
+  border-color: #6B8E23;
+  color: white;
+}
+
+.nav-button.submit:hover {
+  background: linear-gradient(135deg, #7BA428, #6B8E23);
+}
+
+/* Item dots */
+.unfolding-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.dot {
+  width: 32px;
+  height: 32px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.2);
+
+  color: #888;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  transition: all 0.2s ease;
+}
+
+.dot:hover {
+  border-color: #4A90A4;
+  color: #c0c0c0;
+}
+
+.dot.current {
+  background: #4A90A4;
+  border-color: #4A90A4;
+  color: white;
+}
+
+.dot.answered {
+  border-color: #6B8E23;
+  color: #6B8E23;
+}
+
+.dot.answered.current {
+  background: #6B8E23;
+  border-color: #6B8E23;
+  color: white;
+}
+
+.dot.submitted {
+  background: rgba(107, 142, 35, 0.3);
+}
+
+/* ============================================
+   ERROR STATE
+   ============================================ */
+
+.unfolding-error {
+  text-align: center;
+  padding: 40px;
+  color: #CD5C5C;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 900px) {
+  .unfolding-case-container.in-modal {
+    min-width: auto;
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  .unfolding-main-content {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .unfolding-left-column,
+  .unfolding-right-column {
+    flex: 1 1 100%;
+    max-width: 100%;
+  }
+
+  .unfolding-left-column {
+    max-height: 300px;
+  }
+
+  .unfolding-tabs {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 600px) {
+  .unfolding-header {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .unfolding-patient-bar {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .unfolding-tab {
+    padding: 6px 10px;
+    font-size: 0.8rem;
+  }
+
+  .tab-label {
+    display: none;
+  }
+
+  .unfolding-navigation {
+    flex-wrap: wrap;
+  }
+
+  .nav-button {
+    flex: 1;
+    min-width: 100px;
+  }
+}
