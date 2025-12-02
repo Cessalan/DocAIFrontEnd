@@ -1,13 +1,17 @@
 import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useProgress } from '../../Contexts/ProgressContext/ProgressContext';
 import SerumTube from '../QuizRoom/SerumTube';
+import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './ProgressDashboard.css';
 
 /**
- * ProgressDashboard - Full detailed view matching the design mockup
- * Two main cards: Your Progress + Serum Progress
+ * ProgressDashboard - Topic Performance focused view
+ * Main focus: Topic Performance tracking
+ * Secondary: Gamification stats (XP, Streak, Serum)
  */
 const ProgressDashboard = () => {
+  const { t } = useTranslation();
   const {
     currentLevel,
     totalXP,
@@ -23,9 +27,7 @@ const ProgressDashboard = () => {
   } = useProgress();
 
   // Calculate stats
-  const weeklyQuizzes = useMemo(() => {
-    // For now, we'll show total questions answered as a proxy
-    // You can enhance this later with actual weekly tracking
+  const totalQuestions = useMemo(() => {
     const total = Object.values(topicStats || {}).reduce((sum, stat) => sum + (stat.total || 0), 0);
     return total;
   }, [topicStats]);
@@ -34,9 +36,9 @@ const ProgressDashboard = () => {
     const stats = Object.values(topicStats || {});
     if (stats.length === 0) return 0;
     const totalCorrect = stats.reduce((sum, stat) => sum + (stat.correct || 0), 0);
-    const totalQuestions = stats.reduce((sum, stat) => sum + (stat.total || 0), 0);
-    if (totalQuestions === 0) return 0;
-    return Math.round((totalCorrect / totalQuestions) * 100);
+    const totalQs = stats.reduce((sum, stat) => sum + (stat.total || 0), 0);
+    if (totalQs === 0) return 0;
+    return Math.round((totalCorrect / totalQs) * 100);
   }, [topicStats]);
 
   // Calculate how many more correct answers needed to fill serum
@@ -70,10 +72,20 @@ const ProgressDashboard = () => {
 
   // Get emoji based on performance
   const getPerformanceEmoji = (percentage) => {
+    if (percentage >= 90) return '🏆';
     if (percentage >= 80) return '🌟';
-    if (percentage >= 60) return '👍';
+    if (percentage >= 60) return '✨';
     if (percentage >= 40) return '📈';
     return '💪';
+  };
+
+  // Get motivational message
+  const getMotivationalMessage = () => {
+    if (overallAccuracy >= 80) return `${t('progress.crushingIt')} 🎯`;
+    if (overallAccuracy >= 60) return `${t('progress.greatProgress')} 🚀`;
+    if (overallAccuracy >= 40) return `${t('progress.improving')} 📈`;
+    if (totalQuestions > 0) return `${t('progress.everyQuestion')} 💪`;
+    return `${t('progress.startJourney')} 🎯`;
   };
 
   if (!dashboardOpen) return null;
@@ -82,109 +94,29 @@ const ProgressDashboard = () => {
     <div className="progress-dashboard-overlay" onClick={closeDashboard}>
       <div className="progress-dashboard-modal" onClick={(e) => e.stopPropagation()}>
 
-        {/* Your Progress Card */}
-        <div className="progress-card main-progress-card">
-          <div className="card-header">
-            <div className="card-title">
-              <span className="card-icon">⭐</span>
-              <span>Your Progress</span>
-            </div>
-            <div className="level-badge-large">
-              Level {currentLevel}
-            </div>
-          </div>
-
-          {/* XP Progress Bar */}
-          <div className="xp-progress-container">
-            <div className="xp-bar-large">
-              <div
-                className="xp-bar-fill-large"
-                style={{ width: `${xpPercentage}%` }}
-              ></div>
-            </div>
-            <div className="xp-labels">
-              <span className="xp-current">{totalXP} XP</span>
-              <span className="xp-target">/ {xpForNextLevel || totalXP} XP</span>
-            </div>
-          </div>
-
-          {/* Stats Row */}
-          <div className="stats-row">
-            <div className="stat-item">
-              <div className="stat-icon-wrapper fire">
-                <span className="stat-icon">🔥</span>
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{currentStreak}</span>
-                <span className="stat-label">day streak</span>
-              </div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-icon-wrapper books">
-                <span className="stat-icon">📚</span>
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{weeklyQuizzes}</span>
-                <span className="stat-label">questions</span>
-              </div>
-            </div>
-            <div className="stat-item">
-              <div className="stat-icon-wrapper target">
-                <span className="stat-icon">🎯</span>
-              </div>
-              <div className="stat-info">
-                <span className="stat-value">{overallAccuracy}%</span>
-                <span className="stat-label">accuracy</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Serum Progress Card */}
-        <div className="progress-card serum-progress-card">
-          <div className="card-header centered">
-            <div className="card-title">
-              <span className="card-icon">🧪</span>
-              <span>Serum Progress</span>
-            </div>
-          </div>
-
-          {/* Serum Vial Visual */}
-          <div className="serum-vial-container">
-            <SerumTube
-              correctCount={dailyCorrectAnswers}
-              totalQuestions={dailySerumGoal}
-              size={140}
-            />
-          </div>
-
-          {/* Serum Status Text */}
-          <div className="serum-status">
-            {isSerumComplete ? (
-              <span className="serum-complete-text">
-                ✨ Serum delivered to Room 217!
-              </span>
-            ) : (
-              <span className="serum-progress-text">
-                Vial {Math.round(serumPercentage)}% filled – {serumRemaining} more correct {serumRemaining === 1 ? 'answer' : 'answers'} to deliver to Room 217
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Topic Performance Card */}
+        {/* Topic Performance Card - MAIN FOCUS */}
         <div className="progress-card topics-card">
           <div className="card-header">
             <div className="card-title">
-              <span className="card-icon">📊</span>
-              <span>Topic Performance</span>
+              <div className="card-mascot-wrapper">
+                <NurseQuizMascot size={56} isExcited={overallAccuracy >= 60} />
+              </div>
+              <div className="title-content">
+                <span>{t('progress.topicPerformance')}</span>
+                <span className="title-subtitle">{getMotivationalMessage()}</span>
+              </div>
+            </div>
+            <div className="overall-accuracy">
+              <span className="accuracy-value">{overallAccuracy}%</span>
+              <span className="accuracy-label">{t('progress.overallAccuracy')}</span>
             </div>
           </div>
 
           {sortedTopics.length === 0 ? (
             <div className="topics-empty">
               <div className="empty-icon">🎯</div>
-              <p>Complete quizzes to track your topic performance!</p>
+              <p>{t('progress.emptyTitle')}</p>
+              <span className="empty-hint">{t('progress.emptyHint')}</span>
             </div>
           ) : (
             <div className="topics-list">
@@ -195,7 +127,7 @@ const ProgressDashboard = () => {
                   <div
                     key={topic.name}
                     className="topic-item"
-                    style={{ animationDelay: `${index * 0.1}s` }}
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <div className="topic-header">
                       <span className="topic-name">{topic.name}</span>
@@ -225,6 +157,51 @@ const ProgressDashboard = () => {
               })}
             </div>
           )}
+        </div>
+
+        {/* Gamification Stats - Compact sidebar */}
+        <div className="gamification-sidebar">
+          {/* Level & XP */}
+          <div className="progress-card compact-card level-card">
+            <div className="compact-header">
+              <span className="compact-icon">⭐</span>
+              <span className="compact-title">{t('progress.level')} {currentLevel}</span>
+            </div>
+            <div className="xp-mini-bar">
+              <div className="xp-mini-fill" style={{ width: `${xpPercentage}%` }}></div>
+            </div>
+            <span className="xp-mini-text">{totalXP} / {xpForNextLevel || totalXP} {t('progress.xp')}</span>
+          </div>
+
+          {/* Streak */}
+          <div className="progress-card compact-card streak-card">
+            <div className="compact-header">
+              <span className="compact-icon">🔥</span>
+              <span className="compact-title">{currentStreak} {currentStreak === 1 ? t('progress.dayStreak') : t('progress.daysStreak')}</span>
+            </div>
+            <span className="compact-subtitle">{totalQuestions} {t('progress.questionsAnswered')}</span>
+          </div>
+
+          {/* Serum */}
+          <div className="progress-card compact-card serum-card">
+            <div className="compact-header">
+              <span className="compact-icon">🧪</span>
+              <span className="compact-title">{t('progress.dailySerum')}</span>
+            </div>
+            <div className="serum-mini-container">
+              <SerumTube
+                correctCount={dailyCorrectAnswers}
+                totalQuestions={dailySerumGoal}
+                size={100}
+              />
+            </div>
+            <span className="compact-subtitle">
+              {isSerumComplete
+                ? `✨ ${t('progress.delivered')}`
+                : `${serumRemaining} ${t('progress.moreToGo')}`
+              }
+            </span>
+          </div>
         </div>
 
         {/* Close button */}

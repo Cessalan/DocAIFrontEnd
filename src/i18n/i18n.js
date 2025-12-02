@@ -388,6 +388,32 @@ const resources = {
         feedback0: "Review the material and try again."
       },
 
+      // Progress Dashboard & Widget
+      progress: {
+        topicPerformance: "Topic Performance",
+        overallAccuracy: "overall accuracy",
+        level: "Level",
+        dayStreak: "day streak",
+        daysStreak: "days streak",
+        questionsAnswered: "questions answered",
+        dailySerum: "Daily Serum",
+        moreToGo: "more to go",
+        delivered: "Delivered!",
+        xp: "XP",
+        lvl: "Lvl",
+        day: "day",
+        days: "days",
+        // Motivational messages
+        crushingIt: "You're crushing it!",
+        greatProgress: "Great progress! Keep going!",
+        improving: "You're improving!",
+        everyQuestion: "Every question makes you stronger!",
+        startJourney: "Start your learning journey!",
+        // Empty state
+        emptyTitle: "Complete quizzes to track your topic performance!",
+        emptyHint: "Your progress will appear here"
+      },
+
       // Quiz Sharing
       quizShare: {
         buttonText: "Share Quiz",
@@ -799,6 +825,32 @@ const resources = {
         feedback60: "Bon effort! Revois les options manquées.",
         feedback40: "Continue à pratiquer! Concentre-toi sur les explications.",
         feedback0: "Revois la matière et réessaie."
+      },
+
+      // Progress Dashboard & Widget
+      progress: {
+        topicPerformance: "Performance par sujet",
+        overallAccuracy: "précision globale",
+        level: "Niveau",
+        dayStreak: "jour de série",
+        daysStreak: "jours de série",
+        questionsAnswered: "questions répondues",
+        dailySerum: "Sérum quotidien",
+        moreToGo: "encore à faire",
+        delivered: "Livré!",
+        xp: "XP",
+        lvl: "Niv",
+        day: "jour",
+        days: "jours",
+        // Messages de motivation
+        crushingIt: "Tu déchires tout!",
+        greatProgress: "Super progrès! Continue!",
+        improving: "Tu t'améliores!",
+        everyQuestion: "Chaque question te rend plus fort!",
+        startJourney: "Commence ton parcours d'apprentissage!",
+        // État vide
+        emptyTitle: "Complète des quiz pour suivre ta performance par sujet!",
+        emptyHint: "Ta progression apparaîtra ici"
       },
 
       // Quiz Sharing

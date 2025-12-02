@@ -2282,13 +2282,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
+      <ProgressDashboard />
+
       <div
         className={`chat-container ${activeStudySheet ? 'has-study-sheet' : ''}`}
       >
-        {/* Progress Widget - Always visible at top */}
-        <CompactProgressWidget />
-        <ProgressDashboard />
-
         {/* Nursing Background Icons */}
         <div className="nursing-icon">💊</div>
         <div className="nursing-icon">🩺</div>
@@ -2308,7 +2306,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           <h2 className="chat-header-title" onClick={() => setIsFilesModalVisible(true)}>
             {currentChatTitle}
           </h2>
+
+          {/* Progress Widget - Under title */}
+          <CompactProgressWidget />
         </div>
+
         {/* 🎯 STICKY QUIZ PROGRESS BAR - ADD THIS */}
         {activeQuizProgress && activeQuizProgress.isVisible && (
           <StickyQuizProgress
@@ -2325,13 +2327,15 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
 
         {/* Empty State */}
-        {!hasMessages && (
-          <div className="empty-chat-upload" onClick={openFileUploadDialog}>
-            <SvgFileUpload />
-            <p className="empty-upload-text">{t('chat.uploadFile')}</p>
-            <button className="empty-upload-btn">{t('chat.uploadDocument')} ☁️⬆️</button>
-          </div>
-        )}
+        {
+          !hasMessages && (
+            <div className="empty-chat-upload" onClick={openFileUploadDialog}>
+              <SvgFileUpload />
+              <p className="empty-upload-text">{t('chat.uploadFile')}</p>
+              <button className="empty-upload-btn">{t('chat.uploadDocument')} ☁️⬆️</button>
+            </div>
+          )
+        }
 
         {/* Messages */}
         <div
