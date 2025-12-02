@@ -1,0 +1,630 @@
+/* ============================================
+   PROGRESS DASHBOARD - Premium Card Design
+   ============================================ */
+
+.progress-dashboard-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  z-index: 1000;
+  animation: overlay-fade-in 0.2s ease;
+}
+
+@keyframes overlay-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.progress-dashboard-modal {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: auto auto;
+  gap: 16px;
+  width: 100%;
+  max-width: 750px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  animation: modal-slide-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  padding: 20px;
+  background: transparent;
+}
+
+/* Grid assignments for cards */
+.main-progress-card {
+  grid-column: 1 / -1; /* Span full width */
+}
+
+.serum-progress-card {
+  grid-column: 1 / 2;
+}
+
+.topics-card {
+  grid-column: 2 / 3;
+}
+
+.progress-dashboard-modal::-webkit-scrollbar {
+  width: 6px;
+}
+
+.progress-dashboard-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.progress-dashboard-modal::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+}
+
+.progress-dashboard-modal::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+@keyframes modal-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Close Button */
+.dashboard-close-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: rgba(30, 30, 46, 0.9);
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a0a0b0;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 10;
+  backdrop-filter: blur(4px);
+}
+
+.dashboard-close-btn:hover {
+  background: #2a2a3e;
+  color: white;
+  transform: scale(1.1);
+}
+
+.dashboard-close-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Progress Cards */
+.progress-card {
+  background: linear-gradient(145deg, #1a1a2e 0%, #16162a 100%);
+  border-radius: 20px;
+  padding: 24px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+/* Card Header */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.card-header.centered {
+  justify-content: center;
+}
+
+.card-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.card-icon {
+  font-size: 22px;
+}
+
+/* Level Badge */
+.level-badge-large {
+  padding: 8px 16px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  box-shadow:
+    0 2px 12px rgba(139, 92, 246, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+/* XP Progress Section */
+.xp-progress-container {
+  margin-bottom: 24px;
+}
+
+.xp-bar-large {
+  height: 12px;
+  background: rgba(139, 92, 246, 0.2);
+  border-radius: 6px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.xp-bar-fill-large {
+  height: 100%;
+  background: linear-gradient(90deg, #8b5cf6 0%, #a855f7 50%, #c084fc 100%);
+  border-radius: 6px;
+  transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  position: relative;
+  box-shadow: 0 0 12px rgba(139, 92, 246, 0.5);
+}
+
+.xp-bar-fill-large::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent);
+  border-radius: 6px 6px 0 0;
+}
+
+.xp-labels {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  font-size: 14px;
+}
+
+.xp-current {
+  color: #c4b5fd;
+  font-weight: 600;
+}
+
+.xp-target {
+  color: #6b6b80;
+}
+
+/* Stats Row */
+.stats-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.stat-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.stat-icon-wrapper {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stat-icon-wrapper.fire {
+  background: linear-gradient(135deg, rgba(251, 146, 60, 0.2) 0%, rgba(239, 68, 68, 0.15) 100%);
+}
+
+.stat-icon-wrapper.books {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
+}
+
+.stat-icon-wrapper.target {
+  background: linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(16, 185, 129, 0.15) 100%);
+}
+
+.stat-icon {
+  font-size: 22px;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.stat-value {
+  font-size: 20px;
+  font-weight: 700;
+  color: #ffffff !important;
+  background: none !important;
+  -webkit-background-clip: unset !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background-clip: unset !important;
+  line-height: 1;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Serum Progress Card */
+.serum-progress-card {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.serum-progress-card .card-header {
+  margin-bottom: 8px;
+}
+
+.serum-vial-container {
+  display: flex;
+  justify-content: center;
+  padding: 0;
+}
+
+/* Hide the score display from SerumTube since we show our own status text */
+.serum-vial-container .serum-tube-score {
+  display: none;
+}
+
+/* Hide the tooltip in the dashboard context */
+.serum-vial-container .serum-tube-tooltip {
+  display: none;
+}
+
+/* Serum Status Text */
+.serum-status {
+  text-align: center;
+  padding: 0 16px;
+}
+
+.serum-progress-text {
+  font-size: 14px;
+  color: #a0a0b0;
+  line-height: 1.5;
+}
+
+.serum-complete-text {
+  font-size: 15px;
+  color: #4ade80;
+  font-weight: 600;
+}
+
+/* ============================================
+   TOPIC PERFORMANCE CARD
+   ============================================ */
+
+.topics-card {
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 250px;
+}
+
+.topics-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  text-align: center;
+}
+
+.topics-empty .empty-icon {
+  font-size: 40px;
+  margin-bottom: 12px;
+  animation: pulse-icon 2s ease-in-out infinite;
+}
+
+@keyframes pulse-icon {
+  0%, 100% { transform: scale(1); opacity: 0.8; }
+  50% { transform: scale(1.1); opacity: 1; }
+}
+
+.topics-empty p {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0;
+}
+
+.topics-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 4px;
+}
+
+.topics-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.topics-list::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+}
+
+.topics-list::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 2px;
+}
+
+.topics-list::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
+}
+
+.topic-item {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 14px;
+  padding: 14px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  animation: topic-slide-in 0.4s ease-out backwards;
+  transition: all 0.2s ease;
+}
+
+.topic-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.1);
+  transform: translateX(4px);
+}
+
+@keyframes topic-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.topic-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.topic-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #ffffff;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 12px;
+}
+
+.topic-score {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.topic-emoji {
+  font-size: 16px;
+}
+
+.topic-percentage {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.topic-bar-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.topic-bar {
+  flex: 1;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+
+.topic-bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  position: relative;
+  transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.3);
+}
+
+.topic-bar-shine {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), transparent);
+  border-radius: 4px 4px 0 0;
+}
+
+.topic-bar-fill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  0% { left: -100%; }
+  100% { left: 100%; }
+}
+
+.topic-stats {
+  font-size: 12px;
+  color: #6b7280;
+  font-weight: 500;
+  min-width: 40px;
+  text-align: right;
+}
+
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
+
+@media (max-width: 700px) {
+  .progress-dashboard-modal {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+    padding: 16px;
+  }
+
+  .main-progress-card,
+  .serum-progress-card,
+  .topics-card {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-dashboard-modal {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .progress-card {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .card-title {
+    font-size: 16px;
+  }
+
+  .level-badge-large {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+
+  .stats-row {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .stat-item {
+    padding: 12px 16px;
+  }
+
+  .stat-icon-wrapper {
+    width: 40px;
+    height: 40px;
+  }
+
+  .stat-value {
+    font-size: 18px;
+  }
+
+  .stat-label {
+    font-size: 11px;
+  }
+
+  .vial-body {
+    width: 36px;
+    height: 70px;
+  }
+
+  .vial-cap {
+    width: 24px;
+    height: 10px;
+  }
+
+  .serum-progress-text {
+    font-size: 13px;
+  }
+
+  .topics-card {
+    min-height: auto;
+  }
+}
+
+/* Light mode support (optional) */
+body:not(.dark-mode) .progress-card {
+  background: linear-gradient(145deg, #ffffff 0%, #f8f9fc 100%);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+body:not(.dark-mode) .card-title {
+  color: #1a1a2e;
+}
+
+body:not(.dark-mode) .xp-current {
+  color: #7c3aed;
+}
+
+body:not(.dark-mode) .xp-target {
+  color: #9ca3af;
+}
+
+body:not(.dark-mode) .stat-label {
+  color: #9ca3af;
+}
+
+body:not(.dark-mode) .stat-value {
+  color: #1a1a2e;
+}
+
+body:not(.dark-mode) .serum-progress-text {
+  color: #6b7280;
+}
+
+body:not(.dark-mode) .dashboard-close-btn {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+body:not(.dark-mode) .dashboard-close-btn:hover {
+  background: #e5e7eb;
+  color: #1f2937;
+}

@@ -333,7 +333,8 @@ function SATAQuestion({
         score: result.score,
         maxScore: result.maxScore,
         percentage: result.percentage,
-        timestamp: new Date()
+        timestamp: new Date(),
+        topic: quiz.topic || null  // Include topic for progress tracking
       });
     }
   };

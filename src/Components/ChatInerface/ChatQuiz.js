@@ -190,7 +190,8 @@ function ChatQuiz(props) {
         correctOptionIndex: correctIdx,
         correctOptionText: quiz.answer,
         isCorrect: isAnswerCorrect,
-        timestamp: new Date()
+        timestamp: new Date(),
+        topic: quiz.topic || null  // Include topic for progress tracking
       });
     }
   }, [revealed, quiz, quizIndex, onAnswerSelect]);

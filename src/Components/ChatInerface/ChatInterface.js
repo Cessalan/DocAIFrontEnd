@@ -76,6 +76,11 @@ import StudySheetLivePreview from './StudySheetLivePreview.js';
 import StickyQuizProgress from './StickyQuizProgress';
 import SuggestedPrompts from './SuggestedPrompts';
 
+// Progress Tracking
+import CompactProgressWidget from '../Progress/CompactProgressWidget';
+import ProgressDashboard from '../Progress/ProgressDashboard';
+import { useProgress } from '../../Contexts/ProgressContext/ProgressContext';
+
 
 
 /**
@@ -83,6 +88,9 @@ import SuggestedPrompts from './SuggestedPrompts';
  * Features: Text messaging with AI, File uploads, Quiz/Summary/Scenario generation
  */
 const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMode = false }) => {
+
+  // Progress tracking context
+  const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
@@ -1224,6 +1232,16 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       }
       submittedAnswersRef.current.add(answerKey);
 
+      // ✅ Track progress: XP, serum, and topic stats
+      const quizTopic = answerData.topic || null;
+      if (answerData.isCorrect) {
+        console.log("  🎯 Recording correct answer for progress tracking");
+        addCorrectAnswer(quizTopic);
+      } else {
+        console.log("  📊 Recording incorrect answer for topic stats");
+        addIncorrectAnswer(quizTopic);
+      }
+
       // ✅ Find the message to check if it's still streaming
       const quizMessage = chatMessages.find(msg => msg.id === answerData.messageId);
       const isStreaming = quizMessage?.isStreaming;
@@ -2267,6 +2285,10 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       <div
         className={`chat-container ${activeStudySheet ? 'has-study-sheet' : ''}`}
       >
+        {/* Progress Widget - Always visible at top */}
+        <CompactProgressWidget />
+        <ProgressDashboard />
+
         {/* Nursing Background Icons */}
         <div className="nursing-icon">💊</div>
         <div className="nursing-icon">🩺</div>
