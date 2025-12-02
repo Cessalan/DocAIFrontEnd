@@ -206,13 +206,20 @@ function App() {
         <Route path="/admin/question-bank" element={<QuestionBankAdmin />} />
       )}
 
-      {/* Home / Landing Page - Public */}
-      <Route path="/" element={<QuizRoomLanding />} />
-      <Route path="/start" element={<QuizRoomLanding />} />
+      {/* Home - Redirect directly to chat */}
+      <Route
+        path="/"
+        element={
+          <ProtectedRoute>
+            <ChatLayout />
+          </ProtectedRoute>
+        }
+      />
 
-      {/* Dedicated Quiz Page - Public (can be accessed with quiz data) */}
-      <Route path="/quiz-room" element={<DedicatedQuizPage />} />
-      <Route path="/quiz/play" element={<DedicatedQuizPage />} />
+      {/* QuizRoom routes - hidden for now, can be re-enabled later */}
+      {/* <Route path="/start" element={<QuizRoomLanding />} /> */}
+      {/* <Route path="/quiz-room" element={<DedicatedQuizPage />} /> */}
+      {/* <Route path="/quiz/play" element={<DedicatedQuizPage />} /> */}
 
       {/* Protected Chat Layout - with chat ID in URL */}
       <Route

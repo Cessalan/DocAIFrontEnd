@@ -5,17 +5,14 @@ import { WS_BASE_URL } from './config';
 // ============================================================================
 // COST OPTIMIZATION: Connect-on-demand WebSocket pattern
 // - Opens connection only when sending a message
-// - Closes immediately after stream completes
+// - Server closes connection after stream completes
 // - No persistent connections = minimal Cloud Run billing
+// - NO auto-reconnect - each message opens fresh connection
 // ============================================================================
 
 class WebSocketManager {
   constructor() {
     this.connections = new Map(); // chat_id -> WebSocket
-    this.reconnectAttempts = new Map(); // chat_id -> number
-    this.maxReconnectAttempts = 2; // Reduced - don't waste resources on retries
-    this.reconnectDelay = 1000;
-    this.autoCloseOnComplete = true; // COST OPTIMIZATION: Close after stream ends
   }
 
   // Get or create WebSocket connection for a chat
@@ -25,6 +22,8 @@ class WebSocketManager {
       if (ws.readyState === WebSocket.OPEN) {
         return ws;
       }
+      // Clean up stale connection
+      this.connections.delete(chatId);
     }
 
     return this.createConnection(chatId);
@@ -37,7 +36,6 @@ class WebSocketManager {
       ws.onopen = () => {
         console.log(`✅ WebSocket connected for chat ${chatId}`);
         this.connections.set(chatId, ws);
-        this.reconnectAttempts.set(chatId, 0);
         resolve(ws);
       };
 
@@ -49,39 +47,10 @@ class WebSocketManager {
       ws.onclose = (event) => {
         console.log(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
         this.connections.delete(chatId);
-
-        // COST OPTIMIZATION: Don't auto-reconnect - connect on-demand only
-        // Only attempt reconnection during active streaming (code !== 1000)
-        // and only if we're in the middle of a request
-        if (event.code !== 1000 && event.code !== 1001) {
-          // Abnormal close during streaming - limited retry
-          this.attemptReconnection(chatId);
-        }
+        // COST OPTIMIZATION: No reconnection - server closes after each stream
+        // Next message will open a fresh connection
       };
     });
-  }
-
-  async attemptReconnection(chatId) {
-    const attempts = this.reconnectAttempts.get(chatId) || 0;
-
-    // COST OPTIMIZATION: Very limited retries
-    if (attempts < this.maxReconnectAttempts) {
-      const delay = this.reconnectDelay * Math.pow(2, attempts);
-
-      console.log(`🔄 Reconnection attempt ${attempts + 1}/${this.maxReconnectAttempts} for chat ${chatId} in ${delay}ms`);
-
-      setTimeout(async () => {
-        try {
-          this.reconnectAttempts.set(chatId, attempts + 1);
-          await this.createConnection(chatId);
-        } catch (error) {
-          console.error(`Failed reconnection attempt ${attempts + 1} for chat ${chatId}:`, error);
-        }
-      }, delay);
-    } else {
-      console.log(`⚡ Reconnection skipped for ${chatId} - will connect on next message`);
-      this.reconnectAttempts.delete(chatId);
-    }
   }
 
   // Send message through WebSocket
@@ -123,11 +92,6 @@ class WebSocketManager {
       ws.close(1000, 'Client closing connection');
       this.connections.delete(chatId);
     }
-  }
-
-  // Send keepalive ping
-  sendPing(chatId) {
-    this.sendMessage(chatId, { type: 'ping' });
   }
 
   // Cancel ongoing streaming
@@ -299,13 +263,8 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       if (onStreamEnd) {
         onStreamEnd();
       }
-      // COST OPTIMIZATION: Close connection after stream completes
-      if (chatId && wsManager.autoCloseOnComplete) {
-        console.log(`⚡ Stream complete - closing connection for ${chatId}`);
-        setTimeout(() => {
-          wsManager.closeConnection(chatId);
-        }, 100); // Small delay to ensure all data is processed
-      }
+      // Server closes connection after stream - no client action needed
+      console.log(`⚡ Stream complete for ${chatId} - server will close connection`);
       break;
 
     case 'error':
@@ -341,19 +300,9 @@ export const closeWebSocketConnection = (chatId) => {
   wsManager.closeConnection(chatId);
 };
 
-// Setup periodic keepalive (call this when app starts)
-// COST OPTIMIZATION: Disabled by default - keepalive wastes Cloud Run resources
-// The backend now has a 3-minute idle timeout. Only enable if you need longer sessions.
-// When enabled, use 120000ms (2 min) to stay under the 3-min server timeout
-export const setupWebSocketKeepalive = (chatId, intervalMs = 120000, enabled = false) => {
-  if (!enabled) {
-    console.log('⚡ WebSocket keepalive disabled for cost optimization');
-    return null;
-  }
-  return setInterval(() => {
-    wsManager.sendPing(chatId);
-  }, intervalMs);
-};
+// Keepalive disabled - server closes connection after each stream
+// No need for keepalive with connect-on-demand pattern
+export const setupWebSocketKeepalive = () => null;
 
 // Cancel ongoing stream
 export const cancelWebSocketStream = async (chatId) => {
