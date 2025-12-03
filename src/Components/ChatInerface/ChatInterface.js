@@ -107,6 +107,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const [currentChatID, setChatId] = useState(chatId);
   const [currentChatTitle, setChatTitle] = useState('');
   const [chatMessages, setChatMessages] = useState([]);
+  const [isGameChat, setIsGameChat] = useState(false);
+  const [gameState, setGameState] = useState(null);
   const [userInputText, setUserInputText] = useState('');
   const [uploadedFilesList, setUploadedFilesList] = useState([]);
 
@@ -489,12 +491,20 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       setIsAiTyping(false);              // Clear typing indicator
       setStreamingStatus(null);          // Clear streaming status
 
-      // Get chat title
+      // Get chat title and check if it's a game chat
       const chatDocRef = doc(db, "chats", chatId);
       getDoc(chatDocRef).then((docSnapshot) => {
         if (docSnapshot.exists()) {
           const chatData = docSnapshot.data();
           setChatTitle(chatData.title);
+          // Check if this is a game-type chat
+          const isGame = chatData.type === 'game';
+          console.log('🎮 Chat type check:', { chatId, type: chatData.type, isGame, gameState: chatData.gameState });
+          setIsGameChat(isGame);
+          setGameState(chatData.gameState || null);
+        } else {
+          setIsGameChat(false);
+          setGameState(null);
         }
       });
     }
@@ -2278,6 +2288,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   }, [currentChatID]);
 
   const hasMessages = chatMessages.length > 0;
+  console.log('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 
   return (
@@ -2328,11 +2339,36 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
         {/* Empty State */}
         {
-          !hasMessages && (
+          !hasMessages && !isGameChat && (
             <div className="empty-chat-upload" onClick={openFileUploadDialog}>
               <SvgFileUpload />
               <p className="empty-upload-text">{t('chat.uploadFile')}</p>
               <button className="empty-upload-btn">{t('chat.uploadDocument')} ☁️⬆️</button>
+            </div>
+          )
+        }
+
+        {/* Game Chat Empty State - Quiz data wasn't saved */}
+        {
+          !hasMessages && isGameChat && (
+            <div className="game-chat-empty-state">
+              <div className="game-empty-icon">🎮</div>
+              <h3 className="game-empty-title">Quiz Game Session</h3>
+              <p className="game-empty-description">
+                This was a quiz game played from the home page.
+                {gameState?.status === 'completed'
+                  ? ` The game was completed with ${gameState?.serumCollected || 0}mL serum collected.`
+                  : ' The quiz data from this session was not saved.'}
+              </p>
+              <p className="game-empty-hint">
+                Future games will automatically save quiz content here.
+              </p>
+              <button
+                className="game-replay-btn"
+                onClick={() => window.location.href = '/'}
+              >
+                🏠 Go to Home to Play Again
+              </button>
             </div>
           )
         }

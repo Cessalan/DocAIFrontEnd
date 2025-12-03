@@ -546,6 +546,83 @@ export const GetAllQuizFeedbacks = async () => {
 };
 
 /**
+ * Get ALL quizzes from all chats (DEV MODE ONLY)
+ * Unlike GetAllQuizFeedbacks, this returns ALL quizzes regardless of feedback
+ * @returns {Promise<Array>} - Array of quiz objects with full context
+ */
+export const GetAllQuizzes = async () => {
+  try {
+    console.log("📥 Fetching all quizzes...");
+
+    const chatsRef = collection(db, "chats");
+    const chatsSnapshot = await getDocs(chatsRef);
+
+    const allQuizzes = [];
+
+    // Iterate through each chat
+    for (const chatDoc of chatsSnapshot.docs) {
+      const chatId = chatDoc.id;
+      const chatData = chatDoc.data();
+
+      const messagesRef = collection(db, "chats", chatId, "messages");
+      const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
+      const messagesSnapshot = await getDocs(messagesQuery);
+
+      const messages = messagesSnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+
+      // Find ALL messages with quizData (regardless of feedback)
+      messages.forEach((messageData, index) => {
+        if (messageData.quizData && Array.isArray(messageData.quizData) && messageData.quizData.length > 0) {
+          // Get previous message for context (usually the user's request)
+          const previousMessage = index > 0 ? messages[index - 1] : null;
+
+          allQuizzes.push({
+            id: messageData.id,
+            chatId,
+            messageId: messageData.id,
+            userEmail: chatData.userEmail || 'Anonymous',
+            userId: chatData.userId || 'Unknown',
+            timestamp: messageData.timestamp,
+            // Quiz content
+            quizData: messageData.quizData,
+            totalQuestions: messageData.quizData.length,
+            // Has feedback?
+            hasFeedback: !!messageData.feedbackData,
+            feedbackData: messageData.feedbackData || null,
+            // User's answers if available
+            userAnswers: messageData.userAnswers || null,
+            // Context - what prompted this quiz
+            previousMessage: previousMessage ? {
+              content: previousMessage.content || previousMessage.text,
+              type: previousMessage.type,
+              sender: previousMessage.sender,
+              timestamp: previousMessage.timestamp
+            } : null
+          });
+        }
+      });
+    }
+
+    // Sort by timestamp descending (newest first)
+    allQuizzes.sort((a, b) => {
+      const timeA = a.timestamp?.toDate?.() || new Date(a.timestamp) || new Date(0);
+      const timeB = b.timestamp?.toDate?.() || new Date(b.timestamp) || new Date(0);
+      return timeB - timeA;
+    });
+
+    console.log(`✅ Fetched ${allQuizzes.length} total quizzes`);
+    return allQuizzes;
+
+  } catch (error) {
+    console.error("❌ Error fetching all quizzes:", error);
+    throw error;
+  }
+};
+
+/**
  * Get all flashcard feedbacks from all chats (DEV MODE ONLY)
  * @returns {Promise<Array>} - Array of flashcard feedback objects with full context
  */

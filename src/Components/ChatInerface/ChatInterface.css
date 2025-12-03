@@ -2501,3 +2501,116 @@ body.dark-mode .nursing-icon {
       box-shadow: 0 0 20px rgba(157, 126, 219, 0.15);
     }
   }
+
+/* ============================================
+   GAME CHAT EMPTY STATE
+   For game-type chats without saved quiz data
+   ============================================ */
+
+.game-chat-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  max-width: 420px;
+  margin: 0 auto;
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.game-empty-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  animation: bounceIn 0.6s ease-out;
+}
+
+@keyframes bounceIn {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.game-empty-title {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0 0 12px 0;
+}
+
+body.dark-mode .game-empty-title {
+  color: #e5e7eb;
+}
+
+.game-empty-description {
+  font-size: 14px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin: 0 0 8px 0;
+}
+
+body.dark-mode .game-empty-description {
+  color: #9ca3af;
+}
+
+.game-empty-hint {
+  font-size: 12px;
+  color: #9ca3af;
+  font-style: italic;
+  margin: 0 0 24px 0;
+}
+
+body.dark-mode .game-empty-hint {
+  color: #6b7280;
+}
+
+.game-replay-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--radius-pill);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 4px 12px rgba(173, 125, 195, 0.25);
+}
+
+.game-replay-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(173, 125, 195, 0.35);
+}
+
+.game-replay-btn:active {
+  transform: translateY(0);
+}
+
+body.dark-mode .game-replay-btn {
+  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+}
+
+body.dark-mode .game-replay-btn:hover {
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+}

@@ -587,7 +587,7 @@ const QuizRoomLanding = () => {
                 <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                 <path d="M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
               </svg>
-              <span>{t('landing.uploadNotesTitle', 'Upload your files')}</span>
+              <span>{t('landing.uploadNotesTitle', 'Upload a file, save a life')}</span>
             </button>
           </div>
 

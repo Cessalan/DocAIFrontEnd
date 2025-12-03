@@ -696,6 +696,21 @@ body.dark-mode .feedback-empty {
   font-weight: 600;
 }
 
+.quiz-rationale {
+  margin-top: 12px;
+  padding: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border-radius: 6px;
+  border-left: 3px solid #3b82f6;
+  font-size: 13px;
+  color: #1e40af;
+  line-height: 1.5;
+}
+
+.quiz-rationale strong {
+  color: #1d4ed8;
+}
+
 /* Flashcard Styles */
 .flashcard-list {
   display: flex;
@@ -799,6 +814,16 @@ body.dark-mode .quiz-option.correct-option {
   background: rgba(16, 185, 129, 0.15);
   border-color: #10b981;
   color: #6ee7b7;
+}
+
+body.dark-mode .quiz-rationale {
+  background: rgba(59, 130, 246, 0.12);
+  border-left-color: #60a5fa;
+  color: #93c5fd;
+}
+
+body.dark-mode .quiz-rationale strong {
+  color: #60a5fa;
 }
 
 body.dark-mode .flashcard-item {

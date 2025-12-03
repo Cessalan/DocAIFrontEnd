@@ -12,6 +12,10 @@ import './DedicatedQuizPage.css';
 // Auth imports
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 
+// Firebase imports for saving quiz results
+import { db } from '../../Firebase/config';
+import { doc, collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
+
 // WebSocket imports for game mode
 import {
   sendGameQuizRequest,
@@ -402,7 +406,52 @@ function DedicatedQuizPage() {
 
     // Send delivery request to server
     await sendGameDeliver(chatId, sessionSerum);
-  }, [isGameMode, chatId, correctCount]);
+
+    // ------------------------------------------
+    // Save quiz data to Firebase so it can be viewed in ChatInterface
+    // ------------------------------------------
+    try {
+      // Build quiz data with user's answers
+      const quizDataWithAnswers = streamedQuestions.map((question, idx) => ({
+        ...question,
+        userSelection: userAnswers[idx] !== undefined ? {
+          selectedOption: question.options[userAnswers[idx]],
+          isCorrect: question.options[userAnswers[idx]] === question.answer
+        } : null
+      }));
+
+      // Save as a message in the chat's messages collection
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      await addDoc(messagesRef, {
+        type: 'quiz',
+        sender: 'ai',
+        content: `Quiz completed - ${correctCount}/${streamedQuestions.length} correct`,
+        quizData: quizDataWithAnswers,
+        timestamp: serverTimestamp(),
+        isComplete: true,
+        gameMode: true,
+        results: {
+          correctCount,
+          totalQuestions: streamedQuestions.length,
+          serumEarned: sessionSerum,
+          accuracy: Math.round((correctCount / streamedQuestions.length) * 100)
+        }
+      });
+
+      // Update the chat document with final game state
+      const chatRef = doc(db, 'chats', chatId);
+      await updateDoc(chatRef, {
+        updatedAt: serverTimestamp(),
+        'gameState.status': 'completed',
+        'gameState.serumCollected': sessionSerum,
+        'gameState.completedAt': serverTimestamp()
+      });
+
+      console.log('✅ Quiz data saved to Firebase');
+    } catch (error) {
+      console.error('❌ Failed to save quiz data:', error);
+    }
+  }, [isGameMode, chatId, correctCount, streamedQuestions, userAnswers]);
 
   // ------------------------------------------
   // LOGIN PROMPT: Handle navigation to login/signup

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { GetAllFeedback, DeleteFeedback, UpdateFeedbackStatus } from '../../Services/FeedbackService';
-import { GetAllQuizFeedbacks, GetAllFlashcardFeedbacks } from '../../Services/FireBaseServiceChats';
+import { GetAllQuizFeedbacks, GetAllFlashcardFeedbacks, GetAllQuizzes } from '../../Services/FireBaseServiceChats';
 import './FeedbackViewer.css';
 
 const FeedbackViewer = ({ onClose }) => {
@@ -9,10 +9,11 @@ const FeedbackViewer = ({ onClose }) => {
   const [feedbacks, setFeedbacks] = useState([]);
   const [quizFeedbacks, setQuizFeedbacks] = useState([]);
   const [flashcardFeedbacks, setFlashcardFeedbacks] = useState([]);
+  const [allQuizzes, setAllQuizzes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all'); // all, new, reviewed, resolved
   const [typeFilter, setTypeFilter] = useState('all'); // all, general, bug, feature, other
-  const [viewMode, setViewMode] = useState('general'); // general, quizzes, flashcards
+  const [viewMode, setViewMode] = useState('allQuizzes'); // general, quizzes, flashcards, allQuizzes
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
@@ -22,14 +23,16 @@ const FeedbackViewer = ({ onClose }) => {
   const loadFeedbacks = async () => {
     try {
       setLoading(true);
-      const [generalData, quizData, flashcardData] = await Promise.all([
+      const [generalData, quizData, flashcardData, allQuizzesData] = await Promise.all([
         GetAllFeedback(),
         GetAllQuizFeedbacks(),
-        GetAllFlashcardFeedbacks()
+        GetAllFlashcardFeedbacks(),
+        GetAllQuizzes()
       ]);
       setFeedbacks(generalData);
       setQuizFeedbacks(quizData);
       setFlashcardFeedbacks(flashcardData);
+      setAllQuizzes(allQuizzesData);
     } catch (error) {
       console.error('Error loading feedbacks:', error);
     } finally {
@@ -109,6 +112,12 @@ const FeedbackViewer = ({ onClose }) => {
         {/* View Mode Tabs */}
         <div className="feedback-view-tabs">
           <button
+            className={`view-tab ${viewMode === 'allQuizzes' ? 'active' : ''}`}
+            onClick={() => setViewMode('allQuizzes')}
+          >
+            🎮 All Quizzes ({allQuizzes.length})
+          </button>
+          <button
             className={`view-tab ${viewMode === 'general' ? 'active' : ''}`}
             onClick={() => setViewMode('general')}
           >
@@ -118,7 +127,7 @@ const FeedbackViewer = ({ onClose }) => {
             className={`view-tab ${viewMode === 'quizzes' ? 'active' : ''}`}
             onClick={() => setViewMode('quizzes')}
           >
-            📝 Quizzes ({quizFeedbacks.length})
+            📝 Quiz Feedback ({quizFeedbacks.length})
           </button>
           <button
             className={`view-tab ${viewMode === 'flashcards' ? 'active' : ''}`}
@@ -174,6 +183,102 @@ const FeedbackViewer = ({ onClose }) => {
               <div className="spinner"></div>
               <p>Loading feedbacks...</p>
             </div>
+          ) : viewMode === 'allQuizzes' ? (
+            allQuizzes.length === 0 ? (
+              <div className="feedback-empty">
+                <p>📭 No quizzes found</p>
+              </div>
+            ) : (
+              allQuizzes.map((quiz) => (
+                <div
+                  key={`${quiz.chatId}-${quiz.id}`}
+                  className={`feedback-item quiz-feedback ${expandedId === quiz.id ? 'expanded' : ''}`}
+                >
+                  <div className="feedback-item-header" onClick={() => setExpandedId(expandedId === quiz.id ? null : quiz.id)}>
+                    <div className="feedback-item-left">
+                      <span className="feedback-type-emoji">🎮</span>
+                      <div className="feedback-item-info">
+                        <div className="feedback-item-title">
+                          <span className="feedback-user-email">{quiz.userEmail}</span>
+                          <span className="feedback-date">{formatDate(quiz.timestamp)}</span>
+                        </div>
+                        <div className="feedback-preview">
+                          {quiz.totalQuestions} questions {quiz.hasFeedback ? '• Has feedback' : '• No feedback'}
+                        </div>
+                      </div>
+                    </div>
+                    <span className="expand-icon">{expandedId === quiz.id ? '▼' : '▶'}</span>
+                  </div>
+
+                  {expandedId === quiz.id && (
+                    <div className="feedback-item-details">
+                      <div className="feedback-detail-grid">
+                        <div className="feedback-detail-item">
+                          <strong>User Email:</strong>
+                          <span>{quiz.userEmail}</span>
+                        </div>
+                        <div className="feedback-detail-item">
+                          <strong>Chat ID:</strong>
+                          <span>{quiz.chatId}</span>
+                        </div>
+                        <div className="feedback-detail-item">
+                          <strong>Total Questions:</strong>
+                          <span>{quiz.totalQuestions}</span>
+                        </div>
+                        <div className="feedback-detail-item">
+                          <strong>Has Feedback:</strong>
+                          <span>{quiz.hasFeedback ? '✅ Yes' : '❌ No'}</span>
+                        </div>
+                      </div>
+
+                      {quiz.previousMessage && (
+                        <div className="feedback-detail-section">
+                          <strong>User's Request:</strong>
+                          <p className="context-message">{quiz.previousMessage.content}</p>
+                        </div>
+                      )}
+
+                      {quiz.hasFeedback && quiz.feedbackData && (
+                        <div className="feedback-detail-section">
+                          <strong>User Feedback:</strong>
+                          <div className="feedback-rating-display">
+                            <span>Rating: {quiz.feedbackData.rating === 'bad' ? '☹️ Bad' : quiz.feedbackData.rating === 'neutral' ? '😐 Okay' : '😄 Good'}</span>
+                            <span>Detail: {quiz.feedbackData.detail}</span>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="feedback-detail-section">
+                        <strong>Quiz Questions:</strong>
+                        <div className="quiz-questions-list">
+                          {Array.isArray(quiz.quizData) && quiz.quizData.map((question, idx) => (
+                            <div key={idx} className="quiz-question-item">
+                              <div className="quiz-question-number">Question {idx + 1}</div>
+                              <div className="quiz-question-text">{question.question}</div>
+                              <div className="quiz-options">
+                                {question.options && question.options.map((option, optIdx) => (
+                                  <div
+                                    key={optIdx}
+                                    className={`quiz-option ${option === question.answer ? 'correct-option' : ''}`}
+                                  >
+                                    {String.fromCharCode(65 + optIdx)}. {option}
+                                  </div>
+                                ))}
+                              </div>
+                              {question.rationale && (
+                                <div className="quiz-rationale">
+                                  <strong>Rationale:</strong> {question.rationale}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))
+            )
           ) : viewMode === 'quizzes' ? (
             quizFeedbacks.length === 0 ? (
               <div className="feedback-empty">

@@ -414,6 +414,12 @@ const resources = {
         emptyHint: "Your progress will appear here"
       },
 
+      // Landing Page
+      landing: {
+        uploadNotesTitle: "Upload a file, save a life",
+        uploadNotes: "Upload Your Notes"
+      },
+
       // Quiz Sharing
       quizShare: {
         buttonText: "Share Quiz",
@@ -851,6 +857,12 @@ const resources = {
         // État vide
         emptyTitle: "Complète des quiz pour suivre ta performance par sujet!",
         emptyHint: "Ta progression apparaîtra ici"
+      },
+
+      // Landing Page
+      landing: {
+        uploadNotesTitle: "Téléverse un fichier, sauve une vie",
+        uploadNotes: "Téléverse tes notes"
       },
 
       // Quiz Sharing
