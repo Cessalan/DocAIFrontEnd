@@ -297,8 +297,17 @@
   margin: 0 0 24px;
 }
 
+/* Button container for proper alignment */
+.cta-buttons {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
 .practice-btn {
-  display: inline-flex;
+  display: flex;
   align-items: center;
   justify-content: center;
   gap: 10px;
@@ -309,8 +318,8 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin: 8px;
-  min-width: 240px;
+  width: 100%;
+  max-width: 320px;
 }
 
 .practice-btn.primary {
@@ -439,8 +448,11 @@
   }
 
   .practice-btn {
-    width: 100%;
-    margin: 6px 0;
+    max-width: 100%;
+  }
+
+  .cta-buttons {
+    gap: 10px;
   }
 
   .proof-stats {
@@ -453,7 +465,134 @@
   }
 }
 
-/* Dark mode */
+/* Dark mode - body.dark-mode selector for toggle support */
+body.dark-mode .public-quiz-results {
+  background: rgba(30, 30, 40, 0.98);
+  border-color: rgba(139, 92, 246, 0.25);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+}
+
+body.dark-mode .performance-text h2,
+body.dark-mode .stat-value,
+body.dark-mode .virality-cta h3 {
+  color: #f3f4f6;
+}
+
+body.dark-mode .performance-text p,
+body.dark-mode .stat-label,
+body.dark-mode .virality-cta > p,
+body.dark-mode .cta-note,
+body.dark-mode .proof-stats {
+  color: #9ca3af;
+}
+
+body.dark-mode .performance-score {
+  color: #f3f4f6;
+}
+
+body.dark-mode .circle-bg {
+  background: linear-gradient(135deg, rgba(50, 50, 60, 0.9) 0%, rgba(35, 35, 45, 0.9) 100%);
+}
+
+body.dark-mode .circle-content {
+  background: rgba(25, 25, 35, 0.95);
+}
+
+body.dark-mode .circle-progress {
+  background: conic-gradient(
+    from 0deg,
+    #8b5cf6 calc(var(--progress) * 3.6deg),
+    rgba(139, 92, 246, 0.15) calc(var(--progress) * 3.6deg)
+  );
+}
+
+body.dark-mode .stat-card {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.2);
+}
+
+body.dark-mode .stat-icon.correct {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+body.dark-mode .stat-icon.incorrect {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+body.dark-mode .stat-icon.total {
+  background: rgba(139, 92, 246, 0.2);
+}
+
+body.dark-mode .weak-topics-alert {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+body.dark-mode .weak-topics-alert h3 {
+  color: #fca5a5;
+}
+
+body.dark-mode .topic-tag.weak {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #fca5a5;
+}
+
+body.dark-mode .strong-topics-section h4 {
+  color: #a7f3d0;
+}
+
+body.dark-mode .topic-tag.strong {
+  background: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #a7f3d0;
+}
+
+body.dark-mode .virality-cta {
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(167, 139, 250, 0.1) 100%);
+  border-color: rgba(139, 92, 246, 0.25);
+}
+
+body.dark-mode .cta-badge {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .practice-btn.primary {
+  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
+  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.35);
+}
+
+body.dark-mode .practice-btn.primary:hover {
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.45);
+}
+
+body.dark-mode .practice-btn.secondary {
+  background: rgba(139, 92, 246, 0.1);
+  color: #c4b5fd;
+  border-color: rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .practice-btn.secondary:hover {
+  background: rgba(139, 92, 246, 0.2);
+  box-shadow: 0 4px 16px rgba(139, 92, 246, 0.25);
+}
+
+body.dark-mode .social-proof {
+  border-top-color: rgba(139, 92, 246, 0.2);
+}
+
+body.dark-mode .proof-item strong {
+  color: #c4b5fd;
+}
+
+body.dark-mode .proof-divider {
+  color: rgba(139, 92, 246, 0.4);
+}
+
+/* Legacy prefers-color-scheme for system preference fallback */
 @media (prefers-color-scheme: dark) {
   .public-quiz-results {
     background: rgba(30, 30, 35, 0.98);

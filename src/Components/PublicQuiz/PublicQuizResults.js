@@ -138,16 +138,18 @@ function PublicQuizResults({ analytics, topic, totalQuestions }) {
         <h3>Want to master these topics?</h3>
         <p>Get personalized practice questions powered by AI</p>
 
-        <button className="practice-btn primary" onClick={handlePracticeWeakAreas}>
-          <span className="btn-icon">🎯</span>
-          <span className="btn-text">Practice Weak Areas</span>
-          <span className="btn-arrow">→</span>
-        </button>
+        <div className="cta-buttons">
+          <button className="practice-btn primary" onClick={handlePracticeWeakAreas}>
+            <span className="btn-icon">🎯</span>
+            <span className="btn-text">Practice Weak Areas</span>
+            <span className="btn-arrow">→</span>
+          </button>
 
-        <button className="practice-btn secondary" onClick={handleTakeQuiz}>
-          <span className="btn-icon">🔄</span>
-          <span className="btn-text">Take This Quiz</span>
-        </button>
+          <button className="practice-btn secondary" onClick={handleTakeQuiz}>
+            <span className="btn-icon">🔄</span>
+            <span className="btn-text">Retake This Quiz</span>
+          </button>
+        </div>
 
         <p className="cta-note">
           <span className="sparkle">✨</span>

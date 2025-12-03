@@ -59,11 +59,9 @@ import {
 
 // Updated imports for ChatInterface.js
 import {
-  ask_llm_websocket,  // Replace ask_llm_stream
-  warmUpWebSocket,
+  ask_llm_websocket,
   closeWebSocketConnection,
-  setupWebSocketKeepalive,
-  cancelWebSocketStream, // Add this for stop button
+  cancelWebSocketStream,
 } from '../../Services/WebSocketManager.js';
 
 // Styles
@@ -180,8 +178,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   });
 
 
-  // track if connection is alive
-  const [wsKeepalive, setWsKeepalive] = useState(null);
   // 'connecting', 'connected', 'disconnected', 'error'
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
@@ -226,32 +222,16 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   // HELPER FUNCTIONS
   // ============================================
 
-  // manage websocket connection everytime currentChatID changes
+  // COST OPTIMIZATION: Don't pre-warm WebSocket connection
+  // Connect on-demand when user sends a message (handled by ask_llm_websocket)
+  // This saves Cloud Run costs by not opening connections until needed
   useEffect(() => {
     if (currentChatID) {
-      // Warm up WebSocket connection
-      const initWebSocket = async () => {
-        setConnectionStatus('connecting');
-        try {
-          await warmUpWebSocket(currentChatID);
-          setConnectionStatus('connected');
-
-          // Setup keepalive
-          const keepaliveInterval = setupWebSocketKeepalive(currentChatID);
-          setWsKeepalive(keepaliveInterval);
-        } catch (error) {
-          console.error('WebSocket initialization failed:', error);
-          setConnectionStatus('error');
-        }
-      };
-
-      initWebSocket();
+      // Mark as ready - connection will happen when user sends message
+      setConnectionStatus('connected');
 
       // Cleanup on unmount or chat change
       return () => {
-        if (wsKeepalive) {
-          clearInterval(wsKeepalive);
-        }
         closeWebSocketConnection(currentChatID);
         setConnectionStatus('disconnected');
       };
@@ -633,18 +613,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     const messageToSend = customPrompt ?? userInputText;
     if (messageToSend.trim() === '') return;
 
-    // Check WebSocket connection status
-    if (connectionStatus !== 'connected') {
-      console.warn('WebSocket not connected, attempting to reconnect...');
-      try {
-        await warmUpWebSocket(currentChatID);
-        setConnectionStatus('connected');
-      } catch (error) {
-        console.error('Failed to establish WebSocket connection:', error);
-        setConnectionStatus('error');
-        return;
-      }
-    }
+    // IMMEDIATELY show loading state - don't wait for connection
+    setUserInputText('');
+    setIsAiTyping(true);
+    setStreamingStatus(null);
+    setIsStreaming(true);
 
     // Add user message
     const newUserMessage = {
@@ -652,13 +625,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       role: 'user',
       content: messageToSend,
     };
-
-    setUserInputText('');
-
-    // Prepare streaming placeholder IMMEDIATELY (before Firebase save)
-    setIsAiTyping(true);
-    setStreamingStatus(null);
-    setIsStreaming(true); // Mark as actively streaming
 
     const streamingMessageId = `streaming-${Date.now()}`;
     const placeholderMessage = {
@@ -668,14 +634,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       isStreaming: true,
       timestamp: new Date()
     };
-
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('✨ CREATING STREAMING PLACEHOLDER');
-    console.log('   - ID:', streamingMessageId);
-    console.log('   - isStreaming:', placeholderMessage.isStreaming);
-    console.log('   - role:', placeholderMessage.role);
-    console.log('   - type:', placeholderMessage.type || 'undefined');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
 
     // Add user message AND streaming placeholder immediately (optimistic UI)
     setChatMessages(prev => [...prev, newUserMessage, placeholderMessage]);
@@ -822,29 +780,19 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                 }];
               });
             } else {
-              // No empathetic message - use original logic (single bubble)
+              // No empathetic message - transform the existing placeholder into quiz message
               setChatMessages(prev => {
-                const existingQuiz = prev.find(msg =>
-                  msg.id === streamingMessageId && msg.type === 'quiz'
+                return prev.map(msg =>
+                  msg.id === streamingMessageId
+                    ? {
+                        ...msg,
+                        type: 'quiz',
+                        content: statusUpdate.message,
+                        quizData: [],
+                        isStreaming: true
+                      }
+                    : msg
                 );
-
-                if (existingQuiz) {
-                  return prev.map(msg =>
-                    msg.id === streamingMessageId && msg.type === 'quiz'
-                      ? { ...msg, content: statusUpdate.message }
-                      : msg
-                  );
-                }
-
-                return [...prev, {
-                  id: streamingMessageId,
-                  role: 'assistant',
-                  type: 'quiz',
-                  content: statusUpdate.message,
-                  quizData: [],
-                  isStreaming: true,
-                  timestamp: new Date()
-                }];
               });
             }
 
@@ -2466,8 +2414,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                 );
               }
 
-              // Regular messages
-              if (typeof message.content === 'string' && message.content.trim()) {
+              // Regular messages - also render streaming messages with empty content (shows loading heart)
+              if ((typeof message.content === 'string' && message.content.trim()) || message.isStreaming) {
                 // Check if this is the last user message
                 const isLastUserMessage = message.role === 'user' &&
                   chatMessages.findIndex(m => m.id === message.id) ===

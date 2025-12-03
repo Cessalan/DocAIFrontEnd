@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { shareQuiz, copyToClipboard } from '../../Services/QuizShareService';
@@ -15,6 +15,17 @@ function ShareQuizButton({ quizData, userResults, disabled = false, autoOpen = f
   const [hasAutoOpened, setHasAutoOpened] = useState(false);
   const [isInitialMount, setIsInitialMount] = useState(true);
   const [previousAutoOpenState, setPreviousAutoOpenState] = useState(autoOpen);
+  const textareaRef = useRef(null);
+
+  // Auto-resize textarea to fit content
+  const autoResizeTextarea = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = 'auto';
+      const newHeight = Math.min(textarea.scrollHeight, 150);
+      textarea.style.height = `${newHeight}px`;
+    }
+  }, []);
 
   // Generate viral message based on user's score or quiz topics
   const generateViralMessage = () => {
@@ -41,9 +52,16 @@ function ShareQuizButton({ quizData, userResults, disabled = false, autoOpen = f
     if (!isCompleted) {
       if (topics.length > 0) {
         const topicList = topics.slice(0, 3).join(', ');
-        return `Check out this quiz on ${mainTopic}! It covers ${topics.length} topic${topics.length > 1 ? 's' : ''} including ${topicList}. Can you beat it?`;
+        return t('quizShare.viralMessageTopics', {
+          topic: mainTopic,
+          count: topics.length,
+          topicList
+        });
       } else {
-        return `I found this amazing ${mainTopic} quiz with ${totalQuestions} questions! Think you can ace it?`;
+        return t('quizShare.viralMessageNoTopics', {
+          topic: mainTopic,
+          totalQuestions
+        });
       }
     }
 
@@ -74,6 +92,8 @@ function ShareQuizButton({ quizData, userResults, disabled = false, autoOpen = f
       setTimeout(() => {
         setShowModal(true);
         setIsSharing(false);
+        // Auto-resize after modal opens
+        setTimeout(autoResizeTextarea, 50);
       }, 300);
     } catch (error) {
       console.error('Failed to share quiz:', error);
@@ -246,11 +266,16 @@ function ShareQuizButton({ quizData, userResults, disabled = false, autoOpen = f
                 <span>{t('quizShare.challengeMessage')}</span>
               </label>
               <textarea
+                ref={textareaRef}
                 className="viral-message-input"
                 value={customMessage}
-                onChange={(e) => setCustomMessage(e.target.value)}
+                onChange={(e) => {
+                  setCustomMessage(e.target.value);
+                  autoResizeTextarea();
+                }}
+                onFocus={autoResizeTextarea}
                 placeholder={t('quizShare.messagePlaceholder')}
-                rows={2}
+                rows={1}
               />
             </div>
 

@@ -260,38 +260,97 @@
 
 .viral-message-input {
   width: 100%;
-  padding: 14px 16px;
-  background: var(--input-bg, #f8f9fa);
-  border: 1.5px solid var(--input-border, rgba(0, 0, 0, 0.1));
-  border-radius: 10px;
-  font-size: 0.925rem;
-  color: var(--text-primary, #1a1a1a);
+  padding: 16px 18px;
+  background: var(--input-bg, rgba(255, 255, 255, 0.08));
+  border: 1.5px solid var(--input-border, rgba(255, 255, 255, 0.12));
+  border-radius: 12px;
+  font-size: 0.95rem;
+  color: var(--text-primary, #f3f4f6);
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  resize: vertical;
+  resize: none;
   outline: none;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  min-height: 80px;
-  line-height: 1.5;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  min-height: auto;
+  max-height: 150px;
+  line-height: 1.6;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
   box-sizing: border-box;
+  overflow-y: auto;
+  field-sizing: content;
+
+  /* Premium scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
+}
+
+/* Webkit premium scrollbar */
+.viral-message-input::-webkit-scrollbar {
+  width: 6px;
+}
+
+.viral-message-input::-webkit-scrollbar-track {
+  background: transparent;
+  border-radius: 3px;
+}
+
+.viral-message-input::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.viral-message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(139, 92, 246, 0.5);
 }
 
 .viral-message-input:hover {
-  border-color: var(--input-border-hover, rgba(0, 0, 0, 0.15));
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+  border-color: var(--input-border-hover, rgba(139, 92, 246, 0.3));
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(139, 92, 246, 0.1);
 }
 
 .viral-message-input:focus {
-  border-color: var(--input-focus, #ad7dc3);
+  border-color: var(--input-focus, rgba(139, 92, 246, 0.5));
   box-shadow:
-    0 0 0 3px var(--input-focus-shadow, rgba(173, 125, 195, 0.12)),
-    0 2px 8px rgba(0, 0, 0, 0.08);
-  transform: translateY(-1px);
+    inset 0 2px 4px rgba(0, 0, 0, 0.1),
+    0 0 0 3px rgba(139, 92, 246, 0.15),
+    0 0 20px rgba(139, 92, 246, 0.1);
 }
 
 .viral-message-input::placeholder {
-  color: var(--text-placeholder, #999);
+  color: var(--text-placeholder, rgba(255, 255, 255, 0.4));
   font-weight: 400;
+}
+
+/* Light mode adjustments */
+body:not(.dark-mode) .viral-message-input {
+  background: rgba(249, 250, 251, 0.95);
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #1a1a1a;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+body:not(.dark-mode) .viral-message-input::-webkit-scrollbar-thumb {
+  background: rgba(173, 125, 195, 0.3);
+}
+
+body:not(.dark-mode) .viral-message-input::-webkit-scrollbar-thumb:hover {
+  background: rgba(173, 125, 195, 0.5);
+}
+
+body:not(.dark-mode) .viral-message-input:hover {
+  border-color: rgba(173, 125, 195, 0.3);
+}
+
+body:not(.dark-mode) .viral-message-input:focus {
+  border-color: rgba(173, 125, 195, 0.5);
+  box-shadow:
+    inset 0 1px 3px rgba(0, 0, 0, 0.05),
+    0 0 0 3px rgba(173, 125, 195, 0.12),
+    0 0 16px rgba(173, 125, 195, 0.08);
+}
+
+body:not(.dark-mode) .viral-message-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
 }
 
 /* Quick Actions */
@@ -542,8 +601,9 @@
   }
 
   .viral-message-input {
-    font-size: 0.85rem;
-    padding: 10px;
+    font-size: 0.875rem;
+    padding: 14px;
+    max-height: 120px;
   }
 
   .quick-actions {

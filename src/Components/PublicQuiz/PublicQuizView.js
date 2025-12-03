@@ -16,6 +16,27 @@ function PublicQuizView() {
   const [userAnswers, setUserAnswers] = useState([]);
   const [showResults, setShowResults] = useState(false);
   const [skippedQuestions, setSkippedQuestions] = useState([]);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const saved = localStorage.getItem('publicQuizDarkMode');
+    if (saved !== null) return JSON.parse(saved);
+    // Check system preference
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  });
+
+  // Apply dark mode class to body
+  useEffect(() => {
+    if (isDarkMode) {
+      document.body.classList.add('dark-mode');
+    } else {
+      document.body.classList.remove('dark-mode');
+    }
+    localStorage.setItem('publicQuizDarkMode', JSON.stringify(isDarkMode));
+
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove('dark-mode');
+    };
+  }, [isDarkMode]);
 
   useEffect(() => {
     loadQuiz();
@@ -177,7 +198,25 @@ function PublicQuizView() {
   return (
     <>
       {nursingIcons}
-      <div className="public-quiz-container">
+      <div className={`public-quiz-container ${isDarkMode ? 'dark' : ''}`}>
+        {/* Dark Mode Toggle - Same style as QuizRoom landing */}
+        <button
+          className="theme-toggle-btn"
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        >
+          {isDarkMode ? (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
+              <path d="M12 2V4M12 20V22M4 12H2M22 12H20M5.64 5.64L4.22 4.22M19.78 19.78L18.36 18.36M5.64 18.36L4.22 19.78M19.78 4.22L18.36 5.64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            </svg>
+          ) : (
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          )}
+        </button>
+
         <div className="public-quiz-header">
         <div className="brand">
           <img src="/LogoSimple.png" alt="NurseQuiz AI" className="brand-logo" />
