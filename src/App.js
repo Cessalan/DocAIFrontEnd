@@ -12,6 +12,7 @@ import PublicQuizView from "./Components/PublicQuiz/PublicQuizView";
 import QuizRoomLanding from "./Components/QuizRoom/QuizRoomLanding";
 import DedicatedQuizPage from "./Components/QuizRoom/DedicatedQuizPage";
 import QuestionBankAdmin from "./Components/Admin/QuestionBankAdmin";
+import DashboardLayout from "./Components/Dashboard/DashboardLayout";
 import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
@@ -27,11 +28,12 @@ function ChatLayout() {
   const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
 
   // Sync selectedChatId with URL param when it changes
+  // This ensures navigation from dashboard (which only uses navigate()) works correctly
   useEffect(() => {
-    if (urlChatId && urlChatId !== selectedChatId) {
-      setSelectedChatId(urlChatId);
-    }
-  }, [urlChatId, selectedChatId]);
+    // Always sync state with URL - this handles navigation from anywhere
+    setSelectedChatId(urlChatId || null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlChatId]);
 
   // Dark mode state for collapsed rail
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -169,6 +171,7 @@ function ChatLayout() {
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
         <SideBar
           user={user}
+          activeChatId={selectedChatId}
           onChatSelected={onSelectChat}
           onCloseSidebar={onCloseSidebar}
           onViewModeChange={setViewAllChatsMode}
@@ -206,12 +209,12 @@ function App() {
         <Route path="/admin/question-bank" element={<QuestionBankAdmin />} />
       )}
 
-      {/* Home - Redirect directly to chat */}
+      {/* Home - Dashboard */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <ChatLayout />
+            <DashboardLayout />
           </ProtectedRoute>
         }
       />

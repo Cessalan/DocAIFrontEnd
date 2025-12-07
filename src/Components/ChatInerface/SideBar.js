@@ -25,7 +25,7 @@ import '../../index.css';
 // translation
 import { useTranslation } from 'react-i18next';
 
-const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => {
+const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewModeChange }) => {
   const navigate = useNavigate();
 
   // Development mode detection
@@ -84,7 +84,6 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => 
   };
   
   const [chats, setChats] = useState([]);
-  const [activeChatId, setActiveChatId] = useState(null);
   const [hoveredChatId, setHoveredChatId] = useState(null);
 
   // translation
@@ -169,7 +168,6 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => 
     const newChatId = docRef.id;
 
     setChats([{ id: newChatId, ...newChat }, ...chats]);
-    setActiveChatId(newChatId);
 
     // Initialize file count for new chat
     setChatFileCounts(prev => ({ ...prev, [newChatId]: 0 }));
@@ -179,8 +177,7 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => 
 
   const handleSelectChat = (chatId) => {
     console.log("Clicked chat: " + chatId + " from SideBar");
-    setActiveChatId(chatId);
-    
+
     if (onChatSelected) {
       onChatSelected(chatId);
     }
@@ -198,7 +195,6 @@ const SideBar = ({ user, onChatSelected, onCloseSidebar, onViewModeChange }) => 
 
       // If deleted chat was active, clear selection
       if (activeChatId === chatId) {
-        setActiveChatId(null);
         if (onChatSelected) onChatSelected(null);
       }
     } catch (error) {

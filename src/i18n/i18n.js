@@ -420,6 +420,62 @@ const resources = {
         uploadNotes: "Upload Your Notes"
       },
 
+      // Dashboard
+      dashboard: {
+        upcomingExams: {
+          title: "Upcoming Exams"
+        },
+        examsList: {
+          add: "Add"
+        },
+        exam: {
+          study: "Study",
+          today: "Today!",
+          tomorrow: "Tomorrow",
+          inDays: "in {{days}} days"
+        },
+        readiness: {
+          short: "{{percent}}% ready",
+          notStartedShort: "Not started"
+        },
+        noExam: {
+          title: "No upcoming exams",
+          description: "Add an exam to track your preparation progress",
+          addButton: "Add an exam"
+        },
+        streak: {
+          start: "Start your streak today!",
+          first: "Great start!",
+          building: "Keep it up!",
+          strong: "You're on fire!",
+          legend: "Legendary!",
+          day: "day streak",
+          days: "day streak"
+        },
+        daily: {
+          label: "daily goal",
+          complete: "Complete!"
+        },
+        level: {
+          value: "Level {{level}}"
+        },
+        quickActions: {
+          label: "Quick:",
+          upload: "Upload",
+          chat: "Chat",
+          quiz: "Quiz",
+          newChat: "Start a new chat"
+        }
+      },
+
+      // Countdown
+      countdown: {
+        days: "{{days}}d",
+        past: "{{days}}d ago",
+        now: "Now!",
+        today: "Today"
+      },
+
       // Quiz Sharing
       quizShare: {
         buttonText: "Share Quiz",
@@ -866,6 +922,62 @@ const resources = {
       landing: {
         uploadNotesTitle: "Téléverse un fichier, sauve une vie",
         uploadNotes: "Téléverse tes notes"
+      },
+
+      // Dashboard
+      dashboard: {
+        upcomingExams: {
+          title: "Examens à venir"
+        },
+        examsList: {
+          add: "Ajouter"
+        },
+        exam: {
+          study: "Étudier",
+          today: "Aujourd'hui!",
+          tomorrow: "Demain",
+          inDays: "dans {{days}} jours"
+        },
+        readiness: {
+          short: "{{percent}}% prêt",
+          notStartedShort: "Pas commencé"
+        },
+        noExam: {
+          title: "Aucun examen à venir",
+          description: "Ajoute un examen pour suivre ta préparation",
+          addButton: "Ajouter un examen"
+        },
+        streak: {
+          start: "Commence ta série aujourd'hui!",
+          first: "Bon début!",
+          building: "Continue comme ça!",
+          strong: "Tu es en feu!",
+          legend: "Légendaire!",
+          day: "jour de série",
+          days: "jours de série"
+        },
+        daily: {
+          label: "objectif quotidien",
+          complete: "Complété!"
+        },
+        level: {
+          value: "Niveau {{level}}"
+        },
+        quickActions: {
+          label: "Rapide:",
+          upload: "Téléverser",
+          chat: "Discussion",
+          quiz: "Quiz",
+          newChat: "Commencer une discussion"
+        }
+      },
+
+      // Countdown
+      countdown: {
+        days: "{{days}}j",
+        past: "il y a {{days}}j",
+        now: "Maintenant!",
+        today: "Aujourd'hui"
       },
 
       // Quiz Sharing

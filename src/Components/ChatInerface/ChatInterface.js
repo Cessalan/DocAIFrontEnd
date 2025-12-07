@@ -79,7 +79,11 @@ import CompactProgressWidget from '../Progress/CompactProgressWidget';
 import ProgressDashboard from '../Progress/ProgressDashboard';
 import { useProgress } from '../../Contexts/ProgressContext/ProgressContext';
 
+// Exam Prep
+import ExamPrepModal from './ExamPrepModal';
 
+// Common Components
+import ExamCountdown from '../Common/ExamCountdown';
 
 /**
  * ChatInterface Component - A messenger-like interface for AI chat
@@ -107,6 +111,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const [chatMessages, setChatMessages] = useState([]);
   const [isGameChat, setIsGameChat] = useState(false);
   const [gameState, setGameState] = useState(null);
+  const [currentExamData, setCurrentExamData] = useState(null); // { examId, examName, examDate }
+  const [isChatDataLoaded, setIsChatDataLoaded] = useState(!chatId); // True if no chatId (new chat) or after chat doc is fetched
   const [userInputText, setUserInputText] = useState('');
   const [uploadedFilesList, setUploadedFilesList] = useState([]);
 
@@ -151,6 +157,10 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
   // track sugggested prompts that is received after each message
   const [suggestedPrompts, setSuggestedPrompts] = useState([]);
+
+  // Exam prep modal state
+  const [showExamPrepModal, setShowExamPrepModal] = useState(false);
+  const [isCreatingExamChat, setIsCreatingExamChat] = useState(false);
 
   /**
  * activeQuizProgress structure:
@@ -210,6 +220,8 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const uploadMessageIdRef = useRef(null);
   // 🆕 Track insights accumulation to avoid race conditions
   const uploadInsightsAccumulatorRef = useRef([]);
+  // Track the latest requested chat ID to prevent stale async responses
+  const latestRequestedChatIdRef = useRef(null);
 
   // Track if user is at bottom of chat
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -449,46 +461,81 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   // EFFECTS
   // ============================================
 
-  // Sync with parent chatId prop
+  // Sync with parent chatId prop - runs when chatId changes OR on initial mount with a chatId
   useEffect(() => {
-    if (chatId && chatId !== currentChatID) {
-      // Clear messages immediately to force loader to show
+    if (!chatId) return;
+
+    // Skip if we already loaded this exact chat (prevents duplicate loads)
+    if (latestRequestedChatIdRef.current === chatId) return;
+
+    const isSwitchingChats = currentChatID && chatId !== currentChatID;
+
+    // Clear messages if switching chats (not on initial load)
+    if (isSwitchingChats) {
       setChatMessages([]);
-
-      // Update chat ID
-      setChatId(chatId);
-
-      // Reset scroll and loading flags
-      hasInitiallyScrolledRef.current = false;
-      setIsInitialLoadComplete(false);
-
-      // Clear UI states from previous chat
-      setSuggestedPrompts([]);           // Clear suggested prompts (fixes reported bug)
-      setActiveQuizProgress(null);       // Clear sticky quiz progress bar
-      setActiveQuizId(null);             // Clear active quiz tracking
-      setActiveStudySheet(null);         // Close study sheet panel
-      setStudySheetWebSocketData(null);  // Clear study sheet data
-      setIsAiTyping(false);              // Clear typing indicator
-      setStreamingStatus(null);          // Clear streaming status
-
-      // Get chat title and check if it's a game chat
-      const chatDocRef = doc(db, "chats", chatId);
-      getDoc(chatDocRef).then((docSnapshot) => {
-        if (docSnapshot.exists()) {
-          const chatData = docSnapshot.data();
-          setChatTitle(chatData.title);
-          // Check if this is a game-type chat
-          const isGame = chatData.type === 'game';
-          console.log('🎮 Chat type check:', { chatId, type: chatData.type, isGame, gameState: chatData.gameState });
-          setIsGameChat(isGame);
-          setGameState(chatData.gameState || null);
-        } else {
-          setIsGameChat(false);
-          setGameState(null);
-        }
-      });
     }
-  }, [chatId, currentChatID]);
+
+    // Update chat ID
+    setChatId(chatId);
+
+    // Reset scroll and loading flags
+    hasInitiallyScrolledRef.current = false;
+    setIsInitialLoadComplete(false);
+
+    // Reset chat data loaded flag - prevents wrong empty state from showing
+    setIsChatDataLoaded(false);
+
+    // Clear UI states from previous chat
+    setSuggestedPrompts([]);           // Clear suggested prompts (fixes reported bug)
+    setActiveQuizProgress(null);       // Clear sticky quiz progress bar
+    setActiveQuizId(null);             // Clear active quiz tracking
+    setActiveStudySheet(null);         // Close study sheet panel
+    setStudySheetWebSocketData(null);  // Clear study sheet data
+    setIsAiTyping(false);              // Clear typing indicator
+    setStreamingStatus(null);          // Clear streaming status
+
+    // Clear chat type states IMMEDIATELY to prevent stale data showing
+    setIsGameChat(false);
+    setGameState(null);
+    setCurrentExamData(null);
+
+    // Get chat title and check if it's a game chat or exam chat
+    latestRequestedChatIdRef.current = chatId; // Track the latest request
+    const chatDocRef = doc(db, "chats", chatId);
+    getDoc(chatDocRef).then((docSnapshot) => {
+      // Guard against stale responses - if user clicked another chat, ignore this response
+      if (latestRequestedChatIdRef.current !== chatId) {
+        console.log('🚫 Ignoring stale chat data for:', chatId, 'current chat is:', latestRequestedChatIdRef.current);
+        return;
+      }
+      if (docSnapshot.exists()) {
+        const chatData = docSnapshot.data();
+        setChatTitle(chatData.title);
+        // Check if this is a game-type chat
+        const isGame = chatData.type === 'game';
+        console.log('🎮 Chat type check:', { chatId, type: chatData.type, isGame, gameState: chatData.gameState });
+        setIsGameChat(isGame);
+        setGameState(chatData.gameState || null);
+        // Check if this chat is linked to an exam
+        if (chatData.examId) {
+          setCurrentExamData({
+            examId: chatData.examId,
+            examName: chatData.examName,
+            examDate: chatData.examDate
+          });
+        } else {
+          setCurrentExamData(null);
+        }
+      } else {
+        setIsGameChat(false);
+        setGameState(null);
+        setCurrentExamData(null);
+      }
+      // Mark chat data as loaded - now safe to render empty states
+      setIsChatDataLoaded(true);
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chatId]);
 
   // Load messages from Firebase
   useEffect(() => {
@@ -2239,6 +2286,59 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   console.log('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 
+  // Handle exam prep submission - creates exam and linked chat
+  const handleExamPrepSubmit = async ({ examName, examDate }) => {
+    if (!auth.currentUser) return;
+
+    setIsCreatingExamChat(true);
+
+    try {
+      // 1. Create the exam in user's exams subcollection
+      const { createExam } = await import('../../Services/ExamService');
+      const newExam = await createExam(auth.currentUser.uid, {
+        name: examName,
+        date: examDate,
+        subject: examName
+      });
+
+      // 2. Create a chat linked to this exam
+      const chatTitle = `${examName} Prep`;
+      const newChat = {
+        userId: auth.currentUser.uid,
+        title: chatTitle,
+        description: `Exam prep for ${examName}`,
+        examId: newExam.id,
+        examName: examName,
+        examDate: examDate,
+        updatedAt: serverTimestamp()
+      };
+
+      const docRef = await addDoc(collection(db, "chats"), newChat);
+
+      // 3. Set exam data immediately (no async fetch needed)
+      setCurrentExamData({
+        examId: newExam.id,
+        examName: examName,
+        examDate: examDate
+      });
+
+      // 4. Close modal and navigate to the new chat
+      setShowExamPrepModal(false);
+
+      // 5. Select the new chat
+      if (onChatSelected) {
+        onChatSelected(docRef.id);
+      }
+
+      console.log('📚 Created exam prep chat:', docRef.id, 'for exam:', newExam.id);
+
+    } catch (error) {
+      console.error('Error creating exam prep chat:', error);
+    } finally {
+      setIsCreatingExamChat(false);
+    }
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <ProgressDashboard />
@@ -2285,20 +2385,57 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         )}
 
 
-        {/* Empty State */}
-        {
-          !hasMessages && !isGameChat && (
-            <div className="empty-chat-upload" onClick={openFileUploadDialog}>
-              <SvgFileUpload />
-              <p className="empty-upload-text">{t('chat.uploadFile')}</p>
-              <button className="empty-upload-btn">{t('chat.uploadDocument')} ☁️⬆️</button>
+        {/* Empty State - Exam-linked chat: show upload only with exam context */}
+        {!hasMessages && isChatDataLoaded && !isGameChat && currentExamData && (
+          <div className="empty-chat-state exam-linked">
+            <div className="exam-context-header">
+              <h3 className="exam-context-title">{currentExamData.examName}</h3>
+              {currentExamData.examDate && <ExamCountdown examDate={currentExamData.examDate} />}
             </div>
-          )
-        }
+            <button className="exam-start-btn" onClick={openFileUploadDialog}>
+              <span className="exam-start-icon">📄</span>
+              <span className="exam-start-text">Drop your notes & start studying</span>
+              <span className="exam-start-arrow">→</span>
+            </button>
+          </div>
+        )}
+
+        {/* Empty State - Regular chat: show two-card layout */}
+        {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData && (
+          <div className="empty-chat-state">
+            <div className="empty-chat-actions">
+              {/* Upload Card */}
+              <div className="empty-action-card" onClick={openFileUploadDialog}>
+                <SvgFileUpload />
+                <div className="empty-action-content">
+                  <p className="empty-action-title">{t('chat.uploadDocument', 'Upload Document')}</p>
+                  <p className="empty-action-subtitle">{t('chat.uploadHint', 'PDF, images, notes')}</p>
+                </div>
+              </div>
+
+              {/* Exam Prep Card */}
+              <div className="empty-action-card" onClick={() => setShowExamPrepModal(true)}>
+                <span className="empty-action-icon">🎯</span>
+                <div className="empty-action-content">
+                  <p className="empty-action-title">{t('chat.prepareExam', 'Prepare for Exam')}</p>
+                  <p className="empty-action-subtitle">{t('chat.examHint', 'Track your progress')}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Exam Prep Modal */}
+        {showExamPrepModal && (
+          <ExamPrepModal
+            onClose={() => setShowExamPrepModal(false)}
+            onSubmit={handleExamPrepSubmit}
+            isSubmitting={isCreatingExamChat}
+          />
+        )}
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
-        {
-          !hasMessages && isGameChat && (
+        {!hasMessages && isChatDataLoaded && isGameChat && (
             <div className="game-chat-empty-state">
               <div className="game-empty-icon">🎮</div>
               <h3 className="game-empty-title">Quiz Game Session</h3>
@@ -2318,8 +2455,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                 🏠 Go to Home to Play Again
               </button>
             </div>
-          )
-        }
+        )}
 
         {/* Messages */}
         <div

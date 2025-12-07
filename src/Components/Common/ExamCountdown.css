@@ -1,0 +1,178 @@
+/* ============================================
+   EXAM COUNTDOWN - Premium Compact Design
+   ============================================ */
+
+.exam-countdown {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-variant-numeric: tabular-nums;
+}
+
+/* Days badge - gradient pill */
+.exam-countdown__days {
+  font-weight: 700;
+  padding: 3px 8px;
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  color: white;
+  border-radius: 8px;
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.3);
+}
+
+/* Time styling - subtle */
+.exam-countdown__time {
+  font-weight: 600;
+  font-size: 11px;
+  color: rgba(139, 92, 246, 0.8);
+  padding-left: 4px;
+}
+
+/* Text styling (for urgent/past states) */
+.exam-countdown__text {
+  font-weight: 600;
+  font-size: 12px;
+  padding: 3px 10px;
+  border-radius: 8px;
+}
+
+/* ============================================
+   SIZE VARIANTS
+   ============================================ */
+
+/* Small - for exam cards */
+.exam-countdown--small {
+  gap: 2px;
+}
+
+.exam-countdown--small .exam-countdown__days {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+}
+
+.exam-countdown--small .exam-countdown__time {
+  font-size: 10px;
+  padding-left: 3px;
+}
+
+.exam-countdown--small .exam-countdown__text {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+/* Medium - default */
+.exam-countdown--medium {
+  gap: 2px;
+}
+
+.exam-countdown--medium .exam-countdown__days {
+  font-size: 12px;
+  padding: 3px 8px;
+}
+
+.exam-countdown--medium .exam-countdown__time {
+  font-size: 11px;
+}
+
+.exam-countdown--medium .exam-countdown__text {
+  font-size: 12px;
+}
+
+/* Large - for featured displays */
+.exam-countdown--large {
+  gap: 4px;
+}
+
+.exam-countdown--large .exam-countdown__days {
+  font-size: 14px;
+  padding: 4px 10px;
+  border-radius: 10px;
+}
+
+.exam-countdown--large .exam-countdown__time {
+  font-size: 13px;
+  padding-left: 6px;
+}
+
+.exam-countdown--large .exam-countdown__text {
+  font-size: 14px;
+  padding: 4px 12px;
+}
+
+/* ============================================
+   STATE VARIANTS
+   ============================================ */
+
+/* State: Urgent (exam starting now) */
+.exam-countdown--urgent .exam-countdown__text {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.3);
+  animation: urgent-pulse 1.5s ease-in-out infinite;
+}
+
+/* State: Today (within 24 hours) */
+.exam-countdown--today .exam-countdown__days {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  box-shadow: 0 2px 6px rgba(249, 115, 22, 0.35);
+}
+
+.exam-countdown--today .exam-countdown__time {
+  color: rgba(249, 115, 22, 0.8);
+}
+
+/* State: Past */
+.exam-countdown--past .exam-countdown__text {
+  background: rgba(107, 114, 128, 0.15);
+  color: #6b7280;
+  box-shadow: none;
+}
+
+/* Animation */
+@keyframes urgent-pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.02);
+  }
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+
+body.dark-mode .exam-countdown__days {
+  background: linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%);
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+}
+
+body.dark-mode .exam-countdown__time {
+  color: rgba(167, 139, 250, 0.9);
+}
+
+/* Dark mode: Urgent */
+body.dark-mode .exam-countdown--urgent .exam-countdown__text {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+}
+
+/* Dark mode: Today */
+body.dark-mode .exam-countdown--today .exam-countdown__days {
+  background: linear-gradient(135deg, #fb923c 0%, #f97316 100%);
+  box-shadow: 0 2px 8px rgba(249, 115, 22, 0.45);
+}
+
+body.dark-mode .exam-countdown--today .exam-countdown__time {
+  color: rgba(251, 146, 60, 0.9);
+}
+
+/* Dark mode: Past */
+body.dark-mode .exam-countdown--past .exam-countdown__text {
+  background: rgba(75, 85, 99, 0.3);
+  color: #9ca3af;
+}
