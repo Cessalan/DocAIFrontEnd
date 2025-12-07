@@ -20,6 +20,7 @@ import {
 // Components
 import ChatMessage from './ChatMessage';
 import LoadingMessageBox from './LoadingMessageBox';
+import PostUploadActions from './PostUploadActions';
 
 // SVG Components
 import SvgFileUpload from '../Svg/SvgFileUpload';
@@ -553,75 +554,41 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         ...doc.data()
       }));
 
-      // ✅ FIX: Preserve messages that haven't been saved to Firebase yet
+      // Preserve local-only messages that shouldn't be overwritten by Firebase
       setChatMessages(prev => {
-        // 1. Keep upload_loading messages (existing logic)
-        const activeUploadMessages = prev.filter(msg =>
-          msg.type === 'upload_loading' && msg.isLoading === true
-        );
-
-        // 2. 🆕 Keep flashcard/quiz messages that completed but aren't in Firebase yet
-        const pendingSaveMessages = prev.filter(msg => {
-          const isFlashcardOrQuiz = msg.type === 'flashcard' || msg.type === 'quiz';
-          const isCompleted = msg.isStreaming === false;
+        // Local messages to preserve (not in Firebase)
+        const localOnlyMessages = prev.filter(msg => {
           const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
 
-          if (isFlashcardOrQuiz && isCompleted && notInFirebase) {
-            console.log(`🔄 Preserving ${msg.type} message ${msg.id} (not in Firebase yet)`);
-          }
+          // Keep: active uploads, streaming messages, post-upload actions
+          const shouldPreserve =
+            (msg.type === 'upload_loading' && msg.isLoading === true) ||
+            (msg.isStreaming === true) ||
+            (msg.type === 'post_upload_actions') ||
+            ((msg.type === 'flashcard' || msg.type === 'quiz') && msg.isStreaming === false && notInFirebase);
 
-          return isFlashcardOrQuiz && isCompleted && notInFirebase;
+          return shouldPreserve;
         });
 
-        // 3. 🆕 CRITICAL FIX: Keep streaming messages that are actively being streamed
-        const activeStreamingMessages = prev.filter(msg => {
-          const isActivelyStreaming = msg.isStreaming === true; // Only preserve ACTIVE streams
-          const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
-
-          if (isActivelyStreaming && notInFirebase) {
-            console.log(`🔄 Preserving STREAMING message ${msg.id} (actively streaming)`);
-          }
-
-          // Only preserve if BOTH conditions are true
-          return isActivelyStreaming && notInFirebase;
-        });
-
-        console.log(`🔍 Messages to preserve from state:`, {
-          uploadMessages: activeUploadMessages.length,
-          pendingFlashcards: pendingSaveMessages.filter(m => m.type === 'flashcard').length,
-          pendingQuizzes: pendingSaveMessages.filter(m => m.type === 'quiz').length,
-          streamingMessages: activeStreamingMessages.length
-        });
-
-        if (activeUploadMessages.length === 0 && pendingSaveMessages.length === 0 && activeStreamingMessages.length === 0) {
-          // No active messages to preserve, just use Firebase data
+        if (localOnlyMessages.length === 0) {
           return loadedMessages;
         }
 
-        // 4. Merge: Remove these message types from Firebase data to avoid duplicates
-        const firebaseWithoutPending = loadedMessages.filter(msg =>
-          msg.type !== 'upload_loading' &&
-          !pendingSaveMessages.some(pending => pending.id === msg.id) &&
-          !activeStreamingMessages.some(streaming => streaming.id === msg.id)
+        // Filter Firebase messages to avoid duplicates
+        const firebaseFiltered = loadedMessages.filter(msg =>
+          !localOnlyMessages.some(local => local.id === msg.id) &&
+          msg.type !== 'upload_loading' // Use local version for upload_loading
         );
 
-        // 5. Combine: Firebase messages + active uploads + pending saves + streaming messages
-        const result = [
-          ...firebaseWithoutPending,
-          ...activeUploadMessages,
-          ...pendingSaveMessages,
-          ...activeStreamingMessages
-        ];
+        // Combine and sort by timestamp
+        const getTimestamp = (msg) => {
+          if (!msg.timestamp) return 0;
+          if (typeof msg.timestamp.toMillis === 'function') return msg.timestamp.toMillis();
+          if (typeof msg.timestamp.seconds === 'number') return msg.timestamp.seconds * 1000;
+          return msg.timestamp;
+        };
 
-        console.log('🔄 Merged messages:', {
-          fromFirebase: firebaseWithoutPending.length,
-          activeUploads: activeUploadMessages.length,
-          pendingSaves: pendingSaveMessages.length,
-          streamingMessages: activeStreamingMessages.length,
-          total: result.length
-        });
-
-        return result;
+        return [...firebaseFiltered, ...localOnlyMessages].sort((a, b) => getTimestamp(a) - getTimestamp(b));
       });
     });
 
@@ -2000,13 +1967,72 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
         // Clear refs
         uploadMessageIdRef.current = null;
-        uploadInsightsAccumulatorRef.current = [];  // 🆕 Clear accumulator
+        uploadInsightsAccumulatorRef.current = [];
 
+        // NOTE: PostUploadActions will be added when 'post_upload_message' event fires from backend
         break;
 
       case 'error':
         console.error('❌ Batch error:', update.message);
         setIsUploadAnalyzing(false);
+        break;
+
+      // ============================================
+      // POST-UPLOAD: FRIENDLY MESSAGE + ACTIONS
+      // ============================================
+      // This creates a conversational AI message after upload completes.
+      // Instead of just showing stats, it guides the user on what to do next.
+      //
+      // The message includes:
+      // - Friendly text acknowledging the upload
+      // - Topics found in the documents
+      // - Action buttons (Quiz, Flashcards, Study Sheet)
+      // ============================================
+      case 'post_upload_message':
+        console.log('📬 Post-upload message received:', update);
+
+        // Create a new assistant message with the friendly text + actions
+        const postUploadMsgId = `post-upload-${Date.now()}`;
+        const postUploadMsg = {
+          id: postUploadMsgId,
+          role: 'assistant',
+          type: 'post_upload_actions',
+          content: update.message,
+          topics: update.topics || [],
+          filenames: update.filenames || [],
+          actions: update.actions || [],
+          showActions: true,
+          timestamp: Date.now()
+        };
+
+        // Add to chat messages - prevent duplicates by checking if one already exists
+        setChatMessages(prev => {
+          // Check if a post_upload_actions message already exists
+          const alreadyExists = prev.some(msg => msg.type === 'post_upload_actions');
+          if (alreadyExists) {
+            console.log('⚠️ Post-upload message already exists, skipping duplicate');
+            return prev;
+          }
+          return [...prev, postUploadMsg];
+        });
+
+        // Save to Firebase (frontend controls timing - this happens AFTER LoadingMessageBox is complete)
+        const postUploadForFirebase = {
+          id: postUploadMsgId,
+          role: 'assistant',
+          type: 'post_upload_actions',
+          content: update.message,
+          topics: update.topics || [],
+          filenames: update.filenames || [],
+          actions: update.actions || [],
+          showActions: true
+        };
+
+        AppendToChat(chatId, postUploadForFirebase)
+          .then(() => console.log('✅ Post-upload actions saved to Firebase'))
+          .catch(err => console.error('❌ Failed to save post-upload actions:', err));
+
+        console.log('✅ Post-upload message added to chat');
         break;
     }
   };
@@ -2063,6 +2089,58 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     if (handler) {
       await handler(fileName);
     }
+  };
+
+  // ============================================
+  // POST-UPLOAD ACTION HANDLER
+  // ============================================
+  // Called when user clicks an action button after file upload.
+  // This sends a message to the AI based on the selected action.
+  //
+  // ACTIONS:
+  // - quiz: Generate a quiz on the uploaded topics
+  // - flashcards: Create flashcards for studying
+  // - studysheet: Generate a study sheet/summary
+  //
+  // HOW IT WORKS:
+  // 1. Hide the action buttons (so user can't click again)
+  // 2. Build a prompt based on the action and topics
+  // 3. Send as a user message (triggers normal chat flow)
+  // ============================================
+  const handlePostUploadAction = async (actionId, messageData) => {
+    console.log('🎯 Post-upload action clicked:', actionId, messageData);
+
+    // Step 1: Hide action buttons on this message
+    // This prevents double-clicks and shows the action was taken
+    setChatMessages(prev => prev.map(msg =>
+      msg.id === messageData.id
+        ? { ...msg, showActions: false }
+        : msg
+    ));
+
+    // Step 2: Build prompt based on action type
+    // Include topics for context so AI knows what to focus on
+    const topicsStr = messageData.topics?.length > 0
+      ? messageData.topics.join(', ')
+      : 'the uploaded material';
+
+    const prompts = {
+      quiz: `Generate a quiz covering: ${topicsStr}`,
+      flashcards: `Create flashcards for: ${topicsStr}`,
+      studysheet: `Create a study sheet summarizing the uploaded documents`
+    };
+
+    const promptToSend = prompts[actionId];
+
+    if (!promptToSend) {
+      console.warn('Unknown action:', actionId);
+      return;
+    }
+
+    // Step 3: Send as user message (uses existing chat flow)
+    // This triggers the normal AI response handling
+    // We pass null for the event and the prompt as customPrompt
+    await handleSendNewUserMessage(null, promptToSend);
   };
 
 
@@ -2513,7 +2591,12 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           {/* Actual Messages - hidden until positioned */}
           <div style={{ opacity: isInitialLoadComplete ? 1 : 0, transition: 'opacity 0.3s ease' }}>
             {chatMessages.map((message) => {
-              // Handle upload messages - show LoadingMessageBox for both loading and completed insights
+              // ============================================
+              // UPLOAD LOADING BOX
+              // ============================================
+              // Shows progress while files are being analyzed.
+              // Always visible - shows analysis stats even when complete.
+              // ============================================
               if (message.type === 'upload_loading') {
                 return (
                   <LoadingMessageBox
@@ -2545,6 +2628,30 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                       {message.summary && (
                         <div className="upload-complete-summary">{message.summary}</div>
                       )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // POST-UPLOAD ACTIONS MESSAGE
+              // ============================================
+              // Friendly AI message with action buttons after file upload.
+              // Rendered as an AI message (same structure as ChatMessage)
+              // so it appears centered and styled consistently.
+              // ============================================
+              if (message.type === 'post_upload_actions') {
+                return (
+                  <div key={message.id} className="message ai-message">
+                    <div className="message-content">
+                      <PostUploadActions
+                        message={message.content}
+                        topics={message.topics}
+                        filenames={message.filenames}
+                        actions={message.actions}
+                        showActions={message.showActions}
+                        onAction={(actionId) => handlePostUploadAction(actionId, message)}
+                      />
                     </div>
                   </div>
                 );

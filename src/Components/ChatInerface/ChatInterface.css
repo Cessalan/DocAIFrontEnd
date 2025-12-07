@@ -71,6 +71,25 @@
   position: relative;
 }
 
+/* ============================================
+   MESSAGES CONTAINER - SCROLLABLE AREA
+   ============================================ */
+.messages-container {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0;
+  padding-top: 40px;
+  padding-bottom: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: transparent;
+  position: relative;
+  z-index: 1;
+  scroll-behavior: smooth;
+}
+
 /* Nursing Icons Background Container */
 .chat-container::before {
   content: '';
