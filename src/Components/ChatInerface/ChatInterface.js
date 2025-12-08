@@ -560,12 +560,16 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         const localOnlyMessages = prev.filter(msg => {
           const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
 
-          // Keep: active uploads, streaming messages, post-upload actions
+          // Keep: active uploads, streaming messages, post-upload actions, pending flashcards/quizzes
           const shouldPreserve =
             (msg.type === 'upload_loading' && msg.isLoading === true) ||
             (msg.isStreaming === true) ||
             (msg.type === 'post_upload_actions') ||
-            ((msg.type === 'flashcard' || msg.type === 'quiz') && msg.isStreaming === false && notInFirebase);
+            ((msg.type === 'flashcard' || msg.type === 'quiz') && notInFirebase);
+
+          if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz')) {
+            console.log(`🔄 Preserving ${msg.type} message ${msg.id} (isStreaming: ${msg.isStreaming}, notInFirebase: ${notInFirebase})`);
+          }
 
           return shouldPreserve;
         });
@@ -862,11 +866,13 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
             isQuizGeneratingRef.current = true; // Use same ref as quiz to prevent text streaming
 
             setChatMessages(prev => {
+              // First, check if a flashcard message already exists
               const existingFlashcard = prev.find(msg =>
                 msg.id === streamingMessageId && msg.type === 'flashcard'
               );
 
               if (existingFlashcard) {
+                // Update existing flashcard message
                 return prev.map(msg =>
                   msg.id === streamingMessageId && msg.type === 'flashcard'
                     ? { ...msg, content: statusUpdate.message }
@@ -874,6 +880,27 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                 );
               }
 
+              // Check if there's a generic placeholder we need to convert
+              const genericPlaceholder = prev.find(msg =>
+                msg.id === streamingMessageId && !msg.type
+              );
+
+              if (genericPlaceholder) {
+                // Convert the generic placeholder to a flashcard message
+                return prev.map(msg =>
+                  msg.id === streamingMessageId
+                    ? {
+                        ...msg,
+                        type: 'flashcard',
+                        content: statusUpdate.message,
+                        flashcardData: [],
+                        isStreaming: true
+                      }
+                    : msg
+                );
+              }
+
+              // No existing message - create new one
               return [...prev, {
                 id: streamingMessageId,
                 role: 'assistant',
@@ -2109,6 +2136,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   // ============================================
   const handlePostUploadAction = async (actionId, messageData) => {
     console.log('🎯 Post-upload action clicked:', actionId, messageData);
+    console.log('🎯 Current chatId:', currentChatID);
 
     // Step 1: Hide action buttons on this message
     // This prevents double-clicks and shows the action was taken
@@ -2131,6 +2159,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     };
 
     const promptToSend = prompts[actionId];
+    console.log('🎯 Prompt to send:', promptToSend);
 
     if (!promptToSend) {
       console.warn('Unknown action:', actionId);
@@ -2140,7 +2169,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     // Step 3: Send as user message (uses existing chat flow)
     // This triggers the normal AI response handling
     // We pass null for the event and the prompt as customPrompt
+    console.log('🎯 Calling handleSendNewUserMessage...');
     await handleSendNewUserMessage(null, promptToSend);
+    console.log('🎯 handleSendNewUserMessage completed');
   };
 
 

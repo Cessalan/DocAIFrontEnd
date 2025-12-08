@@ -13,6 +13,13 @@ import { getQuestionType } from '../../utils/quizScoring';
 // Constants
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
 
+// Helper function to strip letter prefix from options (e.g., "A) Answer" -> "Answer")
+function stripLetterPrefix(text) {
+  if (!text) return '';
+  // Match patterns like "A)", "A.", "A ", "A:" at the start
+  return text.replace(/^[A-Fa-f][\)\.\:\s]\s*/, '').trim();
+}
+
 // Helper function to clean justification text
 function sanitizeJustification(justification) {
   if (!justification) return '';
@@ -562,7 +569,7 @@ function ChatQuiz(props) {
                     <span className={letterClass}>
                       {OPTION_LETTERS[index]}
                     </span>
-                    <span className="option-text">{choice}</span>
+                    <span className="option-text">{stripLetterPrefix(choice)}</span>
 
                     {effectiveRevealed && isAnswer && (isSelected || isReviewing) && (
                       <span className="compact-icon checkmark">

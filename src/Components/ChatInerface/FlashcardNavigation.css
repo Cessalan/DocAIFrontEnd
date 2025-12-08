@@ -1,328 +1,263 @@
 /* ============================================
-   FLASHCARD NAVIGATION - PREMIUM MINIMALIST
-   Clean, status-focused design
+   FLASHCARD NAVIGATION - MINIMALIST
+   Clean, color-coded cards
    ============================================ */
 
 .flashcard-navigation {
-  background: transparent;
-  border-radius: 10px;
-  padding: 8px 6px;
-  box-shadow: none;
-  border: none;
-}
-
-.flashcard-nav-title {
-  font-size: 10px;
-  font-weight: 700;
-  color: #666;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  margin-bottom: 10px;
-  padding: 0 2px;
-}
-
-/* Card List */
-.flashcard-nav-list {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-bottom: 12px;
+  height: 100%;
+  padding: 12px 8px;
+  gap: 12px;
 }
 
-.flashcard-nav-item {
-  height: 40px;
+/* ============================================
+   PROGRESS SUMMARY
+   ============================================ */
+
+.flashcard-nav-progress {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: center;
   gap: 8px;
-  background: #ffffff;
-  border: 1.5px solid rgba(173, 125, 195, 0.15);
+  padding: 8px 4px;
+  background: rgba(0, 0, 0, 0.03);
   border-radius: 8px;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  padding: 0 10px;
-  position: relative;
-  overflow: hidden;
 }
 
-.flashcard-nav-item::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 0;
-  bottom: 0;
-  width: 3px;
+.progress-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0 8px;
+}
+
+.progress-count {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.progress-count.known {
+  color: #22c55e;
+}
+
+.progress-count.again {
+  color: #f59e0b;
+}
+
+.progress-count.new {
+  color: #6b7280;
+}
+
+.progress-label {
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #6b7280;
+}
+
+.progress-divider {
+  width: 1px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+/* ============================================
+   CARD LIST
+   ============================================ */
+
+.flashcard-nav-list {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* Scrollbar */
+.flashcard-nav-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.flashcard-nav-list::-webkit-scrollbar-track {
   background: transparent;
-  transition: all 0.2s ease;
 }
 
-.flashcard-nav-item:hover {
-  border-color: rgba(173, 125, 195, 0.3);
-  transform: translateX(2px);
-  box-shadow: 0 2px 8px rgba(155, 111, 176, 0.1);
+.flashcard-nav-list::-webkit-scrollbar-thumb {
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
 }
 
-.flashcard-nav-item.active {
-  background: rgba(173, 125, 195, 0.08);
-  border-color: rgba(173, 125, 195, 0.4);
-  box-shadow: 0 2px 12px rgba(155, 111, 176, 0.15);
+/* Card Item */
+.flashcard-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  min-height: 36px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  position: relative;
+  font-family: inherit;
 }
 
 .flashcard-nav-number {
   font-size: 13px;
+  font-weight: 600;
+}
+
+/* Status: New (default) */
+.flashcard-nav-item.status-new {
+  background: rgba(107, 114, 128, 0.08);
+  color: #6b7280;
+}
+
+.flashcard-nav-item.status-new:hover {
+  background: rgba(107, 114, 128, 0.15);
+}
+
+/* Status: Known (green) */
+.flashcard-nav-item.status-known {
+  background: rgba(34, 197, 94, 0.12);
+  color: #16a34a;
+}
+
+.flashcard-nav-item.status-known:hover {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+/* Status: Again/Review (amber) */
+.flashcard-nav-item.status-again {
+  background: rgba(245, 158, 11, 0.12);
+  color: #d97706;
+}
+
+.flashcard-nav-item.status-again:hover {
+  background: rgba(245, 158, 11, 0.2);
+}
+
+/* Active State */
+.flashcard-nav-item.active {
+  box-shadow: inset 0 0 0 2px currentColor;
   font-weight: 700;
-  color: #1a202c;
-  min-width: 24px;
 }
 
-.flashcard-nav-icon {
-  font-size: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.flashcard-nav-item.active.status-new {
+  background: rgba(107, 114, 128, 0.15);
 }
 
-/* Status-specific styling - Premium colors with left accent */
-.flashcard-nav-status-new {
-  background: #ffffff;
+.flashcard-nav-item.active.status-known {
+  background: rgba(34, 197, 94, 0.18);
 }
 
-.flashcard-nav-status-new::before {
-  background: #cbd5e0;
-}
-
-.flashcard-nav-status-learning {
-  background: rgba(246, 173, 85, 0.04);
-  border-color: rgba(246, 173, 85, 0.2);
-}
-
-.flashcard-nav-status-learning::before {
-  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
-}
-
-.flashcard-nav-status-mastered {
-  background: rgba(56, 161, 105, 0.04);
-  border-color: rgba(56, 161, 105, 0.2);
-}
-
-.flashcard-nav-status-mastered::before {
-  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
-}
-
-.flashcard-nav-status-know {
-  background: rgba(56, 161, 105, 0.04);
-  border-color: rgba(56, 161, 105, 0.2);
-}
-
-.flashcard-nav-status-know::before {
-  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
-}
-
-.flashcard-nav-status-again {
-  background: rgba(229, 62, 62, 0.04);
-  border-color: rgba(229, 62, 62, 0.2);
-}
-
-.flashcard-nav-status-again::before {
-  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
-}
-
-/* Legend */
-.flashcard-nav-legend {
-  border-top: 1px solid rgba(173, 125, 195, 0.12);
-  padding-top: 10px;
-  margin-top: 6px;
-}
-
-.flashcard-legend-title {
-  font-size: 9px;
-  font-weight: 700;
-  color: #666;
-  margin-bottom: 8px;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.flashcard-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 11px;
-  color: #2d3748;
-  margin-bottom: 6px;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: background 0.15s ease;
-}
-
-.flashcard-legend-item:hover {
-  background: rgba(173, 125, 195, 0.04);
-}
-
-.flashcard-legend-icon {
-  font-size: 14px;
-  width: 18px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.flashcard-legend-text {
-  flex: 1;
-  font-weight: 500;
+.flashcard-nav-item.active.status-again {
+  background: rgba(245, 158, 11, 0.18);
 }
 
 /* ============================================
-   FEEDBACK FOOTER
+   FOOTER
    ============================================ */
 
 .flashcard-nav-footer {
-  margin-top: auto;
-  padding-top: 10px;
-  width: 100%;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
   display: flex;
   justify-content: center;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
 }
+
+/* ============================================
+   FEEDBACK BUTTON
+   ============================================ */
 
 .flashcard-feedback-container {
   position: relative;
 }
 
 .feedback-trigger-btn {
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #6b46c1 0%, #9f7aea 100%);
+  background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 4px 12px rgba(107, 70, 193, 0.3);
-  position: relative;
-  animation: feedbackPulse 2s infinite;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
+}
+
+.feedback-trigger-btn:hover {
+  transform: scale(1.08);
+  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 .feedback-trigger-btn.submitted {
-  animation: none;
-  box-shadow: 0 2px 6px rgba(107, 70, 193, 0.2);
-  background: linear-gradient(135deg, #805ad5 0%, #b794f4 100%);
+  background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
+  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.2);
 }
 
-.feedback-trigger-btn:hover,
-.feedback-trigger-btn.active {
-  transform: scale(1.1) translateY(-2px);
-  box-shadow: 0 6px 16px rgba(107, 70, 193, 0.4);
-  animation: none;
+.feedback-trigger-btn::after {
+  display: none;
 }
 
 .feedback-icon {
-  font-size: 20px;
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.1));
-}
-
-/* Notification Dot */
-.feedback-trigger-btn::after {
-  content: '';
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: 12px;
-  height: 12px;
-  background: #f56565;
-  border: 2px solid white;
-  border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.3s ease;
-}
-
-.feedback-trigger-btn.submitted::after {
-  transform: scale(0);
-  opacity: 0;
-}
-
-@keyframes feedbackPulse {
-  0% {
-    box-shadow: 0 0 0 0 rgba(107, 70, 193, 0.7);
-  }
-  70% {
-    box-shadow: 0 0 0 10px rgba(107, 70, 193, 0);
-  }
-  100% {
-    box-shadow: 0 0 0 0 rgba(107, 70, 193, 0);
-  }
+  font-size: 16px;
 }
 
 /* Feedback Popover */
 .feedback-popover {
   position: fixed;
-  bottom: auto;
-  left: auto;
-  width: 220px;
-  background: rgba(255, 255, 255, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  border-radius: 12px;
+  width: 200px;
+  background: white;
+  border-radius: 10px;
   padding: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
   border: 1px solid rgba(0, 0, 0, 0.06);
   z-index: 99999;
-  animation: popoverSlideIn 0.2s ease-out;
-}
-
-/* Ensure popover appears above modal content and doesn't get cut off */
-.flashcard-modal-content .feedback-popover {
-  z-index: 100000;
-}
-
-@keyframes popoverSlideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
 }
 
 .feedback-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 8px;
   padding-bottom: 6px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
 }
 
 .feedback-header h4 {
   margin: 0;
-  font-size: 13px;
-  color: #553c9a;
+  font-size: 12px;
+  color: #6b46c1;
   font-weight: 600;
 }
 
 .close-btn {
   background: none;
   border: none;
-  font-size: 16px;
-  color: #a0aec0;
+  font-size: 14px;
+  color: #9ca3af;
   cursor: pointer;
-  padding: 0 4px;
+  padding: 0;
+  line-height: 1;
 }
 
 .close-btn:hover {
-  color: #553c9a;
+  color: #6b46c1;
 }
 
 .feedback-content p {
-  margin: 0 0 10px 0;
-  font-size: 12px;
-  color: #4a5568;
-  line-height: 1.4;
+  margin: 0 0 8px 0;
+  font-size: 11px;
+  color: #6b7280;
 }
 
 .emoji-rating {
@@ -333,284 +268,216 @@
 .emoji-rating button {
   background: none;
   border: none;
-  font-size: 24px;
+  font-size: 20px;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.15s;
   padding: 4px;
-  border-radius: 8px;
 }
 
 .emoji-rating button:hover {
   transform: scale(1.2);
-  background: rgba(107, 70, 193, 0.1);
 }
 
 .feedback-options {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
 }
 
 .feedback-options button {
-  padding: 6px 10px;
-  background: rgba(249, 245, 253, 0.8);
-  border: 1px solid rgba(224, 214, 245, 0.8);
-  border-radius: 6px;
-  font-size: 11px;
-  color: #553c9a;
+  padding: 6px 8px;
+  background: rgba(139, 92, 246, 0.08);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  border-radius: 5px;
+  font-size: 10px;
+  color: #6b46c1;
   cursor: pointer;
   transition: all 0.15s;
   text-align: left;
 }
 
 .feedback-options button:hover {
-  background: #f3e8ff;
-  border-color: #d6bcfa;
+  background: rgba(139, 92, 246, 0.15);
+  border-color: rgba(139, 92, 246, 0.25);
 }
 
 .feedback-step-thanks {
   text-align: center;
-  padding: 10px 0;
-  color: #48bb78;
+  padding: 8px 0;
+  color: #22c55e;
+  font-size: 12px;
   font-weight: 600;
 }
 
 /* ============================================
-   RESPONSIVE
+   DEV MODE
    ============================================ */
 
-@media (max-width: 768px) {
-  .flashcard-nav-list {
-    gap: 4px;
-  }
+.flashcard-feedback-dev-display {
+  margin-top: 8px;
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 6px;
+  font-size: 10px;
+  overflow: hidden;
+}
 
-  .flashcard-nav-item {
-    height: 36px;
-    padding: 0 8px;
-  }
+.dev-feedback-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  background: rgba(249, 115, 22, 0.12);
+}
 
-  .flashcard-nav-number {
-    font-size: 12px;
-  }
+.dev-badge {
+  background: #f97316;
+  color: white;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+}
 
-  .flashcard-nav-icon {
-    font-size: 14px;
-  }
+.dev-feedback-title {
+  font-size: 9px;
+  font-weight: 600;
+  color: #ea580c;
+}
+
+.dev-feedback-content {
+  padding: 6px 8px;
+}
+
+.dev-feedback-row {
+  display: flex;
+  gap: 4px;
+  font-size: 9px;
+}
+
+.dev-feedback-label {
+  color: #9a3412;
+  font-weight: 600;
+}
+
+.dev-feedback-value {
+  color: #ea580c;
 }
 
 /* ============================================
-   DARK MODE - PREMIUM
+   DARK MODE
    ============================================ */
 
 body.dark-mode .flashcard-navigation {
   background: transparent;
-  box-shadow: none;
 }
 
-body.dark-mode .flashcard-nav-title {
-  color: #999;
-}
-
-body.dark-mode .flashcard-nav-item {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode .flashcard-nav-item:hover {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(255, 255, 255, 0.15);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-body.dark-mode .flashcard-nav-item.active {
-  background: rgba(124, 58, 237, 0.15);
-  border-color: rgba(124, 58, 237, 0.4);
-  box-shadow: 0 2px 12px rgba(124, 58, 237, 0.3);
-}
-
-body.dark-mode .flashcard-nav-number {
-  color: #e5e5e5;
-}
-
-body.dark-mode .flashcard-nav-status-new {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode .flashcard-nav-status-new::before {
-  background: rgba(203, 213, 224, 0.3);
-}
-
-body.dark-mode .flashcard-nav-status-learning {
-  background: rgba(246, 173, 85, 0.08);
-  border-color: rgba(246, 173, 85, 0.25);
-}
-
-body.dark-mode .flashcard-nav-status-learning::before {
-  background: linear-gradient(135deg, #f6ad55 0%, #ed8936 100%);
-}
-
-body.dark-mode .flashcard-nav-status-mastered {
-  background: rgba(104, 211, 145, 0.08);
-  border-color: rgba(104, 211, 145, 0.25);
-}
-
-body.dark-mode .flashcard-nav-status-mastered::before {
-  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
-}
-
-body.dark-mode .flashcard-nav-status-know {
-  background: rgba(104, 211, 145, 0.08);
-  border-color: rgba(104, 211, 145, 0.25);
-}
-
-body.dark-mode .flashcard-nav-status-know::before {
-  background: linear-gradient(135deg, #68d391 0%, #48bb78 100%);
-}
-
-body.dark-mode .flashcard-nav-status-again {
-  background: rgba(252, 129, 129, 0.08);
-  border-color: rgba(252, 129, 129, 0.25);
-}
-
-body.dark-mode .flashcard-nav-status-again::before {
-  background: linear-gradient(135deg, #fc8181 0%, #f56565 100%);
-}
-
-body.dark-mode .flashcard-nav-legend {
-  border-top-color: rgba(255, 255, 255, 0.08);
-}
-
-body.dark-mode .flashcard-legend-title {
-  color: #999;
-}
-
-body.dark-mode .flashcard-legend-item {
-  color: #ccc;
-}
-
-body.dark-mode .flashcard-legend-item:hover {
+body.dark-mode .flashcard-nav-progress {
   background: rgba(255, 255, 255, 0.05);
 }
 
-body.dark-mode .flashcard-legend-text {
-  color: #ccc;
+body.dark-mode .progress-label {
+  color: #9ca3af;
+}
+
+body.dark-mode .progress-divider {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .flashcard-nav-list::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* Card Items - Dark */
+body.dark-mode .flashcard-nav-item.status-new {
+  background: rgba(156, 163, 175, 0.12);
+  color: #9ca3af;
+}
+
+body.dark-mode .flashcard-nav-item.status-new:hover {
+  background: rgba(156, 163, 175, 0.2);
+}
+
+body.dark-mode .flashcard-nav-item.status-known {
+  background: rgba(34, 197, 94, 0.15);
+  color: #4ade80;
+}
+
+body.dark-mode .flashcard-nav-item.status-known:hover {
+  background: rgba(34, 197, 94, 0.25);
+}
+
+body.dark-mode .flashcard-nav-item.status-again {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+body.dark-mode .flashcard-nav-item.status-again:hover {
+  background: rgba(245, 158, 11, 0.25);
+}
+
+body.dark-mode .flashcard-nav-item.active.status-new {
+  background: rgba(156, 163, 175, 0.2);
+}
+
+body.dark-mode .flashcard-nav-item.active.status-known {
+  background: rgba(34, 197, 94, 0.22);
+}
+
+body.dark-mode .flashcard-nav-item.active.status-again {
+  background: rgba(245, 158, 11, 0.22);
 }
 
 body.dark-mode .flashcard-nav-footer {
   border-top-color: rgba(255, 255, 255, 0.08);
 }
 
+/* Feedback - Dark */
 body.dark-mode .feedback-popover {
-  background: rgba(30, 33, 40, 0.98);
+  background: #1f2937;
   border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-}
-
-body.dark-mode .feedback-popover h4 {
-  color: #ddd6fe;
-}
-
-body.dark-mode .feedback-content p {
-  color: #e5e7eb;
-  font-weight: 450;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 body.dark-mode .feedback-header {
   border-bottom-color: rgba(255, 255, 255, 0.1);
 }
 
+body.dark-mode .feedback-header h4 {
+  color: #c4b5fd;
+}
+
 body.dark-mode .close-btn {
-  color: #9ca3af;
+  color: #6b7280;
 }
 
 body.dark-mode .close-btn:hover {
-  color: #ddd6fe;
+  color: #c4b5fd;
+}
+
+body.dark-mode .feedback-content p {
+  color: #9ca3af;
 }
 
 body.dark-mode .feedback-options button {
   background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.3);
-  color: #ddd6fe;
-  font-weight: 500;
+  border-color: rgba(139, 92, 246, 0.25);
+  color: #c4b5fd;
 }
 
 body.dark-mode .feedback-options button:hover {
   background: rgba(139, 92, 246, 0.25);
-  border-color: rgba(139, 92, 246, 0.4);
+  border-color: rgba(139, 92, 246, 0.35);
 }
 
-/* ============================================
-   DEV MODE: FEEDBACK DISPLAY
-   ============================================ */
-
-.flashcard-feedback-dev-display {
-  margin-top: 12px;
-  background: rgba(249, 115, 22, 0.08);
-  border: 1px solid rgba(249, 115, 22, 0.3);
-  border-radius: 8px;
-  overflow: hidden;
-  font-size: 12px;
-}
-
-.dev-feedback-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(249, 115, 22, 0.15);
-  border-bottom: 1px solid rgba(249, 115, 22, 0.2);
-}
-
-.dev-badge {
-  background: #f97316;
-  color: white;
-  font-size: 9px;
-  font-weight: 700;
-  padding: 2px 5px;
-  border-radius: 3px;
-  letter-spacing: 0.5px;
-}
-
-.dev-feedback-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: #ea580c;
-}
-
-.dev-feedback-content {
-  padding: 10px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.dev-feedback-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.dev-feedback-label {
-  font-weight: 600;
-  color: #9a3412;
-  min-width: 50px;
-}
-
-.dev-feedback-value {
-  color: #ea580c;
-  font-weight: 500;
-}
-
-/* Dark Mode */
+/* Dev - Dark */
 body.dark-mode .flashcard-feedback-dev-display {
   background: rgba(251, 146, 60, 0.1);
-  border-color: rgba(251, 146, 60, 0.4);
+  border-color: rgba(251, 146, 60, 0.3);
 }
 
 body.dark-mode .dev-feedback-header {
-  background: rgba(251, 146, 60, 0.2);
-  border-bottom-color: rgba(251, 146, 60, 0.3);
+  background: rgba(251, 146, 60, 0.15);
 }
 
 body.dark-mode .dev-feedback-title {
@@ -623,4 +490,41 @@ body.dark-mode .dev-feedback-label {
 
 body.dark-mode .dev-feedback-value {
   color: #fb923c;
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .flashcard-navigation {
+    padding: 8px 6px;
+    gap: 8px;
+  }
+
+  .flashcard-nav-progress {
+    padding: 6px 2px;
+    gap: 4px;
+  }
+
+  .progress-stat {
+    padding: 0 4px;
+  }
+
+  .progress-count {
+    font-size: 16px;
+  }
+
+  .progress-label {
+    font-size: 8px;
+  }
+
+  .flashcard-nav-item {
+    height: 32px;
+    min-height: 32px;
+  }
+
+  .flashcard-nav-number {
+    font-size: 12px;
+  }
 }

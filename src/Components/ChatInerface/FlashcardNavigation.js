@@ -6,6 +6,7 @@ import FlashcardFeedback from './FlashcardFeedback';
 function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackSubmit, hasGivenFeedback, feedbackData }) {
   const { t } = useTranslation();
   const isDev = process.env.NODE_ENV === 'development';
+
   if (!flashcards || flashcards.length === 0) {
     return null;
   }
@@ -16,34 +17,44 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackS
     }
   };
 
+  // Count cards by status
+  const newCount = flashcards.filter(c => !c.userReview && c.status !== 'mastered' && c.status !== 'learning').length;
+  const knownCount = flashcards.filter(c => c.userReview?.knowIt || c.status === 'mastered').length;
+  const againCount = flashcards.filter(c => c.userReview && !c.userReview.knowIt && c.status !== 'mastered').length;
+
   return (
     <div className="flashcard-navigation">
-      <div className="flashcard-nav-title">{t('flashcardNavigation.cards', 'Cards')}</div>
+      {/* Progress Summary */}
+      <div className="flashcard-nav-progress">
+        <div className="progress-stat">
+          <span className="progress-count known">{knownCount}</span>
+          <span className="progress-label">{t('flashcardNavigation.known', 'Known')}</span>
+        </div>
+        <div className="progress-divider" />
+        <div className="progress-stat">
+          <span className="progress-count again">{againCount}</span>
+          <span className="progress-label">{t('flashcardNavigation.review', 'Review')}</span>
+        </div>
+        <div className="progress-divider" />
+        <div className="progress-stat">
+          <span className="progress-count new">{newCount}</span>
+          <span className="progress-label">{t('flashcardNavigation.new', 'New')}</span>
+        </div>
+      </div>
+
+      {/* Card List */}
       <div className="flashcard-nav-list">
         {flashcards.map((card, index) => {
           const isActive = index === currentIndex;
           const isReviewed = card.userReview !== undefined && card.userReview !== null;
           const knowIt = card.userReview?.knowIt;
           const isMastered = card.status === 'mastered';
-          const isLearning = card.status === 'learning';
 
-          let statusClass = 'flashcard-nav-status-new';
-          let statusIcon = '🆕';
-
-          if (isMastered) {
-            statusClass = 'flashcard-nav-status-mastered';
-            statusIcon = '✅';
-          } else if (isLearning) {
-            statusClass = 'flashcard-nav-status-learning';
-            statusIcon = '📘';
-          } else if (isReviewed) {
-            if (knowIt) {
-              statusClass = 'flashcard-nav-status-know';
-              statusIcon = '✓';
-            } else {
-              statusClass = 'flashcard-nav-status-again';
-              statusIcon = '↻';
-            }
+          let statusClass = 'status-new';
+          if (isMastered || knowIt) {
+            statusClass = 'status-known';
+          } else if (isReviewed && !knowIt) {
+            statusClass = 'status-again';
           }
 
           return (
@@ -51,30 +62,12 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackS
               key={index}
               className={`flashcard-nav-item ${isActive ? 'active' : ''} ${statusClass}`}
               onClick={() => handleCardClick(index)}
-              title={card.topic || `Card ${index + 1}`}
+              aria-label={`Card ${index + 1}${isReviewed ? (knowIt ? ' - Known' : ' - Review') : ' - New'}`}
             >
               <span className="flashcard-nav-number">{index + 1}</span>
-              <span className="flashcard-nav-icon">{statusIcon}</span>
             </button>
           );
         })}
-      </div>
-
-      {/* Legend */}
-      <div className="flashcard-nav-legend">
-        <div className="flashcard-legend-title">{t('flashcardNavigation.status', 'Status:')}</div>
-        <div className="flashcard-legend-item">
-          <span className="flashcard-legend-icon">🆕</span>
-          <span className="flashcard-legend-text">{t('flashcardNavigation.new', 'New')}</span>
-        </div>
-        <div className="flashcard-legend-item">
-          <span className="flashcard-legend-icon">📘</span>
-          <span className="flashcard-legend-text">{t('flashcardNavigation.learning', 'Learning')}</span>
-        </div>
-        <div className="flashcard-legend-item">
-          <span className="flashcard-legend-icon">✅</span>
-          <span className="flashcard-legend-text">{t('flashcardNavigation.mastered', 'Mastered')}</span>
-        </div>
       </div>
 
       {/* Feedback Button */}
@@ -90,16 +83,12 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackS
         <div className="flashcard-feedback-dev-display">
           <div className="dev-feedback-header">
             <span className="dev-badge">DEV</span>
-            <span className="dev-feedback-title">Flashcard Feedback Collected</span>
+            <span className="dev-feedback-title">Feedback</span>
           </div>
           <div className="dev-feedback-content">
             <div className="dev-feedback-row">
               <span className="dev-feedback-label">Rating:</span>
-              <span className="dev-feedback-value">
-                {feedbackData.rating === 'good' ? '😄 Good' :
-                 feedbackData.rating === 'neutral' ? '😐 Okay' :
-                 feedbackData.rating === 'bad' ? '☹️ Bad' : feedbackData.rating}
-              </span>
+              <span className="dev-feedback-value">{feedbackData.rating}</span>
             </div>
             <div className="dev-feedback-row">
               <span className="dev-feedback-label">Detail:</span>
