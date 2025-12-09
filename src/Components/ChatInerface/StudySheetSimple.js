@@ -1,0 +1,172 @@
+import React, { useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
+import html2pdf from 'html2pdf.js';
+import './StudySheetSimple.css';
+
+// Parse plain text with UPPERCASE headers and numbered lists
+function parseContent(text) {
+  if (!text) return null;
+
+  const lines = text.split('\n');
+  const elements = [];
+
+  lines.forEach((line, idx) => {
+    const trimmed = line.trim();
+
+    // Empty line = spacer
+    if (!trimmed) {
+      elements.push(<div key={`s-${idx}`} className="study-spacer" />);
+      return;
+    }
+
+    // UPPERCASE HEADER (line that's all caps, at least 3 chars)
+    if (trimmed.length > 2 && trimmed === trimmed.toUpperCase() && /^[A-Z\s]+$/.test(trimmed)) {
+      elements.push(
+        <h2 key={`h-${idx}`} className="study-section-header">
+          {trimmed}
+        </h2>
+      );
+      return;
+    }
+
+    // Numbered list items (1. 2. 3. etc)
+    const numMatch = trimmed.match(/^(\d+)[.)]\s+(.+)/);
+    if (numMatch) {
+      elements.push(
+        <div key={`n-${idx}`} className="study-numbered">
+          <span className="number-marker">{numMatch[1]}</span>
+          <span className="numbered-content">{numMatch[2]}</span>
+        </div>
+      );
+      return;
+    }
+
+    // Lines ending with colon are sub-headers
+    if (trimmed.endsWith(':') && trimmed.length < 60) {
+      elements.push(
+        <h3 key={`sh-${idx}`} className="study-subsection-header">
+          {trimmed}
+        </h3>
+      );
+      return;
+    }
+
+    // Regular paragraph
+    elements.push(
+      <p key={`p-${idx}`} className="study-paragraph">
+        {trimmed}
+      </p>
+    );
+  });
+
+  return elements;
+}
+
+const StudySheetSimple = ({
+  topic,
+  content = '',
+  isStreaming = false,
+  error = null,
+  inline = false
+}) => {
+  const contentRef = useRef(null);
+  const pdfContentRef = useRef(null);
+  const { t } = useTranslation();
+
+  // Auto-scroll while streaming
+  useEffect(() => {
+    if (contentRef.current && isStreaming) {
+      contentRef.current.scrollTop = contentRef.current.scrollHeight;
+    }
+  }, [content, isStreaming]);
+
+  const handleDownloadPDF = async () => {
+    if (!pdfContentRef.current || !content) return;
+
+    const opt = {
+      margin: [15, 15, 15, 15],
+      filename: `${topic.replace(/[^a-zA-Z0-9]/g, '_')}_study_sheet.pdf`,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: {
+        scale: 2,
+        useCORS: true,
+        letterRendering: true
+      },
+      jsPDF: {
+        unit: 'mm',
+        format: 'a4',
+        orientation: 'portrait'
+      },
+      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
+    };
+
+    try {
+      await html2pdf().set(opt).from(pdfContentRef.current).save();
+    } catch (err) {
+      console.error('PDF download failed:', err);
+    }
+  };
+
+  return (
+    <div className={`study-sheet-simple-wrapper ${inline ? 'study-sheet-inline' : ''}`}>
+      {/* Header */}
+      <div className="study-sheet-simple-header">
+        <div className="study-header-top">
+          <h1 className="study-sheet-title">
+            <span className="title-icon">📚</span>
+            {topic}
+          </h1>
+          {!isStreaming && !error && content && (
+            <button
+              className="study-download-btn"
+              onClick={handleDownloadPDF}
+              title={t('studysheet.download', 'Download PDF')}
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+              <span>PDF</span>
+            </button>
+          )}
+        </div>
+        {isStreaming && (
+          <div className="streaming-indicator">
+            <span className="streaming-dot"></span>
+            <span className="streaming-dot"></span>
+            <span className="streaming-dot"></span>
+            <span className="streaming-text">{t('studysheet.generating', 'Generating...')}</span>
+          </div>
+        )}
+        {!isStreaming && !error && content && (
+          <div className="complete-badge">
+            <span>✓</span>
+            <span>{t('studysheet.complete', 'Complete')}</span>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="study-sheet-simple-content" ref={contentRef}>
+        {error ? (
+          <div className="study-error">
+            <span className="error-icon">⚠️</span>
+            <span>{error}</span>
+          </div>
+        ) : (
+          <div className="study-text-content" ref={pdfContentRef}>
+            {/* PDF Header - only visible in PDF */}
+            <div className="pdf-header">
+              <h1>{topic}</h1>
+            </div>
+            {parseContent(content)}
+            {isStreaming && <span className="typing-cursor">|</span>}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
+export default StudySheetSimple;

@@ -35,6 +35,58 @@ function CloseIcon() {
   );
 }
 
+// Helper to format flashcard text with bold and line breaks
+function formatFlashcardText(text) {
+  if (!text) return null;
+
+  // Split by newlines and process each line
+  const lines = text.split('\n');
+
+  return lines.map((line, lineIndex) => {
+    // Process bold text (**text** -> <strong>text</strong>)
+    const parts = [];
+    let remaining = line;
+    let partIndex = 0;
+
+    while (remaining.length > 0) {
+      const boldStart = remaining.indexOf('**');
+
+      if (boldStart === -1) {
+        // No more bold markers, add remaining text
+        if (remaining) parts.push(<span key={partIndex++}>{remaining}</span>);
+        break;
+      }
+
+      // Add text before bold
+      if (boldStart > 0) {
+        parts.push(<span key={partIndex++}>{remaining.substring(0, boldStart)}</span>);
+      }
+
+      // Find closing bold marker
+      const boldEnd = remaining.indexOf('**', boldStart + 2);
+
+      if (boldEnd === -1) {
+        // No closing marker, treat as regular text
+        parts.push(<span key={partIndex++}>{remaining.substring(boldStart)}</span>);
+        break;
+      }
+
+      // Add bold text
+      const boldText = remaining.substring(boldStart + 2, boldEnd);
+      parts.push(<strong key={partIndex++}>{boldText}</strong>);
+
+      remaining = remaining.substring(boldEnd + 2);
+    }
+
+    return (
+      <span key={lineIndex}>
+        {parts}
+        {lineIndex < lines.length - 1 && <br />}
+      </span>
+    );
+  });
+}
+
 // Main Component
 function ChatFlashcard(props) {
   const {
@@ -281,7 +333,9 @@ function ChatFlashcard(props) {
         <div className="flashcard-card-face flashcard-card-back">
           <div className="flashcard-content">
             <div className="flashcard-label">{t('flashcard.answer', 'Answer')}</div>
-            <div className="flashcard-text">{flashcard.back}</div>
+            <div className="flashcard-text flashcard-text-formatted">
+              {formatFlashcardText(flashcard.back)}
+            </div>
           </div>
           <div className="flashcard-flip-instruction">
             <FlipIcon />

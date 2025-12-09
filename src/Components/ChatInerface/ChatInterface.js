@@ -72,6 +72,7 @@ import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
 import StudyGuideGenerator from './StudyGuideGenerator.js';
 import StudySheetLivePreview from './StudySheetLivePreview.js';
+import StudySheetSimple from './StudySheetSimple.js';
 import StickyQuizProgress from './StickyQuizProgress';
 import SuggestedPrompts from './SuggestedPrompts';
 
@@ -145,10 +146,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   const [uploadSummary, setUploadSummary] = useState(null);
   const [isUploadAnalyzing, setIsUploadAnalyzing] = useState(false);
   const [uploadMessageId, setUploadMessageId] = useState(null);
-
-  const [activeStudySheet, setActiveStudySheet] = useState(null);
-  const [studySheetWebSocketData, setStudySheetWebSocketData] = useState(null);
-
 
   // State for sticky quiz progress bar
   const [activeQuizProgress, setActiveQuizProgress] = useState(null);
@@ -490,8 +487,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     setSuggestedPrompts([]);           // Clear suggested prompts (fixes reported bug)
     setActiveQuizProgress(null);       // Clear sticky quiz progress bar
     setActiveQuizId(null);             // Clear active quiz tracking
-    setActiveStudySheet(null);         // Close study sheet panel
-    setStudySheetWebSocketData(null);  // Clear study sheet data
     setIsAiTyping(false);              // Clear typing indicator
     setStreamingStatus(null);          // Clear streaming status
 
@@ -958,36 +953,98 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
             return;
           }
 
-          // Study sheet generation trigger
-          if (statusUpdate.status === "study_sheet_trigger") {
-            console.log("Study sheet triggered:", statusUpdate);
+          // Study sheet generation trigger - create inline message
+          // Handle both "study_sheet_trigger" (from tools) and "study_sheet_start" (from generator)
+          if (statusUpdate.status === "study_sheet_trigger" || statusUpdate.status === "study_sheet_start") {
+            console.log("📚 Study sheet started:", statusUpdate);
 
-            setActiveStudySheet(null);
-
-            setActiveStudySheet({
-              topic: statusUpdate.topic,
-              chatId: currentChatID,
-              key: uuidv4()
+            // Check if we already have a streaming studysheet to avoid duplicates
+            setChatMessages(prev => {
+              const hasStreamingStudySheet = prev.some(msg => msg.type === 'studysheet' && msg.isStreaming);
+              if (hasStreamingStudySheet) {
+                return prev; // Don't create duplicate
+              }
+              return [...prev, {
+                id: `studysheet-${Date.now()}`,
+                role: 'assistant',
+                type: 'studysheet',
+                topic: statusUpdate.topic || 'Study Guide',
+                content: '',
+                isStreaming: true,
+                timestamp: new Date()
+              }];
             });
 
             onCloseSidebar();
             return;
           }
 
-          // All study sheet streaming updates
-          if (statusUpdate.status?.startsWith("study_sheet_")) {
-            console.log("📚 Study sheet update:", statusUpdate.status, statusUpdate);
-
-            // Pass the raw WebSocket data to the component
-            setStudySheetWebSocketData(statusUpdate);
-
-            // Special handling for completion
-            if (statusUpdate.status === "study_sheet_complete") {
-              saveStudySheetToChat(statusUpdate.html_content, updatedChatId);
-            }
-
+          // Study sheet chunk - append content
+          if (statusUpdate.status === "study_sheet_chunk") {
+            console.log("📚 Study sheet chunk received");
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.type === 'studysheet' && msg.isStreaming
+                  ? { ...msg, content: msg.content + (statusUpdate.content || '') }
+                  : msg
+              )
+            );
             return;
           }
+
+          // Study sheet complete
+          if (statusUpdate.status === "study_sheet_complete") {
+            console.log("📚 Study sheet complete");
+
+            // First, find the streaming study sheet BEFORE updating state
+            setChatMessages(prev => {
+              // Find the streaming study sheet we're about to complete
+              const streamingStudySheet = prev.find(
+                msg => msg.type === 'studysheet' && msg.isStreaming
+              );
+
+              if (streamingStudySheet && streamingStudySheet.content) {
+                // Save to Firebase
+                const messageForFirebase = {
+                  id: streamingStudySheet.id,
+                  role: 'assistant',
+                  type: 'studysheet',
+                  topic: streamingStudySheet.topic,
+                  content: streamingStudySheet.content,
+                  timestamp: streamingStudySheet.timestamp || new Date()
+                };
+
+                console.log("📚 Saving study sheet to Firebase:", messageForFirebase.id);
+                AppendToChat(updatedChatId || currentChatID, messageForFirebase)
+                  .then(() => console.log('✅ Study sheet saved to Firebase'))
+                  .catch(err => console.error('❌ Failed to save study sheet:', err));
+              } else {
+                console.log("⚠️ No streaming study sheet found to save");
+              }
+
+              // Update state to mark as complete
+              return prev.map(msg =>
+                msg.type === 'studysheet' && msg.isStreaming
+                  ? { ...msg, isStreaming: false }
+                  : msg
+              );
+            });
+            return;
+          }
+
+          // Study sheet error
+          if (statusUpdate.status === "study_sheet_error") {
+            console.log("📚 Study sheet error:", statusUpdate.message);
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.type === 'studysheet' && msg.isStreaming
+                  ? { ...msg, isStreaming: false, error: statusUpdate.message }
+                  : msg
+              )
+            );
+            return;
+          }
+
 
           // Default status update
           setStreamingStatus(statusUpdate);
@@ -1187,25 +1244,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     handleSendNewUserMessage(null, suggestion);
   }, [handleSendNewUserMessage]);
 
-
-  const saveStudySheetToChat = async (finalHtml, chatId) => {
-    try {
-      const studySheetMessage = {
-        id: uuidv4(),
-        role: "assistant",
-        content: `Study sheet created ${activeStudySheet?.topic || ':Study Guide'}`,
-        html: finalHtml,
-        type: "studysheet",
-        timestamp: new Date(),
-        isStreaming: false
-      };
-
-      await AppendToChat(chatId, studySheetMessage);
-      console.log('Study sheet saved to chat');
-    } catch (error) {
-      console.error('Error saving study sheet:', error);
-    }
-  };
 
   // ✅ FIXED: Use ref instead of state for synchronous updates
   const handleQuizAnswerSelect = async (answerData) => {
@@ -2307,11 +2345,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     }
   };
 
-  const handleCloseStudySheet = () => {
-    setActiveStudySheet(null);
-    setStudySheetWebSocketData(null);
-  };
-
   // ============================================
   // RENDER
   // ============================================
@@ -2453,7 +2486,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       <ProgressDashboard />
 
       <div
-        className={`chat-container ${activeStudySheet ? 'has-study-sheet' : ''}`}
+        className="chat-container"
       >
         {/* Nursing Background Icons */}
         <div className="nursing-icon">💊</div>
@@ -2682,6 +2715,25 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                         actions={message.actions}
                         showActions={message.showActions}
                         onAction={(actionId) => handlePostUploadAction(actionId, message)}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // STUDY SHEET MESSAGE (inline in chat)
+              // ============================================
+              if (message.type === 'studysheet') {
+                return (
+                  <div key={message.id} className="message ai-message study-sheet-message">
+                    <div className="message-content">
+                      <StudySheetSimple
+                        topic={message.topic}
+                        content={message.content}
+                        isStreaming={message.isStreaming}
+                        error={message.error}
+                        inline={true}
                       />
                     </div>
                   </div>
@@ -3029,29 +3081,6 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           )
         }
       </div >
-      {/* Study Guide Panel */}
-      {
-        activeStudySheet && (
-          <div className="study-sheet-panel">
-            <div className="study-guide-content">
-              {/* <StudyGuideGenerator
-                  topic={activeStudyGuide.topic}
-                  chatId={activeStudyGuide.chatId}
-                  numSections={activeStudyGuide.num_sections}
-                />  */}
-
-              <StudySheetLivePreview
-                key={activeStudySheet.key}
-                topic={activeStudySheet.topic}
-                chatId={activeStudySheet.chatId}
-                onClose={handleCloseStudySheet}
-                websocketData={studySheetWebSocketData}
-              />
-            </div>
-          </div>
-
-        )
-      }
     </div >
   );
 };

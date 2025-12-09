@@ -2179,6 +2179,21 @@ body.dark-mode .nursing-icon {
     flex-direction: column;
     animation: slideInFromRight 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
     overflow: hidden;
+    background: #f8fafc;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+
+  .study-guide-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+  }
+
+  body.dark-mode .study-sheet-panel {
+    background: #1a1a2e;
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
   }
 
   @keyframes slideInFromRight {
