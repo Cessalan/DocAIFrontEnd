@@ -1,10 +1,18 @@
 import React from 'react';
-import { useTranslation } from 'react-i18next';
 import './FlashcardNavigation.css';
 import FlashcardFeedback from './FlashcardFeedback';
 
-function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackSubmit, hasGivenFeedback, feedbackData }) {
-  const { t } = useTranslation();
+/**
+ * FlashcardNavigation - Clean sidebar navigation for flashcards
+ */
+function FlashcardNavigation({
+  flashcards,
+  currentIndex,
+  onNavigate,
+  onFeedbackSubmit,
+  hasGivenFeedback,
+  feedbackData
+}) {
   const isDev = process.env.NODE_ENV === 'development';
 
   if (!flashcards || flashcards.length === 0) {
@@ -18,83 +26,73 @@ function FlashcardNavigation({ flashcards, currentIndex, onNavigate, onFeedbackS
   };
 
   // Count cards by status
-  const newCount = flashcards.filter(c => !c.userReview && c.status !== 'mastered' && c.status !== 'learning').length;
-  const knownCount = flashcards.filter(c => c.userReview?.knowIt || c.status === 'mastered').length;
-  const againCount = flashcards.filter(c => c.userReview && !c.userReview.knowIt && c.status !== 'mastered').length;
+  const knownCount = flashcards.filter(card =>
+    card.userReview?.knowIt || card.status === 'mastered'
+  ).length;
+
+  const reviewCount = flashcards.filter(card =>
+    card.userReview && !card.userReview.knowIt && card.status !== 'mastered'
+  ).length;
+
+  const newCount = flashcards.length - knownCount - reviewCount;
+
+  // Get status for a card
+  const getCardStatus = (card) => {
+    if (card.status === 'mastered' || card.userReview?.knowIt) return 'known';
+    if (card.userReview && !card.userReview.knowIt) return 'review';
+    return 'new';
+  };
 
   return (
-    <div className="flashcard-navigation">
-      {/* Progress Summary */}
-      <div className="flashcard-nav-progress">
-        <div className="progress-stat">
-          <span className="progress-count known">{knownCount}</span>
-          <span className="progress-label">{t('flashcardNavigation.known', 'Known')}</span>
+    <div className="flashcard-nav">
+      {/* Progress header */}
+      <div className="flashcard-nav-header">
+        <div className="nav-stat">
+          <span className="nav-dot known"></span>
+          <span className="nav-value">{knownCount}</span>
         </div>
-        <div className="progress-divider" />
-        <div className="progress-stat">
-          <span className="progress-count again">{againCount}</span>
-          <span className="progress-label">{t('flashcardNavigation.review', 'Review')}</span>
+        <div className="nav-stat">
+          <span className="nav-dot review"></span>
+          <span className="nav-value">{reviewCount}</span>
         </div>
-        <div className="progress-divider" />
-        <div className="progress-stat">
-          <span className="progress-count new">{newCount}</span>
-          <span className="progress-label">{t('flashcardNavigation.new', 'New')}</span>
+        <div className="nav-stat">
+          <span className="nav-dot new"></span>
+          <span className="nav-value">{newCount}</span>
         </div>
       </div>
 
-      {/* Card List */}
-      <div className="flashcard-nav-list">
+      {/* Card Grid */}
+      <div className="flashcard-nav-grid">
         {flashcards.map((card, index) => {
           const isActive = index === currentIndex;
-          const isReviewed = card.userReview !== undefined && card.userReview !== null;
-          const knowIt = card.userReview?.knowIt;
-          const isMastered = card.status === 'mastered';
-
-          let statusClass = 'status-new';
-          if (isMastered || knowIt) {
-            statusClass = 'status-known';
-          } else if (isReviewed && !knowIt) {
-            statusClass = 'status-again';
-          }
+          const status = getCardStatus(card);
 
           return (
             <button
               key={index}
-              className={`flashcard-nav-item ${isActive ? 'active' : ''} ${statusClass}`}
+              className={`nav-card-btn ${isActive ? 'active' : ''} status-${status}`}
               onClick={() => handleCardClick(index)}
-              aria-label={`Card ${index + 1}${isReviewed ? (knowIt ? ' - Known' : ' - Review') : ' - New'}`}
+              aria-label={`Card ${index + 1}`}
             >
-              <span className="flashcard-nav-number">{index + 1}</span>
+              {index + 1}
             </button>
           );
         })}
       </div>
 
-      {/* Feedback Button */}
-      <div className="flashcard-nav-footer">
+      {/* Feedback */}
+      <div className="flashcard-nav-feedback">
         <FlashcardFeedback
           onFeedbackSubmit={onFeedbackSubmit}
           hasSubmitted={hasGivenFeedback}
         />
       </div>
 
-      {/* DEV MODE: Display Feedback Data */}
+      {/* Dev Mode */}
       {isDev && feedbackData && (
-        <div className="flashcard-feedback-dev-display">
-          <div className="dev-feedback-header">
-            <span className="dev-badge">DEV</span>
-            <span className="dev-feedback-title">Feedback</span>
-          </div>
-          <div className="dev-feedback-content">
-            <div className="dev-feedback-row">
-              <span className="dev-feedback-label">Rating:</span>
-              <span className="dev-feedback-value">{feedbackData.rating}</span>
-            </div>
-            <div className="dev-feedback-row">
-              <span className="dev-feedback-label">Detail:</span>
-              <span className="dev-feedback-value">{feedbackData.detail}</span>
-            </div>
-          </div>
+        <div className="dev-feedback-box">
+          <span className="dev-badge">DEV</span>
+          <span className="dev-text">{feedbackData.rating}</span>
         </div>
       )}
     </div>

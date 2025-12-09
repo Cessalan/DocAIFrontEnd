@@ -1,187 +1,164 @@
 /* ============================================
-   FLASHCARD NAVIGATION - MINIMALIST
-   Clean, color-coded cards
+   FLASHCARD NAVIGATION - CLEAN & MINIMAL
    ============================================ */
 
-.flashcard-navigation {
+.flashcard-nav {
   display: flex;
   flex-direction: column;
   height: 100%;
-  padding: 12px 8px;
+  padding: 12px;
   gap: 12px;
+  background: transparent;
+  overflow: hidden; /* Prevent horizontal scroll */
 }
 
 /* ============================================
-   PROGRESS SUMMARY
+   HEADER - Dot + number stats
    ============================================ */
 
-.flashcard-nav-progress {
+.flashcard-nav-header {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 8px 4px;
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 8px;
+  gap: 16px;
+  padding: 10px 8px;
+  flex-shrink: 0;
 }
 
-.progress-stat {
+.nav-stat {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  padding: 0 8px;
+  gap: 6px;
 }
 
-.progress-count {
-  font-size: 18px;
-  font-weight: 700;
-  line-height: 1;
+.nav-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }
 
-.progress-count.known {
-  color: #22c55e;
+.nav-dot.known {
+  background: #4ade80;
 }
 
-.progress-count.again {
-  color: #f59e0b;
+.nav-dot.review {
+  background: #fbbf24;
 }
 
-.progress-count.new {
-  color: #6b7280;
+.nav-dot.new {
+  background: #6b7280;
 }
 
-.progress-label {
-  font-size: 9px;
+.nav-value {
+  font-size: 13px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: #6b7280;
-}
-
-.progress-divider {
-  width: 1px;
-  height: 24px;
-  background: rgba(0, 0, 0, 0.1);
+  color: rgba(255, 255, 255, 0.8);
 }
 
 /* ============================================
-   CARD LIST
+   CARD GRID
    ============================================ */
 
-.flashcard-nav-list {
+.flashcard-nav-grid {
   flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
   overflow-y: auto;
-  padding-right: 4px;
+  overflow-x: hidden;
+  padding: 2px;
+  align-content: start;
 }
 
 /* Scrollbar */
-.flashcard-nav-list::-webkit-scrollbar {
-  width: 4px;
+.flashcard-nav-grid::-webkit-scrollbar {
+  width: 3px;
 }
 
-.flashcard-nav-list::-webkit-scrollbar-track {
+.flashcard-nav-grid::-webkit-scrollbar-track {
   background: transparent;
 }
 
-.flashcard-nav-list::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.15);
-  border-radius: 2px;
+.flashcard-nav-grid::-webkit-scrollbar-thumb {
+  background: rgba(139, 92, 246, 0.3);
+  border-radius: 3px;
 }
 
-/* Card Item */
-.flashcard-nav-item {
+/* Card Button */
+.nav-card-btn {
+  aspect-ratio: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 36px;
-  min-height: 36px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   cursor: pointer;
-  transition: all 0.15s ease;
-  position: relative;
   font-family: inherit;
-}
-
-.flashcard-nav-number {
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
+  transition: all 0.15s ease;
 }
 
-/* Status: New (default) */
-.flashcard-nav-item.status-new {
-  background: rgba(107, 114, 128, 0.08);
-  color: #6b7280;
-}
-
-.flashcard-nav-item.status-new:hover {
+/* Status: New */
+.nav-card-btn.status-new {
   background: rgba(107, 114, 128, 0.15);
+  color: #9ca3af;
 }
 
-/* Status: Known (green) */
-.flashcard-nav-item.status-known {
-  background: rgba(34, 197, 94, 0.12);
-  color: #16a34a;
+.nav-card-btn.status-new:hover {
+  background: rgba(107, 114, 128, 0.25);
 }
 
-.flashcard-nav-item.status-known:hover {
-  background: rgba(34, 197, 94, 0.2);
+/* Status: Known */
+.nav-card-btn.status-known {
+  background: rgba(74, 222, 128, 0.2);
+  color: #4ade80;
 }
 
-/* Status: Again/Review (amber) */
-.flashcard-nav-item.status-again {
-  background: rgba(245, 158, 11, 0.12);
-  color: #d97706;
+.nav-card-btn.status-known:hover {
+  background: rgba(74, 222, 128, 0.3);
 }
 
-.flashcard-nav-item.status-again:hover {
-  background: rgba(245, 158, 11, 0.2);
+/* Status: Review */
+.nav-card-btn.status-review {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+}
+
+.nav-card-btn.status-review:hover {
+  background: rgba(251, 191, 36, 0.3);
 }
 
 /* Active State */
-.flashcard-nav-item.active {
-  box-shadow: inset 0 0 0 2px currentColor;
-  font-weight: 700;
+.nav-card-btn.active {
+  box-shadow: 0 0 0 2px #a78bfa;
+  transform: scale(1.05);
 }
 
-.flashcard-nav-item.active.status-new {
-  background: rgba(107, 114, 128, 0.15);
-}
-
-.flashcard-nav-item.active.status-known {
-  background: rgba(34, 197, 94, 0.18);
-}
-
-.flashcard-nav-item.active.status-again {
-  background: rgba(245, 158, 11, 0.18);
+.nav-card-btn.active.status-new {
+  background: rgba(167, 139, 250, 0.25);
+  color: #c4b5fd;
 }
 
 /* ============================================
-   FOOTER
+   FEEDBACK SECTION
    ============================================ */
 
-.flashcard-nav-footer {
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
+.flashcard-nav-feedback {
+  padding-top: 12px;
   display: flex;
   justify-content: center;
+  flex-shrink: 0;
 }
 
-/* ============================================
-   FEEDBACK BUTTON
-   ============================================ */
-
+/* Feedback Button */
 .flashcard-feedback-container {
   position: relative;
 }
 
 .feedback-trigger-btn {
-  width: 36px;
-  height: 36px;
+  width: 34px;
+  height: 34px;
   border-radius: 50%;
   border: none;
   background: linear-gradient(135deg, #8b5cf6 0%, #a78bfa 100%);
@@ -195,32 +172,28 @@
 }
 
 .feedback-trigger-btn:hover {
-  transform: scale(1.08);
+  transform: scale(1.1);
   box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
 }
 
 .feedback-trigger-btn.submitted {
   background: linear-gradient(135deg, #a78bfa 0%, #c4b5fd 100%);
-  box-shadow: 0 2px 6px rgba(139, 92, 246, 0.2);
-}
-
-.feedback-trigger-btn::after {
-  display: none;
+  opacity: 0.7;
 }
 
 .feedback-icon {
-  font-size: 16px;
+  font-size: 15px;
 }
 
 /* Feedback Popover */
 .feedback-popover {
   position: fixed;
   width: 200px;
-  background: white;
-  border-radius: 10px;
-  padding: 12px;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: #1e1e24;
+  border-radius: 12px;
+  padding: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 99999;
 }
 
@@ -228,15 +201,15 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .feedback-header h4 {
   margin: 0;
-  font-size: 12px;
-  color: #6b46c1;
+  font-size: 13px;
+  color: #c4b5fd;
   font-weight: 600;
 }
 
@@ -244,20 +217,20 @@
   background: none;
   border: none;
   font-size: 14px;
-  color: #9ca3af;
+  color: #6b7280;
   cursor: pointer;
-  padding: 0;
+  padding: 2px;
   line-height: 1;
 }
 
 .close-btn:hover {
-  color: #6b46c1;
+  color: #c4b5fd;
 }
 
 .feedback-content p {
-  margin: 0 0 8px 0;
-  font-size: 11px;
-  color: #6b7280;
+  margin: 0 0 10px 0;
+  font-size: 12px;
+  color: #9ca3af;
 }
 
 .emoji-rating {
@@ -268,44 +241,46 @@
 .emoji-rating button {
   background: none;
   border: none;
-  font-size: 20px;
+  font-size: 22px;
   cursor: pointer;
-  transition: transform 0.15s;
-  padding: 4px;
+  transition: transform 0.15s ease;
+  padding: 6px;
+  border-radius: 8px;
 }
 
 .emoji-rating button:hover {
   transform: scale(1.2);
+  background: rgba(139, 92, 246, 0.15);
 }
 
 .feedback-options {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 5px;
 }
 
 .feedback-options button {
-  padding: 6px 8px;
-  background: rgba(139, 92, 246, 0.08);
-  border: 1px solid rgba(139, 92, 246, 0.15);
-  border-radius: 5px;
-  font-size: 10px;
-  color: #6b46c1;
+  padding: 8px 10px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #c4b5fd;
   cursor: pointer;
-  transition: all 0.15s;
+  transition: all 0.15s ease;
   text-align: left;
 }
 
 .feedback-options button:hover {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.25);
+  background: rgba(139, 92, 246, 0.2);
+  transform: translateX(2px);
 }
 
 .feedback-step-thanks {
   text-align: center;
-  padding: 8px 0;
-  color: #22c55e;
-  font-size: 12px;
+  padding: 12px;
+  color: #4ade80;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -313,21 +288,15 @@
    DEV MODE
    ============================================ */
 
-.flashcard-feedback-dev-display {
-  margin-top: 8px;
-  background: rgba(249, 115, 22, 0.08);
-  border: 1px solid rgba(249, 115, 22, 0.2);
-  border-radius: 6px;
-  font-size: 10px;
-  overflow: hidden;
-}
-
-.dev-feedback-header {
+.dev-feedback-box {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 4px 8px;
-  background: rgba(249, 115, 22, 0.12);
+  padding: 6px 8px;
+  background: rgba(249, 115, 22, 0.1);
+  border-radius: 6px;
+  font-size: 9px;
+  flex-shrink: 0;
 }
 
 .dev-badge {
@@ -335,161 +304,79 @@
   color: white;
   font-size: 8px;
   font-weight: 700;
-  padding: 1px 4px;
-  border-radius: 2px;
+  padding: 2px 4px;
+  border-radius: 3px;
 }
 
-.dev-feedback-title {
-  font-size: 9px;
-  font-weight: 600;
-  color: #ea580c;
-}
-
-.dev-feedback-content {
-  padding: 6px 8px;
-}
-
-.dev-feedback-row {
-  display: flex;
-  gap: 4px;
-  font-size: 9px;
-}
-
-.dev-feedback-label {
-  color: #9a3412;
-  font-weight: 600;
-}
-
-.dev-feedback-value {
-  color: #ea580c;
+.dev-text {
+  color: #fb923c;
+  font-weight: 500;
 }
 
 /* ============================================
-   DARK MODE
+   LIGHT MODE
    ============================================ */
 
-body.dark-mode .flashcard-navigation {
-  background: transparent;
+body:not(.dark-mode) .nav-dot.known {
+  background: #22c55e;
 }
 
-body.dark-mode .flashcard-nav-progress {
-  background: rgba(255, 255, 255, 0.05);
+body:not(.dark-mode) .nav-dot.review {
+  background: #f59e0b;
 }
 
-body.dark-mode .progress-label {
-  color: #9ca3af;
+body:not(.dark-mode) .nav-dot.new {
+  background: #9ca3af;
 }
 
-body.dark-mode .progress-divider {
-  background: rgba(255, 255, 255, 0.1);
+body:not(.dark-mode) .nav-value {
+  color: rgba(0, 0, 0, 0.7);
 }
 
-body.dark-mode .flashcard-nav-list::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-/* Card Items - Dark */
-body.dark-mode .flashcard-nav-item.status-new {
-  background: rgba(156, 163, 175, 0.12);
-  color: #9ca3af;
-}
-
-body.dark-mode .flashcard-nav-item.status-new:hover {
-  background: rgba(156, 163, 175, 0.2);
-}
-
-body.dark-mode .flashcard-nav-item.status-known {
-  background: rgba(34, 197, 94, 0.15);
-  color: #4ade80;
-}
-
-body.dark-mode .flashcard-nav-item.status-known:hover {
-  background: rgba(34, 197, 94, 0.25);
-}
-
-body.dark-mode .flashcard-nav-item.status-again {
-  background: rgba(245, 158, 11, 0.15);
-  color: #fbbf24;
-}
-
-body.dark-mode .flashcard-nav-item.status-again:hover {
-  background: rgba(245, 158, 11, 0.25);
-}
-
-body.dark-mode .flashcard-nav-item.active.status-new {
-  background: rgba(156, 163, 175, 0.2);
-}
-
-body.dark-mode .flashcard-nav-item.active.status-known {
-  background: rgba(34, 197, 94, 0.22);
-}
-
-body.dark-mode .flashcard-nav-item.active.status-again {
-  background: rgba(245, 158, 11, 0.22);
-}
-
-body.dark-mode .flashcard-nav-footer {
-  border-top-color: rgba(255, 255, 255, 0.08);
-}
-
-/* Feedback - Dark */
-body.dark-mode .feedback-popover {
-  background: #1f2937;
-  border-color: rgba(255, 255, 255, 0.1);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-body.dark-mode .feedback-header {
-  border-bottom-color: rgba(255, 255, 255, 0.1);
-}
-
-body.dark-mode .feedback-header h4 {
-  color: #c4b5fd;
-}
-
-body.dark-mode .close-btn {
+body:not(.dark-mode) .nav-card-btn.status-new {
+  background: rgba(107, 114, 128, 0.1);
   color: #6b7280;
 }
 
-body.dark-mode .close-btn:hover {
-  color: #c4b5fd;
+body:not(.dark-mode) .nav-card-btn.status-known {
+  background: rgba(34, 197, 94, 0.15);
+  color: #16a34a;
 }
 
-body.dark-mode .feedback-content p {
-  color: #9ca3af;
+body:not(.dark-mode) .nav-card-btn.status-review {
+  background: rgba(245, 158, 11, 0.15);
+  color: #d97706;
 }
 
-body.dark-mode .feedback-options button {
+body:not(.dark-mode) .nav-card-btn.active {
+  box-shadow: 0 0 0 2px #8b5cf6;
+}
+
+body:not(.dark-mode) .nav-card-btn.active.status-new {
   background: rgba(139, 92, 246, 0.15);
-  border-color: rgba(139, 92, 246, 0.25);
-  color: #c4b5fd;
+  color: #7c3aed;
 }
 
-body.dark-mode .feedback-options button:hover {
-  background: rgba(139, 92, 246, 0.25);
-  border-color: rgba(139, 92, 246, 0.35);
+body:not(.dark-mode) .feedback-popover {
+  background: white;
+  border-color: rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.15);
 }
 
-/* Dev - Dark */
-body.dark-mode .flashcard-feedback-dev-display {
-  background: rgba(251, 146, 60, 0.1);
-  border-color: rgba(251, 146, 60, 0.3);
+body:not(.dark-mode) .feedback-header {
+  border-bottom-color: rgba(0, 0, 0, 0.08);
 }
 
-body.dark-mode .dev-feedback-header {
-  background: rgba(251, 146, 60, 0.15);
+body:not(.dark-mode) .feedback-header h4 {
+  color: #7c3aed;
 }
 
-body.dark-mode .dev-feedback-title {
-  color: #fb923c;
+body:not(.dark-mode) .feedback-content p {
+  color: #6b7280;
 }
 
-body.dark-mode .dev-feedback-label {
-  color: #fdba74;
-}
-
-body.dark-mode .dev-feedback-value {
-  color: #fb923c;
+body:not(.dark-mode) .feedback-options button {
+  color: #6b46c1;
 }
 
 /* ============================================
@@ -497,34 +384,32 @@ body.dark-mode .dev-feedback-value {
    ============================================ */
 
 @media (max-width: 768px) {
-  .flashcard-navigation {
-    padding: 8px 6px;
-    gap: 8px;
+  .flashcard-nav {
+    padding: 10px;
+    gap: 10px;
   }
 
-  .flashcard-nav-progress {
-    padding: 6px 2px;
-    gap: 4px;
+  .flashcard-nav-header {
+    gap: 12px;
+    padding: 8px;
   }
 
-  .progress-stat {
-    padding: 0 4px;
+  .nav-dot {
+    width: 6px;
+    height: 6px;
   }
 
-  .progress-count {
-    font-size: 16px;
-  }
-
-  .progress-label {
-    font-size: 8px;
-  }
-
-  .flashcard-nav-item {
-    height: 32px;
-    min-height: 32px;
-  }
-
-  .flashcard-nav-number {
+  .nav-value {
     font-size: 12px;
+  }
+
+  .flashcard-nav-grid {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 5px;
+  }
+
+  .nav-card-btn {
+    font-size: 10px;
+    border-radius: 6px;
   }
 }
