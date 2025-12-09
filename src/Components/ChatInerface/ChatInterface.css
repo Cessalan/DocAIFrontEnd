@@ -2924,3 +2924,30 @@ body.dark-mode .game-replay-btn {
 body.dark-mode .game-replay-btn:hover {
   box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
 }
+
+/* ============================================
+   AUDIO ERROR MESSAGE
+   ============================================ */
+.audio-error-message {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-md);
+  color: #dc2626;
+  font-size: 0.875rem;
+  margin: 8px 0;
+}
+
+.audio-error-message .error-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+body.dark-mode .audio-error-message {
+  background: rgba(239, 68, 68, 0.12);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}

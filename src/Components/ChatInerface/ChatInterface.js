@@ -47,7 +47,7 @@ import {
   DeleteMessage
 } from '../../Services/FireBaseServiceChats.js';
 
-import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
+import { loadFilesForChat, saveAudioToStorage } from '../../Services/FireBaseFiles.js';
 import {
   ask_llm_stream,
   embed_docs,
@@ -75,6 +75,8 @@ import StudySheetLivePreview from './StudySheetLivePreview.js';
 import StudySheetSimple from './StudySheetSimple.js';
 import StickyQuizProgress from './StickyQuizProgress';
 import SuggestedPrompts from './SuggestedPrompts';
+import AudioConfirmCard from './AudioConfirmCard';
+import ChatAudioPlayer from './ChatAudioPlayer';
 
 // Progress Tracking
 import CompactProgressWidget from '../Progress/CompactProgressWidget';
@@ -1045,6 +1047,161 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
             return;
           }
 
+          // ============ AUDIO HANDLERS ============
+
+          // Audio options - show confirmation card for user to select duration
+          if (statusUpdate.status === "audio_options") {
+            console.log("🎙️ Audio options received:", statusUpdate);
+
+            // IMPORTANT: Set flag to skip onStreamEnd callback
+            // This prevents the empty finalMessage from being saved/displayed
+            isQuizGeneratingRef.current = true;
+
+            const audioOptionsId = uuidv4();
+            setChatMessages(prev => {
+              // Remove any streaming placeholder message first
+              const filtered = prev.filter(msg => !msg.isStreaming || msg.content);
+              return [
+                ...filtered,
+                {
+                  id: audioOptionsId,
+                  role: 'assistant',
+                  type: 'audio_options',
+                  topic: statusUpdate.topic,
+                  intent: statusUpdate.intent,
+                  styleName: statusUpdate.style_name,
+                  styleDescription: statusUpdate.style_description,
+                  durations: statusUpdate.durations,
+                  defaultDuration: statusUpdate.default_duration,
+                  timestamp: new Date()
+                }
+              ];
+            });
+            setIsAiTyping(false);
+            setIsStreaming(false);
+            return;
+          }
+
+          // Audio generating - show generating state
+          if (statusUpdate.status === "audio_generating" || statusUpdate.status === "audio_script_ready" || statusUpdate.status === "audio_tts_progress") {
+            console.log("🎙️ Audio generating:", statusUpdate.message);
+            setChatMessages(prev => {
+              // Check if we already have an audio player message generating
+              const hasAudioPlayer = prev.some(msg => msg.type === 'audio_player' && msg.isGenerating);
+              if (hasAudioPlayer) {
+                // Update the existing generating message
+                return prev.map(msg =>
+                  msg.type === 'audio_player' && msg.isGenerating
+                    ? { ...msg, generatingMessage: statusUpdate.message }
+                    : msg
+                );
+              }
+              // Create new audio player in generating state
+              return [
+                ...prev,
+                {
+                  id: uuidv4(),
+                  role: 'assistant',
+                  type: 'audio_player',
+                  isGenerating: true,
+                  generatingMessage: statusUpdate.message,
+                  topic: statusUpdate.topic || 'Audio',
+                  timestamp: new Date()
+                }
+              ];
+            });
+            return;
+          }
+
+          // Audio ready - show the player with audio and save to Firebase
+          if (statusUpdate.status === "audio_ready") {
+            console.log("🎙️ Audio ready:", statusUpdate.topic);
+
+            // Save audio to Firebase Storage and then save chat message
+            if (currentChatID && statusUpdate.audio_base64) {
+              saveAudioToStorage(currentChatID, statusUpdate.audio_base64, {
+                topic: statusUpdate.topic,
+                intent: statusUpdate.intent,
+                duration: statusUpdate.audio_duration
+              }).then(async (result) => {
+                if (result.success) {
+                  console.log("🎙️ Audio saved to Firebase Storage:", result.downloadURL);
+
+                  // Update the message in UI with Firebase URL
+                  setChatMessages(prev =>
+                    prev.map(msg =>
+                      msg.type === 'audio_player' && msg.topic === statusUpdate.topic
+                        ? { ...msg, firebaseUrl: result.downloadURL, firebasePath: result.path }
+                        : msg
+                    )
+                  );
+
+                  // Save to Firestore as a chat message
+                  const audioMessageForFirebase = {
+                    id: `audio-${Date.now()}`,
+                    role: 'assistant',
+                    type: 'audio',
+                    topic: statusUpdate.topic,
+                    intent: statusUpdate.intent,
+                    duration: statusUpdate.audio_duration,
+                    script: statusUpdate.script,
+                    firebaseUrl: result.downloadURL,
+                    firebasePath: result.path,
+                    timestamp: new Date()
+                  };
+
+                  try {
+                    await AppendToChat(currentChatID, audioMessageForFirebase);
+                    console.log("🎙️ Audio message saved to Firestore");
+                  } catch (err) {
+                    console.error("🎙️ Failed to save audio message to Firestore:", err);
+                  }
+                } else {
+                  console.error("🎙️ Failed to save audio to Firebase Storage:", result.error);
+                }
+              });
+            }
+
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.type === 'audio_player' && msg.isGenerating
+                  ? {
+                      ...msg,
+                      isGenerating: false,
+                      audioBase64: statusUpdate.audio_base64,
+                      audioDuration: statusUpdate.audio_duration,
+                      topic: statusUpdate.topic,
+                      intent: statusUpdate.intent,
+                      script: statusUpdate.script
+                    }
+                  : msg
+              )
+            );
+            return;
+          }
+
+          // Audio complete
+          if (statusUpdate.status === "audio_complete") {
+            console.log("🎙️ Audio generation complete");
+            setIsAiTyping(false);
+            return;
+          }
+
+          // Audio error
+          if (statusUpdate.status === "audio_error") {
+            console.log("🎙️ Audio error:", statusUpdate.message);
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.type === 'audio_player' && msg.isGenerating
+                  ? { ...msg, isGenerating: false, error: statusUpdate.message }
+                  : msg
+              )
+            );
+            setIsAiTyping(false);
+            return;
+          }
+
+          // ============ END AUDIO HANDLERS ============
 
           // Default status update
           setStreamingStatus(statusUpdate);
@@ -2735,6 +2892,87 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                         isStreaming={message.isStreaming}
                         error={message.error}
                         inline={true}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // AUDIO OPTIONS MESSAGE (confirmation card)
+              // ============================================
+              if (message.type === 'audio_options') {
+                return (
+                  <div key={message.id} className="message ai-message audio-options-message">
+                    <div className="message-content">
+                      <AudioConfirmCard
+                        topic={message.topic}
+                        intent={message.intent}
+                        styleName={message.styleName}
+                        styleDescription={message.styleDescription}
+                        durations={message.durations}
+                        defaultDuration={message.defaultDuration}
+                        onGenerate={(duration) => {
+                          // Remove the options card
+                          setChatMessages(prev => prev.filter(msg => msg.id !== message.id));
+                          // Send message to generate audio with selected duration and language
+                          // Map 'fr' -> 'french', 'en' -> 'english' for backend
+                          const langMap = { 'fr': 'french', 'en': 'english' };
+                          const audioLang = langMap[currentLanguage] || 'english';
+                          const audioRequest = `Generate audio: topic="${message.topic}" intent="${message.intent}" duration="${duration}" language="${audioLang}"`;
+                          handleSendNewUserMessage(null, audioRequest);
+                        }}
+                        onCancel={() => {
+                          // Remove the options card
+                          setChatMessages(prev => prev.filter(msg => msg.id !== message.id));
+                        }}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // AUDIO PLAYER MESSAGE (live session)
+              // ============================================
+              if (message.type === 'audio_player') {
+                return (
+                  <div key={message.id} className="message ai-message audio-player-message">
+                    <div className="message-content">
+                      <ChatAudioPlayer
+                        audioBase64={message.audioBase64}
+                        firebaseUrl={message.firebaseUrl}
+                        topic={message.topic}
+                        intent={message.intent}
+                        duration={message.audioDuration ? `${Math.round(message.audioDuration / 60)} min` : ''}
+                        script={message.script}
+                        isGenerating={message.isGenerating}
+                        generatingMessage={message.generatingMessage}
+                      />
+                      {message.error && (
+                        <div className="audio-error-message">
+                          {message.error}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // AUDIO MESSAGE (persisted from Firebase)
+              // ============================================
+              if (message.type === 'audio') {
+                return (
+                  <div key={message.id} className="message ai-message audio-player-message">
+                    <div className="message-content">
+                      <ChatAudioPlayer
+                        firebaseUrl={message.firebaseUrl}
+                        topic={message.topic}
+                        intent={message.intent}
+                        duration={message.duration || ''}
+                        script={message.script}
+                        isGenerating={false}
                       />
                     </div>
                   </div>

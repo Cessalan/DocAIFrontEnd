@@ -184,8 +184,10 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
 
     case 'stream_chunk':
       // Handle all the streaming formats from your current implementation
+      console.log('📦 Stream chunk received:', data);
       if (data.status) {
         // Handle status updates (quiz generation, study sheets, etc.)
+        console.log('📦 Calling onStatusUpdate with status:', data.status);
         onStatusUpdate(data);
       }
       else if (data.answer_chunk) {

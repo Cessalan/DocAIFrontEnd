@@ -1,0 +1,272 @@
+/* Audio Confirm Card - Premium Minimal Design */
+
+.audio-confirm-card {
+  background: rgba(155, 111, 176, 0.04);
+  border: 1px solid rgba(155, 111, 176, 0.15);
+  border-radius: 16px;
+  padding: 20px;
+  max-width: 400px;
+  margin: 8px 0;
+}
+
+/* Header */
+.audio-confirm-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.audio-icon {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.audio-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.audio-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1f1f1f;
+  margin: 0;
+}
+
+.audio-style-name {
+  font-size: 0.8rem;
+  color: #9b6fb0;
+  font-weight: 500;
+}
+
+/* Content */
+.audio-confirm-content {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.audio-topic-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.audio-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #666;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.audio-topic {
+  font-size: 0.95rem;
+  color: #333;
+  font-weight: 500;
+}
+
+.audio-style-description {
+  font-size: 0.85rem;
+  color: #555;
+  line-height: 1.5;
+  margin: 0;
+  padding: 10px 12px;
+  background: rgba(155, 111, 176, 0.06);
+  border-radius: 8px;
+}
+
+/* Duration Section */
+.audio-duration-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.audio-duration-options {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.audio-duration-btn {
+  padding: 8px 16px;
+  background: white;
+  border: 1px solid rgba(155, 111, 176, 0.25);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.audio-duration-btn:hover:not(:disabled) {
+  border-color: #9b6fb0;
+  color: #9b6fb0;
+}
+
+.audio-duration-btn.selected {
+  background: #9b6fb0;
+  border-color: #9b6fb0;
+  color: white;
+}
+
+.audio-duration-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Actions */
+.audio-confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(155, 111, 176, 0.1);
+}
+
+.audio-cancel-btn {
+  padding: 10px 20px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.audio-cancel-btn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.audio-generate-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  background: #9b6fb0;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: white;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.audio-generate-btn:hover:not(:disabled) {
+  background: #8a5fa0;
+  transform: translateY(-1px);
+}
+
+.audio-generate-btn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.audio-generate-btn svg {
+  flex-shrink: 0;
+}
+
+/* Spinner */
+.audio-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: audio-spin 0.8s linear infinite;
+}
+
+@keyframes audio-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Dark Mode */
+body.dark-mode .audio-confirm-card {
+  background: rgba(140, 120, 170, 0.1);
+  border-color: rgba(180, 160, 200, 0.2);
+}
+
+body.dark-mode .audio-title {
+  color: #f0f0f0;
+}
+
+body.dark-mode .audio-style-name {
+  color: #c8b0e0;
+}
+
+body.dark-mode .audio-label {
+  color: #999;
+}
+
+body.dark-mode .audio-topic {
+  color: #e0e0e0;
+}
+
+body.dark-mode .audio-style-description {
+  background: rgba(140, 120, 170, 0.15);
+  color: #ccc;
+}
+
+body.dark-mode .audio-duration-btn {
+  background: rgba(30, 30, 40, 0.5);
+  border-color: rgba(180, 160, 200, 0.3);
+  color: #aaa;
+}
+
+body.dark-mode .audio-duration-btn:hover:not(:disabled) {
+  border-color: #b8a0d0;
+  color: #d8c8e8;
+}
+
+body.dark-mode .audio-duration-btn.selected {
+  background: #8b70a8;
+  border-color: #8b70a8;
+  color: white;
+}
+
+body.dark-mode .audio-confirm-actions {
+  border-top-color: rgba(180, 160, 200, 0.15);
+}
+
+body.dark-mode .audio-cancel-btn {
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #aaa;
+}
+
+body.dark-mode .audio-cancel-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .audio-generate-btn {
+  background: #8b70a8;
+}
+
+body.dark-mode .audio-generate-btn:hover:not(:disabled) {
+  background: #9b80b8;
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .audio-confirm-card {
+    padding: 16px;
+  }
+
+  .audio-confirm-actions {
+    flex-direction: column;
+  }
+
+  .audio-cancel-btn,
+  .audio-generate-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
