@@ -4,21 +4,22 @@
 
 .compact-progress-widget {
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  gap: 8px;
+  padding: 6px 12px;
   background: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
+  border-radius: 20px;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   user-select: none;
   position: relative;
   z-index: 100;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+  flex-shrink: 0;
 }
 
 .compact-progress-widget:hover {
@@ -66,24 +67,7 @@ body.dark-mode .compact-progress-widget:hover {
   }
 }
 
-/* Pills row - top row with badges */
-.widget-pills-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Widget sections */
-.widget-section {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
 /* Level Badge - Premium pill */
-.level-section {
-  flex-shrink: 0;
-}
 
 .level-badge {
   display: flex;
@@ -107,17 +91,16 @@ body.dark-mode .compact-progress-widget:hover {
   letter-spacing: 0.5px;
 }
 
-/* XP Row - Full width bar below pills */
+/* XP Row - Inline with other elements */
 .widget-xp-row {
   display: flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
+  gap: 6px;
 }
 
 .widget-xp-row .xp-bar-track {
-  flex: 1;
-  height: 5px;
+  width: 50px;
+  height: 4px;
   background: rgba(0, 0, 0, 0.1);
   border-radius: 3px;
   overflow: hidden;

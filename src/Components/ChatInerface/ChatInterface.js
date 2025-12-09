@@ -2504,12 +2504,13 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
         {/* Header */}
         <div className="chat-header">
-          <h2 className="chat-header-title" onClick={() => setIsFilesModalVisible(true)}>
-            {currentChatTitle}
-          </h2>
-
-          {/* Progress Widget - Under title */}
-          <CompactProgressWidget />
+          <div className="chat-header-row">
+            <h2 className="chat-header-title" onClick={() => setIsFilesModalVisible(true)}>
+              {currentChatTitle}
+            </h2>
+            {/* Progress Widget - Next to title */}
+            <CompactProgressWidget />
+          </div>
         </div>
 
         {/* 🎯 STICKY QUIZ PROGRESS BAR - ADD THIS */}

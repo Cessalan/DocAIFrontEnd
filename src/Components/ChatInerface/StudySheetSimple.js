@@ -83,6 +83,56 @@ const StudySheetSimple = ({
   const handleDownloadPDF = async () => {
     if (!pdfContentRef.current || !content) return;
 
+    // Create off-screen container with forced light mode styles
+    const offscreenContainer = document.createElement('div');
+    offscreenContainer.style.cssText = `
+      position: absolute;
+      left: -9999px;
+      top: 0;
+      width: 800px;
+      background: #ffffff;
+    `;
+
+    // Clone the content
+    const clone = pdfContentRef.current.cloneNode(true);
+
+    // Apply light mode styles directly to cloned elements
+    clone.style.background = '#ffffff';
+    clone.style.color = '#333333';
+
+    // Force light mode colors on all elements
+    const applyLightStyles = (el) => {
+      if (el.classList.contains('study-section-header')) {
+        el.style.background = '#9b6fb0';
+        el.style.color = 'white';
+      }
+      if (el.classList.contains('study-subsection-header')) {
+        el.style.color = '#4a3660';
+      }
+      if (el.classList.contains('study-paragraph')) {
+        el.style.color = '#333333';
+      }
+      if (el.classList.contains('study-numbered')) {
+        el.style.background = 'rgba(155, 111, 176, 0.04)';
+      }
+      if (el.classList.contains('number-marker')) {
+        el.style.background = '#9b6fb0';
+        el.style.color = 'white';
+      }
+      if (el.classList.contains('numbered-content')) {
+        el.style.color = '#333333';
+      }
+      if (el.classList.contains('pdf-header')) {
+        el.style.display = 'block';
+        el.style.color = '#1f1f1f';
+      }
+      Array.from(el.children).forEach(applyLightStyles);
+    };
+    applyLightStyles(clone);
+
+    offscreenContainer.appendChild(clone);
+    document.body.appendChild(offscreenContainer);
+
     const opt = {
       margin: [15, 15, 15, 15],
       filename: `${topic.replace(/[^a-zA-Z0-9]/g, '_')}_study_sheet.pdf`,
@@ -90,7 +140,8 @@ const StudySheetSimple = ({
       html2canvas: {
         scale: 2,
         useCORS: true,
-        letterRendering: true
+        letterRendering: true,
+        backgroundColor: '#ffffff'
       },
       jsPDF: {
         unit: 'mm',
@@ -101,9 +152,12 @@ const StudySheetSimple = ({
     };
 
     try {
-      await html2pdf().set(opt).from(pdfContentRef.current).save();
+      await html2pdf().set(opt).from(clone).save();
     } catch (err) {
       console.error('PDF download failed:', err);
+    } finally {
+      // Clean up off-screen container
+      document.body.removeChild(offscreenContainer);
     }
   };
 
