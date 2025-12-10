@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import './PostUploadActions.css';
 
 /**
@@ -38,6 +39,19 @@ const PostUploadActions = ({
   showActions = true,
   onAction
 }) => {
+  const { t } = useTranslation();
+
+  // Map action IDs to i18n translation keys
+  const getLocalizedLabel = (actionId, fallbackLabel) => {
+    const labelKeys = {
+      quiz: 'postUpload.quizLabel',
+      flashcards: 'postUpload.flashcardsLabel',
+      studysheet: 'postUpload.studysheetLabel',
+      audio: 'postUpload.audioLabel'
+    };
+    const key = labelKeys[actionId];
+    return key ? t(key, fallbackLabel) : fallbackLabel;
+  };
 
   // ============================================
   // RENDER
@@ -68,7 +82,7 @@ const PostUploadActions = ({
               type="button"
             >
               <span className="action-icon">{action.icon}</span>
-              <span className="action-label">{action.label}</span>
+              <span className="action-label">{getLocalizedLabel(action.id, action.label)}</span>
             </button>
           ))}
         </div>

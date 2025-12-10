@@ -205,6 +205,19 @@ const resources = {
         uploading: "Uploading:"
       },
 
+      // Post-Upload Actions
+      postUpload: {
+        // Action button labels
+        quizLabel: "Quiz me",
+        flashcardsLabel: "Create flashcards",
+        studysheetLabel: "Study sheet",
+        audioLabel: "Listen",
+        // Action prompts sent to AI
+        quizPrompt: "Generate a quiz covering: {{topics}}",
+        flashcardsPrompt: "Create flashcards for: {{topics}}",
+        studysheetPrompt: "Create a study sheet summarizing the uploaded documents"
+      },
+
       // Quiz Navigation
       quizNavigation: {
         title: "Quiz Navigation",
@@ -476,6 +489,39 @@ const resources = {
         today: "Today"
       },
 
+      // Audio Generation
+      audio: {
+        readyToGenerate: "Audio Ready",
+        topic: "Topic",
+        duration: "Duration",
+        minute: "min",
+        minutes: "min",
+        generate: "Generate Audio",
+        generating: "Generating...",
+        download: "Download",
+        speed: "Speed",
+        showTranscript: "Show transcript",
+        hideTranscript: "Hide transcript",
+        // Intent style names
+        fullLesson: "Full Lesson",
+        quickSummary: "Quick Summary",
+        deepDive: "Deep Dive",
+        simpleExplanation: "Simple Explanation",
+        progressReport: "Progress Report",
+        // Intent style descriptions
+        fullLessonDesc: "Structured lesson with examples and clinical context",
+        quickSummaryDesc: "Key points only, concise overview",
+        deepDiveDesc: "Comprehensive, detailed exploration",
+        simpleExplanationDesc: "Beginner-friendly, uses analogies",
+        progressReportDesc: "Your stats, achievements, and recommendations",
+        // Status messages
+        creatingScript: "Creating script...",
+        scriptReady: "Script ready, converting to speech...",
+        generatingAudio: "Generating audio...",
+        audioReady: "Audio ready!",
+        audioError: "Failed to generate audio"
+      },
+
       // Quiz Sharing
       quizShare: {
         buttonText: "Share Quiz",
@@ -707,6 +753,19 @@ const resources = {
         received: "J'ai reçu ton fichier",
         question: "",
         uploading: "Entrain d'envoyer:"
+      },
+
+      // Post-Upload Actions
+      postUpload: {
+        // Action button labels
+        quizLabel: "Quiz",
+        flashcardsLabel: "Créer des cartes mémoire",
+        studysheetLabel: "Feuille d'étude",
+        audioLabel: "Écouter",
+        // Action prompts sent to AI
+        quizPrompt: "Génère un quiz couvrant : {{topics}}",
+        flashcardsPrompt: "Crée des cartes mémoire pour : {{topics}}",
+        studysheetPrompt: "Crée une feuille d'étude résumant les documents téléversés"
       },
 
       // Quiz Navigation
@@ -978,6 +1037,39 @@ const resources = {
         past: "il y a {{days}}j",
         now: "Maintenant!",
         today: "Aujourd'hui"
+      },
+
+      // Audio Generation
+      audio: {
+        readyToGenerate: "Audio prêt",
+        topic: "Sujet",
+        duration: "Durée",
+        minute: "min",
+        minutes: "min",
+        generate: "Générer l'audio",
+        generating: "Génération...",
+        download: "Télécharger",
+        speed: "Vitesse",
+        showTranscript: "Afficher la transcription",
+        hideTranscript: "Masquer la transcription",
+        // Intent style names
+        fullLesson: "Leçon complète",
+        quickSummary: "Résumé rapide",
+        deepDive: "Exploration approfondie",
+        simpleExplanation: "Explication simple",
+        progressReport: "Rapport de progression",
+        // Intent style descriptions
+        fullLessonDesc: "Leçon structurée avec exemples et contexte clinique",
+        quickSummaryDesc: "Points clés uniquement, aperçu concis",
+        deepDiveDesc: "Exploration complète et détaillée",
+        simpleExplanationDesc: "Adapté aux débutants, utilise des analogies",
+        progressReportDesc: "Tes statistiques, réalisations et recommandations",
+        // Status messages
+        creatingScript: "Création du script...",
+        scriptReady: "Script prêt, conversion en audio...",
+        generatingAudio: "Génération de l'audio...",
+        audioReady: "Audio prêt!",
+        audioError: "Échec de la génération audio"
       },
 
       // Quiz Sharing

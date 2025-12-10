@@ -616,7 +616,9 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
   // MESSAGE HANDLING
   // ============================================
 
-  const handleSendNewUserMessage = async (e = null, customPrompt = null) => {
+  const handleSendNewUserMessage = async (e = null, customPrompt = null, options = {}) => {
+    const { hideUserMessage = false } = options;
+
     // Check if e is actually an event object (has preventDefault method)
     if (e && typeof e.preventDefault === 'function') {
       e.preventDefault();
@@ -634,11 +636,12 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     setStreamingStatus(null);
     setIsStreaming(true);
 
-    // Add user message
+    // Add user message (unless hidden for automated prompts)
     const newUserMessage = {
       id: uuidv4(),
       role: 'user',
       content: messageToSend,
+      hidden: hideUserMessage, // Mark as hidden for rendering
     };
 
     const streamingMessageId = `streaming-${Date.now()}`;
@@ -651,7 +654,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     };
 
     // Add user message AND streaming placeholder immediately (optimistic UI)
-    setChatMessages(prev => [...prev, newUserMessage, placeholderMessage]);
+    // If hideUserMessage is true, only add the placeholder
+    setChatMessages(prev => hideUserMessage
+      ? [...prev, placeholderMessage]
+      : [...prev, newUserMessage, placeholderMessage]
+    );
 
     // Scroll user message to top of viewport (ChatGPT style)
     setTimeout(() => {
@@ -1085,6 +1092,18 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           // Audio generating - show generating state
           if (statusUpdate.status === "audio_generating" || statusUpdate.status === "audio_script_ready" || statusUpdate.status === "audio_tts_progress") {
             console.log("🎙️ Audio generating:", statusUpdate.message);
+
+            // Map backend status to translation key for bilingual support
+            const getAudioStatusKey = (status) => {
+              switch (status) {
+                case 'audio_generating': return 'audio.creatingScript';
+                case 'audio_script_ready': return 'audio.scriptReady';
+                case 'audio_tts_progress': return 'audio.generatingAudio';
+                default: return 'audio.generating';
+              }
+            };
+            const statusKey = getAudioStatusKey(statusUpdate.status);
+
             setChatMessages(prev => {
               // Check if we already have an audio player message generating
               const hasAudioPlayer = prev.some(msg => msg.type === 'audio_player' && msg.isGenerating);
@@ -1092,7 +1111,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                 // Update the existing generating message
                 return prev.map(msg =>
                   msg.type === 'audio_player' && msg.isGenerating
-                    ? { ...msg, generatingMessage: statusUpdate.message }
+                    ? { ...msg, generatingMessageKey: statusKey }
                     : msg
                 );
               }
@@ -1104,7 +1123,7 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                   role: 'assistant',
                   type: 'audio_player',
                   isGenerating: true,
-                  generatingMessage: statusUpdate.message,
+                  generatingMessageKey: statusKey,
                   topic: statusUpdate.topic || 'Audio',
                   timestamp: new Date()
                 }
@@ -2347,10 +2366,31 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       ? messageData.topics.join(', ')
       : 'the uploaded material';
 
+    // Special handling for audio - show the AudioConfirmCard
+    if (actionId === 'audio') {
+      const audioOptionsId = `audio-options-${Date.now()}`;
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: audioOptionsId,
+          role: 'assistant',
+          type: 'audio_options',
+          topic: topicsStr,
+          intent: 'teach',
+          styleName: 'Full Lesson',
+          styleDescription: 'Structured lesson with examples and clinical context',
+          durations: ['2min', '5min', '10min'],
+          defaultDuration: '5min',
+          timestamp: new Date()
+        }
+      ]);
+      return;
+    }
+
     const prompts = {
-      quiz: `Generate a quiz covering: ${topicsStr}`,
-      flashcards: `Create flashcards for: ${topicsStr}`,
-      studysheet: `Create a study sheet summarizing the uploaded documents`
+      quiz: t('postUpload.quizPrompt', { topics: topicsStr }),
+      flashcards: t('postUpload.flashcardsPrompt', { topics: topicsStr }),
+      studysheet: t('postUpload.studysheetPrompt')
     };
 
     const promptToSend = prompts[actionId];
@@ -2916,11 +2956,13 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                           // Remove the options card
                           setChatMessages(prev => prev.filter(msg => msg.id !== message.id));
                           // Send message to generate audio with selected duration and language
-                          // Map 'fr' -> 'french', 'en' -> 'english' for backend
+                          // Use i18n.language directly to get current language (avoid stale closure)
+                          const currentLang = i18n.language || 'en';
+                          const langCode = currentLang.split('-')[0]; // Extract base language code
                           const langMap = { 'fr': 'french', 'en': 'english' };
-                          const audioLang = langMap[currentLanguage] || 'english';
+                          const audioLang = langMap[langCode] || 'english';
                           const audioRequest = `Generate audio: topic="${message.topic}" intent="${message.intent}" duration="${duration}" language="${audioLang}"`;
-                          handleSendNewUserMessage(null, audioRequest);
+                          handleSendNewUserMessage(null, audioRequest, { hideUserMessage: true });
                         }}
                         onCancel={() => {
                           // Remove the options card
@@ -2947,11 +2989,11 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                         duration={message.audioDuration ? `${Math.round(message.audioDuration / 60)} min` : ''}
                         script={message.script}
                         isGenerating={message.isGenerating}
-                        generatingMessage={message.generatingMessage}
+                        generatingMessage={message.generatingMessageKey ? t(message.generatingMessageKey) : message.generatingMessage}
                       />
                       {message.error && (
                         <div className="audio-error-message">
-                          {message.error}
+                          {t('audio.audioError', message.error)}
                         </div>
                       )}
                     </div>

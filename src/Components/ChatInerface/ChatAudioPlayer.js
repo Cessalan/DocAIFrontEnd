@@ -89,15 +89,52 @@ const ChatAudioPlayer = ({
   };
 
   // Handle download
-  const handleDownload = () => {
-    if (!audioBase64) return;
+  const handleDownload = async () => {
+    if (!audioUrl) return;
 
-    const link = document.createElement('a');
-    link.href = audioUrl;
-    link.download = `${topic.replace(/[^a-zA-Z0-9]/g, '_')}_audio.mp3`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    const filename = `${(topic || 'audio').replace(/[^a-zA-Z0-9]/g, '_')}_audio.mp3`;
+
+    try {
+      // For Firebase URLs, we need to fetch and create a blob
+      if (firebaseUrl) {
+        const response = await fetch(firebaseUrl);
+        const blob = await response.blob();
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        // Clean up the blob URL
+        URL.revokeObjectURL(blobUrl);
+      } else if (audioBase64) {
+        // For base64, convert to blob for better download handling
+        const byteCharacters = atob(audioBase64);
+        const byteNumbers = new Array(byteCharacters.length);
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i);
+        }
+        const byteArray = new Uint8Array(byteNumbers);
+        const blob = new Blob([byteArray], { type: 'audio/mpeg' });
+        const blobUrl = URL.createObjectURL(blob);
+
+        const link = document.createElement('a');
+        link.href = blobUrl;
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        URL.revokeObjectURL(blobUrl);
+      }
+    } catch (error) {
+      console.error('Download failed:', error);
+      // Fallback: open in new tab
+      window.open(audioUrl, '_blank');
+    }
   };
 
   // Skip forward/backward

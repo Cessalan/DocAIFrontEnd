@@ -226,7 +226,10 @@ export const embed_docs = async (documents,chatId) => {
  */
 export const upload_files_with_progress = async (files, chatId, onProgress,language) => {
   try {
-    
+    // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
+    const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
+    console.log('📤 Upload language:', language, '-> normalized:', normalizedLang);
+
     // Prepare FormData
     const formData = new FormData();
     files.forEach(file => {
@@ -234,7 +237,7 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
     });
     formData.append('chat_id', chatId);
     formData.append('user_id', auth.currentUser?.uid || 'anonymous');
-    formData.append('language', language || 'english')
+    formData.append('language', normalizedLang)
 
     // Send request
     const response = await fetch(`${FAST_API_BASE}/chat/upload-files`, {

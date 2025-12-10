@@ -43,13 +43,37 @@ const AudioConfirmCard = ({
     }
   };
 
+  // Get translated style name based on intent
+  const getTranslatedStyleName = () => {
+    switch (intent) {
+      case 'teach': return t('audio.fullLesson', 'Full Lesson');
+      case 'summarize': return t('audio.quickSummary', 'Quick Summary');
+      case 'deep_dive': return t('audio.deepDive', 'Deep Dive');
+      case 'simplify': return t('audio.simpleExplanation', 'Simple Explanation');
+      case 'progress': return t('audio.progressReport', 'Progress Report');
+      default: return styleName;
+    }
+  };
+
+  // Get translated style description based on intent
+  const getTranslatedStyleDescription = () => {
+    switch (intent) {
+      case 'teach': return t('audio.fullLessonDesc', 'Structured lesson with examples and clinical context');
+      case 'summarize': return t('audio.quickSummaryDesc', 'Key points only, concise overview');
+      case 'deep_dive': return t('audio.deepDiveDesc', 'Comprehensive, detailed exploration');
+      case 'simplify': return t('audio.simpleExplanationDesc', 'Beginner-friendly, uses analogies');
+      case 'progress': return t('audio.progressReportDesc', 'Your stats, achievements, and recommendations');
+      default: return styleDescription;
+    }
+  };
+
   return (
     <div className="audio-confirm-card">
       <div className="audio-confirm-header">
         <span className="audio-icon">{getIntentIcon()}</span>
         <div className="audio-header-text">
           <h3 className="audio-title">{t('audio.readyToGenerate', 'Audio Ready')}</h3>
-          <span className="audio-style-name">{styleName}</span>
+          <span className="audio-style-name">{getTranslatedStyleName()}</span>
         </div>
       </div>
 
@@ -59,7 +83,7 @@ const AudioConfirmCard = ({
           <span className="audio-topic">{topic}</span>
         </div>
 
-        <p className="audio-style-description">{styleDescription}</p>
+        <p className="audio-style-description">{getTranslatedStyleDescription()}</p>
 
         <div className="audio-duration-section">
           <span className="audio-label">{t('audio.duration', 'Duration')}:</span>
