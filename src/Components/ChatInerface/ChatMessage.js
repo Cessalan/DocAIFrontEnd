@@ -579,8 +579,9 @@ const ChatMessage = ({
   // ============================================
 
   console.log("msg check before role:", message)
-  const isAI = message.role === "assistant";
-  const isUser = message.role === "user";
+  // Support both 'role' (standard) and 'sender' (legacy game quizzes)
+  const isAI = message.role === "assistant" || message.sender === "ai";
+  const isUser = message.role === "user" || message.sender === "user";
 
   const fullFile = uploadedFilesList?.find(
     (uploadedFile) => uploadedFile.name === message.file?.name && uploadedFile.id === message.file?.id

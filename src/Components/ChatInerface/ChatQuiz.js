@@ -99,6 +99,7 @@ function ChatQuiz(props) {
   const [reviewMode, setReviewMode] = useState(false);
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [submittedFeedback, setSubmittedFeedback] = useState(feedbackData);
+  const [showXpAnimation, setShowXpAnimation] = useState(false);
 
   const handleFeedbackSubmit = (data) => {
     console.log('Quiz Feedback Submitted:', data);
@@ -180,8 +181,16 @@ function ChatQuiz(props) {
     const correctIdx = quiz.options.findIndex(opt => opt === quiz.answer);
     const isAnswerCorrect = index === correctIdx;
 
-    if (isAnswerCorrect && navigator.vibrate) {
-      navigator.vibrate(50);
+    if (isAnswerCorrect) {
+      // Vibrate on correct answer
+      if (navigator.vibrate) {
+        navigator.vibrate(50);
+      }
+      // Show +1 XP animation
+      setShowXpAnimation(true);
+      setTimeout(() => {
+        setShowXpAnimation(false);
+      }, 1500);
     }
 
     setTimeout(() => {
@@ -479,6 +488,13 @@ function ChatQuiz(props) {
         )}
 
         <div className="quiz-main-content">
+          {/* +1 XP Animation - Shows on correct answer */}
+          {showXpAnimation && (
+            <div className="quiz-xp-animation">
+              +1 XP
+            </div>
+          )}
+
           <div className="quiz-content-wrapper" key={quizIndex}>
             {/* Header */}
             <div className="quiz-compact-header">

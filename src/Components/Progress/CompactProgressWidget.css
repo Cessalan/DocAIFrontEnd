@@ -22,6 +22,66 @@
   flex-shrink: 0;
 }
 
+/* ============================================
+   +1 XP FLOATING ANIMATION
+   ============================================ */
+
+.xp-float-animation {
+  position: absolute;
+  top: -8px;
+  right: 50%;
+  transform: translateX(50%);
+  font-size: 14px;
+  font-weight: 700;
+  color: #3b82f6;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.5), 0 0 20px rgba(59, 130, 246, 0.3);
+  pointer-events: none;
+  animation: xpFloatUp 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  z-index: 1000;
+  white-space: nowrap;
+}
+
+@keyframes xpFloatUp {
+  0% {
+    opacity: 1;
+    transform: translateX(50%) translateY(0) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: translateX(50%) translateY(-20px) scale(1.2);
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(50%) translateY(-35px) scale(0.9);
+  }
+}
+
+/* Widget pulse effect when gaining XP */
+.compact-progress-widget.xp-pulse {
+  animation: widgetPulse 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes widgetPulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.3), 0 4px 12px -2px rgba(59, 130, 246, 0.4);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 2px 4px -1px rgba(0, 0, 0, 0.08);
+  }
+}
+
+/* Dark mode adjustments */
+body.dark-mode .xp-float-animation {
+  color: #60a5fa;
+  text-shadow: 0 0 10px rgba(96, 165, 250, 0.6), 0 0 20px rgba(96, 165, 250, 0.4);
+}
+
 .compact-progress-widget:hover {
   background: rgba(255, 255, 255, 0.15);
   transform: translateY(-1px);

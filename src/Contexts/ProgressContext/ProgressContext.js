@@ -71,6 +71,7 @@ export function ProgressProvider({ children }) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [dashboardOpen, setDashboardOpen] = useState(false);
+  const [xpGainAnimation, setXpGainAnimation] = useState(null); // { amount: number, timestamp: number }
 
   // Load user progress on mount/login
   useEffect(() => {
@@ -162,6 +163,9 @@ export function ProgressProvider({ children }) {
           dailySerumDate: result.dailySerumDate,
           topicStats: result.topicStats || prev.topicStats,
         }));
+
+        // Trigger +1 XP animation
+        setXpGainAnimation({ amount: 1, timestamp: Date.now() });
       }
     } catch (error) {
       console.error('Error recording correct answer:', error);
@@ -227,6 +231,11 @@ export function ProgressProvider({ children }) {
   );
   const isSerumComplete = progressData.dailyCorrectAnswers >= DAILY_SERUM_GOAL;
 
+  // Clear animation after it plays
+  const clearXpAnimation = useCallback(() => {
+    setXpGainAnimation(null);
+  }, []);
+
   const value = {
     // Data
     ...progressData,
@@ -241,12 +250,14 @@ export function ProgressProvider({ children }) {
     // State
     isLoading,
     dashboardOpen,
+    xpGainAnimation,
 
     // Actions
     addCorrectAnswer,
     addIncorrectAnswer,
     toggleDashboard,
     closeDashboard,
+    clearXpAnimation,
   };
 
   return (

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useProgress } from '../../Contexts/ProgressContext/ProgressContext';
 import './CompactProgressWidget.css';
@@ -21,7 +21,27 @@ const CompactProgressWidget = () => {
     dailySerumGoal,
     isLoading,
     toggleDashboard,
+    xpGainAnimation,
+    clearXpAnimation,
   } = useProgress();
+
+  // Track animation visibility
+  const [showXpFloat, setShowXpFloat] = useState(false);
+
+  // Trigger animation when xpGainAnimation changes
+  useEffect(() => {
+    if (xpGainAnimation) {
+      setShowXpFloat(true);
+
+      // Hide after animation completes (1s)
+      const timer = setTimeout(() => {
+        setShowXpFloat(false);
+        clearXpAnimation();
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [xpGainAnimation, clearXpAnimation]);
 
   if (isLoading) {
     return (
@@ -34,7 +54,14 @@ const CompactProgressWidget = () => {
   const xpPercentage = xpForNextLevel ? Math.min((xpProgress / xpNeeded) * 100, 100) : 100;
 
   return (
-    <div className="compact-progress-widget" onClick={toggleDashboard}>
+    <div className={`compact-progress-widget ${showXpFloat ? 'xp-pulse' : ''}`} onClick={toggleDashboard}>
+      {/* +1 XP Floating Animation */}
+      {showXpFloat && (
+        <div className="xp-float-animation">
+          +1 XP
+        </div>
+      )}
+
       {/* Level Badge */}
       <div className="level-badge">
         <span className="level-icon">⭐</span>

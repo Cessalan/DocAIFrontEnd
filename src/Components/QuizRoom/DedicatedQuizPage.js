@@ -12,6 +12,9 @@ import './DedicatedQuizPage.css';
 // Auth imports
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 
+// Progress context for existing topics
+import { useProgress } from '../../Contexts/ProgressContext/ProgressContext';
+
 // Firebase imports for saving quiz results
 import { db } from '../../Firebase/config';
 import { doc, collection, addDoc, serverTimestamp, updateDoc } from 'firebase/firestore';
@@ -137,6 +140,7 @@ function DedicatedQuizPage() {
   const navigate = useNavigate();
   const [isDarkMode] = useDarkMode();
   const { currentUser } = useAuth();
+  const { topicStats } = useProgress();
 
   // Login prompt state - shown when anonymous user tries to answer
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
@@ -366,7 +370,10 @@ function DedicatedQuizPage() {
         });
 
         // Step 3: Request quiz questions
-        const success = await sendGameQuizRequest(chatId, 5, 'medium');
+        // Pass existing topics so backend can match questions to user's established topics
+        const existingTopics = topicStats ? Object.keys(topicStats) : [];
+        console.log('📚 Sending existing topics to backend:', existingTopics);
+        const success = await sendGameQuizRequest(chatId, 5, 'medium', null, existingTopics);
 
         if (!success && isMounted) {
           setGameError('Failed to start quiz. Please try again.');
@@ -424,7 +431,7 @@ function DedicatedQuizPage() {
       const messagesRef = collection(db, 'chats', chatId, 'messages');
       await addDoc(messagesRef, {
         type: 'quiz',
-        sender: 'ai',
+        role: 'assistant',
         content: `Quiz completed - ${correctCount}/${streamedQuestions.length} correct`,
         quizData: quizDataWithAnswers,
         timestamp: serverTimestamp(),

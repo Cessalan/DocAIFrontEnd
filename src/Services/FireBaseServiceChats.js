@@ -352,27 +352,42 @@ export const DeleteChat = async (chatId) => {
     const messagesRef = collection(db, "chats", chatId, "messages");
     const messagesSnapshot = await getDocs(messagesRef);
 
-    const deletePromises = messagesSnapshot.docs.map(doc =>
-      deleteDoc(doc.ref)
+    const messageDeletePromises = messagesSnapshot.docs.map(docSnap =>
+      deleteDoc(docSnap.ref)
     );
-    await Promise.all(deletePromises);
+    await Promise.all(messageDeletePromises);
     console.log("✅ Deleted", messagesSnapshot.size, "messages");
 
-    // 2. Delete chat document
+    // 2. Delete uploads subcollection (file metadata)
+    const uploadsRef = collection(db, "chats", chatId, "uploads");
+    const uploadsSnapshot = await getDocs(uploadsRef);
+
+    const uploadsDeletePromises = uploadsSnapshot.docs.map(docSnap =>
+      deleteDoc(docSnap.ref)
+    );
+    await Promise.all(uploadsDeletePromises);
+    console.log("✅ Deleted", uploadsSnapshot.size, "upload metadata documents");
+
+    // 3. Delete chat document
     await deleteDoc(doc(db, "chats", chatId));
     console.log("✅ Deleted chat document");
 
-    // 3. Delete uploaded files in Storage: /chats/{chatId}/
+    // 4. Delete uploaded files in Storage: /chats/{chatId}/
     const chatStorageRef = ref(storage, `chats/${chatId}`);
     await deleteFolder(chatStorageRef);
-    console.log("✅ Deleted /chats folder");
+    console.log("✅ Deleted /chats/{chatId} folder (uploads, audio)");
 
-    // 4. Delete vector store files: /FileVectorStore/{chatId}/
-    const vectorStoreRef = ref(storage, `FileVectorStore/${chatId}`);
-    await deleteFolder(vectorStoreRef);
-    console.log("✅ Deleted /FileVectorStore folder");
+    // 5. Delete per-file vector store files: /FileVectorStore/{chatId}/
+    const fileVectorStoreRef = ref(storage, `FileVectorStore/${chatId}`);
+    await deleteFolder(fileVectorStoreRef);
+    console.log("✅ Deleted /FileVectorStore/{chatId} folder");
 
-    console.log("✅ Chat deleted successfully");
+    // 6. Delete combined vector store: /vectorstores/{chatId}/
+    const combinedVectorStoreRef = ref(storage, `vectorstores/${chatId}`);
+    await deleteFolder(combinedVectorStoreRef);
+    console.log("✅ Deleted /vectorstores/{chatId} folder");
+
+    console.log("✅ Chat fully deleted: messages, uploads, files, and embeddings");
     return { success: true };
 
   } catch (error) {

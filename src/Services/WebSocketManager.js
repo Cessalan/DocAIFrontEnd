@@ -332,6 +332,7 @@ export const cancelWebSocketStream = async (chatId) => {
  * @param {number} questionCount - Number of questions (default: 5)
  * @param {string} difficulty - Question difficulty: "easy", "medium", "hard" (default: "medium")
  * @param {function} onMessage - Callback for handling streamed messages
+ * @param {Array<string>} existingTopics - User's existing topics from progress tracking (for smart topic matching)
  * @returns {Promise<boolean>} - True if request sent successfully
  *
  * Message types you'll receive in onMessage:
@@ -340,7 +341,7 @@ export const cancelWebSocketStream = async (chatId) => {
  *   - game_question_ready: { question: { index, question, options, answer, justification, topic, serumValue }, quizId, isFirst }
  *   - game_quiz_complete: { totalQuestions }
  */
-export const sendGameQuizRequest = async (chatId, questionCount = 5, difficulty = "medium", onMessage = null) => {
+export const sendGameQuizRequest = async (chatId, questionCount = 5, difficulty = "medium", onMessage = null, existingTopics = []) => {
   try {
     // Make sure we're connected
     await wsManager.getConnection(chatId);
@@ -350,11 +351,12 @@ export const sendGameQuizRequest = async (chatId, questionCount = 5, difficulty 
       wsManager.setupMessageListener(chatId, onMessage);
     }
 
-    // Send the game quiz request
+    // Send the game quiz request with existing topics for smart matching
     const success = await wsManager.sendMessage(chatId, {
       type: "game_quiz",
       questionCount,
-      difficulty
+      difficulty,
+      existingTopics  // User's existing topics - backend will try to match questions to these
     });
 
     if (success) {

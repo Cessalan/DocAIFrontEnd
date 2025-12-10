@@ -309,16 +309,16 @@ const getchatDate = (timestamp) => {
                 </div>
               )}
               
-              {/* Delete button - appears on hover */}
-               {/* {hoveredChatId === chat.id && (
+              {/* Delete button - appears on hover (DEV MODE ONLY) */}
+              {isDevelopment && hoveredChatId === chat.id && (
                 <button
                   className="delete-chat-button"
                   onClick={(e) => handleDeleteChat(e, chat.id)}
-                  title="Supprimer ce chat"
+                  title="Delete chat (messages, files, embeddings)"
                 >
                   🗑️
                 </button>
-              )}  */}
+              )}
               
               <div className="conversation-details">
                 {/* Header section - now stacked vertically */}
