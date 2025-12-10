@@ -3,7 +3,35 @@ import { useTranslation } from 'react-i18next';
 import html2pdf from 'html2pdf.js';
 import './StudySheetSimple.css';
 
-// Parse plain text with UPPERCASE headers and numbered lists
+// Parse inline markdown (bold, italic) within text
+function parseInlineMarkdown(text) {
+  if (!text) return text;
+
+  // Split by bold markers (**text**) and process
+  const parts = [];
+  let remaining = text;
+  let keyIdx = 0;
+
+  while (remaining.length > 0) {
+    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
+
+    if (boldMatch) {
+      const beforeBold = remaining.substring(0, boldMatch.index);
+      if (beforeBold) {
+        parts.push(beforeBold);
+      }
+      parts.push(<strong key={`b-${keyIdx++}`}>{boldMatch[1]}</strong>);
+      remaining = remaining.substring(boldMatch.index + boldMatch[0].length);
+    } else {
+      parts.push(remaining);
+      break;
+    }
+  }
+
+  return parts.length > 0 ? parts : text;
+}
+
+// Parse markdown content with headers, lists, and formatting
 function parseContent(text) {
   if (!text) return null;
 
@@ -19,12 +47,63 @@ function parseContent(text) {
       return;
     }
 
-    // UPPERCASE HEADER (line that's all caps, at least 3 chars)
+    // Horizontal rule (---, ___, ***)
+    if (/^[-_*]{3,}$/.test(trimmed)) {
+      elements.push(<hr key={`hr-${idx}`} className="study-divider" />);
+      return;
+    }
+
+    // Markdown H1 (# Header)
+    const h1Match = trimmed.match(/^#\s+(.+)/);
+    if (h1Match) {
+      elements.push(
+        <h1 key={`h1-${idx}`} className="study-main-header">
+          {parseInlineMarkdown(h1Match[1])}
+        </h1>
+      );
+      return;
+    }
+
+    // Markdown H2 (## Header)
+    const h2Match = trimmed.match(/^##\s+(.+)/);
+    if (h2Match) {
+      elements.push(
+        <h2 key={`h2-${idx}`} className="study-section-header">
+          {parseInlineMarkdown(h2Match[1])}
+        </h2>
+      );
+      return;
+    }
+
+    // Markdown H3 (### Header)
+    const h3Match = trimmed.match(/^###\s+(.+)/);
+    if (h3Match) {
+      elements.push(
+        <h3 key={`h3-${idx}`} className="study-subsection-header">
+          {parseInlineMarkdown(h3Match[1])}
+        </h3>
+      );
+      return;
+    }
+
+    // UPPERCASE HEADER (line that's all caps, at least 3 chars) - legacy support
     if (trimmed.length > 2 && trimmed === trimmed.toUpperCase() && /^[A-Z\s]+$/.test(trimmed)) {
       elements.push(
         <h2 key={`h-${idx}`} className="study-section-header">
           {trimmed}
         </h2>
+      );
+      return;
+    }
+
+    // Bullet list items (- item or * item)
+    const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
+    if (bulletMatch) {
+      elements.push(
+        <div key={`b-${idx}`} className="study-bullet">
+          <span className="bullet-marker">•</span>
+          <span className="bullet-content">{parseInlineMarkdown(bulletMatch[1])}</span>
+        </div>
       );
       return;
     }
@@ -35,26 +114,26 @@ function parseContent(text) {
       elements.push(
         <div key={`n-${idx}`} className="study-numbered">
           <span className="number-marker">{numMatch[1]}</span>
-          <span className="numbered-content">{numMatch[2]}</span>
+          <span className="numbered-content">{parseInlineMarkdown(numMatch[2])}</span>
         </div>
       );
       return;
     }
 
-    // Lines ending with colon are sub-headers
-    if (trimmed.endsWith(':') && trimmed.length < 60) {
+    // Lines ending with colon are sub-headers (legacy support)
+    if (trimmed.endsWith(':') && trimmed.length < 60 && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
       elements.push(
         <h3 key={`sh-${idx}`} className="study-subsection-header">
-          {trimmed}
+          {parseInlineMarkdown(trimmed)}
         </h3>
       );
       return;
     }
 
-    // Regular paragraph
+    // Regular paragraph with inline markdown support
     elements.push(
       <p key={`p-${idx}`} className="study-paragraph">
-        {trimmed}
+        {parseInlineMarkdown(trimmed)}
       </p>
     );
   });
