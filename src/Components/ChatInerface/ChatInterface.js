@@ -586,10 +586,53 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           if (!msg.timestamp) return 0;
           if (typeof msg.timestamp.toMillis === 'function') return msg.timestamp.toMillis();
           if (typeof msg.timestamp.seconds === 'number') return msg.timestamp.seconds * 1000;
-          return msg.timestamp;
+          return new Date(msg.timestamp).getTime();
         };
 
-        return [...firebaseFiltered, ...localOnlyMessages].sort((a, b) => getTimestamp(a) - getTimestamp(b));
+        // Find the latest timestamp from valid Firebase messages
+        // This is crucial for fixing the "flashcard before prompt" bug
+        // The server timestamp might be ahead of client time, so we need to force
+        // local streaming messages to be "after" the latest server message.
+        let maxFirebaseTimestamp = 0;
+        if (firebaseFiltered.length > 0) {
+          maxFirebaseTimestamp = Math.max(...firebaseFiltered.map(getTimestamp));
+        }
+
+        // Adjust local messages to strictly follow the latest server message
+        const adjustedLocalMessages = localOnlyMessages.map(msg => {
+          const originalTs = getTimestamp(msg);
+
+          // Only force-move active streaming/loading content to the bottom
+          // "isStreaming" covers: text stream, quiz stream, flashcard stream
+          // "isLoading" covers: upload loading
+          // "isGenerating" covers: audio generation
+          const isActiveContent =
+            msg.isStreaming === true ||
+            msg.isLoading === true ||
+            msg.isGenerating === true ||
+            (msg.type === 'post_upload_actions'); // Always keep actions at bottom
+
+          if (isActiveContent && maxFirebaseTimestamp > 0) {
+            // If the server thinks it's "tomorrow" relative to us, we must be "tomorrow + 1ms"
+            // This ensures the streaming bubble stays BELOW the user prompt that triggered it
+            if (originalTs <= maxFirebaseTimestamp) {
+              // We don't mutate the original message object to avoid render loops, 
+              // but we wrap it for the sort, OR we just assume it's "Infinity" for sorting purposes.
+              // Actually, let's just cheat the timestamp for the sort function below.
+              return { ...msg, _sortTimestamp: maxFirebaseTimestamp + 10 };
+            }
+          }
+          return { ...msg, _sortTimestamp: originalTs };
+        });
+
+        const allMessages = [
+          ...firebaseFiltered.map(m => ({ ...m, _sortTimestamp: getTimestamp(m) })),
+          ...adjustedLocalMessages
+        ];
+
+        return allMessages
+          .sort((a, b) => a._sortTimestamp - b._sortTimestamp)
+          .map(({ _sortTimestamp, ...msg }) => msg); // Remove the temp property
       });
     });
 
@@ -807,12 +850,12 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
                 return prev.map(msg =>
                   msg.id === streamingMessageId
                     ? {
-                        ...msg,
-                        type: 'quiz',
-                        content: statusUpdate.message,
-                        quizData: [],
-                        isStreaming: true
-                      }
+                      ...msg,
+                      type: 'quiz',
+                      content: statusUpdate.message,
+                      quizData: [],
+                      isStreaming: true
+                    }
                     : msg
                 );
               });
@@ -865,55 +908,26 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           }
 
           // Flashcard generation progress (EXACTLY like quiz)
+          // Flashcard generation progress
           if (statusUpdate.status === "flashcard_generating") {
             console.log("📇 Flashcard generation streaming started");
-            isQuizGeneratingRef.current = true; // Use same ref as quiz to prevent text streaming
+            isQuizGeneratingRef.current = true;
 
             setChatMessages(prev => {
-              // First, check if a flashcard message already exists
-              const existingFlashcard = prev.find(msg =>
-                msg.id === streamingMessageId && msg.type === 'flashcard'
-              );
-
-              if (existingFlashcard) {
-                // Update existing flashcard message
-                return prev.map(msg =>
-                  msg.id === streamingMessageId && msg.type === 'flashcard'
-                    ? { ...msg, content: statusUpdate.message }
-                    : msg
-                );
-              }
-
-              // Check if there's a generic placeholder we need to convert
-              const genericPlaceholder = prev.find(msg =>
-                msg.id === streamingMessageId && !msg.type
-              );
-
-              if (genericPlaceholder) {
-                // Convert the generic placeholder to a flashcard message
-                return prev.map(msg =>
-                  msg.id === streamingMessageId
-                    ? {
-                        ...msg,
-                        type: 'flashcard',
-                        content: statusUpdate.message,
-                        flashcardData: [],
-                        isStreaming: true
-                      }
-                    : msg
-                );
-              }
-
-              // No existing message - create new one
-              return [...prev, {
-                id: streamingMessageId,
-                role: 'assistant',
-                type: 'flashcard',
-                content: statusUpdate.message,
-                flashcardData: [],
-                isStreaming: true,
-                timestamp: new Date()
-              }];
+              return prev.map(msg => {
+                // Convert streaming placeholder to flashcard message
+                if (msg.id === streamingMessageId) {
+                  return {
+                    ...msg,
+                    type: 'flashcard',
+                    content: statusUpdate.message,
+                    flashcardData: [],
+                    isStreaming: true,
+                    timestamp: msg.timestamp || new Date()
+                  };
+                }
+                return msg;
+              });
             });
 
             setStreamingStatus({
@@ -1185,14 +1199,14 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
               prev.map(msg =>
                 msg.type === 'audio_player' && msg.isGenerating
                   ? {
-                      ...msg,
-                      isGenerating: false,
-                      audioBase64: statusUpdate.audio_base64,
-                      audioDuration: statusUpdate.audio_duration,
-                      topic: statusUpdate.topic,
-                      intent: statusUpdate.intent,
-                      script: statusUpdate.script
-                    }
+                    ...msg,
+                    isGenerating: false,
+                    audioBase64: statusUpdate.audio_base64,
+                    audioDuration: statusUpdate.audio_duration,
+                    topic: statusUpdate.topic,
+                    intent: statusUpdate.intent,
+                    script: statusUpdate.script
+                  }
                   : msg
               )
             );
@@ -2776,25 +2790,25 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
         {!hasMessages && isChatDataLoaded && isGameChat && (
-            <div className="game-chat-empty-state">
-              <div className="game-empty-icon">🎮</div>
-              <h3 className="game-empty-title">Quiz Game Session</h3>
-              <p className="game-empty-description">
-                This was a quiz game played from the home page.
-                {gameState?.status === 'completed'
-                  ? ` The game was completed with ${gameState?.serumCollected || 0}mL serum collected.`
-                  : ' The quiz data from this session was not saved.'}
-              </p>
-              <p className="game-empty-hint">
-                Future games will automatically save quiz content here.
-              </p>
-              <button
-                className="game-replay-btn"
-                onClick={() => window.location.href = '/'}
-              >
-                🏠 Go to Home to Play Again
-              </button>
-            </div>
+          <div className="game-chat-empty-state">
+            <div className="game-empty-icon">🎮</div>
+            <h3 className="game-empty-title">Quiz Game Session</h3>
+            <p className="game-empty-description">
+              This was a quiz game played from the home page.
+              {gameState?.status === 'completed'
+                ? ` The game was completed with ${gameState?.serumCollected || 0}mL serum collected.`
+                : ' The quiz data from this session was not saved.'}
+            </p>
+            <p className="game-empty-hint">
+              Future games will automatically save quiz content here.
+            </p>
+            <button
+              className="game-replay-btn"
+              onClick={() => window.location.href = '/'}
+            >
+              🏠 Go to Home to Play Again
+            </button>
+          </div>
         )}
 
         {/* Messages */}
