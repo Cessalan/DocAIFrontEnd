@@ -5,10 +5,12 @@ import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import NurseQuizMascot from './NurseQuizMascot';
 import BrainMascot from './BrainMascot';
 import './QuizRoomLanding.css';
+// Import the login prompt styles from DedicatedQuizPage
+import './DedicatedQuizPage.css';
 
 // Firebase imports for creating game chat
 import { db, auth } from '../../Firebase/config';
-import { handleSignOut } from '../../Firebase/auth';
+import { handleSignOut, handleSignInWithGoogleAccount } from '../../Firebase/auth';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 
 // API imports for file upload
@@ -68,7 +70,7 @@ const AnimatedCounter = ({ target, duration = 2000, suffix = '%', onComplete }) 
  * Shows immediate value with micro-interactions
  */
 const QuizRoomLanding = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const navigate = useNavigate();
   const { currentUser } = useAuth();
   const [pressedCard, setPressedCard] = useState(null);
@@ -100,6 +102,17 @@ const QuizRoomLanding = () => {
   // Direct upload flow state
   const [uploadPhase, setUploadPhase] = useState('idle'); // 'idle' | 'processing'
   const fileInputRef = useRef(null);
+
+  // ============================================
+  // LOGIN-REQUIRED UPLOAD FLOW STATE
+  // ============================================
+  // When a user uploads files but isn't logged in,
+  // we store the files in memory and show a login prompt.
+  // After they log in, we resume the upload automatically.
+  // ============================================
+  const [pendingFiles, setPendingFiles] = useState([]);
+  const [showLoginPrompt, setShowLoginPrompt] = useState(false);
+  const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
 
   // Handle counter completion - trigger explosion when all 3 are done
   const handleCounterComplete = useCallback(() => {
@@ -362,12 +375,59 @@ const QuizRoomLanding = () => {
     fileInputRef.current?.click();
   };
 
-  // Handle file selection
-  // This uploads the file, embeds it, then navigates to the quiz page
-  // where questions will be streamed via WebSocket
+  // ============================================
+  // FILE SELECTION HANDLER
+  // ============================================
+  // This is the main entry point when a user picks files.
+  //
+  // FLOW:
+  // 1. User selects one or more files
+  // 2. If NOT logged in → store files in memory, show login modal
+  // 3. If logged in → proceed with upload immediately
+  // 4. After login (if was prompted) → auto-resume upload
+  // ============================================
   const handleFileSelected = async (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Reset file input so the same files can be selected again
+    e.target.value = '';
+
+    // ------------------------------------------
+    // STEP 1: Check if user is logged in
+    // ------------------------------------------
+    if (!currentUser) {
+      // User is NOT logged in
+      // Store the files in memory and show login prompt
+      console.log(`📁 ${files.length} file(s) selected but user not logged in. Storing files in memory...`);
+      setPendingFiles(files);
+      setShowLoginPrompt(true);
+      return;
+    }
+
+    // ------------------------------------------
+    // STEP 2: User IS logged in - proceed with upload
+    // ------------------------------------------
+    await processFileUpload(files);
+  };
+
+  // ============================================
+  // PROCESS FILE UPLOAD
+  // ============================================
+  // This function handles the actual upload flow.
+  // It's called either:
+  // - Directly when user is already logged in
+  // - After user logs in (with the pending files)
+  // ============================================
+  const processFileUpload = async (files) => {
+    // Ensure files is an array
+    const fileArray = Array.isArray(files) ? files : [files];
+    if (fileArray.length === 0) return;
+
+    // Get the browser language for embedding
+    // i18n.language gives us 'en' or 'fr' based on detection
+    const browserLanguage = i18n.language || 'en';
+    console.log('🌐 Browser language detected:', browserLanguage);
 
     // Start processing phase - show loading overlay
     setUploadPhase('processing');
@@ -381,15 +441,21 @@ const QuizRoomLanding = () => {
 
       // ------------------------------------------
       // Step 2: Create the game chat document in Firestore
-      // This stores the game state (serum, attempts, etc.)
+      // User MUST be logged in at this point
       // ------------------------------------------
-      const userId = auth.currentUser?.uid || 'anonymous';
+      const userId = auth.currentUser.uid;
       const chatRef = doc(db, 'chats', gameId);
+
+      // Create title from file names
+      const title = fileArray.length === 1
+        ? fileArray[0].name.replace(/\.[^/.]+$/, '')
+        : `${fileArray[0].name.replace(/\.[^/.]+$/, '')} +${fileArray.length - 1} more`;
 
       await setDoc(chatRef, {
         userId,
-        title: file.name.replace(/\.[^/.]+$/, ''), // Use filename as title
+        title,
         type: 'game', // Mark this as a game session
+        language: browserLanguage, // Store the language used
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
         // Initialize game state
@@ -402,25 +468,24 @@ const QuizRoomLanding = () => {
         }
       });
 
-      console.log('✅ Game chat document created');
+      console.log('✅ Game chat document created for user:', userId);
 
       // ------------------------------------------
-      // Step 3: Upload the file and embed it
-      // This uses the existing upload endpoint
+      // Step 3: Upload the files and embed them
+      // Pass the browser language for proper embedding
       // ------------------------------------------
-      console.log('📤 Uploading file:', file.name);
+      console.log(`📤 Uploading ${fileArray.length} file(s):`, fileArray.map(f => f.name).join(', '), 'with language:', browserLanguage);
 
       await upload_files_with_progress(
-        [file],           // Files array (just one file)
+        fileArray,        // Files array
         gameId,           // Chat ID we just created
         (update) => {     // Progress callback
-          // You could update UI here if needed
           console.log('Upload progress:', update);
         },
-        'english'         // Language for processing
+        browserLanguage   // Language for processing (from browser)
       );
 
-      console.log('✅ File uploaded and embedded');
+      console.log('✅ Files uploaded and embedded');
 
       // ------------------------------------------
       // Step 4: Navigate to the quiz page
@@ -430,10 +495,11 @@ const QuizRoomLanding = () => {
 
       navigate('/quiz/play', {
         state: {
-          chatId: gameId,                           // The game session ID
-          title: file.name.replace(/\.[^/.]+$/, ''), // Quiz title from filename
-          fromUpload: true,                          // Flag to indicate streaming mode
-          isGameMode: true                           // Enable game features (serum, etc.)
+          chatId: gameId,
+          title,
+          fromUpload: true,
+          isGameMode: true,
+          language: browserLanguage // Pass language to quiz page
         }
       });
 
@@ -442,35 +508,277 @@ const QuizRoomLanding = () => {
       setUploadPhase('idle');
       console.error('❌ Game setup failed:', error);
 
-      // Show user-friendly error (you could add a toast notification here)
-      alert('Failed to process your file. Please try again.');
+      // Show user-friendly error
+      alert(t('landing.uploadError', 'Failed to process your files. Please try again.'));
     }
-
-    // Reset file input so the same file can be selected again
-    e.target.value = '';
   };
+
+  // ============================================
+  // LOGIN PROMPT HANDLERS
+  // ============================================
+
+  // Called when user clicks "Login" in the prompt
+  const handleLoginFromPrompt = async () => {
+    // Store the pending files info in sessionStorage
+    // We convert to simple objects since File objects can't be serialized
+    if (pendingFiles.length > 0) {
+      const pendingUploadState = {
+        files: pendingFiles.map(f => ({
+          fileName: f.name,
+          fileSize: f.size,
+          fileType: f.type
+        })),
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('pendingUploadState', JSON.stringify(pendingUploadState));
+
+      // Store the actual files as base64 in sessionStorage
+      // Note: For very large files, consider using IndexedDB instead
+      const filesBase64 = await Promise.all(
+        pendingFiles.map(file => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }))
+      );
+      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+
+      setShowLoginPrompt(false);
+      // Navigate to login - after login, user goes to /c where
+      // ProtectedRoute will show QuizRoomLanding with the restored files
+      navigate('/login', {
+        state: {
+          returnTo: '/c',
+          message: t('landing.loginToUpload', 'Sign in to upload your notes and start learning!')
+        }
+      });
+    }
+  };
+
+  // Called when user clicks "Sign Up" in the prompt
+  const handleSignupFromPrompt = async () => {
+    if (pendingFiles.length > 0) {
+      const pendingUploadState = {
+        files: pendingFiles.map(f => ({
+          fileName: f.name,
+          fileSize: f.size,
+          fileType: f.type
+        })),
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('pendingUploadState', JSON.stringify(pendingUploadState));
+
+      // Store the actual files as base64 in sessionStorage
+      const filesBase64 = await Promise.all(
+        pendingFiles.map(file => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }))
+      );
+      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+
+      setShowLoginPrompt(false);
+      // Navigate to signup - after signup, user goes to /c
+      navigate('/signup', {
+        state: {
+          returnTo: '/c',
+          message: t('landing.signupToUpload', 'Create an account to upload your notes!')
+        }
+      });
+    }
+  };
+
+  // Called when user dismisses the login prompt
+  const handleCloseLoginPrompt = () => {
+    setShowLoginPrompt(false);
+    setPendingFiles([]);
+  };
+
+  // ============================================
+  // GOOGLE SIGN-IN DIRECTLY FROM MODAL
+  // ============================================
+  // This allows users to sign in with Google without leaving the modal.
+  // After successful sign-in, we store the files and navigate to /c
+  // where they will be processed automatically.
+  // ============================================
+  const handleGoogleSignInFromPrompt = async () => {
+    if (pendingFiles.length === 0) return;
+
+    setIsGoogleSigningIn(true);
+
+    try {
+      // Store the pending files info in sessionStorage BEFORE signing in
+      const pendingUploadState = {
+        files: pendingFiles.map(f => ({
+          fileName: f.name,
+          fileSize: f.size,
+          fileType: f.type
+        })),
+        timestamp: Date.now()
+      };
+      sessionStorage.setItem('pendingUploadState', JSON.stringify(pendingUploadState));
+
+      // Store the actual files as base64
+      const filesBase64 = await Promise.all(
+        pendingFiles.map(file => new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        }))
+      );
+      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+
+      // Now sign in with Google
+      await handleSignInWithGoogleAccount();
+
+      // Close the modal and navigate to /c
+      // The pending upload will be restored there
+      setShowLoginPrompt(false);
+      setPendingFiles([]);
+      navigate('/c', { replace: true });
+
+    } catch (error) {
+      console.error('Google sign-in failed:', error);
+      // Clear session storage on error
+      sessionStorage.removeItem('pendingUploadState');
+      sessionStorage.removeItem('pendingUploadFiles');
+    } finally {
+      setIsGoogleSigningIn(false);
+    }
+  };
+
+  // NOTE: Pending upload restoration is handled in ChatLayout (App.js)
+  // because QuizRoomLanding is not rendered when the user is logged in
 
   const handleTalkToTutor = () => handleDelayedNavigation(() => navigateWithAction('tutor'));
   const handleDailyChallenge = () => handleDelayedNavigation(() => navigateWithAction('daily'));
 
   return (
     <div className={`quiz-landing-page ${isExiting ? 'exiting' : ''}`}>
-      {/* Hidden file input for direct upload */}
+      {/* Hidden file input for direct upload - supports multiple files */}
       <input
         ref={fileInputRef}
         type="file"
         accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.md"
         onChange={handleFileSelected}
+        multiple
         style={{ display: 'none' }}
       />
+
+      {/* Login Prompt Modal - shows when user tries to upload without being logged in */}
+      {showLoginPrompt && (
+        <div className="login-prompt-overlay" onClick={handleCloseLoginPrompt}>
+          <div className="login-prompt-modal glassmorphic" onClick={(e) => e.stopPropagation()}>
+            {/* Close button */}
+            <button className="login-prompt-close" onClick={handleCloseLoginPrompt} aria-label="Close">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            {/* Mascot */}
+            <div className="login-prompt-mascot">
+              <NurseQuizMascot size={100} isExcited={true} />
+            </div>
+
+            {/* Content */}
+            <h2 className="login-prompt-title">{t('landing.loginPromptTitle', 'Almost there!')}</h2>
+            <p className="login-prompt-message">
+              {t('landing.loginPromptMessage', 'Sign in to save your progress and track your learning journey.')}
+            </p>
+
+            {/* Show file names so user knows they're ready */}
+            {pendingFiles.length > 0 && (
+              <div className="login-prompt-file-indicator">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" />
+                  <path d="M14 2V7H19" />
+                </svg>
+                <span className="file-name">
+                  {pendingFiles.length === 1
+                    ? pendingFiles[0].name
+                    : `${pendingFiles[0].name} +${pendingFiles.length - 1} more`}
+                </span>
+                <span className="file-status">
+                  {pendingFiles.length === 1
+                    ? t('landing.fileReady', 'Ready to upload')
+                    : t('landing.filesReady', `${pendingFiles.length} files ready`)}
+                </span>
+              </div>
+            )}
+
+            {/* Quick Google Sign-in - Less friction */}
+            <button
+              type="button"
+              className="login-prompt-google-btn"
+              onClick={handleGoogleSignInFromPrompt}
+              disabled={isGoogleSigningIn}
+            >
+              <img
+                src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg"
+                alt="Google logo"
+                className="google-logo"
+              />
+              <span>{isGoogleSigningIn ? t('landing.signingIn', 'Signing in...') : t('landing.continueWithGoogle', 'Continue with Google')}</span>
+            </button>
+
+            {/* Divider */}
+            <div className="login-prompt-divider">
+              <span>{t('landing.or', 'or')}</span>
+            </div>
+
+            {/* Benefits list */}
+            <ul className="login-prompt-benefits">
+              <li>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {t('landing.benefit1', 'Save your quiz progress')}
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {t('landing.benefit2', 'Track your learning stats')}
+              </li>
+              <li>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2">
+                  <polyline points="20 6 9 17 4 12" />
+                </svg>
+                {t('landing.benefit3', 'Access your uploaded notes anytime')}
+              </li>
+            </ul>
+
+            {/* Action buttons */}
+            <div className="login-prompt-actions">
+              <button className="login-prompt-btn primary" onClick={handleSignupFromPrompt}>
+                {t('landing.createAccount', 'Create Free Account')}
+              </button>
+              <button className="login-prompt-btn secondary" onClick={handleLoginFromPrompt}>
+                {t('landing.haveAccount', 'I already have an account')}
+              </button>
+            </div>
+
+            {/* Reassurance */}
+            <p className="login-prompt-reassurance">
+              {t('landing.fileWillBeUploaded', 'Your file will be uploaded automatically after you sign in.')}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Simple Loading Overlay - shows while generating quiz */}
       {uploadPhase === 'processing' && (
         <div className="simple-loading-overlay">
           <div className="simple-loading-content">
             <div className="simple-loading-spinner" />
-            <p className="simple-loading-text">Generating NCLEX-style questions...</p>
-            <p className="simple-loading-subtext">Analyzing your notes</p>
+            <p className="simple-loading-text">{t('landing.generatingQuestions', 'Generating NCLEX-style questions...')}</p>
+            <p className="simple-loading-subtext">{t('landing.analyzingNotes', 'Analyzing your notes')}</p>
           </div>
         </div>
       )}
@@ -592,7 +900,7 @@ const QuizRoomLanding = () => {
           </div>
 
           {/* Feature Cards - Inline in Hero */}
-          <div className="hero-features">
+          {/* <div className="hero-features">
             <button
               className={`hero-feature-card nclex-card ${pressedCard === 'nclex' ? 'pressed' : ''}`}
               onClick={handleStudyNCLEX}
@@ -651,7 +959,7 @@ const QuizRoomLanding = () => {
               </div>
               <span className="hero-feature-title">{t('landing.dailyChallenge', "Daily Challenge")}</span>
             </button>
-          </div>
+          </div> */}
 
           {/* Social Proof Badges */}
           <div className="landing-social-proof">

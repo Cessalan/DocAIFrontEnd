@@ -23,9 +23,16 @@ function ChatLayout() {
   const { chatId: urlChatId } = useParams(); // Get chatId from URL
   const navigate = useNavigate();
 
+  // Get user FIRST - needed before any useEffects that depend on it
+  const user = auth.currentUser;
+
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
   const [selectedChatId, setSelectedChatId] = useState(urlChatId || null);
   const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
+
+  // Pending files state - when user uploads from landing page, this gets set
+  // and ChatInterface will pick it up and process it as a normal upload
+  const [pendingUploadFiles, setPendingUploadFiles] = useState([]);
 
   // Sync selectedChatId with URL param when it changes
   // This ensures navigation from dashboard (which only uses navigate()) works correctly
@@ -80,6 +87,70 @@ function ChatLayout() {
     warmUpServer();
   }, []); // Empty dependency array - runs once on mount
 
+  // ============================================
+  // RESTORE PENDING UPLOAD AFTER LOGIN
+  // ============================================
+  // When user returns from login after trying to upload files,
+  // restore the files from sessionStorage and set them as pendingUploadFiles.
+  // ChatInterface will then pick them up and process them normally.
+  // ============================================
+  useEffect(() => {
+    // Only run if user is logged in
+    if (!user) return;
+
+    // Check for pending upload in sessionStorage
+    const pendingUploadStateStr = sessionStorage.getItem('pendingUploadState');
+    const pendingUploadFilesStr = sessionStorage.getItem('pendingUploadFiles');
+
+    if (!pendingUploadStateStr || !pendingUploadFilesStr) return;
+
+    try {
+      const uploadState = JSON.parse(pendingUploadStateStr);
+
+      // Check if the session is still valid (less than 30 minutes old)
+      const isValid = Date.now() - uploadState.timestamp < 30 * 60 * 1000;
+
+      if (!isValid) {
+        console.log('⏰ Pending upload session expired');
+        sessionStorage.removeItem('pendingUploadState');
+        sessionStorage.removeItem('pendingUploadFiles');
+        return;
+      }
+
+      // Parse the base64 files array
+      const filesBase64 = JSON.parse(pendingUploadFilesStr);
+      const fileInfos = uploadState.files || [];
+
+      console.log(`🔄 Restoring ${fileInfos.length} pending file(s) after login`);
+
+      // Convert each base64 back to File object
+      const restoredFiles = filesBase64.map((base64Data, index) => {
+        const fileInfo = fileInfos[index] || {};
+        const byteString = atob(base64Data.split(',')[1]);
+        const mimeType = fileInfo.fileType || 'application/octet-stream';
+        const ab = new ArrayBuffer(byteString.length);
+        const ia = new Uint8Array(ab);
+        for (let i = 0; i < byteString.length; i++) {
+          ia[i] = byteString.charCodeAt(i);
+        }
+        const blob = new Blob([ab], { type: mimeType });
+        return new File([blob], fileInfo.fileName || `file_${index}`, { type: mimeType });
+      });
+
+      // Clear the session storage
+      sessionStorage.removeItem('pendingUploadState');
+      sessionStorage.removeItem('pendingUploadFiles');
+
+      // Set the pending files - ChatInterface will handle the upload
+      setPendingUploadFiles(restoredFiles);
+
+    } catch (error) {
+      console.error('Failed to restore pending upload:', error);
+      sessionStorage.removeItem('pendingUploadState');
+      sessionStorage.removeItem('pendingUploadFiles');
+    }
+  }, [user]);
+
   const toggleSidebar = () => {
     setSidebarOpen(!sidebarOpen);
   };
@@ -97,8 +168,6 @@ function ChatLayout() {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
-
-  const user = auth.currentUser;
 
   // Function to check if we're on mobile
   const isMobile = () => {
@@ -147,6 +216,11 @@ function ChatLayout() {
     }
   };
 
+  // Callback to clear the pending upload after ChatInterface processes it
+  const clearPendingUpload = () => {
+    setPendingUploadFiles([]);
+  };
+
   return (
     <div className="app-wrapper">
 
@@ -184,6 +258,8 @@ function ChatLayout() {
           onChatSelected={onSelectChat}
           onCloseSidebar={onCloseSidebar}
           viewAllChatsMode={viewAllChatsMode}
+          pendingUploadFiles={pendingUploadFiles}
+          onPendingUploadProcessed={clearPendingUpload}
         />
       </div>
 

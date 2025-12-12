@@ -93,7 +93,14 @@ import ExamCountdown from '../Common/ExamCountdown';
  * ChatInterface Component - A messenger-like interface for AI chat
  * Features: Text messaging with AI, File uploads, Quiz/Summary/Scenario generation
  */
-const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMode = false }) => {
+const ChatInterface = ({
+  chatId,
+  onChatSelected,
+  onCloseSidebar,
+  viewAllChatsMode = false,
+  pendingUploadFiles = [],         // Files to upload after returning from login
+  onPendingUploadProcessed = null  // Callback when pending upload is handled
+}) => {
 
   // Progress tracking context
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
@@ -136,6 +143,34 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
       console.log('📚 Pre-filled practice prompt from quiz share:', pendingTopic);
     }
   }, [chatId]);
+
+  // ============================================
+  // PENDING FILE UPLOAD STATE
+  // ============================================
+  // Track whether we need to process pending files from the landing page
+  // The actual processing happens later (after handleFileSelect is defined)
+  // ============================================
+  const pendingUploadProcessedRef = useRef(false);
+  const [shouldProcessPendingUpload, setShouldProcessPendingUpload] = useState(false);
+
+  // Set flag when pendingUploadFiles arrives
+  useEffect(() => {
+    if (pendingUploadFiles.length > 0 && !pendingUploadProcessedRef.current) {
+      const user = auth.currentUser;
+      if (user) {
+        console.log(`📤 Pending upload files detected: ${pendingUploadFiles.length} file(s)`);
+        setShouldProcessPendingUpload(true);
+      }
+    }
+  }, [pendingUploadFiles]);
+
+  // Reset the processed flag when pendingUploadFiles becomes empty
+  useEffect(() => {
+    if (pendingUploadFiles.length === 0) {
+      pendingUploadProcessedRef.current = false;
+      setShouldProcessPendingUpload(false);
+    }
+  }, [pendingUploadFiles]);
 
   // UI state
   const [isAiTyping, setIsAiTyping] = useState(false);
@@ -557,11 +592,13 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
         const localOnlyMessages = prev.filter(msg => {
           const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
 
-          // Keep: active uploads, streaming messages, post-upload actions, pending flashcards/quizzes
+          // Keep: active uploads, streaming messages, pending post-upload actions, pending flashcards/quizzes
+          // NOTE: post_upload_actions should only be preserved if NOT YET in Firebase
+          // Once saved to Firebase, let Firebase be the source of truth for ordering
           const shouldPreserve =
             (msg.type === 'upload_loading' && msg.isLoading === true) ||
             (msg.isStreaming === true) ||
-            (msg.type === 'post_upload_actions') ||
+            (msg.type === 'post_upload_actions' && notInFirebase) ||
             ((msg.type === 'flashcard' || msg.type === 'quiz') && notInFirebase);
 
           if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz')) {
@@ -606,17 +643,19 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           // "isStreaming" covers: text stream, quiz stream, flashcard stream
           // "isLoading" covers: upload loading
           // "isGenerating" covers: audio generation
+          // NOTE: post_upload_actions that are LOCAL ONLY (not yet in Firebase) should
+          // be pushed to bottom, but once saved to Firebase they should keep their timestamp
           const isActiveContent =
             msg.isStreaming === true ||
             msg.isLoading === true ||
-            msg.isGenerating === true ||
-            (msg.type === 'post_upload_actions'); // Always keep actions at bottom
+            msg.isGenerating === true;
+          // Removed: (msg.type === 'post_upload_actions') - these now use their real timestamp
 
           if (isActiveContent && maxFirebaseTimestamp > 0) {
             // If the server thinks it's "tomorrow" relative to us, we must be "tomorrow + 1ms"
             // This ensures the streaming bubble stays BELOW the user prompt that triggered it
             if (originalTs <= maxFirebaseTimestamp) {
-              // We don't mutate the original message object to avoid render loops, 
+              // We don't mutate the original message object to avoid render loops,
               // but we wrap it for the sort, OR we just assume it's "Infinity" for sorting purposes.
               // Actually, let's just cheat the timestamp for the sort function below.
               return { ...msg, _sortTimestamp: maxFirebaseTimestamp + 10 };
@@ -1978,6 +2017,38 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
     e.target.value = null;
   };
 
+  // ============================================
+  // PROCESS PENDING FILE UPLOAD (from landing page)
+  // ============================================
+  // This effect runs after handleFileSelect is defined and when
+  // shouldProcessPendingUpload is true. It triggers the upload
+  // for files that were selected before the user logged in.
+  // ============================================
+  useEffect(() => {
+    if (!shouldProcessPendingUpload || pendingUploadFiles.length === 0) return;
+    if (pendingUploadProcessedRef.current) return;
+
+    console.log(`📤 Processing ${pendingUploadFiles.length} pending upload(s) from landing page`);
+    pendingUploadProcessedRef.current = true;
+    setShouldProcessPendingUpload(false);
+
+    // Create a fake event object to trigger the existing handleFileSelect
+    const fakeEvent = {
+      target: {
+        files: pendingUploadFiles,
+        value: null
+      }
+    };
+
+    // Trigger the file upload
+    handleFileSelect(fakeEvent);
+
+    // Notify parent that we've processed the pending upload
+    if (onPendingUploadProcessed) {
+      onPendingUploadProcessed();
+    }
+  }, [shouldProcessPendingUpload, pendingUploadFiles, onPendingUploadProcessed]);
+
   // Progress handler - add this as a new function in your component
   const handleUploadProgress = (update, fileTracker, chatId) => {
     console.log('📦 Upload progress:', update.type, update);
@@ -2177,15 +2248,16 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
               console.log(`   📊 Message insights BEFORE completion:`, msg.insights?.length || 0, 'items');
               console.log(`   📊 Files in message:`, msg.insights?.map(i => i.filename) || []);
 
-              // Create the completed version - PRESERVE ALL FIELDS
+              // Create the completed version - PRESERVE ALL FIELDS including original timestamp
+              // We keep the original timestamp so LoadingMessageBox stays in correct position
               const completedMsg = {
                 ...msg,
                 isLoading: false,  // Stop spinner, show checkmark
                 insights: msg.insights || [],  // Explicitly preserve
                 summary: msg.summary || null,  // Explicitly preserve
                 fileCount: msg.fileCount || update.total_files,
-                filenames: msg.filenames || [],
-                timestamp: Date.now()
+                filenames: msg.filenames || []
+                // NOTE: Don't update timestamp - preserve original creation time for correct ordering
               };
 
               console.log(`   📊 Completed message created:`);
@@ -2210,9 +2282,14 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
 
               console.log('💾 Saving to Firebase with', messageForFirebase.insights?.length, 'insights');
 
-              AppendToChat(chatId, messageForFirebase)
+              // Save LoadingMessageBox to Firebase and store the promise
+              // This ensures it gets a serverTimestamp BEFORE the post-upload message
+              const savePromise = AppendToChat(chatId, messageForFirebase)
                 .then(() => console.log('✅ Saved completed insights to Firebase'))
                 .catch(err => console.error('❌ Failed to save:', err));
+
+              // Store the promise so post-upload can wait for it
+              window._loadingMessageSavePromise = savePromise;
 
               return completedMsg;
             }
@@ -2260,18 +2337,26 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           timestamp: Date.now()
         };
 
-        // Add to chat messages - prevent duplicates by checking if one already exists
+        // Add to chat messages - prevent duplicates by checking if one with same files already exists
         setChatMessages(prev => {
-          // Check if a post_upload_actions message already exists
-          const alreadyExists = prev.some(msg => msg.type === 'post_upload_actions');
+          // Check if a post_upload_actions message with the SAME filenames already exists
+          // This prevents duplicate messages for the same upload batch, but allows
+          // multiple uploads to each have their own post-upload message
+          const filenamesKey = (update.filenames || []).sort().join('|');
+          const alreadyExists = prev.some(msg => {
+            if (msg.type !== 'post_upload_actions') return false;
+            const msgFilenamesKey = (msg.filenames || []).sort().join('|');
+            return msgFilenamesKey === filenamesKey;
+          });
           if (alreadyExists) {
-            console.log('⚠️ Post-upload message already exists, skipping duplicate');
+            console.log('⚠️ Post-upload message for these files already exists, skipping duplicate');
             return prev;
           }
           return [...prev, postUploadMsg];
         });
 
-        // Save to Firebase (frontend controls timing - this happens AFTER LoadingMessageBox is complete)
+        // Save to Firebase AFTER LoadingMessageBox has been saved
+        // This ensures correct ordering via serverTimestamp
         const postUploadForFirebase = {
           id: postUploadMsgId,
           role: 'assistant',
@@ -2283,9 +2368,20 @@ const ChatInterface = ({ chatId, onChatSelected, onCloseSidebar, viewAllChatsMod
           showActions: true
         };
 
-        AppendToChat(chatId, postUploadForFirebase)
-          .then(() => console.log('✅ Post-upload actions saved to Firebase'))
-          .catch(err => console.error('❌ Failed to save post-upload actions:', err));
+        // Wait for LoadingMessageBox to be saved first, then save post-upload
+        const savePostUpload = async () => {
+          // Wait for LoadingMessageBox save to complete (if exists)
+          if (window._loadingMessageSavePromise) {
+            await window._loadingMessageSavePromise;
+            window._loadingMessageSavePromise = null;
+          }
+          // Small delay to ensure serverTimestamp ordering
+          await new Promise(resolve => setTimeout(resolve, 100));
+          await AppendToChat(chatId, postUploadForFirebase);
+          console.log('✅ Post-upload actions saved to Firebase');
+        };
+
+        savePostUpload().catch(err => console.error('❌ Failed to save post-upload actions:', err));
 
         console.log('✅ Post-upload message added to chat');
         break;

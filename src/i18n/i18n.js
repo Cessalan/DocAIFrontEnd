@@ -211,7 +211,7 @@ const resources = {
         quizLabel: "Quiz me",
         flashcardsLabel: "Create flashcards",
         studysheetLabel: "Study sheet",
-        audioLabel: "Listen",
+        audioLabel: "Audio summary",
         // Action prompts sent to AI
         quizPrompt: "Generate a quiz covering: {{topics}}",
         flashcardsPrompt: "Create flashcards for: {{topics}}",
@@ -429,8 +429,29 @@ const resources = {
 
       // Landing Page
       landing: {
-        uploadNotesTitle: "Upload a file, save a life",
-        uploadNotes: "Upload Your Notes"
+        uploadNotesTitle: "Upload your study material",
+        uploadNotes: "Upload Your Notes",
+        // Login prompt modal
+        loginPromptTitle: "Almost there!",
+        loginPromptMessage: "Sign in to save your progress and track your learning journey.",
+        fileReady: "Ready to upload",
+        fileWillBeUploaded: "Your file will be uploaded automatically after you sign in.",
+        loginToUpload: "Sign in to upload your notes and start learning!",
+        signupToUpload: "Create an account to upload your notes!",
+        // Benefits in login prompt
+        benefit1: "Save your quiz progress",
+        benefit2: "Track your learning stats",
+        benefit3: "Access your uploaded notes anytime",
+        createAccount: "Create Free Account",
+        haveAccount: "I already have an account",
+        // Google sign-in in modal
+        continueWithGoogle: "Continue with Google",
+        signingIn: "Signing in...",
+        or: "or",
+        // Upload process
+        generatingQuestions: "Generating NCLEX-style questions...",
+        analyzingNotes: "Analyzing your notes",
+        uploadError: "Failed to process your file. Please try again."
       },
 
       // Dashboard
@@ -761,7 +782,7 @@ const resources = {
         quizLabel: "Quiz",
         flashcardsLabel: "Créer des cartes mémoire",
         studysheetLabel: "Feuille d'étude",
-        audioLabel: "Écouter",
+        audioLabel: "Résumé audio",
         // Action prompts sent to AI
         quizPrompt: "Génère un quiz couvrant : {{topics}}",
         flashcardsPrompt: "Crée des cartes mémoire pour : {{topics}}",
@@ -979,8 +1000,29 @@ const resources = {
 
       // Landing Page
       landing: {
-        uploadNotesTitle: "Téléverse un fichier, sauve une vie",
-        uploadNotes: "Téléverse tes notes"
+        uploadNotesTitle: "Téléverse tes notes de cours",
+        uploadNotes: "Téléverse tes notes",
+        // Login prompt modal
+        loginPromptTitle: "Presque terminé!",
+        loginPromptMessage: "Connecte-toi pour sauvegarder ta progression et suivre ton apprentissage.",
+        fileReady: "Prêt à téléverser",
+        fileWillBeUploaded: "Ton fichier sera téléversé automatiquement après ta connexion.",
+        loginToUpload: "Connecte-toi pour téléverser tes notes et commencer!",
+        signupToUpload: "Crée un compte pour téléverser tes notes!",
+        // Benefits in login prompt
+        benefit1: "Sauvegarde ta progression de quiz",
+        benefit2: "Suis tes statistiques d'apprentissage",
+        benefit3: "Accède à tes notes téléversées n'importe quand",
+        createAccount: "Créer un compte gratuit",
+        haveAccount: "J'ai déjà un compte",
+        // Google sign-in in modal
+        continueWithGoogle: "Continuer avec Google",
+        signingIn: "Connexion...",
+        or: "ou",
+        // Upload process
+        generatingQuestions: "Génération des questions NCLEX...",
+        analyzingNotes: "Analyse de tes notes",
+        uploadError: "Échec du traitement de ton fichier. Réessaie."
       },
 
       // Dashboard

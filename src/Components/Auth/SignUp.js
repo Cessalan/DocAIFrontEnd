@@ -49,7 +49,9 @@ const Signup = () => {
   // Handle redirect after successful signup (same logic as Login)
   useEffect(() => {
     if (isUserLoggedIn && returnTo) {
-      // Check if there's pending quiz state to restore
+      // ------------------------------------------
+      // CASE 1: Check for pending quiz state (from quiz page)
+      // ------------------------------------------
       const pendingQuizState = sessionStorage.getItem('pendingQuizState');
       if (pendingQuizState) {
         try {
@@ -79,7 +81,23 @@ const Signup = () => {
         // Clear invalid session
         sessionStorage.removeItem('pendingQuizState');
       }
-      // If no valid pending state, just navigate to returnTo
+
+      // ------------------------------------------
+      // CASE 2: Check for pending upload (from landing page)
+      // If user was trying to upload a file before signing up,
+      // navigate to /c - since user is now logged in, the ChatLayout
+      // will render and the pending upload will be handled
+      // ------------------------------------------
+      const pendingUploadState = sessionStorage.getItem('pendingUploadState');
+      if (pendingUploadState) {
+        // Navigate to /c - the upload will be restored there
+        navigate('/c', { replace: true });
+        return;
+      }
+
+      // ------------------------------------------
+      // CASE 3: Default - just navigate to returnTo
+      // ------------------------------------------
       navigate(returnTo, { replace: true });
     }
   }, [isUserLoggedIn, returnTo, navigate]);
