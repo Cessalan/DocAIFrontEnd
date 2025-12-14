@@ -116,6 +116,7 @@ function ChatFlashcard(props) {
   const [isFlipped, setIsFlipped] = useState(false);
   const [reviewed, setReviewed] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
+  const [showHint, setShowHint] = useState(false);
 
   // Use parent-controlled modal state if provided, otherwise use local state
   const [localModalOpen, setLocalModalOpen] = useState(false);
@@ -137,22 +138,23 @@ function ChatFlashcard(props) {
     return allFlashcards.filter(card => card.status === 'mastered').length;
   }, [allFlashcards]);
 
-  // Calculate results statistics
+  // Calculate results statistics based on user's session review
   const resultsData = useMemo(() => {
     if (!allFlashcards || allFlashcards.length === 0) {
       return { masteredCards: 0, learningCards: 0, newCards: 0, topicBreakdown: [] };
     }
 
+    // Count based on userReview from this session
     const masteredCards = allFlashcards.filter(card =>
-      card.status === 'mastered' || card.userReview?.knowIt === true
+      card.userReview?.knowIt === true
     ).length;
 
     const learningCards = allFlashcards.filter(card =>
-      card.status === 'learning' || (card.userReview && card.userReview.knowIt === false)
+      card.userReview?.knowIt === false
     ).length;
 
     const newCards = allFlashcards.filter(card =>
-      !card.status && !card.userReview
+      !card.userReview
     ).length;
 
     // Calculate topic breakdown if topics exist
@@ -163,9 +165,9 @@ function ChatFlashcard(props) {
         topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
       }
       topicMap[topic].total++;
-      if (card.status === 'mastered' || card.userReview?.knowIt === true) {
+      if (card.userReview?.knowIt === true) {
         topicMap[topic].mastered++;
-      } else if (card.status === 'learning' || card.userReview?.knowIt === false) {
+      } else if (card.userReview?.knowIt === false) {
         topicMap[topic].learning++;
       }
     });
@@ -186,6 +188,8 @@ function ChatFlashcard(props) {
         setIsFlipped(false);
         setReviewed(false);
       }
+      // Always reset hint visibility when card changes
+      setShowHint(false);
     }
   }, [flashcard, cardIndex]);
 
@@ -319,7 +323,26 @@ function ChatFlashcard(props) {
             <div className="flashcard-text">{flashcard.front}</div>
             {flashcard.hint && !isFlipped && (
               <div className="flashcard-hint">
-                💡 {t('flashcard.hint', 'Hint')}: {flashcard.hint}
+                {showHint ? (
+                  <div className="flashcard-hint-revealed">
+                    <div className="flashcard-hint-header">
+                      <span className="hint-icon">💡</span>
+                      <span>{t('flashcard.hint', 'Hint')}</span>
+                    </div>
+                    <div className="flashcard-hint-text">{flashcard.hint}</div>
+                  </div>
+                ) : (
+                  <button
+                    className="flashcard-hint-btn"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowHint(true);
+                    }}
+                  >
+                    <span className="hint-icon">💡</span>
+                    <span>{t('flashcard.showHint', 'Show hint')}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>

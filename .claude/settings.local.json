@@ -9,7 +9,10 @@
       "Bash(find:*)",
       "Bash(npm install:*)",
       "Bash(python:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(grep:*)",
+      "Bash(wc:*)",
+      "Bash(node scripts/generate-blog-html.js:*)"
     ],
     "deny": [],
     "ask": []

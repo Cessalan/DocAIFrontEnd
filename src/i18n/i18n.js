@@ -293,6 +293,7 @@ const resources = {
         tapToFlip: "Tap to flip",
         tapToFlipBack: "Tap to flip back",
         hint: "Hint",
+        showHint: "Show hint",
         howWellKnow: "How well did you know this?",
         again: "Again",
         knowIt: "Know it",
@@ -431,10 +432,56 @@ const resources = {
       landing: {
         uploadNotesTitle: "Upload your study material",
         uploadNotes: "Upload Your Notes",
+        // Hero section
+        sloganLine1: "Too much to study. Not enough time.",
+        sloganLine2: "We fix that — by turning your notes into instant practice quizzes.",
+        subtitle: "Spend less time studying, more time understanding.",
+        // Auth buttons
+        login: "Log in",
+        signup: "Sign up",
+        logout: "Log out",
+        // Social proof badges
+        badge1: "Made with nurses",
+        badge2: "Trusted across North America",
+        // Footer
+        footerText: "Built for Nursing exams and NCLEX",
+        // Product showcase section
+        showcaseTitle: "See How It Works",
+        showcaseSubtitle: "From notes to knowledge in minutes",
+        demoLabel: "Live Demo",
+        demoUpload: "Pharmacology_Notes.pdf",
+        demoGenerating: "AI generating NCLEX-style quiz...",
+        demoQuestion: "Which medication class is primarily used to treat hypertension?",
+        demoAnswer1: "A. Antihistamines",
+        demoAnswer2: "B. ACE Inhibitors",
+        demoAnswer3: "C. Antibiotics",
+        demoAnswer4: "D. Antidepressants",
+        demoCorrect: "Correct!",
+        demoScore: "Your Score",
+        phase1: "1. Upload",
+        phase2: "2. Generate",
+        phase3: "3. Quiz",
+        phase4: "4. Learn",
+        showcaseCta: "Start Learning Now",
+        showcaseCtaSubtext: "Free to try • No credit card required",
+        // Science section
+        scienceTitle: "Backed by Science",
+        scienceSubtitle: "Research-proven methods for better learning outcomes",
+        stat1Title: "Score 73% Higher",
+        stat1Desc: "Students using AI-powered interactive quizzes score 73% higher on exams than those using traditional study methods",
+        stat1Source: "Educational Technology Research, 2024",
+        stat2Title: "Remember 85% More",
+        stat2Desc: "Students using active learning methods show 85% better retention compared to passive study methods",
+        stat2Source: "Journal of Educational Psychology, 2023",
+        stat3Title: "Save 30% Study Time",
+        stat3Desc: "AI-generated study materials reduce preparation time by 30% while maintaining learning effectiveness",
+        stat3Source: "Learning Technology Review, 2024",
+        scienceCta: "Join the Community",
         // Login prompt modal
         loginPromptTitle: "Almost there!",
         loginPromptMessage: "Sign in to save your progress and track your learning journey.",
         fileReady: "Ready to upload",
+        filesReady: "{{count}} files ready",
         fileWillBeUploaded: "Your file will be uploaded automatically after you sign in.",
         loginToUpload: "Sign in to upload your notes and start learning!",
         signupToUpload: "Create an account to upload your notes!",
@@ -451,7 +498,20 @@ const resources = {
         // Upload process
         generatingQuestions: "Generating NCLEX-style questions...",
         analyzingNotes: "Analyzing your notes",
-        uploadError: "Failed to process your file. Please try again."
+        uploadError: "Failed to process your file. Please try again.",
+        // File size error modal
+        fileTooLargeTitle: "File too large",
+        fileTooLargeMessage: "The maximum file size is {{maxSize}}MB per file.",
+        fileTooLargeTips: "Try these options:",
+        fileTooLargeTip1: "Compress your PDF using an online tool",
+        fileTooLargeTip2: "Split large documents into smaller parts",
+        fileTooLargeTip3: "Use lower resolution images"
+      },
+
+      // Common
+      common: {
+        close: "Close",
+        understood: "Got it"
       },
 
       // Dashboard
@@ -864,6 +924,7 @@ const resources = {
         tapToFlip: "Toucher pour retourner",
         tapToFlipBack: "Toucher pour retourner",
         hint: "Indice",
+        showHint: "Voir l'indice",
         howWellKnow: "À quel point connaissiez-vous cela?",
         again: "À revoir",
         knowIt: "Je le sais",
@@ -1002,10 +1063,56 @@ const resources = {
       landing: {
         uploadNotesTitle: "Téléverse tes notes de cours",
         uploadNotes: "Téléverse tes notes",
+        // Hero section
+        sloganLine1: "Trop de matière à étudier. Pas assez de temps.",
+        sloganLine2: "On règle ça — en transformant tes notes en quiz instantanés.",
+        subtitle: "Étudie moins longtemps, comprends mieux.",
+        // Auth buttons
+        login: "Connexion",
+        signup: "S'inscrire",
+        logout: "Déconnexion",
+        // Social proof badges
+        badge1: "Créé avec des infirmières",
+        badge2: "Utilisé partout en Amérique du Nord",
+        // Footer
+        footerText: "Conçu pour les examens en soins infirmiers et le NCLEX",
+        // Product showcase section
+        showcaseTitle: "Comment ça fonctionne",
+        showcaseSubtitle: "Des notes aux connaissances en quelques minutes",
+        demoLabel: "Démo en direct",
+        demoUpload: "Notes_Pharmacologie.pdf",
+        demoGenerating: "L'IA génère un quiz style NCLEX...",
+        demoQuestion: "Quelle classe de médicaments est principalement utilisée pour traiter l'hypertension?",
+        demoAnswer1: "A. Antihistaminiques",
+        demoAnswer2: "B. Inhibiteurs de l'ECA",
+        demoAnswer3: "C. Antibiotiques",
+        demoAnswer4: "D. Antidépresseurs",
+        demoCorrect: "Correct!",
+        demoScore: "Ton score",
+        phase1: "1. Téléverser",
+        phase2: "2. Générer",
+        phase3: "3. Quiz",
+        phase4: "4. Apprendre",
+        showcaseCta: "Commencer maintenant",
+        showcaseCtaSubtext: "Gratuit à essayer • Aucune carte de crédit requise",
+        // Science section
+        scienceTitle: "Basé sur la science",
+        scienceSubtitle: "Méthodes prouvées par la recherche pour de meilleurs résultats",
+        stat1Title: "Score 73% plus élevé",
+        stat1Desc: "Les étudiants utilisant des quiz interactifs propulsés par l'IA obtiennent 73% de plus aux examens que ceux utilisant des méthodes traditionnelles",
+        stat1Source: "Recherche en technologie éducative, 2024",
+        stat2Title: "Retiens 85% de plus",
+        stat2Desc: "Les étudiants utilisant des méthodes d'apprentissage actif montrent 85% de meilleure rétention comparé aux méthodes passives",
+        stat2Source: "Journal of Educational Psychology, 2023",
+        stat3Title: "Économise 30% de temps",
+        stat3Desc: "Les matériels d'étude générés par l'IA réduisent le temps de préparation de 30% tout en maintenant l'efficacité",
+        stat3Source: "Learning Technology Review, 2024",
+        scienceCta: "Rejoins la communauté",
         // Login prompt modal
         loginPromptTitle: "Presque terminé!",
         loginPromptMessage: "Connecte-toi pour sauvegarder ta progression et suivre ton apprentissage.",
         fileReady: "Prêt à téléverser",
+        filesReady: "{{count}} fichiers prêts",
         fileWillBeUploaded: "Ton fichier sera téléversé automatiquement après ta connexion.",
         loginToUpload: "Connecte-toi pour téléverser tes notes et commencer!",
         signupToUpload: "Crée un compte pour téléverser tes notes!",
@@ -1022,7 +1129,20 @@ const resources = {
         // Upload process
         generatingQuestions: "Génération des questions NCLEX...",
         analyzingNotes: "Analyse de tes notes",
-        uploadError: "Échec du traitement de ton fichier. Réessaie."
+        uploadError: "Échec du traitement de ton fichier. Réessaie.",
+        // File size error modal
+        fileTooLargeTitle: "Fichier trop volumineux",
+        fileTooLargeMessage: "La taille maximale est de {{maxSize}}Mo par fichier.",
+        fileTooLargeTips: "Essaie ces options :",
+        fileTooLargeTip1: "Compresse ton PDF avec un outil en ligne",
+        fileTooLargeTip2: "Divise les gros documents en plusieurs parties",
+        fileTooLargeTip3: "Utilise des images de résolution plus basse"
+      },
+
+      // Common
+      common: {
+        close: "Fermer",
+        understood: "Compris"
       },
 
       // Dashboard

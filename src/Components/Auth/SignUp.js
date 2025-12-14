@@ -128,9 +128,15 @@ const Signup = () => {
 
   const onGoogleSignIn = async () => {
     try {
+      setError('');
+      setLoading(true);
       await handleSignInWithGoogleAccount();
+      navigate('/c');
     } catch (error) {
       console.error("Error signing in with Google:", error);
+      setError(error.message);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -221,10 +227,11 @@ const Signup = () => {
         </button>
       </form>
 
-      <button 
+      <button
         type="button"
         className="google-login-button"
         onClick={onGoogleSignIn}
+        onTouchEnd={(e) => { e.preventDefault(); onGoogleSignIn(); }}
         disabled={loading}
       >
         <img 

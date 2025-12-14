@@ -146,7 +146,7 @@ const IndexPage = () => {
         </div>
 
         <p style={styles.lead}>
-          Instantly generate quizzes, get clear rationales, and stay on top of weak areas, whether you are prepping for NCLEX, OIIQ, or class exams.
+          Instantly generate quizzes, get clear rationales, and stay on top of weak areas, whether you are prepping for NCLEX or class exams.
         </p>
 
         <div style={styles.ctas}>

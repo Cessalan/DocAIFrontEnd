@@ -2967,9 +2967,19 @@ const ChatInterface = ({
               // UPLOAD LOADING BOX
               // ============================================
               // Shows progress while files are being analyzed.
-              // Always visible - shows analysis stats even when complete.
+              // Hidden once complete AND post_upload_actions exists (to avoid redundancy)
               // ============================================
               if (message.type === 'upload_loading') {
+                // Hide completed LoadingMessageBox if PostUploadActions exists
+                // This avoids showing redundant info after the friendly action message appears
+                if (!message.isLoading) {
+                  const hasPostUploadActions = chatMessages.some(
+                    msg => msg.type === 'post_upload_actions'
+                  );
+                  if (hasPostUploadActions) {
+                    return null; // Hide the completed loading box
+                  }
+                }
                 return (
                   <LoadingMessageBox
                     key={message.id}

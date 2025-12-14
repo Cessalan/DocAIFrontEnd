@@ -114,6 +114,10 @@ const QuizRoomLanding = () => {
   const [showLoginPrompt, setShowLoginPrompt] = useState(false);
   const [isGoogleSigningIn, setIsGoogleSigningIn] = useState(false);
 
+  // File size error modal state
+  const [showFileSizeError, setShowFileSizeError] = useState(false);
+  const [oversizedFileNames, setOversizedFileNames] = useState([]);
+
   // Handle counter completion - trigger explosion when all 3 are done
   const handleCounterComplete = useCallback(() => {
     setCompletedCounters(prev => {
@@ -376,15 +380,22 @@ const QuizRoomLanding = () => {
   };
 
   // ============================================
+  // FILE SIZE LIMIT
+  // ============================================
+  const MAX_FILE_SIZE_MB = 15;
+  const MAX_FILE_SIZE_BYTES = MAX_FILE_SIZE_MB * 1024 * 1024;
+
+  // ============================================
   // FILE SELECTION HANDLER
   // ============================================
   // This is the main entry point when a user picks files.
   //
   // FLOW:
   // 1. User selects one or more files
-  // 2. If NOT logged in → store files in memory, show login modal
-  // 3. If logged in → proceed with upload immediately
-  // 4. After login (if was prompted) → auto-resume upload
+  // 2. Validate file sizes (max 15MB each)
+  // 3. If NOT logged in → store file metadata only, show login modal
+  // 4. If logged in → proceed with upload immediately (stream to backend)
+  // 5. After login (if was prompted) → user must re-select files
   // ============================================
   const handleFileSelected = async (e) => {
     const files = Array.from(e.target.files || []);
@@ -394,19 +405,31 @@ const QuizRoomLanding = () => {
     e.target.value = '';
 
     // ------------------------------------------
-    // STEP 1: Check if user is logged in
+    // STEP 1: Validate file sizes
+    // ------------------------------------------
+    const oversizedFiles = files.filter(f => f.size > MAX_FILE_SIZE_BYTES);
+    if (oversizedFiles.length > 0) {
+      setOversizedFileNames(oversizedFiles.map(f => f.name));
+      setShowFileSizeError(true);
+      return;
+    }
+
+    // ------------------------------------------
+    // STEP 2: Check if user is logged in
     // ------------------------------------------
     if (!currentUser) {
       // User is NOT logged in
-      // Store the files in memory and show login prompt
-      console.log(`📁 ${files.length} file(s) selected but user not logged in. Storing files in memory...`);
+      // Store file references in memory (NOT base64) and show login prompt
+      // Files will need to be re-selected after login
+      console.log(`📁 ${files.length} file(s) selected but user not logged in. Showing login prompt...`);
       setPendingFiles(files);
       setShowLoginPrompt(true);
       return;
     }
 
     // ------------------------------------------
-    // STEP 2: User IS logged in - proceed with upload
+    // STEP 3: User IS logged in - proceed with upload immediately
+    // Files are streamed directly to backend, not stored in browser
     // ------------------------------------------
     await processFileUpload(files);
   };
@@ -516,79 +539,43 @@ const QuizRoomLanding = () => {
   // ============================================
   // LOGIN PROMPT HANDLERS
   // ============================================
+  // NOTE: We do NOT store files in sessionStorage/IndexedDB to avoid
+  // storage quota errors with large files. Users will re-select files
+  // after logging in. This is a simpler, more reliable approach.
+  // ============================================
 
   // Called when user clicks "Login" in the prompt
-  const handleLoginFromPrompt = async () => {
-    // Store the pending files info in sessionStorage
-    // We convert to simple objects since File objects can't be serialized
-    if (pendingFiles.length > 0) {
-      const pendingUploadState = {
-        files: pendingFiles.map(f => ({
-          fileName: f.name,
-          fileSize: f.size,
-          fileType: f.type
-        })),
-        timestamp: Date.now()
-      };
-      sessionStorage.setItem('pendingUploadState', JSON.stringify(pendingUploadState));
+  const handleLoginFromPrompt = () => {
+    // Clear pending files - user will re-select after login
+    setPendingFiles([]);
+    setShowLoginPrompt(false);
 
-      // Store the actual files as base64 in sessionStorage
-      // Note: For very large files, consider using IndexedDB instead
-      const filesBase64 = await Promise.all(
-        pendingFiles.map(file => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        }))
-      );
-      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+    // Set a flag so we can prompt user to upload after login
+    sessionStorage.setItem('promptUploadAfterAuth', 'true');
 
-      setShowLoginPrompt(false);
-      // Navigate to login - after login, user goes to /c where
-      // ProtectedRoute will show QuizRoomLanding with the restored files
-      navigate('/login', {
-        state: {
-          returnTo: '/c',
-          message: t('landing.loginToUpload', 'Sign in to upload your notes and start learning!')
-        }
-      });
-    }
+    navigate('/login', {
+      state: {
+        returnTo: '/c',
+        message: t('landing.loginToUpload', 'Sign in to upload your notes and start learning!')
+      }
+    });
   };
 
   // Called when user clicks "Sign Up" in the prompt
-  const handleSignupFromPrompt = async () => {
-    if (pendingFiles.length > 0) {
-      const pendingUploadState = {
-        files: pendingFiles.map(f => ({
-          fileName: f.name,
-          fileSize: f.size,
-          fileType: f.type
-        })),
-        timestamp: Date.now()
-      };
-      sessionStorage.setItem('pendingUploadState', JSON.stringify(pendingUploadState));
+  const handleSignupFromPrompt = () => {
+    // Clear pending files - user will re-select after login
+    setPendingFiles([]);
+    setShowLoginPrompt(false);
 
-      // Store the actual files as base64 in sessionStorage
-      const filesBase64 = await Promise.all(
-        pendingFiles.map(file => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        }))
-      );
-      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+    // Set a flag so we can prompt user to upload after login
+    sessionStorage.setItem('promptUploadAfterAuth', 'true');
 
-      setShowLoginPrompt(false);
-      // Navigate to signup - after signup, user goes to /c
-      navigate('/signup', {
-        state: {
-          returnTo: '/c',
-          message: t('landing.signupToUpload', 'Create an account to upload your notes!')
-        }
-      });
-    }
+    navigate('/signup', {
+      state: {
+        returnTo: '/c',
+        message: t('landing.signupToUpload', 'Create an account to upload your notes!')
+      }
+    });
   };
 
   // Called when user dismisses the login prompt
@@ -601,8 +588,8 @@ const QuizRoomLanding = () => {
   // GOOGLE SIGN-IN DIRECTLY FROM MODAL
   // ============================================
   // This allows users to sign in with Google without leaving the modal.
-  // After successful sign-in, we store the files and navigate to /c
-  // where they will be processed automatically.
+  // After successful sign-in, we process the upload immediately since
+  // the files are still in memory (pendingFiles state).
   // ============================================
   const handleGoogleSignInFromPrompt = async () => {
     if (pendingFiles.length === 0) return;
@@ -610,42 +597,23 @@ const QuizRoomLanding = () => {
     setIsGoogleSigningIn(true);
 
     try {
-      // Store the pending files info in sessionStorage BEFORE signing in
-      const pendingUploadState = {
-        files: pendingFiles.map(f => ({
-          fileName: f.name,
-          fileSize: f.size,
-          fileType: f.type
-        })),
-        timestamp: Date.now()
-      };
-      sessionStorage.setItem('pendingUploadState', JSON.stringify(pendingUploadState));
+      // Keep a reference to the files before clearing state
+      const filesToUpload = [...pendingFiles];
 
-      // Store the actual files as base64
-      const filesBase64 = await Promise.all(
-        pendingFiles.map(file => new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(file);
-        }))
-      );
-      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
-
-      // Now sign in with Google
+      // Sign in with Google
       await handleSignInWithGoogleAccount();
 
-      // Close the modal and navigate to /c
-      // The pending upload will be restored there
+      // Close the modal
       setShowLoginPrompt(false);
       setPendingFiles([]);
-      navigate('/c', { replace: true });
+
+      // Now that user is signed in, process the upload immediately
+      // Files are still in memory, no storage needed!
+      await processFileUpload(filesToUpload);
 
     } catch (error) {
       console.error('Google sign-in failed:', error);
-      // Clear session storage on error
-      sessionStorage.removeItem('pendingUploadState');
-      sessionStorage.removeItem('pendingUploadFiles');
+      // Keep the modal open so user can try again
     } finally {
       setIsGoogleSigningIn(false);
     }
@@ -663,7 +631,7 @@ const QuizRoomLanding = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.md"
+        accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.png,.jpg,.jpeg"
         onChange={handleFileSelected}
         multiple
         style={{ display: 'none' }}
@@ -766,8 +734,75 @@ const QuizRoomLanding = () => {
 
             {/* Reassurance */}
             <p className="login-prompt-reassurance">
-              {t('landing.fileWillBeUploaded', 'Your file will be uploaded automatically after you sign in.')}
+              {t('landing.fileWillBeUploaded', 'Sign in with Google to upload immediately, or create an account and re-select your file.')}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* File Size Error Modal */}
+      {showFileSizeError && (
+        <div className="login-prompt-overlay" onClick={() => setShowFileSizeError(false)}>
+          <div className="login-prompt-modal glassmorphic file-size-error-modal" onClick={(e) => e.stopPropagation()}>
+            {/* Close button */}
+            <button
+              className="login-prompt-close"
+              onClick={() => setShowFileSizeError(false)}
+              aria-label={t('common.close', 'Close')}
+            >
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+
+            {/* Warning Icon */}
+            <div className="file-size-error-icon">
+              <svg viewBox="0 0 24 24" width="64" height="64" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <circle cx="12" cy="12" r="10" stroke="#f59e0b" strokeWidth="2"/>
+                <path d="M12 8v4" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round"/>
+                <circle cx="12" cy="16" r="1" fill="#f59e0b"/>
+              </svg>
+            </div>
+
+            {/* Content */}
+            <h2 className="login-prompt-title">
+              {t('landing.fileTooLargeTitle', 'File too large')}
+            </h2>
+            <p className="login-prompt-message">
+              {t('landing.fileTooLargeMessage', 'The maximum file size is {{maxSize}}MB per file.', { maxSize: MAX_FILE_SIZE_MB })}
+            </p>
+
+            {/* Show file names */}
+            <div className="file-size-error-files">
+              {oversizedFileNames.map((fileName, index) => (
+                <div key={index} className="file-size-error-file">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" />
+                    <path d="M14 2V7H19" />
+                  </svg>
+                  <span className="file-name">{fileName}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* Suggestions */}
+            <div className="file-size-error-tips">
+              <p className="tips-title">{t('landing.fileTooLargeTips', 'Try these options:')}</p>
+              <ul>
+                <li>{t('landing.fileTooLargeTip1', 'Compress your PDF using an online tool')}</li>
+                <li>{t('landing.fileTooLargeTip2', 'Split large documents into smaller parts')}</li>
+                <li>{t('landing.fileTooLargeTip3', 'Use lower resolution images')}</li>
+              </ul>
+            </div>
+
+            {/* Action button */}
+            <button
+              className="login-prompt-btn primary"
+              onClick={() => setShowFileSizeError(false)}
+            >
+              {t('common.understood', 'Got it')}
+            </button>
           </div>
         </div>
       )}
@@ -827,16 +862,20 @@ const QuizRoomLanding = () => {
           ) : (
             <>
               <button
+                type="button"
                 className="auth-header-btn login-btn"
                 onClick={() => handleDelayedNavigation(() => navigate('/login'))}
+                onTouchEnd={(e) => { e.preventDefault(); handleDelayedNavigation(() => navigate('/login')); }}
                 onMouseEnter={() => handleCardHover('login')}
                 onMouseLeave={handleCardHoverEnd}
               >
                 {t('landing.login', 'Log in')}
               </button>
               <button
+                type="button"
                 className="auth-header-btn signup-btn"
                 onClick={() => handleDelayedNavigation(() => navigate('/signup'))}
+                onTouchEnd={(e) => { e.preventDefault(); handleDelayedNavigation(() => navigate('/signup')); }}
                 onMouseEnter={() => handleCardHover('signup')}
                 onMouseLeave={handleCardHoverEnd}
               >
@@ -897,6 +936,50 @@ const QuizRoomLanding = () => {
               </svg>
               <span>{t('landing.uploadNotesTitle', 'Upload a file, save a life')}</span>
             </button>
+
+            {/* Accepted file types indicator */}
+            <div className="accepted-formats">
+              <span className="format-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 13H16M8 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                Word
+              </span>
+              <span className="format-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <rect x="7" y="7" width="10" height="7" stroke="currentColor" strokeWidth="1.5"/>
+                  <line x1="7" y1="17" x2="17" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                PowerPoint
+              </span>
+              <span className="format-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M9 13H15M9 17H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                PDF
+              </span>
+              <span className="format-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5"/>
+                  <path d="M8 13H16M8 17H16M8 9H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                </svg>
+                TXT
+              </span>
+              <span className="format-item">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
+                  <path d="M21 15L16 10L6 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+                Images
+              </span>
+            </div>
           </div>
 
           {/* Feature Cards - Inline in Hero */}

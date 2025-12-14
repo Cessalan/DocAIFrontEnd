@@ -1612,6 +1612,60 @@ body:not(.dark-mode) .popular-badge {
   height: 26px;
 }
 
+/* Accepted file formats indicator */
+.accepted-formats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.format-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  font-weight: 500;
+}
+
+.format-item svg {
+  opacity: 0.6;
+}
+
+/* Dark mode adjustments */
+.dark-mode .format-item {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Light mode */
+body:not(.dark-mode) .format-item {
+  color: rgba(0, 0, 0, 0.45);
+}
+
+body:not(.dark-mode) .format-item svg {
+  opacity: 0.5;
+}
+
+/* Mobile responsive */
+@media (max-width: 480px) {
+  .accepted-formats {
+    gap: 12px;
+  }
+
+  .format-item {
+    font-size: 12px;
+    gap: 4px;
+  }
+
+  .format-item svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+
 /* ============================================
    HERO FEATURES - Inline compact cards
    ============================================ */

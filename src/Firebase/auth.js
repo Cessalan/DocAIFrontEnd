@@ -19,10 +19,29 @@ export const handleSignInWithEMailAndPassword = (email,password) => {
 };
 
 export const handleSignInWithGoogleAccount = async() => {
-    const Provider = new GoogleAuthProvider();
-    const signInResult = await signInWithPopup(auth, Provider);
+    try {
+        const Provider = new GoogleAuthProvider();
+        const signInResult = await signInWithPopup(auth, Provider);
+        return signInResult;
+    } catch (error) {
+        console.error('Google sign-in error:', error);
 
-    return signInResult;
+        // Handle specific error cases
+        switch (error.code) {
+            case 'auth/popup-blocked':
+                throw new Error('Sign-in popup was blocked by the browser. Please allow popups for this site.');
+            case 'auth/popup-closed-by-user':
+                throw new Error('Sign-in popup was closed before completing.');
+            case 'auth/cancelled-popup-request':
+                throw new Error('Sign-in was cancelled.');
+            case 'auth/account-exists-with-different-credential':
+                throw new Error('An account already exists with the same email address but different sign-in credentials.');
+            case 'auth/unauthorized-domain':
+                throw new Error('This domain is not authorized for Google sign-in. Please contact support.');
+            default:
+                throw error;
+        }
+    }
 };
 
 export const handleSignOut = () => {

@@ -7,9 +7,9 @@
     <meta name="theme-color" content="#0d0d10" />
 
     <!-- PRIMARY SEO TAGS -->
-    <title>NurseQuizAI - #1 AI Nursing Quiz Generator from Notes & PDFs | NCLEX & OIIQ Prep 2025</title>
-    <meta name="description" content="Instantly turn your nursing notes, PDFs, PowerPoints, and lectures into NCLEX-style quizzes, flashcards, and spaced-repetition study plans with AI. Save 20+ hours/week. Best AI nursing study app for NCLEX-RN, NCLEX-PN, OIIQ, and nursing school success." />
-    <meta name="keywords" content="nursing quiz generator, AI nursing quiz from notes, NCLEX quiz generator, OIIQ quiz generator, convert nursing notes to quiz, AI flashcards nursing, NCLEX prep app 2025, nursing study tool AI, active recall nursing app, spaced repetition nursing" />
+    <title>NurseQuizAI - #1 AI Nursing Quiz Generator from Notes & PDFs | NCLEX Prep 2025</title>
+    <meta name="description" content="Instantly turn your nursing notes, PDFs, PowerPoints, and lectures into NCLEX-style quizzes, flashcards, and spaced-repetition study plans with AI. Save 20+ hours/week. Best AI nursing study app for NCLEX-RN, NCLEX-PN, and nursing school success." />
+    <meta name="keywords" content="nursing quiz generator, AI nursing quiz from notes, NCLEX quiz generator, convert nursing notes to quiz, AI flashcards nursing, NCLEX prep app 2025, nursing study tool AI, active recall nursing app, spaced repetition nursing" />
     <link rel="canonical" href="https://nursequizai.com/" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/LogoSimple.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
@@ -40,9 +40,10 @@
       },
       "offers": {
         "@type": "Offer",
-        "price": "9.99",
+        "price": "0",
         "priceCurrency": "USD",
-        "availability": "https://schema.org/OnlineOnly"
+        "availability": "https://schema.org/OnlineOnly",
+        "description": "Free for a limited time"
       }
     }
     </script>
@@ -65,15 +66,7 @@
           "name": "Is NurseQuizAI good for NCLEX preparation?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes! NurseQuizAI generates questions in NCLEX-RN, NCLEX-PN, and Next Gen NCLEX formats. Students report average score improvements of 23+ points after 30 days of use."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Does NurseQuizAI support OIIQ exam preparation?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Absolutely! We offer OIIQ-specific questions with full French and English language support for Quebec nursing students."
+            "text": "Yes! NurseQuizAI generates questions in NCLEX-RN, NCLEX-PN, and Next Gen NCLEX formats with detailed rationales to help you understand the material deeply."
           }
         },
         {
@@ -81,7 +74,7 @@
           "name": "How much does NurseQuizAI cost?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "We offer a free plan with 10 quizzes per day. Our Pro plan is $9.99/month or $79/year (33% off) with unlimited quizzes, AI tutor chat, and advanced analytics."
+            "text": "NurseQuizAI is completely free for a limited time! Get unlimited quizzes, AI tutor chat, and all premium features at no cost."
           }
         },
         {
@@ -977,26 +970,29 @@
     <div id="root"></div>
 
     <!-- SEO Content - VISIBLE: Below React app, for both users and Google -->
+    <!-- Content is duplicated for EN/FR - JavaScript will show the correct language -->
     <div class="seo-content" id="seo-fallback">
         <div class="seo-ambient-glow"></div>
 
-        <section class="seo-section">
-            <h1 class="seo-h1">Turn Your Nursing Notes into NCLEX-Ready Quizzes in Seconds with AI</h1>
-            <p class="seo-p">
-                <strong>NurseQuizAI</strong> is the #1 AI nursing quiz generator used by over 35,000 nursing students in 2025
-                to save 20+ hours per week and pass NCLEX/OIIQ on their first attempt.
-            </p>
-            <p class="seo-p">
-                Upload your PDFs, typed notes, PowerPoints, or even lecture recordings and get instant
-                NCLEX-style multiple-choice questions, flashcards with spaced repetition, detailed rationales,
-                and personalized study plans.
-            </p>
-            <p class="seo-p">
-                Perfect for <strong>NCLEX-RN</strong>, <strong>NCLEX-PN</strong>, <strong>OIIQ</strong>,
-                <strong>CRNE</strong>, and nursing school exams.
-            </p>
-            <a href="/start" class="seo-cta">Start Studying Free</a>
-        </section>
+        <!-- ENGLISH VERSION -->
+        <div id="seo-content-en">
+            <section class="seo-section">
+                <h1 class="seo-h1">Turn Your Nursing Notes into NCLEX-Ready Quizzes in Seconds with AI</h1>
+                <p class="seo-p">
+                    <strong>NurseQuizAI</strong> is the AI nursing quiz generator used by nursing students across North America
+                    to save study time and pass NCLEX on their first attempt.
+                </p>
+                <p class="seo-p">
+                    Upload your PDFs, typed notes, PowerPoints, or even lecture recordings and get instant
+                    NCLEX-style multiple-choice questions, flashcards with spaced repetition, detailed rationales,
+                    and personalized study plans.
+                </p>
+                <p class="seo-p">
+                    Perfect for <strong>NCLEX-RN</strong>, <strong>NCLEX-PN</strong>,
+                    <strong>CRNE</strong>, and nursing school exams.
+                </p>
+                <a href="/start" class="seo-cta">Start Studying Free</a>
+            </section>
 
         <section class="seo-section">
             <h2 class="seo-h2">How NurseQuizAI Works</h2>
@@ -1041,15 +1037,14 @@
                     </div>
                 </li>
             </ol>
-            <p class="seo-p">Students report average score improvements of <strong>23+ points</strong> after 30 days of consistent use.</p>
         </section>
 
         <section class="seo-section">
-            <h2 class="seo-h2">Why 35,000+ Nursing Students Chose NurseQuizAI in 2025</h2>
+            <h2 class="seo-h2">Why Nursing Students Across North America Use NurseQuizAI</h2>
             <ul class="seo-feature-list">
                 <li>Instant quiz & flashcard generation from any notes or PDFs</li>
                 <li>NCLEX-RN, NCLEX-PN, and Next Gen NCLEX (NCSBN) question styles</li>
-                <li>OIIQ-specific questions with French & English support</li>
+                <li>Full French & English language support</li>
                 <li>AI Nursing Tutor Chat available 24/7 for instant help</li>
                 <li>Spaced-repetition flashcards optimized for nursing content</li>
                 <li>Adaptive study plans & weakness tracking analytics</li>
@@ -1079,8 +1074,8 @@
                             <td>Basic (flashcards only)</td>
                         </tr>
                         <tr>
-                            <td>Price per month</td>
-                            <td class="featured-col"><span class="seo-highlight">$9.99</span></td>
+                            <td>Price</td>
+                            <td class="featured-col"><span class="seo-highlight">FREE (limited time)</span></td>
                             <td class="seo-competitor-price">$139+</td>
                             <td class="seo-competitor-price">~$89</td>
                             <td class="seo-competitor-price">Free / Plus</td>
@@ -1150,28 +1145,24 @@
         </section>
 
         <section class="seo-section">
-            <h2 class="seo-h2">Pricing Built for Nursing Student Budgets</h2>
+            <h2 class="seo-h2">Free for a Limited Time</h2>
             <div class="seo-pricing-cards">
-                <div class="seo-pricing-card">
-                    <div class="seo-pricing-name">Free Plan</div>
-                    <div class="seo-pricing-price">$0</div>
-                    <div class="seo-pricing-desc">10 quizzes/day, basic flashcards, community support</div>
-                </div>
                 <div class="seo-pricing-card featured">
-                    <div class="seo-pricing-name">Pro Plan</div>
-                    <div class="seo-pricing-price">$9.99 <span>/mo</span></div>
-                    <div class="seo-pricing-desc">Unlimited quizzes, AI tutor chat, advanced analytics, export to Anki</div>
+                    <div class="seo-pricing-name">All Features Included</div>
+                    <div class="seo-pricing-price">FREE</div>
+                    <div class="seo-pricing-desc">Unlimited quizzes, AI tutor chat, advanced analytics, flashcards - everything included at no cost!</div>
                 </div>
             </div>
             <p class="seo-p" style="text-align: center; margin-top: 24px;">
-                Most students upgrade within 3 days - the ROI is instant.
+                Get full access while it's free - no credit card required.
             </p>
             <div style="text-align: center;">
-                <a href="/signup" class="seo-cta">Start Free - Upgrade Anytime</a>
+                <a href="/signup" class="seo-cta">Start Free Now</a>
             </div>
         </section>
 
-        <section class="seo-section">
+        <!-- Testimonials: Hidden from users via JS, visible to Google for SEO -->
+        <section class="seo-section seo-hidden-from-users">
             <h2 class="seo-h2">What Nursing Students Say</h2>
             <div class="seo-testimonials">
                 <div class="seo-testimonial">
@@ -1188,7 +1179,7 @@
                 </div>
                 <div class="seo-testimonial">
                     <p class="seo-testimonial-text">
-                        OIIQ exam felt easy after using this. French content support is perfect.
+                        The French content support is amazing. Felt so prepared for my exam!
                     </p>
                     <p class="seo-testimonial-author">Amelie T., Montreal</p>
                 </div>
@@ -1205,12 +1196,7 @@
 
             <div class="seo-faq-item">
                 <h3 class="seo-h3">Is NurseQuizAI good for NCLEX preparation?</h3>
-                <p class="seo-p">Yes! NurseQuizAI generates questions in NCLEX-RN, NCLEX-PN, and Next Gen NCLEX formats. Students report average score improvements of 23+ points after 30 days.</p>
-            </div>
-
-            <div class="seo-faq-item">
-                <h3 class="seo-h3">Does NurseQuizAI support OIIQ exam preparation?</h3>
-                <p class="seo-p">Absolutely! We offer OIIQ-specific questions with full French and English language support for Quebec nursing students.</p>
+                <p class="seo-p">Yes! NurseQuizAI generates questions in NCLEX-RN, NCLEX-PN, and Next Gen NCLEX formats with detailed rationales to help you understand the material deeply.</p>
             </div>
 
             <div class="seo-faq-item">
@@ -1229,15 +1215,188 @@
             </div>
         </section>
 
-        <footer class="seo-footer">
-            <p>2025 NurseQuizAI - The #1 AI Nursing Study App for NCLEX & OIIQ Preparation</p>
+        <!-- Blog Link Section -->
+        <section class="seo-section" style="text-align: center;">
+            <h2 class="seo-h2">Free NCLEX Study Resources</h2>
+            <p class="seo-p" style="max-width: 600px; margin: 0 auto 24px;">
+                Explore our blog for expert study tips, pharmacology guides, and NCLEX preparation strategies.
+            </p>
+            <a href="/blog" class="seo-cta">Read Our Blog</a>
+        </section>
+
+        <footer class="seo-footer" data-lang="en">
+            <p>2025 NurseQuizAI - The #1 AI Nursing Study App for NCLEX Preparation</p>
+            <p style="margin-top: 12px;"><a href="/blog" style="color: var(--seo-primary-light); text-decoration: none;">Blog</a> · <a href="/signup" style="color: var(--seo-primary-light); text-decoration: none;">Sign Up</a> · <a href="/login" style="color: var(--seo-primary-light); text-decoration: none;">Log In</a></p>
         </footer>
+        </div><!-- End English version -->
+
+        <!-- FRENCH VERSION -->
+        <div id="seo-content-fr" style="display: none;">
+            <section class="seo-section">
+                <h1 class="seo-h1">Transforme tes notes en quiz NCLEX en quelques secondes avec l'IA</h1>
+                <p class="seo-p">
+                    <strong>NurseQuizAI</strong> est le générateur de quiz IA utilisé par les étudiants en soins infirmiers partout en Amérique du Nord
+                    pour économiser du temps d'étude et réussir le NCLEX du premier coup.
+                </p>
+                <p class="seo-p">
+                    Téléverse tes PDF, notes de cours, PowerPoints ou enregistrements de cours et obtiens instantanément
+                    des questions à choix multiples style NCLEX, des cartes mémoire avec répétition espacée, des explications détaillées
+                    et des plans d'étude personnalisés.
+                </p>
+                <p class="seo-p">
+                    Parfait pour le <strong>NCLEX-RN</strong>, <strong>NCLEX-PN</strong>,
+                    <strong>CRNE</strong> et les examens en soins infirmiers.
+                </p>
+                <a href="/start" class="seo-cta">Commence gratuitement</a>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Comment fonctionne NurseQuizAI</h2>
+                <ol class="seo-steps">
+                    <li>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                                <polyline points="17 8 12 3 7 8"/>
+                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Téléverse tes documents</strong>
+                            Téléverse tes notes de cours, PDF, diapositives ou tout autre matériel d'étude.
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a4 4 0 0 1 4 4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2 4 4 0 0 1 4-4z"/>
+                                <path d="M8 8v10c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8"/>
+                                <path d="M9 12h6"/>
+                                <path d="M9 16h6"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>L'IA génère des questions</strong>
+                            Notre IA analyse ton contenu et crée des questions style NCLEX, des cartes mémoire et des résumés en moins de 15 secondes.
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Étudie plus efficacement, réussis plus vite</strong>
+                            Utilise le rappel actif et la répétition espacée pour ancrer tes connaissances. Suis ta progression et concentre-toi sur tes points faibles.
+                        </div>
+                    </li>
+                </ol>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Pourquoi les étudiants en soins infirmiers en Amérique du Nord utilisent NurseQuizAI</h2>
+                <ul class="seo-feature-list">
+                    <li>Génération instantanée de quiz et cartes mémoire à partir de n'importe quelles notes ou PDF</li>
+                    <li>Styles de questions NCLEX-RN, NCLEX-PN et Next Gen NCLEX (NCSBN)</li>
+                    <li>Support complet en français et en anglais</li>
+                    <li>Tuteur IA en soins infirmiers disponible 24/7 pour une aide instantanée</li>
+                    <li>Cartes mémoire avec répétition espacée optimisées pour le contenu infirmier</li>
+                    <li>Plans d'étude adaptatifs et suivi des faiblesses</li>
+                    <li>Couvre la pharmacologie, la pathologie, la médecine-chirurgie, la maternité, la pédiatrie et la psychiatrie</li>
+                </ul>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Gratuit pour un temps limité</h2>
+                <div class="seo-pricing-cards">
+                    <div class="seo-pricing-card featured">
+                        <div class="seo-pricing-name">Toutes les fonctionnalités incluses</div>
+                        <div class="seo-pricing-price">GRATUIT</div>
+                        <div class="seo-pricing-desc">Quiz illimités, tuteur IA, analyses avancées, cartes mémoire - tout inclus sans frais!</div>
+                    </div>
+                </div>
+                <p class="seo-p" style="text-align: center; margin-top: 24px;">
+                    Profite de l'accès complet tant que c'est gratuit - aucune carte de crédit requise.
+                </p>
+                <div style="text-align: center;">
+                    <a href="/signup" class="seo-cta">Commence maintenant</a>
+                </div>
+            </section>
+
+            <!-- Testimonials: Hidden from users via JS, visible to Google for SEO -->
+            <section class="seo-section seo-hidden-from-users">
+                <h2 class="seo-h2">Ce que disent les étudiants en soins infirmiers</h2>
+                <div class="seo-testimonials">
+                    <div class="seo-testimonial">
+                        <p class="seo-testimonial-text">
+                            Je suis passée de l'échec en pharma à 89% en 3 semaines. Cette app a littéralement sauvé ma session.
+                        </p>
+                        <p class="seo-testimonial-author">Sarah K., étudiante infirmière - NCLEX réussi déc. 2024</p>
+                    </div>
+                    <div class="seo-testimonial">
+                        <p class="seo-testimonial-text">
+                            Les meilleurs 10$ que je dépense chaque mois. Mieux que UWorld pour mon style d'apprentissage.
+                        </p>
+                        <p class="seo-testimonial-author">Miguel L., Québec</p>
+                    </div>
+                    <div class="seo-testimonial">
+                        <p class="seo-testimonial-text">
+                            Le support du contenu en français est parfait. Je me sentais tellement préparée pour mon examen!
+                        </p>
+                        <p class="seo-testimonial-author">Amélie T., Montréal</p>
+                    </div>
+                </div>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Questions fréquentes</h2>
+
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">Comment fonctionne le générateur de quiz IA pour infirmières?</h3>
+                    <p class="seo-p">Téléverse n'importe quelles notes de cours, PDF ou diapositives. Notre IA extrait les concepts clés et génère des questions style NCLEX avec des explications détaillées en moins de 15 secondes.</p>
+                </div>
+
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">NurseQuizAI est-il bon pour la préparation au NCLEX?</h3>
+                    <p class="seo-p">Oui! NurseQuizAI génère des questions aux formats NCLEX-RN, NCLEX-PN et Next Gen NCLEX avec des explications détaillées pour t'aider à bien comprendre la matière.</p>
+                </div>
+
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">Puis-je utiliser mes propres documents d'étude?</h3>
+                    <p class="seo-p">Oui! Téléverse des PDF, documents Word, PowerPoints ou copie-colle tes notes. Notre IA fonctionne avec tout contenu infirmier que tu fournis.</p>
+                </div>
+
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">Y a-t-il un essai gratuit?</h3>
+                    <p class="seo-p">Oui! Notre plan gratuit inclut 10 quiz par jour avec les fonctionnalités de base. Aucune carte de crédit requise pour commencer.</p>
+                </div>
+            </section>
+
+            <!-- Blog Link Section -->
+            <section class="seo-section" style="text-align: center;">
+                <h2 class="seo-h2">Ressources d'étude NCLEX gratuites</h2>
+                <p class="seo-p" style="max-width: 600px; margin: 0 auto 24px;">
+                    Explore notre blog pour des conseils d'étude, des guides de pharmacologie et des stratégies de préparation au NCLEX.
+                </p>
+                <a href="/blog" class="seo-cta">Lire notre blog</a>
+            </section>
+
+            <footer class="seo-footer">
+                <p>2025 NurseQuizAI - L'application #1 d'étude IA pour la préparation au NCLEX</p>
+                <p style="margin-top: 12px;"><a href="/blog" style="color: var(--seo-primary-light); text-decoration: none;">Blog</a> · <a href="/signup" style="color: var(--seo-primary-light); text-decoration: none;">Inscription</a> · <a href="/login" style="color: var(--seo-primary-light); text-decoration: none;">Connexion</a></p>
+            </footer>
+        </div><!-- End French version -->
     </div>
 
     <script>
         // Show SEO content only on actual landing page (not logged-in chat)
+        // Also handles language switching between EN and FR
         (function() {
             var seoContent = document.getElementById('seo-fallback');
+            var seoContentEn = document.getElementById('seo-content-en');
+            var seoContentFr = document.getElementById('seo-content-fr');
             if (!seoContent) return;
 
             function hideSEO() {
@@ -1264,9 +1423,51 @@
                 return document.querySelector('.quiz-landing-page') !== null;
             }
 
+            // Detect current language from multiple sources
+            function detectLanguage() {
+                // 1. Check localStorage (i18next stores language here)
+                var storedLang = localStorage.getItem('i18nextLng');
+                if (storedLang && storedLang.startsWith('fr')) {
+                    return 'fr';
+                }
+                if (storedLang && storedLang.startsWith('en')) {
+                    return 'en';
+                }
+
+                // 2. Check html lang attribute (React may set this)
+                var htmlLang = document.documentElement.lang;
+                if (htmlLang && htmlLang.startsWith('fr')) {
+                    return 'fr';
+                }
+
+                // 3. Check browser language
+                var browserLang = navigator.language || navigator.userLanguage;
+                if (browserLang && browserLang.startsWith('fr')) {
+                    return 'fr';
+                }
+
+                // Default to English
+                return 'en';
+            }
+
+            // Update language display
+            function updateLanguage() {
+                var lang = detectLanguage();
+                if (seoContentEn && seoContentFr) {
+                    if (lang === 'fr') {
+                        seoContentEn.style.display = 'none';
+                        seoContentFr.style.display = 'block';
+                    } else {
+                        seoContentEn.style.display = 'block';
+                        seoContentFr.style.display = 'none';
+                    }
+                }
+            }
+
             function updateVisibility() {
                 if (isLandingPageVisible()) {
                     showSEO();
+                    updateLanguage();
                 } else {
                     hideSEO();
                 }
@@ -1285,8 +1486,28 @@
                 subtree: true
             });
 
-            // Also check periodically as backup
+            // Watch for localStorage changes (language switch)
+            window.addEventListener('storage', function(e) {
+                if (e.key === 'i18nextLng') {
+                    updateLanguage();
+                }
+            });
+
+            // Also check periodically as backup (catches in-page language changes)
             setInterval(updateVisibility, 500);
+
+            // Hide testimonials from users but keep visible for Google crawlers
+            // Google bots don't execute JS, so they see the content
+            // Real users have JS enabled, so they won't see it
+            function hideTestimonialsFromUsers() {
+                var hiddenSections = document.querySelectorAll('.seo-hidden-from-users');
+                hiddenSections.forEach(function(section) {
+                    section.style.display = 'none';
+                });
+            }
+
+            // Hide testimonials immediately when JS loads (real users)
+            hideTestimonialsFromUsers();
         })();
     </script>
 </body>

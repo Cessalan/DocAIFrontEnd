@@ -1,3 +1,17 @@
-# https://www.robotstxt.org/robotstxt.html
+# robots.txt for NurseQuizAI
+# https://nursequizai.com
+
 User-agent: *
-Disallow:
+
+# Allow all public pages
+Allow: /
+Allow: /blog/
+Allow: /signup
+Allow: /login
+
+# Disallow protected/private pages
+Disallow: /c/
+Disallow: /admin/
+
+# Sitemap location
+Sitemap: https://nursequizai.com/sitemap.xml

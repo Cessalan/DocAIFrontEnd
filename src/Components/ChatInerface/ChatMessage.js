@@ -706,9 +706,9 @@ const ChatMessage = ({
                   {/* Results Screen */}
                   <FlashcardResults
                     totalCards={parsedFlashcardData.length}
-                    masteredCards={parsedFlashcardData.filter(c => c.status === 'mastered').length}
-                    learningCards={parsedFlashcardData.filter(c => c.status === 'learning').length}
-                    newCards={parsedFlashcardData.filter(c => c.status === 'new' || !c.status).length}
+                    masteredCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === true).length}
+                    learningCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === false).length}
+                    newCards={parsedFlashcardData.filter(c => !c.userReview).length}
                     onContinue={handleContinueLearning}
                     onReview={handleReviewFlashcards}
                     topicBreakdown={(() => {
@@ -720,8 +720,8 @@ const ChatMessage = ({
                           topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
                         }
                         topicMap[topic].total++;
-                        if (card.status === 'mastered') topicMap[topic].mastered++;
-                        if (card.status === 'learning') topicMap[topic].learning++;
+                        if (card.userReview?.knowIt === true) topicMap[topic].mastered++;
+                        else if (card.userReview?.knowIt === false) topicMap[topic].learning++;
                       });
                       return Object.values(topicMap);
                     })()}

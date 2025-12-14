@@ -11,6 +11,8 @@ import ProtectedRoute from "./Components/Auth/ProtectedRoute";
 import PublicQuizView from "./Components/PublicQuiz/PublicQuizView";
 import QuizRoomLanding from "./Components/QuizRoom/QuizRoomLanding";
 import DedicatedQuizPage from "./Components/QuizRoom/DedicatedQuizPage";
+import BlogList from "./Components/Blog/BlogList";
+import BlogPost from "./Components/Blog/BlogPost";
 import QuestionBankAdmin from "./Components/Admin/QuestionBankAdmin";
 import DashboardLayout from "./Components/Dashboard/DashboardLayout";
 import './index.css';
@@ -279,6 +281,10 @@ function App() {
       <Route path="/signup" element={<Signup />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/quiz/:shareId" element={<PublicQuizView />} />
+
+      {/* Blog Routes - Public for SEO */}
+      <Route path="/blog" element={<BlogList />} />
+      <Route path="/blog/:slug" element={<BlogPost />} />
 
       {/* Admin Routes - DEV ONLY */}
       {isDev && (
