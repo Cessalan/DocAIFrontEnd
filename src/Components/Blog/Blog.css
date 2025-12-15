@@ -505,6 +505,15 @@
   border-top: 1px solid var(--blog-border);
 }
 
+.blog-footer-links a {
+  color: #a78bfa;
+  margin: 0 6px;
+}
+
+.blog-footer-links a:hover {
+  color: #6b21a8; /* keep visible on light backgrounds */
+}
+
 /* ============================================
    LOADING & 404
    ============================================ */

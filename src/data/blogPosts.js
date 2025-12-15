@@ -4,87 +4,11 @@
 
 export const blogPosts = [
   {
-    "title": "How to Study for NCLEX in 30 Days: A Complete Guide",
-    "slug": "how-to-study-for-nclex-in-30-days",
-    "excerpt": "A proven 30-day study plan to help you pass NCLEX on your first attempt. Learn the best strategies, daily schedules, and resources used by successful nurses.",
-    "category": "NCLEX Prep",
-    "date": "2025-01-10",
-    "readTime": 12,
-    "author": "NurseQuizAI Team",
-    "tags": [
-      "NCLEX",
-      "Study Plan",
-      "NCLEX-RN",
-      "Nursing School"
-    ],
-    "relatedSlugs": [
-      "best-nclex-study-strategies",
-      "pharmacology-memorization-tips"
-    ]
-  },
-  {
-    "title": "Top 10 NCLEX Study Strategies That Actually Work in 2025",
-    "slug": "best-nclex-study-strategies",
-    "excerpt": "Discover evidence-based study strategies used by nurses who passed NCLEX on their first try. From active recall to spaced repetition, learn what really works.",
-    "category": "Study Tips",
-    "date": "2025-01-08",
-    "readTime": 10,
-    "author": "NurseQuizAI Team",
-    "tags": [
-      "Study Strategies",
-      "Active Recall",
-      "Spaced Repetition",
-      "NCLEX Tips"
-    ],
-    "relatedSlugs": [
-      "how-to-study-for-nclex-in-30-days",
-      "how-to-use-ai-for-nursing-study"
-    ]
-  },
-  {
-    "title": "How to Memorize Pharmacology for Nursing: 7 Proven Techniques",
-    "slug": "pharmacology-memorization-tips",
-    "excerpt": "Struggling with nursing pharmacology? Learn memory techniques, mnemonics, and study strategies to master drug classifications, side effects, and nursing implications.",
-    "category": "Pharmacology",
-    "date": "2025-01-05",
-    "readTime": 9,
-    "author": "NurseQuizAI Team",
-    "tags": [
-      "Pharmacology",
-      "Memorization",
-      "Drug Classes",
-      "Nursing School"
-    ],
-    "relatedSlugs": [
-      "how-to-study-for-nclex-in-30-days",
-      "best-nclex-study-strategies"
-    ]
-  },
-  {
-    "title": "How to Use AI to Study for Nursing Exams (2025 Guide)",
-    "slug": "how-to-use-ai-for-nursing-study",
-    "excerpt": "Learn how AI tools like quiz generators and flashcard makers can transform your nursing study routine. Save time and study smarter with technology.",
-    "category": "Study Tools",
-    "date": "2025-01-03",
-    "readTime": 8,
-    "author": "NurseQuizAI Team",
-    "tags": [
-      "AI",
-      "Study Tools",
-      "Technology",
-      "Nursing Education"
-    ],
-    "relatedSlugs": [
-      "best-nclex-study-strategies",
-      "convert-notes-to-quiz"
-    ]
-  },
-  {
     "title": "How to Convert Your Nursing Notes into Practice Quizzes",
     "slug": "convert-notes-to-quiz",
     "excerpt": "Turn your lecture notes, PDFs, and study materials into NCLEX-style practice questions. A step-by-step guide to active learning with your own content.",
     "category": "Study Tips",
-    "date": "2024-12-28",
+    "date": "2026-12-28",
     "readTime": 7,
     "author": "NurseQuizAI Team",
     "tags": [
@@ -103,7 +27,7 @@ export const blogPosts = [
     "slug": "nclex-next-gen-guide",
     "excerpt": "Understand the Next Gen NCLEX format, new question types, clinical judgment model, and how to prepare for the updated exam in 2025.",
     "category": "NCLEX Prep",
-    "date": "2024-12-20",
+    "date": "2026-12-20",
     "readTime": 11,
     "author": "NurseQuizAI Team",
     "tags": [
@@ -115,6 +39,165 @@ export const blogPosts = [
     "relatedSlugs": [
       "how-to-study-for-nclex-in-30-days",
       "best-nclex-study-strategies"
+    ]
+  },
+  {
+    "title": "How to Study for NCLEX in 30 Days: A Complete Guide",
+    "slug": "how-to-study-for-nclex-in-30-days",
+    "excerpt": "A proven 30-day study plan to help you pass NCLEX on your first attempt. Learn the best strategies, daily schedules, and resources used by successful nurses.",
+    "category": "NCLEX Prep",
+    "date": "2026-01-10",
+    "readTime": 12,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "NCLEX",
+      "Study Plan",
+      "NCLEX-RN",
+      "Nursing School"
+    ],
+    "relatedSlugs": [
+      "best-nclex-study-strategies",
+      "pharmacology-memorization-tips"
+    ]
+  },
+  {
+    "title": "Top 10 NCLEX Study Strategies That Actually Work in 2025",
+    "slug": "best-nclex-study-strategies",
+    "excerpt": "Discover evidence-based study strategies used by nurses who passed NCLEX on their first try. From active recall to spaced repetition, learn what really works.",
+    "category": "Study Tips",
+    "date": "2026-01-08",
+    "readTime": 10,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "Study Strategies",
+      "Active Recall",
+      "Spaced Repetition",
+      "NCLEX Tips"
+    ],
+    "relatedSlugs": [
+      "how-to-study-for-nclex-in-30-days",
+      "how-to-use-ai-for-nursing-study"
+    ]
+  },
+  {
+    "title": "How to Memorize Pharmacology for Nursing: 7 Proven Techniques",
+    "slug": "pharmacology-memorization-tips",
+    "excerpt": "Struggling with nursing pharmacology? Learn memory techniques, mnemonics, and study strategies to master drug classifications, side effects, and nursing implications.",
+    "category": "Pharmacology",
+    "date": "2026-01-05",
+    "readTime": 9,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "Pharmacology",
+      "Memorization",
+      "Drug Classes",
+      "Nursing School"
+    ],
+    "relatedSlugs": [
+      "how-to-study-for-nclex-in-30-days",
+      "best-nclex-study-strategies"
+    ]
+  },
+  {
+    "title": "How to Use AI to Study for Nursing Exams (2025 Guide)",
+    "slug": "how-to-use-ai-for-nursing-study",
+    "excerpt": "Learn how AI tools like quiz generators and flashcard makers can transform your nursing study routine. Save time and study smarter with technology.",
+    "category": "Study Tools",
+    "date": "2026-01-03",
+    "readTime": 8,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "AI",
+      "Study Tools",
+      "Technology",
+      "Nursing Education"
+    ],
+    "relatedSlugs": [
+      "best-nclex-study-strategies",
+      "convert-notes-to-quiz"
+    ]
+  },
+  {
+    "title": "Quizlet and Anki Alternatives for Nursing Students (with NCLEX-Style AI)",
+    "slug": "quizlet-anki-alternative-nursing",
+    "excerpt": "Looking for a Quizlet or Anki alternative made for nurses? See how NurseQuizAI turns your PDFs and lecture notes into NCLEX-style quizzes, flashcards, audio summaries, and study sheets in minutes.",
+    "category": "Study Tools",
+    "date": "2026-01-06",
+    "readTime": 9,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "Quizlet Alternative",
+      "Anki Alternative",
+      "NCLEX",
+      "Flashcards",
+      "Audio Summary"
+    ],
+    "relatedSlugs": [
+      "convert-notes-to-quiz",
+      "how-to-use-ai-for-nursing-study",
+      "best-nclex-study-strategies"
+    ]
+  },
+  {
+    "title": "Turn Nursing PDFs Into NCLEX Quizzes and Flashcards",
+    "slug": "nursing-pdf-to-quiz-flashcards",
+    "excerpt": "Upload your nursing PDFs, slides, and images, and generate NCLEX-style quizzes, flashcards, study sheets, and audio summaries automatically—no manual card building.",
+    "category": "Study Tips",
+    "date": "2026-01-06",
+    "readTime": 7,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "NCLEX",
+      "Quiz Generator",
+      "Flashcards",
+      "Nursing PDFs",
+      "Study Sheets"
+    ],
+    "relatedSlugs": [
+      "convert-notes-to-quiz",
+      "nclex-next-gen-guide",
+      "how-to-use-ai-for-nursing-study"
+    ]
+  },
+  {
+    "title": "Audio Summaries and Study Sheets for Nursing (Quizlet/Anki Alternative)",
+    "slug": "audio-summaries-nursing-quizlet-anki-alternative",
+    "excerpt": "Skip manual decks. Upload nursing notes to get audio summaries, printable study sheets, and NCLEX-style quizzes—an alternative to Quizlet and Anki built for nurses.",
+    "category": "Study Tools",
+    "date": "2026-01-06",
+    "readTime": 6,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "Audio Summary",
+      "Study Sheets",
+      "Quizlet Alternative",
+      "Anki Alternative",
+      "NCLEX"
+    ],
+    "relatedSlugs": [
+      "quizlet-anki-alternative-nursing",
+      "nursing-pdf-to-quiz-flashcards",
+      "how-to-use-ai-for-nursing-study"
+    ]
+  },
+  {
+    "title": "Is NurseQuizAI free? Pricing and what you get",
+    "slug": "is-nursequizai-free",
+    "excerpt": "See what you can do for free with NurseQuizAI: sample NCLEX quizzes, file uploads to generate questions, flashcards, study sheets, and audio summaries.",
+    "category": "Pricing",
+    "date": "2026-01-07",
+    "readTime": 4,
+    "author": "NurseQuizAI Team",
+    "tags": [
+      "Pricing",
+      "Free",
+      "NCLEX",
+      "Quiz Generator"
+    ],
+    "relatedSlugs": [
+      "quizlet-anki-alternative-nursing",
+      "nursing-pdf-to-quiz-flashcards",
+      "audio-summaries-nursing-quizlet-anki-alternative"
     ]
   }
 ];

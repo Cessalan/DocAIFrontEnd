@@ -3,7 +3,7 @@ title: "How to Study for NCLEX in 30 Days: A Complete Guide"
 slug: "how-to-study-for-nclex-in-30-days"
 excerpt: "A proven 30-day study plan to help you pass NCLEX on your first attempt. Learn the best strategies, daily schedules, and resources used by successful nurses."
 category: "NCLEX Prep"
-date: "2025-01-10"
+date: "2026-01-10"
 readTime: 12
 author: "NurseQuizAI Team"
 tags: ["NCLEX", "Study Plan", "NCLEX-RN", "Nursing School"]

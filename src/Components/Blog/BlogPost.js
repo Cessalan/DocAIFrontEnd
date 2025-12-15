@@ -168,6 +168,11 @@ const BlogPost = () => {
       {/* Footer */}
       <footer className="blog-footer">
         <p>© 2025 NurseQuizAI - {t('blog.footerText', 'AI-Powered NCLEX Preparation')}</p>
+        <p className="blog-footer-links">
+          <a href="/quizlet-alternative-nursing">Quizlet alternative for nursing</a> ·
+          <a href="/anki-alternative-nclex">Anki alternative for NCLEX</a> ·
+          <a href="/blog/nursing-pdf-to-quiz-flashcards">Convert PDFs to quizzes</a>
+        </p>
       </footer>
     </div>
   );

@@ -3,7 +3,7 @@ title: "How to Convert Your Nursing Notes into Practice Quizzes"
 slug: "convert-notes-to-quiz"
 excerpt: "Turn your lecture notes, PDFs, and study materials into NCLEX-style practice questions. A step-by-step guide to active learning with your own content."
 category: "Study Tips"
-date: "2024-12-28"
+date: "2026-12-28"
 readTime: 7
 author: "NurseQuizAI Team"
 tags: ["Quiz Generator", "Notes", "Active Learning", "Study Tips"]

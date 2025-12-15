@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Anki Alternative for NCLEX | Nursing Quizzes, Flashcards, Audio</title>
+  <meta name="description" content="NCLEX-focused Anki alternative: upload nursing PDFs/notes to auto-generate NCLEX-style quizzes (SATA), flashcards, study sheets, and audio summaries in English or French.">
+  <link rel="canonical" href="https://nursequizai.com/anki-alternative-nclex.html">
+  <style>
+    :root {
+      --bg: #0c0f1f;
+      --card: #131c3d;
+      --accent: #22d3ee;
+      --accent-2: #0ea5e9;
+      --text: #e5e7eb;
+      --muted: #9ca3af;
+      --border: #1f2a4d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background: radial-gradient(120% 120% at 70% 20%, rgba(14,165,233,0.12), transparent 45%), var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { color: var(--text); }
+    .page { max-width: 1080px; margin: 0 auto; padding: 48px 18px 72px; }
+    .hero { display: grid; gap: 18px; padding: 28px; background: linear-gradient(135deg, rgba(14,165,233,0.12), rgba(17,24,39,0.8)); border: 1px solid var(--border); border-radius: 20px; box-shadow: 0 20px 60px rgba(0,0,0,0.35); }
+    .eyebrow { color: var(--accent); font-weight: 700; letter-spacing: 0.05em; font-size: 12px; text-transform: uppercase; }
+    h1 { font-size: 32px; margin: 6px 0 4px; line-height: 1.2; }
+    .hero p { margin: 0; color: var(--muted); }
+    .cta-row { display: flex; gap: 12px; flex-wrap: wrap; margin-top: 8px; }
+    .btn { padding: 12px 18px; border-radius: 12px; font-weight: 700; border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease; background: var(--accent-2); color: white; box-shadow: 0 10px 30px rgba(14,165,233,0.35); }
+    .btn.secondary { background: transparent; border-color: var(--border); color: var(--text); box-shadow: none; }
+    .pill { display: inline-flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: 999px; background: rgba(255,255,255,0.06); border: 1px solid var(--border); color: var(--muted); font-size: 13px; }
+    .grid { display: grid; gap: 16px; margin-top: 28px; }
+    .three { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+    .two { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 18px; box-shadow: 0 12px 30px rgba(0,0,0,0.25); }
+    .card h3 { margin: 0 0 8px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); }
+    .list { padding-left: 16px; margin: 8px 0 0; color: var(--muted); }
+    .list li { margin: 6px 0; }
+    .faq h3 { margin: 0 0 6px; }
+    .links a { display: inline-block; margin: 6px 12px 0 0; }
+    .muted { color: var(--muted); }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="hero">
+      <div class="eyebrow">Anki Alternative · NCLEX & Nursing</div>
+      <h1>Auto-generate NCLEX quizzes, flashcards, study sheets, and audio from your nursing files</h1>
+      <p>No manual deck building. Upload PDFs, slides, or images; NurseQuizAI produces NCLEX-style quizzes (SATA), flashcards, printable study sheets, and audio summaries—English or French.</p>
+      <div class="cta-row">
+        <a class="btn" href="/">Start with your notes</a>
+        <a class="btn secondary" href="/quizroom">See a sample quiz</a>
+      </div>
+      <div class="pill">Faster than hand-made Anki decks for NCLEX prep</div>
+    </div>
+
+    <div class="grid three">
+      <div class="card">
+        <h3>Uploads, not manual decks</h3>
+        <p>Skip card creation. Upload files; get flashcards, quizzes, study sheets, and audio automatically.</p>
+      </div>
+      <div class="card">
+        <h3>NCLEX-ready</h3>
+        <p>Includes “select all that apply” and clinical reasoning focus from your documents.</p>
+      </div>
+      <div class="card">
+        <h3>Bilingual</h3>
+        <p>Browser language controls insights, titles, summaries (EN/FR)—no English-only outputs.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top: 22px;">
+      <h3>What you get</h3>
+      <ul class="list">
+        <li><strong>Flashcards:</strong> Auto-generated from your notes—no templates needed.</li>
+        <li><strong>Quizzes:</strong> NCLEX-style, with SATA from your own files.</li>
+        <li><strong>Study sheets:</strong> Printable, organized by key nursing concepts.</li>
+        <li><strong>Audio summaries:</strong> Listen while commuting or between clinicals.</li>
+        <li><strong>Insights:</strong> Localized titles/topics when you upload (EN/FR).</li>
+      </ul>
+    </div>
+
+    <div class="grid two" style="margin-top: 22px;">
+      <div class="card">
+        <h3>Why it replaces manual Anki</h3>
+        <p>Uploads become ready-to-use cards, quizzes, and sheets. No plug-ins, no hand-typing. Faster iteration on weak topics revealed by quizzes.</p>
+      </div>
+      <div class="card">
+        <h3>Clinical use-cases</h3>
+        <p>Drill pharm, labs, care plans, patho, and patient scenarios before exams and rotations.</p>
+      </div>
+    </div>
+
+    <div class="card faq" style="margin-top: 22px;">
+      <h3>FAQ</h3>
+      <p><strong>Is this really an Anki alternative for NCLEX?</strong><br/>Yes—uploads drive NCLEX-style quizzes, flashcards, study sheets, and audio. No manual decks.</p>
+      <p><strong>Do I lose spaced repetition?</strong><br/>You can export flashcards and still schedule reviews; generation is what’s automated.</p>
+      <p><strong>Does it support SATA?</strong><br/>Yes. “Select all that apply” questions are generated from your files.</p>
+      <p><strong>Does it work in French?</strong><br/>Yes. Insights, titles, and summaries follow your browser language.</p>
+    </div>
+
+    <div class="card links" style="margin-top: 22px;">
+      <h3>Related reading</h3>
+      <a href="/blog/quizlet-anki-alternative-nursing">Quizlet vs Anki for nursing</a>
+      <a href="/blog/nursing-pdf-to-quiz-flashcards">Convert nursing PDFs to quizzes</a>
+      <a href="/blog/audio-summaries-nursing-quizlet-anki-alternative">Audio summaries + study sheets</a>
+    </div>
+
+    <div class="card" style="margin-top: 22px; text-align: center;">
+      <h3>Ready to skip manual decks?</h3>
+      <p class="muted">Upload a PDF or slide deck and generate NCLEX-style quizzes, flashcards, study sheets, and audio in minutes.</p>
+      <div class="cta-row" style="justify-content: center;">
+        <a class="btn" href="/">Start free</a>
+        <a class="btn secondary" href="/quizroom">View sample quiz</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

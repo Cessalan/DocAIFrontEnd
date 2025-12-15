@@ -3,7 +3,7 @@ title: "How to Use AI to Study for Nursing Exams (2025 Guide)"
 slug: "how-to-use-ai-for-nursing-study"
 excerpt: "Learn how AI tools like quiz generators and flashcard makers can transform your nursing study routine. Save time and study smarter with technology."
 category: "Study Tools"
-date: "2025-01-03"
+date: "2026-01-03"
 readTime: 8
 author: "NurseQuizAI Team"
 tags: ["AI", "Study Tools", "Technology", "Nursing Education"]

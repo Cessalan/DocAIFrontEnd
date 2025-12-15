@@ -3,7 +3,7 @@ title: "Next Generation NCLEX (NGN): Everything You Need to Know"
 slug: "nclex-next-gen-guide"
 excerpt: "Understand the Next Gen NCLEX format, new question types, clinical judgment model, and how to prepare for the updated exam in 2025."
 category: "NCLEX Prep"
-date: "2024-12-20"
+date: "2026-12-20"
 readTime: 11
 author: "NurseQuizAI Team"
 tags: ["Next Gen NCLEX", "NGN", "Clinical Judgment", "NCLEX 2025"]

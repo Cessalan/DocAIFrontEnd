@@ -3,7 +3,7 @@ title: "Top 10 NCLEX Study Strategies That Actually Work in 2025"
 slug: "best-nclex-study-strategies"
 excerpt: "Discover evidence-based study strategies used by nurses who passed NCLEX on their first try. From active recall to spaced repetition, learn what really works."
 category: "Study Tips"
-date: "2025-01-08"
+date: "2026-01-08"
 readTime: 10
 author: "NurseQuizAI Team"
 tags: ["Study Strategies", "Active Recall", "Spaced Repetition", "NCLEX Tips"]
