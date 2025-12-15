@@ -24,7 +24,9 @@ const resources = {
         filesReceived: "Files received, what's next?",
         fileReceived: "File received, what's next?",
         continuelearning: "Continue learning",
-        uploading: "Uploading"
+        uploading: "Uploading",
+        prepareExam: "Prepare for Exam",
+        examHint: "Track your progress"
       },
 
       // Common UI Elements
@@ -306,6 +308,34 @@ const resources = {
         generatingFlashcards: "Generating flashcards...",
         expandToFullscreen: "Expand to fullscreen",
         closeFullscreen: "Close fullscreen"
+      },
+
+      // Flashcard Results
+      flashcardResults: {
+        // Mastery tiers
+        outstandingTitle: "Outstanding Mastery!",
+        outstandingMessage: "You've mastered almost all the content!",
+        excellentTitle: "Excellent Progress!",
+        excellentMessage: "Great work, keep it up!",
+        goodTitle: "Good Progress!",
+        goodMessage: "You're learning well!",
+        moderateTitle: "Keep Going!",
+        moderateMessage: "Keep reviewing!",
+        studyTitle: "Strong Start!",
+        studyMessage: "Keep reviewing these cards!",
+        // Stats labels
+        masteredLabel: "Mastered",
+        learningLabel: "Learning",
+        newLabel: "New",
+        // Topic section
+        performanceByTopic: "Performance by Topic",
+        // Action buttons
+        reviewCards: "Review Cards",
+        continueLearning: "Continue Learning",
+        // Motivational messages
+        tipReviewRegularly: "Tip: Review regularly to improve retention!",
+        almostThere: "Almost there! Keep reviewing the challenging cards.",
+        amazingMastery: "Amazing! You've mastered this content!"
       },
 
       // Flashcard Navigation
@@ -655,7 +685,9 @@ const resources = {
         filesReceived: "Fichiers reçus, quelle est la suite?",
         fileReceived: "Fichier reçu, quelle est la suite?",
         continuelearning: "Continuer l'apprentissage",
-        uploading: "Téléversement"
+        uploading: "Téléversement",
+        prepareExam: "Préparer un examen",
+        examHint: "Suivre mes progrès"
       },
 
       // Common UI Elements
@@ -937,6 +969,34 @@ const resources = {
         generatingFlashcards: "Génération des cartes mémoire...",
         expandToFullscreen: "Agrandir en plein écran",
         closeFullscreen: "Fermer le plein écran"
+      },
+
+      // Flashcard Results
+      flashcardResults: {
+        // Mastery tiers
+        outstandingTitle: "Maîtrise Exceptionnelle!",
+        outstandingMessage: "Tu maîtrises presque tout le contenu!",
+        excellentTitle: "Excellente Progression!",
+        excellentMessage: "Continue comme ça!",
+        goodTitle: "Bon Progrès!",
+        goodMessage: "Tu apprends bien!",
+        moderateTitle: "Continue!",
+        moderateMessage: "Continue de réviser!",
+        studyTitle: "Bon Début!",
+        studyMessage: "Continue de réviser ces cartes!",
+        // Stats labels
+        masteredLabel: "Maîtrisées",
+        learningLabel: "En Cours",
+        newLabel: "Nouvelles",
+        // Topic section
+        performanceByTopic: "Performance par Sujet",
+        // Action buttons
+        reviewCards: "Réviser",
+        continueLearning: "Continuer",
+        // Motivational messages
+        tipReviewRegularly: "Astuce: Révise régulièrement pour mieux mémoriser!",
+        almostThere: "Tu y es presque! Continue de réviser les cartes difficiles.",
+        amazingMastery: "Bravo! Tu maîtrises ce contenu!"
       },
 
       // Flashcard Navigation

@@ -204,6 +204,25 @@ const StudySheetSimple = ({
       if (el.classList.contains('pdf-header')) {
         el.style.display = 'block';
         el.style.color = '#1f1f1f';
+        el.style.marginBottom = '20px';
+        el.style.paddingBottom = '16px';
+        el.style.borderBottom = '1px solid #e0d0f0';
+      }
+      if (el.classList.contains('pdf-brand')) {
+        el.style.display = 'flex';
+        el.style.alignItems = 'center';
+        el.style.gap = '8px';
+        el.style.marginBottom = '12px';
+      }
+      if (el.classList.contains('pdf-logo')) {
+        el.style.width = '24px';
+        el.style.height = '24px';
+      }
+      if (el.classList.contains('pdf-link')) {
+        el.style.color = '#9b6fb0';
+        el.style.fontSize = '13px';
+        el.style.textDecoration = 'none';
+        el.style.fontWeight = '500';
       }
       Array.from(el.children).forEach(applyLightStyles);
     };
@@ -291,6 +310,10 @@ const StudySheetSimple = ({
           <div className="study-text-content" ref={pdfContentRef}>
             {/* PDF Header - only visible in PDF */}
             <div className="pdf-header">
+              <div className="pdf-brand">
+                <img src="/LogoSimple.png" alt="NurseQuizAI" className="pdf-logo" />
+                <a href="https://nursequizai.com" className="pdf-link">nursequizai.com</a>
+              </div>
               <h1>{topic}</h1>
             </div>
             {parseContent(content)}

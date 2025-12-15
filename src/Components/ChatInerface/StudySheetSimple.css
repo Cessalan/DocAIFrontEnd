@@ -87,17 +87,38 @@
   height: 13px;
 }
 
-/* PDF Header - hidden on screen */
+/* PDF Header - hidden on screen, visible in PDF */
 .pdf-header {
   display: none;
+}
+
+.pdf-brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.pdf-logo {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+.pdf-link {
+  color: #9b6fb0;
+  font-size: 13px;
+  text-decoration: none;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 @media print {
   .pdf-header {
     display: block;
     margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #ccc;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #e0d0f0;
   }
 
   .pdf-header h1 {

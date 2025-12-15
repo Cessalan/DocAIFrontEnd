@@ -29,8 +29,7 @@ const FlashcardResults = ({
   onReview,
   topicBreakdown = []
 }) => {
-  const { t, i18n } = useTranslation();
-  const currentLanguage = i18n.language;
+  const { t } = useTranslation();
 
   const percentage = totalCards > 0
     ? Math.round((masteredCards / totalCards) * 100)
@@ -42,49 +41,39 @@ const FlashcardResults = ({
       return {
         color: 'outstanding',
         emoji: '🏆',
-        title: currentLanguage === 'fr' ? 'Maîtrise Exceptionnelle!' : 'Outstanding Mastery!',
-        message: currentLanguage === 'fr'
-          ? 'Tu maîtrises presque tout le contenu!'
-          : 'You\'ve mastered almost all the content!'
+        title: t('flashcardResults.outstandingTitle'),
+        message: t('flashcardResults.outstandingMessage')
       };
     }
     if (percentage >= 70) {
       return {
         color: 'excellent',
         emoji: '🌟',
-        title: currentLanguage === 'fr' ? 'Excellente Progression!' : 'Excellent Progress!',
-        message: currentLanguage === 'fr'
-          ? 'Continue comme ça!'
-          : 'Great work, keep it up!'
+        title: t('flashcardResults.excellentTitle'),
+        message: t('flashcardResults.excellentMessage')
       };
     }
     if (percentage >= 50) {
       return {
         color: 'good',
         emoji: '📘',
-        title: currentLanguage === 'fr' ? 'Bon Progrès!' : 'Good Progress!',
-        message: currentLanguage === 'fr'
-          ? 'Tu apprends bien!'
-          : 'You\'re learning well!'
+        title: t('flashcardResults.goodTitle'),
+        message: t('flashcardResults.goodMessage')
       };
     }
     if (percentage >= 30) {
       return {
         color: 'moderate',
         emoji: '💪',
-        title: currentLanguage === 'fr' ? 'Continue!' : 'Keep Going!',
-        message: currentLanguage === 'fr'
-          ? 'Continue de réviser!'
-          : 'Keep reviewing!'
+        title: t('flashcardResults.moderateTitle'),
+        message: t('flashcardResults.moderateMessage')
       };
     }
     return {
       color: 'study',
       emoji: '📚',
-      title: currentLanguage === 'fr' ? 'Commence Fort!' : 'Strong Start!',
-      message: currentLanguage === 'fr'
-        ? 'Continue de réviser ces cartes!'
-        : 'Keep reviewing these cards!'
+      title: t('flashcardResults.studyTitle'),
+      message: t('flashcardResults.studyMessage')
     };
   };
 
@@ -115,7 +104,7 @@ const FlashcardResults = ({
           <div className="flashcard-breakdown-details">
             <div className="flashcard-breakdown-count">{masteredCards}</div>
             <div className="flashcard-breakdown-label">
-              {currentLanguage === 'fr' ? 'Maîtrisées' : 'Mastered'}
+              {t('flashcardResults.masteredLabel')}
             </div>
           </div>
         </div>
@@ -125,7 +114,7 @@ const FlashcardResults = ({
           <div className="flashcard-breakdown-details">
             <div className="flashcard-breakdown-count">{learningCards}</div>
             <div className="flashcard-breakdown-label">
-              {currentLanguage === 'fr' ? 'En Cours' : 'Learning'}
+              {t('flashcardResults.learningLabel')}
             </div>
           </div>
         </div>
@@ -135,7 +124,7 @@ const FlashcardResults = ({
           <div className="flashcard-breakdown-details">
             <div className="flashcard-breakdown-count">{newCards}</div>
             <div className="flashcard-breakdown-label">
-              {currentLanguage === 'fr' ? 'Nouvelles' : 'New'}
+              {t('flashcardResults.newLabel')}
             </div>
           </div>
         </div>
@@ -145,7 +134,7 @@ const FlashcardResults = ({
       {topicBreakdown && topicBreakdown.length > 0 && (
         <div className="flashcard-topic-breakdown">
           <h3 className="flashcard-topic-title">
-            📚 {currentLanguage === 'fr' ? 'Performance par Sujet' : 'Performance by Topic'}
+            📚 {t('flashcardResults.performanceByTopic')}
           </h3>
           <div className="flashcard-topic-list">
             {topicBreakdown.map((topic, index) => {
@@ -183,7 +172,7 @@ const FlashcardResults = ({
           <button className="flashcard-results-btn flashcard-review-btn" onClick={onReview}>
             <span className="btn-icon">👁️</span>
             <span className="btn-text">
-              {currentLanguage === 'fr' ? 'Réviser' : 'Review Cards'}
+              {t('flashcardResults.reviewCards')}
             </span>
           </button>
         )}
@@ -191,7 +180,7 @@ const FlashcardResults = ({
           <button className="flashcard-results-btn flashcard-continue-btn" onClick={onContinue}>
             <span className="btn-icon">▶️</span>
             <span className="btn-text">
-              {currentLanguage === 'fr' ? 'Continuer' : 'Continue Learning'}
+              {t('flashcardResults.continueLearning')}
             </span>
           </button>
         )}
@@ -200,22 +189,13 @@ const FlashcardResults = ({
       {/* Motivational Footer */}
       <div className="flashcard-results-footer">
         {percentage < 50 && (
-          <p>{currentLanguage === 'fr'
-            ? '💡 Astuce: Révise régulièrement pour mieux mémoriser!'
-            : '💡 Tip: Review regularly to improve retention!'}
-          </p>
+          <p>💡 {t('flashcardResults.tipReviewRegularly')}</p>
         )}
         {percentage >= 50 && percentage < 90 && (
-          <p>{currentLanguage === 'fr'
-            ? '🎯 Tu y es presque! Continue de réviser les cartes difficiles.'
-            : '🎯 Almost there! Keep reviewing the challenging cards.'}
-          </p>
+          <p>🎯 {t('flashcardResults.almostThere')}</p>
         )}
         {percentage >= 90 && (
-          <p>{currentLanguage === 'fr'
-            ? '🌟 Bravo! Tu maîtrises ce contenu!'
-            : '🌟 Amazing! You\'ve mastered this content!'}
-          </p>
+          <p>🌟 {t('flashcardResults.amazingMastery')}</p>
         )}
       </div>
     </div>
