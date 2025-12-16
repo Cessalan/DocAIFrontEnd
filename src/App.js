@@ -284,8 +284,10 @@ function ChatLayout() {
 const isDev = process.env.NODE_ENV === 'development';
 
 function App() {
+  console.log('App rendering');
   return (
     <Routes>
+      <Route path="/start" element={<QuizRoomLanding />} />
       {/* Public Routes */}
       <Route path="/login" element={<Login />} />
       <Route path="/signup" element={<Signup />} />

@@ -27,6 +27,7 @@
     "start": "react-scripts start",
     "build": "react-scripts build && node scripts/generate-blog-html.js",
     "test": "react-scripts test",
+    "test:landing": "react-scripts test src/tests/verifications/landing-page-verification.spec.js",
     "eject": "react-scripts eject",
     "build:quiz": "esbuild src/nclex-quiz-widget.jsx --bundle --outfile=public/js/nclex-quiz-widget.bundle.js --format=iife --global-name=NCLEXQuizWidget --external:react --external:react-dom"
   },
