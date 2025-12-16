@@ -25,6 +25,9 @@ function ChatLayout() {
   const { chatId: urlChatId } = useParams(); // Get chatId from URL
   const navigate = useNavigate();
 
+  // Auth context for reactive auth state
+  const { isUserLoggedIn } = useAuth() || {};
+
   // Get user FIRST - needed before any useEffects that depend on it
   const user = auth.currentUser;
 
@@ -88,6 +91,13 @@ function ChatLayout() {
 
     warmUpServer();
   }, []); // Empty dependency array - runs once on mount
+
+  // Redirect to home if the user disconnects/signs out while on chat routes
+  useEffect(() => {
+    if (isUserLoggedIn === false) {
+      navigate('/');
+    }
+  }, [isUserLoggedIn, navigate]);
 
   // ============================================
   // RESTORE PENDING UPLOAD AFTER LOGIN

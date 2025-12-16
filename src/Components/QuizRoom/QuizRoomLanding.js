@@ -8,13 +8,8 @@ import './QuizRoomLanding.css';
 // Import the login prompt styles from DedicatedQuizPage
 import './DedicatedQuizPage.css';
 
-// Firebase imports for creating game chat
-import { db, auth } from '../../Firebase/config';
+// Firebase imports
 import { handleSignOut, handleSignInWithGoogleAccount } from '../../Firebase/auth';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
-
-// API imports for file upload
-import { upload_files_with_progress } from '../../Services/FastAPICalls';
 
 // Animated counter component
 const AnimatedCounter = ({ target, duration = 2000, suffix = '%', onComplete }) => {
@@ -447,91 +442,48 @@ const QuizRoomLanding = () => {
     const fileArray = Array.isArray(files) ? files : [files];
     if (fileArray.length === 0) return;
 
-    // Get the browser language for embedding
-    // i18n.language gives us 'en' or 'fr' based on detection
-    const browserLanguage = i18n.language || 'en';
-    console.log('🌐 Browser language detected:', browserLanguage);
+    // ============================================
+    // SIMPLE FLOW: Store files and navigate to /c
+    // ChatInterface will handle the actual upload
+    // ============================================
 
-    // Start processing phase - show loading overlay
     setUploadPhase('processing');
 
     try {
-      // ------------------------------------------
-      // Step 1: Generate a unique chat ID for this game session
-      // ------------------------------------------
-      const gameId = `game_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
-      console.log('🎮 Starting game session:', gameId);
-
-      // ------------------------------------------
-      // Step 2: Create the game chat document in Firestore
-      // User MUST be logged in at this point
-      // ------------------------------------------
-      const userId = auth.currentUser.uid;
-      const chatRef = doc(db, 'chats', gameId);
-
-      // Create title from file names
-      const title = fileArray.length === 1
-        ? fileArray[0].name.replace(/\.[^/.]+$/, '')
-        : `${fileArray[0].name.replace(/\.[^/.]+$/, '')} +${fileArray.length - 1} more`;
-
-      await setDoc(chatRef, {
-        userId,
-        title,
-        type: 'game', // Mark this as a game session
-        language: browserLanguage, // Store the language used
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
-        // Initialize game state
-        gameState: {
-          status: 'uploading',
-          serumCollected: 0,
-          serumRequired: 100,
-          attempts: 0,
-          completedAt: null
-        }
-      });
-
-      console.log('✅ Game chat document created for user:', userId);
-
-      // ------------------------------------------
-      // Step 3: Upload the files and embed them
-      // Pass the browser language for proper embedding
-      // ------------------------------------------
-      console.log(`📤 Uploading ${fileArray.length} file(s):`, fileArray.map(f => f.name).join(', '), 'with language:', browserLanguage);
-
-      await upload_files_with_progress(
-        fileArray,        // Files array
-        gameId,           // Chat ID we just created
-        (update) => {     // Progress callback
-          console.log('Upload progress:', update);
-        },
-        browserLanguage   // Language for processing (from browser)
+      // Convert files to base64 for sessionStorage
+      const filesBase64 = await Promise.all(
+        fileArray.map(file => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        })
       );
 
-      console.log('✅ Files uploaded and embedded');
+      // Store file metadata
+      const uploadState = {
+        files: fileArray.map(f => ({
+          fileName: f.name,
+          fileType: f.type
+        })),
+        timestamp: Date.now()
+      };
 
-      // ------------------------------------------
-      // Step 4: Navigate to the quiz page
-      // The quiz page will connect via WebSocket and stream questions
-      // ------------------------------------------
+      // Save to sessionStorage - ChatLayout will restore these
+      sessionStorage.setItem('pendingUploadState', JSON.stringify(uploadState));
+      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+
+      console.log(`📦 Stored ${fileArray.length} file(s) in sessionStorage for ChatInterface`);
+
+      // Navigate to chat - ChatInterface will handle the upload
       setUploadPhase('idle');
-
-      navigate('/quiz/play', {
-        state: {
-          chatId: gameId,
-          title,
-          fromUpload: true,
-          isGameMode: true,
-          language: browserLanguage // Pass language to quiz page
-        }
-      });
+      navigate('/c');
 
     } catch (error) {
-      // Handle errors gracefully
       setUploadPhase('idle');
-      console.error('❌ Game setup failed:', error);
-
-      // Show user-friendly error
+      console.error('❌ Failed to prepare files:', error);
       alert(t('landing.uploadError', 'Failed to process your files. Please try again.'));
     }
   };
@@ -539,19 +491,53 @@ const QuizRoomLanding = () => {
   // ============================================
   // LOGIN PROMPT HANDLERS
   // ============================================
-  // NOTE: We do NOT store files in sessionStorage/IndexedDB to avoid
-  // storage quota errors with large files. Users will re-select files
-  // after logging in. This is a simpler, more reliable approach.
+  // Store files to sessionStorage so they can be restored after login.
+  // ChatLayout will restore these and pass to ChatInterface.
   // ============================================
 
+  // Helper to store pending files to sessionStorage
+  const storePendingFilesToSession = async (files) => {
+    try {
+      // Convert files to base64
+      const filesBase64 = await Promise.all(
+        files.map(file => {
+          return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(file);
+          });
+        })
+      );
+
+      // Store file metadata
+      const uploadState = {
+        files: files.map(f => ({
+          fileName: f.name,
+          fileType: f.type
+        })),
+        timestamp: Date.now()
+      };
+
+      sessionStorage.setItem('pendingUploadState', JSON.stringify(uploadState));
+      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+      console.log(`📦 Stored ${files.length} file(s) in sessionStorage for after login`);
+      return true;
+    } catch (error) {
+      console.error('Failed to store files to sessionStorage:', error);
+      return false;
+    }
+  };
+
   // Called when user clicks "Login" in the prompt
-  const handleLoginFromPrompt = () => {
-    // Clear pending files - user will re-select after login
+  const handleLoginFromPrompt = async () => {
+    // Store files to sessionStorage so they persist through login
+    if (pendingFiles.length > 0) {
+      await storePendingFilesToSession(pendingFiles);
+    }
+
     setPendingFiles([]);
     setShowLoginPrompt(false);
-
-    // Set a flag so we can prompt user to upload after login
-    sessionStorage.setItem('promptUploadAfterAuth', 'true');
 
     navigate('/login', {
       state: {
@@ -562,13 +548,14 @@ const QuizRoomLanding = () => {
   };
 
   // Called when user clicks "Sign Up" in the prompt
-  const handleSignupFromPrompt = () => {
-    // Clear pending files - user will re-select after login
+  const handleSignupFromPrompt = async () => {
+    // Store files to sessionStorage so they persist through signup
+    if (pendingFiles.length > 0) {
+      await storePendingFilesToSession(pendingFiles);
+    }
+
     setPendingFiles([]);
     setShowLoginPrompt(false);
-
-    // Set a flag so we can prompt user to upload after login
-    sessionStorage.setItem('promptUploadAfterAuth', 'true');
 
     navigate('/signup', {
       state: {
@@ -607,8 +594,8 @@ const QuizRoomLanding = () => {
       setShowLoginPrompt(false);
       setPendingFiles([]);
 
-      // Now that user is signed in, process the upload immediately
-      // Files are still in memory, no storage needed!
+      // Now that user is signed in, process the upload
+      // This will store to sessionStorage and navigate to /c
       await processFileUpload(filesToUpload);
 
     } catch (error) {

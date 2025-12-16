@@ -179,49 +179,168 @@ const StudySheetSimple = ({
     clone.style.background = '#ffffff';
     clone.style.color = '#333333';
 
-    // Force light mode colors on all elements
+    // Force light mode colors on all elements with page break controls
     const applyLightStyles = (el) => {
-      if (el.classList.contains('study-section-header')) {
-        el.style.background = '#9b6fb0';
-        el.style.color = 'white';
-      }
-      if (el.classList.contains('study-subsection-header')) {
-        el.style.color = '#4a3660';
-      }
-      if (el.classList.contains('study-paragraph')) {
-        el.style.color = '#333333';
-      }
-      if (el.classList.contains('study-numbered')) {
-        el.style.background = 'rgba(155, 111, 176, 0.04)';
-      }
-      if (el.classList.contains('number-marker')) {
-        el.style.background = '#9b6fb0';
-        el.style.color = 'white';
-      }
-      if (el.classList.contains('numbered-content')) {
-        el.style.color = '#333333';
-      }
+      // PDF Header styling
       if (el.classList.contains('pdf-header')) {
         el.style.display = 'block';
-        el.style.color = '#1f1f1f';
+        el.style.marginBottom = '28px';
+        el.style.paddingBottom = '24px';
+        el.style.borderBottom = '3px solid #9b6fb0';
+        el.style.pageBreakAfter = 'avoid';
+        el.style.breakAfter = 'avoid';
+      }
+      if (el.classList.contains('pdf-header-top')) {
+        el.style.display = 'flex';
+        el.style.justifyContent = 'space-between';
+        el.style.alignItems = 'center';
         el.style.marginBottom = '20px';
-        el.style.paddingBottom = '16px';
-        el.style.borderBottom = '1px solid #e0d0f0';
       }
       if (el.classList.contains('pdf-brand')) {
         el.style.display = 'flex';
         el.style.alignItems = 'center';
-        el.style.gap = '8px';
-        el.style.marginBottom = '12px';
+        el.style.gap = '12px';
       }
       if (el.classList.contains('pdf-logo')) {
-        el.style.width = '24px';
-        el.style.height = '24px';
+        el.style.width = '40px';
+        el.style.height = '40px';
+        el.style.borderRadius = '8px';
+      }
+      if (el.classList.contains('pdf-brand-text')) {
+        el.style.display = 'flex';
+        el.style.flexDirection = 'column';
+        el.style.gap = '2px';
+      }
+      if (el.classList.contains('pdf-brand-name')) {
+        el.style.fontSize = '18px';
+        el.style.fontWeight = '700';
+        el.style.color = '#1f1f1f';
+        el.style.letterSpacing = '-0.02em';
       }
       if (el.classList.contains('pdf-link')) {
         el.style.color = '#9b6fb0';
         el.style.fontSize = '13px';
         el.style.textDecoration = 'none';
+        el.style.fontWeight = '500';
+      }
+      if (el.classList.contains('pdf-tagline')) {
+        el.style.fontSize = '11px';
+        el.style.color = '#888';
+        el.style.fontStyle = 'italic';
+      }
+      if (el.classList.contains('pdf-title-section')) {
+        el.style.textAlign = 'center';
+        el.style.padding = '16px 0';
+      }
+      if (el.classList.contains('pdf-title')) {
+        el.style.fontSize = '26px';
+        el.style.fontWeight = '700';
+        el.style.color = '#1f1f1f';
+        el.style.margin = '0 0 8px 0';
+        el.style.lineHeight = '1.3';
+      }
+      if (el.classList.contains('pdf-subtitle')) {
+        el.style.fontSize = '14px';
+        el.style.color = '#9b6fb0';
+        el.style.fontWeight = '500';
+        el.style.textTransform = 'uppercase';
+        el.style.letterSpacing = '0.1em';
+      }
+      // Section headers with page break controls
+      if (el.classList.contains('study-section-header')) {
+        el.style.background = 'linear-gradient(135deg, #9b6fb0 0%, #7b5a90 100%)';
+        el.style.color = 'white';
+        el.style.padding = '12px 20px';
+        el.style.borderRadius = '8px';
+        el.style.marginTop = '32px';
+        el.style.marginBottom = '16px';
+        el.style.pageBreakAfter = 'avoid';
+        el.style.breakAfter = 'avoid';
+        el.style.pageBreakInside = 'avoid';
+        el.style.breakInside = 'avoid';
+        el.style.boxShadow = '0 2px 8px rgba(155, 111, 176, 0.25)';
+      }
+      if (el.classList.contains('study-subsection-header')) {
+        el.style.color = '#4a3660';
+        el.style.borderLeft = '3px solid #9b6fb0';
+        el.style.paddingLeft = '12px';
+        el.style.marginTop = '24px';
+        el.style.pageBreakAfter = 'avoid';
+        el.style.breakAfter = 'avoid';
+      }
+      if (el.classList.contains('study-main-header')) {
+        el.style.color = '#1f1f1f';
+        el.style.pageBreakAfter = 'avoid';
+        el.style.breakAfter = 'avoid';
+      }
+      if (el.classList.contains('study-paragraph')) {
+        el.style.color = '#333333';
+        el.style.lineHeight = '1.8';
+        el.style.pageBreakInside = 'avoid';
+        el.style.breakInside = 'avoid';
+      }
+      if (el.classList.contains('study-numbered')) {
+        el.style.background = 'linear-gradient(135deg, rgba(155, 111, 176, 0.08) 0%, rgba(155, 111, 176, 0.03) 100%)';
+        el.style.border = '1px solid rgba(155, 111, 176, 0.15)';
+        el.style.borderRadius = '10px';
+        el.style.padding = '14px 16px';
+        el.style.marginBottom = '10px';
+        el.style.pageBreakInside = 'avoid';
+        el.style.breakInside = 'avoid';
+      }
+      if (el.classList.contains('number-marker')) {
+        el.style.background = 'linear-gradient(135deg, #9b6fb0 0%, #7b5a90 100%)';
+        el.style.color = 'white';
+        el.style.borderRadius = '6px';
+        el.style.minWidth = '26px';
+        el.style.height = '26px';
+        el.style.fontWeight = '600';
+      }
+      if (el.classList.contains('numbered-content')) {
+        el.style.color = '#333333';
+        el.style.lineHeight = '1.75';
+      }
+      if (el.classList.contains('study-bullet')) {
+        el.style.pageBreakInside = 'avoid';
+        el.style.breakInside = 'avoid';
+        el.style.marginBottom = '8px';
+      }
+      if (el.classList.contains('bullet-marker')) {
+        el.style.color = '#9b6fb0';
+        el.style.fontWeight = '700';
+      }
+      if (el.classList.contains('bullet-content')) {
+        el.style.color = '#333333';
+      }
+      if (el.classList.contains('study-divider')) {
+        el.style.pageBreakAfter = 'avoid';
+        el.style.breakAfter = 'avoid';
+      }
+      // PDF Footer styling
+      if (el.classList.contains('pdf-footer')) {
+        el.style.display = 'block';
+        el.style.marginTop = '40px';
+        el.style.paddingTop = '20px';
+        el.style.pageBreakInside = 'avoid';
+        el.style.breakInside = 'avoid';
+      }
+      if (el.classList.contains('pdf-footer-line')) {
+        el.style.height = '2px';
+        el.style.background = 'linear-gradient(90deg, transparent, #9b6fb0, transparent)';
+        el.style.marginBottom = '16px';
+      }
+      if (el.classList.contains('pdf-footer-content')) {
+        el.style.display = 'flex';
+        el.style.justifyContent = 'space-between';
+        el.style.alignItems = 'center';
+        el.style.fontSize = '11px';
+        el.style.color = '#888';
+      }
+      if (el.classList.contains('pdf-footer-text')) {
+        el.style.color = '#888';
+      }
+      if (el.classList.contains('pdf-footer-link')) {
+        el.style.color = '#9b6fb0';
         el.style.fontWeight = '500';
       }
       Array.from(el.children).forEach(applyLightStyles);
@@ -272,7 +391,7 @@ const StudySheetSimple = ({
             <button
               className="study-download-btn"
               onClick={handleDownloadPDF}
-              title={t('studysheet.download', 'Download PDF')}
+              title={t('studysheet.download')}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
@@ -310,14 +429,31 @@ const StudySheetSimple = ({
           <div className="study-text-content" ref={pdfContentRef}>
             {/* PDF Header - only visible in PDF */}
             <div className="pdf-header">
-              <div className="pdf-brand">
-                <img src="/LogoSimple.png" alt="NurseQuizAI" className="pdf-logo" />
-                <a href="https://nursequizai.com" className="pdf-link">nursequizai.com</a>
+              <div className="pdf-header-top">
+                <div className="pdf-brand">
+                  <img src="/LogoSimple.png" alt="NurseQuizAI" className="pdf-logo" />
+                  <span className="pdf-brand-text">
+                    <span className="pdf-brand-name">NurseQuizAI</span>
+                    <a href="https://nursequizai.com" className="pdf-link">nursequizai.com</a>
+                  </span>
+                </div>
+                <div className="pdf-tagline">{t('studysheet.pdfTagline', 'Your AI-Powered Nursing Study Companion')}</div>
               </div>
-              <h1>{topic}</h1>
+              <div className="pdf-title-section">
+                <h1 className="pdf-title">{topic}</h1>
+                <div className="pdf-subtitle">{t('studysheet.pdfSubtitle', 'Comprehensive Study Guide')}</div>
+              </div>
             </div>
             {parseContent(content)}
             {isStreaming && <span className="typing-cursor">|</span>}
+            {/* PDF Footer */}
+            <div className="pdf-footer">
+              <div className="pdf-footer-line"></div>
+              <div className="pdf-footer-content">
+                <span className="pdf-footer-text">{t('studysheet.pdfGeneratedBy', 'Generated by NurseQuizAI')}</span>
+                <span className="pdf-footer-link">nursequizai.com</span>
+              </div>
+            </div>
           </div>
         )}
       </div>

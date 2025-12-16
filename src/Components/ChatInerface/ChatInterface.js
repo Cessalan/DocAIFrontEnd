@@ -952,6 +952,8 @@ const ChatInterface = ({
             console.log("📇 Flashcard generation streaming started");
             isQuizGeneratingRef.current = true;
 
+            const localizedFlashcardMsg = t('loading.generatingFlashcards', 'Generating flashcards...');
+
             setChatMessages(prev => {
               return prev.map(msg => {
                 // Convert streaming placeholder to flashcard message
@@ -959,7 +961,7 @@ const ChatInterface = ({
                   return {
                     ...msg,
                     type: 'flashcard',
-                    content: statusUpdate.message,
+                    content: localizedFlashcardMsg,
                     flashcardData: [],
                     isStreaming: true,
                     timestamp: msg.timestamp || new Date()
@@ -971,7 +973,7 @@ const ChatInterface = ({
 
             setStreamingStatus({
               status: 'generating_flashcards',
-              message: statusUpdate.message
+              message: localizedFlashcardMsg
             });
             return;
           }
@@ -1900,6 +1902,10 @@ const ChatInterface = ({
       resolvedChatId = await ensureChatExists(currentChatID, user);
       if (resolvedChatId !== currentChatID) {
         setChatId(resolvedChatId);
+        // Keep sidebar/URL state in sync (important when coming from landing)
+        if (onChatSelected) {
+          onChatSelected(resolvedChatId);
+        }
       }
     } catch (error) {
       console.error('Failed to ensure chat exists:', error);
@@ -2842,11 +2848,21 @@ const ChatInterface = ({
               <h3 className="exam-context-title">{currentExamData.examName}</h3>
               {currentExamData.examDate && <ExamCountdown examDate={currentExamData.examDate} />}
             </div>
-            <button className="exam-start-btn" onClick={openFileUploadDialog}>
-              <span className="exam-start-icon">📄</span>
-              <span className="exam-start-text">Drop your notes & start studying</span>
-              <span className="exam-start-arrow">→</span>
-            </button>
+            <div className="exam-upload-card">
+              <p className="exam-upload-subtitle">
+                {t('chat.examPrepLead', "Dépose tes notes, on prépare ton plan d'étude pour l'examen.")}
+              </p>
+              <button className="exam-start-btn" onClick={openFileUploadDialog}>
+                <span className="exam-start-icon">📤</span>
+                <span className="exam-start-text">
+                  {t('chat.examUploadCta', 'Importer tes fichiers')}
+                </span>
+                <span className="exam-start-arrow">→</span>
+              </button>
+              <p className="exam-upload-hint">
+                {t('chat.examUploadHint', 'PDF, images, notes — nous générons quiz, fiches et flashcards.')}
+              </p>
+            </div>
           </div>
         )}
 

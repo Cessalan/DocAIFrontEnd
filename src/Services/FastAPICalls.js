@@ -309,19 +309,21 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
     throw error;
   }
 };
-export const generate_title = async(message) => {
+export const generate_title = async(message, language = 'en') => {
+  // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
+  const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
 
   const requestBody = JSON.stringify({
-    message:message || ""
+    message: message || "",
+    language: normalizedLang
   });
-  try{
-
+  try {
     const response = await fetch(`${FAST_API_BASE}/chat/generate-title`, {
       method: "POST",
       headers: header,
       body: requestBody
     });
-  
+
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Title Generation request failed with status ${response.status}: ${errorText}`);
@@ -330,11 +332,10 @@ export const generate_title = async(message) => {
     const title_response = await response.json();
     return title_response;
 
-  }catch(error)
-  {
-   console.error("Error during title generation:", error);
+  } catch(error) {
+    console.error("Error during title generation:", error);
     throw error;
-  } 
+  }
 }
 
 export const generate_summary = async(chat_id, file_name, language) => {
