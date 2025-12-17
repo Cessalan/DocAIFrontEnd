@@ -250,6 +250,21 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
           total_generated: data.total_generated
         });
       }
+      // Handle mindmap generation
+      else if (data.status === "mindmap_generating") {
+        console.log("🧠 Mindmap generation started");
+        onStatusUpdate({
+          status: "mindmap_generating",
+          message: data.message
+        });
+      }
+      else if (data.status === "mindmap_complete") {
+        console.log("✅ Mindmap complete");
+        onStatusUpdate({
+          status: "mindmap_complete",
+          mindmap_data: data.mindmap_data
+        });
+      }
 
       if (data.status === "suggested_prompts" && data.suggestions) {
         console.log("📝 Received suggestions:", data.suggestions);

@@ -1,7 +1,7 @@
 # Mindmap Feature Implementation Plan
 
 ## Overview
-Add the ability to generate interactive mindmaps from uploaded documents. This feature will extract key concepts, topics, and their relationships from documents and visualize them as an interactive mindmap.
+Add the ability to generate interactive mindmaps from uploaded documents. The mindmap is triggered **through chat conversation** (like quizzes and flashcards) - user types "create a mindmap" and the backend generates it.
 
 ---
 
@@ -9,18 +9,19 @@ Add the ability to generate interactive mindmaps from uploaded documents. This f
 
 ### Current System
 - **Frontend**: React app with components for chat, quiz, flashcards, study sheets
-- **Backend**: Separate FastAPI service (not in this repo) at `https://ragfastapi-*.run.app`
-- **Storage**: Firebase (Firestore + Storage)
-- **Pattern**: Upload files → Backend processes → Frontend displays generated content
+- **Backend**: Separate FastAPI service at `c:\Users\Billion\Desktop\NQBackEnd\NQBackEnd2`
+- **Trigger Pattern**: User asks in chat → LLM calls tool → Backend streams status → Frontend renders
 
-### Mindmap Flow
+### How It Works (Same Pattern as Quiz)
 ```
-User uploads document
-    → Backend extracts text & embeddings (existing)
-    → User clicks "Mindmap" button
-    → Frontend calls new /chat/generate-mindmap endpoint
-    → Backend extracts concepts & relationships using LLM
-    → Frontend renders interactive mindmap
+User types: "Create a mindmap from my notes"
+    → WebSocket sends message to backend
+    → LLM detects intent → calls generate_mindmap_stream tool
+    → Tool returns: { status: "mindmap_streaming_initiated" }
+    → Orchestrator calls stream_mindmap_data()
+    → Backend sends: { status: "mindmap_generating", message: "..." }
+    → Backend sends: { status: "mindmap_complete", mindmap_data: {...} }
+    → Frontend renders ChatMindmap component
 ```
 
 ---
@@ -32,263 +33,225 @@ User uploads document
 #### 1.1 Create MindmapViewer Component
 **File**: `src/Components/Mindmap/MindmapViewer.js`
 
-- Interactive node-based visualization
+- Interactive node-based visualization using React Flow
 - Pan and zoom support
-- Click nodes to expand/collapse branches
-- Color-coded by topic/category
-- Export as image option
+- Click nodes to show summary tooltip
+- Color-coded by node type (central/main/sub/detail)
 
-**Library Recommendation**: [React Flow](https://reactflow.dev/)
-- MIT licensed, actively maintained
-- Built for React, handles pan/zoom/interactions
-- Supports custom node styling
-- ~50KB gzipped
-
-Alternative: [D3.js](https://d3js.org/) for more custom control
-
-#### 1.2 Create MindmapNode Component
-**File**: `src/Components/Mindmap/MindmapNode.js`
-
-- Custom styled nodes matching app theme
-- Hospital/neon glow aesthetic
-- Expandable/collapsible
-- Shows topic name and optionally key points
-
-#### 1.3 Create ChatMindmap Component
+#### 1.2 Create ChatMindmap Component
 **File**: `src/Components/ChatInerface/ChatMindmap.js`
 
-- Wrapper component for displaying mindmap in chat
-- Similar structure to ChatQuiz, ChatFlashcard, ChatStudySheet
+- Wrapper component for displaying mindmap in chat messages
 - Loading state with animation
 - Error handling
+- Similar structure to ChatQuiz, ChatFlashcard
 
-#### 1.4 Add Mindmap CSS
+#### 1.3 Add Mindmap CSS
 **File**: `src/Components/Mindmap/MindmapViewer.css`
 
 - Dark mode support
 - Neon glow effects matching existing theme
 - Responsive sizing
-- Animation for node appearance
 
 ---
 
-### Phase 2: Frontend - Integration
+### Phase 2: Frontend - WebSocket/Streaming Integration
 
-#### 2.1 Update PostUploadActions
-**File**: `src/Components/ChatInerface/PostUploadActions.js`
+#### 2.1 Update WebSocketManager.js
+**File**: `src/Services/WebSocketManager.js`
 
-Add mindmap action button:
+Add handlers around line 260 (after quiz_complete handler):
+
 ```javascript
-actions={[
-  { id: 'quiz', label: 'Quiz me', icon: '🧪' },
-  { id: 'flashcards', label: 'Create flashcards', icon: '📇' },
-  { id: 'studysheet', label: 'Study sheet', icon: '📝' },
-  { id: 'mindmap', label: 'Generate mindmap', icon: '🧠' },  // NEW
-  { id: 'audio', label: 'Listen', icon: '🎧' }
-]}
-```
-
-#### 2.2 Update i18n Translations
-**File**: `src/i18n/i18n.js`
-
-Add translation keys:
-```javascript
-postUpload: {
-  mindmapLabel: 'Generate mindmap',
-  // French
-  mindmapLabel: 'Générer une carte mentale'
+// Handle mindmap generation
+else if (data.status === "mindmap_generating") {
+  onStatusUpdate({
+    status: "mindmap_generating",
+    message: data.message
+  });
+}
+else if (data.status === "mindmap_complete") {
+  onStatusUpdate({
+    status: "mindmap_complete",
+    mindmap_data: data.mindmap_data
+  });
 }
 ```
 
-#### 2.3 Update ChatInterface Handler
-**File**: `src/Components/ChatInerface/ChatInterface.js`
-
-Add handler in `handlePostUploadAction`:
-```javascript
-case 'mindmap':
-  await handleGenerateMindmap(selectedFile);
-  break;
-```
-
-Add new function `handleGenerateMindmap`:
-- Call API
-- Show loading state
-- Display mindmap component
-- Handle errors
-
-#### 2.4 Add State for Mindmap
-In ChatInterface.js, add state:
-```javascript
-const [mindmapData, setMindmapData] = useState(null);
-const [isMindmapLoading, setIsMindmapLoading] = useState(false);
-```
-
 ---
 
-### Phase 3: Frontend - API Service
+### Phase 3: Frontend - ChatInterface Integration
 
-#### 3.1 Add Mindmap API Function
-**File**: `src/Services/FastAPICalls.js`
+#### 3.1 Update ChatInterface.js Status Handler
+**File**: `src/Components/ChatInerface/ChatInterface.js`
+
+Add after flashcard handling (around line 1010):
 
 ```javascript
-/**
- * Generates a mindmap from uploaded document content
- * @param {string} chat_id - The chat/session ID
- * @param {string} file_name - Name of the uploaded file
- * @param {string} language - Language for labels ('en' or 'fr')
- * @returns {Promise<Object>} Mindmap data structure
- */
-export const generate_mindmap = async (chat_id, file_name, language = 'en') => {
-  const requestBody = JSON.stringify({
-    chat_id: chat_id,
-    filename: file_name,
-    language: language
+// Mindmap generation started
+if (statusUpdate.status === "mindmap_generating") {
+  console.log("🧠 Mindmap generation started");
+
+  setChatMessages(prev => {
+    return prev.map(msg => {
+      if (msg.id === streamingMessageId) {
+        return {
+          ...msg,
+          type: 'mindmap',
+          content: statusUpdate.message || 'Generating mindmap...',
+          mindmapData: null,
+          isStreaming: true,
+          timestamp: msg.timestamp || new Date()
+        };
+      }
+      return msg;
+    });
   });
 
+  setStreamingStatus({
+    status: 'generating_mindmap',
+    message: statusUpdate.message
+  });
+  return;
+}
+
+// Mindmap complete
+if (statusUpdate.status === "mindmap_complete") {
+  console.log("✅ Mindmap completed");
+
+  setChatMessages(prev =>
+    prev.map(msg => {
+      if (msg.id === streamingMessageId && msg.type === 'mindmap') {
+        return {
+          ...msg,
+          mindmapData: statusUpdate.mindmap_data,
+          isStreaming: false,
+          content: 'Mindmap ready'
+        };
+      }
+      return msg;
+    })
+  );
+
+  // Save to Firebase
+  handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId);
+  setStreamingStatus(null);
+  return;
+}
+```
+
+#### 3.2 Add handleMindmapComplete Function
+
+```javascript
+const handleMindmapComplete = async (mindmapData, messageId, chatId) => {
   try {
-    const response = await fetch(`${FAST_API_BASE}/chat/generate-mindmap`, {
-      method: "POST",
-      headers: header,
-      body: requestBody
-    });
+    const mindmapMessage = {
+      id: messageId,
+      role: 'assistant',
+      type: 'mindmap',
+      mindmapData: mindmapData,
+      content: 'Mindmap generated',
+      timestamp: new Date()
+    };
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      throw new Error(`Mindmap generation failed: ${response.status}: ${errorText}`);
-    }
-
-    return await response.json();
+    await AppendToChat(chatId || currentChatID, mindmapMessage);
   } catch (error) {
-    console.error("Error during mindmap generation:", error);
-    throw error;
+    console.error("Error saving mindmap:", error);
   }
 };
 ```
 
----
+#### 3.3 Update Message Rendering
 
-### Phase 4: Backend - API Endpoint
+In the JSX where messages are rendered, add mindmap case:
 
-#### 4.1 Create Mindmap Endpoint
-**Endpoint**: `POST /chat/generate-mindmap`
-
-**Request Body**:
-```json
-{
-  "chat_id": "string",
-  "filename": "string",
-  "language": "en"
-}
-```
-
-**Response**:
-```json
-{
-  "mindmap": {
-    "central_topic": "Document Title/Main Topic",
-    "nodes": [
-      {
-        "id": "node_1",
-        "label": "Main Concept 1",
-        "type": "main",
-        "children": ["node_1a", "node_1b"],
-        "summary": "Brief description of this concept"
-      },
-      {
-        "id": "node_1a",
-        "label": "Sub-concept 1a",
-        "type": "sub",
-        "parent": "node_1",
-        "children": [],
-        "summary": "Details about sub-concept"
-      }
-    ],
-    "edges": [
-      { "source": "root", "target": "node_1", "label": "" },
-      { "source": "node_1", "target": "node_1a", "label": "includes" }
-    ]
-  }
-}
-```
-
-#### 4.2 LLM Prompt for Mindmap Generation
-
-```python
-prompt = f"""
-Analyze the following document and create a hierarchical mindmap structure.
-
-Instructions:
-1. Identify the MAIN TOPIC (central node)
-2. Extract 4-8 KEY CONCEPTS as primary branches
-3. For each key concept, identify 2-4 SUB-CONCEPTS
-4. Keep labels concise (2-5 words)
-5. Add brief summaries (1 sentence) for each node
-6. Identify relationships between concepts
-
-Document Content:
-{document_text}
-
-Return JSON format:
-{{
-  "central_topic": "Main Document Topic",
-  "nodes": [
-    {{
-      "id": "unique_id",
-      "label": "Concept Name",
-      "type": "main|sub|detail",
-      "children": ["child_id1", "child_id2"],
-      "parent": "parent_id or null for main nodes",
-      "summary": "One sentence description"
-    }}
-  ],
-  "edges": [
-    {{
-      "source": "parent_id",
-      "target": "child_id",
-      "label": "relationship type (optional)"
-    }}
-  ]
-}}
-"""
+```javascript
+{msg.type === 'mindmap' && (
+  <ChatMindmap
+    mindmapData={msg.mindmapData}
+    isLoading={msg.isStreaming}
+    topic={msg.content}
+  />
+)}
 ```
 
 ---
 
-### Phase 5: Install Dependencies
+### Phase 4: Install Dependencies
 
 ```bash
 npm install reactflow
-# or
-npm install @xyflow/react  # v12+ (newer naming)
+# or for v12+
+npm install @xyflow/react
 ```
 
 ---
 
 ## Data Structure
 
-### Mindmap Node Schema
-```typescript
-interface MindmapNode {
-  id: string;           // Unique identifier
-  label: string;        // Display text (2-5 words)
-  type: 'central' | 'main' | 'sub' | 'detail';
-  children: string[];   // Array of child node IDs
-  parent: string | null;
-  summary: string;      // Brief description
-  position?: { x: number, y: number };  // For React Flow
-}
+### Mindmap Data from Backend
 
-interface MindmapEdge {
-  source: string;       // Parent node ID
-  target: string;       // Child node ID
-  label?: string;       // Relationship description
+```json
+{
+  "central_topic": "Cardiovascular System",
+  "nodes": [
+    {
+      "id": "root",
+      "label": "Cardiovascular System",
+      "type": "central",
+      "children": ["node_1", "node_2"],
+      "parent": null,
+      "summary": "Study of the heart and blood vessels"
+    },
+    {
+      "id": "node_1",
+      "label": "Heart Anatomy",
+      "type": "main",
+      "children": ["node_1a"],
+      "parent": "root",
+      "summary": "Structure and chambers of the heart"
+    },
+    {
+      "id": "node_1a",
+      "label": "Four Chambers",
+      "type": "sub",
+      "children": [],
+      "parent": "node_1",
+      "summary": "Left/right atria and ventricles"
+    }
+  ],
+  "edges": [
+    { "source": "root", "target": "node_1" },
+    { "source": "node_1", "target": "node_1a" }
+  ]
 }
+```
 
-interface MindmapData {
-  central_topic: string;
-  nodes: MindmapNode[];
-  edges: MindmapEdge[];
-}
+### React Flow Transformation
+
+The MindmapViewer will transform this data into React Flow format:
+
+```javascript
+// Transform nodes
+const flowNodes = mindmapData.nodes.map((node, index) => ({
+  id: node.id,
+  data: {
+    label: node.label,
+    summary: node.summary,
+    type: node.type
+  },
+  position: calculatePosition(node, index), // Layout algorithm
+  type: 'mindmapNode' // Custom node type
+}));
+
+// Transform edges
+const flowEdges = mindmapData.edges.map(edge => ({
+  id: `${edge.source}-${edge.target}`,
+  source: edge.source,
+  target: edge.target,
+  type: 'smoothstep',
+  animated: true
+}));
 ```
 
 ---
@@ -301,138 +264,107 @@ src/
 │   ├── Mindmap/
 │   │   ├── MindmapViewer.js      # Main visualization component
 │   │   ├── MindmapViewer.css     # Styles
-│   │   ├── MindmapNode.js        # Custom node component
-│   │   └── MindmapNode.css       # Node styles
+│   │   └── MindmapNode.js        # Custom node component
 │   └── ChatInerface/
 │       └── ChatMindmap.js        # Chat wrapper component
 └── Services/
-    └── FastAPICalls.js           # Add generate_mindmap function
+    └── (modifications only)
 ```
 
 ---
 
-## Modified Files
+## Modified Files Summary
 
 | File | Changes |
 |------|---------|
-| `PostUploadActions.js` | Add mindmap action button |
-| `ChatInterface.js` | Add mindmap state, handler, and render |
-| `FastAPICalls.js` | Add `generate_mindmap` function |
-| `i18n.js` | Add translation keys |
+| `WebSocketManager.js` | Add `mindmap_generating` and `mindmap_complete` handlers |
+| `ChatInterface.js` | Add mindmap state handling, render ChatMindmap |
 | `package.json` | Add reactflow dependency |
+
+---
+
+## Chat Trigger Examples
+
+Users can trigger mindmap generation by typing:
+
+### English
+- "Create a mindmap from my document"
+- "Show me a concept map"
+- "Visualize the key concepts"
+- "Mind map this material"
+- "Map out the main topics"
+
+### French
+- "Créer une carte mentale"
+- "Carte mentale de mes notes"
+- "Visualiser les concepts"
+- "Schéma conceptuel"
+
+---
+
+## Backend Files (Separate Repo)
+
+Backend implementation is documented in:
+`c:\Users\Billion\Desktop\NQBackEnd\NQBackEnd2\BACKEND_REQUIREMENTS_MINDMAP.md`
+
+Files to create/modify:
+1. `services/mindmap_generator.py` - NEW: Streaming mindmap generation
+2. `tools/quiztools.py` - ADD: `generate_mindmap_stream` tool
+3. `services/orchestrator.py` - ADD: Handle mindmap tool calls
 
 ---
 
 ## UI/UX Considerations
 
-### Mindmap Interactions
+### Visual Design
+| Node Type | Size | Color | Description |
+|-----------|------|-------|-------------|
+| central | Largest | Primary blue | Root node (document title) |
+| main | Large | Teal | Primary branches |
+| sub | Medium | Light blue | Secondary branches |
+| detail | Small | Gray | Tertiary details |
+
+### Interactions
 - **Click node**: Show summary tooltip
-- **Double-click node**: Expand/collapse children
 - **Drag**: Pan the canvas
 - **Scroll**: Zoom in/out
-- **Hover**: Highlight connected nodes
+- **Hover**: Highlight node
 
-### Visual Design
-- Central node: Larger, distinct color (primary blue/teal)
-- Main branches: Medium size, category colors
-- Sub-concepts: Smaller, lighter shades
-- Neon glow on hover (matching app theme)
-- Curved edges with optional labels
-
-### Export Options
-- Download as PNG
-- Copy to clipboard
-- Full-screen view mode
-
----
-
-## Backend Requirements Document
-
-Create file: `BACKEND_REQUIREMENTS_MINDMAP.md`
-
-```markdown
-# Backend Requirements for Mindmap Generation
-
-## Endpoint
-POST /chat/generate-mindmap
-
-## Request
-{
-  "chat_id": "string",
-  "filename": "string",
-  "language": "en" | "fr"
-}
-
-## Processing
-1. Retrieve document content from vector store using chat_id + filename
-2. Send to LLM with mindmap extraction prompt
-3. Parse and validate JSON response
-4. Return structured mindmap data
-
-## Response Schema
-[See data structure above]
-
-## Quality Guidelines
-- Central topic should be clear and concise
-- 4-8 main branches (not too sparse, not overwhelming)
-- 2-4 sub-concepts per main branch
-- Labels: 2-5 words maximum
-- Summaries: 1 sentence maximum
-```
+### Loading State
+- Show pulsing animation
+- Display "Analyzing document structure..." message
 
 ---
 
 ## Testing Checklist
 
-- [ ] Mindmap generates for PDF documents
-- [ ] Mindmap generates for DOCX documents
-- [ ] Mindmap generates for TXT/MD documents
-- [ ] French language labels work correctly
+### Frontend
+- [ ] Mindmap triggers from chat message
 - [ ] Loading state displays properly
-- [ ] Error handling works (invalid file, API error)
+- [ ] Mindmap renders with correct layout
 - [ ] Pan and zoom work smoothly
-- [ ] Nodes are clickable
-- [ ] Export to image works
-- [ ] Responsive on mobile
+- [ ] Nodes show summaries on click
 - [ ] Dark mode styling correct
-- [ ] Integrates with existing PostUploadActions
+- [ ] Mindmap saved to Firebase correctly
+- [ ] Mindmap loads when reopening chat
 
----
-
-## Estimated Complexity
-
-| Component | Complexity | Notes |
-|-----------|------------|-------|
-| MindmapViewer | Medium | React Flow handles most complexity |
-| ChatMindmap | Low | Similar to existing chat components |
-| API Integration | Low | Same pattern as quiz/flashcards |
-| Backend Endpoint | Medium | LLM prompt engineering needed |
-| Styling | Medium | Custom theme to match app |
-
----
-
-## Alternative Approaches Considered
-
-1. **D3.js Force Graph**: More control but higher complexity
-2. **Canvas-based**: Better performance but harder to style
-3. **SVG Manual**: Full control but significant development time
-4. **Mermaid.js**: Simple but less interactive
-
-**Chosen**: React Flow - best balance of features, ease of use, and React integration.
+### Backend
+- [ ] LLM detects mindmap intent
+- [ ] Tool returns correct status
+- [ ] Streaming sends proper messages
+- [ ] Error handling works
+- [ ] French language support works
 
 ---
 
 ## Next Steps
 
-1. Approve this plan
-2. Install React Flow dependency
-3. Create MindmapViewer component
-4. Add API function
-5. Integrate into ChatInterface
-6. Implement backend endpoint (separate repo)
-7. Test and iterate
+1. **Frontend**: Install React Flow, create components
+2. **Backend**: Create mindmap tool and generator
+3. **Integration**: Test end-to-end flow
+4. **Polish**: Styling, animations, edge cases
 
 ---
 
 *Created: 2025-12-16*
-*Status: Ready for Review*
+*Status: Ready for Implementation*

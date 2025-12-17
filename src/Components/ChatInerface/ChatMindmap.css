@@ -1,0 +1,113 @@
+/* ChatMindmap.css - Chat message wrapper styles for mindmap */
+/* Matches the warm coral/lavender aesthetic of the app */
+
+.chat-mindmap {
+  width: 100%;
+  max-width: 900px;
+  margin: 12px 0;
+  border-radius: var(--radius-xl, 20px);
+  overflow: hidden;
+}
+
+/* Loading state */
+.chat-mindmap-loading {
+  background: var(--dark-bg-secondary, #2f2f2f);
+  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  padding: 60px 24px;
+}
+
+.mindmap-loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.mindmap-loading-spinner {
+  width: 56px;
+  height: 56px;
+  border: 3px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  border-top-color: var(--primary-coral, #e88d7d);
+  border-radius: 50%;
+  animation: mindmapSpin 1s linear infinite;
+}
+
+@keyframes mindmapSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.mindmap-loading-text {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-white, #ffffff);
+}
+
+.mindmap-loading-subtext {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Error state */
+.chat-mindmap-error {
+  background: var(--dark-bg-secondary, #2f2f2f);
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  padding: 40px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  border-radius: var(--radius-xl, 20px);
+}
+
+.mindmap-error-icon {
+  width: 48px;
+  height: 48px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  font-size: 28px;
+  font-weight: bold;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+}
+
+.mindmap-error-text {
+  font-size: 15px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Instructions footer */
+.mindmap-instructions {
+  background: var(--dark-bg-elevated, #262626);
+  padding: 12px 20px;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5);
+  text-align: center;
+  border-top: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .chat-mindmap {
+    max-width: 100%;
+    border-radius: 16px;
+  }
+
+  .mindmap-loading-spinner {
+    width: 48px;
+    height: 48px;
+  }
+
+  .mindmap-loading-text {
+    font-size: 15px;
+  }
+
+  .mindmap-instructions {
+    font-size: 12px;
+    padding: 10px 16px;
+  }
+}

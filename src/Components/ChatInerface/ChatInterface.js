@@ -89,6 +89,9 @@ import ExamPrepModal from './ExamPrepModal';
 // Common Components
 import ExamCountdown from '../Common/ExamCountdown';
 
+// Mindmap
+import ChatMindmap from './ChatMindmap';
+
 /**
  * ChatInterface Component - A messenger-like interface for AI chat
  * Features: Text messaging with AI, File uploads, Quiz/Summary/Scenario generation
@@ -1017,6 +1020,57 @@ const ChatInterface = ({
             return;
           }
 
+          // Mindmap generation started
+          if (statusUpdate.status === "mindmap_generating") {
+            console.log("🧠 Mindmap generation started");
+
+            setChatMessages(prev => {
+              return prev.map(msg => {
+                if (msg.id === streamingMessageId) {
+                  return {
+                    ...msg,
+                    type: 'mindmap',
+                    content: statusUpdate.message || 'Generating mindmap...',
+                    mindmapData: null,
+                    isStreaming: true,
+                    timestamp: msg.timestamp || new Date()
+                  };
+                }
+                return msg;
+              });
+            });
+
+            setStreamingStatus({
+              status: 'generating_mindmap',
+              message: statusUpdate.message
+            });
+            return;
+          }
+
+          // Mindmap complete
+          if (statusUpdate.status === "mindmap_complete") {
+            console.log("✅ Mindmap completed");
+
+            setChatMessages(prev =>
+              prev.map(msg => {
+                if (msg.id === streamingMessageId && msg.type === 'mindmap') {
+                  return {
+                    ...msg,
+                    mindmapData: statusUpdate.mindmap_data,
+                    isStreaming: false,
+                    content: 'Mindmap ready'
+                  };
+                }
+                return msg;
+              })
+            );
+
+            // Save to Firebase
+            handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId);
+            setStreamingStatus(null);
+            return;
+          }
+
           // Study sheet generation trigger - create inline message
           // Handle both "study_sheet_trigger" (from tools) and "study_sheet_start" (from generator)
           if (statusUpdate.status === "study_sheet_trigger" || statusUpdate.status === "study_sheet_start") {
@@ -1821,6 +1875,58 @@ const ChatInterface = ({
 
     setIsAiTyping(false);
     console.log("✅ Flashcard save complete!");
+  };
+
+  const handleMindmapComplete = async (mindmapData, messageId, chatId) => {
+    console.log("✅ Mindmap complete, finalizing message");
+    console.log("📦 Backend sent mindmap with", mindmapData?.nodes?.length, "nodes");
+    setStreamingStatus(null);
+
+    // ✅ Update UI state
+    setChatMessages(prev =>
+      prev.map(msg => {
+        if (msg.id === messageId && msg.type === 'mindmap') {
+          return {
+            ...msg,
+            mindmapData: mindmapData,
+            content: mindmapData?.central_topic || 'Mindmap',
+            isStreaming: false,
+            timestamp: new Date()
+          };
+        }
+        return msg;
+      })
+    );
+
+    // ✅ Save to Firebase
+    console.log("💾 Saving mindmap to Firebase");
+
+    const messageToSave = {
+      id: messageId,
+      role: 'assistant',
+      type: 'mindmap',
+      mindmapData: mindmapData,
+      content: mindmapData?.central_topic || 'Mindmap',
+      isStreaming: false,
+      timestamp: new Date()
+    };
+
+    try {
+      await AppendToChat(chatId, messageToSave);
+      console.log("✅ Mindmap Firebase save successful");
+    } catch (error) {
+      console.error("❌ Mindmap Firebase save failed, retrying once:", error);
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        await AppendToChat(chatId, messageToSave);
+        console.log("✅ Mindmap Firebase save successful on retry");
+      } catch (retryError) {
+        console.error("❌ Mindmap Firebase save failed on retry:", retryError);
+      }
+    }
+
+    setIsAiTyping(false);
+    console.log("✅ Mindmap save complete!");
   };
 
   const handleFlashcardReview = async (reviewData) => {
@@ -3151,6 +3257,23 @@ const ChatInterface = ({
                         duration={message.duration || ''}
                         script={message.script}
                         isGenerating={false}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // MINDMAP MESSAGE
+              // ============================================
+              if (message.type === 'mindmap') {
+                return (
+                  <div key={message.id} className="message ai-message mindmap-message">
+                    <div className="message-content">
+                      <ChatMindmap
+                        mindmapData={message.mindmapData}
+                        isLoading={message.isStreaming}
+                        topic={message.content}
                       />
                     </div>
                   </div>
