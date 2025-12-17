@@ -223,10 +223,12 @@ const resources = {
         flashcardsLabel: "Create flashcards",
         studysheetLabel: "Study sheet",
         audioLabel: "Audio summary",
+        mindmapLabel: "Mind map",
         // Action prompts sent to AI
         quizPrompt: "Generate a quiz covering: {{topics}}",
         flashcardsPrompt: "Create flashcards for: {{topics}}",
-        studysheetPrompt: "Create a study sheet summarizing the uploaded documents"
+        studysheetPrompt: "Create a study sheet summarizing the uploaded documents",
+        mindmapPrompt: "Create a mind map for: {{topics}}"
       },
 
       // Quiz Navigation
@@ -908,10 +910,12 @@ const resources = {
         flashcardsLabel: "Créer des cartes mémoire",
         studysheetLabel: "Feuille d'étude",
         audioLabel: "Résumé audio",
+        mindmapLabel: "Carte mentale",
         // Action prompts sent to AI
         quizPrompt: "Génère un quiz couvrant : {{topics}}",
         flashcardsPrompt: "Crée des cartes mémoire pour : {{topics}}",
-        studysheetPrompt: "Crée une feuille d'étude résumant les documents téléversés"
+        studysheetPrompt: "Crée une feuille d'étude résumant les documents téléversés",
+        mindmapPrompt: "Crée une carte mentale pour : {{topics}}"
       },
 
       // Quiz Navigation

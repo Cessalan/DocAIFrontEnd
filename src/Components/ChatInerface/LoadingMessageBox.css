@@ -352,16 +352,17 @@ body.dark-mode .loading-text {
 }
 
 body.dark-mode .progress-stats {
-  background: rgba(50, 53, 62, 0.6);
-  border-color: rgba(139, 92, 246, 0.2);
+  background: rgba(60, 63, 72, 0.8);
+  border-color: rgba(139, 92, 246, 0.3);
 }
 
 body.dark-mode .stat-number {
-  color: #a78bfa;
+  color: #e9d5ff;
+  text-shadow: 0 0 1px rgba(233, 213, 255, 0.5);
 }
 
 body.dark-mode .stat-label {
-  color: #9ca3af;
+  color: #d1d5db;
 }
 
 body.dark-mode .insight-preview {

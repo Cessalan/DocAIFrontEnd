@@ -429,6 +429,8 @@ const ChatInterface = ({
   const isSystemBusy = () => {
     return (
       isAiTyping ||
+      isStreaming ||
+      isQuizGeneratingRef.current ||
       loadingStates.quiz ||
       loadingStates.summary ||
       loadingStates.scenario ||
@@ -2583,6 +2585,12 @@ const ChatInterface = ({
     console.log('🎯 Post-upload action clicked:', actionId, messageData);
     console.log('🎯 Current chatId:', currentChatID);
 
+    // Block action if system is busy (prevents triggering multiple actions simultaneously)
+    if (isSystemBusy()) {
+      console.log('⚠️ System is busy, ignoring post-upload action');
+      return;
+    }
+
     // Step 1: Hide action buttons on this message
     // This prevents double-clicks and shows the action was taken
     setChatMessages(prev => prev.map(msg =>
@@ -2621,7 +2629,8 @@ const ChatInterface = ({
     const prompts = {
       quiz: t('postUpload.quizPrompt', { topics: topicsStr }),
       flashcards: t('postUpload.flashcardsPrompt', { topics: topicsStr }),
-      studysheet: t('postUpload.studysheetPrompt')
+      studysheet: t('postUpload.studysheetPrompt'),
+      mindmap: t('postUpload.mindmapPrompt', { topics: topicsStr })
     };
 
     const promptToSend = prompts[actionId];
@@ -3163,6 +3172,7 @@ const ChatInterface = ({
                         filenames={message.filenames}
                         actions={message.actions}
                         showActions={message.showActions}
+                        disabled={isSystemBusy()}
                         onAction={(actionId) => handlePostUploadAction(actionId, message)}
                       />
                     </div>
@@ -3479,10 +3489,13 @@ const ChatInterface = ({
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   // submit form when user presses enter
-                  e.currentTarget.form?.requestSubmit();
+                  if (!isSystemBusy()) {
+                    e.currentTarget.form?.requestSubmit();
+                  }
                 }
               }}
-              className="message-textarea"
+              disabled={isSystemBusy()}
+              className={`message-textarea ${isSystemBusy() ? 'textarea-disabled' : ''}`}
             />
 
             {/* Bottom row: file buttons on left, send button on right */}

@@ -1,101 +1,209 @@
 /* ============================================
-   POST-UPLOAD ACTIONS
+   POST-UPLOAD ACTIONS - QuizRoomLanding Style
    ============================================
-   Friendly AI message with action buttons shown after file upload.
-
-   This component is rendered inside the standard message structure:
-   .message.ai-message > .message-content > .post-upload-message
-
-   So we don't need our own positioning - the parent handles that.
+   Colorful sticky-note style action buttons shown after file upload.
+   Matches the warm, organic aesthetic of QuizRoomLanding.
 
    STRUCTURE:
    .post-upload-message
      └── .post-upload-text (the friendly message)
-     └── .post-upload-actions (button container)
-           └── .post-upload-action-btn (individual buttons)
+     └── .post-upload-actions (button container - horizontal flex)
+           └── .post-upload-action-btn.action-{type} (colorful buttons)
+                 └── .action-icon-circle (colored icon container)
+                 └── .action-label (button text)
    ============================================ */
 
 /* -----------------------------------------
+   CSS VARIABLES - Sticky Note Palette
+   Matching QuizRoomLanding colors
+   ----------------------------------------- */
+.post-upload-message {
+  --sticky-blue: #d4f0fc;
+  --sticky-pink: #ffd6e0;
+  --sticky-green: #d8f5d8;
+  --sticky-yellow: #fff8b8;
+  --sticky-purple: #e8dff5;
+
+  --text-primary: #3d3d3d;
+  --text-secondary: #6b6b6b;
+
+  /* Organic transition from QuizRoomLanding */
+  --transition-wobbly: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* -----------------------------------------
    CONTAINER
-   Lives inside .message-content, so no need for
-   background/border - parent ai-message handles that.
    ----------------------------------------- */
 .post-upload-message {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  animation: fadeInUp 0.3s ease-out;
+  animation: fadeInUp 0.4s ease-out;
 }
 
 /* -----------------------------------------
    FRIENDLY MESSAGE TEXT
-   The conversational message from the AI.
    ----------------------------------------- */
 .post-upload-text {
   font-size: 15px;
   line-height: 1.55;
-  color: var(--text-primary, #1f1f1f);
+  color: var(--text-primary);
 }
 
 /* -----------------------------------------
    ACTION BUTTONS CONTAINER
-   Vertical stack of pill-style buttons.
+   Horizontal flex wrap - matches QuizRoomLanding .transform-features
    ----------------------------------------- */
 .post-upload-actions {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  flex-wrap: wrap;
   gap: 10px;
+  margin-top: 4px;
 }
 
 /* -----------------------------------------
-   ACTION BUTTON
-   Pill-style button matching empty state cards.
-   Large tap target for mobile (min 48px).
+   ACTION BUTTON BASE
+   Sticky-note pill style matching QuizRoomLanding
    ----------------------------------------- */
 .post-upload-action-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 18px;
-  background: rgba(255, 255, 255, 0.9);
-  border: 1.5px solid rgba(173, 125, 195, 0.18);
-  border-radius: 14px;
+  gap: 8px;
+  padding: 10px 16px 10px 12px;
+  background: #ffffff;
+  border: 1.5px solid rgba(100, 100, 100, 0.12);
+  border-radius: 10px 12px 10px 11px; /* Organic shape */
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.3s var(--transition-wobbly);
+  box-shadow:
+    2px 2px 0px rgba(60, 60, 60, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.04);
   text-align: left;
-  width: 100%;
-  min-height: 48px; /* Accessibility: large tap target */
+  min-height: 44px;
 }
 
+/* Slight rotations for organic feel */
+.post-upload-action-btn:nth-child(1) { transform: rotate(-0.5deg); }
+.post-upload-action-btn:nth-child(2) { transform: rotate(0.5deg); }
+.post-upload-action-btn:nth-child(3) { transform: rotate(-0.3deg); }
+.post-upload-action-btn:nth-child(4) { transform: rotate(0.4deg); }
+
 .post-upload-action-btn:hover {
-  background: rgba(255, 255, 255, 1);
-  border-color: var(--primary-purple, #ad7dc3);
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(173, 125, 195, 0.15);
+  transform: translateY(-3px) rotate(0deg) scale(1.02);
+  box-shadow:
+    3px 3px 0px rgba(60, 60, 60, 0.08),
+    0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
 .post-upload-action-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(173, 125, 195, 0.1);
+  transform: translateY(-1px) scale(0.98);
+  box-shadow:
+    1px 1px 0px rgba(60, 60, 60, 0.06),
+    0 2px 4px rgba(0, 0, 0, 0.04);
 }
 
-/* Icon (emoji) */
-.post-upload-action-btn .action-icon {
-  font-size: 20px;
-  line-height: 1;
+/* -----------------------------------------
+   ICON CIRCLE
+   Colored circle container for SVG icons
+   ----------------------------------------- */
+.action-icon-circle {
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px 8px 7px 6px; /* Organic shape */
+  transition: all 0.3s var(--transition-wobbly);
   flex-shrink: 0;
+}
+
+.action-icon-circle svg {
+  width: 16px;
+  height: 16px;
+}
+
+.post-upload-action-btn:hover .action-icon-circle {
+  transform: rotate(-10deg) scale(1.1);
 }
 
 /* Label text */
 .post-upload-action-btn .action-label {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
-  color: var(--primary-purple-dark, #663a82);
+  color: var(--text-primary);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* -----------------------------------------
+   INDIVIDUAL BUTTON COLORS
+   Each action has its signature sticky-note color
+   ----------------------------------------- */
+
+/* Quiz - Blue sticky note */
+.post-upload-action-btn.action-quiz {
+  background: var(--sticky-blue);
+}
+.post-upload-action-btn.action-quiz:hover {
+  border-color: rgba(65, 105, 225, 0.4);
+}
+.action-quiz .action-icon-circle {
+  background: rgba(100, 149, 237, 0.3);
+  color: #4169e1;
+}
+
+/* Flashcards - Pink sticky note */
+.post-upload-action-btn.action-flashcards {
+  background: var(--sticky-pink);
+}
+.post-upload-action-btn.action-flashcards:hover {
+  border-color: rgba(219, 39, 119, 0.4);
+}
+.action-flashcards .action-icon-circle {
+  background: rgba(255, 105, 180, 0.25);
+  color: #db2777;
+}
+
+/* Audio - Green sticky note */
+.post-upload-action-btn.action-audio {
+  background: var(--sticky-green);
+}
+.post-upload-action-btn.action-audio:hover {
+  border-color: rgba(5, 150, 105, 0.4);
+}
+.action-audio .action-icon-circle {
+  background: rgba(60, 179, 113, 0.3);
+  color: #059669;
+}
+
+/* Study Sheet - Yellow sticky note */
+.post-upload-action-btn.action-studysheet {
+  background: var(--sticky-yellow);
+}
+.post-upload-action-btn.action-studysheet:hover {
+  border-color: rgba(217, 119, 6, 0.4);
+}
+.action-studysheet .action-icon-circle {
+  background: rgba(255, 193, 7, 0.35);
+  color: #d97706;
+}
+
+/* Mind Map - Purple sticky note */
+.post-upload-action-btn.action-mindmap {
+  background: var(--sticky-purple);
+}
+.post-upload-action-btn.action-mindmap:hover {
+  border-color: rgba(139, 92, 246, 0.4);
+}
+.action-mindmap .action-icon-circle {
+  background: rgba(167, 139, 250, 0.3);
+  color: #7c3aed;
 }
 
 /* -----------------------------------------
    ANIMATION
-   Subtle fade-in when the message appears.
    ----------------------------------------- */
 @keyframes fadeInUp {
   from {
@@ -108,6 +216,30 @@
   }
 }
 
+/* Staggered entrance for buttons */
+.post-upload-action-btn {
+  animation: buttonPopIn 0.4s var(--transition-wobbly) backwards;
+}
+.post-upload-action-btn:nth-child(1) { animation-delay: 0.1s; }
+.post-upload-action-btn:nth-child(2) { animation-delay: 0.15s; }
+.post-upload-action-btn:nth-child(3) { animation-delay: 0.2s; }
+.post-upload-action-btn:nth-child(4) { animation-delay: 0.25s; }
+.post-upload-action-btn:nth-child(5) { animation-delay: 0.3s; }
+
+@keyframes buttonPopIn {
+  0% {
+    opacity: 0;
+    transform: translateY(15px) scale(0.9);
+  }
+  60% {
+    transform: translateY(-3px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /* ============================================
    DARK MODE
    ============================================ */
@@ -116,42 +248,144 @@ body.dark-mode .post-upload-text {
 }
 
 body.dark-mode .post-upload-action-btn {
-  background: rgba(40, 40, 60, 0.6);
-  border-color: rgba(139, 92, 246, 0.25);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    2px 2px 0px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 body.dark-mode .post-upload-action-btn:hover {
-  background: rgba(50, 50, 70, 0.8);
-  border-color: #8b5cf6;
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.2);
+  box-shadow:
+    3px 3px 0px rgba(0, 0, 0, 0.25),
+    0 6px 16px rgba(0, 0, 0, 0.2);
 }
 
 body.dark-mode .post-upload-action-btn .action-label {
-  color: #e5e7eb;
+  color: #1f1f1f;
+}
+
+/* Dark mode - Keep colors vibrant but slightly muted */
+body.dark-mode .post-upload-action-btn.action-quiz {
+  background: #b8e4f7;
+}
+body.dark-mode .post-upload-action-btn.action-quiz:hover {
+  border-color: rgba(100, 149, 237, 0.6);
+}
+
+body.dark-mode .post-upload-action-btn.action-flashcards {
+  background: #ffc5d3;
+}
+body.dark-mode .post-upload-action-btn.action-flashcards:hover {
+  border-color: rgba(219, 39, 119, 0.6);
+}
+
+body.dark-mode .post-upload-action-btn.action-audio {
+  background: #c5eec5;
+}
+body.dark-mode .post-upload-action-btn.action-audio:hover {
+  border-color: rgba(5, 150, 105, 0.6);
+}
+
+body.dark-mode .post-upload-action-btn.action-studysheet {
+  background: #ffefa6;
+}
+body.dark-mode .post-upload-action-btn.action-studysheet:hover {
+  border-color: rgba(217, 119, 6, 0.6);
+}
+
+body.dark-mode .post-upload-action-btn.action-mindmap {
+  background: #ddd0f0;
+}
+body.dark-mode .post-upload-action-btn.action-mindmap:hover {
+  border-color: rgba(139, 92, 246, 0.6);
+}
+
+/* ============================================
+   DISABLED STATE
+   When system is busy (streaming, generating, etc.)
+   ============================================ */
+.post-upload-actions.actions-disabled {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.post-upload-action-btn.btn-disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+  transform: none !important;
+}
+
+.post-upload-action-btn.btn-disabled:hover {
+  transform: none !important;
+  box-shadow:
+    2px 2px 0px rgba(60, 60, 60, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.04) !important;
+}
+
+.post-upload-action-btn.btn-disabled .action-icon-circle {
+  transform: none !important;
 }
 
 /* ============================================
    MOBILE RESPONSIVE
    ============================================ */
-@media (max-width: 480px) {
+@media (max-width: 600px) {
+  .post-upload-actions {
+    gap: 8px;
+  }
+
+  .post-upload-action-btn {
+    padding: 9px 14px 9px 10px;
+    gap: 7px;
+  }
+
+  .action-icon-circle {
+    width: 26px;
+    height: 26px;
+    min-width: 26px;
+  }
+
+  .action-icon-circle svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .post-upload-action-btn .action-label {
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 400px) {
   .post-upload-message {
-    gap: 14px;
+    gap: 12px;
   }
 
   .post-upload-text {
     font-size: 14px;
   }
 
-  .post-upload-action-btn {
-    padding: 12px 16px;
-    gap: 10px;
+  .post-upload-actions {
+    gap: 6px;
   }
 
-  .post-upload-action-btn .action-icon {
-    font-size: 18px;
+  .post-upload-action-btn {
+    padding: 8px 12px 8px 9px;
+    gap: 6px;
+    min-height: 40px;
+  }
+
+  .action-icon-circle {
+    width: 24px;
+    height: 24px;
+    min-width: 24px;
+  }
+
+  .action-icon-circle svg {
+    width: 13px;
+    height: 13px;
   }
 
   .post-upload-action-btn .action-label {
-    font-size: 13px;
+    font-size: 11px;
   }
 }
