@@ -3,16 +3,19 @@
 import { WS_BASE_URL } from './config';
 
 // ============================================================================
-// COST OPTIMIZATION: Connect-on-demand WebSocket pattern
-// - Opens connection only when sending a message
-// - Server closes connection after stream completes
-// - No persistent connections = minimal Cloud Run billing
-// - NO auto-reconnect - each message opens fresh connection
+// WebSocket Connection Management
+// - Opens connection on first message
+// - Connection stays open for 5 minutes of inactivity (server-side timeout)
+// - Enables rapid follow-up requests (quiz after upload, mindmap after chat)
+// - Keepalive pings every 2 minutes to prevent premature closure
 // ============================================================================
+
+const KEEPALIVE_INTERVAL = 120000; // 2 minutes - send ping to keep connection alive
 
 class WebSocketManager {
   constructor() {
     this.connections = new Map(); // chat_id -> WebSocket
+    this.keepaliveIntervals = new Map(); // chat_id -> interval ID
   }
 
   // Get or create WebSocket connection for a chat
@@ -22,35 +25,103 @@ class WebSocketManager {
       if (ws.readyState === WebSocket.OPEN) {
         return ws;
       }
-      // Clean up stale connection
+      // Clean up stale connection (CONNECTING, CLOSING, or CLOSED)
+      console.log(`🧹 Cleaning up stale WebSocket for chat ${chatId} (readyState: ${ws.readyState})`);
+      try {
+        // Force close if still connecting or closing
+        if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.CLOSING) {
+          ws.close(1000, 'Cleaning up stale connection');
+        }
+      } catch (e) {
+        // Ignore close errors
+      }
       this.connections.delete(chatId);
     }
 
     return this.createConnection(chatId);
   }
 
-  createConnection(chatId) {
+  createConnection(chatId, retryCount = 0) {
     return new Promise((resolve, reject) => {
       const ws = new WebSocket(`${WS_BASE_URL}/ws/${chatId}`);
+      let connectionTimeout;
+
+      // Set a connection timeout
+      connectionTimeout = setTimeout(() => {
+        if (ws.readyState === WebSocket.CONNECTING) {
+          console.warn(`⏰ WebSocket connection timeout for chat ${chatId}`);
+          ws.close();
+          reject(new Error('WebSocket connection timeout'));
+        }
+      }, 10000); // 10 second timeout
 
       ws.onopen = () => {
+        clearTimeout(connectionTimeout);
         console.log(`✅ WebSocket connected for chat ${chatId}`);
         this.connections.set(chatId, ws);
+
+        // Start keepalive ping to maintain connection
+        this.startKeepalive(chatId, ws);
+
         resolve(ws);
       };
 
       ws.onerror = (error) => {
+        clearTimeout(connectionTimeout);
         console.error(`❌ WebSocket error for chat ${chatId}:`, error);
-        reject(error);
+
+        // Retry once if this is the first attempt (handles race condition with closing connection)
+        if (retryCount < 1) {
+          console.log(`🔄 Retrying WebSocket connection for chat ${chatId}...`);
+          setTimeout(() => {
+            this.createConnection(chatId, retryCount + 1)
+              .then(resolve)
+              .catch(reject);
+          }, 500); // Wait 500ms before retry
+        } else {
+          reject(error);
+        }
       };
 
       ws.onclose = (event) => {
+        clearTimeout(connectionTimeout);
         console.log(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
+        this.stopKeepalive(chatId);
         this.connections.delete(chatId);
-        // COST OPTIMIZATION: No reconnection - server closes after each stream
-        // Next message will open a fresh connection
+        // Connection will be re-established on next message if needed
       };
     });
+  }
+
+  // Start keepalive ping to prevent server timeout
+  startKeepalive(chatId, ws) {
+    // Clear any existing interval
+    this.stopKeepalive(chatId);
+
+    const interval = setInterval(() => {
+      if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: 'ping' }));
+          console.log(`🏓 Sent keepalive ping for chat ${chatId}`);
+        } catch (e) {
+          console.warn(`Failed to send keepalive ping for chat ${chatId}`);
+          this.stopKeepalive(chatId);
+        }
+      } else {
+        // Connection no longer open, stop pinging
+        this.stopKeepalive(chatId);
+      }
+    }, KEEPALIVE_INTERVAL);
+
+    this.keepaliveIntervals.set(chatId, interval);
+  }
+
+  // Stop keepalive ping
+  stopKeepalive(chatId) {
+    if (this.keepaliveIntervals.has(chatId)) {
+      clearInterval(this.keepaliveIntervals.get(chatId));
+      this.keepaliveIntervals.delete(chatId);
+    }
   }
 
   // Send message through WebSocket
@@ -87,6 +158,7 @@ class WebSocketManager {
 
   // Close connection
   closeConnection(chatId) {
+    this.stopKeepalive(chatId);
     const ws = this.connections.get(chatId);
     if (ws) {
       ws.close(1000, 'Client closing connection');
@@ -184,7 +256,7 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
 
     case 'stream_chunk':
       // Handle all the streaming formats from your current implementation
-      console.log('📦 Stream chunk received:', data);
+      console.log('📦 Stream chunk received:', data?.status || 'no status', data);
       if (data.status) {
         // Handle status updates (quiz generation, study sheets, etc.)
         console.log('📦 Calling onStatusUpdate with status:', data.status);
@@ -259,7 +331,8 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
         });
       }
       else if (data.status === "mindmap_complete") {
-        console.log("✅ Mindmap complete");
+        console.log("✅ Mindmap complete received from backend");
+        console.log("📦 Mindmap data:", data.mindmap_data ? `${data.mindmap_data.nodes?.length} nodes` : "NO DATA");
         onStatusUpdate({
           status: "mindmap_complete",
           mindmap_data: data.mindmap_data
@@ -280,8 +353,8 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       if (onStreamEnd) {
         onStreamEnd();
       }
-      // Server closes connection after stream - no client action needed
-      console.log(`⚡ Stream complete for ${chatId} - server will close connection`);
+      // Connection stays open for follow-up requests (5 min idle timeout)
+      console.log(`✅ Stream complete for ${chatId} - connection stays open for follow-up requests`);
       break;
 
     case 'error':
@@ -292,8 +365,8 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       break;
 
     case 'pong':
-      // Handle keepalive response - but we shouldn't get these with auto-close
-      console.log('🏓 Received pong');
+      // Handle keepalive response - confirms connection is alive
+      console.log('🏓 Received pong - connection alive');
       break;
 
     default:
@@ -317,8 +390,8 @@ export const closeWebSocketConnection = (chatId) => {
   wsManager.closeConnection(chatId);
 };
 
-// Keepalive disabled - server closes connection after each stream
-// No need for keepalive with connect-on-demand pattern
+// Keepalive is now handled automatically within WebSocketManager
+// This function is kept for backward compatibility
 export const setupWebSocketKeepalive = () => null;
 
 // Cancel ongoing stream

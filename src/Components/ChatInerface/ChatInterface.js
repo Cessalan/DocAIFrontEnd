@@ -1023,6 +1023,7 @@ const ChatInterface = ({
           // Mindmap generation started
           if (statusUpdate.status === "mindmap_generating") {
             console.log("🧠 Mindmap generation started");
+            isQuizGeneratingRef.current = true;
 
             setChatMessages(prev => {
               return prev.map(msg => {
