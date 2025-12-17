@@ -595,16 +595,16 @@ const ChatInterface = ({
         const localOnlyMessages = prev.filter(msg => {
           const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
 
-          // Keep: active uploads, streaming messages, pending post-upload actions, pending flashcards/quizzes
+          // Keep: active uploads, streaming messages, pending post-upload actions, pending flashcards/quizzes/mindmaps
           // NOTE: post_upload_actions should only be preserved if NOT YET in Firebase
           // Once saved to Firebase, let Firebase be the source of truth for ordering
           const shouldPreserve =
             (msg.type === 'upload_loading' && msg.isLoading === true) ||
             (msg.isStreaming === true) ||
             (msg.type === 'post_upload_actions' && notInFirebase) ||
-            ((msg.type === 'flashcard' || msg.type === 'quiz') && notInFirebase);
+            ((msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap') && notInFirebase);
 
-          if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz')) {
+          if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap')) {
             console.log(`🔄 Preserving ${msg.type} message ${msg.id} (isStreaming: ${msg.isStreaming}, notInFirebase: ${notInFirebase})`);
           }
 
@@ -1047,25 +1047,12 @@ const ChatInterface = ({
             return;
           }
 
-          // Mindmap complete
+          // Mindmap complete - let handleMindmapComplete handle both state update and Firebase save
+          // (similar to handleFlashcardComplete pattern to avoid race conditions)
           if (statusUpdate.status === "mindmap_complete") {
-            console.log("✅ Mindmap completed");
+            console.log("✅ Mindmap completed with", statusUpdate.mindmap_data?.nodes?.length, "nodes");
 
-            setChatMessages(prev =>
-              prev.map(msg => {
-                if (msg.id === streamingMessageId && msg.type === 'mindmap') {
-                  return {
-                    ...msg,
-                    mindmapData: statusUpdate.mindmap_data,
-                    isStreaming: false,
-                    content: 'Mindmap ready'
-                  };
-                }
-                return msg;
-              })
-            );
-
-            // Save to Firebase
+            // Single state update + Firebase save in handler (avoid duplicate setChatMessages calls)
             handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId);
             setStreamingStatus(null);
             return;
@@ -1483,6 +1470,21 @@ const ChatInterface = ({
                 };
               }
 
+              // Handle mindmap messages - remove if stopped mid-generation (no partial mindmaps)
+              if (msg.type === 'mindmap') {
+                if (msg.mindmapData && msg.mindmapData.nodes && msg.mindmapData.nodes.length > 0) {
+                  console.log(`🛑 Finalizing mindmap with ${msg.mindmapData.nodes.length} nodes`);
+                  return {
+                    ...msg,
+                    isStreaming: false,
+                    stopped: true
+                  };
+                }
+                // No data yet - remove the placeholder
+                console.log(`🛑 Removing incomplete mindmap message: ${msg.id}`);
+                return null;
+              }
+
               // Handle regular text messages - keep if has content
               if (msg.content && msg.content.trim()) {
                 return {
@@ -1880,12 +1882,18 @@ const ChatInterface = ({
   const handleMindmapComplete = async (mindmapData, messageId, chatId) => {
     console.log("✅ Mindmap complete, finalizing message");
     console.log("📦 Backend sent mindmap with", mindmapData?.nodes?.length, "nodes");
+    console.log("🆔 Target messageId:", messageId);
     setStreamingStatus(null);
 
-    // ✅ Update UI state
-    setChatMessages(prev =>
-      prev.map(msg => {
+    // ✅ Update UI state - this is the ONLY place state is updated for mindmap_complete
+    setChatMessages(prev => {
+      console.log("🔍 Looking for message to update...");
+      const targetMsg = prev.find(msg => msg.id === messageId);
+      console.log("📍 Found target message:", targetMsg ? `type=${targetMsg.type}, isStreaming=${targetMsg.isStreaming}` : "NOT FOUND");
+
+      return prev.map(msg => {
         if (msg.id === messageId && msg.type === 'mindmap') {
+          console.log("✅ Updating mindmap message with data");
           return {
             ...msg,
             mindmapData: mindmapData,
@@ -1895,8 +1903,8 @@ const ChatInterface = ({
           };
         }
         return msg;
-      })
-    );
+      });
+    });
 
     // ✅ Save to Firebase
     console.log("💾 Saving mindmap to Firebase");

@@ -133,6 +133,7 @@ const transformToReactFlow = (mindmapData) => {
       label: node.label,
       summary: node.summary,
       nodeType: node.type,
+      details: node.details || [], // Include details array from backend
     },
     position: { x: 0, y: 0 },
     parent: node.parent,
@@ -185,11 +186,13 @@ const MindmapModal = ({ mindmapData, onClose, onNodeClick }) => {
         return;
       }
 
-      // Hide controls and minimap temporarily
+      // Hide controls, minimap, and tooltip temporarily
       const controls = containerRef.current.querySelector('.react-flow__controls');
       const minimap = containerRef.current.querySelector('.react-flow__minimap');
+      const tooltip = containerRef.current.querySelector('.mindmap-tooltip');
       if (controls) controls.style.display = 'none';
       if (minimap) minimap.style.display = 'none';
+      if (tooltip) tooltip.style.display = 'none';
 
       // Capture the actual visible ReactFlow container
       const canvas = await html2canvas(containerRef.current, {
@@ -200,9 +203,10 @@ const MindmapModal = ({ mindmapData, onClose, onNodeClick }) => {
         logging: false,
       });
 
-      // Restore controls and minimap
+      // Restore controls, minimap, and tooltip
       if (controls) controls.style.display = '';
       if (minimap) minimap.style.display = '';
+      if (tooltip) tooltip.style.display = '';
 
       // Create PDF in landscape
       const pdf = new jsPDF({
@@ -498,11 +502,25 @@ const MindmapModal = ({ mindmapData, onClose, onNodeClick }) => {
             </ReactFlow>
           )}
 
-          {/* Tooltip */}
-          {selectedNode && selectedNode.data?.summary && (
-            <div className="mindmap-tooltip mindmap-tooltip-modal">
+          {/* Tooltip with details */}
+          {selectedNode && (selectedNode.data?.summary || selectedNode.data?.details?.length > 0) && (
+            <div className="mindmap-tooltip mindmap-tooltip-modal" data-node-type={selectedNode.data?.nodeType}>
+              <button className="tooltip-close" onClick={() => setSelectedNode(null)} title="Close">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
               <div className="tooltip-header">{selectedNode.data.label}</div>
-              <div className="tooltip-content">{selectedNode.data.summary}</div>
+              {selectedNode.data.summary && (
+                <div className="tooltip-content">{selectedNode.data.summary}</div>
+              )}
+              {selectedNode.data.details && selectedNode.data.details.length > 0 && (
+                <ul className="tooltip-details">
+                  {selectedNode.data.details.map((detail, index) => (
+                    <li key={index}>{detail}</li>
+                  ))}
+                </ul>
+              )}
             </div>
           )}
         </div>
@@ -524,20 +542,21 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const containerRef = useRef(null);
 
-  const { nodes: initialNodes, edges: initialEdges } = useMemo(
+  // Transform data first
+  const { nodes: transformedNodes, edges: transformedEdges } = useMemo(
     () => transformToReactFlow(mindmapData),
     [mindmapData]
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState(transformedNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState(transformedEdges);
 
-  // Update nodes when mindmapData changes
+  // Update nodes when mindmapData changes - this is crucial for streaming updates
   useEffect(() => {
-    const { nodes: newNodes, edges: newEdges } = transformToReactFlow(mindmapData);
-    setNodes(newNodes);
-    setEdges(newEdges);
-  }, [mindmapData, setNodes, setEdges]);
+    console.log('InlineViewer: mindmapData changed, updating nodes:', transformedNodes.length);
+    setNodes(transformedNodes);
+    setEdges(transformedEdges);
+  }, [transformedNodes, transformedEdges, setNodes, setEdges]);
 
   const handleNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
@@ -557,9 +576,11 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
     setIsDownloading(true);
 
     try {
-      // Hide controls temporarily
+      // Hide controls and tooltip temporarily
       const controls = containerRef.current.querySelector('.react-flow__controls');
+      const tooltip = containerRef.current.querySelector('.mindmap-tooltip');
       if (controls) controls.style.display = 'none';
+      if (tooltip) tooltip.style.display = 'none';
 
       // Capture the actual visible ReactFlow container
       const canvas = await html2canvas(containerRef.current, {
@@ -570,8 +591,9 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
         logging: false,
       });
 
-      // Restore controls
+      // Restore controls and tooltip
       if (controls) controls.style.display = '';
+      if (tooltip) tooltip.style.display = '';
 
       // Create PDF in landscape
       const pdf = new jsPDF({
@@ -722,11 +744,25 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
           />
         </ReactFlow>
 
-        {/* Tooltip for inline */}
-        {selectedNode && selectedNode.data?.summary && (
-          <div className="mindmap-tooltip">
+        {/* Tooltip for inline with details */}
+        {selectedNode && (selectedNode.data?.summary || selectedNode.data?.details?.length > 0) && (
+          <div className="mindmap-tooltip" data-node-type={selectedNode.data?.nodeType}>
+            <button className="tooltip-close" onClick={() => setSelectedNode(null)} title="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                <path d="M18 6L6 18M6 6l12 12" />
+              </svg>
+            </button>
             <div className="tooltip-header">{selectedNode.data.label}</div>
-            <div className="tooltip-content">{selectedNode.data.summary}</div>
+            {selectedNode.data.summary && (
+              <div className="tooltip-content">{selectedNode.data.summary}</div>
+            )}
+            {selectedNode.data.details && selectedNode.data.details.length > 0 && (
+              <ul className="tooltip-details">
+                {selectedNode.data.details.map((detail, index) => (
+                  <li key={index}>{detail}</li>
+                ))}
+              </ul>
+            )}
           </div>
         )}
       </div>

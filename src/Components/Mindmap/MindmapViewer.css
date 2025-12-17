@@ -38,7 +38,7 @@ body.dark-mode .mindmap-viewer {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 16px;
   animation: modalFadeIn 0.2s ease;
 }
 
@@ -55,8 +55,8 @@ body.dark-mode .mindmap-viewer {
 /* Light mode modal - default */
 .mindmap-modal {
   width: 100%;
-  max-width: 900px;
-  height: 80vh;
+  max-width: 1200px;
+  height: 90vh;
   background: #ffffff;
   border-radius: 24px;
   box-shadow: 0 20px 60px rgba(100, 80, 60, 0.15);
@@ -605,10 +605,46 @@ body.dark-mode .mindmap-minimap .react-flow__minimap-mask {
   border: 1px solid rgba(232, 141, 125, 0.2);
   border-radius: 16px;
   padding: 16px 20px;
-  max-width: 350px;
+  padding-top: 12px;
+  max-width: 420px;
+  max-height: 300px;
+  overflow-y: auto;
   box-shadow: 0 8px 32px rgba(100, 80, 60, 0.12);
   z-index: 10;
-  animation: tooltipFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: tooltipSlideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Close button for tooltip */
+.tooltip-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.04);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  color: var(--text-muted, #999);
+  transition: all 0.15s ease;
+}
+
+.tooltip-close:hover {
+  background: rgba(232, 141, 125, 0.12);
+  color: var(--primary-coral, #e07065);
+}
+
+body.dark-mode .tooltip-close {
+  background: rgba(255, 255, 255, 0.06);
+  color: rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode .tooltip-close:hover {
+  background: rgba(232, 141, 125, 0.15);
+  color: var(--primary-coral, #e88d7d);
 }
 
 body.dark-mode .mindmap-tooltip {
@@ -617,15 +653,14 @@ body.dark-mode .mindmap-tooltip {
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
-@keyframes tooltipFadeIn {
-  from {
+@keyframes tooltipSlideUp {
+  0% {
     opacity: 0;
-    transform: translateX(-50%) translateY(10px);
+    transform: translateX(-50%) translateY(12px) scale(0.96);
   }
-
-  to {
+  100% {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateX(-50%) translateY(0) scale(1);
   }
 }
 
@@ -634,12 +669,94 @@ body.dark-mode .mindmap-tooltip {
   font-weight: 600;
   color: var(--primary-coral, #e88d7d);
   margin-bottom: 8px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(232, 141, 125, 0.15);
+  padding-right: 24px; /* Space for close button */
 }
 
-body.dark-mode .tooltip-header {
-  border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+/* Node type specific tooltip styles - matches MindmapNode colors */
+
+/* Central node - coral/rose */
+.mindmap-tooltip[data-node-type="central"] {
+  background: linear-gradient(135deg, #fdf5f4 0%, #fef9f8 100%);
+  border-color: rgba(201, 86, 75, 0.25);
+}
+.mindmap-tooltip[data-node-type="central"] .tooltip-header {
+  color: #c9564b;
+}
+.mindmap-tooltip[data-node-type="central"] .tooltip-close:hover {
+  background: rgba(201, 86, 75, 0.12);
+  color: #c9564b;
+}
+
+/* Main node - amber/orange */
+.mindmap-tooltip[data-node-type="main"] {
+  background: linear-gradient(135deg, #fef8f2 0%, #fffaf6 100%);
+  border-color: rgba(208, 133, 53, 0.25);
+}
+.mindmap-tooltip[data-node-type="main"] .tooltip-header {
+  color: #d08535;
+}
+.mindmap-tooltip[data-node-type="main"] .tooltip-close:hover {
+  background: rgba(208, 133, 53, 0.12);
+  color: #d08535;
+}
+
+/* Sub node - sage green */
+.mindmap-tooltip[data-node-type="sub"] {
+  background: linear-gradient(135deg, #f4f9f5 0%, #f8fbf8 100%);
+  border-color: rgba(90, 153, 96, 0.25);
+}
+.mindmap-tooltip[data-node-type="sub"] .tooltip-header {
+  color: #5a9960;
+}
+.mindmap-tooltip[data-node-type="sub"] .tooltip-close:hover {
+  background: rgba(90, 153, 96, 0.12);
+  color: #5a9960;
+}
+
+/* Detail node - lavender */
+.mindmap-tooltip[data-node-type="detail"] {
+  background: linear-gradient(135deg, #f8f6fa 0%, #faf9fb 100%);
+  border-color: rgba(138, 122, 154, 0.25);
+}
+.mindmap-tooltip[data-node-type="detail"] .tooltip-header {
+  color: #8a7a9a;
+}
+.mindmap-tooltip[data-node-type="detail"] .tooltip-close:hover {
+  background: rgba(138, 122, 154, 0.12);
+  color: #8a7a9a;
+}
+
+/* Dark mode tooltip backgrounds - solid colors for readability */
+body.dark-mode .mindmap-tooltip[data-node-type="central"] {
+  background: linear-gradient(135deg, #3d2a28 0%, #352422 100%);
+  border-color: rgba(224, 112, 101, 0.4);
+}
+body.dark-mode .mindmap-tooltip[data-node-type="central"] .tooltip-header {
+  color: #e88d7d;
+}
+
+body.dark-mode .mindmap-tooltip[data-node-type="main"] {
+  background: linear-gradient(135deg, #3d3225 0%, #352c20 100%);
+  border-color: rgba(232, 160, 80, 0.4);
+}
+body.dark-mode .mindmap-tooltip[data-node-type="main"] .tooltip-header {
+  color: #e8a050;
+}
+
+body.dark-mode .mindmap-tooltip[data-node-type="sub"] {
+  background: linear-gradient(135deg, #283d2a 0%, #223524 100%);
+  border-color: rgba(127, 172, 132, 0.4);
+}
+body.dark-mode .mindmap-tooltip[data-node-type="sub"] .tooltip-header {
+  color: #8fbc94;
+}
+
+body.dark-mode .mindmap-tooltip[data-node-type="detail"] {
+  background: linear-gradient(135deg, #332f3d 0%, #2d2935 100%);
+  border-color: rgba(168, 149, 184, 0.4);
+}
+body.dark-mode .mindmap-tooltip[data-node-type="detail"] .tooltip-header {
+  color: #b8a5c8;
 }
 
 .tooltip-content {
@@ -650,6 +767,33 @@ body.dark-mode .tooltip-header {
 
 body.dark-mode .tooltip-content {
   color: rgba(255, 255, 255, 0.8);
+}
+
+/* Tooltip details list - shows specific facts from document */
+.tooltip-details {
+  margin: 10px 0 0 0;
+  padding: 10px 0 0 16px;
+  border-top: 1px solid rgba(232, 141, 125, 0.15);
+  list-style-type: disc;
+}
+
+body.dark-mode .tooltip-details {
+  border-top: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+}
+
+.tooltip-details li {
+  font-size: 13px;
+  color: var(--text-secondary, #6b6b6b);
+  line-height: 1.5;
+  margin-bottom: 6px;
+}
+
+.tooltip-details li:last-child {
+  margin-bottom: 0;
+}
+
+body.dark-mode .tooltip-details li {
+  color: rgba(255, 255, 255, 0.75);
 }
 
 /* Empty state - Light mode */

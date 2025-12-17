@@ -885,6 +885,23 @@ body.dark-mode .nursing-icon {
     max-width: 100%;
   }
 
+  /* Mindmap messages match input width (800px) */
+  .message:has(.chat-mindmap),
+  .message:has(.mindmap-viewer) {
+    max-width: 800px;
+    width: 100%;
+  }
+
+  .message:has(.chat-mindmap) .message-content,
+  .message:has(.mindmap-viewer) .message-content {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: 100%;
+    max-width: 100%;
+  }
+
   .user-message {
     margin-left: auto;
     margin-right: auto;

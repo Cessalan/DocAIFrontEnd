@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import MindmapViewer from '../Mindmap/MindmapViewer';
 import './ChatMindmap.css';
 
@@ -9,6 +9,29 @@ import './ChatMindmap.css';
  * Handles loading state and renders MindmapViewer when data is ready
  */
 const ChatMindmap = ({ mindmapData, isLoading, topic }) => {
+  const renderCount = useRef(0);
+  renderCount.current += 1;
+
+  // Debug log to track state changes
+  console.log(`ChatMindmap render #${renderCount.current}:`, {
+    isLoading,
+    hasMindmapData: !!mindmapData,
+    nodesCount: mindmapData?.nodes?.length,
+    centralTopic: mindmapData?.central_topic
+  });
+
+  // Log when props change
+  useEffect(() => {
+    console.log('📊 ChatMindmap: mindmapData prop changed', {
+      hasData: !!mindmapData,
+      nodesCount: mindmapData?.nodes?.length
+    });
+  }, [mindmapData]);
+
+  useEffect(() => {
+    console.log('📊 ChatMindmap: isLoading prop changed to', isLoading);
+  }, [isLoading]);
+
   // Loading state
   if (isLoading || !mindmapData) {
     return (
@@ -38,18 +61,16 @@ const ChatMindmap = ({ mindmapData, isLoading, topic }) => {
     );
   }
 
-  // Render mindmap
+  // Render mindmap - use key to force re-render when data changes
   return (
     <div className="chat-mindmap">
       <MindmapViewer
+        key={`mindmap-${mindmapData?.nodes?.length || 0}-${mindmapData?.central_topic || 'loading'}`}
         mindmapData={mindmapData}
         onNodeClick={(node) => {
           console.log('Node clicked:', node);
         }}
       />
-      <div className="mindmap-instructions">
-        Click a node to see details. Drag to pan, scroll to zoom.
-      </div>
     </div>
   );
 };
