@@ -1,10 +1,10 @@
 /* MindmapNode.css - Custom node styles for mindmap visualization */
-/* Matches the warm coral/lavender aesthetic of the app */
+/* Warm palette with distinct colors for each level */
 
 .mindmap-node {
   padding: 12px 20px;
   border-radius: 14px;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -12,11 +12,10 @@
   min-width: 100px;
   max-width: 200px;
   text-align: center;
-  backdrop-filter: blur(8px);
 }
 
 .mindmap-node:hover {
-  transform: scale(1.08);
+  transform: scale(1.05);
   z-index: 10;
 }
 
@@ -24,79 +23,79 @@
   border-color: rgba(255, 255, 255, 0.5);
 }
 
-/* Central node - largest, coral gradient */
+/* Central node - Deep coral/rose */
 .mindmap-node-central {
-  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  background: linear-gradient(135deg, #e07065 0%, #c9564b 100%);
   color: white;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 700;
-  padding: 18px 28px;
-  min-width: 160px;
-  max-width: 260px;
+  padding: 16px 24px;
+  min-width: 140px;
+  max-width: 240px;
   box-shadow:
-    0 8px 32px rgba(232, 141, 125, 0.4),
+    0 6px 24px rgba(224, 112, 101, 0.4),
     0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 .mindmap-node-central:hover {
   box-shadow:
-    0 12px 48px rgba(232, 141, 125, 0.5),
+    0 10px 36px rgba(224, 112, 101, 0.5),
     0 0 0 1px rgba(255, 255, 255, 0.2) inset;
 }
 
-/* Main nodes - primary branches, lavender */
+/* Main nodes - Warm amber/orange */
 .mindmap-node-main {
-  background: linear-gradient(135deg, #b8a5d4 0%, #a894c9 100%);
-  color: white;
+  background: linear-gradient(135deg, #f0a05a 0%, #e08c42 100%);
+  color: #4a3520;
   font-size: 14px;
   font-weight: 600;
-  padding: 12px 20px;
+  padding: 11px 18px;
   box-shadow:
-    0 6px 24px rgba(184, 165, 212, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    0 4px 18px rgba(240, 160, 90, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 }
 
 .mindmap-node-main:hover {
   box-shadow:
-    0 8px 32px rgba(184, 165, 212, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+    0 6px 24px rgba(240, 160, 90, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
 }
 
-/* Sub nodes - secondary branches, teal/cyan */
+/* Sub nodes - Soft sage green */
 .mindmap-node-sub {
-  background: linear-gradient(135deg, #5eead4 0%, #2dd4bf 100%);
-  color: #134e4a;
+  background: linear-gradient(135deg, #8fbc94 0%, #7aa87f 100%);
+  color: #2d4030;
   font-size: 13px;
   font-weight: 500;
-  padding: 10px 16px;
+  padding: 9px 15px;
   box-shadow:
-    0 4px 16px rgba(94, 234, 212, 0.3),
+    0 3px 14px rgba(143, 188, 148, 0.35),
     0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 }
 
 .mindmap-node-sub:hover {
   box-shadow:
-    0 6px 24px rgba(94, 234, 212, 0.4),
+    0 5px 20px rgba(143, 188, 148, 0.45),
     0 0 0 1px rgba(255, 255, 255, 0.25) inset;
 }
 
-/* Detail nodes - tertiary branches, muted */
+/* Detail nodes - Soft lavender/purple */
 .mindmap-node-detail {
-  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
-  color: white;
+  background: linear-gradient(135deg, #b8a5c8 0%, #a694b8 100%);
+  color: #3d3548;
   font-size: 12px;
-  font-weight: 400;
-  padding: 8px 14px;
+  font-weight: 500;
+  padding: 8px 13px;
   box-shadow:
-    0 3px 12px rgba(100, 116, 139, 0.3),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 2px 10px rgba(184, 165, 200, 0.35),
+    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
 }
 
 .mindmap-node-detail:hover {
   box-shadow:
-    0 4px 16px rgba(100, 116, 139, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+    0 4px 14px rgba(184, 165, 200, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
 }
 
 /* Node content */
@@ -109,14 +108,13 @@
 .mindmap-node-label {
   line-height: 1.4;
   word-wrap: break-word;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Handles - connection points */
 .mindmap-handle {
-  width: 10px;
-  height: 10px;
-  background: rgba(255, 255, 255, 0.6);
+  width: 8px;
+  height: 8px;
+  background: rgba(232, 141, 125, 0.6);
   border: 2px solid rgba(255, 255, 255, 0.9);
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
@@ -128,4 +126,42 @@
 
 .mindmap-handle:hover {
   transform: scale(1.2);
+}
+
+/* ============================================
+   DARK MODE - Adjusted for dark backgrounds
+   ============================================ */
+body.dark-mode .mindmap-node-central {
+  background: linear-gradient(135deg, #e07065 0%, #c9564b 100%);
+  color: white;
+  box-shadow:
+    0 6px 24px rgba(224, 112, 101, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+body.dark-mode .mindmap-node-main {
+  background: linear-gradient(135deg, #e8a050 0%, #d89040 100%);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 4px 18px rgba(232, 160, 80, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+body.dark-mode .mindmap-node-sub {
+  background: linear-gradient(135deg, #7fac84 0%, #6a9870 100%);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 3px 14px rgba(127, 172, 132, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+}
+
+body.dark-mode .mindmap-node-detail {
+  background: linear-gradient(135deg, #a895b8 0%, #9684a8 100%);
+  color: white;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  box-shadow:
+    0 2px 10px rgba(168, 149, 184, 0.4),
+    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
 }

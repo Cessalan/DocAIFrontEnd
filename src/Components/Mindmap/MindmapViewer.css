@@ -1,16 +1,25 @@
 /* MindmapViewer.css - Main mindmap container styles */
 /* Matches the warm coral/lavender aesthetic of the app */
 
+/* ============================================
+   INLINE VIEWER - Light mode default
+   ============================================ */
 .mindmap-viewer {
   width: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--dark-bg-secondary, #2f2f2f);
+  background: var(--bg-paper, #fffef9);
   border-radius: var(--radius-xl, 20px);
   overflow: hidden;
-  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border: 2px solid rgba(232, 141, 125, 0.2);
+  box-shadow: 0 8px 32px rgba(100, 80, 60, 0.1);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dark-mode .mindmap-viewer {
+  background: var(--dark-bg-secondary, #2f2f2f);
+  border: 2px solid var(--dark-border-accent, rgba(200, 180, 220, 0.3));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 /* ============================================
@@ -37,19 +46,20 @@
   from {
     opacity: 0;
   }
+
   to {
     opacity: 1;
   }
 }
 
+/* Light mode modal - default */
 .mindmap-modal {
   width: 100%;
   max-width: 900px;
-  height: auto;
-  max-height: 80vh;
+  height: 80vh;
   background: #ffffff;
   border-radius: 24px;
-  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 60px rgba(100, 80, 60, 0.15);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -58,8 +68,7 @@
 }
 
 /* Dark mode modal */
-body.dark-mode .mindmap-modal,
-.mindmap-modal {
+body.dark-mode .mindmap-modal {
   background: var(--dark-bg-secondary, #2f2f2f);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
 }
@@ -69,30 +78,42 @@ body.dark-mode .mindmap-modal,
     opacity: 0;
     transform: translateY(20px) scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
   }
 }
 
+/* Light mode header */
 .mindmap-modal-header {
   padding: 20px 24px;
-  background: linear-gradient(135deg, rgba(200, 180, 220, 0.1) 0%, rgba(232, 141, 125, 0.05) 100%);
-  border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  background: linear-gradient(135deg, rgba(232, 141, 125, 0.08) 0%, rgba(200, 180, 220, 0.06) 100%);
+  border-bottom: 1px solid rgba(232, 141, 125, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
   flex-shrink: 0;
 }
 
+body.dark-mode .mindmap-modal-header {
+  background: linear-gradient(135deg, rgba(200, 180, 220, 0.1) 0%, rgba(232, 141, 125, 0.05) 100%);
+  border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+}
+
+/* Light mode title */
 .mindmap-modal-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-white, #ffffff);
+  color: var(--text-primary, #3d3d3d);
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+body.dark-mode .mindmap-modal-title {
+  color: var(--text-white, #ffffff);
 }
 
 .mindmap-modal-title::before {
@@ -100,16 +121,72 @@ body.dark-mode .mindmap-modal,
   font-size: 20px;
 }
 
+/* Light mode action button */
+.mindmap-modal-action-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.15);
+  border-radius: 10px;
+  color: var(--primary-coral, #e07065);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mindmap-modal-action-btn:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: var(--primary-coral, #e07065);
+}
+
+.mindmap-modal-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+body.dark-mode .mindmap-modal-action-btn {
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.1));
+  color: var(--text-secondary, #b3b3b3);
+}
+
+body.dark-mode .mindmap-modal-action-btn:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: var(--primary-coral, #e88d7d);
+  color: var(--primary-coral, #e88d7d);
+}
+
+/* Button spinner */
+.mindmap-btn-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(232, 141, 125, 0.3);
+  border-top-color: var(--primary-coral, #e07065);
+  border-radius: 50%;
+  animation: btnSpin 0.8s linear infinite;
+}
+
+@keyframes btnSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Light mode close button */
 .mindmap-modal-close {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: var(--dark-bg-tertiary, #3d3d3d);
-  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.15);
   border-radius: 10px;
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, #6b6b6b);
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -120,23 +197,54 @@ body.dark-mode .mindmap-modal,
   color: var(--primary-coral, #e88d7d);
 }
 
-.mindmap-modal-content {
-  flex: 1;
-  position: relative;
-  background: var(--dark-bg-primary, #1a1a1a);
-  overflow: hidden;
-  min-height: 400px;
-  max-height: 60vh;
+body.dark-mode .mindmap-modal-close {
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  color: rgba(255, 255, 255, 0.7);
 }
 
+body.dark-mode .mindmap-modal-close:hover {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: var(--primary-coral, #e88d7d);
+  color: var(--primary-coral, #e88d7d);
+}
+
+/* Light mode content area */
+.mindmap-modal-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  background: var(--bg-cream, #fdf8f3);
+  overflow: hidden;
+  min-height: 0;
+}
+
+body.dark-mode .mindmap-modal-content {
+  background: var(--dark-bg-primary, #1a1a1a);
+}
+
+.mindmap-modal-content .react-flow {
+  width: 100% !important;
+  height: 100% !important;
+  flex: 1;
+}
+
+/* Light mode footer */
 .mindmap-modal-footer {
   padding: 12px 20px;
-  background: var(--dark-bg-elevated, #262626);
-  border-top: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  background: var(--bg-paper, #fffef9);
+  border-top: 1px solid rgba(232, 141, 125, 0.12);
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted, #999999);
   text-align: center;
   flex-shrink: 0;
+}
+
+body.dark-mode .mindmap-modal-footer {
+  background: var(--dark-bg-elevated, #262626);
+  border-top: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  color: rgba(255, 255, 255, 0.5);
 }
 
 /* Tooltip positioning in modal */
@@ -149,16 +257,16 @@ body.dark-mode .mindmap-modal,
   max-width: 300px;
 }
 
-/* Expand button in inline viewer */
+/* Light mode expand button */
 .mindmap-expand-btn {
   display: flex;
   align-items: center;
   gap: 6px;
   padding: 8px 14px;
-  background: var(--dark-bg-tertiary, #3d3d3d);
-  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.15);
   border-radius: 10px;
-  color: var(--dark-accent, #b8a5d4);
+  color: var(--primary-coral, #e88d7d);
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
@@ -166,12 +274,66 @@ body.dark-mode .mindmap-modal,
 }
 
 .mindmap-expand-btn:hover {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: var(--primary-coral, #e88d7d);
+  color: var(--primary-coral-dark, #c46a5a);
+}
+
+body.dark-mode .mindmap-expand-btn {
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  color: var(--dark-accent, #b8a5d4);
+}
+
+body.dark-mode .mindmap-expand-btn:hover {
   background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
   border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
   color: var(--primary-coral, #e88d7d);
 }
 
 .mindmap-expand-btn svg {
+  flex-shrink: 0;
+}
+
+/* Inline action button (PDF download) */
+.mindmap-action-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.15);
+  border-radius: 10px;
+  color: var(--primary-coral, #e07065);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mindmap-action-btn:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: var(--primary-coral, #e07065);
+}
+
+.mindmap-action-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+body.dark-mode .mindmap-action-btn {
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  color: var(--dark-accent, #b8a5d4);
+}
+
+body.dark-mode .mindmap-action-btn:hover:not(:disabled) {
+  background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+  border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  color: var(--primary-coral, #e88d7d);
+}
+
+.mindmap-action-btn svg {
   flex-shrink: 0;
 }
 
@@ -188,8 +350,13 @@ body.dark-mode .mindmap-modal,
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .mindmap-viewer.mindmap-fullscreen {
@@ -211,6 +378,7 @@ body.dark-mode .mindmap-modal,
     opacity: 0;
     transform: scale(0.95);
   }
+
   to {
     opacity: 1;
     transform: scale(1);
@@ -218,18 +386,24 @@ body.dark-mode .mindmap-modal,
 }
 
 .mindmap-fullscreen .mindmap-container {
-  height: calc(100% - 110px); /* Account for header and footer */
+  height: calc(100% - 110px);
   flex: 1;
 }
 
+/* Light mode header */
 .mindmap-header {
   padding: 16px 20px;
-  background: var(--dark-bg-elevated, #262626);
-  border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  background: var(--bg-paper, #fffef9);
+  border-bottom: 1px solid rgba(232, 141, 125, 0.12);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+}
+
+body.dark-mode .mindmap-header {
+  background: var(--dark-bg-elevated, #262626);
+  border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
 }
 
 .mindmap-header-actions {
@@ -238,21 +412,34 @@ body.dark-mode .mindmap-modal,
   gap: 8px;
 }
 
+/* Light mode fullscreen button */
 .mindmap-fullscreen-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: var(--dark-bg-tertiary, #3d3d3d);
-  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.15);
   border-radius: 10px;
-  color: var(--dark-accent, #b8a5d4);
+  color: var(--primary-coral, #e88d7d);
   cursor: pointer;
   transition: all 0.2s ease;
 }
 
 .mindmap-fullscreen-btn:hover {
+  background: rgba(232, 141, 125, 0.15);
+  color: var(--primary-coral-dark, #c46a5a);
+  border-color: var(--primary-coral, #e88d7d);
+}
+
+body.dark-mode .mindmap-fullscreen-btn {
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  color: var(--dark-accent, #b8a5d4);
+}
+
+body.dark-mode .mindmap-fullscreen-btn:hover {
   background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
   color: var(--primary-coral, #e88d7d);
   border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
@@ -262,14 +449,19 @@ body.dark-mode .mindmap-modal,
   flex-shrink: 0;
 }
 
+/* Light mode title */
 .mindmap-title {
   margin: 0;
   font-size: 18px;
   font-weight: 600;
-  color: var(--text-white, #ffffff);
+  color: var(--text-primary, #3d3d3d);
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+body.dark-mode .mindmap-title {
+  color: var(--text-white, #ffffff);
 }
 
 .mindmap-title::before {
@@ -277,46 +469,86 @@ body.dark-mode .mindmap-modal,
   font-size: 20px;
 }
 
+/* Light mode container */
 .mindmap-container {
   width: 100%;
-  height: 550px;
+  height: 500px;
+  min-height: 400px;
   position: relative;
+  background: var(--bg-cream, #fdf8f3);
+}
+
+body.dark-mode .mindmap-container {
   background: var(--dark-bg-primary, #1a1a1a);
 }
 
-/* React Flow customization */
 .mindmap-container .react-flow {
-  background: var(--dark-bg-primary, #1a1a1a) !important;
+  width: 100%;
+  height: 100%;
+}
+
+/* React Flow customization - Light mode */
+.mindmap-container .react-flow {
+  background: var(--bg-cream, #fdf8f3) !important;
 }
 
 .mindmap-container .react-flow__background {
-  background: var(--dark-bg-primary, #1a1a1a) !important;
+  background: var(--bg-cream, #fdf8f3) !important;
 }
 
 .mindmap-container .react-flow__background pattern line {
+  stroke: rgba(232, 141, 125, 0.12) !important;
+}
+
+body.dark-mode .mindmap-container .react-flow {
+  background: var(--dark-bg-primary, #1a1a1a) !important;
+}
+
+body.dark-mode .mindmap-container .react-flow__background {
+  background: var(--dark-bg-primary, #1a1a1a) !important;
+}
+
+body.dark-mode .mindmap-container .react-flow__background pattern line {
   stroke: rgba(200, 180, 220, 0.08) !important;
 }
 
-/* Controls styling - match app theme */
+/* Modal content ReactFlow - Light mode */
+.mindmap-modal-content .react-flow {
+  background: var(--bg-cream, #fdf8f3) !important;
+}
+
+.mindmap-modal-content .react-flow__background {
+  background: var(--bg-cream, #fdf8f3) !important;
+}
+
+body.dark-mode .mindmap-modal-content .react-flow {
+  background: var(--dark-bg-primary, #1a1a1a) !important;
+}
+
+body.dark-mode .mindmap-modal-content .react-flow__background {
+  background: var(--dark-bg-primary, #1a1a1a) !important;
+}
+
+/* Controls styling - Light mode */
 .mindmap-controls {
-  background: var(--dark-bg-elevated, #262626) !important;
-  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25)) !important;
+  background: #ffffff !important;
+  border: 1px solid rgba(232, 141, 125, 0.2) !important;
   border-radius: 12px !important;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+  box-shadow: 0 4px 16px rgba(100, 80, 60, 0.1) !important;
   overflow: hidden;
 }
 
 .mindmap-controls button {
-  background: var(--dark-bg-elevated, #262626) !important;
-  border-color: var(--dark-border, rgba(255, 255, 255, 0.08)) !important;
-  color: var(--dark-accent, #b8a5d4) !important;
+  background: #ffffff !important;
+  border-color: rgba(232, 141, 125, 0.12) !important;
+  color: var(--primary-coral, #e88d7d) !important;
   width: 32px !important;
   height: 32px !important;
 }
 
 .mindmap-controls button:hover {
-  background: var(--dark-bg-tertiary, #3d3d3d) !important;
-  color: var(--primary-coral, #e88d7d) !important;
+  background: rgba(232, 141, 125, 0.08) !important;
+  color: var(--primary-coral-dark, #c46a5a) !important;
 }
 
 .mindmap-controls button svg {
@@ -325,32 +557,64 @@ body.dark-mode .mindmap-modal,
   height: 14px !important;
 }
 
-/* MiniMap styling */
-.mindmap-minimap {
+body.dark-mode .mindmap-controls {
   background: var(--dark-bg-elevated, #262626) !important;
   border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25)) !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+body.dark-mode .mindmap-controls button {
+  background: var(--dark-bg-elevated, #262626) !important;
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.08)) !important;
+  color: var(--dark-accent, #b8a5d4) !important;
+}
+
+body.dark-mode .mindmap-controls button:hover {
+  background: var(--dark-bg-tertiary, #3d3d3d) !important;
+  color: var(--primary-coral, #e88d7d) !important;
+}
+
+/* MiniMap styling - Light mode */
+.mindmap-minimap {
+  background: #ffffff !important;
+  border: 1px solid rgba(232, 141, 125, 0.2) !important;
   border-radius: 12px !important;
   overflow: hidden;
 }
 
 .mindmap-minimap .react-flow__minimap-mask {
+  fill: rgba(232, 141, 125, 0.12) !important;
+}
+
+body.dark-mode .mindmap-minimap {
+  background: var(--dark-bg-elevated, #262626) !important;
+  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25)) !important;
+}
+
+body.dark-mode .mindmap-minimap .react-flow__minimap-mask {
   fill: rgba(232, 141, 125, 0.15) !important;
 }
 
-/* Tooltip */
+/* Tooltip - Light mode */
 .mindmap-tooltip {
   position: absolute;
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--dark-bg-elevated, #262626);
-  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  background: #ffffff;
+  border: 1px solid rgba(232, 141, 125, 0.2);
   border-radius: 16px;
   padding: 16px 20px;
   max-width: 350px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 32px rgba(100, 80, 60, 0.12);
   z-index: 10;
   animation: tooltipFadeIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dark-mode .mindmap-tooltip {
+  background: var(--dark-bg-elevated, #262626);
+  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes tooltipFadeIn {
@@ -358,6 +622,7 @@ body.dark-mode .mindmap-modal,
     opacity: 0;
     transform: translateX(-50%) translateY(10px);
   }
+
   to {
     opacity: 1;
     transform: translateX(-50%) translateY(0);
@@ -370,58 +635,71 @@ body.dark-mode .mindmap-modal,
   color: var(--primary-coral, #e88d7d);
   margin-bottom: 8px;
   padding-bottom: 8px;
+  border-bottom: 1px solid rgba(232, 141, 125, 0.15);
+}
+
+body.dark-mode .tooltip-header {
   border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
 }
 
 .tooltip-content {
   font-size: 14px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--text-secondary, #6b6b6b);
   line-height: 1.6;
 }
 
-/* Empty state */
+body.dark-mode .tooltip-content {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* Empty state - Light mode */
 .mindmap-empty {
   width: 100%;
   height: 400px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: var(--dark-bg-secondary, #2f2f2f);
+  background: var(--bg-cream, #fdf8f3);
   border-radius: var(--radius-xl, 20px);
-  border: 2px dashed var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  border: 2px dashed rgba(232, 141, 125, 0.25);
 }
 
 .mindmap-empty p {
-  color: rgba(255, 255, 255, 0.5);
+  color: var(--text-muted, #999999);
   font-size: 15px;
 }
 
-/* Edge styling */
+body.dark-mode .mindmap-empty {
+  background: var(--dark-bg-secondary, #2f2f2f);
+  border: 2px dashed var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+}
+
+body.dark-mode .mindmap-empty p {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Edge styling - Light mode (warm peach) */
 .react-flow__edge-path {
-  stroke: var(--dark-accent, #b8a5d4) !important;
+  stroke: #e8a090 !important;
   stroke-width: 2 !important;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: var(--primary-coral, #e88d7d) !important;
+  stroke: #e88d7d !important;
   stroke-width: 3 !important;
+}
+
+body.dark-mode .react-flow__edge-path {
+  stroke: #d4a88a !important;
+}
+
+body.dark-mode .react-flow__edge:hover .react-flow__edge-path {
+  stroke: #e88d7d !important;
 }
 
 /* Attribution removal */
 .react-flow__attribution {
   display: none !important;
-}
-
-/* Hint panel - shows drag instructions */
-.mindmap-hint-panel {
-  background: var(--dark-bg-elevated, #262626);
-  color: rgba(255, 255, 255, 0.5);
-  font-size: 12px;
-  padding: 6px 12px;
-  border-radius: 8px;
-  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
-  pointer-events: none;
-  opacity: 0.8;
 }
 
 /* Dragging cursor */
@@ -453,7 +731,7 @@ body.dark-mode .mindmap-modal,
   }
 }
 
-/* Loading state animation */
+/* Loading state - Light mode */
 .mindmap-loading {
   width: 100%;
   height: 400px;
@@ -462,18 +740,28 @@ body.dark-mode .mindmap-modal,
   align-items: center;
   justify-content: center;
   gap: 20px;
-  background: var(--dark-bg-secondary, #2f2f2f);
+  background: var(--bg-cream, #fdf8f3);
   border-radius: var(--radius-xl, 20px);
+  border: 1px solid rgba(232, 141, 125, 0.15);
+}
+
+body.dark-mode .mindmap-loading {
+  background: var(--dark-bg-secondary, #2f2f2f);
   border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
 }
 
 .mindmap-loading-spinner {
   width: 48px;
   height: 48px;
-  border: 3px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  border: 3px solid rgba(232, 141, 125, 0.2);
   border-top-color: var(--primary-coral, #e88d7d);
   border-radius: 50%;
   animation: spin 1s linear infinite;
+}
+
+body.dark-mode .mindmap-loading-spinner {
+  border: 3px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  border-top-color: var(--primary-coral, #e88d7d);
 }
 
 @keyframes spin {
@@ -483,18 +771,12 @@ body.dark-mode .mindmap-modal,
 }
 
 .mindmap-loading-text {
-  color: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, #6b6b6b);
   font-size: 15px;
 }
 
-/* Instructions footer */
-.mindmap-instructions {
-  background: var(--dark-bg-elevated, #262626);
-  padding: 12px 20px;
-  font-size: 13px;
-  color: rgba(255, 255, 255, 0.5);
-  text-align: center;
-  border-top: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+body.dark-mode .mindmap-loading-text {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 /* ============================================
@@ -503,11 +785,7 @@ body.dark-mode .mindmap-modal,
 @media (max-width: 960px) {
   .mindmap-modal {
     max-width: 95%;
-  }
-
-  .mindmap-modal-content {
-    min-height: 350px;
-    max-height: 55vh;
+    height: 75vh;
   }
 }
 
@@ -518,6 +796,7 @@ body.dark-mode .mindmap-modal,
 
   .mindmap-modal {
     max-width: 100%;
+    height: 70vh;
     border-radius: 20px;
   }
 
@@ -538,11 +817,6 @@ body.dark-mode .mindmap-modal,
     height: 32px;
   }
 
-  .mindmap-modal-content {
-    min-height: 300px;
-    max-height: 50vh;
-  }
-
   .mindmap-modal-footer {
     padding: 10px 16px;
     font-size: 11px;
@@ -560,14 +834,10 @@ body.dark-mode .mindmap-modal,
 @media (max-width: 480px) {
   .mindmap-modal {
     border-radius: 16px;
+    height: 65vh;
   }
 
   .mindmap-modal-header {
     padding: 14px;
-  }
-
-  .mindmap-modal-content {
-    min-height: 250px;
-    max-height: 45vh;
   }
 }
