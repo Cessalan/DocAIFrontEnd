@@ -80,12 +80,20 @@ const PostUploadActions = ({
       case 'mindmap':
         return (
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="1.5"/>
-            <circle cx="5" cy="6" r="2" stroke="currentColor" strokeWidth="1.5"/>
-            <circle cx="19" cy="6" r="2" stroke="currentColor" strokeWidth="1.5"/>
-            <circle cx="5" cy="18" r="2" stroke="currentColor" strokeWidth="1.5"/>
-            <circle cx="19" cy="18" r="2" stroke="currentColor" strokeWidth="1.5"/>
-            <path d="M9.5 10L6.5 7.5M14.5 10L17.5 7.5M9.5 14L6.5 16.5M14.5 14L17.5 16.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            {/* Left node (root) */}
+            <rect x="2" y="9" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            {/* Top right node */}
+            <rect x="18" y="2" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            {/* Bottom right node */}
+            <rect x="18" y="16" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            {/* Horizontal line from left node */}
+            <path d="M6 12H12" stroke="currentColor" strokeWidth="1.5"/>
+            {/* Vertical line */}
+            <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5"/>
+            {/* Top horizontal to right node */}
+            <path d="M12 5H18" stroke="currentColor" strokeWidth="1.5"/>
+            {/* Bottom horizontal to right node */}
+            <path d="M12 19H18" stroke="currentColor" strokeWidth="1.5"/>
           </svg>
         );
       default:

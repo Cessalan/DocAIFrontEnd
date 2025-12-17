@@ -9,62 +9,234 @@
   overflow: hidden;
 }
 
-/* Light mode styles */
+/* ============================================
+   PREMIUM SHIMMER SKELETON LOADING
+   SVG-based horizontal mindmap with curved connections
+   ============================================ */
+
 .chat-mindmap-loading {
   background: var(--bg-cream, #fdf8f3);
-  border: 1px solid rgba(232, 141, 125, 0.15);
-  padding: 60px 24px;
+  border: 1px solid rgba(232, 141, 125, 0.2);
+  padding: 40px 24px;
 }
 
 body.dark-mode .chat-mindmap-loading {
-  background: var(--dark-bg-secondary, #2f2f2f);
-  border: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  background: var(--dark-bg-secondary, #2a2a2a);
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.mindmap-loading-container {
+.mindmap-skeleton {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 24px;
 }
 
-.mindmap-loading-spinner {
-  width: 56px;
-  height: 56px;
-  border: 3px solid rgba(232, 141, 125, 0.2);
-  border-top-color: var(--primary-coral, #e88d7d);
-  border-radius: 50%;
-  animation: mindmapSpin 1s linear infinite;
+/* SVG Container */
+.skeleton-svg {
+  width: 100%;
+  max-width: 500px;
+  height: auto;
 }
 
-body.dark-mode .mindmap-loading-spinner {
-  border: 3px solid var(--dark-border, rgba(255, 255, 255, 0.08));
-  border-top-color: var(--primary-coral, #e88d7d);
+/* ============================================
+   CONNECTION PATHS - Curved bezier lines
+   ============================================ */
+
+.skeleton-path {
+  fill: none;
+  stroke: rgba(160, 130, 110, 0.35);
+  stroke-width: 2;
+  stroke-linecap: round;
+  animation: pathPulse 3s ease-in-out infinite;
 }
 
-@keyframes mindmapSpin {
-  to {
-    transform: rotate(360deg);
+body.dark-mode .skeleton-path {
+  stroke: rgba(255, 255, 255, 0.18);
+}
+
+/* Staggered path animations for organic feel */
+.path-root-l1-1 { animation-delay: 0s; }
+.path-root-l1-2 { animation-delay: 0.15s; }
+.path-root-l1-3 { animation-delay: 0.3s; }
+.path-l1-l2-1 { animation-delay: 0.1s; }
+.path-l1-l2-2 { animation-delay: 0.2s; }
+.path-l1-l2-3 { animation-delay: 0.25s; }
+.path-l1-l2-4 { animation-delay: 0.35s; }
+.path-l1-l2-5 { animation-delay: 0.45s; }
+
+@keyframes pathPulse {
+  0%, 100% {
+    stroke-opacity: 0.4;
+  }
+  50% {
+    stroke-opacity: 0.8;
   }
 }
 
-.mindmap-loading-text {
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--text-primary, #3d3d3d);
+/* ============================================
+   NODE RECTANGLES - Rounded pill shapes
+   ============================================ */
+
+.skeleton-node-rect {
+  animation: nodePulse 2.5s ease-in-out infinite;
 }
 
-body.dark-mode .mindmap-loading-text {
-  color: var(--text-white, #ffffff);
+/* Root node - warm brown/coral */
+.node-root-rect {
+  fill: rgba(180, 90, 60, 0.45);
+  animation-delay: 0s;
 }
 
-.mindmap-loading-subtext {
+body.dark-mode .node-root-rect {
+  fill: rgba(190, 110, 70, 0.5);
+}
+
+/* Level 1 nodes - medium orange/brown */
+.node-l1-rect {
+  fill: rgba(200, 130, 90, 0.4);
+}
+
+body.dark-mode .node-l1-rect {
+  fill: rgba(200, 140, 100, 0.45);
+}
+
+.node-l1-1 .skeleton-node-rect { animation-delay: 0.1s; }
+.node-l1-2 .skeleton-node-rect { animation-delay: 0.2s; }
+.node-l1-3 .skeleton-node-rect { animation-delay: 0.3s; }
+
+/* Level 2 nodes - muted green */
+.node-l2-rect {
+  fill: rgba(120, 160, 100, 0.38);
+}
+
+body.dark-mode .node-l2-rect {
+  fill: rgba(130, 170, 110, 0.42);
+}
+
+.node-l2-1 .skeleton-node-rect { animation-delay: 0.15s; }
+.node-l2-2 .skeleton-node-rect { animation-delay: 0.25s; }
+.node-l2-3 .skeleton-node-rect { animation-delay: 0.3s; }
+.node-l2-4 .skeleton-node-rect { animation-delay: 0.4s; }
+.node-l2-5 .skeleton-node-rect { animation-delay: 0.5s; }
+
+@keyframes nodePulse {
+  0%, 100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* ============================================
+   SHIMMER EFFECT - Premium sweep animation
+   ============================================ */
+
+.skeleton-node-shimmer {
+  fill: url(#shimmerGradient);
+  opacity: 0;
+  animation: shimmerSweep 2.2s ease-in-out infinite;
+}
+
+/* CSS-based shimmer since SVG gradients need defs */
+.skeleton-node-shimmer {
+  fill: rgba(255, 255, 255, 0.35);
+  clip-path: inset(0 100% 0 0);
+  animation: shimmerClip 2s ease-in-out infinite;
+}
+
+body.dark-mode .skeleton-node-shimmer {
+  fill: rgba(255, 255, 255, 0.15);
+}
+
+/* Staggered shimmer for each node group */
+.node-root .skeleton-node-shimmer { animation-delay: 0s; }
+.node-l1-1 .skeleton-node-shimmer { animation-delay: 0.3s; }
+.node-l1-2 .skeleton-node-shimmer { animation-delay: 0.4s; }
+.node-l1-3 .skeleton-node-shimmer { animation-delay: 0.5s; }
+.node-l2-1 .skeleton-node-shimmer { animation-delay: 0.6s; }
+.node-l2-2 .skeleton-node-shimmer { animation-delay: 0.7s; }
+.node-l2-3 .skeleton-node-shimmer { animation-delay: 0.75s; }
+.node-l2-4 .skeleton-node-shimmer { animation-delay: 0.85s; }
+.node-l2-5 .skeleton-node-shimmer { animation-delay: 0.95s; }
+
+@keyframes shimmerClip {
+  0% {
+    clip-path: inset(0 100% 0 0);
+  }
+  50% {
+    clip-path: inset(0 0 0 0);
+  }
+  100% {
+    clip-path: inset(0 0 0 100%);
+  }
+}
+
+/* ============================================
+   LOADING STATUS TEXT
+   ============================================ */
+
+.mindmap-loading-status {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loading-text-shimmer {
+  position: relative;
+  overflow: hidden;
+  padding: 10px 24px;
+  border-radius: 20px;
+  background: rgba(160, 130, 110, 0.12);
+}
+
+body.dark-mode .loading-text-shimmer {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.loading-text {
   font-size: 14px;
-  color: var(--text-muted, #999999);
+  font-weight: 500;
+  color: var(--text-secondary, #6b6b6b);
+  letter-spacing: 0.01em;
+  position: relative;
+  z-index: 1;
 }
 
-body.dark-mode .mindmap-loading-subtext {
-  color: rgba(255, 255, 255, 0.5);
+body.dark-mode .loading-text {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Shimmer overlay for text */
+.loading-text-shimmer .skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.4) 50%,
+    transparent 100%
+  );
+  animation: shimmerSlide 2.5s ease-in-out infinite;
+}
+
+body.dark-mode .loading-text-shimmer .skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.15) 50%,
+    transparent 100%
+  );
+}
+
+@keyframes shimmerSlide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
 }
 
 /* Error state */
@@ -114,12 +286,32 @@ body.dark-mode .mindmap-error-text {
     border-radius: 16px;
   }
 
-  .mindmap-loading-spinner {
-    width: 48px;
-    height: 48px;
+  .chat-mindmap-loading {
+    padding: 24px 12px;
+    overflow-x: auto;
   }
 
-  .mindmap-loading-text {
-    font-size: 15px;
+  .skeleton-svg {
+    max-width: 400px;
+    min-width: 320px;
+  }
+
+  .loading-text {
+    font-size: 13px;
+  }
+
+  .loading-text-shimmer {
+    padding: 8px 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .skeleton-svg {
+    max-width: 320px;
+    min-width: 280px;
+  }
+
+  .mindmap-skeleton {
+    gap: 16px;
   }
 }

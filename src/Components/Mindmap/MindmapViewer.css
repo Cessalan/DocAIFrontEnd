@@ -160,6 +160,19 @@ body.dark-mode .mindmap-modal-action-btn:hover:not(:disabled) {
   color: var(--primary-coral, #e88d7d);
 }
 
+/* Active state for toggle buttons */
+.mindmap-modal-action-btn.active {
+  background: rgba(232, 141, 125, 0.2);
+  border-color: var(--primary-coral, #e07065);
+  color: var(--primary-coral, #e07065);
+}
+
+body.dark-mode .mindmap-modal-action-btn.active {
+  background: rgba(232, 141, 125, 0.25);
+  border-color: var(--primary-coral, #e88d7d);
+  color: var(--primary-coral, #e88d7d);
+}
+
 /* Button spinner */
 .mindmap-btn-spinner {
   width: 14px;
@@ -209,13 +222,13 @@ body.dark-mode .mindmap-modal-close:hover {
   color: var(--primary-coral, #e88d7d);
 }
 
-/* Light mode content area */
+/* Light mode content area - clean white/cream for nursing style */
 .mindmap-modal-content {
   flex: 1;
   display: flex;
   flex-direction: column;
   position: relative;
-  background: var(--bg-cream, #fdf8f3);
+  background: #fafafa;
   overflow: hidden;
   min-height: 0;
 }
@@ -469,13 +482,13 @@ body.dark-mode .mindmap-title {
   font-size: 20px;
 }
 
-/* Light mode container */
+/* Light mode container - clean background for nursing style */
 .mindmap-container {
   width: 100%;
   height: 500px;
   min-height: 400px;
   position: relative;
-  background: var(--bg-cream, #fdf8f3);
+  background: #fafafa;
 }
 
 body.dark-mode .mindmap-container {
@@ -487,17 +500,17 @@ body.dark-mode .mindmap-container {
   height: 100%;
 }
 
-/* React Flow customization - Light mode */
+/* React Flow customization - Light mode - clean for nursing style */
 .mindmap-container .react-flow {
-  background: var(--bg-cream, #fdf8f3) !important;
+  background: #fafafa !important;
 }
 
 .mindmap-container .react-flow__background {
-  background: var(--bg-cream, #fdf8f3) !important;
+  background: #fafafa !important;
 }
 
 .mindmap-container .react-flow__background pattern line {
-  stroke: rgba(232, 141, 125, 0.12) !important;
+  stroke: rgba(0, 0, 0, 0.05) !important;
 }
 
 body.dark-mode .mindmap-container .react-flow {
@@ -512,13 +525,13 @@ body.dark-mode .mindmap-container .react-flow__background pattern line {
   stroke: rgba(200, 180, 220, 0.08) !important;
 }
 
-/* Modal content ReactFlow - Light mode */
+/* Modal content ReactFlow - Light mode - clean for nursing style */
 .mindmap-modal-content .react-flow {
-  background: var(--bg-cream, #fdf8f3) !important;
+  background: #fafafa !important;
 }
 
 .mindmap-modal-content .react-flow__background {
-  background: var(--bg-cream, #fdf8f3) !important;
+  background: #fafafa !important;
 }
 
 body.dark-mode .mindmap-modal-content .react-flow {
@@ -822,23 +835,57 @@ body.dark-mode .mindmap-empty p {
   color: rgba(255, 255, 255, 0.5);
 }
 
-/* Edge styling - Light mode (warm peach) */
+/* Edge styling - inherit colors from dynamic styling */
 .react-flow__edge-path {
-  stroke: #e8a090 !important;
   stroke-width: 2 !important;
+  transition: stroke-width 0.2s ease;
 }
 
 .react-flow__edge:hover .react-flow__edge-path {
-  stroke: #e88d7d !important;
   stroke-width: 3 !important;
 }
 
+/* Edge labels - inline text style (no box, text breaks the line) */
+.react-flow__edge-textwrapper {
+  pointer-events: none;
+}
+
+.react-flow__edge-text {
+  font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  fill: #666 !important;
+}
+
+/* Edge label background - matches canvas, creates "break in line" effect */
+.react-flow__edge-textbg {
+  fill: #fafafa !important;
+  stroke: none !important;
+  rx: 2 !important;
+  ry: 2 !important;
+}
+
+/* Dark mode edge styling - brighter, more visible */
 body.dark-mode .react-flow__edge-path {
-  stroke: #d4a88a !important;
+  stroke-width: 2.5 !important;
+  opacity: 0.85 !important;
 }
 
 body.dark-mode .react-flow__edge:hover .react-flow__edge-path {
-  stroke: #e88d7d !important;
+  stroke-width: 3.5 !important;
+  opacity: 1 !important;
+}
+
+/* Dark mode edge labels - inline text on dark canvas */
+body.dark-mode .react-flow__edge-text {
+  fill: #a0a0a0 !important;
+  font-weight: 500;
+  font-size: 10px;
+}
+
+body.dark-mode .react-flow__edge-textbg {
+  fill: var(--dark-bg-primary, #1a1a1a) !important;
+  stroke: none !important;
 }
 
 /* Attribution removal */

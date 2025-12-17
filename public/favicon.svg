@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <defs>
+    <linearGradient id="peachGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8b4a0"/>
+      <stop offset="50%" stop-color="#e88d7d"/>
+      <stop offset="100%" stop-color="#d4736a"/>
+    </linearGradient>
+  </defs>
+  <!-- Main heart - MAXIMUM SIZE, edge to edge -->
+  <path d="M16 31 C16 31 0 20 0 9 C0 3 5 0 10 0 C13 0 16 3 16 3 C16 3 19 0 22 0 C27 0 32 3 32 9 C32 20 16 31 16 31Z"
+        fill="url(#peachGradient)"/>
+</svg>

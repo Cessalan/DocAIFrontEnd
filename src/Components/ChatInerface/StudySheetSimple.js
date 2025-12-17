@@ -431,7 +431,7 @@ const StudySheetSimple = ({
             <div className="pdf-header">
               <div className="pdf-header-top">
                 <div className="pdf-brand">
-                  <img src="/LogoSimple.png" alt="NurseQuizAI" className="pdf-logo" />
+                  <img src="/NQWarmLogo.png" alt="NurseQuizAI" className="pdf-logo" />
                   <span className="pdf-brand-text">
                     <span className="pdf-brand-name">NurseQuizAI</span>
                     <a href="https://nursequizai.com" className="pdf-link">nursequizai.com</a>

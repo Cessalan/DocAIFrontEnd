@@ -219,7 +219,7 @@ function PublicQuizView() {
 
         <div className="public-quiz-header">
         <div className="brand">
-          <img src="/LogoSimple.png" alt="NurseQuiz AI" className="brand-logo" />
+          <img src="/NQWarmLogo.png" alt="NurseQuiz AI" className="brand-logo" />
           <h1>NurseQuiz AI</h1>
         </div>
         <div className="quiz-info">

@@ -82,7 +82,8 @@ const LoadingMessageBox = ({
           <span className="complete-icon">✅</span>
         )}
         <span className="loading-text">
-          {getStatusText()}
+          <span className="loading-text-content">{getStatusText()}</span>
+          <span className="loading-text-shimmer"></span>
         </span>
       </div>
       

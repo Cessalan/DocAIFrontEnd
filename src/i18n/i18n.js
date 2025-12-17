@@ -223,12 +223,33 @@ const resources = {
         flashcardsLabel: "Create flashcards",
         studysheetLabel: "Study sheet",
         audioLabel: "Audio summary",
-        mindmapLabel: "Mind map",
+        mindmapLabel: "Concept map",
         // Action prompts sent to AI
         quizPrompt: "Generate a quiz covering: {{topics}}",
         flashcardsPrompt: "Create flashcards for: {{topics}}",
         studysheetPrompt: "Create a study sheet summarizing the uploaded documents",
-        mindmapPrompt: "Create a mind map for: {{topics}}"
+        mindmapPrompt: "Create a concept map for: {{topics}}"
+      },
+
+      // Mindmap Modal
+      mindmap: {
+        downloadPdf: "PDF",
+        details: "Details",
+        compact: "Compact",
+        radial: "Radial",
+        tree: "Tree",
+        switchToRadial: "Switch to Radial Layout",
+        switchToTree: "Switch to Tree Layout",
+        close: "Close",
+        footerTree: "Tree layout.",
+        footerRadial: "Radial layout.",
+        detailsShown: "Details shown on nodes.",
+        clickForDetails: "Click a node to see details.",
+        dragToRearrange: "Drag to rearrange. Scroll to zoom.",
+        // Loading states
+        analyzingDocument: "Analyzing document structure...",
+        extractingConcepts: "Extracting concepts and relationships...",
+        errorGenerating: "Could not generate mindmap. Please try again."
       },
 
       // Quiz Navigation
@@ -478,6 +499,7 @@ const resources = {
         fileFormats: "PDF, PPT, Word, Images • Up to 15MB",
         featureQuiz: "Quizzes",
         featureFlashcards: "Flashcards",
+        featureMindMap: "Concept Maps",
         featureAudio: "Audio",
         featureStudySheet: "Study Sheet",
         // Hero section
@@ -487,6 +509,7 @@ const resources = {
         typewriter: {
           quiz: "quizzes",
           flashcards: "flashcards",
+          mindmaps: "concept maps",
           audio: "audio",
           studysheet: "study sheets",
           success: "success 🏆"
@@ -910,12 +933,33 @@ const resources = {
         flashcardsLabel: "Créer des cartes mémoire",
         studysheetLabel: "Feuille d'étude",
         audioLabel: "Résumé audio",
-        mindmapLabel: "Carte mentale",
+        mindmapLabel: "Schéma conceptuel",
         // Action prompts sent to AI
         quizPrompt: "Génère un quiz couvrant : {{topics}}",
         flashcardsPrompt: "Crée des cartes mémoire pour : {{topics}}",
         studysheetPrompt: "Crée une feuille d'étude résumant les documents téléversés",
-        mindmapPrompt: "Crée une carte mentale pour : {{topics}}"
+        mindmapPrompt: "Crée un schéma conceptuel pour : {{topics}}"
+      },
+
+      // Mindmap Modal
+      mindmap: {
+        downloadPdf: "PDF",
+        details: "Détails",
+        compact: "Compact",
+        radial: "Radial",
+        tree: "Arbre",
+        switchToRadial: "Passer en vue radiale",
+        switchToTree: "Passer en vue arbre",
+        close: "Fermer",
+        footerTree: "Vue arbre.",
+        footerRadial: "Vue radiale.",
+        detailsShown: "Détails affichés sur les nœuds.",
+        clickForDetails: "Cliquez sur un nœud pour voir les détails.",
+        dragToRearrange: "Glissez pour réorganiser. Défilez pour zoomer.",
+        // Loading states
+        analyzingDocument: "Analyse de la structure du document...",
+        extractingConcepts: "Extraction des concepts et relations...",
+        errorGenerating: "Impossible de générer la carte mentale. Veuillez réessayer."
       },
 
       // Quiz Navigation
@@ -1165,6 +1209,7 @@ const resources = {
         fileFormats: "PDF, PPT, Word, Images • Jusqu'à 15Mo",
         featureQuiz: "Quiz",
         featureFlashcards: "Flashcards",
+        featureMindMap: "Schéma conceptuel",
         featureAudio: "Audio",
         featureStudySheet: "Fiche d'étude",
         // Hero section
@@ -1174,6 +1219,7 @@ const resources = {
         typewriter: {
           quiz: "quiz",
           flashcards: "flashcards",
+          mindmaps: "schémas conceptuels",
           audio: "audio",
           studysheet: "fiches d'étude",
           success: "succès 🏆"

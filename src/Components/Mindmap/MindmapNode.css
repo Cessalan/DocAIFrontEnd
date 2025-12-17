@@ -1,121 +1,118 @@
-/* MindmapNode.css - Custom node styles for mindmap visualization */
-/* Warm palette with distinct colors for each level */
+/* MindmapNode.css - Nursing Concept Map Style */
+/* White backgrounds with pastel colored borders */
 
 .mindmap-node {
-  padding: 12px 20px;
-  border-radius: 14px;
+  padding: 12px 18px;
+  border-radius: 16px;
   font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-  border: 2px solid transparent;
+  border: 3px solid var(--branch-color, #e0e0e0);
+  background: white;
   min-width: 100px;
-  max-width: 200px;
+  max-width: 180px;
   text-align: center;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .mindmap-node:hover {
   transform: scale(1.05);
   z-index: 10;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
 }
 
 .mindmap-node.selected {
-  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1), 0 4px 16px rgba(0, 0, 0, 0.15);
 }
 
-/* Central node - Deep coral/rose */
+/* Central node - Larger, golden yellow border */
 .mindmap-node-central {
-  background: linear-gradient(135deg, #e07065 0%, #c9564b 100%);
-  color: white;
+  border-width: 4px;
+  border-color: #FFD54F;
+  color: #5D4037;
   font-size: 16px;
   font-weight: 700;
-  padding: 16px 24px;
+  padding: 18px 24px;
   min-width: 140px;
-  max-width: 240px;
-  box-shadow:
-    0 6px 24px rgba(224, 112, 101, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
-  border-radius: 18px;
+  max-width: 220px;
+  background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%);
+  box-shadow: 0 4px 20px rgba(255, 213, 79, 0.3);
+  border-radius: 20px;
 }
 
 .mindmap-node-central:hover {
-  box-shadow:
-    0 10px 36px rgba(224, 112, 101, 0.5),
-    0 0 0 1px rgba(255, 255, 255, 0.2) inset;
+  box-shadow: 0 6px 28px rgba(255, 213, 79, 0.4);
 }
 
-/* Main nodes - Warm amber/orange */
+/* Main nodes - Medium size */
 .mindmap-node-main {
-  background: linear-gradient(135deg, #f0a05a 0%, #e08c42 100%);
-  color: #4a3520;
-  font-size: 14px;
+  color: #424242;
+  font-size: 13px;
   font-weight: 600;
-  padding: 11px 18px;
-  box-shadow:
-    0 4px 18px rgba(240, 160, 90, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  padding: 10px 16px;
+  min-width: 90px;
+  max-width: 160px;
+  background: rgba(255, 255, 255, 0.95);
 }
 
 .mindmap-node-main:hover {
-  box-shadow:
-    0 6px 24px rgba(240, 160, 90, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.12);
 }
 
-/* Sub nodes - Soft sage green */
+/* Sub nodes - Smaller */
 .mindmap-node-sub {
-  background: linear-gradient(135deg, #8fbc94 0%, #7aa87f 100%);
-  color: #2d4030;
-  font-size: 13px;
+  color: #616161;
+  font-size: 12px;
   font-weight: 500;
-  padding: 9px 15px;
-  box-shadow:
-    0 3px 14px rgba(143, 188, 148, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  padding: 8px 14px;
+  min-width: 70px;
+  max-width: 140px;
+  border-width: 2px;
+  background: rgba(255, 255, 255, 0.92);
 }
 
 .mindmap-node-sub:hover {
-  box-shadow:
-    0 5px 20px rgba(143, 188, 148, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.1);
 }
 
-/* Detail nodes - Soft lavender/purple */
+/* Detail nodes - Smallest */
 .mindmap-node-detail {
-  background: linear-gradient(135deg, #b8a5c8 0%, #a694b8 100%);
-  color: #3d3548;
-  font-size: 12px;
+  color: #757575;
+  font-size: 11px;
   font-weight: 500;
-  padding: 8px 13px;
-  box-shadow:
-    0 2px 10px rgba(184, 165, 200, 0.35),
-    0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+  padding: 6px 12px;
+  min-width: 60px;
+  max-width: 120px;
+  border-width: 2px;
+  background: rgba(255, 255, 255, 0.9);
 }
 
 .mindmap-node-detail:hover {
-  box-shadow:
-    0 4px 14px rgba(184, 165, 200, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.08);
 }
 
 /* Node content */
 .mindmap-node-content {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 6px;
 }
 
 .mindmap-node-label {
-  line-height: 1.4;
+  line-height: 1.3;
   word-wrap: break-word;
+  text-align: center;
 }
 
 /* Handles - connection points */
 .mindmap-handle {
   width: 8px;
   height: 8px;
-  background: rgba(232, 141, 125, 0.6);
-  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: var(--branch-color, #e0e0e0);
+  border: 2px solid white;
   opacity: 0;
   transition: opacity 0.2s ease, transform 0.2s ease;
 }
@@ -125,43 +122,162 @@
 }
 
 .mindmap-handle:hover {
-  transform: scale(1.2);
+  transform: scale(1.3);
 }
 
 /* ============================================
-   DARK MODE - Adjusted for dark backgrounds
+   DARK MODE
    ============================================ */
+body.dark-mode .mindmap-node {
+  background: #2d2d2d;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  border-width: 3px;
+}
+
 body.dark-mode .mindmap-node-central {
-  background: linear-gradient(135deg, #e07065 0%, #c9564b 100%);
-  color: white;
-  box-shadow:
-    0 6px 24px rgba(224, 112, 101, 0.45),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  background: linear-gradient(135deg, #3d3620 0%, #332d1a 100%);
+  color: #FFD54F;
+  border-width: 4px;
 }
 
 body.dark-mode .mindmap-node-main {
-  background: linear-gradient(135deg, #e8a050 0%, #d89040 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow:
-    0 4px 18px rgba(232, 160, 80, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  background: #2a2a2a;
+  color: #f5f5f5;
+  font-weight: 600;
 }
 
 body.dark-mode .mindmap-node-sub {
-  background: linear-gradient(135deg, #7fac84 0%, #6a9870 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow:
-    0 3px 14px rgba(127, 172, 132, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+  background: #282828;
+  color: #e8e8e8;
 }
 
 body.dark-mode .mindmap-node-detail {
-  background: linear-gradient(135deg, #a895b8 0%, #9684a8 100%);
-  color: white;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
-  box-shadow:
-    0 2px 10px rgba(168, 149, 184, 0.4),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+  background: #262626;
+  color: #e0e0e0;
+}
+
+body.dark-mode .mindmap-node-label {
+  color: inherit;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .mindmap-handle {
+  border-color: #2d2d2d;
+}
+
+/* Dark mode hover - brighter border */
+body.dark-mode .mindmap-node:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================
+   EXPANDED MODE - Show details inline
+   ============================================ */
+.mindmap-node.expanded {
+  max-width: 260px;
+  text-align: left;
+}
+
+.mindmap-node.expanded:hover {
+  transform: none;
+}
+
+.mindmap-node.expanded .mindmap-node-content {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.mindmap-node.expanded .mindmap-node-label {
+  font-weight: 600;
+  border-bottom: 2px solid var(--branch-color, #e0e0e0);
+  padding-bottom: 6px;
+  width: 100%;
+  text-align: left;
+}
+
+.mindmap-node-details {
+  width: 100%;
+}
+
+.mindmap-node-summary {
+  margin: 0 0 6px 0;
+  font-size: 10px;
+  font-weight: 400;
+  color: #666;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.mindmap-node-details-list {
+  margin: 0;
+  padding: 0 0 0 14px;
+  font-size: 9px;
+  font-weight: 400;
+  color: #555;
+  line-height: 1.5;
+}
+
+.mindmap-node-details-list li {
+  margin-bottom: 2px;
+}
+
+.mindmap-node-details-list li:last-child {
+  margin-bottom: 0;
+}
+
+/* Expanded mode for each node type */
+.mindmap-node-central.expanded {
+  max-width: 300px;
+  padding: 18px 22px;
+}
+
+.mindmap-node-central.expanded .mindmap-node-summary {
+  font-size: 11px;
+  color: #5D4037;
+}
+
+.mindmap-node-central.expanded .mindmap-node-details-list {
+  font-size: 10px;
+  color: #5D4037;
+}
+
+.mindmap-node-main.expanded {
+  max-width: 240px;
+  padding: 12px 16px;
+}
+
+.mindmap-node-sub.expanded {
+  max-width: 220px;
+  padding: 10px 14px;
+}
+
+.mindmap-node-detail.expanded {
+  max-width: 200px;
+  padding: 8px 12px;
+}
+
+/* Dark mode expanded adjustments */
+body.dark-mode .mindmap-node.expanded .mindmap-node-label {
+  border-bottom-color: var(--branch-color, #555);
+  color: #ffffff;
+}
+
+body.dark-mode .mindmap-node-summary {
+  color: #d0d0d0;
+  font-style: italic;
+}
+
+body.dark-mode .mindmap-node-details-list {
+  color: #c5c5c5;
+}
+
+body.dark-mode .mindmap-node-details-list li {
+  color: #c5c5c5;
+}
+
+/* Dark mode central node expanded */
+body.dark-mode .mindmap-node-central.expanded .mindmap-node-summary,
+body.dark-mode .mindmap-node-central.expanded .mindmap-node-details-list {
+  color: #FFE082;
 }

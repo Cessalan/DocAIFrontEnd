@@ -69,33 +69,33 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
         style={{ overflow: 'visible' }}
       >
         <defs>
-          {/* 3D Spherical Heart Gradient - Soft Pastel Pink (Wispr Flow style) */}
+          {/* 3D Spherical Heart Gradient - Warm Peach/Coral (matching logo) */}
           <radialGradient id="heartGrad3D" cx="35%" cy="30%" r="65%" fx="25%" fy="20%">
-            <stop offset="0%" stopColor="#fffafc" />
-            <stop offset="20%" stopColor="#ffe4e6" />
-            <stop offset="45%" stopColor="#fecdd3" />
-            <stop offset="70%" stopColor="#fda4af" />
-            <stop offset="100%" stopColor="#fb7185" />
+            <stop offset="0%" stopColor="#fff8f5" />
+            <stop offset="20%" stopColor="#fcd5c8" />
+            <stop offset="45%" stopColor="#f8b4a0" />
+            <stop offset="70%" stopColor="#e88d7d" />
+            <stop offset="100%" stopColor="#d4736a" />
           </radialGradient>
 
           {/* Bottom shadow gradient for 3D depth */}
           <radialGradient id="heartShadow3D" cx="50%" cy="80%" r="50%">
-            <stop offset="0%" stopColor="#c9247a" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="#c9247a" stopOpacity="0" />
+            <stop offset="0%" stopColor="#b85a4a" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#b85a4a" stopOpacity="0" />
           </radialGradient>
 
-          {/* Premium outline with purple tones */}
+          {/* Premium outline with warm coral tones */}
           <linearGradient id="outlineGrad3D" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#a855f7" />
-            <stop offset="50%" stopColor="#7c3aed" />
-            <stop offset="100%" stopColor="#5b21b6" />
+            <stop offset="0%" stopColor="#e8a090" />
+            <stop offset="50%" stopColor="#d4736a" />
+            <stop offset="100%" stopColor="#c45d54" />
           </linearGradient>
 
-          {/* Bouncy limb gradient - creamy white/pink */}
+          {/* Bouncy limb gradient - creamy white/peach */}
           <radialGradient id="limbGrad3D" cx="35%" cy="30%" r="70%">
-            <stop offset="0%" stopColor="#fffcfb" />
-            <stop offset="40%" stopColor="#ffe4e6" />
-            <stop offset="100%" stopColor="#fda4af" />
+            <stop offset="0%" stopColor="#fff8f5" />
+            <stop offset="40%" stopColor="#fcd5c8" />
+            <stop offset="100%" stopColor="#e88d7d" />
           </radialGradient>
 
           {/* Halo gradient - ethereal cyan - more vibrant */}
@@ -126,11 +126,11 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
             <stop offset="100%" stopColor="#ffffff" stopOpacity="0" />
           </radialGradient>
 
-          {/* Cheek blush - rounder */}
+          {/* Cheek blush - rounder, warm peach */}
           <radialGradient id="blushGrad3D" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ff6b9d" stopOpacity="0.6" />
-            <stop offset="70%" stopColor="#ff6b9d" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#ff6b9d" stopOpacity="0" />
+            <stop offset="0%" stopColor="#e88d7d" stopOpacity="0.6" />
+            <stop offset="70%" stopColor="#e88d7d" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#e88d7d" stopOpacity="0" />
           </radialGradient>
 
           {/* Eye gradient for depth */}
@@ -139,26 +139,26 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
             <stop offset="100%" stopColor="#0f0f1a" />
           </radialGradient>
 
-          {/* Foot 3D gradient - more depth */}
+          {/* Foot 3D gradient - warm peach */}
           <radialGradient id="footGrad3D" cx="30%" cy="25%" r="75%">
-            <stop offset="0%" stopColor="#fff8fc" />
-            <stop offset="30%" stopColor="#ffebf5" />
-            <stop offset="60%" stopColor="#ffd6ed" />
-            <stop offset="100%" stopColor="#f9a8d4" />
+            <stop offset="0%" stopColor="#fff8f5" />
+            <stop offset="30%" stopColor="#fde8df" />
+            <stop offset="60%" stopColor="#f8c4b4" />
+            <stop offset="100%" stopColor="#e88d7d" />
           </radialGradient>
 
           {/* Foot bottom shadow gradient */}
           <linearGradient id="footShadowGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="#e879a9" stopOpacity="0" />
-            <stop offset="70%" stopColor="#d85a94" stopOpacity="0.2" />
-            <stop offset="100%" stopColor="#c9247a" stopOpacity="0.35" />
+            <stop offset="0%" stopColor="#d4736a" stopOpacity="0" />
+            <stop offset="70%" stopColor="#c45d54" stopOpacity="0.2" />
+            <stop offset="100%" stopColor="#b85a4a" stopOpacity="0.35" />
           </linearGradient>
 
           {/* Toe highlight gradient */}
           <radialGradient id="toeGrad" cx="50%" cy="30%" r="60%">
             <stop offset="0%" stopColor="#ffffff" stopOpacity="0.9" />
-            <stop offset="60%" stopColor="#fff5fa" stopOpacity="0.5" />
-            <stop offset="100%" stopColor="#ffd6ed" stopOpacity="0" />
+            <stop offset="60%" stopColor="#fff8f5" stopOpacity="0.5" />
+            <stop offset="100%" stopColor="#fcd5c8" stopOpacity="0" />
           </radialGradient>
 
           {/* Filters */}
@@ -175,7 +175,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
           </filter>
 
           <filter id="softShadow3D" x="-50%" y="-50%" width="200%" height="200%">
-            <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#7c3aed" floodOpacity="0.25" />
+            <feDropShadow dx="0" dy="8" stdDeviation="12" floodColor="#d4736a" floodOpacity="0.25" />
           </filter>
 
           <filter id="innerGlow3D" x="-20%" y="-20%" width="140%" height="140%">
@@ -221,9 +221,8 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
               />
             </ellipse>
 
-            {/* HALO - more visible, floating higher */}
+            {/* HALO - commented out
             <g filter="url(#haloGlow3D)">
-              {/* Separate float animation for halo */}
               <animateTransform
                 attributeName="transform"
                 type="translate"
@@ -233,7 +232,6 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 calcMode="spline"
                 keySplines="0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1; 0.4 0 0.2 1"
               />
-              {/* Outer glow ring */}
               <ellipse
                 cx="150"
                 cy="38"
@@ -244,7 +242,6 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 strokeWidth="12"
                 opacity="0.3"
               />
-              {/* Main halo ring */}
               <ellipse
                 cx="150"
                 cy="38"
@@ -269,7 +266,6 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                   repeatCount="indefinite"
                 />
               </ellipse>
-              {/* Inner highlight ring */}
               <ellipse
                 cx="150"
                 cy="36"
@@ -280,7 +276,6 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 strokeWidth="2"
                 opacity="0.5"
               />
-              {/* Inner halo ring */}
               <ellipse
                 cx="150"
                 cy="38"
@@ -292,6 +287,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 opacity="0.6"
               />
             </g>
+            */}
 
             {/* SPARKLES */}
             <g>
@@ -326,7 +322,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 <animate attributeName="opacity" values="0.2;0.8;0.2" dur="1.5s" repeatCount="indefinite" begin="0.3s" />
                 <animate attributeName="cy" values="130;126;130" dur="1.8s" repeatCount="indefinite" />
               </circle>
-              <circle cx="75" cy="190" r="2" fill="#fda4af">
+              <circle cx="75" cy="190" r="2" fill="#e88d7d">
                 <animate attributeName="opacity" values="0.3;0.9;0.3" dur="2.2s" repeatCount="indefinite" begin="0.8s" />
               </circle>
               <circle cx="225" cy="185" r="2.5" fill="#67e8f9">
@@ -397,7 +393,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
             {/* CUTE FACE - softer, more integrated */}
             <g>
               {/* Subtle face area shadow for depth */}
-              <ellipse cx="150" cy="160" rx="50" ry="35" fill="#d85a94" opacity="0.08" />
+              <ellipse cx="150" cy="160" rx="50" ry="35" fill="#c45d54" opacity="0.08" />
 
               {/* Left eye - softer, rounder */}
               <g style={{
@@ -406,7 +402,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 transformOrigin: '118px 150px'
               }}>
                 {/* Eye socket shadow - stays fixed */}
-                <ellipse cx="118" cy="152" rx="20" ry="22" fill="#d85a94" opacity="0.15" />
+                <ellipse cx="118" cy="152" rx="20" ry="22" fill="#c45d54" opacity="0.15" />
                 {/* Eye white/sclera - wider when surprised */}
                 <ellipse
                   cx="118"
@@ -419,7 +415,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                   }}
                 />
                 {/* Soft outer glow to blend */}
-                <ellipse cx="118" cy="150" rx="16" ry="18" fill="none" stroke="#ffaad9" strokeWidth="2" opacity="0.3" />
+                <ellipse cx="118" cy="150" rx="16" ry="18" fill="none" stroke="#f8b4a0" strokeWidth="2" opacity="0.3" />
                 {/* Pupil group - moves with look direction, smaller when surprised */}
                 <g style={{
                   transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -432,7 +428,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                   {/* Small shine */}
                   <circle cx="120" cy="152" r="3" fill="#ffffff" opacity="0.8" />
                   {/* Pink reflection - matches body */}
-                  <circle cx="115" cy="158" r="2" fill="#fda4af" opacity="0.6" />
+                  <circle cx="115" cy="158" r="2" fill="#e88d7d" opacity="0.6" />
                 </g>
               </g>
 
@@ -443,7 +439,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 transformOrigin: '182px 150px'
               }}>
                 {/* Eye socket shadow - stays fixed */}
-                <ellipse cx="182" cy="152" rx="20" ry="22" fill="#d85a94" opacity="0.15" />
+                <ellipse cx="182" cy="152" rx="20" ry="22" fill="#c45d54" opacity="0.15" />
                 {/* Eye white/sclera - wider when surprised */}
                 <ellipse
                   cx="182"
@@ -456,7 +452,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                   }}
                 />
                 {/* Soft outer glow to blend */}
-                <ellipse cx="182" cy="150" rx="16" ry="18" fill="none" stroke="#ffaad9" strokeWidth="2" opacity="0.3" />
+                <ellipse cx="182" cy="150" rx="16" ry="18" fill="none" stroke="#f8b4a0" strokeWidth="2" opacity="0.3" />
                 {/* Pupil group - moves with look direction */}
                 <g style={{
                   transition: 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
@@ -469,14 +465,14 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                   {/* Small shine */}
                   <circle cx="184" cy="152" r="3" fill="#ffffff" opacity="0.8" />
                   {/* Pink reflection - matches body */}
-                  <circle cx="179" cy="158" r="2" fill="#fda4af" opacity="0.6" />
+                  <circle cx="179" cy="158" r="2" fill="#e88d7d" opacity="0.6" />
                 </g>
               </g>
 
               {/* Happy eyebrows - raised when surprised */}
               <path
                 d="M100 130 Q118 123 136 128"
-                stroke="#d85a94"
+                stroke="#c45d54"
                 strokeWidth="2"
                 strokeLinecap="round"
                 fill="none"
@@ -489,7 +485,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
               />
               <path
                 d="M164 128 Q182 123 200 130"
-                stroke="#d85a94"
+                stroke="#c45d54"
                 strokeWidth="2"
                 strokeLinecap="round"
                 fill="none"
@@ -513,7 +509,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                 }}
                 className="mouth-surprised"
               >
-                <ellipse cx="150" cy="190" rx="12" ry="10" fill="#c9247a" opacity="0.2" />
+                <ellipse cx="150" cy="190" rx="12" ry="10" fill="#b85a4a" opacity="0.2" />
                 <ellipse cx="150" cy="188" rx="10" ry="8" fill="#4a1a2e" />
                 <ellipse cx="150" cy="189" rx="7" ry="5" fill="#2d0f1a" />
               </g>
@@ -529,7 +525,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
               >
                 <path
                   d="M120 184 Q150 210 180 184"
-                  stroke="#c9247a"
+                  stroke="#b85a4a"
                   strokeWidth="8"
                   strokeLinecap="round"
                   fill="none"
@@ -563,7 +559,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
               >
                 <path
                   d="M117 186 C125 188, 135 214, 150 214 C165 214, 175 188, 183 186"
-                  fill="#c9247a"
+                  fill="#b85a4a"
                   opacity="0.15"
                 />
                 <path
@@ -574,12 +570,12 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
                   d="M124 186 C130 188, 140 205, 150 205 C160 205, 170 188, 176 186"
                   fill="#2d0f1a"
                 />
-                <ellipse cx="150" cy="198" rx="11" ry="7" fill="#ff6b9d" />
-                <ellipse cx="147" cy="195" rx="6" ry="3.5" fill="#ff8fb3" opacity="0.6" />
+                <ellipse cx="150" cy="198" rx="11" ry="7" fill="#e88d7d" />
+                <ellipse cx="147" cy="195" rx="6" ry="3.5" fill="#f8b4a0" opacity="0.6" />
                 <path
                   d="M122 184 C130 185, 140 208, 150 208"
                   fill="none"
-                  stroke="#ffaad9"
+                  stroke="#f8b4a0"
                   strokeWidth="1.5"
                   strokeLinecap="round"
                   opacity="0.2"
@@ -590,13 +586,13 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
             {/* ROUNDER BLUSH CHEEKS - more integrated */}
             {/* Left cheek - layered for softer blend */}
             <g>
-              <ellipse cx="85" cy="170" rx="22" ry="16" fill="#ff6b9d" opacity="0.15" />
+              <ellipse cx="85" cy="170" rx="22" ry="16" fill="#e88d7d" opacity="0.15" />
               <ellipse cx="85" cy="172" rx="16" ry="12" fill="url(#blushGrad3D)" />
               <ellipse cx="82" cy="169" rx="6" ry="4" fill="#ffffff" opacity="0.25" />
             </g>
             {/* Right cheek */}
             <g>
-              <ellipse cx="215" cy="170" rx="22" ry="16" fill="#ff6b9d" opacity="0.15" />
+              <ellipse cx="215" cy="170" rx="22" ry="16" fill="#e88d7d" opacity="0.15" />
               <ellipse cx="215" cy="172" rx="16" ry="12" fill="url(#blushGrad3D)" />
               <ellipse cx="212" cy="169" rx="6" ry="4" fill="#ffffff" opacity="0.25" />
             </g>
@@ -688,7 +684,7 @@ const NurseQuizMascot = ({ size = 200, className = '', lookDirection = 'center',
             <g>
               <path
                 d="M240 195 C240 188, 247 183, 252 188 C257 183, 264 188, 264 195 C264 204, 252 212, 252 212 C252 212, 240 204, 240 195"
-                fill="#fda4af"
+                fill="#e88d7d"
                 opacity="0.7"
               >
                 <animate attributeName="opacity" values="0.5;0.9;0.5" dur="1.8s" repeatCount="indefinite" />

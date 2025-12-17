@@ -138,7 +138,7 @@ const IndexPage = () => {
     <div style={styles.page}>
       <div style={styles.card}>
         <div style={styles.header}>
-          <img src="/LogoSimple.png" alt="NurseQuiz AI logo" style={styles.logo} />
+          <img src="/NQWarmLogo.png" alt="NurseQuiz AI logo" style={styles.logo} />
           <div>
             <h1 style={styles.title}>NurseQuiz AI</h1>
             <p style={styles.subtitle}>Turn your notes into NCLEX-ready practice in minutes.</p>

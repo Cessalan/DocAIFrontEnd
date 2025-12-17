@@ -126,6 +126,46 @@
   font-weight: 600;
   color: #6b21a8;
   letter-spacing: 0.01em;
+  position: relative;
+  display: inline-block;
+  overflow: hidden;
+}
+
+.loading-text-content {
+  position: relative;
+  z-index: 1;
+}
+
+/* Shimmer animation overlay */
+.loading-text-shimmer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(139, 92, 246, 0.3) 50%,
+    transparent 100%
+  );
+  animation: textShimmer 2s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes textShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Hide shimmer when loading is complete */
+.loading-message-box.complete-with-insights .loading-text-shimmer,
+.loading-message-box.completed .loading-text-shimmer {
+  display: none;
 }
 
 /* Cumulative Progress Stats - Compact inline layout */
@@ -349,6 +389,15 @@ body.dark-mode .loading-message-box.complete-with-insights {
 
 body.dark-mode .loading-text {
   color: #ddd6fe;
+}
+
+body.dark-mode .loading-text-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.4) 50%,
+    transparent 100%
+  );
 }
 
 body.dark-mode .progress-stats {

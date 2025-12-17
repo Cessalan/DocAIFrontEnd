@@ -175,7 +175,7 @@ function generateBlogListHtml(posts, jsPath, cssPath) {
   <meta name="description" content="Expert nursing study tips, NCLEX preparation strategies, pharmacology guides, and more. Free resources to help you pass NCLEX on your first attempt.">
   <meta name="keywords" content="NCLEX study tips, nursing blog, NCLEX prep guide, nursing school tips, pharmacology study guide">
   <link rel="canonical" href="https://nursequizai.com/blog">
-  <link rel="icon" href="/LogoSimple.png">
+  <link rel="icon" href="/NQWarmLogo.png">
 
   <!-- Open Graph -->
   <meta property="og:title" content="Nursing Study Tips & NCLEX Prep Blog | NurseQuizAI">
@@ -273,7 +273,7 @@ function generateBlogPostHtml(post, jsPath, cssPath) {
   <meta name="description" content="${escapeHtml(post.excerpt)}">
   <meta name="keywords" content="${tagsArray.map(t => escapeHtml(t)).join(', ')}">
   <link rel="canonical" href="https://nursequizai.com/blog/${post.slug}">
-  <link rel="icon" href="/LogoSimple.png">
+  <link rel="icon" href="/NQWarmLogo.png">
 
   <!-- Open Graph -->
   <meta property="og:title" content="${escapeHtml(post.title)}">
@@ -310,7 +310,7 @@ function generateBlogPostHtml(post, jsPath, cssPath) {
       "url": "https://nursequizai.com",
       "logo": {
         "@type": "ImageObject",
-        "url": "https://nursequizai.com/LogoSimple.png"
+        "url": "https://nursequizai.com/NQWarmLogo.png"
       }
     },
     "mainEntityOfPage": {

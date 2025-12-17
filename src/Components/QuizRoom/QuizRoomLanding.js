@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
-import NurseQuizMascot from './NurseQuizMascot';
 import BrainMascot from './BrainMascot';
+import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
 import './QuizRoomLanding.css';
 // Import the login prompt styles from DedicatedQuizPage
 import './DedicatedQuizPage.css';
@@ -125,24 +125,9 @@ const QuizRoomLanding = () => {
   const { currentUser } = useAuth();
   const [pressedCard, setPressedCard] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
-  const [isSpinning, setIsSpinning] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
   const [showFlash, setShowFlash] = useState(false);
   const heroRef = useRef(null);
-  const mascotRef = useRef(null);
-  const lastScrollY = useRef(0);
-  const scrollTimeout = useRef(null);
-
-  // Mascot scroll-following state
-  const [mascotIsFloating, setMascotIsFloating] = useState(false);
-  const [mascotIsExitingFloat, setMascotIsExitingFloat] = useState(false);
-  const [mascotIsReturning, setMascotIsReturning] = useState(false);
-  const [mascotIsFlying, setMascotIsFlying] = useState(false);
-  const [flyDirection, setFlyDirection] = useState('none');
-  const [mouseLookDirection, setMouseLookDirection] = useState('center');
-  const [mascotIsExcited, setMascotIsExcited] = useState(false);
-  const [mascotIsSurprised, setMascotIsSurprised] = useState(false);
-  const floatExitTimeout = useRef(null);
 
   // Brain mascot explosion state
   const [brainIsExploding, setBrainIsExploding] = useState(false);
@@ -202,157 +187,11 @@ const QuizRoomLanding = () => {
     localStorage.setItem('darkMode', isDarkMode);
   }, [isDarkMode]);
 
-  // Toggle dark mode with mascot surprise animation
+  // Toggle dark mode
   const toggleDarkMode = () => {
-    // Trigger surprised blink animation
-    setMascotIsSurprised(true);
-
-    // After blink (eyes closed), change theme
-    setTimeout(() => {
-      setIsDarkMode(prev => !prev);
-    }, 150);
-
-    // Open eyes after theme change
-    setTimeout(() => {
-      setMascotIsSurprised(false);
-    }, 400);
+    setIsDarkMode(prev => !prev);
   };
 
-  // Handle mouse movement for mascot eye tracking when floating
-  const handleMouseMove = useCallback((e) => {
-    if (!mascotRef.current || !mascotIsFloating) return;
-
-    const mascotRect = mascotRef.current.getBoundingClientRect();
-    const mascotCenterX = mascotRect.left + mascotRect.width / 2;
-    const mascotCenterY = mascotRect.top + mascotRect.height / 2;
-
-    const deltaX = e.clientX - mascotCenterX;
-    const deltaY = e.clientY - mascotCenterY;
-    const angle = Math.atan2(deltaY, deltaX) * (180 / Math.PI);
-
-    // Map angle to look directions
-    if (angle >= -30 && angle < 30) {
-      setMouseLookDirection('right');
-    } else if (angle >= 30 && angle < 60) {
-      setMouseLookDirection('down-right');
-    } else if (angle >= 60 && angle < 120) {
-      setMouseLookDirection('down-center');
-    } else if (angle >= 120 && angle < 150) {
-      setMouseLookDirection('down-left');
-    } else if (angle >= 150 || angle < -150) {
-      setMouseLookDirection('left');
-    } else if (angle >= -120 && angle < -60) {
-      setMouseLookDirection('up');
-    } else {
-      setMouseLookDirection('center');
-    }
-  }, [mascotIsFloating]);
-
-  // Handle scroll for mascot floating behavior
-  const handleScroll = useCallback(() => {
-    // Disable floating mascot on mobile (768px and below)
-    const isMobile = window.innerWidth <= 768;
-    if (isMobile) {
-      setMascotIsFloating(false);
-      setMascotIsExitingFloat(false);
-      setMascotIsReturning(false);
-      return;
-    }
-
-    const scrollY = window.scrollY;
-    const heroHeight = heroRef?.current?.offsetHeight || window.innerHeight;
-    const mascotTriggerPoint = heroHeight * 0.4; // Start floating after 40% of hero
-
-    // Determine if mascot should float
-    if (scrollY > mascotTriggerPoint) {
-      // Clear any exit animation in progress
-      if (floatExitTimeout.current) {
-        clearTimeout(floatExitTimeout.current);
-        floatExitTimeout.current = null;
-      }
-      setMascotIsExitingFloat(false);
-      setMascotIsReturning(false);
-      setMascotIsFloating(true);
-    } else if (mascotIsFloating && !mascotIsExitingFloat) {
-      // Start exit animation sequence
-      setMascotIsExitingFloat(true);
-
-      // After exit animation, return to hero position
-      floatExitTimeout.current = setTimeout(() => {
-        setMascotIsFloating(false);
-        setMascotIsExitingFloat(false);
-        setMascotIsReturning(true);
-
-        // Clear returning state quickly
-        setTimeout(() => {
-          setMascotIsReturning(false);
-        }, 50);
-      }, 350); // Match CSS animation duration
-    }
-
-    // Determine scroll direction for flying animation
-    const scrollDelta = scrollY - lastScrollY.current;
-
-    if (Math.abs(scrollDelta) > 3) {
-      setMascotIsFlying(true);
-      setFlyDirection(scrollDelta > 0 ? 'down' : 'up');
-    }
-
-    // Clear existing timeout
-    if (scrollTimeout.current) {
-      clearTimeout(scrollTimeout.current);
-    }
-
-    // Stop flying after scroll stops
-    scrollTimeout.current = setTimeout(() => {
-      setMascotIsFlying(false);
-      setFlyDirection('none');
-    }, 150);
-
-    lastScrollY.current = scrollY;
-  }, [mascotIsFloating, mascotIsExitingFloat]);
-
-  // Set up scroll and mouse event listeners
-  useEffect(() => {
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('mousemove', handleMouseMove, { passive: true });
-
-    return () => {
-      window.removeEventListener('scroll', handleScroll);
-      window.removeEventListener('mousemove', handleMouseMove);
-      if (scrollTimeout.current) {
-        clearTimeout(scrollTimeout.current);
-      }
-      if (floatExitTimeout.current) {
-        clearTimeout(floatExitTimeout.current);
-      }
-    };
-  }, [handleScroll, handleMouseMove]);
-
-  // Map hovered card to mascot look direction
-  const getMascotLookDirection = () => {
-    // When floating, use mouse tracking
-    if (mascotIsFloating) {
-      return mouseLookDirection;
-    }
-    // When in hero, use card hover tracking
-    switch (hoveredCard) {
-      case 'login':
-        return 'right';
-      case 'signup':
-        return 'right';
-      case 'upload':
-        return 'down-center';
-      case 'nclex':
-        return 'down-left';
-      case 'tutor':
-        return 'down-center';
-      case 'challenge':
-        return 'down-right';
-      default:
-        return 'center';
-    }
-  };
 
   // Handle card press for haptic-like feedback
   const handleCardPress = (cardId) => {
@@ -366,25 +205,13 @@ const QuizRoomLanding = () => {
     setPressedCard(null);
   };
 
-  // Handle card hover for mascot eye tracking and excitement
+  // Handle card hover
   const handleCardHover = (cardId) => {
     setHoveredCard(cardId);
-    // Set mascot excited when hovering over any CTA buttons (including login/signup)
-    const ctaCards = ['upload', 'nclex', 'tutor', 'challenge', 'login', 'signup', 'startLearning', 'joinCommunity'];
-    setMascotIsExcited(ctaCards.includes(cardId));
   };
 
   const handleCardHoverEnd = () => {
     setHoveredCard(null);
-    setMascotIsExcited(false);
-  };
-
-  // Trigger mascot fly away animation
-  const triggerMascotSpin = () => {
-    if (!isSpinning) {
-      setIsSpinning(true);
-      setTimeout(() => setIsSpinning(false), 500); // Match animation duration
-    }
   };
 
   // Trigger anime-style page exit animation
@@ -393,7 +220,6 @@ const QuizRoomLanding = () => {
 
     setIsExiting(true);
     setShowFlash(true);
-    triggerMascotSpin();
 
     // Haptic feedback for mobile
     if (navigator.vibrate) {
@@ -699,11 +525,6 @@ const QuizRoomLanding = () => {
               </svg>
             </button>
 
-            {/* Mascot */}
-            <div className="login-prompt-mascot">
-              <NurseQuizMascot size={100} isExcited={true} />
-            </div>
-
             {/* Content */}
             <h2 className="login-prompt-title">{t('landing.loginPromptTitle', 'Almost there!')}</h2>
             <p className="login-prompt-message">
@@ -882,6 +703,7 @@ const QuizRoomLanding = () => {
         {/* Top navigation bar */}
         <nav className="landing-nav">
         <div className="landing-brand">
+          <HeartLogo className="brand-logo" />
           <span className="brand-name">NurseQuizAI</span>
         </div>
         <div className="landing-auth-header">
@@ -938,22 +760,6 @@ const QuizRoomLanding = () => {
 
       <div className="quiz-landing-wrapper">
         <div className="quiz-landing-content">
-          {/* Mascot - follows scroll with anime-style flying */}
-          <div
-            ref={mascotRef}
-            className={`landing-mascot ${isSpinning ? 'spinning' : ''} ${mascotIsFloating ? 'floating' : ''} ${mascotIsExitingFloat ? 'exiting-float' : ''} ${mascotIsReturning ? 'returning' : ''} ${mascotIsFlying ? 'flying' : 'idle'} fly-${flyDirection}`}
-          >
-            <NurseQuizMascot size={65} lookDirection={getMascotLookDirection()} isExcited={mascotIsExcited} isSurprised={mascotIsSurprised} />
-            {/* Motion trails for anime effect */}
-            {mascotIsFlying && mascotIsFloating && (
-              <div className="mascot-motion-trails">
-                <span className="trail"></span>
-                <span className="trail"></span>
-                <span className="trail"></span>
-              </div>
-            )}
-          </div>
-
           {/* Hero Section - Copy + CTA side by side */}
           <div className="hero-split">
             {/* Left side - Copy */}
@@ -961,21 +767,21 @@ const QuizRoomLanding = () => {
               <p className="landing-slogan">
                 {t('landing.sloganLine1', 'Too much to study. Not enough time.')}
                 <br />
-                <span className="slogan-highlight">
-                  {t('landing.sloganLine2Prefix', 'We fix that — by turning your notes into ')}
+                <span className="slogan-highlight-wrapper">
+                  <span className="slogan-highlight">{t('landing.sloganLine2Prefix', 'We fix that — by turning your notes into ')}</span>
                   <TypewriterText
                     words={[
-                      t('landing.typewriter.quiz', 'quizzes'),
-                      t('landing.typewriter.flashcards', 'flashcards'),
-                      t('landing.typewriter.audio', 'audio'),
-                      t('landing.typewriter.studysheet', 'study sheets'),
-                      t('landing.typewriter.success', 'success')
+                      t('landing.typewriter.quiz', 'quizzes.'),
+                      t('landing.typewriter.flashcards', 'flashcards.'),
+                      t('landing.typewriter.mindmaps', 'concept maps.'),
+                      t('landing.typewriter.audio', 'audio.'),
+                      t('landing.typewriter.studysheet', 'study sheets.'),
+                      t('landing.typewriter.success', 'success.')
                     ]}
                     typingSpeed={100}
                     erasingSpeed={50}
                     pauseDuration={1600}
                   />
-                  {t('landing.sloganLine2Suffix', '.')}
                 </span>
               </p>
               <h2 className="landing-subtitle">
@@ -1037,6 +843,30 @@ const QuizRoomLanding = () => {
                     </svg>
                   </div>
                   <span className="feature-label">{t('landing.featureFlashcards', 'Flashcards')}</span>
+                </div>
+              </div>
+
+              <div className="feature-output-card mindmap-card">
+                <div className="feature-card-inner">
+                  <div className="feature-icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      {/* Left node (root) */}
+                      <rect x="2" y="9" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                      {/* Top right node */}
+                      <rect x="18" y="2" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                      {/* Bottom right node */}
+                      <rect x="18" y="16" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+                      {/* Horizontal line from left node */}
+                      <path d="M6 12H12" stroke="currentColor" strokeWidth="1.5"/>
+                      {/* Vertical line */}
+                      <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5"/>
+                      {/* Top horizontal to right node */}
+                      <path d="M12 5H18" stroke="currentColor" strokeWidth="1.5"/>
+                      {/* Bottom horizontal to right node */}
+                      <path d="M12 19H18" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  </div>
+                  <span className="feature-label">{t('landing.featureMindMap', 'Concept Maps')}</span>
                 </div>
               </div>
 
