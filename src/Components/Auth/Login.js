@@ -161,6 +161,13 @@ const Login = () => {
       {/* Only redirect to home if logged in AND no returnTo specified */}
       {isUserLoggedIn && !returnTo && <Navigate to="/c" replace = {true} />}
 
+      {/* Scattered doodle decorations for organic feel */}
+      <div className="doodle-elements" aria-hidden="true">
+        <span className="star-doodle star-doodle-1">✦</span>
+        <span className="star-doodle star-doodle-2">✧</span>
+        <span className="star-doodle star-doodle-3">✦</span>
+      </div>
+
       {/* Theme toggle in corner */}
       <div className="auth-theme-toggle">
         <ThemeToggle />

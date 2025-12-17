@@ -480,7 +480,15 @@ const resources = {
         featureStudySheet: "Study Sheet",
         // Hero section
         sloganLine1: "Too much to study. Not enough time.",
-        sloganLine2: "We fix that — by turning your notes into instant practice quizzes.",
+        sloganLine2Prefix: "We fix that — by turning your notes into ",
+        sloganLine2Suffix: ".",
+        typewriter: {
+          quiz: "quizzes",
+          flashcards: "flashcards",
+          audio: "audio",
+          studysheet: "study sheets",
+          success: "success 🏆"
+        },
         subtitle: "Spend less time studying, more time understanding.",
         // Auth buttons
         login: "Log in",
@@ -1157,7 +1165,15 @@ const resources = {
         featureStudySheet: "Fiche d'étude",
         // Hero section
         sloganLine1: "Trop de matière à étudier. Pas assez de temps.",
-        sloganLine2: "On règle ça — en transformant tes notes en quiz instantanés.",
+        sloganLine2Prefix: "On règle ça — en transformant tes notes en ",
+        sloganLine2Suffix: ".",
+        typewriter: {
+          quiz: "quiz",
+          flashcards: "flashcards",
+          audio: "audio",
+          studysheet: "fiches d'étude",
+          success: "succès 🏆"
+        },
         subtitle: "Étudie moins longtemps, comprends mieux.",
         // Auth buttons
         login: "Connexion",

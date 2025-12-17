@@ -1,7 +1,7 @@
 /* ============================================
    COLLAPSED SIDEBAR RAIL
    Slim icon bar when sidebar is collapsed
-   Similar to Gemini/Claude/ChatGPT style
+   Warm, feminine notebook style
    ============================================ */
 
 .collapsed-sidebar-rail {
@@ -10,57 +10,60 @@
   left: 0;
   width: 60px;
   height: 100vh;
-  background: #ffffff;
-  border-right: 1px solid #e8e8e8;
+  background: linear-gradient(180deg, var(--bg-paper, #fffef9) 0%, var(--bg-cream, #fdf8f3) 100%);
+  border-right: 1px dashed rgba(232, 141, 125, 0.2);
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 16px 0;
   z-index: 999;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  box-shadow: 2px 0 12px rgba(100, 80, 60, 0.06);
 }
 
-/* Dark mode */
+/* Dark mode - Claude-like neutral dark */
 .collapsed-sidebar-rail.dark {
-  background: #1a1a1e;
-  border-right-color: #2d2d32;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  background: var(--dark-bg-secondary, #2f2f2f);
+  border-right: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  box-shadow: none;
 }
 
 /* Icon buttons */
 .rail-icon-button {
   width: 44px;
   height: 44px;
-  border-radius: 12px;
-  border: none;
+  border-radius: 8px 12px 10px 8px;
+  border: 1.5px solid transparent;
   background: transparent;
-  color: #5f6368;
+  color: #6b5c52;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
+  transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   margin-bottom: 8px;
 }
 
 .rail-icon-button:hover {
-  background: rgba(173, 125, 195, 0.1);
-  color: var(--primary-purple, #ad7dc3);
+  background: rgba(232, 141, 125, 0.12);
+  color: var(--primary-coral, #e88d7d);
+  border-color: rgba(232, 141, 125, 0.15);
+  transform: scale(1.05) rotate(-1deg);
 }
 
 .rail-icon-button:active {
   transform: scale(0.95);
 }
 
-/* Dark mode icon buttons */
+/* Dark mode icon buttons - Claude-like */
 .collapsed-sidebar-rail.dark .rail-icon-button {
-  color: #a0a0a5;
+  color: #a0a0a0;
 }
 
 .collapsed-sidebar-rail.dark .rail-icon-button:hover {
-  background: rgba(173, 125, 195, 0.15);
-  color: var(--primary-purple-light, #d2bde7);
+  background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+  color: var(--dark-accent-light, #d4c8e8);
+  border-color: transparent;
 }
 
 /* Menu button - slightly larger visual emphasis */
@@ -68,24 +71,30 @@
   margin-bottom: 16px;
 }
 
-/* New chat button - accent style */
+/* New chat button - clean lavender style */
 .rail-icon-button.new-chat-button {
-  background: rgba(173, 125, 195, 0.12);
-  color: var(--primary-purple, #ad7dc3);
+  background: #e8dff5;
+  color: #2d2d2d;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: none;
 }
 
 .rail-icon-button.new-chat-button:hover {
-  background: rgba(173, 125, 195, 0.2);
-  color: var(--primary-purple-dark, #663a82);
+  background: #ddd0f0;
+  color: #2d2d2d;
+  transform: scale(1.05);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .collapsed-sidebar-rail.dark .rail-icon-button.new-chat-button {
-  background: rgba(173, 125, 195, 0.2);
-  color: var(--primary-purple-light, #d2bde7);
+  background: rgba(200, 180, 220, 0.2);
+  color: #e5e5e5;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: none;
 }
 
 .collapsed-sidebar-rail.dark .rail-icon-button.new-chat-button:hover {
-  background: rgba(173, 125, 195, 0.3);
+  background: rgba(200, 180, 220, 0.3);
 }
 
 /* Spacer to push items to bottom */
@@ -111,20 +120,24 @@
   left: calc(100% + 8px);
   top: 50%;
   transform: translateY(-50%);
-  background: #333;
+  background: linear-gradient(135deg, #3d3a38 0%, #2d2b29 100%);
   color: white;
-  padding: 6px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 6px 10px 8px 6px;
   font-size: 12px;
+  font-family: var(--font-handwritten, 'Kalam', cursive);
   white-space: nowrap;
   z-index: 1000;
   pointer-events: none;
   opacity: 0;
+  border: 1px solid rgba(232, 141, 125, 0.2);
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.15);
   animation: tooltipFadeIn 0.2s ease 0.3s forwards;
 }
 
 .collapsed-sidebar-rail.dark .rail-icon-button[data-tooltip]:hover::after {
-  background: #4a4a4f;
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
 }
 
 @keyframes tooltipFadeIn {

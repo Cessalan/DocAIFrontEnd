@@ -11,6 +11,61 @@ import './DedicatedQuizPage.css';
 // Firebase imports
 import { handleSignOut, handleSignInWithGoogleAccount } from '../../Firebase/auth';
 
+// Typewriter animation component - cycles through words with smooth typing/erasing effect
+const TypewriterText = ({ words = ['quiz', 'flashcards', 'audio', 'study sheet', 'success'], typingSpeed = 120, erasingSpeed = 60, pauseDuration = 2000 }) => {
+  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [displayedText, setDisplayedText] = useState('');
+  const [isTyping, setIsTyping] = useState(true);
+  const [isPaused, setIsPaused] = useState(false);
+
+  useEffect(() => {
+    const currentWord = words[currentWordIndex];
+    let timeout;
+
+    // Add slight randomness to typing speed for more natural feel
+    const getTypingDelay = () => typingSpeed + Math.random() * 40 - 20;
+    const getErasingDelay = () => erasingSpeed + Math.random() * 20 - 10;
+
+    if (isPaused) {
+      // Pause before erasing
+      timeout = setTimeout(() => {
+        setIsPaused(false);
+        setIsTyping(false);
+      }, pauseDuration);
+    } else if (isTyping) {
+      // Typing phase
+      if (displayedText.length < currentWord.length) {
+        timeout = setTimeout(() => {
+          setDisplayedText(currentWord.slice(0, displayedText.length + 1));
+        }, getTypingDelay());
+      } else {
+        // Word fully typed, pause before erasing
+        setIsPaused(true);
+      }
+    } else {
+      // Erasing phase
+      if (displayedText.length > 0) {
+        timeout = setTimeout(() => {
+          setDisplayedText(displayedText.slice(0, -1));
+        }, getErasingDelay());
+      } else {
+        // Word fully erased, move to next word
+        setCurrentWordIndex((prev) => (prev + 1) % words.length);
+        setIsTyping(true);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [displayedText, isTyping, isPaused, currentWordIndex, words, typingSpeed, erasingSpeed, pauseDuration]);
+
+  return (
+    <span className="typewriter-container">
+      <span className="typewriter-text">{displayedText}</span>
+      <span className="typewriter-cursor"></span>
+    </span>
+  );
+};
+
 // Animated counter component
 const AnimatedCounter = ({ target, duration = 2000, suffix = '%', onComplete }) => {
   const [count, setCount] = useState(0);
@@ -614,6 +669,14 @@ const QuizRoomLanding = () => {
 
   return (
     <div className={`quiz-landing-page ${isExiting ? 'exiting' : ''}`}>
+      {/* Scattered doodle decorations for organic feel */}
+      <div className="doodle-elements" aria-hidden="true">
+        <span className="star-doodle star-doodle-1">✦</span>
+        <span className="star-doodle star-doodle-2">✧</span>
+        <span className="star-doodle star-doodle-3">✦</span>
+        <div className="coffee-ring"></div>
+      </div>
+
       {/* Hidden file input for direct upload - supports multiple files */}
       <input
         ref={fileInputRef}
@@ -880,7 +943,7 @@ const QuizRoomLanding = () => {
             ref={mascotRef}
             className={`landing-mascot ${isSpinning ? 'spinning' : ''} ${mascotIsFloating ? 'floating' : ''} ${mascotIsExitingFloat ? 'exiting-float' : ''} ${mascotIsReturning ? 'returning' : ''} ${mascotIsFlying ? 'flying' : 'idle'} fly-${flyDirection}`}
           >
-            <NurseQuizMascot size={120} lookDirection={getMascotLookDirection()} isExcited={mascotIsExcited} isSurprised={mascotIsSurprised} />
+            <NurseQuizMascot size={65} lookDirection={getMascotLookDirection()} isExcited={mascotIsExcited} isSurprised={mascotIsSurprised} />
             {/* Motion trails for anime effect */}
             {mascotIsFlying && mascotIsFloating && (
               <div className="mascot-motion-trails">
@@ -898,7 +961,22 @@ const QuizRoomLanding = () => {
               <p className="landing-slogan">
                 {t('landing.sloganLine1', 'Too much to study. Not enough time.')}
                 <br />
-                <span className="slogan-highlight">{t('landing.sloganLine2', 'We fix that — by turning your notes into instant practice quizzes.')}</span>
+                <span className="slogan-highlight">
+                  {t('landing.sloganLine2Prefix', 'We fix that — by turning your notes into ')}
+                  <TypewriterText
+                    words={[
+                      t('landing.typewriter.quiz', 'quizzes'),
+                      t('landing.typewriter.flashcards', 'flashcards'),
+                      t('landing.typewriter.audio', 'audio'),
+                      t('landing.typewriter.studysheet', 'study sheets'),
+                      t('landing.typewriter.success', 'success')
+                    ]}
+                    typingSpeed={100}
+                    erasingSpeed={50}
+                    pauseDuration={1600}
+                  />
+                  {t('landing.sloganLine2Suffix', '.')}
+                </span>
               </p>
               <h2 className="landing-subtitle">
                 {t('landing.subtitle', 'Spend less time studying, more time understanding.')}

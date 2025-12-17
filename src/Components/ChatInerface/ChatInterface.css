@@ -1,32 +1,58 @@
 /* ============================================
-   GLASSMORPHIC CHAT INTERFACE
-   White glass with purple accents (matches sidebar)
+   WARM NOTEBOOK CHAT INTERFACE
+   Clean, minimalist design with warm accents
    ============================================ */
 
 :root {
-  --primary-purple: #ad7dc3;
-  --primary-purple-hover: #9b6fb0;
-  --primary-purple-dark: #663a82;
-  --primary-purple-light: #d2bde7;
+  /* Warm coral palette - matching landing page */
+  --primary-coral: #e88d7d;
+  --primary-coral-hover: #d67a6a;
+  --primary-coral-dark: #c46a5a;
+  --primary-coral-light: #f4a896;
+  --primary-peach: #f8c8c4;
 
-  /* White glass backgrounds */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-bg-strong: rgba(255, 255, 255, 0.85);
-  --glass-border: rgba(173, 125, 195, 0.18);
+  /* Claude-like dark mode accent colors - soft lavender */
+  --dark-accent: #b8a5d4;
+  --dark-accent-hover: #a894c9;
+  --dark-accent-light: #d4c8e8;
+  --dark-accent-muted: rgba(200, 180, 220, 0.15);
 
-  --bg-white: #ffffff;
-  --bg-light: #f8f9fa;
-  --border-light: #e8e8e8;
-  --border-purple: rgba(173, 125, 195, 0.2);
+  /* Claude-like dark backgrounds */
+  --dark-bg-primary: #1a1a1a;
+  --dark-bg-secondary: #2f2f2f;
+  --dark-bg-tertiary: #3d3d3d;
+  --dark-bg-elevated: #262626;
+  --dark-border: rgba(255, 255, 255, 0.08);
+  --dark-border-accent: rgba(200, 180, 220, 0.25);
 
-  --text-primary: #1f1f1f;
-  --text-secondary: #5f6368;
+  /* Keep purple as alias for backwards compatibility */
+  --primary-purple: #e88d7d;
+  --primary-purple-hover: #d67a6a;
+  --primary-purple-dark: #c46a5a;
+  --primary-purple-light: #f4a896;
+
+  /* Warm paper backgrounds */
+  --glass-bg: rgba(255, 254, 249, 0.85);
+  --glass-bg-strong: rgba(255, 254, 249, 0.95);
+  --glass-border: rgba(232, 141, 125, 0.15);
+
+  --bg-white: #fffef9;
+  --bg-light: #fdf8f3;
+  --bg-cream: #fff5eb;
+  --border-light: rgba(100, 100, 100, 0.1);
+  --border-purple: rgba(232, 141, 125, 0.2);
+
+  /* Text colors - warm tones */
+  --text-primary: #3d3d3d;
+  --text-secondary: #6b6b6b;
+  --text-muted: #999999;
   --text-white: #ffffff;
 
   --spacing-lg: 16px;
   --spacing-xl: 20px;
   --spacing-2xl: 24px;
 
+  /* Organic border-radius */
   --radius-md: 12px;
   --radius-lg: 16px;
   --radius-xl: 20px;
@@ -40,27 +66,27 @@
 
   --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-wobbly: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
-  --shadow-sm: 0 2px 8px rgba(155, 111, 176, 0.08);
-  --shadow-md: 0 4px 16px rgba(155, 111, 176, 0.12);
-  --shadow-lg: 0 8px 32px rgba(155, 111, 176, 0.16);
+  /* Warm shadows */
+  --shadow-sm: 0 2px 8px rgba(100, 80, 60, 0.06);
+  --shadow-md: 0 4px 16px rgba(100, 80, 60, 0.08);
+  --shadow-lg: 0 8px 32px rgba(100, 80, 60, 0.1);
 
   --gradient-mesh:
-    radial-gradient(at 0% 0%, rgba(173, 125, 195, 0.15) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(217, 184, 244, 0.1) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(248, 200, 196, 0.12) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(255, 243, 205, 0.1) 0px, transparent 50%);
 }
 
 /* ============================================
-   CHAT CONTAINER - WHITE GLASS
+   CHAT CONTAINER - WARM PAPER
    ============================================ */
 .chat-container {
   width: 100%;
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: var(--glass-bg);
-  backdrop-filter: var(--blur-sm);
-  -webkit-backdrop-filter: var(--blur-sm);
+  background: linear-gradient(180deg, var(--bg-white) 0%, var(--bg-light) 100%);
   margin: 0;
   border-radius: 0;
   overflow: hidden;
@@ -103,23 +129,22 @@
   overflow: hidden;
 }
 
-/* Individual Nursing Icons */
+/* Individual Nursing Icons - warm coral tones */
 .nursing-icon {
   position: absolute;
   font-size: 24px;
-  opacity: 0.18;
+  opacity: 0.12;
   pointer-events: none;
   animation: floatNurse 20s infinite ease-in-out;
-  filter: blur(0.3px) drop-shadow(0 2px 4px rgba(173, 125, 195, 0.15));
+  filter: blur(0.3px) drop-shadow(0 2px 4px rgba(232, 141, 125, 0.1));
   transition: all 0.3s ease;
   z-index: 0;
+  color: var(--primary-coral);
 }
 
-/* Dark mode - glowy effect */
+/* Dark mode - hide nursing icons completely */
 body.dark-mode .nursing-icon {
-  opacity: 0.16;
-  filter: blur(0.6px) drop-shadow(0 0 8px rgba(167, 139, 250, 0.4)) drop-shadow(0 0 14px rgba(167, 139, 250, 0.25));
-  text-shadow: 0 0 10px rgba(167, 139, 250, 0.5), 0 0 18px rgba(167, 139, 250, 0.3);
+  display: none;
 }
 
 /* Stagger animations for each icon - LEFT SIDE ONLY */
@@ -294,24 +319,24 @@ body.dark-mode .nursing-icon {
   .streaming-logo-svg {
     width: 44px;
     height: 44px;
-    filter: drop-shadow(0 2px 10px rgba(157, 126, 219, 0.5));
+    filter: drop-shadow(0 2px 10px rgba(232, 141, 125, 0.4));
     animation: geminiPulse 1.8s ease-in-out infinite;
     overflow: visible;
   }
 
-  /* Gemini-style gradient animation - fast color morphing */
+  /* Gemini-style gradient animation - warm color morphing */
   .streaming-logo-svg .gradient-stop-1 {
-    stop-color: #b794f6;
+    stop-color: #f4a896;
     animation: colorShift1 1.8s ease-in-out infinite;
   }
 
   .streaming-logo-svg .gradient-stop-2 {
-    stop-color: #9d7edb;
+    stop-color: #e88d7d;
     animation: colorShift2 1.8s ease-in-out infinite;
   }
 
   .streaming-logo-svg .gradient-stop-3 {
-    stop-color: #7c5cbf;
+    stop-color: #d67a6a;
     animation: colorShift3 1.8s ease-in-out infinite;
   }
 
@@ -333,69 +358,69 @@ body.dark-mode .nursing-icon {
     transform-box: fill-box;
   }
 
-  /* Gemini-style pulse - smooth scale and glow */
+  /* Gemini-style pulse - smooth scale and warm glow */
   @keyframes geminiPulse {
 
     0%,
     100% {
       transform: scale(1);
-      filter: drop-shadow(0 2px 8px rgba(157, 126, 219, 0.4));
+      filter: drop-shadow(0 2px 8px rgba(232, 141, 125, 0.35));
     }
 
     50% {
       transform: scale(1.05);
-      filter: drop-shadow(0 4px 16px rgba(157, 126, 219, 0.6));
+      filter: drop-shadow(0 4px 16px rgba(232, 141, 125, 0.5));
     }
   }
 
-  /* Color morphing - gradient stop 1 */
+  /* Color morphing - warm gradient stop 1 */
   @keyframes colorShift1 {
 
     0%,
     100% {
-      stop-color: #b794f6;
+      stop-color: #f4a896;
     }
 
     33% {
-      stop-color: #9d7edb;
+      stop-color: #e88d7d;
     }
 
     66% {
-      stop-color: #c4b0f3;
+      stop-color: #f8c8c4;
     }
   }
 
-  /* Color morphing - gradient stop 2 */
+  /* Color morphing - warm gradient stop 2 */
   @keyframes colorShift2 {
 
     0%,
     100% {
-      stop-color: #9d7edb;
+      stop-color: #e88d7d;
     }
 
     33% {
-      stop-color: #7c5cbf;
+      stop-color: #d67a6a;
     }
 
     66% {
-      stop-color: #b794f6;
+      stop-color: #f4a896;
     }
   }
 
-  /* Color morphing - gradient stop 3 */
+  /* Color morphing - warm gradient stop 3 */
   @keyframes colorShift3 {
 
     0%,
     100% {
-      stop-color: #7c5cbf;
+      stop-color: #d67a6a;
     }
 
     33% {
-      stop-color: #b794f6;
+      stop-color: #f4a896;
     }
 
     66% {
-      stop-color: #9d7edb;
+      stop-color: #e88d7d;
     }
   }
 
@@ -463,7 +488,7 @@ body.dark-mode .nursing-icon {
     width: 28px;
     height: 28px;
     overflow: visible;
-    filter: drop-shadow(0 1px 4px rgba(157, 126, 219, 0.3));
+    filter: drop-shadow(0 1px 4px rgba(232, 141, 125, 0.3));
   }
 
   /* Static logo image sizing (fallback) */
@@ -485,13 +510,12 @@ body.dark-mode .nursing-icon {
   }
 
   .messages-container::-webkit-scrollbar-thumb {
-    background: rgba(173, 125, 195, 0.3);
+    background: rgba(232, 141, 125, 0.25);
     border-radius: 3px;
-    backdrop-filter: var(--blur-sm);
   }
 
   .messages-container::-webkit-scrollbar-thumb:hover {
-    background: rgba(173, 125, 195, 0.5);
+    background: rgba(232, 141, 125, 0.4);
   }
 
   /* ============================================
@@ -505,16 +529,14 @@ body.dark-mode .nursing-icon {
     width: 48px;
     height: 48px;
     border-radius: var(--radius-full);
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--blur-lg);
-    -webkit-backdrop-filter: var(--blur-lg);
-    border: 1px solid rgba(173, 125, 195, 0.3);
-    box-shadow: var(--shadow-lg);
+    background: var(--bg-white);
+    border: 1.5px solid var(--border-light);
+    box-shadow: var(--shadow-md);
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: var(--primary-purple);
+    color: var(--primary-coral);
     transition: all var(--transition-normal);
     z-index: 150;
     animation: fadeInUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
@@ -523,11 +545,11 @@ body.dark-mode .nursing-icon {
 
   .scroll-to-bottom-btn:hover {
     transform: translateY(-4px) scale(1.05);
-    background: rgba(173, 125, 195, 0.2);
-    border-color: var(--primary-purple);
+    background: rgba(232, 141, 125, 0.08);
+    border-color: var(--primary-coral);
     box-shadow:
       var(--shadow-lg),
-      0 0 20px rgba(173, 125, 195, 0.3);
+      0 0 16px rgba(232, 141, 125, 0.2);
   }
 
   .scroll-to-bottom-btn:active {
@@ -574,7 +596,7 @@ body.dark-mode .nursing-icon {
   }
 
   /* ============================================
-   NUSE LOADER TO REPLACE SKELETON
+   NURSE LOADER - WARM STYLE
    ============================================ */
   .nurse-loader {
     display: flex;
@@ -589,10 +611,9 @@ body.dark-mode .nursing-icon {
     width: 70px;
     height: 70px;
     background: radial-gradient(circle,
-        rgba(183, 132, 221, 0.35),
-        rgba(183, 132, 221, 0.08));
+        rgba(232, 141, 125, 0.25),
+        rgba(232, 141, 125, 0.06));
     border-radius: 50%;
-    backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -602,16 +623,16 @@ body.dark-mode .nursing-icon {
   .loader-icon {
     width: 34px;
     height: 34px;
-    color: #b784dd;
+    color: var(--primary-coral);
     opacity: 0.9;
   }
 
-  /* SPARKLES */
+  /* SPARKLES - warm colors */
   .sparkle {
     position: absolute;
     width: 8px;
     height: 8px;
-    background: radial-gradient(circle, #d9b7ff 0%, #b784dd00 70%);
+    background: radial-gradient(circle, #f8c8c4 0%, rgba(232, 141, 125, 0) 70%);
     border-radius: 50%;
     opacity: 0;
     animation: sparkleFloat 2.4s infinite ease-in-out;
@@ -668,13 +689,13 @@ body.dark-mode .nursing-icon {
 
   .loader-text {
     font-size: 14px;
-    color: #c9b3df;
-    opacity: 0.9;
+    color: var(--primary-coral);
+    opacity: 0.8;
     letter-spacing: 0.2px;
   }
 
   /* ============================================
-   LOADING SKELETON
+   LOADING SKELETON - WARM STYLE
    ============================================ */
   .chat-loading-overlay {
     position: absolute;
@@ -682,8 +703,7 @@ body.dark-mode .nursing-icon {
     left: 0;
     right: 0;
     bottom: 0;
-    background: var(--glass-bg);
-    backdrop-filter: var(--blur-sm);
+    background: var(--bg-white);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -721,9 +741,9 @@ body.dark-mode .nursing-icon {
     height: 40px;
     border-radius: var(--radius-full);
     background: linear-gradient(90deg,
-        rgba(173, 125, 195, 0.1) 0%,
-        rgba(173, 125, 195, 0.2) 50%,
-        rgba(173, 125, 195, 0.1) 100%);
+        rgba(232, 141, 125, 0.08) 0%,
+        rgba(232, 141, 125, 0.15) 50%,
+        rgba(232, 141, 125, 0.08) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
     flex-shrink: 0;
@@ -736,19 +756,18 @@ body.dark-mode .nursing-icon {
     flex-direction: column;
     gap: 8px;
     padding: var(--spacing-lg);
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--blur-md);
+    background: var(--bg-light);
     border-radius: var(--radius-xl);
-    border: 1px solid rgba(173, 125, 195, 0.15);
+    border: 1px solid var(--border-light);
   }
 
   .skeleton-line {
     height: 12px;
     border-radius: 6px;
     background: linear-gradient(90deg,
-        rgba(173, 125, 195, 0.1) 0%,
-        rgba(173, 125, 195, 0.2) 50%,
-        rgba(173, 125, 195, 0.1) 100%);
+        rgba(232, 141, 125, 0.08) 0%,
+        rgba(232, 141, 125, 0.15) 50%,
+        rgba(232, 141, 125, 0.08) 100%);
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
   }
@@ -1012,23 +1031,15 @@ body.dark-mode .nursing-icon {
     color: rgb(248, 113, 113);
   }
 
-  /* User messages: Subtle bubble for distinction */
+  /* User messages: Clean, minimal bubble */
   .user-message .message-content {
-    background: rgba(173, 125, 195, 0.08);
-    /* More subtle */
-    backdrop-filter: var(--blur-md);
-    border: 1px solid rgba(173, 125, 195, 0.15);
-    /* Softer border */
-    box-shadow: 0 1px 3px rgba(173, 125, 195, 0.1);
-    /* Subtle shadow */
+    background: rgba(232, 141, 125, 0.08);
+    border: 1px solid rgba(232, 141, 125, 0.12);
+    box-shadow: 0 1px 3px rgba(100, 80, 60, 0.06);
     border-radius: 20px;
-    /* More rounded for modern feel */
     padding: 16px 20px;
-    /* Comfortable padding */
     max-width: 85%;
-    /* Don't take full width */
     margin-left: auto;
-    /* Push to right */
   }
 
   .message-text,
@@ -1151,33 +1162,34 @@ body.dark-mode .nursing-icon {
     width: 100%;
   }
 
-  /* Individual action card */
+  /* Individual action card - warm paper style */
   .empty-action-card {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
     padding: 24px 16px;
-    background: rgba(255, 255, 255, 0.8);
-    border: 1.5px solid rgba(173, 125, 195, 0.15);
+    background: var(--bg-white);
+    border: 1.5px solid var(--border-light);
     border-radius: 16px;
     cursor: pointer;
     transition: all 0.25s ease;
     text-align: center;
+    box-shadow: var(--shadow-sm);
   }
 
   .empty-action-card:hover {
-    background: rgba(255, 255, 255, 0.95);
-    border-color: var(--primary-purple);
+    background: #ffffff;
+    border-color: var(--primary-coral);
     transform: translateY(-3px);
-    box-shadow: 0 8px 24px rgba(173, 125, 195, 0.15);
+    box-shadow: var(--shadow-md);
   }
 
   .empty-action-card svg {
     width: 40px;
     height: 40px;
-    fill: var(--primary-purple);
-    filter: drop-shadow(0 2px 4px rgba(155, 111, 176, 0.15));
+    fill: var(--primary-coral);
+    filter: drop-shadow(0 2px 4px rgba(232, 141, 125, 0.15));
   }
 
   .empty-action-icon {
@@ -1232,7 +1244,7 @@ body.dark-mode .nursing-icon {
     align-items: center;
     gap: 6px;
     padding: 6px 12px;
-    background: rgba(139, 92, 246, 0.1);
+    background: rgba(232, 141, 125, 0.1);
     border-radius: 20px;
     margin: 4px 0;
   }
@@ -1277,9 +1289,9 @@ body.dark-mode .nursing-icon {
     50% { opacity: 0.6; }
   }
 
-  /* Dark mode countdown */
+  /* Dark mode countdown - Claude-like */
   body.dark-mode .exam-countdown {
-    background: rgba(139, 92, 246, 0.15);
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
   }
 
   body.dark-mode .exam-countdown.urgent {
@@ -1291,11 +1303,11 @@ body.dark-mode .nursing-icon {
   }
 
   body.dark-mode .countdown-days {
-    color: #a78bfa;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .countdown-time {
-    color: #9ca3af;
+    color: #a0a0a0;
   }
 
   body.dark-mode .exam-countdown.urgent .countdown-text {
@@ -1303,19 +1315,19 @@ body.dark-mode .nursing-icon {
   }
 
   body.dark-mode .exam-upload-card {
-    background: linear-gradient(145deg, rgba(18, 22, 35, 0.9), rgba(22, 30, 48, 0.92));
-    border: 1px solid rgba(145, 125, 245, 0.45);
-    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.55), 0 10px 20px rgba(0, 0, 0, 0.35);
-    backdrop-filter: blur(14px);
-    outline: 1px solid rgba(255, 255, 255, 0.03);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+    box-shadow: none;
+    backdrop-filter: none;
+    outline: none;
   }
 
   body.dark-mode .exam-upload-subtitle {
-    color: #f7f6ff;
+    color: #e5e5e5;
   }
 
   body.dark-mode .exam-upload-hint {
-    color: #cfd3ff;
+    color: #a0a0a0;
   }
 
   .exam-upload-card {
@@ -1352,12 +1364,12 @@ body.dark-mode .nursing-icon {
     align-items: center;
     gap: 12px;
     padding: 14px 20px;
-    background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%);
+    background: linear-gradient(135deg, #f4a896 0%, #e88d7d 100%);
     border: none;
     border-radius: 14px;
     cursor: pointer;
     transition: all 0.2s ease;
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+    box-shadow: 0 4px 12px rgba(232, 141, 125, 0.3);
     width: 100%;
     max-width: 360px;
     justify-content: center;
@@ -1365,7 +1377,7 @@ body.dark-mode .nursing-icon {
 
   .exam-start-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+    box-shadow: 0 6px 20px rgba(232, 141, 125, 0.4);
   }
 
   .exam-start-btn:active {
@@ -1439,28 +1451,28 @@ body.dark-mode .nursing-icon {
     transform: translateY(-4px) scale(1.05);
   }
 
-  /* Dark mode for action cards */
+  /* Dark mode for action cards - Claude-like */
   body.dark-mode .empty-action-card {
-    background: rgba(30, 30, 50, 0.6);
-    border-color: rgba(139, 92, 246, 0.2);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   body.dark-mode .empty-action-card:hover {
-    background: rgba(40, 40, 60, 0.8);
-    border-color: #8b5cf6;
-    box-shadow: 0 8px 24px rgba(139, 92, 246, 0.2);
+    background: var(--dark-bg-tertiary, #3d3d3d);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+    box-shadow: none;
   }
 
   body.dark-mode .empty-action-card svg {
-    fill: #a78bfa;
+    fill: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .empty-action-title {
-    color: #e5e7eb;
+    color: #e5e5e5;
   }
 
   body.dark-mode .empty-action-subtitle {
-    color: #9ca3af;
+    color: #a0a0a0;
   }
 
   /* Mobile: stack cards vertically */
@@ -1492,69 +1504,70 @@ body.dark-mode .nursing-icon {
   }
 
   /* ============================================
-   INPUT AREA - ChatGPT/Claude Premium Style
+   INPUT AREA - Clean, minimal warm style
    ============================================ */
   .input-area {
     display: flex;
     align-items: flex-end;
     max-width: 800px;
-    /* Match message width */
     margin: 0 auto;
-    /* Center horizontally */
     padding: 20px 32px;
-    /* Match message padding */
     gap: 12px;
     background: transparent;
-    /* Remove background - let the wrapper handle it */
-    backdrop-filter: none;
-    -webkit-backdrop-filter: none;
     border: none;
     box-shadow: none;
 
     /* Fixed positioning for sticky input */
     position: fixed;
     bottom: 0;
-    left: 50%;
-    transform: translateX(-50%);
+    left: 0;
+    right: 0;
     width: 100%;
     z-index: 30;
 
-    /* Gradient fade at bottom for seamless look */
+    /* Warm gradient fade at bottom */
     background: linear-gradient(to top,
-        rgba(248, 249, 250, 1) 0%,
-        rgba(248, 249, 250, 0.98) 70%,
-        rgba(248, 249, 250, 0) 100%);
+        var(--bg-light) 0%,
+        rgba(253, 248, 243, 0.98) 70%,
+        rgba(253, 248, 243, 0) 100%);
   }
 
-  /* Input wrapper container - Premium style */
+  /* Adjust input position when sidebar rail is shown (desktop) */
+  .main-content.rail-shifted .input-area {
+    left: 60px;
+    width: calc(100% - 60px);
+  }
+
+  /* Adjust input position when full sidebar is open */
+  .main-content.shifted .input-area {
+    left: 320px;
+    width: calc(100% - 320px);
+  }
+
+  /* Input wrapper container - Clean warm style */
   .input-wrapper-container {
     flex: 1;
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background: #ffffff;
-    /* Solid white background */
-    border: 1.5px solid rgba(0, 0, 0, 0.1);
-    /* Subtle border */
-    border-radius: 26px;
-    /* Softer, more rounded */
+    background: var(--bg-white);
+    border: 1.5px solid var(--border-light);
+    border-radius: 24px;
     padding: 14px 18px;
-    /* Comfortable padding */
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
-    /* Subtle floating shadow */
+    box-shadow: var(--shadow-sm);
     position: relative;
   }
 
-  /* Premium glow effect on focus */
+  /* Subtle warm glow on focus */
   .input-wrapper-container::before {
     content: '';
     position: absolute;
     inset: -2px;
     background: linear-gradient(135deg,
-        rgba(173, 125, 195, 0.15),
-        rgba(217, 184, 244, 0.15),
-        rgba(173, 125, 195, 0.15));
+        rgba(232, 141, 125, 0.1),
+        rgba(248, 200, 196, 0.1),
+        rgba(232, 141, 125, 0.1));
     border-radius: 26px;
     opacity: 0;
     transition: opacity 0.4s ease;
@@ -1571,25 +1584,22 @@ body.dark-mode .nursing-icon {
 
     0%,
     100% {
-      opacity: 0.5;
+      opacity: 0.4;
       transform: scale(0.98);
     }
 
     50% {
-      opacity: 1;
+      opacity: 0.8;
       transform: scale(1.02);
     }
   }
 
   .input-wrapper-container:focus-within {
-    border-color: rgba(173, 125, 195, 0.4);
-    /* Purple accent on focus */
+    border-color: rgba(232, 141, 125, 0.35);
     background: #ffffff;
-    box-shadow: 0 4px 20px rgba(173, 125, 195, 0.12),
-      0 0 0 3px rgba(173, 125, 195, 0.05);
-    /* Layered shadow with subtle ring */
+    box-shadow: var(--shadow-md),
+      0 0 0 3px rgba(232, 141, 125, 0.06);
     transform: translateY(-1px);
-    /* Gentle lift effect */
   }
 
   .message-textarea {
@@ -1614,26 +1624,19 @@ body.dark-mode .nursing-icon {
   }
 
   .message-textarea::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg,
-        rgba(173, 125, 195, 0.25) 0%,
-        rgba(173, 125, 195, 0.35) 100%);
+    background: rgba(232, 141, 125, 0.2);
     border-radius: 10px;
     border: 2px solid transparent;
     background-clip: padding-box;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: all 0.3s ease;
   }
 
   .message-textarea::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg,
-        rgba(173, 125, 195, 0.45) 0%,
-        rgba(173, 125, 195, 0.55) 100%);
-    border: 1px solid transparent;
+    background: rgba(232, 141, 125, 0.35);
   }
 
   .message-textarea::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(180deg,
-        rgba(173, 125, 195, 0.6) 0%,
-        rgba(173, 125, 195, 0.7) 100%);
+    background: rgba(232, 141, 125, 0.45);
   }
 
   .message-textarea::placeholder {
@@ -1774,16 +1777,16 @@ body.dark-mode .nursing-icon {
     transform: scale(1.1);
   }
 
-  /* Send button as icon inside input */
+  /* Send button - clean lavender style */
   .send-button-icon {
-    background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
-    color: white;
-    border: none;
+    background: #e8dff5;
+    color: #2d2d2d;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 10px;
     border-radius: 50%;
     cursor: pointer;
-    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
-    box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
+    transition: all 0.2s ease;
+    box-shadow: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -1793,21 +1796,34 @@ body.dark-mode .nursing-icon {
   }
 
   .send-button-icon:not(:disabled) {
-    transform: scale(1.08);
-    box-shadow: 0 3px 12px rgba(173, 125, 195, 0.35);
+    transform: scale(1.05);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    animation: none;
+  }
+
+  /* Micro animation - subtle pulse when ready to send */
+  @keyframes sendButtonReady {
+    0%, 100% {
+      transform: scale(1.05);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    }
+    50% {
+      transform: scale(1.08);
+      box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
+    }
   }
 
   .send-button-icon:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--primary-purple-hover) 0%, var(--primary-purple-dark) 100%);
-    transform: scale(1.15);
-    box-shadow: 0 4px 14px rgba(173, 125, 195, 0.45);
+    background: #ddd0f0;
+    transform: scale(1.1);
+    box-shadow: 0 3px 12px rgba(0, 0, 0, 0.1);
   }
 
   .send-button-icon:disabled {
     opacity: 0.4;
     cursor: not-allowed;
     transform: scale(0.92);
-    box-shadow: 0 1px 4px rgba(173, 125, 195, 0.15);
+    box-shadow: none;
   }
 
   /* Disabled send button icon tilted */
@@ -1834,29 +1850,29 @@ body.dark-mode .nursing-icon {
     /* Straighten up when enabled */
   }
 
-  /* Stop button - appears when streaming */
+  /* Stop button - clean lavender style */
   .stop-button-icon {
-    background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
-    color: white;
-    border: none;
+    background: #e8dff5;
+    color: #2d2d2d;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 10px;
     border-radius: 50%;
     cursor: pointer;
-    transition: all var(--transition-fast);
+    transition: all 0.2s ease;
     display: flex;
     align-items: center;
     justify-content: center;
-    box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
+    box-shadow: none;
     min-width: 40px;
     min-height: 40px;
     flex-shrink: 0;
-    animation: pulse-purple 2s ease-in-out infinite;
+    animation: none;
   }
 
   .stop-button-icon:hover {
-    background: linear-gradient(135deg, var(--primary-purple-hover) 0%, var(--primary-purple-dark) 100%);
+    background: #ddd0f0;
     transform: scale(1.05);
-    box-shadow: 0 4px 12px rgba(173, 125, 195, 0.5);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     animation: none;
   }
 
@@ -1869,38 +1885,38 @@ body.dark-mode .nursing-icon {
     height: 20px;
   }
 
-  /* Pulse animation for stop button */
-  @keyframes pulse-purple {
+  /* Pulse animation for stop button - subtle */
+  @keyframes pulse-coral {
 
     0%,
     100% {
-      box-shadow: 0 2px 8px rgba(173, 125, 195, 0.3);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     50% {
-      box-shadow: 0 2px 16px rgba(173, 125, 195, 0.6);
+      box-shadow: 0 2px 12px rgba(0, 0, 0, 0.12);
     }
   }
 
   /* Old send button - keep for compatibility */
   .send-button {
-    background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-hover) 100%);
-    color: white;
-    border: none;
+    background: #e8dff5;
+    color: #2d2d2d;
+    border: 1px solid rgba(0, 0, 0, 0.08);
     padding: 12px 28px;
     border-radius: var(--radius-pill);
     font-weight: 600;
     font-size: 16px;
     cursor: pointer;
-    transition: all var(--transition-fast);
-    box-shadow: var(--shadow-md);
+    transition: all 0.2s ease;
+    box-shadow: none;
     white-space: nowrap;
   }
 
   .send-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--primary-purple-hover) 0%, var(--primary-purple-dark) 100%);
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-lg);
+    background: #ddd0f0;
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
 
   .send-button:disabled {
@@ -1909,7 +1925,7 @@ body.dark-mode .nursing-icon {
   }
 
   .send-button-busy {
-    background: linear-gradient(135deg, #9ca3af 0%, #6b7280 100%);
+    background: rgba(200, 180, 220, 0.3);
   }
 
   .pulsing-dots {
@@ -1954,17 +1970,16 @@ body.dark-mode .nursing-icon {
     align-items: center;
     gap: 12px;
     padding: 16px 20px;
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--blur-md);
+    background: var(--bg-white);
     border-radius: var(--radius-xl);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: var(--shadow-md);
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow-sm);
   }
 
   .typing-indicator h4 {
     font-size: 14px;
     font-weight: 500;
-    color: var(--primary-purple-dark);
+    color: var(--text-primary);
     display: flex;
     align-items: center;
     gap: 8px;
@@ -1978,7 +1993,7 @@ body.dark-mode .nursing-icon {
   .blinking-dots span {
     width: 6px;
     height: 6px;
-    background: var(--primary-purple);
+    background: var(--primary-coral);
     border-radius: 50%;
     animation: dotPulse 1.4s infinite;
   }
@@ -2010,13 +2025,13 @@ body.dark-mode .nursing-icon {
   }
 
   /* ============================================
-   MODAL - WHITE GLASS
+   MODAL - CLEAN WARM STYLE
    ============================================ */
   .modal-overlay {
     position: fixed;
     inset: 0;
-    background: rgba(45, 45, 45, 0.6);
-    backdrop-filter: var(--blur-lg);
+    background: rgba(60, 50, 45, 0.5);
+    backdrop-filter: var(--blur-sm);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2024,8 +2039,7 @@ body.dark-mode .nursing-icon {
   }
 
   .modal-content {
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--blur-lg);
+    background: var(--bg-white);
     border-radius: var(--radius-2xl);
     width: 90%;
     max-width: 600px;
@@ -2033,7 +2047,7 @@ body.dark-mode .nursing-icon {
     display: flex;
     flex-direction: column;
     box-shadow: var(--shadow-lg);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    border: 1px solid var(--border-light);
     overflow: hidden;
   }
 
@@ -2042,9 +2056,8 @@ body.dark-mode .nursing-icon {
     justify-content: space-between;
     align-items: center;
     padding: 20px;
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--blur-md);
-    border-bottom: 1px solid rgba(173, 125, 195, 0.15);
+    background: var(--bg-white);
+    border-bottom: 1px solid var(--border-light);
     min-height: 60px;
   }
 
@@ -2052,13 +2065,13 @@ body.dark-mode .nursing-icon {
     margin: 0;
     font-size: 20px;
     font-weight: 600;
-    color: var(--primary-purple-dark);
+    color: var(--text-primary);
   }
 
   .close-button {
-    background: rgba(173, 125, 195, 0.1);
+    background: rgba(232, 141, 125, 0.08);
     border: none;
-    color: var(--primary-purple);
+    color: var(--primary-coral);
     font-size: 24px;
     cursor: pointer;
     width: 32px;
@@ -2071,7 +2084,7 @@ body.dark-mode .nursing-icon {
   }
 
   .close-button:hover {
-    background: rgba(173, 125, 195, 0.2);
+    background: rgba(232, 141, 125, 0.15);
     transform: scale(1.1);
   }
 
@@ -2089,9 +2102,8 @@ body.dark-mode .nursing-icon {
   }
 
   .file-item {
-    background: var(--glass-bg-strong);
-    backdrop-filter: var(--blur-md);
-    border: 1px solid rgba(255, 255, 255, 0.3);
+    background: var(--bg-light);
+    border: 1px solid var(--border-light);
     border-radius: var(--radius-xl);
     padding: var(--spacing-xl);
     display: flex;
@@ -2240,8 +2252,8 @@ body.dark-mode .nursing-icon {
   }
 
   body.dark-mode .study-sheet-panel {
-    background: #1a1a2e;
-    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.4);
+    background: var(--dark-bg-primary, #1a1a1a);
+    box-shadow: -4px 0 20px rgba(0, 0, 0, 0.3);
   }
 
   @keyframes slideInFromRight {
@@ -2333,6 +2345,17 @@ body.dark-mode .nursing-icon {
       /* Mobile-friendly padding */
       gap: 8px;
       max-width: 100%;
+      /* Reset to full width on mobile (no sidebar rail) */
+      left: 0;
+      right: 0;
+      width: 100%;
+    }
+
+    /* Override desktop sidebar adjustments on mobile */
+    .main-content.rail-shifted .input-area,
+    .main-content.shifted .input-area {
+      left: 0;
+      width: 100%;
     }
 
     .input-wrapper-container {
@@ -2387,19 +2410,20 @@ body.dark-mode .nursing-icon {
   }
 
   /* ============================================
-   DARK MODE STYLES - PREMIUM EDITION
+   DARK MODE STYLES - CLAUDE-LIKE NEUTRAL
    ============================================ */
   body.dark-mode {
-    background: linear-gradient(135deg, #0f0f12 0%, #1a1a1e 100%);
-    color: #e5e7eb;
+    background: var(--dark-bg-primary, #1a1a1a);
+    color: #e5e5e5;
   }
 
-  /* Chat Container - Dark */
+  /* Chat Container - Dark - matches sidebar */
   body.dark-mode .chat-container {
-    background: linear-gradient(135deg, rgba(25, 25, 30, 1), rgba(30, 30, 35, 1));
+    background: var(--dark-bg-secondary, #2f2f2f);
+    background-image: none;
     border: none;
     box-shadow: none;
-    border-left: 1px solid transparent;
+    border-left: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   /* Messages Container - Dark */
@@ -2410,23 +2434,22 @@ body.dark-mode .nursing-icon {
   /* AI Messages - Dark Mode */
   body.dark-mode .ai-message .message-content {
     background: transparent;
-    color: #e5e7eb;
+    color: #e5e5e5;
   }
 
   body.dark-mode .ai-message .message-text {
     font-size: 16px;
     line-height: 1.8;
-    color: #e5e7eb;
+    color: #e5e5e5;
     font-weight: 400;
   }
 
   /* User Messages - Dark Mode */
   body.dark-mode .user-message .message-content {
-    background: rgba(68, 70, 84, 0.5);
-    /* More subtle dark bubble */
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    color: #e5e7eb;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+    background: var(--dark-bg-tertiary, #3d3d3d);
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+    color: #e5e5e5;
+    box-shadow: none;
   }
 
   /* Message Text - Dark */
@@ -2494,24 +2517,21 @@ body.dark-mode .nursing-icon {
   }
 
   body.dark-mode .input-wrapper-container {
-    background: rgb(52, 53, 65);
-    /* Fully opaque - no transparency */
-    border: 1.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+    box-shadow: none;
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   /* Dark mode glow effect - disabled for cleaner look */
   body.dark-mode .input-wrapper-container::before {
     background: transparent;
-    /* No glow effect */
     filter: none;
     opacity: 0;
   }
 
   body.dark-mode .input-wrapper-container:focus-within::before {
     opacity: 0;
-    /* Keep glow disabled */
     animation: none;
   }
 
@@ -2530,22 +2550,17 @@ body.dark-mode .nursing-icon {
   }
 
   body.dark-mode .input-wrapper-container:focus-within {
-    border-color: rgba(80, 80, 90, 0.4);
-    /* Darker, subtle border */
-    background: rgb(30, 31, 38);
-    /* Much darker background when typing */
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
-    /* Simple dark shadow, no purple glow */
-    transform: translateY(-1px);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+    background: var(--dark-bg-elevated, #262626);
+    box-shadow: none;
+    transform: none;
   }
 
-  /* Even darker when user has typed text */
+  /* When user has typed text */
   body.dark-mode .input-wrapper-container:has(.message-textarea:not(:placeholder-shown)) {
-    background: rgb(25, 26, 33);
-    /* Even darker when text is present */
-    border-color: rgba(80, 80, 90, 0.5);
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
-    /* Deeper shadow, no purple */
+    background: var(--dark-bg-elevated, #262626);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+    box-shadow: none;
   }
 
   body.dark-mode .message-textarea {
@@ -2558,211 +2573,212 @@ body.dark-mode .nursing-icon {
     font-weight: 400;
   }
 
-  /* Dark mode textarea scrollbar - softer purple glow */
+  /* Dark mode textarea scrollbar - Claude-like muted */
   body.dark-mode .message-textarea::-webkit-scrollbar-track {
     background: rgba(255, 255, 255, 0.03);
   }
 
   body.dark-mode .message-textarea::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg,
-        rgba(139, 92, 246, 0.3) 0%,
-        rgba(139, 92, 246, 0.4) 100%);
+    background: var(--dark-bg-tertiary, #3d3d3d);
   }
 
   body.dark-mode .message-textarea::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg,
-        rgba(139, 92, 246, 0.5) 0%,
-        rgba(139, 92, 246, 0.6) 100%);
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
   }
 
   body.dark-mode .message-textarea::-webkit-scrollbar-thumb:active {
-    background: linear-gradient(180deg,
-        rgba(139, 92, 246, 0.7) 0%,
-        rgba(139, 92, 246, 0.8) 100%);
+    background: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .input-wrapper {
-    background: rgba(52, 53, 65, 0.5);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   body.dark-mode .input-wrapper:focus-within {
-    border-color: rgba(255, 255, 255, 0.15);
-    background: rgba(52, 53, 65, 0.7);
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+    background: var(--dark-bg-elevated, #262626);
+    box-shadow: none;
   }
 
   body.dark-mode .input-wrapper textarea {
-    color: #e5e7eb;
+    color: #e5e5e5;
     font-weight: 400;
   }
 
   body.dark-mode .input-wrapper textarea::placeholder {
-    color: rgba(255, 255, 255, 0.4);
+    color: #808080;
     font-weight: 400;
   }
 
-  /* Buttons - Dark */
+  /* Buttons - Dark - muted lavender */
   body.dark-mode .send-button {
-    background: linear-gradient(135deg, #8b5cf6, #6b46c1);
+    background: rgba(200, 180, 220, 0.2);
+    color: #e5e5e5;
+    border-color: rgba(255, 255, 255, 0.1);
   }
 
   body.dark-mode .send-button:hover:not(:disabled) {
-    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+    background: rgba(200, 180, 220, 0.3);
   }
 
   body.dark-mode .send-button-icon {
-    background: linear-gradient(135deg, #8b5cf6, #6b46c1);
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
-    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    background: rgba(200, 180, 220, 0.2);
+    color: #e5e5e5;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
+    transition: all 0.2s ease;
   }
 
   body.dark-mode .send-button-icon:not(:disabled) {
-    background: linear-gradient(135deg, #a78bfa, #8b5cf6);
-    box-shadow: 0 4px 16px rgba(139, 92, 246, 0.5);
-    transform: scale(1.12);
+    background: rgba(200, 180, 220, 0.25);
+    box-shadow: none;
+    transform: scale(1.05);
   }
 
   body.dark-mode .send-button-icon:hover:not(:disabled) {
-    background: linear-gradient(135deg, #7c3aed, #5b21b6);
-    box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
-    transform: scale(1.18);
+    background: rgba(200, 180, 220, 0.35);
+    box-shadow: none;
+    transform: scale(1.1);
   }
 
   body.dark-mode .send-button-icon:disabled {
-    opacity: 0.35;
-    transform: scale(0.9);
-    box-shadow: 0 1px 4px rgba(139, 92, 246, 0.2);
+    opacity: 0.4;
+    transform: scale(1);
+    box-shadow: none;
   }
 
   /* Stop button - Dark mode */
   body.dark-mode .stop-button-icon {
-    background: linear-gradient(135deg, #8b5cf6, #6b46c1);
-    box-shadow: 0 2px 8px rgba(139, 92, 246, 0.4);
+    background: rgba(200, 180, 220, 0.2);
+    color: #e5e5e5;
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: none;
   }
 
   body.dark-mode .stop-button-icon:hover {
-    background: linear-gradient(135deg, #7c3aed, #5b21b6);
-    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.5);
+    background: rgba(200, 180, 220, 0.3);
+    box-shadow: none;
   }
 
   body.dark-mode .upload-button {
-    background: rgba(255, 255, 255, 0.05);
-    border-color: rgba(255, 255, 255, 0.1);
-    color: #a78bfa;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    background: transparent;
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
+    color: var(--dark-accent, #b8a5d4);
+    box-shadow: none;
   }
 
   body.dark-mode .upload-button::before {
-    background: rgba(255, 255, 255, 0.08);
+    background: transparent;
   }
 
   body.dark-mode .upload-button:hover:not(:disabled) {
-    border-color: rgba(255, 255, 255, 0.15);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+    box-shadow: none;
   }
 
   /* Empty State - Dark */
   body.dark-mode .empty-upload-text {
-    color: #a78bfa;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .empty-upload-btn {
-    border-color: #a78bfa;
-    color: #a78bfa;
+    border-color: var(--dark-accent, #b8a5d4);
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .empty-upload-btn:hover {
-    background: rgba(107, 70, 193, 0.2);
-    border-color: #c4b5fd;
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+    border-color: var(--dark-accent-light, #d4c8e8);
   }
 
   /* Scroll Button - Dark */
   body.dark-mode .scroll-to-bottom-btn {
-    background: rgba(45, 45, 50, 0.95);
-    border-color: rgba(107, 70, 193, 0.5);
-    color: #a78bfa;
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .scroll-to-bottom-btn:hover {
-    background: rgba(107, 70, 193, 0.3);
-    border-color: #a78bfa;
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
   }
 
   /* Typing Indicator - Dark */
   body.dark-mode .typing-indicator {
-    background: rgba(45, 45, 50, 0.95);
-    border-color: rgba(107, 70, 193, 0.3);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   body.dark-mode .typing-indicator h4 {
-    color: #a78bfa;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   /* Loading States - Dark */
   body.dark-mode .loader-text {
-    color: #a78bfa;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   /* Modal - Dark */
   body.dark-mode .modal-overlay {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.7);
   }
 
   body.dark-mode .modal-content {
-    background: rgba(30, 30, 30, 0.98);
-    border-color: rgba(107, 70, 193, 0.4);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   body.dark-mode .modal-header {
-    background: rgba(30, 30, 30, 0.95);
-    border-bottom-color: rgba(107, 70, 193, 0.3);
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border-bottom-color: var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   body.dark-mode .modal-header h3 {
-    color: #a78bfa;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .close-button {
-    background: rgba(107, 70, 193, 0.2);
-    color: #a78bfa;
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .close-button:hover {
-    background: rgba(107, 70, 193, 0.3);
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.25));
   }
 
   /* File Items - Dark */
   body.dark-mode .file-item {
-    background: rgba(45, 45, 50, 0.95);
-    border-color: rgba(107, 70, 193, 0.3);
+    background: var(--dark-bg-tertiary, #3d3d3d);
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
   }
 
   body.dark-mode .file-item:hover {
-    border-color: rgba(107, 70, 193, 0.5);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
   }
 
   body.dark-mode .file-name {
-    color: #e5e7eb;
+    color: #e5e5e5;
   }
 
   body.dark-mode .file-meta {
-    color: #9ca3af;
+    color: #808080;
   }
 
   body.dark-mode .file-action-btn {
-    background: rgba(107, 70, 193, 0.2);
-    border-color: rgba(107, 70, 193, 0.3);
-    color: #a78bfa;
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+    border-color: transparent;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   body.dark-mode .file-action-btn:hover {
-    background: rgba(107, 70, 193, 0.3);
+    background: var(--dark-accent-muted, rgba(200, 180, 220, 0.25));
   }
 
   /* Lists - Dark */
   body.dark-mode .message-text ul>li::before {
-    color: #a78bfa;
+    color: var(--dark-accent, #b8a5d4);
   }
 
   /* ============================================
@@ -2775,12 +2791,12 @@ body.dark-mode .nursing-icon {
     justify-content: center;
     gap: 10px;
     padding: 12px 24px;
-    background: rgba(157, 126, 219, 0.06);
+    background: rgba(232, 141, 125, 0.06);
     border-radius: 20px;
     margin-bottom: 16px;
     backdrop-filter: blur(12px);
     animation: slideInFromTop 0.3s ease-out, subtleGlow 2s ease-in-out infinite;
-    border: 1px solid rgba(157, 126, 219, 0.15);
+    border: 1px solid rgba(232, 141, 125, 0.15);
     width: fit-content;
     margin-left: auto;
     margin-right: auto;
@@ -2796,9 +2812,9 @@ body.dark-mode .nursing-icon {
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #b794f6 0%, #9d7edb 100%);
+    background: linear-gradient(135deg, #f4a896 0%, #e88d7d 100%);
     animation: streamingPulse 1.4s ease-in-out infinite;
-    box-shadow: 0 0 8px rgba(157, 126, 219, 0.4);
+    box-shadow: 0 0 8px rgba(232, 141, 125, 0.4);
   }
 
   .streaming-dot:nth-child(1) {
@@ -2816,7 +2832,7 @@ body.dark-mode .nursing-icon {
   .streaming-text {
     font-size: 13px;
     font-weight: 500;
-    color: #9d7edb;
+    color: #e88d7d;
     letter-spacing: 0.5px;
     text-transform: lowercase;
     opacity: 0.9;
@@ -2852,12 +2868,28 @@ body.dark-mode .nursing-icon {
 
     0%,
     100% {
-      box-shadow: 0 0 0 rgba(157, 126, 219, 0);
+      box-shadow: 0 0 0 rgba(232, 141, 125, 0);
     }
 
     50% {
-      box-shadow: 0 0 20px rgba(157, 126, 219, 0.15);
+      box-shadow: 0 0 20px rgba(232, 141, 125, 0.15);
     }
+  }
+
+  /* Dark mode streaming indicator - Claude-like */
+  body.dark-mode .streaming-bar {
+    background: var(--dark-bg-secondary, #2f2f2f);
+    border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
+    animation: slideInFromTop 0.3s ease-out;
+  }
+
+  body.dark-mode .streaming-dot {
+    background: var(--dark-accent, #b8a5d4);
+    box-shadow: none;
+  }
+
+  body.dark-mode .streaming-text {
+    color: var(--dark-accent, #b8a5d4);
   }
 
 /* ============================================
@@ -2914,7 +2946,7 @@ body.dark-mode .nursing-icon {
 }
 
 body.dark-mode .game-empty-title {
-  color: #e5e7eb;
+  color: #e5e5e5;
 }
 
 .game-empty-description {
@@ -2925,7 +2957,7 @@ body.dark-mode .game-empty-title {
 }
 
 body.dark-mode .game-empty-description {
-  color: #9ca3af;
+  color: #a0a0a0;
 }
 
 .game-empty-hint {
@@ -2936,7 +2968,7 @@ body.dark-mode .game-empty-description {
 }
 
 body.dark-mode .game-empty-hint {
-  color: #6b7280;
+  color: #808080;
 }
 
 .game-replay-btn {
@@ -2944,7 +2976,7 @@ body.dark-mode .game-empty-hint {
   align-items: center;
   gap: 8px;
   padding: 12px 24px;
-  background: linear-gradient(135deg, var(--primary-purple) 0%, var(--primary-purple-dark) 100%);
+  background: linear-gradient(135deg, var(--primary-coral) 0%, var(--primary-coral-dark) 100%);
   color: white;
   border: none;
   border-radius: var(--radius-pill);
@@ -2952,12 +2984,12 @@ body.dark-mode .game-empty-hint {
   font-weight: 500;
   cursor: pointer;
   transition: all var(--transition-fast);
-  box-shadow: 0 4px 12px rgba(173, 125, 195, 0.25);
+  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.25);
 }
 
 .game-replay-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(173, 125, 195, 0.35);
+  box-shadow: 0 6px 20px rgba(232, 141, 125, 0.35);
 }
 
 .game-replay-btn:active {
@@ -2965,12 +2997,13 @@ body.dark-mode .game-empty-hint {
 }
 
 body.dark-mode .game-replay-btn {
-  background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);
-  box-shadow: 0 4px 12px rgba(139, 92, 246, 0.3);
+  background: var(--dark-accent, #b8a5d4);
+  box-shadow: none;
 }
 
 body.dark-mode .game-replay-btn:hover {
-  box-shadow: 0 6px 20px rgba(139, 92, 246, 0.4);
+  background: var(--dark-accent-hover, #a894c9);
+  box-shadow: none;
 }
 
 /* ============================================
