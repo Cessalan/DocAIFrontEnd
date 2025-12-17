@@ -1,22 +1,26 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8" />
-    <link rel="icon" href="%PUBLIC_URL%/LogoSimple.png" sizes="256x256"/>
+    <link rel="icon" href="%PUBLIC_URL%/LogoSimple.png" sizes="256x256" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0d0d10" />
 
     <!-- PRIMARY SEO TAGS -->
     <title>NurseQuizAI - #1 AI Nursing Quiz Generator from Notes & PDFs | NCLEX Prep 2025</title>
-    <meta name="description" content="Instantly turn your nursing notes, PDFs, PowerPoints, and lectures into NCLEX-style quizzes, flashcards, and spaced-repetition study plans with AI. Save 20+ hours/week. Best AI nursing study app for NCLEX-RN, NCLEX-PN, and nursing school success." />
-    <meta name="keywords" content="nursing quiz generator, AI nursing quiz from notes, NCLEX quiz generator, convert nursing notes to quiz, AI flashcards nursing, NCLEX prep app 2025, nursing study tool AI, active recall nursing app, spaced repetition nursing" />
+    <meta name="description"
+        content="Instantly turn your nursing notes, PDFs, PowerPoints, and lectures into NCLEX-style quizzes, flashcards, and spaced-repetition study plans with AI. Save 20+ hours/week. Best AI nursing study app for NCLEX-RN, NCLEX-PN, and nursing school success." />
+    <meta name="keywords"
+        content="nursing quiz generator, AI nursing quiz from notes, NCLEX quiz generator, convert nursing notes to quiz, AI flashcards nursing, NCLEX prep app 2025, nursing study tool AI, active recall nursing app, spaced repetition nursing" />
     <link rel="canonical" href="https://nursequizai.com/" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/LogoSimple.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
 
     <!-- OG & Twitter -->
     <meta property="og:title" content="NurseQuizAI - Turn Your Nursing Notes into NCLEX Quizzes in Seconds" />
-    <meta property="og:description" content="The #1 AI tool nursing students use to go from overwhelmed to passing NCLEX on the first try. Free to start." />
+    <meta property="og:description"
+        content="The #1 AI tool nursing students use to go from overwhelmed to passing NCLEX on the first try. Free to start." />
     <meta property="og:image" content="https://nursequizai.com/og-image-main.jpg" />
     <meta property="og:url" content="https://nursequizai.com/" />
     <meta property="og:type" content="website" />
@@ -100,7 +104,9 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Fraunces:opsz,wght@9..144,300..700&display=swap"
+        rel="stylesheet">
 
     <style>
         /* ============================================
@@ -164,20 +170,27 @@
             transform: translateX(-50%);
             width: 800px;
             height: 800px;
-            background: radial-gradient(
-                circle,
-                rgba(139, 92, 246, 0.06) 0%,
-                rgba(139, 92, 246, 0.02) 40%,
-                transparent 70%
-            );
+            background: radial-gradient(circle,
+                    rgba(139, 92, 246, 0.06) 0%,
+                    rgba(139, 92, 246, 0.02) 40%,
+                    transparent 70%);
             pointer-events: none;
             z-index: 0;
             animation: seoAmbientPulse 10s ease-in-out infinite;
         }
 
         @keyframes seoAmbientPulse {
-            0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
-            50% { opacity: 0.8; transform: translateX(-50%) scale(1.15); }
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: translateX(-50%) scale(1);
+            }
+
+            50% {
+                opacity: 0.8;
+                transform: translateX(-50%) scale(1.15);
+            }
         }
 
         /* ============================================
@@ -338,7 +351,7 @@
             color: white;
         }
 
-        .seo-steps li > div:last-child {
+        .seo-steps li>div:last-child {
             flex: 1;
             padding-top: 4px;
         }
@@ -350,7 +363,7 @@
             font-size: 1.125rem;
         }
 
-        .seo-steps li > div:last-child {
+        .seo-steps li>div:last-child {
             color: var(--seo-text-secondary);
             font-size: 0.9375rem;
             line-height: 1.6;
@@ -733,6 +746,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -743,12 +757,29 @@
             animation: seoFadeInUp 0.6s ease-out both;
         }
 
-        .seo-section:nth-child(2) { animation-delay: 0.1s; }
-        .seo-section:nth-child(3) { animation-delay: 0.2s; }
-        .seo-section:nth-child(4) { animation-delay: 0.3s; }
-        .seo-section:nth-child(5) { animation-delay: 0.4s; }
-        .seo-section:nth-child(6) { animation-delay: 0.5s; }
-        .seo-section:nth-child(7) { animation-delay: 0.6s; }
+        .seo-section:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .seo-section:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+
+        .seo-section:nth-child(4) {
+            animation-delay: 0.3s;
+        }
+
+        .seo-section:nth-child(5) {
+            animation-delay: 0.4s;
+        }
+
+        .seo-section:nth-child(6) {
+            animation-delay: 0.5s;
+        }
+
+        .seo-section:nth-child(7) {
+            animation-delay: 0.6s;
+        }
 
         /* ============================================
            LIGHT MODE OVERRIDES
@@ -760,12 +791,10 @@
         }
 
         body:not(.dark-mode) .seo-ambient-glow {
-            background: radial-gradient(
-                circle,
-                rgba(139, 92, 246, 0.08) 0%,
-                rgba(139, 92, 246, 0.03) 40%,
-                transparent 70%
-            );
+            background: radial-gradient(circle,
+                    rgba(139, 92, 246, 0.08) 0%,
+                    rgba(139, 92, 246, 0.03) 40%,
+                    transparent 70%);
         }
 
         body:not(.dark-mode) .seo-h1 {
@@ -816,7 +845,7 @@
             color: #1e293b;
         }
 
-        body:not(.dark-mode) .seo-steps li > div:last-child {
+        body:not(.dark-mode) .seo-steps li>div:last-child {
             color: #475569;
         }
 
@@ -962,9 +991,9 @@
         body:not(.dark-mode) .seo-section::after {
             background: linear-gradient(90deg, transparent, #a78bfa, transparent);
         }
-
     </style>
 </head>
+
 <body>
     <!-- React App Mount Point - PRIMARY: Users see this first -->
     <div id="root"></div>
@@ -979,7 +1008,8 @@
             <section class="seo-section">
                 <h1 class="seo-h1">Turn Your Nursing Notes into NCLEX-Ready Quizzes in Seconds with AI</h1>
                 <p class="seo-p">
-                    <strong>NurseQuizAI</strong> is the AI nursing quiz generator used by nursing students across North America
+                    <strong>NurseQuizAI</strong> is the AI nursing quiz generator used by nursing students across North
+                    America
                     to save study time and pass NCLEX on their first attempt.
                 </p>
                 <p class="seo-p">
@@ -994,240 +1024,256 @@
                 <a href="/start" class="seo-cta">Start Studying Free</a>
             </section>
 
-        <section class="seo-section">
-            <h2 class="seo-h2">How NurseQuizAI Works</h2>
-            <ol class="seo-steps">
-                <li>
-                    <div class="step-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                            <polyline points="17 8 12 3 7 8"/>
-                            <line x1="12" y1="3" x2="12" y2="15"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <strong>Upload Your Materials</strong>
-                        Upload your nursing notes, PDFs, lecture slides, or any study material you have.
-                    </div>
-                </li>
-                <li>
-                    <div class="step-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M12 2a4 4 0 0 1 4 4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2 4 4 0 0 1 4-4z"/>
-                            <path d="M8 8v10c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8"/>
-                            <path d="M9 12h6"/>
-                            <path d="M9 16h6"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <strong>AI Generates Questions</strong>
-                        Our AI analyzes your content and creates NCLEX-style questions, flashcards, and summaries in under 15 seconds.
-                    </div>
-                </li>
-                <li>
-                    <div class="step-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                            <polyline points="22 4 12 14.01 9 11.01"/>
-                        </svg>
-                    </div>
-                    <div>
-                        <strong>Study Smarter, Pass Faster</strong>
-                        Use active recall and spaced repetition to lock in knowledge. Track your progress and focus on weak areas.
-                    </div>
-                </li>
-            </ol>
-        </section>
+            <section class="seo-section">
+                <h2 class="seo-h2">How NurseQuizAI Works</h2>
+                <ol class="seo-steps">
+                    <li>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Upload Your Materials</strong>
+                            Upload your nursing notes, PDFs, lecture slides, or any study material you have.
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a4 4 0 0 1 4 4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2 4 4 0 0 1 4-4z" />
+                                <path d="M8 8v10c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8" />
+                                <path d="M9 12h6" />
+                                <path d="M9 16h6" />
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>AI Generates Questions</strong>
+                            Our AI analyzes your content and creates NCLEX-style questions, flashcards, and summaries in
+                            under 15 seconds.
+                        </div>
+                    </li>
+                    <li>
+                        <div class="step-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                        </div>
+                        <div>
+                            <strong>Study Smarter, Pass Faster</strong>
+                            Use active recall and spaced repetition to lock in knowledge. Track your progress and focus
+                            on weak areas.
+                        </div>
+                    </li>
+                </ol>
+            </section>
 
-        <section class="seo-section">
-            <h2 class="seo-h2">Why Nursing Students Across North America Use NurseQuizAI</h2>
-            <ul class="seo-feature-list">
-                <li>Instant quiz & flashcard generation from any notes or PDFs</li>
-                <li>NCLEX-RN, NCLEX-PN, and Next Gen NCLEX (NCSBN) question styles</li>
-                <li>Full French & English language support</li>
-                <li>AI Nursing Tutor Chat available 24/7 for instant help</li>
-                <li>Spaced-repetition flashcards optimized for nursing content</li>
-                <li>Adaptive study plans & weakness tracking analytics</li>
-                <li>Covers Pharmacology, Patho, Med-Surg, Maternity, Peds, and Psych</li>
-            </ul>
-        </section>
+            <section class="seo-section">
+                <h2 class="seo-h2">Why Nursing Students Across North America Use NurseQuizAI</h2>
+                <ul class="seo-feature-list">
+                    <li>Instant quiz & flashcard generation from any notes or PDFs</li>
+                    <li>NCLEX-RN, NCLEX-PN, and Next Gen NCLEX (NCSBN) question styles</li>
+                    <li>Full French & English language support</li>
+                    <li>AI Nursing Tutor Chat available 24/7 for instant help</li>
+                    <li>Spaced-repetition flashcards optimized for nursing content</li>
+                    <li>Adaptive study plans & weakness tracking analytics</li>
+                    <li>Covers Pharmacology, Patho, Med-Surg, Maternity, Peds, and Psych</li>
+                </ul>
+            </section>
 
-        <section class="seo-section">
-            <h2 class="seo-h2">NurseQuizAI vs Other Tools (2025 Comparison)</h2>
-            <div class="seo-table-wrapper">
-                <table class="seo-table">
-                    <thead>
-                        <tr>
-                            <th>Feature</th>
-                            <th class="featured-col">NurseQuizAI</th>
-                            <th>UWorld</th>
-                            <th>Archer</th>
-                            <th>Quizlet</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>Turn your own notes/PDFs into quizzes</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No (pre-made only)</span></td>
-                            <td><span class="seo-cross">No (pre-made only)</span></td>
-                            <td>Basic (flashcards only)</td>
-                        </tr>
-                        <tr>
-                            <td>Price</td>
-                            <td class="featured-col"><span class="seo-highlight">FREE (limited time)</span></td>
-                            <td class="seo-competitor-price">$139+</td>
-                            <td class="seo-competitor-price">~$89</td>
-                            <td class="seo-competitor-price">Free / Plus</td>
-                        </tr>
-                        <tr>
-                            <td>AI explanations & rationales</td>
-                            <td class="featured-col"><span class="seo-check">Unlimited (from your content)</span></td>
-                            <td>Their questions only</td>
-                            <td>Their questions only</td>
-                            <td><span class="seo-cross">No rationales</span></td>
-                        </tr>
-                        <tr>
-                            <td>Upload files directly (PDFs, notes, slides)</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td>Limited import</td>
-                        </tr>
-                        <tr>
-                            <td>AI-generated quizzes from any document</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                        </tr>
-                        <tr>
-                            <td>Spaced repetition built-in</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td>Manual (user-created)</td>
-                        </tr>
-                        <tr>
-                            <td>Personalized weak-point quizzes</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                        </tr>
-                        <tr>
-                            <td>24/7 AI Tutor Chat</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                        </tr>
-                        <tr>
-                            <td>Progress & performance tracking</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td>Basic stats</td>
-                            <td>Basic stats</td>
-                            <td>Limited</td>
-                        </tr>
-                        <tr>
-                            <td>Gamified learning</td>
-                            <td class="featured-col"><span class="seo-check">Yes</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                            <td><span class="seo-cross">No</span></td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-            <div class="seo-table-result">
-                <p><strong>Key difference:</strong> NurseQuizAI lets you study from YOUR notes - UWorld and Archer only offer pre-made question banks. Why pay more for content you didn't choose?</p>
-            </div>
-        </section>
-
-        <section class="seo-section">
-            <h2 class="seo-h2">Free for a Limited Time</h2>
-            <div class="seo-pricing-cards">
-                <div class="seo-pricing-card featured">
-                    <div class="seo-pricing-name">All Features Included</div>
-                    <div class="seo-pricing-price">FREE</div>
-                    <div class="seo-pricing-desc">Unlimited quizzes, AI tutor chat, advanced analytics, flashcards - everything included at no cost!</div>
+            <section class="seo-section">
+                <h2 class="seo-h2">NurseQuizAI vs Other Tools (2025 Comparison)</h2>
+                <div class="seo-table-wrapper">
+                    <table class="seo-table">
+                        <thead>
+                            <tr>
+                                <th>Feature</th>
+                                <th class="featured-col">NurseQuizAI</th>
+                                <th>UWorld</th>
+                                <th>Archer</th>
+                                <th>Quizlet</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>Turn your own notes/PDFs into quizzes</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No (pre-made only)</span></td>
+                                <td><span class="seo-cross">No (pre-made only)</span></td>
+                                <td>Basic (flashcards only)</td>
+                            </tr>
+                            <tr>
+                                <td>Price</td>
+                                <td class="featured-col"><span class="seo-highlight">FREE (limited time)</span></td>
+                                <td class="seo-competitor-price">$139+</td>
+                                <td class="seo-competitor-price">~$89</td>
+                                <td class="seo-competitor-price">Free / Plus</td>
+                            </tr>
+                            <tr>
+                                <td>AI explanations & rationales</td>
+                                <td class="featured-col"><span class="seo-check">Unlimited (from your content)</span>
+                                </td>
+                                <td>Their questions only</td>
+                                <td>Their questions only</td>
+                                <td><span class="seo-cross">No rationales</span></td>
+                            </tr>
+                            <tr>
+                                <td>Upload files directly (PDFs, notes, slides)</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td>Limited import</td>
+                            </tr>
+                            <tr>
+                                <td>AI-generated quizzes from any document</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                            </tr>
+                            <tr>
+                                <td>Spaced repetition built-in</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td>Manual (user-created)</td>
+                            </tr>
+                            <tr>
+                                <td>Personalized weak-point quizzes</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                            </tr>
+                            <tr>
+                                <td>24/7 AI Tutor Chat</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                            </tr>
+                            <tr>
+                                <td>Progress & performance tracking</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td>Basic stats</td>
+                                <td>Basic stats</td>
+                                <td>Limited</td>
+                            </tr>
+                            <tr>
+                                <td>Gamified learning</td>
+                                <td class="featured-col"><span class="seo-check">Yes</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                                <td><span class="seo-cross">No</span></td>
+                            </tr>
+                        </tbody>
+                    </table>
                 </div>
-            </div>
-            <p class="seo-p" style="text-align: center; margin-top: 24px;">
-                Get full access while it's free - no credit card required.
-            </p>
-            <div style="text-align: center;">
-                <a href="/signup" class="seo-cta">Start Free Now</a>
-            </div>
-        </section>
-
-        <!-- Testimonials: Hidden from users via JS, visible to Google for SEO -->
-        <section class="seo-section seo-hidden-from-users">
-            <h2 class="seo-h2">What Nursing Students Say</h2>
-            <div class="seo-testimonials">
-                <div class="seo-testimonial">
-                    <p class="seo-testimonial-text">
-                        I went from failing pharm to 89% in 3 weeks. This app literally saved my semester.
-                    </p>
-                    <p class="seo-testimonial-author">Sarah K., RN student - Passed NCLEX Dec 2024</p>
+                <div class="seo-table-result">
+                    <p><strong>Key difference:</strong> NurseQuizAI lets you study from YOUR notes - UWorld and Archer
+                        only offer pre-made question banks. Why pay more for content you didn't choose?</p>
                 </div>
-                <div class="seo-testimonial">
-                    <p class="seo-testimonial-text">
-                        Best $10 I spend every month. Better than UWorld for my learning style.
-                    </p>
-                    <p class="seo-testimonial-author">Miguel L., Quebec</p>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Free for a Limited Time</h2>
+                <div class="seo-pricing-cards">
+                    <div class="seo-pricing-card featured">
+                        <div class="seo-pricing-name">All Features Included</div>
+                        <div class="seo-pricing-price">FREE</div>
+                        <div class="seo-pricing-desc">Unlimited quizzes, AI tutor chat, advanced analytics, flashcards -
+                            everything included at no cost!</div>
+                    </div>
                 </div>
-                <div class="seo-testimonial">
-                    <p class="seo-testimonial-text">
-                        The French content support is amazing. Felt so prepared for my exam!
-                    </p>
-                    <p class="seo-testimonial-author">Amelie T., Montreal</p>
+                <p class="seo-p" style="text-align: center; margin-top: 24px;">
+                    Get full access while it's free - no credit card required.
+                </p>
+                <div style="text-align: center;">
+                    <a href="/signup" class="seo-cta">Start Free Now</a>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <section class="seo-section">
-            <h2 class="seo-h2">Frequently Asked Questions</h2>
+            <!-- Testimonials: Hidden from users via JS, visible to Google for SEO -->
+            <section class="seo-section seo-hidden-from-users">
+                <h2 class="seo-h2">What Nursing Students Say</h2>
+                <div class="seo-testimonials">
+                    <div class="seo-testimonial">
+                        <p class="seo-testimonial-text">
+                            I went from failing pharm to 89% in 3 weeks. This app literally saved my semester.
+                        </p>
+                        <p class="seo-testimonial-author">Sarah K., RN student - Passed NCLEX Dec 2024</p>
+                    </div>
+                    <div class="seo-testimonial">
+                        <p class="seo-testimonial-text">
+                            Best $10 I spend every month. Better than UWorld for my learning style.
+                        </p>
+                        <p class="seo-testimonial-author">Miguel L., Quebec</p>
+                    </div>
+                    <div class="seo-testimonial">
+                        <p class="seo-testimonial-text">
+                            The French content support is amazing. Felt so prepared for my exam!
+                        </p>
+                        <p class="seo-testimonial-author">Amelie T., Montreal</p>
+                    </div>
+                </div>
+            </section>
 
-            <div class="seo-faq-item">
-                <h3 class="seo-h3">How does the AI nursing quiz generator work?</h3>
-                <p class="seo-p">Upload any nursing notes, PDFs, or lecture slides. Our AI extracts key concepts and generates NCLEX-style questions with detailed rationales in under 15 seconds.</p>
-            </div>
+            <section class="seo-section">
+                <h2 class="seo-h2">Frequently Asked Questions</h2>
 
-            <div class="seo-faq-item">
-                <h3 class="seo-h3">Is NurseQuizAI good for NCLEX preparation?</h3>
-                <p class="seo-p">Yes! NurseQuizAI generates questions in NCLEX-RN, NCLEX-PN, and Next Gen NCLEX formats with detailed rationales to help you understand the material deeply.</p>
-            </div>
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">How does the AI nursing quiz generator work?</h3>
+                    <p class="seo-p">Upload any nursing notes, PDFs, or lecture slides. Our AI extracts key concepts and
+                        generates NCLEX-style questions with detailed rationales in under 15 seconds.</p>
+                </div>
 
-            <div class="seo-faq-item">
-                <h3 class="seo-h3">Can I use my own study materials?</h3>
-                <p class="seo-p">Yes! Upload PDFs, Word docs, PowerPoints, or even copy-paste your typed notes. Our AI works with any nursing content you provide.</p>
-            </div>
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">Is NurseQuizAI good for NCLEX preparation?</h3>
+                    <p class="seo-p">Yes! NurseQuizAI generates questions in NCLEX-RN, NCLEX-PN, and Next Gen NCLEX
+                        formats with detailed rationales to help you understand the material deeply.</p>
+                </div>
 
-            <div class="seo-faq-item">
-                <h3 class="seo-h3">How is this better than making my own flashcards?</h3>
-                <p class="seo-p">Creating quality NCLEX-style questions takes hours. NurseQuizAI does it in seconds with professional rationales, saving you 20+ hours per week to actually study.</p>
-            </div>
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">Can I use my own study materials?</h3>
+                    <p class="seo-p">Yes! Upload PDFs, Word docs, PowerPoints, or even copy-paste your typed notes. Our
+                        AI works with any nursing content you provide.</p>
+                </div>
 
-            <div class="seo-faq-item">
-                <h3 class="seo-h3">Is there a free trial?</h3>
-                <p class="seo-p">Yes! Our free plan includes 10 quizzes per day with basic features. No credit card required to start.</p>
-            </div>
-        </section>
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">How is this better than making my own flashcards?</h3>
+                    <p class="seo-p">Creating quality NCLEX-style questions takes hours. NurseQuizAI does it in seconds
+                        with professional rationales, saving you 20+ hours per week to actually study.</p>
+                </div>
 
-        <!-- Blog Link Section -->
-        <section class="seo-section" style="text-align: center;">
-            <h2 class="seo-h2">Free NCLEX Study Resources</h2>
-            <p class="seo-p" style="max-width: 600px; margin: 0 auto 24px;">
-                Explore our blog for expert study tips, pharmacology guides, and NCLEX preparation strategies.
-            </p>
-            <a href="/blog" class="seo-cta">Read Our Blog</a>
-        </section>
+                <div class="seo-faq-item">
+                    <h3 class="seo-h3">Is there a free trial?</h3>
+                    <p class="seo-p">Yes! Our free plan includes 10 quizzes per day with basic features. No credit card
+                        required to start.</p>
+                </div>
+            </section>
 
-        <footer class="seo-footer" data-lang="en">
-            <p>2025 NurseQuizAI - The #1 AI Nursing Study App for NCLEX Preparation</p>
-            <p style="margin-top: 12px;"><a href="/blog" style="color: var(--seo-primary-light); text-decoration: none;">Blog</a> · <a href="/signup" style="color: var(--seo-primary-light); text-decoration: none;">Sign Up</a> · <a href="/login" style="color: var(--seo-primary-light); text-decoration: none;">Log In</a></p>
-        </footer>
+            <!-- Blog Link Section -->
+            <section class="seo-section" style="text-align: center;">
+                <h2 class="seo-h2">Free NCLEX Study Resources</h2>
+                <p class="seo-p" style="max-width: 600px; margin: 0 auto 24px;">
+                    Explore our blog for expert study tips, pharmacology guides, and NCLEX preparation strategies.
+                </p>
+                <a href="/blog" class="seo-cta">Read Our Blog</a>
+            </section>
+
+            <footer class="seo-footer" data-lang="en">
+                <p>2025 NurseQuizAI - The #1 AI Nursing Study App for NCLEX Preparation</p>
+                <p style="margin-top: 12px;"><a href="/blog"
+                        style="color: var(--seo-primary-light); text-decoration: none;">Blog</a> · <a href="/signup"
+                        style="color: var(--seo-primary-light); text-decoration: none;">Sign Up</a> · <a href="/login"
+                        style="color: var(--seo-primary-light); text-decoration: none;">Log In</a></p>
+            </footer>
         </div><!-- End English version -->
 
         <!-- FRENCH VERSION -->
@@ -1235,12 +1281,14 @@
             <section class="seo-section">
                 <h1 class="seo-h1">Transforme tes notes en quiz NCLEX en quelques secondes avec l'IA</h1>
                 <p class="seo-p">
-                    <strong>NurseQuizAI</strong> est le générateur de quiz IA utilisé par les étudiants en soins infirmiers partout en Amérique du Nord
+                    <strong>NurseQuizAI</strong> est le générateur de quiz IA utilisé par les étudiants en soins
+                    infirmiers partout en Amérique du Nord
                     pour économiser du temps d'étude et réussir le NCLEX du premier coup.
                 </p>
                 <p class="seo-p">
                     Téléverse tes PDF, notes de cours, PowerPoints ou enregistrements de cours et obtiens instantanément
-                    des questions à choix multiples style NCLEX, des cartes mémoire avec répétition espacée, des explications détaillées
+                    des questions à choix multiples style NCLEX, des cartes mémoire avec répétition espacée, des
+                    explications détaillées
                     et des plans d'étude personnalisés.
                 </p>
                 <p class="seo-p">
@@ -1255,10 +1303,11 @@
                 <ol class="seo-steps">
                     <li>
                         <div class="step-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                                <polyline points="17 8 12 3 7 8"/>
-                                <line x1="12" y1="3" x2="12" y2="15"/>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                                <polyline points="17 8 12 3 7 8" />
+                                <line x1="12" y1="3" x2="12" y2="15" />
                             </svg>
                         </div>
                         <div>
@@ -1268,35 +1317,40 @@
                     </li>
                     <li>
                         <div class="step-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M12 2a4 4 0 0 1 4 4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2 4 4 0 0 1 4-4z"/>
-                                <path d="M8 8v10c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8"/>
-                                <path d="M9 12h6"/>
-                                <path d="M9 16h6"/>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M12 2a4 4 0 0 1 4 4c0 1.1-.9 2-2 2h-4a2 2 0 0 1-2-2 4 4 0 0 1 4-4z" />
+                                <path d="M8 8v10c0 1.1.9 2 2 2h4c1.1 0 2-.9 2-2V8" />
+                                <path d="M9 12h6" />
+                                <path d="M9 16h6" />
                             </svg>
                         </div>
                         <div>
                             <strong>L'IA génère des questions</strong>
-                            Notre IA analyse ton contenu et crée des questions style NCLEX, des cartes mémoire et des résumés en moins de 15 secondes.
+                            Notre IA analyse ton contenu et crée des questions style NCLEX, des cartes mémoire et des
+                            résumés en moins de 15 secondes.
                         </div>
                     </li>
                     <li>
                         <div class="step-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-                                <polyline points="22 4 12 14.01 9 11.01"/>
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                                stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                                <polyline points="22 4 12 14.01 9 11.01" />
                             </svg>
                         </div>
                         <div>
                             <strong>Étudie plus efficacement, réussis plus vite</strong>
-                            Utilise le rappel actif et la répétition espacée pour ancrer tes connaissances. Suis ta progression et concentre-toi sur tes points faibles.
+                            Utilise le rappel actif et la répétition espacée pour ancrer tes connaissances. Suis ta
+                            progression et concentre-toi sur tes points faibles.
                         </div>
                     </li>
                 </ol>
             </section>
 
             <section class="seo-section">
-                <h2 class="seo-h2">Pourquoi les étudiants en soins infirmiers en Amérique du Nord utilisent NurseQuizAI</h2>
+                <h2 class="seo-h2">Pourquoi les étudiants en soins infirmiers en Amérique du Nord utilisent NurseQuizAI
+                </h2>
                 <ul class="seo-feature-list">
                     <li>Génération instantanée de quiz et cartes mémoire à partir de n'importe quelles notes ou PDF</li>
                     <li>Styles de questions NCLEX-RN, NCLEX-PN et Next Gen NCLEX (NCSBN)</li>
@@ -1304,7 +1358,8 @@
                     <li>Tuteur IA en soins infirmiers disponible 24/7 pour une aide instantanée</li>
                     <li>Cartes mémoire avec répétition espacée optimisées pour le contenu infirmier</li>
                     <li>Plans d'étude adaptatifs et suivi des faiblesses</li>
-                    <li>Couvre la pharmacologie, la pathologie, la médecine-chirurgie, la maternité, la pédiatrie et la psychiatrie</li>
+                    <li>Couvre la pharmacologie, la pathologie, la médecine-chirurgie, la maternité, la pédiatrie et la
+                        psychiatrie</li>
                 </ul>
             </section>
 
@@ -1314,7 +1369,8 @@
                     <div class="seo-pricing-card featured">
                         <div class="seo-pricing-name">Toutes les fonctionnalités incluses</div>
                         <div class="seo-pricing-price">GRATUIT</div>
-                        <div class="seo-pricing-desc">Quiz illimités, tuteur IA, analyses avancées, cartes mémoire - tout inclus sans frais!</div>
+                        <div class="seo-pricing-desc">Quiz illimités, tuteur IA, analyses avancées, cartes mémoire -
+                            tout inclus sans frais!</div>
                     </div>
                 </div>
                 <p class="seo-p" style="text-align: center; margin-top: 24px;">
@@ -1331,19 +1387,22 @@
                 <div class="seo-testimonials">
                     <div class="seo-testimonial">
                         <p class="seo-testimonial-text">
-                            Je suis passée de l'échec en pharma à 89% en 3 semaines. Cette app a littéralement sauvé ma session.
+                            Je suis passée de l'échec en pharma à 89% en 3 semaines. Cette app a littéralement sauvé ma
+                            session.
                         </p>
                         <p class="seo-testimonial-author">Sarah K., étudiante infirmière - NCLEX réussi déc. 2024</p>
                     </div>
                     <div class="seo-testimonial">
                         <p class="seo-testimonial-text">
-                            Les meilleurs 10$ que je dépense chaque mois. Mieux que UWorld pour mon style d'apprentissage.
+                            Les meilleurs 10$ que je dépense chaque mois. Mieux que UWorld pour mon style
+                            d'apprentissage.
                         </p>
                         <p class="seo-testimonial-author">Miguel L., Québec</p>
                     </div>
                     <div class="seo-testimonial">
                         <p class="seo-testimonial-text">
-                            Le support du contenu en français est parfait. Je me sentais tellement préparée pour mon examen!
+                            Le support du contenu en français est parfait. Je me sentais tellement préparée pour mon
+                            examen!
                         </p>
                         <p class="seo-testimonial-author">Amélie T., Montréal</p>
                     </div>
@@ -1355,22 +1414,27 @@
 
                 <div class="seo-faq-item">
                     <h3 class="seo-h3">Comment fonctionne le générateur de quiz IA pour infirmières?</h3>
-                    <p class="seo-p">Téléverse n'importe quelles notes de cours, PDF ou diapositives. Notre IA extrait les concepts clés et génère des questions style NCLEX avec des explications détaillées en moins de 15 secondes.</p>
+                    <p class="seo-p">Téléverse n'importe quelles notes de cours, PDF ou diapositives. Notre IA extrait
+                        les concepts clés et génère des questions style NCLEX avec des explications détaillées en moins
+                        de 15 secondes.</p>
                 </div>
 
                 <div class="seo-faq-item">
                     <h3 class="seo-h3">NurseQuizAI est-il bon pour la préparation au NCLEX?</h3>
-                    <p class="seo-p">Oui! NurseQuizAI génère des questions aux formats NCLEX-RN, NCLEX-PN et Next Gen NCLEX avec des explications détaillées pour t'aider à bien comprendre la matière.</p>
+                    <p class="seo-p">Oui! NurseQuizAI génère des questions aux formats NCLEX-RN, NCLEX-PN et Next Gen
+                        NCLEX avec des explications détaillées pour t'aider à bien comprendre la matière.</p>
                 </div>
 
                 <div class="seo-faq-item">
                     <h3 class="seo-h3">Puis-je utiliser mes propres documents d'étude?</h3>
-                    <p class="seo-p">Oui! Téléverse des PDF, documents Word, PowerPoints ou copie-colle tes notes. Notre IA fonctionne avec tout contenu infirmier que tu fournis.</p>
+                    <p class="seo-p">Oui! Téléverse des PDF, documents Word, PowerPoints ou copie-colle tes notes. Notre
+                        IA fonctionne avec tout contenu infirmier que tu fournis.</p>
                 </div>
 
                 <div class="seo-faq-item">
                     <h3 class="seo-h3">Y a-t-il un essai gratuit?</h3>
-                    <p class="seo-p">Oui! Notre plan gratuit inclut 10 quiz par jour avec les fonctionnalités de base. Aucune carte de crédit requise pour commencer.</p>
+                    <p class="seo-p">Oui! Notre plan gratuit inclut 10 quiz par jour avec les fonctionnalités de base.
+                        Aucune carte de crédit requise pour commencer.</p>
                 </div>
             </section>
 
@@ -1378,14 +1442,18 @@
             <section class="seo-section" style="text-align: center;">
                 <h2 class="seo-h2">Ressources d'étude NCLEX gratuites</h2>
                 <p class="seo-p" style="max-width: 600px; margin: 0 auto 24px;">
-                    Explore notre blog pour des conseils d'étude, des guides de pharmacologie et des stratégies de préparation au NCLEX.
+                    Explore notre blog pour des conseils d'étude, des guides de pharmacologie et des stratégies de
+                    préparation au NCLEX.
                 </p>
                 <a href="/blog" class="seo-cta">Lire notre blog</a>
             </section>
 
             <footer class="seo-footer">
                 <p>2025 NurseQuizAI - L'application #1 d'étude IA pour la préparation au NCLEX</p>
-                <p style="margin-top: 12px;"><a href="/blog" style="color: var(--seo-primary-light); text-decoration: none;">Blog</a> · <a href="/signup" style="color: var(--seo-primary-light); text-decoration: none;">Inscription</a> · <a href="/login" style="color: var(--seo-primary-light); text-decoration: none;">Connexion</a></p>
+                <p style="margin-top: 12px;"><a href="/blog"
+                        style="color: var(--seo-primary-light); text-decoration: none;">Blog</a> · <a href="/signup"
+                        style="color: var(--seo-primary-light); text-decoration: none;">Inscription</a> · <a
+                        href="/login" style="color: var(--seo-primary-light); text-decoration: none;">Connexion</a></p>
             </footer>
         </div><!-- End French version -->
     </div>
@@ -1393,7 +1461,7 @@
     <script>
         // Show SEO content only on actual landing page (not logged-in chat)
         // Also handles language switching between EN and FR
-        (function() {
+        (function () {
             var seoContent = document.getElementById('seo-fallback');
             var seoContentEn = document.getElementById('seo-content-en');
             var seoContentFr = document.getElementById('seo-content-fr');
@@ -1477,7 +1545,7 @@
             hideSEO();
 
             // Watch for DOM changes to detect landing page
-            var observer = new MutationObserver(function() {
+            var observer = new MutationObserver(function () {
                 updateVisibility();
             });
 
@@ -1487,7 +1555,7 @@
             });
 
             // Watch for localStorage changes (language switch)
-            window.addEventListener('storage', function(e) {
+            window.addEventListener('storage', function (e) {
                 if (e.key === 'i18nextLng') {
                     updateLanguage();
                 }
@@ -1501,7 +1569,7 @@
             // Real users have JS enabled, so they won't see it
             function hideTestimonialsFromUsers() {
                 var hiddenSections = document.querySelectorAll('.seo-hidden-from-users');
-                hiddenSections.forEach(function(section) {
+                hiddenSections.forEach(function (section) {
                     section.style.display = 'none';
                 });
             }
@@ -1511,4 +1579,5 @@
         })();
     </script>
 </body>
+
 </html>

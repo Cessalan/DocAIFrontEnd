@@ -471,6 +471,13 @@ const resources = {
       landing: {
         uploadNotesTitle: "Upload your study material",
         uploadNotes: "Upload Your Notes",
+        // Hero transformation
+        dropNotes: "Drop your lecture slides here",
+        fileFormats: "PDF, PPT, Word, Images • Up to 15MB",
+        featureQuiz: "Quizzes",
+        featureFlashcards: "Flashcards",
+        featureAudio: "Audio",
+        featureStudySheet: "Study Sheet",
         // Hero section
         sloganLine1: "Too much to study. Not enough time.",
         sloganLine2: "We fix that — by turning your notes into instant practice quizzes.",
@@ -1141,6 +1148,13 @@ const resources = {
       landing: {
         uploadNotesTitle: "Téléverse tes notes de cours",
         uploadNotes: "Téléverse tes notes",
+        // Hero transformation
+        dropNotes: "Dépose tes notes de cours ici",
+        fileFormats: "PDF, PPT, Word, Images • Jusqu'à 15Mo",
+        featureQuiz: "Quiz",
+        featureFlashcards: "Flashcards",
+        featureAudio: "Audio",
+        featureStudySheet: "Fiche d'étude",
         // Hero section
         sloganLine1: "Trop de matière à étudier. Pas assez de temps.",
         sloganLine2: "On règle ça — en transformant tes notes en quiz instantanés.",

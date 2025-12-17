@@ -891,82 +891,101 @@ const QuizRoomLanding = () => {
             )}
           </div>
 
-          {/* Welcome Header */}
-          <header className="landing-header">
-            <p className="landing-slogan">
-              {t('landing.sloganLine1', 'Too much to study. Not enough time.')}
-              <br />
-              <span className="slogan-highlight">{t('landing.sloganLine2', 'We fix that — by turning your notes into instant practice quizzes.')}</span>
-            </p>
-            <h2 className="landing-subtitle">
-              {t('landing.subtitle', 'Spend less time studying, more time understanding.')}
-            </h2>
-          </header>
+          {/* Hero Section - Copy + CTA side by side */}
+          <div className="hero-split">
+            {/* Left side - Copy */}
+            <header className="landing-header">
+              <p className="landing-slogan">
+                {t('landing.sloganLine1', 'Too much to study. Not enough time.')}
+                <br />
+                <span className="slogan-highlight">{t('landing.sloganLine2', 'We fix that — by turning your notes into instant practice quizzes.')}</span>
+              </p>
+              <h2 className="landing-subtitle">
+                {t('landing.subtitle', 'Spend less time studying, more time understanding.')}
+              </h2>
+            </header>
 
-          {/* Primary CTA Section - Upload Notes */}
-          <div className="hero-cta-section">
-            <button
-              className={`hero-upload-btn ${pressedCard === 'upload' ? 'pressed' : ''}`}
-              onClick={handleUploadNotes}
-              onMouseDown={() => handleCardPress('upload')}
-              onMouseUp={handleCardRelease}
-              onMouseEnter={() => handleCardHover('upload')}
-              onMouseLeave={() => { handleCardRelease(); handleCardHoverEnd(); }}
-              onTouchStart={() => handleCardPress('upload')}
-              onTouchEnd={handleCardRelease}
-              aria-label={t('landing.uploadNotes', 'Upload Your Notes')}
-            >
-              <svg className="upload-btn-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15V19C21 20.1046 20.1046 21 19 21H5C3.89543 21 3 20.1046 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M17 8L12 3L7 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                <path d="M12 3V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              <span>{t('landing.uploadNotesTitle', 'Upload a file, save a life')}</span>
-            </button>
+            {/* Right side - CTA */}
+            <div className="hero-transformation">
+            {/* Central Document */}
+            <div className="transform-center">
+              <button
+                className={`transform-doc-btn ${pressedCard === 'upload' ? 'pressed' : ''}`}
+                onClick={handleUploadNotes}
+                onMouseDown={() => handleCardPress('upload')}
+                onMouseUp={handleCardRelease}
+                onMouseEnter={() => handleCardHover('upload')}
+                onMouseLeave={() => { handleCardRelease(); handleCardHoverEnd(); }}
+                onTouchStart={() => handleCardPress('upload')}
+                onTouchEnd={handleCardRelease}
+                aria-label={t('landing.uploadNotes', 'Upload Your Notes')}
+              >
+                <div className="doc-icon-wrapper">
+                  <svg className="doc-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M12 11V17M9 14H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                  </svg>
+                  <div className="doc-pulse"></div>
+                </div>
+                <div className="doc-text">
+                  <span className="doc-title">{t('landing.dropNotes', 'Drop your lecture slides here')}</span>
+                  <span className="doc-subtitle">{t('landing.fileFormats', 'PDF, PPT, Word • Up to 15MB')}</span>
+                </div>
+              </button>
 
-            {/* Accepted file types indicator */}
-            <div className="accepted-formats">
-              <span className="format-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M8 13H16M8 17H13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                Word
-              </span>
-              <span className="format-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                  <rect x="7" y="7" width="10" height="7" stroke="currentColor" strokeWidth="1.5"/>
-                  <line x1="7" y1="17" x2="17" y2="17" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                PowerPoint
-              </span>
-              <span className="format-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M9 13H15M9 17H12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                PDF
-              </span>
-              <span className="format-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M14 2H6C5.44772 2 5 2.44772 5 3V21C5 21.5523 5.44772 22 6 22H18C18.5523 22 19 21.5523 19 21V7L14 2Z" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M14 2V7H19" stroke="currentColor" strokeWidth="1.5"/>
-                  <path d="M8 13H16M8 17H16M8 9H10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                </svg>
-                TXT
-              </span>
-              <span className="format-item">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/>
-                  <circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/>
-                  <path d="M21 15L16 10L6 21" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                Images
-              </span>
             </div>
+
+            {/* Feature Cards Grid */}
+            <div className="transform-features">
+              <div className="feature-output-card quiz-card">
+                <div className="feature-card-inner">
+                  <div className="feature-icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M8 10L10 12L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                  <span className="feature-label">{t('landing.featureQuiz', 'Quizzes')}</span>
+                </div>
+              </div>
+
+              <div className="feature-output-card flashcard-card">
+                <div className="feature-card-inner">
+                  <div className="feature-icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <rect x="3" y="6" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                      <rect x="9" y="9" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+                    </svg>
+                  </div>
+                  <span className="feature-label">{t('landing.featureFlashcards', 'Flashcards')}</span>
+                </div>
+              </div>
+
+              <div className="feature-output-card audio-card">
+                <div className="feature-card-inner">
+                  <div className="feature-icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 4V20M8 8V16M4 11V13M16 6V18M20 9V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <span className="feature-label">{t('landing.featureAudio', 'Audio')}</span>
+                </div>
+              </div>
+
+              <div className="feature-output-card studysheet-card">
+                <div className="feature-card-inner">
+                  <div className="feature-icon-circle">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5"/>
+                      <path d="M14 2v6h6M8 13h8M8 17h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    </svg>
+                  </div>
+                  <span className="feature-label">{t('landing.featureStudySheet', 'Study Sheet')}</span>
+                </div>
+              </div>
+            </div>
+          </div>
           </div>
 
           {/* Feature Cards - Inline in Hero */}
