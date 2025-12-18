@@ -250,43 +250,62 @@
 }
 
 /* ============================================
-   GENERATING STATE
+   GENERATING STATE - Modern Glassmorphism
    ============================================ */
 .chat-audio-player.generating {
-  background: var(--sticky-green);
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(200, 180, 220, 0.3);
+  border-radius: 16px;
+  padding: 16px 20px;
+  transform: none;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.chat-audio-player.generating:hover {
+  transform: none;
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.08),
+    0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .chat-audio-player.generating .audio-player-header {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 16px;
 }
 
 .chat-audio-player.generating .audio-waveform-container {
-  width: 50px;
-  min-width: 50px;
-  height: 32px;
+  width: 56px;
+  min-width: 56px;
+  height: 40px;
   cursor: default;
-  background: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(200, 180, 220, 0.15) 0%, rgba(180, 160, 200, 0.1) 100%);
+  border-radius: 12px;
+  padding: 8px;
 }
 
 .chat-audio-player.generating .audio-waveform-container:hover {
-  background: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(200, 180, 220, 0.15) 0%, rgba(180, 160, 200, 0.1) 100%);
 }
 
 .waveform-bar.generating {
   height: 30%;
   animation: waveform-pulse 1.2s ease-in-out infinite;
-  background: var(--accent-green);
+  background: linear-gradient(180deg, #9b87c2 0%, #7c6b9e 100%);
+  border-radius: 2px;
 }
 
 @keyframes waveform-pulse {
   0%, 100% {
-    height: 15%;
-    opacity: 0.4;
+    height: 20%;
+    opacity: 0.5;
   }
   50% {
-    height: 90%;
+    height: 85%;
     opacity: 1;
   }
 }
@@ -295,13 +314,13 @@
 .generating-text-shimmer {
   background: linear-gradient(
     90deg,
-    #059669 0%,
-    #059669 35%,
-    #34d399 48%,
-    #6ee7b7 52%,
-    #34d399 56%,
-    #059669 70%,
-    #059669 100%
+    #7c6b9e 0%,
+    #7c6b9e 35%,
+    #b8a5d4 48%,
+    #d4c8e8 52%,
+    #b8a5d4 56%,
+    #7c6b9e 70%,
+    #7c6b9e 100%
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
@@ -310,6 +329,7 @@
   animation: shimmer-text 2s infinite linear;
   font-weight: 500;
   font-size: 0.85rem;
+  letter-spacing: 0.01em;
 }
 
 @keyframes shimmer-text {
@@ -324,13 +344,14 @@
 }
 
 .chat-audio-player.generating .audio-player-topic {
-  font-size: 0.9rem;
+  font-size: 0.95rem;
   font-weight: 600;
-  color: var(--text-primary);
-  margin: 0 0 4px 0;
+  color: #3d3d3d;
+  margin: 0 0 6px 0;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  letter-spacing: -0.01em;
 }
 
 .audio-player-status.generating {
@@ -500,16 +521,30 @@ body.dark-mode .audio-speed-btn:hover {
   background: rgba(255, 255, 255, 0.9);
 }
 
+body.dark-mode .chat-audio-player.generating {
+  background: rgba(45, 45, 45, 0.95);
+  border-color: rgba(200, 180, 220, 0.2);
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.25),
+    0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .chat-audio-player.generating:hover {
+  box-shadow:
+    0 4px 24px rgba(0, 0, 0, 0.3),
+    0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
 body.dark-mode .generating-text-shimmer {
   background: linear-gradient(
     90deg,
-    #047857 0%,
-    #047857 35%,
-    #10b981 48%,
-    #34d399 52%,
-    #10b981 56%,
-    #047857 70%,
-    #047857 100%
+    #b8a5d4 0%,
+    #b8a5d4 35%,
+    #d4c8e8 48%,
+    #e8e0f0 52%,
+    #d4c8e8 56%,
+    #b8a5d4 70%,
+    #b8a5d4 100%
   );
   background-size: 200% 100%;
   -webkit-background-clip: text;
@@ -519,11 +554,15 @@ body.dark-mode .generating-text-shimmer {
 }
 
 body.dark-mode .chat-audio-player.generating .audio-player-topic {
-  color: #1f1f1f;
+  color: #e5e5e5;
 }
 
 body.dark-mode .chat-audio-player.generating .audio-waveform-container {
-  background: rgba(255, 255, 255, 0.5);
+  background: linear-gradient(135deg, rgba(200, 180, 220, 0.2) 0%, rgba(180, 160, 200, 0.15) 100%);
+}
+
+body.dark-mode .waveform-bar.generating {
+  background: linear-gradient(180deg, #b8a5d4 0%, #9b87c2 100%);
 }
 
 body.dark-mode .audio-transcript-section {
@@ -620,10 +659,26 @@ body.dark-mode .audio-transcript-content::-webkit-scrollbar-thumb:hover {
     padding: 3px 8px;
   }
 
+  .chat-audio-player.generating {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+
   .chat-audio-player.generating .audio-waveform-container {
-    width: 44px;
-    min-width: 44px;
-    height: 28px;
+    width: 48px;
+    min-width: 48px;
+    height: 36px;
+    border-radius: 10px;
+    padding: 6px;
+  }
+
+  .chat-audio-player.generating .audio-player-header {
+    gap: 12px;
+  }
+
+  .chat-audio-player.generating .audio-player-topic {
+    font-size: 0.9rem;
+    margin-bottom: 4px;
   }
 
   .generating-text-shimmer {

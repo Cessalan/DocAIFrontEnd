@@ -21,6 +21,7 @@ import {
 import ChatMessage from './ChatMessage';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
+import QuizModeSelector from './QuizModeSelector';
 
 // SVG Components
 import SvgFileUpload from '../Svg/SvgFileUpload';
@@ -54,7 +55,8 @@ import {
   generate_summary,
   stream_summary,
   generate_scenario,
-  upload_files_with_progress
+  upload_files_with_progress,
+  speech_to_text
 } from '../../Services/FastAPICalls.js';
 
 
@@ -200,6 +202,10 @@ const ChatInterface = ({
   const [showExamPrepModal, setShowExamPrepModal] = useState(false);
   const [isCreatingExamChat, setIsCreatingExamChat] = useState(false);
 
+  // Quiz mode selector state (NCLEX vs Knowledge)
+  const [showQuizModeSelector, setShowQuizModeSelector] = useState(false);
+  const [pendingQuizMessageData, setPendingQuizMessageData] = useState(null);
+
   /**
  * activeQuizProgress structure:
  * {
@@ -267,6 +273,12 @@ const ChatInterface = ({
 
   // State to force minimum height for scrolling user message to top
   const [forceScrollSpace, setForceScrollSpace] = useState(false);
+
+  // Voice input states
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+  const mediaRecorderRef = useRef(null);
+  const audioChunksRef = useRef([]);
 
   // ============================================
   // HELPER FUNCTIONS
@@ -2591,6 +2603,20 @@ const ChatInterface = ({
       return;
     }
 
+    // Step 2: Build prompt based on action type
+    // Include topics for context so AI knows what to focus on
+    const topicsStr = messageData.topics?.length > 0
+      ? messageData.topics.join(', ')
+      : 'the uploaded material';
+
+    // Special handling for quiz - show mode selector modal
+    if (actionId === 'quiz') {
+      console.log('🎯 Opening quiz mode selector');
+      setPendingQuizMessageData(messageData);
+      setShowQuizModeSelector(true);
+      return;
+    }
+
     // Step 1: Hide action buttons on this message
     // This prevents double-clicks and shows the action was taken
     setChatMessages(prev => prev.map(msg =>
@@ -2598,12 +2624,6 @@ const ChatInterface = ({
         ? { ...msg, showActions: false }
         : msg
     ));
-
-    // Step 2: Build prompt based on action type
-    // Include topics for context so AI knows what to focus on
-    const topicsStr = messageData.topics?.length > 0
-      ? messageData.topics.join(', ')
-      : 'the uploaded material';
 
     // Special handling for audio - show the AudioConfirmCard
     if (actionId === 'audio') {
@@ -2627,7 +2647,6 @@ const ChatInterface = ({
     }
 
     const prompts = {
-      quiz: t('postUpload.quizPrompt', { topics: topicsStr }),
       flashcards: t('postUpload.flashcardsPrompt', { topics: topicsStr }),
       studysheet: t('postUpload.studysheetPrompt'),
       mindmap: t('postUpload.mindmapPrompt', { topics: topicsStr })
@@ -2647,6 +2666,52 @@ const ChatInterface = ({
     console.log('🎯 Calling handleSendNewUserMessage...');
     await handleSendNewUserMessage(null, promptToSend);
     console.log('🎯 handleSendNewUserMessage completed');
+  };
+
+  // Handle quiz mode selection from the modal
+  const handleQuizModeSelect = async (quizMode) => {
+    console.log('🎯 Quiz mode selected:', quizMode);
+
+    if (!pendingQuizMessageData) {
+      console.warn('No pending quiz message data');
+      return;
+    }
+
+    const messageData = pendingQuizMessageData;
+    const topicsStr = messageData.topics?.length > 0
+      ? messageData.topics.join(', ')
+      : 'the uploaded material';
+
+    // Hide action buttons on the original message
+    setChatMessages(prev => prev.map(msg =>
+      msg.id === messageData.id
+        ? { ...msg, showActions: false }
+        : msg
+    ));
+
+    // Build quiz prompt with mode
+    // The backend will parse the quiz mode from the prompt
+    let quizPrompt;
+    if (quizMode === 'knowledge') {
+      quizPrompt = t('postUpload.knowledgeQuizPrompt', {
+        topics: topicsStr,
+        defaultValue: `Generate a knowledge test quiz about ${topicsStr}. Use direct factual questions, not clinical scenarios.`
+      });
+    } else {
+      quizPrompt = t('postUpload.nclexQuizPrompt', {
+        topics: topicsStr,
+        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}. Use clinical scenarios testing judgment.`
+      });
+    }
+
+    console.log('🎯 Quiz prompt with mode:', quizPrompt);
+
+    // Clear pending data
+    setPendingQuizMessageData(null);
+    setShowQuizModeSelector(false);
+
+    // Send the quiz prompt
+    await handleSendNewUserMessage(null, quizPrompt);
   };
 
 
@@ -2865,6 +2930,69 @@ const ChatInterface = ({
   console.log('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 
+  // ============================================
+  // VOICE INPUT HANDLERS
+  // ============================================
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+      // Try webm first, fallback to mp4 for Safari
+      const mimeType = MediaRecorder.isTypeSupported('audio/webm')
+        ? 'audio/webm'
+        : 'audio/mp4';
+
+      const mediaRecorder = new MediaRecorder(stream, { mimeType });
+      mediaRecorderRef.current = mediaRecorder;
+      audioChunksRef.current = [];
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) {
+          audioChunksRef.current.push(e.data);
+        }
+      };
+
+      mediaRecorder.onstop = async () => {
+        setIsTranscribing(true);
+        const audioBlob = new Blob(audioChunksRef.current, { type: mimeType });
+
+        try {
+          const result = await speech_to_text(audioBlob);
+          if (result.success && result.text) {
+            setUserInputText(prev => prev ? `${prev} ${result.text}` : result.text);
+          }
+        } catch (error) {
+          console.error('Transcription failed:', error);
+        }
+
+        setIsTranscribing(false);
+        // Stop all tracks to release microphone
+        stream.getTracks().forEach(track => track.stop());
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (error) {
+      console.error('Microphone access denied:', error);
+      alert('Microphone access is required for voice input');
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && isRecording) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
+
+  const toggleRecording = () => {
+    if (isRecording) {
+      stopRecording();
+    } else {
+      startRecording();
+    }
+  };
+
   // Handle exam prep submission - creates exam and linked chat
   const handleExamPrepSubmit = async ({ examName, examDate }) => {
     if (!auth.currentUser) return;
@@ -3023,6 +3151,17 @@ const ChatInterface = ({
             isSubmitting={isCreatingExamChat}
           />
         )}
+
+        {/* Quiz Mode Selector Modal */}
+        <QuizModeSelector
+          isOpen={showQuizModeSelector}
+          onClose={() => {
+            setShowQuizModeSelector(false);
+            setPendingQuizMessageData(null);
+          }}
+          onSelectMode={handleQuizModeSelect}
+          topics={pendingQuizMessageData?.topics || []}
+        />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
         {!hasMessages && isChatDataLoaded && isGameChat && (
@@ -3540,38 +3679,69 @@ const ChatInterface = ({
                 </button>
               </div>
 
-              {/* Send or Stop button on the right */}
-              {isStreaming ? (
-                // Stop button when streaming
+              {/* Right side: Voice input + Send/Stop button */}
+              <div className="input-actions-right-group">
+                {/* Voice input button */}
                 <button
                   type="button"
-                  className="stop-button-icon"
-                  onClick={handleStopStreaming}
-                  title={t('chat.stopStreaming', 'Stop streaming')}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                    <rect x="6" y="6" width="12" height="12" rx="2" />
-                  </svg>
-                </button>
-              ) : (
-                // Send button when not streaming
-                <button type="submit"
-                  className={`send-button-icon ${isSystemBusy() ? 'send-button-busy' : ''}`}
-                  disabled={!userInputText.trim() || isSystemBusy()}
-                  title={t('chat.send')}>
-                  {isSystemBusy() ? (
-                    <div className="pulsing-dots">
+                  className={`voice-input-button ${isRecording ? 'recording' : ''} ${isTranscribing ? 'transcribing' : ''}`}
+                  onClick={toggleRecording}
+                  disabled={isSystemBusy() || isTranscribing}
+                  title={isRecording ? t('chat.stopRecording', 'Stop recording') : t('chat.voiceInput', 'Voice input')}
+                >
+                  {isTranscribing ? (
+                    <div className="voice-transcribing">
                       <span></span>
                       <span></span>
                       <span></span>
                     </div>
+                  ) : isRecording ? (
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
                   ) : (
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="22" y1="2" x2="11" y2="13"></line>
-                      <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                      <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+                      <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+                      <line x1="12" y1="19" x2="12" y2="23"></line>
+                      <line x1="8" y1="23" x2="16" y2="23"></line>
                     </svg>
                   )}
                 </button>
-              )}
+
+                {/* Send or Stop button */}
+                {isStreaming ? (
+                  // Stop button when streaming
+                  <button
+                    type="button"
+                    className="stop-button-icon"
+                    onClick={handleStopStreaming}
+                    title={t('chat.stopStreaming', 'Stop streaming')}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <rect x="6" y="6" width="12" height="12" rx="2" />
+                    </svg>
+                  </button>
+                ) : (
+                  // Send button when not streaming
+                  <button type="submit"
+                    className={`send-button-icon ${isSystemBusy() ? 'send-button-busy' : ''}`}
+                    disabled={!userInputText.trim() || isSystemBusy()}
+                    title={t('chat.send')}>
+                    {isSystemBusy() ? (
+                      <div className="pulsing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                      </div>
+                    ) : (
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                      </svg>
+                    )}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </form>

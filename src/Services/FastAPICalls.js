@@ -648,3 +648,30 @@ export const generate_study_guide_section = async (sectionTitle, topic, chatId, 
     throw error;
   }
 };
+
+/**
+ * Speech-to-Text using OpenAI Whisper
+ * @param {Blob} audioBlob - Audio blob from MediaRecorder
+ * @returns {Promise<{success: boolean, text: string}>}
+ */
+export const speech_to_text = async (audioBlob) => {
+  try {
+    const formData = new FormData();
+    formData.append('audio', audioBlob, 'recording.webm');
+
+    const response = await fetch(`${FAST_API_BASE}/speech-to-text`, {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Speech-to-text failed: ${response.status} - ${errorText}`);
+    }
+
+    return await response.json();
+  } catch (error) {
+    console.error("Error transcribing audio:", error);
+    throw error;
+  }
+};

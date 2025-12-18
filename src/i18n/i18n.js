@@ -161,7 +161,19 @@ const resources = {
         notQuite: "Not quite",
         skipQuestion: "Skip Question",
         nextQuestion: "Next Question",
-        viewResults: "View Results"
+        viewResults: "View Results",
+        // Quiz Mode Selector
+        modeSelector: {
+          title: "Choose Quiz Type",
+          context: "Generating questions about: {{topics}}",
+          nclex: "NCLEX Practice",
+          nclexDesc: "Clinical scenarios testing your judgment",
+          knowledge: "Knowledge Test",
+          knowledgeDesc: "Direct questions testing factual recall",
+          advanced: "Advanced",
+          recommended: "Recommended",
+          hint: "Not sure? Start with Knowledge Test for basic review, then try NCLEX Practice when ready."
+        }
       },
 
       // Quiz Sticky Progress Bar
@@ -224,11 +236,13 @@ const resources = {
         studysheetLabel: "Study sheet",
         audioLabel: "Audio summary",
         mindmapLabel: "Concept map",
-        // Action prompts sent to AI
-        quizPrompt: "Generate a quiz covering: {{topics}}",
+        // Action prompts sent to AI (quiz prompts now handled by mode selector)
         flashcardsPrompt: "Create flashcards for: {{topics}}",
         studysheetPrompt: "Create a study sheet summarizing the uploaded documents",
-        mindmapPrompt: "Create a concept map for: {{topics}}"
+        mindmapPrompt: "Create a concept map for: {{topics}}",
+        // Quiz mode-specific prompts
+        knowledgeQuizPrompt: "Generate a knowledge test quiz about {{topics}}. Use direct factual questions, not clinical scenarios.",
+        nclexQuizPrompt: "Generate an NCLEX-style quiz about {{topics}}. Use clinical scenarios testing judgment."
       },
 
       // Mindmap Modal
@@ -871,7 +885,19 @@ const resources = {
         notQuite: "Pas tout à fait",
         skipQuestion: "Passer la question",
         nextQuestion: "Question suivante",
-        viewResults: "Voir les résultats"
+        viewResults: "Voir les résultats",
+        // Quiz Mode Selector
+        modeSelector: {
+          title: "Choisir le type de quiz",
+          context: "Génération de questions sur : {{topics}}",
+          nclex: "Pratique NCLEX",
+          nclexDesc: "Scénarios cliniques testant ton jugement",
+          knowledge: "Test de connaissances",
+          knowledgeDesc: "Questions directes testant la mémorisation",
+          advanced: "Avancé",
+          recommended: "Recommandé",
+          hint: "Pas sûr? Commence avec le Test de connaissances pour une révision de base, puis essaie Pratique NCLEX quand tu es prêt."
+        }
       },
 
       // Quiz Sticky Progress Bar
@@ -934,11 +960,13 @@ const resources = {
         studysheetLabel: "Feuille d'étude",
         audioLabel: "Résumé audio",
         mindmapLabel: "Schéma conceptuel",
-        // Action prompts sent to AI
-        quizPrompt: "Génère un quiz couvrant : {{topics}}",
+        // Action prompts sent to AI (quiz prompts now handled by mode selector)
         flashcardsPrompt: "Crée des cartes mémoire pour : {{topics}}",
         studysheetPrompt: "Crée une feuille d'étude résumant les documents téléversés",
-        mindmapPrompt: "Crée un schéma conceptuel pour : {{topics}}"
+        mindmapPrompt: "Crée un schéma conceptuel pour : {{topics}}",
+        // Quiz mode-specific prompts
+        knowledgeQuizPrompt: "Génère un quiz de connaissances sur {{topics}}. Utilise des questions factuelles directes, pas de scénarios cliniques.",
+        nclexQuizPrompt: "Génère un quiz de style NCLEX sur {{topics}}. Utilise des scénarios cliniques testant le jugement."
       },
 
       // Mindmap Modal

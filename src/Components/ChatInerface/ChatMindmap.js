@@ -99,9 +99,9 @@ const ChatMindmap = ({ mindmapData, isLoading, topic }) => {
 
           {/* Loading text with shimmer */}
           <div className="mindmap-loading-status">
-            <div className="loading-text-shimmer">
-              <span className="loading-text">{topic || t('mindmap.extractingConcepts')}</span>
-              <div className="skeleton-shimmer"></div>
+            <div className="mindmap-text-shimmer">
+              <span className="mindmap-loading-text">{topic || t('mindmap.extractingConcepts')}</span>
+              <div className="mindmap-shimmer-overlay"></div>
             </div>
           </div>
         </div>

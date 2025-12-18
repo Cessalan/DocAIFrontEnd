@@ -130,46 +130,36 @@ body.dark-mode .node-l2-rect {
 }
 
 /* ============================================
-   SHIMMER EFFECT - Premium sweep animation
+   SHIMMER EFFECT - Pulse/glow animation (no sweep)
    ============================================ */
 
 .skeleton-node-shimmer {
-  fill: url(#shimmerGradient);
+  fill: rgba(255, 255, 255, 0.4);
   opacity: 0;
-  animation: shimmerSweep 2.2s ease-in-out infinite;
-}
-
-/* CSS-based shimmer since SVG gradients need defs */
-.skeleton-node-shimmer {
-  fill: rgba(255, 255, 255, 0.35);
-  clip-path: inset(0 100% 0 0);
-  animation: shimmerClip 2s ease-in-out infinite;
+  animation: shimmerPulse 2s ease-in-out infinite;
 }
 
 body.dark-mode .skeleton-node-shimmer {
-  fill: rgba(255, 255, 255, 0.15);
+  fill: rgba(255, 255, 255, 0.2);
 }
 
 /* Staggered shimmer for each node group */
 .node-root .skeleton-node-shimmer { animation-delay: 0s; }
-.node-l1-1 .skeleton-node-shimmer { animation-delay: 0.3s; }
-.node-l1-2 .skeleton-node-shimmer { animation-delay: 0.4s; }
-.node-l1-3 .skeleton-node-shimmer { animation-delay: 0.5s; }
-.node-l2-1 .skeleton-node-shimmer { animation-delay: 0.6s; }
-.node-l2-2 .skeleton-node-shimmer { animation-delay: 0.7s; }
-.node-l2-3 .skeleton-node-shimmer { animation-delay: 0.75s; }
-.node-l2-4 .skeleton-node-shimmer { animation-delay: 0.85s; }
-.node-l2-5 .skeleton-node-shimmer { animation-delay: 0.95s; }
+.node-l1-1 .skeleton-node-shimmer { animation-delay: 0.2s; }
+.node-l1-2 .skeleton-node-shimmer { animation-delay: 0.3s; }
+.node-l1-3 .skeleton-node-shimmer { animation-delay: 0.4s; }
+.node-l2-1 .skeleton-node-shimmer { animation-delay: 0.5s; }
+.node-l2-2 .skeleton-node-shimmer { animation-delay: 0.6s; }
+.node-l2-3 .skeleton-node-shimmer { animation-delay: 0.65s; }
+.node-l2-4 .skeleton-node-shimmer { animation-delay: 0.75s; }
+.node-l2-5 .skeleton-node-shimmer { animation-delay: 0.85s; }
 
-@keyframes shimmerClip {
-  0% {
-    clip-path: inset(0 100% 0 0);
+@keyframes shimmerPulse {
+  0%, 100% {
+    opacity: 0;
   }
   50% {
-    clip-path: inset(0 0 0 0);
-  }
-  100% {
-    clip-path: inset(0 0 0 100%);
+    opacity: 1;
   }
 }
 
@@ -183,7 +173,7 @@ body.dark-mode .skeleton-node-shimmer {
   justify-content: center;
 }
 
-.loading-text-shimmer {
+.mindmap-text-shimmer {
   position: relative;
   overflow: hidden;
   padding: 10px 24px;
@@ -191,11 +181,11 @@ body.dark-mode .skeleton-node-shimmer {
   background: rgba(160, 130, 110, 0.12);
 }
 
-body.dark-mode .loading-text-shimmer {
+body.dark-mode .mindmap-text-shimmer {
   background: rgba(255, 255, 255, 0.08);
 }
 
-.loading-text {
+.mindmap-loading-text {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary, #6b6b6b);
@@ -204,38 +194,29 @@ body.dark-mode .loading-text-shimmer {
   z-index: 1;
 }
 
-body.dark-mode .loading-text {
+body.dark-mode .mindmap-loading-text {
   color: rgba(255, 255, 255, 0.6);
 }
 
-/* Shimmer overlay for text */
-.loading-text-shimmer .skeleton-shimmer {
+/* Shimmer overlay for text - subtle pulse instead of sweep */
+.mindmap-shimmer-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.4) 50%,
-    transparent 100%
-  );
-  animation: shimmerSlide 2.5s ease-in-out infinite;
+  background: rgba(255, 255, 255, 0.3);
+  animation: textShimmerPulse 2s ease-in-out infinite;
+  border-radius: inherit;
 }
 
-body.dark-mode .loading-text-shimmer .skeleton-shimmer {
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    rgba(255, 255, 255, 0.15) 50%,
-    transparent 100%
-  );
+body.dark-mode .mindmap-shimmer-overlay {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-@keyframes shimmerSlide {
-  0% {
-    transform: translateX(-100%);
+@keyframes textShimmerPulse {
+  0%, 100% {
+    opacity: 0;
   }
-  100% {
-    transform: translateX(100%);
+  50% {
+    opacity: 1;
   }
 }
 
@@ -296,11 +277,11 @@ body.dark-mode .mindmap-error-text {
     min-width: 320px;
   }
 
-  .loading-text {
+  .mindmap-loading-text {
     font-size: 13px;
   }
 
-  .loading-text-shimmer {
+  .mindmap-text-shimmer {
     padding: 8px 16px;
   }
 }

@@ -1686,6 +1686,12 @@ body.dark-mode .nursing-icon {
     align-items: center;
   }
 
+  .input-actions-right-group {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
   /* Old input-wrapper for compatibility */
   .input-wrapper {
     flex: 1;
@@ -2400,6 +2406,10 @@ body.dark-mode .nursing-icon {
       gap: 6px;
     }
 
+    .input-actions-right-group {
+      gap: 6px;
+    }
+
     .message-textarea {
       font-size: 16px;
       /* Prevent zoom on iOS */
@@ -3068,4 +3078,159 @@ body.dark-mode .audio-error-message {
   background: rgba(239, 68, 68, 0.12);
   border-color: rgba(239, 68, 68, 0.3);
   color: #f87171;
+}
+
+/* ============================================
+   VOICE INPUT BUTTON
+   ============================================ */
+
+.voice-input-button {
+  background: transparent;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b6b6b;
+  position: relative;
+  overflow: hidden;
+}
+
+.voice-input-button:hover:not(:disabled) {
+  background: rgba(200, 180, 220, 0.15);
+  border-color: rgba(200, 180, 220, 0.4);
+  color: #7c6b9e;
+  transform: scale(1.05);
+}
+
+.voice-input-button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Recording state - pulsing red */
+.voice-input-button.recording {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #dc2626;
+  animation: voicePulse 1.5s ease-in-out infinite;
+}
+
+.voice-input-button.recording::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.2);
+  animation: voiceRipple 1.5s ease-out infinite;
+}
+
+@keyframes voicePulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+@keyframes voiceRipple {
+  0% {
+    transform: scale(0.8);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.4);
+    opacity: 0;
+  }
+}
+
+/* Transcribing state */
+.voice-input-button.transcribing {
+  background: rgba(200, 180, 220, 0.2);
+  border-color: rgba(200, 180, 220, 0.4);
+}
+
+.voice-transcribing {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.voice-transcribing span {
+  width: 4px;
+  height: 4px;
+  background: #7c6b9e;
+  border-radius: 50%;
+  animation: voiceTranscribeDot 1.2s ease-in-out infinite;
+}
+
+.voice-transcribing span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.voice-transcribing span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes voiceTranscribeDot {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.5;
+  }
+  50% {
+    transform: scale(1.3);
+    opacity: 1;
+  }
+}
+
+/* Dark mode */
+body.dark-mode .voice-input-button {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: #a0a0a0;
+}
+
+body.dark-mode .voice-input-button:hover:not(:disabled) {
+  background: rgba(200, 180, 220, 0.15);
+  border-color: rgba(200, 180, 220, 0.3);
+  color: #b8a5d4;
+}
+
+body.dark-mode .voice-input-button.recording {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: rgba(239, 68, 68, 0.5);
+  color: #f87171;
+}
+
+body.dark-mode .voice-input-button.transcribing {
+  background: rgba(200, 180, 220, 0.15);
+  border-color: rgba(200, 180, 220, 0.3);
+}
+
+body.dark-mode .voice-transcribing span {
+  background: #b8a5d4;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .voice-input-button {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .voice-input-button svg {
+    width: 18px;
+    height: 18px;
+  }
 }
