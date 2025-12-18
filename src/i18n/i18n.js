@@ -607,6 +607,33 @@ const resources = {
         understood: "Got it"
       },
 
+      // Orientation Flow (Post-Upload)
+      orientation: {
+        analyzed: "We analyzed your file",
+        keyTopics: "Here are the {{count}} most important topics you'll need:",
+        gotIt: "Got it",
+        goodStart: "Good start!",
+        coveredBasics: "Ready for a quick win?",
+        continueStudying: "Try 2 flashcards",
+        doLater: "Maybe later",
+        basics: "Basics"
+      },
+
+      // Quick Win (Post-Flashcard Momentum)
+      quickWin: {
+        niceStart: "Nice start",
+        coveredBasics: "You've covered the basics. Want to try applying it?",
+        tryQuestion: "Try one question (2 min)",
+        saveLater: "Save & continue later"
+      },
+
+      // Single Question (Momentum Phase)
+      singleQuestion: {
+        correct: "Nice! You got it right.",
+        incorrect: "Not quite, but you're learning!",
+        done: "Done"
+      },
+
       // Dashboard
       dashboard: {
         upcomingExams: {
@@ -1329,6 +1356,33 @@ const resources = {
       common: {
         close: "Fermer",
         understood: "Compris"
+      },
+
+      // Orientation Flow (Post-Upload)
+      orientation: {
+        analyzed: "Nous avons analysé ton fichier",
+        keyTopics: "Voici les {{count}} sujets les plus importants:",
+        gotIt: "Compris",
+        goodStart: "Bon début!",
+        coveredBasics: "Prêt pour une petite victoire?",
+        continueStudying: "Essayer 2 flashcards",
+        doLater: "Peut-être plus tard",
+        basics: "Bases"
+      },
+
+      // Quick Win (Post-Flashcard Momentum)
+      quickWin: {
+        niceStart: "Bon début",
+        coveredBasics: "Tu as couvert les bases. Tu veux essayer de les appliquer?",
+        tryQuestion: "Essayer une question (2 min)",
+        saveLater: "Sauvegarder et continuer plus tard"
+      },
+
+      // Single Question (Momentum Phase)
+      singleQuestion: {
+        correct: "Bravo! Tu as la bonne réponse.",
+        incorrect: "Pas tout à fait, mais tu apprends!",
+        done: "Terminé"
       },
 
       // Dashboard

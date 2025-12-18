@@ -640,3 +640,89 @@ export const setupGameMessageListener = (chatId, handlers = {}) => {
   });
 };
 
+// ============================================================================
+// MICRO-RATIONALE - Request short, encouraging feedback after quiz answer
+// ============================================================================
+
+/**
+ * Request micro-rationale for a quiz answer via WebSocket
+ * Returns a short encouraging message + 1-2 sentence rationale
+ *
+ * @param {string} chatId - Chat ID for WebSocket connection
+ * @param {Object} answerData - Answer data from quiz
+ * @param {string} answerData.question - The question text
+ * @param {string} answerData.correctAnswer - The correct answer text
+ * @param {string} answerData.selectedAnswer - User's selected answer
+ * @param {boolean} answerData.isCorrect - Whether user got it right
+ * @param {string} answerData.topic - Topic of the question
+ * @param {string} answerData.originalRationale - Original verbose rationale to condense
+ * @param {string} language - Response language (en/fr)
+ * @param {Function} onRationaleReceived - Callback with { encouragement, rationale }
+ */
+export const requestMicroRationale = async (chatId, answerData, language, onRationaleReceived) => {
+  try {
+    console.log('🎯 Requesting micro-rationale for quiz answer');
+
+    const ws = await wsManager.getConnection(chatId);
+
+    // Set up one-time message listener for rationale response
+    const originalOnMessage = ws.onmessage;
+
+    ws.onmessage = (event) => {
+      try {
+        const message = JSON.parse(event.data);
+
+        // Handle micro-rationale response
+        if (message.type === 'micro_rationale_response') {
+          console.log('✅ Received micro-rationale:', message.data);
+          onRationaleReceived({
+            encouragement: message.data.encouragement,
+            rationale: message.data.rationale,
+            source: message.data.source || 'gpt-nano'
+          });
+          // Restore original handler
+          ws.onmessage = originalOnMessage;
+          return;
+        }
+
+        // Pass through to original handler for other messages
+        if (originalOnMessage) {
+          originalOnMessage(event);
+        }
+      } catch (error) {
+        console.error('Failed to parse micro-rationale response:', error);
+      }
+    };
+
+    // Send request
+    const success = await wsManager.sendMessage(chatId, {
+      type: 'micro_rationale_request',
+      question: answerData.question || answerData.questionText,
+      correct_answer: answerData.correctAnswer || answerData.correctAnswerText,
+      selected_answer: answerData.selectedAnswer || answerData.selectedOptionText,
+      is_correct: answerData.isCorrect,
+      topic: answerData.topic || null,
+      original_rationale: answerData.originalRationale || answerData.justification || null,
+      language: language || 'en'
+    });
+
+    if (!success) {
+      throw new Error('Failed to send micro-rationale request');
+    }
+
+    console.log('📤 Micro-rationale request sent');
+
+  } catch (error) {
+    console.error('❌ Micro-rationale request failed:', error);
+    // Return useful fallback with correct answer context
+    const correctAnswer = answerData.correctAnswer || answerData.correctAnswerText || '';
+    onRationaleReceived({
+      encouragement: answerData.isCorrect
+        ? "Nice work! You got it right."
+        : `The correct answer is: ${correctAnswer}`,
+      rationale: "",
+      source: 'fallback'
+    });
+  }
+};
+

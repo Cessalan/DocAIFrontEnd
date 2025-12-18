@@ -1,0 +1,505 @@
+/* OrientationFlow.css - Post-upload guided insight experience */
+/* Warm coral/lavender aesthetic matching the app theme */
+
+.orientation-flow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px 20px;
+  max-width: 480px;
+  margin: 0 auto;
+  animation: orientationFadeIn 0.4s ease-out;
+}
+
+.orientation-flow.orientation-exiting {
+  animation: orientationFadeOut 0.3s ease-out forwards;
+}
+
+@keyframes orientationFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes orientationFadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+/* ============================================
+   PROGRESS BAR
+   ============================================ */
+
+.orientation-progress-container {
+  width: 100%;
+  height: 6px;
+  background: rgba(160, 130, 110, 0.15);
+  border-radius: 3px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.orientation-progress-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #e88d7d 0%, #c4a6d9 100%);
+  border-radius: 3px;
+  transition: width 0.5s ease-out;
+}
+
+.orientation-progress-text {
+  position: absolute;
+  right: 0;
+  top: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #8b8b8b);
+}
+
+body.dark-mode .orientation-progress-container {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .orientation-progress-text {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* ============================================
+   CONTENT CARDS
+   ============================================ */
+
+.orientation-content {
+  width: 100%;
+  min-height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.orientation-card {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 20px;
+  padding: 32px 28px;
+  border: 1px solid rgba(232, 141, 125, 0.2);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.06),
+    0 2px 8px rgba(0, 0, 0, 0.04);
+  animation: cardSlideIn 0.4s ease-out;
+  text-align: center;
+}
+
+body.dark-mode .orientation-card {
+  background: rgba(45, 45, 45, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+@keyframes cardSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* ============================================
+   INTRO SCREEN
+   ============================================ */
+
+.orientation-intro .orientation-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: iconPop 0.5s ease-out 0.2s both;
+}
+
+@keyframes iconPop {
+  from {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.orientation-title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary, #2d2d2d);
+  margin: 0 0 8px 0;
+  letter-spacing: -0.01em;
+}
+
+body.dark-mode .orientation-title {
+  color: #f0f0f0;
+}
+
+.orientation-subtitle {
+  font-size: 0.95rem;
+  color: var(--text-secondary, #6b6b6b);
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+body.dark-mode .orientation-subtitle {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* Topic pills */
+.orientation-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: center;
+}
+
+.orientation-topic-pill {
+  display: inline-block;
+  padding: 8px 16px;
+  background: linear-gradient(135deg, rgba(232, 141, 125, 0.15) 0%, rgba(196, 166, 217, 0.15) 100%);
+  border: 1px solid rgba(232, 141, 125, 0.25);
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary, #4a4a4a);
+  animation: pillFadeIn 0.3s ease-out backwards;
+}
+
+.orientation-topic-pill:nth-child(1) { animation-delay: 0.3s; }
+.orientation-topic-pill:nth-child(2) { animation-delay: 0.4s; }
+.orientation-topic-pill:nth-child(3) { animation-delay: 0.5s; }
+
+@keyframes pillFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.dark-mode .orientation-topic-pill {
+  background: linear-gradient(135deg, rgba(232, 141, 125, 0.2) 0%, rgba(196, 166, 217, 0.2) 100%);
+  border-color: rgba(232, 141, 125, 0.3);
+  color: #e5e5e5;
+}
+
+/* ============================================
+   INSIGHT SCREEN
+   ============================================ */
+
+.orientation-insight {
+  text-align: left;
+}
+
+.orientation-insight-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.insight-emoji {
+  font-size: 24px;
+}
+
+.insight-topic {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #e88d7d;
+  letter-spacing: -0.01em;
+}
+
+body.dark-mode .insight-topic {
+  color: #f0a090;
+}
+
+.insight-text {
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--text-primary, #2d2d2d);
+  line-height: 1.5;
+  margin: 0 0 12px 0;
+}
+
+body.dark-mode .insight-text {
+  color: #f0f0f0;
+}
+
+/* Basics level badge */
+.insight-level-badge {
+  margin-left: auto;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 4px 10px;
+  background: linear-gradient(135deg, rgba(120, 180, 120, 0.15) 0%, rgba(100, 160, 100, 0.1) 100%);
+  color: #5a9a5a;
+  border-radius: 12px;
+  border: 1px solid rgba(120, 180, 120, 0.3);
+}
+
+body.dark-mode .insight-level-badge {
+  background: linear-gradient(135deg, rgba(120, 180, 120, 0.2) 0%, rgba(100, 160, 100, 0.15) 100%);
+  color: #8bc88b;
+  border-color: rgba(120, 180, 120, 0.4);
+}
+
+/* Relevance bullet list */
+.insight-relevance-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.insight-relevance-item {
+  font-size: 0.85rem;
+  color: #5a5a5a;
+  line-height: 1.4;
+  padding: 10px 14px;
+  padding-left: 32px;
+  background: rgba(245, 240, 235, 0.8);
+  border-radius: 8px;
+  position: relative;
+  border: 1px solid rgba(160, 130, 110, 0.12);
+}
+
+.insight-relevance-item::before {
+  content: '✓';
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #5a9a5a;
+}
+
+body.dark-mode .insight-relevance-item {
+  color: #e0e0e0;
+  background: rgba(60, 60, 60, 0.6);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .insight-relevance-item::before {
+  color: #8bc88b;
+}
+
+/* Context line - quiet, calm note */
+.insight-context {
+  font-size: 0.8rem;
+  color: var(--text-secondary, #8b8b8b);
+  margin: 12px 0 0 0;
+  padding-top: 10px;
+  border-top: 1px solid rgba(160, 130, 110, 0.15);
+  line-height: 1.4;
+}
+
+body.dark-mode .insight-context {
+  color: rgba(255, 255, 255, 0.5);
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+/* ============================================
+   COMPLETE SCREEN
+   ============================================ */
+
+.orientation-complete .orientation-icon {
+  font-size: 48px;
+  margin-bottom: 16px;
+  animation: checkPop 0.5s ease-out;
+}
+
+@keyframes checkPop {
+  from {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.orientation-cta-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.orientation-btn {
+  padding: 14px 24px;
+  border-radius: 12px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+}
+
+.orientation-btn-primary {
+  background: linear-gradient(135deg, #e88d7d 0%, #d97a6a 100%);
+  color: white;
+  box-shadow: 0 4px 16px rgba(232, 141, 125, 0.3);
+}
+
+.orientation-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(232, 141, 125, 0.4);
+}
+
+.orientation-btn-secondary {
+  background: transparent;
+  color: var(--text-secondary, #8b8b8b);
+  border: 1px solid rgba(160, 130, 110, 0.3);
+}
+
+.orientation-btn-secondary:hover {
+  background: rgba(160, 130, 110, 0.08);
+  border-color: rgba(160, 130, 110, 0.5);
+}
+
+body.dark-mode .orientation-btn-primary {
+  background: linear-gradient(135deg, #e88d7d 0%, #d97a6a 100%);
+}
+
+body.dark-mode .orientation-btn-secondary {
+  color: rgba(255, 255, 255, 0.6);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .orientation-btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================
+   GOT IT BUTTON
+   ============================================ */
+
+.orientation-action {
+  margin-top: 24px;
+  opacity: 0;
+  transform: translateY(10px);
+  transition: all 0.4s ease-out;
+}
+
+.orientation-action.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.orientation-got-it-btn {
+  padding: 12px 32px;
+  background: rgba(160, 130, 110, 0.12);
+  border: 1px solid rgba(160, 130, 110, 0.25);
+  border-radius: 24px;
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--text-primary, #4a4a4a);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.orientation-got-it-btn:hover:not(:disabled) {
+  background: rgba(160, 130, 110, 0.2);
+  border-color: rgba(160, 130, 110, 0.4);
+  transform: translateY(-1px);
+}
+
+.orientation-got-it-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body.dark-mode .orientation-got-it-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #e5e5e5;
+}
+
+body.dark-mode .orientation-got-it-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  .orientation-flow {
+    padding: 20px 16px;
+  }
+
+  .orientation-card {
+    padding: 24px 20px;
+    border-radius: 16px;
+  }
+
+  .orientation-title {
+    font-size: 1.15rem;
+  }
+
+  .insight-text {
+    font-size: 1rem;
+  }
+
+  .orientation-btn {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+
+  .orientation-got-it-btn {
+    padding: 10px 28px;
+  }
+}
+
+@media (max-width: 480px) {
+  .orientation-card {
+    padding: 20px 16px;
+  }
+
+  .orientation-intro .orientation-icon,
+  .orientation-complete .orientation-icon {
+    font-size: 40px;
+  }
+
+  .orientation-topic-pill {
+    padding: 6px 12px;
+    font-size: 0.8rem;
+  }
+}

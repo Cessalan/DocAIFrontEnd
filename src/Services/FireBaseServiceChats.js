@@ -775,4 +775,64 @@ export const DeleteMessage = async (chatId, messageId) => {
   }
 };
 
+/**
+ * Increment the completed sessions count for a chat
+ * Used to track user progress through momentum milestones
+ * @param {string} chatId - The chat ID
+ * @returns {Promise<number>} - The new session count
+ */
+export const IncrementCompletedSessions = async (chatId) => {
+  try {
+    if (!chatId) {
+      console.warn("No chatId provided for session increment");
+      return 0;
+    }
+
+    const chatRef = doc(db, "chats", chatId);
+    const chatDoc = await getDoc(chatRef);
+
+    if (!chatDoc.exists()) {
+      console.warn("Chat not found:", chatId);
+      return 0;
+    }
+
+    const currentCount = chatDoc.data().completedSessions || 0;
+    const newCount = currentCount + 1;
+
+    await updateDoc(chatRef, {
+      completedSessions: newCount,
+      updatedAt: serverTimestamp()
+    });
+
+    console.log(`✅ Session count incremented: ${currentCount} → ${newCount}`);
+    return newCount;
+
+  } catch (error) {
+    console.error("❌ Error incrementing session count:", error);
+    return 0;
+  }
+};
+
+/**
+ * Get the completed sessions count for a chat
+ * @param {string} chatId - The chat ID
+ * @returns {Promise<number>} - The current session count
+ */
+export const GetCompletedSessions = async (chatId) => {
+  try {
+    if (!chatId) return 0;
+
+    const chatRef = doc(db, "chats", chatId);
+    const chatDoc = await getDoc(chatRef);
+
+    if (!chatDoc.exists()) return 0;
+
+    return chatDoc.data().completedSessions || 0;
+
+  } catch (error) {
+    console.error("❌ Error getting session count:", error);
+    return 0;
+  }
+};
+
 export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };

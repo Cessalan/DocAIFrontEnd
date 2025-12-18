@@ -1,0 +1,204 @@
+/* SingleQuestionCard.css - Minimal single question for momentum phase */
+/* No modal, no skip, no view results - just question and options */
+
+.single-question-card {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px;
+  max-width: 480px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 14px;
+  border: 1px solid rgba(232, 141, 125, 0.15);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.05),
+    0 2px 8px rgba(0, 0, 0, 0.03);
+  animation: sqcFadeIn 0.3s ease-out;
+}
+
+@keyframes sqcFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+body.dark-mode .single-question-card {
+  background: rgba(45, 45, 45, 0.95);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.2),
+    0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Question */
+.sqc-question {
+  text-align: left;
+}
+
+.sqc-question-text {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-primary, #2d2d2d);
+  line-height: 1.5;
+  margin: 0;
+}
+
+body.dark-mode .sqc-question-text {
+  color: #f0f0f0;
+}
+
+/* Options */
+.sqc-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sqc-option {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(250, 250, 250, 0.8);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  width: 100%;
+}
+
+.sqc-option:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.08);
+  border-color: rgba(232, 141, 125, 0.3);
+  transform: translateY(-1px);
+}
+
+.sqc-option:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+body.dark-mode .sqc-option {
+  background: rgba(60, 60, 60, 0.6);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .sqc-option:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: rgba(232, 141, 125, 0.4);
+}
+
+.sqc-option-letter {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: rgba(232, 141, 125, 0.15);
+  color: #d97a6a;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  flex-shrink: 0;
+}
+
+body.dark-mode .sqc-option-letter {
+  background: rgba(232, 141, 125, 0.2);
+  color: #e88d7d;
+}
+
+.sqc-option-text {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--text-primary, #2d2d2d);
+  line-height: 1.4;
+}
+
+body.dark-mode .sqc-option-text {
+  color: #e0e0e0;
+}
+
+.sqc-option-check,
+.sqc-option-x {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.sqc-option-check {
+  color: #4CAF50;
+}
+
+.sqc-option-x {
+  color: rgba(200, 100, 100, 0.7);
+  font-size: 0.85rem;
+}
+
+/* Option states after answering */
+.sqc-option-correct {
+  background: rgba(76, 175, 80, 0.12) !important;
+  border-color: rgba(76, 175, 80, 0.4) !important;
+}
+
+.sqc-option-correct .sqc-option-letter {
+  background: #4CAF50;
+  color: white;
+}
+
+/* Softened incorrect state - dimmed/neutral instead of harsh red */
+.sqc-option-incorrect {
+  background: rgba(120, 120, 120, 0.08) !important;
+  border-color: rgba(120, 120, 120, 0.25) !important;
+  opacity: 0.85;
+}
+
+.sqc-option-incorrect .sqc-option-letter {
+  background: rgba(120, 120, 120, 0.4);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.sqc-option-disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+body.dark-mode .sqc-option-correct {
+  background: rgba(76, 175, 80, 0.2) !important;
+  border-color: rgba(76, 175, 80, 0.5) !important;
+}
+
+/* Softened incorrect state for dark mode */
+body.dark-mode .sqc-option-incorrect {
+  background: rgba(100, 100, 100, 0.15) !important;
+  border-color: rgba(150, 150, 150, 0.3) !important;
+}
+
+body.dark-mode .sqc-option-incorrect .sqc-option-letter {
+  background: rgba(150, 150, 150, 0.4);
+}
+
+/* Responsive */
+@media (max-width: 480px) {
+  .single-question-card {
+    padding: 16px 14px;
+    border-radius: 12px;
+  }
+
+  .sqc-question-text {
+    font-size: 0.95rem;
+  }
+
+  .sqc-option {
+    padding: 10px 12px;
+  }
+
+  .sqc-option-text {
+    font-size: 0.85rem;
+  }
+}

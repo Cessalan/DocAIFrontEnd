@@ -3234,3 +3234,292 @@ body.dark-mode .voice-transcribing span {
     height: 18px;
   }
 }
+
+/* ============================================
+   ORIENTATION FLOW OVERLAY
+   Post-upload guided insight experience
+   ============================================ */
+
+.orientation-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(253, 248, 243, 0.98);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  animation: orientationOverlayIn 0.4s ease-out;
+  overflow-y: auto;
+  padding: 20px;
+}
+
+body.dark-mode .orientation-overlay {
+  background: rgba(26, 26, 26, 0.98);
+}
+
+@keyframes orientationOverlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (max-width: 768px) {
+  .orientation-overlay {
+    padding: 16px;
+  }
+}
+
+/* ============================================
+   MICRO-RATIONALE MESSAGE
+   Short, encouraging feedback after quiz answer
+   ============================================ */
+
+.micro-rationale-message {
+  max-width: 420px;
+  margin: 8px 0;
+  animation: microRationaleFadeIn 0.3s ease-out;
+}
+
+@keyframes microRationaleFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.micro-rationale-card {
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.micro-rationale-card.correct {
+  border-left: 3px solid #4CAF50;
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.08) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+.micro-rationale-card.incorrect {
+  border-left: 3px solid #FF9800;
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.08) 0%, rgba(255, 255, 255, 0.95) 100%);
+}
+
+body.dark-mode .micro-rationale-card {
+  background: rgba(45, 45, 45, 0.95);
+}
+
+body.dark-mode .micro-rationale-card.correct {
+  background: linear-gradient(135deg, rgba(76, 175, 80, 0.15) 0%, rgba(45, 45, 45, 0.95) 100%);
+}
+
+body.dark-mode .micro-rationale-card.incorrect {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.15) 0%, rgba(45, 45, 45, 0.95) 100%);
+}
+
+.micro-rationale-encouragement {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.micro-rationale-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.micro-rationale-card.correct .micro-rationale-icon {
+  color: #4CAF50;
+  font-weight: 700;
+}
+
+.micro-rationale-card.incorrect .micro-rationale-icon {
+  color: #FF9800;
+}
+
+.micro-rationale-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary, #2d2d2d);
+  line-height: 1.4;
+}
+
+body.dark-mode .micro-rationale-text {
+  color: #f0f0f0;
+}
+
+.micro-rationale-content {
+  font-size: 0.875rem;
+  color: var(--text-secondary, #5a5a5a);
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 24px;
+}
+
+body.dark-mode .micro-rationale-content {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+@media (max-width: 480px) {
+  .micro-rationale-message {
+    max-width: 100%;
+  }
+
+  .micro-rationale-card {
+    padding: 10px 14px;
+    border-radius: 12px;
+  }
+
+  .micro-rationale-text {
+    font-size: 0.9rem;
+  }
+
+  .micro-rationale-content {
+    font-size: 0.825rem;
+    padding-left: 20px;
+  }
+}
+
+/* ============================================
+   MICRO-RATIONALE CTA BUTTONS
+   Forward-looking actions after quiz feedback
+   ============================================ */
+
+.micro-rationale-cta {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 16px;
+  max-width: 280px;
+}
+
+.micro-rationale-cta-primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #e88d7d 0%, #d97a6a 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(232, 141, 125, 0.3);
+}
+
+.micro-rationale-cta-primary:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.4);
+}
+
+.micro-rationale-cta-primary:active {
+  transform: translateY(0);
+}
+
+.micro-rationale-cta-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 16px;
+  background: transparent;
+  color: var(--text-secondary, #666);
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.micro-rationale-cta-secondary:hover {
+  background: rgba(0, 0, 0, 0.03);
+  border-color: rgba(0, 0, 0, 0.15);
+}
+
+body.dark-mode .micro-rationale-cta-secondary {
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .micro-rationale-cta-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 480px) {
+  .micro-rationale-cta {
+    max-width: 100%;
+  }
+
+  .micro-rationale-cta-primary {
+    padding: 11px 18px;
+    font-size: 0.85rem;
+  }
+
+  .micro-rationale-cta-secondary {
+    padding: 9px 14px;
+    font-size: 0.8rem;
+  }
+}
+
+/* ============================================
+   SAVE & EXIT FLOW STYLES
+   ============================================ */
+
+.save-exit-message {
+  margin: 0;
+  color: var(--text-primary, #2d2d2d);
+  line-height: 1.5;
+}
+
+body.dark-mode .save-exit-message {
+  color: #e0e0e0;
+}
+
+.save-exit-resume-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #e88d7d 0%, #d97a6a 100%);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(232, 141, 125, 0.3);
+}
+
+.save-exit-resume-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.4);
+}
+
+.save-exit-resume-btn:active {
+  transform: translateY(0);
+}
+
+body.dark-mode .save-exit-resume-btn {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .save-exit-resume-btn:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}

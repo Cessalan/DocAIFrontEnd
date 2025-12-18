@@ -3,6 +3,8 @@ import ReactMarkDown from "react-markdown";
 import ChatQuiz from "./ChatQuiz";
 import ChatFlashcard from "./ChatFlashcard";
 import FlashcardResults from "./FlashcardResults";
+import QuickWinComplete from "./QuickWinComplete";
+import SingleQuestionCard from "./SingleQuestionCard";
 import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
@@ -38,7 +40,8 @@ const ChatMessage = ({
   onSendMessage,
   onFeedbackSubmit,
   onDeleteMessage,
-  viewAllChatsMode = false
+  viewAllChatsMode = false,
+  onSessionComplete
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -479,8 +482,18 @@ const ChatMessage = ({
   }, []);
 
   // Continue learning (focus on non-mastered cards)
+  // Also tracks session completion for momentum-based UX
+  const sessionCountedRef = useRef(false);
+
   const handleContinueLearning = useCallback(() => {
     if (!parsedFlashcardData) return;
+
+    // Track session completion when user clicks action button on results screen
+    // Only count once per session (prevent double-counting)
+    if (showFlashcardResults && !sessionCountedRef.current && onSessionComplete) {
+      sessionCountedRef.current = true;
+      onSessionComplete(message.id, 'flashcard');
+    }
 
     const firstNonMastered = parsedFlashcardData.findIndex(
       card => card.status !== 'mastered'
@@ -493,7 +506,64 @@ const ChatMessage = ({
       setCurrentCardIndex(0);
       setShowFlashcardResults(false);
     }
-  }, [parsedFlashcardData]);
+  }, [parsedFlashcardData, showFlashcardResults, onSessionComplete, message.id]);
+
+  // ============================================
+  // QUICK WIN HANDLERS (Momentum-based UX)
+  // ============================================
+
+  /**
+   * "Try one question" - Lightweight single question, no dashboard, no scores
+   * Just: question → answer → short explanation → encouragement
+   * Does NOT increment session count (still momentum phase)
+   */
+  const handleTryOneQuestion = useCallback(() => {
+    if (!onSendMessage) return;
+
+    // Get the topic from the flashcards for context
+    const topic = parsedFlashcardData?.[0]?.topic || 'the content you just learned';
+
+    // Generate a single, lightweight question - hidden from user, no dashboard
+    const singleQuestionPrompt = `Generate exactly 1 simple multiple choice question about: ${topic}.
+Keep it easy and encouraging. This is just to help apply what was just learned.
+No scoring, no performance tracking - just a gentle check.`;
+
+    console.log('🎯 Triggering single question for momentum:', topic);
+
+    // Send hidden prompt to generate one question
+    onSendMessage(null, singleQuestionPrompt, { hideUserMessage: true, isSingleQuestion: true });
+
+    // Hide the quick win screen
+    setShowFlashcardResults(false);
+  }, [onSendMessage, parsedFlashcardData]);
+
+  /**
+   * "Save & continue later" - Gentle exit, preserves progress
+   * Shows saving progress flow, gets supportive GPT-nano message
+   * Does NOT increment session count, does NOT reset progress
+   */
+  const handleSaveLater = useCallback(() => {
+    console.log('💾 Save & continue later - preserving progress');
+
+    // Hide the results screen
+    setShowFlashcardResults(false);
+
+    // Trigger save & exit flow with GPT-nano supportive message
+    if (onSendMessage) {
+      const exitPrompt = `Role: Supportive study coach.
+Task: Write ONE short reassuring sentence for a user who chose to save and continue later.
+Rules:
+- Max 12 words
+- Calm, encouraging
+- No pressure, no urgency
+- Just output the sentence, nothing else`;
+      onSendMessage(null, exitPrompt, {
+        hideUserMessage: true,
+        suppressSuggestions: true,
+        isSaveExitFlow: true
+      });
+    }
+  }, [onSendMessage]);
 
   // Intersection observer for sticky bar
   useEffect(() => {
@@ -639,56 +709,168 @@ const ChatMessage = ({
           </div>
         )}
 
+        {/* Save & Exit Flow - Progress saved message with Resume button */}
+        {isAI && message.type === "save_exit" && (
+          <div className="message-text">
+            <p className="save-exit-message">{message.content}</p>
+            {message.saveState === 'complete' && (
+              <button
+                className="save-exit-resume-btn"
+                onClick={() => {
+                  // Minimal resume: subtle reassurance + focus input
+                  // Do NOT increment session - resume ≠ effort
+
+                  // Show subtle inline feedback
+                  const btn = document.querySelector('.save-exit-resume-btn');
+                  if (btn) {
+                    btn.textContent = 'Picking up where you left off.';
+                    btn.disabled = true;
+                    btn.style.opacity = '0.7';
+                  }
+
+                  // Scroll to and focus the input
+                  setTimeout(() => {
+                    const input = document.querySelector('.chat-input-field, .chat-input textarea, input[type="text"]');
+                    if (input) {
+                      input.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                      input.focus();
+                    }
+                  }, 300);
+                }}
+              >
+                Resume learning
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* Micro-Rationale Display - Simple text feedback after quiz answer with CTA */}
+        {isAI && message.type === "micro_rationale" && (
+          <div className="message-text">
+            <p>{message.encouragement}</p>
+            <div className="micro-rationale-cta">
+              <button
+                className="micro-rationale-cta-primary"
+                onClick={() => {
+                  if (onSendMessage) {
+                    const topic = message.topic || 'the material';
+                    const prompt = `Generate exactly 1 simple multiple choice question about: ${topic}.
+Keep it easy and encouraging. This is just to help apply what was just learned.
+No scoring, no performance tracking - just a gentle check.`;
+                    onSendMessage(null, prompt, { hideUserMessage: true, isSingleQuestion: true });
+                  }
+                }}
+              >
+                Try one more question (2 min)
+              </button>
+              <button
+                className="micro-rationale-cta-secondary"
+                onClick={() => {
+                  // Request a supportive exit message from GPT-nano with save flow
+                  if (onSendMessage) {
+                    const exitPrompt = `Role: Supportive study coach.
+Task: Write ONE short reassuring sentence for a user who chose to save and continue later.
+Rules:
+- Max 12 words
+- Calm, encouraging
+- No pressure, no urgency
+- Just output the sentence, nothing else`;
+                    onSendMessage(null, exitPrompt, {
+                      hideUserMessage: true,
+                      suppressSuggestions: true,
+                      isSaveExitFlow: true
+                    });
+                  }
+                }}
+              >
+                Save & continue later
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Quiz Display - Single Question Navigation */}
         {isAI && Array.isArray(parsedQuizData) && parsedQuizData.length > 0 && (
           <div className="message-text">
+            {/* Debug logging */}
+            {console.log('🎯 Quiz message isSingleQuestion:', message.isSingleQuestion, 'messageId:', message.id)}
+
             {/* Streaming Indicator - Above quiz */}
             {message.isStreaming && !showResults && (
               <StreamingIndicator type="quiz" />
             )}
 
-            {/* Quiz Content - Conditional Rendering */}
-            <div className="quiz-single-view-container">
-              {showResults ? (
-                /* Results Screen */
-                <QuizResultsAnalytics
-                  quizData={parsedQuizData}
-                  totalQuestions={parsedQuizData.length}
-                  correctAnswers={quizStreak.totalCorrect}
-                  incorrectAnswers={quizStreak.totalIncorrect}
-                  longestStreak={quizStreak.longest}
-                  onStartTargetedPractice={handleStartTargetedPractice}
-                  onReview={handleReviewQuiz}
-                  messageId={message.id}
-                />
-              ) : isWaitingForQuestion ? (
-                /* Loading State - Waiting for next question */
-                <QuizLoading />
-              ) : currentQuestion ? (
-                /* Current Question */
-                <ChatQuiz
-                  quiz={currentQuestion}
-                  messageId={message.id}
-                  quizIndex={currentQuestionIndex}
-                  onAnswerSelect={handleQuizAnswerSelect}
-                  onNext={handleNextQuestion}
-                  onSkip={handleSkipQuestion}
-                  isLastQuestion={isLastQuestion && !message.isStreaming}
-                  totalQuestions={parsedQuizData.length}
-                  modalOpen={quizModalOpen}
-                  onModalChange={setQuizModalOpen}
-                  allQuizzes={parsedQuizData}
-                  onNavigate={setCurrentQuestionIndex}
-                  skippedQuestions={skippedQuestions}
-                  showReview={isReviewing}
-                  onFeedbackSubmit={onFeedbackSubmit}
-                  feedbackData={message.feedbackData}
-                />
-              ) : (
-                /* Initial loading state */
-                <QuizLoading />
-              )}
-            </div>
+            {/* Single Question Mode - Lightweight quiz for momentum phase */}
+            {message.isSingleQuestion ? (
+              <div className="single-question-container">
+                {message.isStreaming ? (
+                  <QuizLoading />
+                ) : parsedQuizData[0] ? (
+                  <SingleQuestionCard
+                    question={parsedQuizData[0]}
+                    messageId={message.id}
+                    onAnswerSelect={(answerData) => {
+                      console.log('🎯 Single question answered:', answerData);
+                      // Pass to parent for micro-rationale in chat
+                      if (onQuizAnswerSelect) {
+                        onQuizAnswerSelect({
+                          ...answerData,
+                          messageId: message.id,
+                          quizIndex: 0, // Single question is always index 0
+                          isSingleQuestion: true,
+                          answeredAt: new Date().toISOString()
+                        });
+                      }
+                    }}
+                  />
+                ) : (
+                  <QuizLoading />
+                )}
+              </div>
+            ) : (
+              /* Full Quiz Content - Conditional Rendering */
+              <div className="quiz-single-view-container">
+                {showResults ? (
+                  /* Results Screen */
+                  <QuizResultsAnalytics
+                    quizData={parsedQuizData}
+                    totalQuestions={parsedQuizData.length}
+                    correctAnswers={quizStreak.totalCorrect}
+                    incorrectAnswers={quizStreak.totalIncorrect}
+                    longestStreak={quizStreak.longest}
+                    onStartTargetedPractice={handleStartTargetedPractice}
+                    onReview={handleReviewQuiz}
+                    messageId={message.id}
+                  />
+                ) : isWaitingForQuestion ? (
+                  /* Loading State - Waiting for next question */
+                  <QuizLoading />
+                ) : currentQuestion ? (
+                  /* Current Question */
+                  <ChatQuiz
+                    quiz={currentQuestion}
+                    messageId={message.id}
+                    quizIndex={currentQuestionIndex}
+                    onAnswerSelect={handleQuizAnswerSelect}
+                    onNext={handleNextQuestion}
+                    onSkip={handleSkipQuestion}
+                    isLastQuestion={isLastQuestion && !message.isStreaming}
+                    totalQuestions={parsedQuizData.length}
+                    modalOpen={quizModalOpen}
+                    onModalChange={setQuizModalOpen}
+                    allQuizzes={parsedQuizData}
+                    onNavigate={setCurrentQuestionIndex}
+                    skippedQuestions={skippedQuestions}
+                    showReview={isReviewing}
+                    onFeedbackSubmit={onFeedbackSubmit}
+                    feedbackData={message.feedbackData}
+                  />
+                ) : (
+                  /* Initial loading state */
+                  <QuizLoading />
+                )}
+              </div>
+            )}
           </div>
         )}
 
@@ -697,43 +879,69 @@ const ChatMessage = ({
           console.log("🎴 RENDERING FLASHCARDS - Total:", parsedFlashcardData.length);
           console.log("🎴 Current card index:", currentCardIndex);
           console.log("🎴 Show results:", showFlashcardResults);
+          console.log("🎴 isQuickStartSession:", message.isQuickStartSession);
+          console.log("🎴 sessionNumber:", message.sessionNumber);
           return true;
         })() && (
           <div className="message-text">
             <div className="flashcard-view-container">
               {showFlashcardResults ? (
                 <>
-                  {/* Results Screen */}
-                  <FlashcardResults
-                    totalCards={parsedFlashcardData.length}
-                    masteredCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === true).length}
-                    learningCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === false).length}
-                    newCards={parsedFlashcardData.filter(c => !c.userReview).length}
-                    onContinue={handleContinueLearning}
-                    onReview={handleReviewFlashcards}
-                    topicBreakdown={(() => {
-                      // Calculate topic breakdown
-                      const topicMap = {};
-                      parsedFlashcardData.forEach(card => {
-                        const topic = card.topic || 'General';
-                        if (!topicMap[topic]) {
-                          topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
-                        }
-                        topicMap[topic].total++;
-                        if (card.userReview?.knowIt === true) topicMap[topic].mastered++;
-                        else if (card.userReview?.knowIt === false) topicMap[topic].learning++;
-                      });
-                      return Object.values(topicMap);
-                    })()}
-                  />
-
-                  {/* Feedback (matches design under flashcard view) */}
-                  <div className="flashcard-results-feedback">
-                    <FlashcardFeedback
-                      onFeedbackSubmit={(data) => onFeedbackSubmit && onFeedbackSubmit(message.id, data)}
-                      hasSubmitted={!!message.feedbackData}
+                  {/* Quick Win Screen for momentum sessions OR Full Results for regular sessions */}
+                  {/* Show QuickWin when sessionNumber is defined (meaning it's a momentum session from orientation) */}
+                  {(() => {
+                    // sessionNumber is set for quick-start momentum sessions (0, 1, 2, etc.)
+                    // null/undefined means it's a regular flashcard request from user
+                    const isQuickWin = message.isQuickStartSession ||
+                      (typeof message.sessionNumber === 'number');
+                    console.log("🎯 QuickWin check:", {
+                      isQuickStartSession: message.isQuickStartSession,
+                      sessionNumber: message.sessionNumber,
+                      typeofSessionNumber: typeof message.sessionNumber,
+                      isQuickWin
+                    });
+                    return isQuickWin;
+                  })() ? (
+                    <QuickWinComplete
+                      onTryQuestion={handleTryOneQuestion}
+                      onSaveLater={handleSaveLater}
+                      topic={parsedFlashcardData[0]?.topic}
                     />
-                  </div>
+                  ) : (
+                    <>
+                      {/* Results Screen */}
+                      <FlashcardResults
+                        totalCards={parsedFlashcardData.length}
+                        masteredCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === true).length}
+                        learningCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === false).length}
+                        newCards={parsedFlashcardData.filter(c => !c.userReview).length}
+                        onContinue={handleContinueLearning}
+                        onReview={handleReviewFlashcards}
+                        topicBreakdown={(() => {
+                          // Calculate topic breakdown
+                          const topicMap = {};
+                          parsedFlashcardData.forEach(card => {
+                            const topic = card.topic || 'General';
+                            if (!topicMap[topic]) {
+                              topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
+                            }
+                            topicMap[topic].total++;
+                            if (card.userReview?.knowIt === true) topicMap[topic].mastered++;
+                            else if (card.userReview?.knowIt === false) topicMap[topic].learning++;
+                          });
+                          return Object.values(topicMap);
+                        })()}
+                      />
+
+                      {/* Feedback (matches design under flashcard view) */}
+                      <div className="flashcard-results-feedback">
+                        <FlashcardFeedback
+                          onFeedbackSubmit={(data) => onFeedbackSubmit && onFeedbackSubmit(message.id, data)}
+                          hasSubmitted={!!message.feedbackData}
+                        />
+                      </div>
+                    </>
+                  )}
                 </>
               ) : parsedFlashcardData[currentCardIndex] ? (
                 /* Current Flashcard */
@@ -783,7 +991,7 @@ const ChatMessage = ({
         )}
 
         {/* Regular Text Message */}
-        {!parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
+        {!parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && message.type !== "micro_rationale" && message.type !== "save_exit" && (
           <div className={isAI ? "message-text" : ""}>
             {isUser ? (
               <div style={{ wordWrap: 'break-word' }}>

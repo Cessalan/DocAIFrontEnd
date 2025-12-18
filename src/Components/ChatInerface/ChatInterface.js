@@ -45,7 +45,9 @@ import {
   UpdateQuizAnswer,
   UpdateFlashcardReview,
   SaveQuizFeedback,
-  DeleteMessage
+  DeleteMessage,
+  IncrementCompletedSessions,
+  GetCompletedSessions
 } from '../../Services/FireBaseServiceChats.js';
 
 import { loadFilesForChat, saveAudioToStorage } from '../../Services/FireBaseFiles.js';
@@ -65,6 +67,7 @@ import {
   ask_llm_websocket,
   closeWebSocketConnection,
   cancelWebSocketStream,
+  requestMicroRationale,
 } from '../../Services/WebSocketManager.js';
 
 // Styles
@@ -93,6 +96,9 @@ import ExamCountdown from '../Common/ExamCountdown';
 
 // Mindmap
 import ChatMindmap from './ChatMindmap';
+
+// Orientation Flow (post-upload guided experience)
+import OrientationFlow from './OrientationFlow';
 
 /**
  * ChatInterface Component - A messenger-like interface for AI chat
@@ -131,6 +137,8 @@ const ChatInterface = ({
   const [isChatDataLoaded, setIsChatDataLoaded] = useState(!chatId); // True if no chatId (new chat) or after chat doc is fetched
   const [userInputText, setUserInputText] = useState('');
   const [uploadedFilesList, setUploadedFilesList] = useState([]);
+  // Track completed study sessions for momentum-based UX
+  const [completedSessions, setCompletedSessions] = useState(0);
 
   // Check for pending quiz prompt from signup flow
   useEffect(() => {
@@ -206,6 +214,10 @@ const ChatInterface = ({
   const [showQuizModeSelector, setShowQuizModeSelector] = useState(false);
   const [pendingQuizMessageData, setPendingQuizMessageData] = useState(null);
 
+  // Orientation flow state (post-upload guided experience)
+  const [showOrientationFlow, setShowOrientationFlow] = useState(false);
+  const [orientationData, setOrientationData] = useState(null); // { topics, filenames, actions }
+
   /**
  * activeQuizProgress structure:
  * {
@@ -254,6 +266,8 @@ const ChatInterface = ({
   const documentFileInputRef = useRef(null);
   const textareaRef = useRef(null); // Premium textarea ref for auto-resize
   const isQuizGeneratingRef = useRef(false);
+  // Track if current flashcard session is a quick-start (momentum) session
+  const isQuickStartSessionRef = useRef(false);
   // in case the user answers quiz while its being loaded and streamed
   const pendingQuizAnswersRef = useRef({});
   // Track which questions have been submitted (prevent double-submit)
@@ -576,10 +590,14 @@ const ChatInterface = ({
         } else {
           setCurrentExamData(null);
         }
+        // Load completed sessions count for momentum-based UX
+        setCompletedSessions(chatData.completedSessions || 0);
+        console.log('📊 Loaded completed sessions:', chatData.completedSessions || 0);
       } else {
         setIsGameChat(false);
         setGameState(null);
         setCurrentExamData(null);
+        setCompletedSessions(0);
       }
       // Mark chat data as loaded - now safe to render empty states
       setIsChatDataLoaded(true);
@@ -605,9 +623,31 @@ const ChatInterface = ({
 
       // Preserve local-only messages that shouldn't be overwritten by Firebase
       setChatMessages(prev => {
+        // Create a map of local UI-only flags to preserve (not stored in Firebase)
+        const localUIFlags = {};
+        prev.forEach(msg => {
+          const flags = {};
+          if (msg.isQuickStartSession !== undefined) {
+            flags.isQuickStartSession = msg.isQuickStartSession;
+          }
+          if (msg.isSingleQuestion !== undefined) {
+            flags.isSingleQuestion = msg.isSingleQuestion;
+          }
+          if (Object.keys(flags).length > 0) {
+            localUIFlags[msg.id] = flags;
+          }
+        });
+
+        // Merge local UI flags back into loaded messages
+        const mergedMessages = loadedMessages.map(msg => {
+          if (localUIFlags[msg.id]) {
+            return { ...msg, ...localUIFlags[msg.id] };
+          }
+          return msg;
+        });
         // Local messages to preserve (not in Firebase)
         const localOnlyMessages = prev.filter(msg => {
-          const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
+          const notInFirebase = !mergedMessages.some(fbMsg => fbMsg.id === msg.id);
 
           // Keep: active uploads, streaming messages, pending post-upload actions, pending flashcards/quizzes/mindmaps
           // NOTE: post_upload_actions should only be preserved if NOT YET in Firebase
@@ -626,11 +666,11 @@ const ChatInterface = ({
         });
 
         if (localOnlyMessages.length === 0) {
-          return loadedMessages;
+          return mergedMessages;
         }
 
         // Filter Firebase messages to avoid duplicates
-        const firebaseFiltered = loadedMessages.filter(msg =>
+        const firebaseFiltered = mergedMessages.filter(msg =>
           !localOnlyMessages.some(local => local.id === msg.id) &&
           msg.type !== 'upload_loading' // Use local version for upload_loading
         );
@@ -716,7 +756,19 @@ const ChatInterface = ({
   // ============================================
 
   const handleSendNewUserMessage = async (e = null, customPrompt = null, options = {}) => {
-    const { hideUserMessage = false } = options;
+    const { hideUserMessage = false, isQuickStartSession = false, isSingleQuestion = false, suppressSuggestions = false, isSaveExitFlow = false } = options;
+
+    // Track if this is a single question for momentum phase
+    const isSingleQuestionRef = { current: isSingleQuestion };
+
+    // Track if suggestions should be suppressed for this message
+    const suppressSuggestionsRef = { current: suppressSuggestions };
+
+    // Track if this is a save & exit flow
+    const isSaveExitFlowRef = { current: isSaveExitFlow };
+
+    // Track if this is a quick-start flashcard session (for momentum screen)
+    isQuickStartSessionRef.current = isQuickStartSession;
 
     // Check if e is actually an event object (has preventDefault method)
     if (e && typeof e.preventDefault === 'function') {
@@ -744,20 +796,45 @@ const ChatInterface = ({
     };
 
     const streamingMessageId = `streaming-${Date.now()}`;
-    const placeholderMessage = {
-      id: streamingMessageId,
-      role: 'assistant',
-      content: '',
-      isStreaming: true,
-      timestamp: new Date()
-    };
 
-    // Add user message AND streaming placeholder immediately (optimistic UI)
-    // If hideUserMessage is true, only add the placeholder
-    setChatMessages(prev => hideUserMessage
-      ? [...prev, placeholderMessage]
-      : [...prev, newUserMessage, placeholderMessage]
-    );
+    // Special handling for save & exit flow - show saving progress
+    if (isSaveExitFlow) {
+      const saveExitMessage = {
+        id: streamingMessageId,
+        role: 'assistant',
+        type: 'save_exit',
+        content: 'Saving your progress…',
+        saveState: 'saving', // saving -> saved -> complete
+        isStreaming: true,
+        timestamp: new Date()
+      };
+
+      setChatMessages(prev => [...prev, saveExitMessage]);
+
+      // After 300ms, show "Progress saved." placeholder
+      setTimeout(() => {
+        setChatMessages(prev => prev.map(msg =>
+          msg.id === streamingMessageId
+            ? { ...msg, content: 'Progress saved.', saveState: 'saved' }
+            : msg
+        ));
+      }, 300);
+    } else {
+      const placeholderMessage = {
+        id: streamingMessageId,
+        role: 'assistant',
+        content: '',
+        isStreaming: true,
+        timestamp: new Date()
+      };
+
+      // Add user message AND streaming placeholder immediately (optimistic UI)
+      // If hideUserMessage is true, only add the placeholder
+      setChatMessages(prev => hideUserMessage
+        ? [...prev, placeholderMessage]
+        : [...prev, newUserMessage, placeholderMessage]
+      );
+    }
 
     // Scroll user message to top of viewport (ChatGPT style)
     setTimeout(() => {
@@ -771,9 +848,13 @@ const ChatInterface = ({
     }, 100);
 
     // Save to Firebase (non-blocking for UI)
-    const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
-    if (updatedChatId && updatedChatId !== currentChatID) {
-      setChatId(updatedChatId);
+    // Don't save hidden messages (like auto-generated prompts) to Firebase
+    let updatedChatId = currentChatID;
+    if (!hideUserMessage) {
+      updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+      if (updatedChatId && updatedChatId !== currentChatID) {
+        setChatId(updatedChatId);
+      }
     }
 
     let fullResponse = "";
@@ -868,6 +949,7 @@ const ChatInterface = ({
           // Quiz generation progress
           if (statusUpdate.status === "quiz_generating") {
             console.log("generating quiz streaming");
+            console.log("🎯 isSingleQuestionRef.current:", isSingleQuestionRef.current);
             isQuizGeneratingRef.current = true;
 
             // If empathetic message exists, create a SECOND bubble for quiz
@@ -889,6 +971,7 @@ const ChatInterface = ({
                   );
                 }
 
+                console.log("🎯 Creating quiz bubble with isSingleQuestion:", isSingleQuestionRef.current);
                 // Create NEW quiz bubble (second bubble after empathetic message)
                 return [...prev, {
                   id: quizMessageId,
@@ -897,11 +980,13 @@ const ChatInterface = ({
                   content: statusUpdate.message,
                   quizData: [],
                   isStreaming: true,
+                  isSingleQuestion: isSingleQuestionRef.current, // Flag for lightweight single question
                   timestamp: new Date()
                 }];
               });
             } else {
               // No empathetic message - transform the existing placeholder into quiz message
+              console.log("🎯 Transforming placeholder with isSingleQuestion:", isSingleQuestionRef.current);
               setChatMessages(prev => {
                 return prev.map(msg =>
                   msg.id === streamingMessageId
@@ -910,7 +995,8 @@ const ChatInterface = ({
                       type: 'quiz',
                       content: statusUpdate.message,
                       quizData: [],
-                      isStreaming: true
+                      isStreaming: true,
+                      isSingleQuestion: isSingleQuestionRef.current // Flag for lightweight single question
                     }
                     : msg
                 );
@@ -958,7 +1044,7 @@ const ChatInterface = ({
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
 
-            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId);
+            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, isSingleQuestionRef.current);
             setStreamingStatus(null);
             return;
           }
@@ -967,6 +1053,7 @@ const ChatInterface = ({
           // Flashcard generation progress
           if (statusUpdate.status === "flashcard_generating") {
             console.log("📇 Flashcard generation streaming started");
+            console.log("📇 isQuickStartSession:", isQuickStartSessionRef.current);
             isQuizGeneratingRef.current = true;
 
             const localizedFlashcardMsg = t('loading.generatingFlashcards', 'Generating flashcards...');
@@ -981,6 +1068,7 @@ const ChatInterface = ({
                     content: localizedFlashcardMsg,
                     flashcardData: [],
                     isStreaming: true,
+                    isQuickStartSession: isQuickStartSessionRef.current, // Flag for momentum screen
                     timestamp: msg.timestamp || new Date()
                   };
                 }
@@ -1029,6 +1117,11 @@ const ChatInterface = ({
 
           // Prompts suggestions
           if (statusUpdate.status === "suggested_prompts" && statusUpdate.suggestions) {
+            // Skip suggestions if suppressed (e.g., for exit messages)
+            if (suppressSuggestionsRef.current) {
+              console.log("💡 Suggestions suppressed for this message");
+              return;
+            }
             console.log("💡 Received suggestions:", statusUpdate.suggestions);
             setSuggestedPrompts(statusUpdate.suggestions);
             return;
@@ -1371,6 +1464,17 @@ const ChatInterface = ({
                 console.log('   - Previous content length:', msg.content?.length || 0);
                 console.log('   - New content length:', fullResponse.length);
                 console.log('   - isStreaming: true');
+                console.log('   - isSaveExitFlow:', isSaveExitFlowRef.current);
+
+                // For save_exit flow, update content and mark as complete when response arrives
+                if (msg.type === 'save_exit') {
+                  return {
+                    ...msg,
+                    content: fullResponse,
+                    saveState: 'complete',
+                    isStreaming: true
+                  };
+                }
                 return { ...msg, content: fullResponse, isStreaming: true };
               }
               return msg;
@@ -1401,7 +1505,12 @@ const ChatInterface = ({
             role: "assistant",
             content: fullResponse,
             timestamp: new Date(),
-            isStreaming: false
+            isStreaming: false,
+            // Preserve save_exit type if this was a save & exit flow
+            ...(isSaveExitFlowRef.current && {
+              type: 'save_exit',
+              saveState: 'complete'
+            })
           };
 
           console.log('💾 Saving final message with ID:', streamingMessageId);
@@ -1410,7 +1519,9 @@ const ChatInterface = ({
           console.log('🔄 Updating streaming message to final (isStreaming: false)');
           setChatMessages(prev =>
             prev.map(msg =>
-              msg.id === streamingMessageId ? finalMessage : msg
+              msg.id === streamingMessageId
+                ? { ...msg, ...finalMessage }
+                : msg
             )
           );
 
@@ -1653,6 +1764,56 @@ const ChatInterface = ({
         return; // Don't save to Firebase yet
       }
 
+      // ✅ Handle SingleQuestionCard answers (different field names)
+      if (answerData.isSingleQuestion) {
+        console.log("  🎯 Single question mode - requesting micro-rationale...");
+
+        // Save single question answer to Firebase
+        await UpdateQuizAnswer(
+          currentChatID,
+          answerData.messageId,
+          answerData.question,
+          {
+            ...answerData,
+            questionText: answerData.question,
+            selectedOptionText: answerData.selectedAnswer,
+            correctAnswerText: answerData.correctAnswer
+          }
+        );
+
+        requestMicroRationale(
+          currentChatID,
+          {
+            question: answerData.question,
+            correctAnswer: answerData.correctAnswer,
+            selectedAnswer: answerData.selectedAnswer,
+            isCorrect: answerData.isCorrect,
+            topic: answerData.topic,
+            originalRationale: answerData.originalRationale
+          },
+          currentLanguage,
+          (rationale) => {
+            console.log("  📝 Micro-rationale received:", rationale);
+
+            const rationaleMessage = {
+              id: `rationale-${Date.now()}`,
+              role: 'assistant',
+              type: 'micro_rationale',
+              content: rationale.rationale,
+              encouragement: rationale.encouragement,
+              isCorrect: answerData.isCorrect,
+              topic: answerData.topic,
+              timestamp: new Date()
+            };
+
+            setChatMessages(prev => [...prev, rationaleMessage]);
+          }
+        );
+
+        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        return;
+      }
+
       // ✅ If NOT streaming, save immediately to Firebase
       console.log("  💾 Quiz is finalized - saving to Firebase immediately");
       await UpdateQuizAnswer(
@@ -1663,6 +1824,39 @@ const ChatInterface = ({
       );
 
       console.log("  ✅ Saved to Firebase successfully");
+
+      // ✅ Request micro-rationale and display as chat message
+      console.log("  🎯 Requesting micro-rationale...");
+      requestMicroRationale(
+        currentChatID,
+        {
+          question: answerData.questionText,
+          correctAnswer: answerData.correctAnswerText,
+          selectedAnswer: answerData.selectedOptionText,
+          isCorrect: answerData.isCorrect,
+          topic: answerData.topic,
+          originalRationale: answerData.justification
+        },
+        currentLanguage,
+        (rationale) => {
+          console.log("  📝 Micro-rationale received:", rationale);
+
+          // Add rationale as a new chat message
+          const rationaleMessage = {
+            id: `rationale-${Date.now()}`,
+            role: 'assistant',
+            type: 'micro_rationale',
+            content: rationale.rationale,
+            encouragement: rationale.encouragement,
+            isCorrect: answerData.isCorrect,
+            topic: answerData.topic,
+            timestamp: new Date()
+          };
+
+          setChatMessages(prev => [...prev, rationaleMessage]);
+        }
+      );
+
       console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     } catch (error) {
@@ -1714,9 +1908,10 @@ const ChatInterface = ({
     }
   }, [activeQuizId]); // Important: Add activeQuizId to dependencies
 
-  const handleQuizComplete = async (quizData, messageId, chatId) => {
+  const handleQuizComplete = async (quizData, messageId, chatId, isSingleQuestion = false) => {
     console.log("✅ Quiz complete, finalizing message");
     console.log("Backend sent", quizData?.length, "questions");
+    console.log("🎯 isSingleQuestion:", isSingleQuestion);
     setStreamingStatus(null);
 
     // ✅ Get pending answers from ref FIRST
@@ -1789,7 +1984,8 @@ const ChatInterface = ({
       quizData: mergedQuizData,
       content: currentLanguage === 'fr' ? `Votre quiz (${quizData.length} questions)` : `Your quiz (${quizData.length} questions)`,
       isStreaming: false,
-      timestamp: new Date()
+      timestamp: new Date(),
+      ...(isSingleQuestion && { isSingleQuestion: true }) // Preserve flag for single question mode
     };
 
     console.log("🔍 DEBUG - messageToSave.quizData:", messageToSave.quizData);
@@ -1830,7 +2026,16 @@ const ChatInterface = ({
   const handleFlashcardComplete = async (flashcardData, messageId, chatId) => {
     console.log("✅ Flashcards complete, finalizing message");
     console.log("📦 Backend sent", flashcardData?.length, "flashcards");
+    console.log("📇 isQuickStartSession at complete:", isQuickStartSessionRef.current);
     setStreamingStatus(null);
+
+    // Capture the quick start session flag before resetting
+    const wasQuickStartSession = isQuickStartSessionRef.current;
+
+    // Determine the session number for this flashcard set
+    // Session 0 = first quick-start (momentum), Session 1+ = subsequent sessions
+    const sessionNumber = wasQuickStartSession ? completedSessions : null;
+    console.log("📊 Session number for this flashcard set:", sessionNumber);
 
     // Initialize flashcard data with status (same as quiz initializes with answers)
     const initializedFlashcards = flashcardData.map(card => ({
@@ -1843,6 +2048,7 @@ const ChatInterface = ({
     console.log("🎴 Initialized flashcards:", initializedFlashcards);
 
     // ✅ Update UI state (EXACTLY like handleQuizComplete)
+    // Store sessionNumber for momentum-based UX decisions
     setChatMessages(prev =>
       prev.map(msg => {
         if (msg.id === messageId && msg.type === 'flashcard') {
@@ -1851,6 +2057,8 @@ const ChatInterface = ({
             flashcardData: initializedFlashcards,
             content: `Flashcards - ${flashcardData.length} cards`,
             isStreaming: false,
+            isQuickStartSession: wasQuickStartSession, // For backward compat
+            sessionNumber: sessionNumber, // Which session this is (0 = first momentum)
             timestamp: new Date()
           };
         }
@@ -1858,12 +2066,16 @@ const ChatInterface = ({
       })
     );
 
+    // Reset the ref for future flashcard sessions
+    isQuickStartSessionRef.current = false;
+
     // ✅ Save to Firebase with retry (EXACTLY like handleQuizComplete)
     console.log("💾 Saving to Firebase:",
       flashcardData.length,
       "flashcards"
     );
 
+    // Save sessionNumber to Firebase so we can track progress
     const messageToSave = {
       id: messageId,
       role: 'assistant',
@@ -1871,6 +2083,7 @@ const ChatInterface = ({
       flashcardData: initializedFlashcards,
       content: `Flashcards - ${flashcardData.length} cards`,
       isStreaming: false,
+      sessionNumber: sessionNumber, // Track which session this was
       timestamp: new Date()
     };
 
@@ -2458,69 +2671,132 @@ const ChatInterface = ({
       case 'post_upload_message':
         console.log('📬 Post-upload message received:', update);
 
-        // Create a new assistant message with the friendly text + actions
-        const postUploadMsgId = `post-upload-${Date.now()}`;
-        const postUploadMsg = {
-          id: postUploadMsgId,
-          role: 'assistant',
-          type: 'post_upload_actions',
-          content: update.message,
+        // Store the data for orientation flow and post-upload actions
+        const postUploadData = {
+          id: `post-upload-${Date.now()}`,
+          message: update.message,
           topics: update.topics || [],
+          insights: update.insights || [],  // Educational insights from backend
           filenames: update.filenames || [],
-          actions: update.actions || [],
-          showActions: true,
-          timestamp: Date.now()
+          actions: update.actions || []
         };
 
-        // Add to chat messages - prevent duplicates by checking if one with same files already exists
-        setChatMessages(prev => {
-          // Check if a post_upload_actions message with the SAME filenames already exists
-          // This prevents duplicate messages for the same upload batch, but allows
-          // multiple uploads to each have their own post-upload message
-          const filenamesKey = (update.filenames || []).sort().join('|');
-          const alreadyExists = prev.some(msg => {
-            if (msg.type !== 'post_upload_actions') return false;
-            const msgFilenamesKey = (msg.filenames || []).sort().join('|');
-            return msgFilenamesKey === filenamesKey;
-          });
-          if (alreadyExists) {
-            console.log('⚠️ Post-upload message for these files already exists, skipping duplicate');
-            return prev;
-          }
-          return [...prev, postUploadMsg];
+        // Check if this upload batch already has a post-upload message
+        const filenamesKeyCheck = (update.filenames || []).sort().join('|');
+        const alreadyHasPostUpload = chatMessages.some(msg => {
+          if (msg.type !== 'post_upload_actions') return false;
+          const msgFilenamesKey = (msg.filenames || []).sort().join('|');
+          return msgFilenamesKey === filenamesKeyCheck;
         });
 
-        // Save to Firebase AFTER LoadingMessageBox has been saved
-        // This ensures correct ordering via serverTimestamp
-        const postUploadForFirebase = {
-          id: postUploadMsgId,
-          role: 'assistant',
-          type: 'post_upload_actions',
-          content: update.message,
-          topics: update.topics || [],
-          filenames: update.filenames || [],
-          actions: update.actions || [],
-          showActions: true
-        };
+        if (alreadyHasPostUpload) {
+          console.log('⚠️ Post-upload message for these files already exists, skipping');
+          break;
+        }
 
-        // Wait for LoadingMessageBox to be saved first, then save post-upload
-        const savePostUpload = async () => {
-          // Wait for LoadingMessageBox save to complete (if exists)
-          if (window._loadingMessageSavePromise) {
-            await window._loadingMessageSavePromise;
-            window._loadingMessageSavePromise = null;
-          }
-          // Small delay to ensure serverTimestamp ordering
-          await new Promise(resolve => setTimeout(resolve, 100));
-          await AppendToChat(chatId, postUploadForFirebase);
-          console.log('✅ Post-upload actions saved to Firebase');
-        };
-
-        savePostUpload().catch(err => console.error('❌ Failed to save post-upload actions:', err));
-
-        console.log('✅ Post-upload message added to chat');
+        // Show orientation flow if we have topics
+        if (postUploadData.topics.length > 0) {
+          console.log('🎓 Showing orientation flow with topics:', postUploadData.topics);
+          setOrientationData(postUploadData);
+          setShowOrientationFlow(true);
+        } else {
+          // No topics - skip orientation, show post-upload actions directly
+          console.log('📋 No topics found, showing post-upload actions directly');
+          addPostUploadMessage(postUploadData);
+        }
         break;
     }
+  };
+
+  // ============================================
+  // POST-UPLOAD MESSAGE HELPER
+  // ============================================
+  // Creates and saves the post-upload actions message
+  const addPostUploadMessage = async (data) => {
+    const postUploadMsgId = data.id || `post-upload-${Date.now()}`;
+    const postUploadMsg = {
+      id: postUploadMsgId,
+      role: 'assistant',
+      type: 'post_upload_actions',
+      content: data.message,
+      topics: data.topics || [],
+      filenames: data.filenames || [],
+      actions: data.actions || [],
+      showActions: true,
+      timestamp: Date.now()
+    };
+
+    // Add to chat messages
+    setChatMessages(prev => [...prev, postUploadMsg]);
+
+    // Save to Firebase
+    const postUploadForFirebase = {
+      id: postUploadMsgId,
+      role: 'assistant',
+      type: 'post_upload_actions',
+      content: data.message,
+      topics: data.topics || [],
+      filenames: data.filenames || [],
+      actions: data.actions || [],
+      showActions: true
+    };
+
+    try {
+      // Wait for LoadingMessageBox save to complete (if exists)
+      if (window._loadingMessageSavePromise) {
+        await window._loadingMessageSavePromise;
+        window._loadingMessageSavePromise = null;
+      }
+      // Small delay to ensure serverTimestamp ordering
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await AppendToChat(currentChatID, postUploadForFirebase);
+      console.log('✅ Post-upload actions saved to Firebase');
+    } catch (err) {
+      console.error('❌ Failed to save post-upload actions:', err);
+    }
+  };
+
+  // ============================================
+  // ORIENTATION FLOW HANDLERS
+  // ============================================
+  // Called when user clicks "Continue studying" in orientation
+  const handleOrientationContinue = async () => {
+    console.log('🎓 Orientation complete - user wants to continue');
+    setShowOrientationFlow(false);
+
+    // Instead of showing post-upload actions, generate 2 quick flashcards immediately
+    // This gives the user an instant small win - momentum over mastery
+    if (orientationData) {
+      const topics = orientationData.topics || [];
+      const topicText = topics.length > 0 ? topics.slice(0, 2).join(', ') : 'the uploaded content';
+
+      // Generate just 2 teaching flashcards - extremely small first milestone
+      const quickStartPrompt = `Generate exactly 2 simple teaching flashcards about: ${topicText}.
+Focus on the most fundamental concepts only. Keep it easy and encouraging.`;
+
+      console.log('🚀 Generating quick-start flashcards:', quickStartPrompt);
+
+      // Send the prompt with isQuickStartSession flag
+      // This will show QuickWinComplete instead of full FlashcardResults
+      await handleSendNewUserMessage(null, quickStartPrompt, {
+        hideUserMessage: true,
+        isQuickStartSession: true
+      });
+    }
+
+    setOrientationData(null);
+  };
+
+  // Called when user clicks "Do this later" in orientation
+  const handleOrientationLater = () => {
+    console.log('🎓 Orientation complete - user will do later');
+    setShowOrientationFlow(false);
+
+    // Still add the post-upload actions message (but user chose to defer)
+    if (orientationData) {
+      addPostUploadMessage(orientationData);
+    }
+    setOrientationData(null);
   };
 
   // AI response for batch upload - add this as a new function in your component
@@ -2893,6 +3169,25 @@ const ChatInterface = ({
   }, [currentChatID]);
 
   // ============================================
+  // SESSION COMPLETION HANDLING (Momentum Tracking)
+  // ============================================
+  const handleSessionComplete = useCallback(async (messageId, sessionType = 'flashcard') => {
+    try {
+      console.log("🎯 Session completed:", { messageId, sessionType, currentSessions: completedSessions });
+
+      // Increment the session count in Firebase
+      const newCount = await IncrementCompletedSessions(currentChatID);
+
+      // Update local state
+      setCompletedSessions(newCount);
+
+      console.log("✅ Session count updated:", newCount);
+    } catch (error) {
+      console.error("Failed to track session completion:", error);
+    }
+  }, [currentChatID, completedSessions]);
+
+  // ============================================
   // MESSAGE DELETION HANDLING (DEV MODE)
   // ============================================
   const handleDeleteMessage = useCallback(async (messageId) => {
@@ -3162,6 +3457,20 @@ const ChatInterface = ({
           onSelectMode={handleQuizModeSelect}
           topics={pendingQuizMessageData?.topics || []}
         />
+
+        {/* Orientation Flow - Post-upload guided insight experience */}
+        {showOrientationFlow && orientationData && (
+          <div className="orientation-overlay">
+            <OrientationFlow
+              insights={orientationData.insights}
+              topics={orientationData.topics}
+              filename={orientationData.filenames?.[0]}
+              onContinue={handleOrientationContinue}
+              onLater={handleOrientationLater}
+              onComplete={() => setShowOrientationFlow(false)}
+            />
+          </div>
+        )}
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
         {!hasMessages && isChatDataLoaded && isGameChat && (
@@ -3462,6 +3771,7 @@ const ChatInterface = ({
                       onSendMessage={handleSendNewUserMessage}
                       onDeleteMessage={handleDeleteMessage}
                       viewAllChatsMode={viewAllChatsMode}
+                      onSessionComplete={handleSessionComplete}
                     />
                   </div>
                 );
