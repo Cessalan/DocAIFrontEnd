@@ -10,7 +10,8 @@ import {
   updateNodeStatus,
   completeNodeAndAdvance,
   addAskedHash,
-  saveNodeContent
+  saveNodeContent,
+  getNodeContent
 } from '../../Services/StudySessionService';
 
 import './StudyMode.css';
@@ -99,7 +100,37 @@ const StudyModeContainer = ({
     });
 
     try {
-      // Generate content for this node
+      // ========================================
+      // CHECK FOR SAVED CONTENT FIRST
+      // If node has messageId, retrieve saved content instead of regenerating
+      // ========================================
+      if (node.messageId) {
+        console.log('📬 Node has messageId, checking for saved content:', node.messageId);
+        const savedContent = await getNodeContent(chatId, node.messageId);
+
+        if (savedContent?.studyContent) {
+          console.log('✅ Retrieved saved content, skipping generation');
+          setCurrentContent(savedContent.studyContent);
+
+          // Set mascot back to nurse
+          setMascotState({
+            type: 'nurse',
+            isExcited: false,
+            isSurprised: false,
+            lookDirection: 'down-center'
+          });
+
+          setIsLoadingContent(false);
+          return; // Exit early - no need to generate
+        } else {
+          console.log('⚠️ messageId exists but content not found, will regenerate');
+        }
+      }
+
+      // ========================================
+      // GENERATE NEW CONTENT (no saved content found)
+      // ========================================
+      console.log('🔄 Generating new content for node:', node.id);
       const result = await generate_study_item(
         chatId,
         node.type,

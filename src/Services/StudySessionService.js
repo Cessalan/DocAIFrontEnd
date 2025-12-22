@@ -450,6 +450,49 @@ export const getStudyProgress = async (chatId) => {
 };
 
 /**
+ * Get saved content for a node by its message ID
+ * This prevents regenerating content for nodes the user has already visited.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {string} messageId - Message ID stored on the node
+ * @returns {Promise<Object|null>} - Saved content or null if not found
+ */
+export const getNodeContent = async (chatId, messageId) => {
+  try {
+    if (!messageId) {
+      console.log('📭 No messageId provided, content needs to be generated');
+      return null;
+    }
+
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+    const messageSnap = await getDoc(messageRef);
+
+    if (!messageSnap.exists()) {
+      console.log('📭 Message not found:', messageId);
+      return null;
+    }
+
+    const messageData = messageSnap.data();
+    console.log('📬 Retrieved saved content for message:', messageId);
+
+    // Return the studyContent field (primary content storage)
+    // Also include type-specific fields as fallback
+    return {
+      studyContent: messageData.studyContent,
+      quizData: messageData.quizData,
+      flashcardData: messageData.flashcardData,
+      lessonData: messageData.lessonData,
+      audioData: messageData.audioData,
+      type: messageData.type,
+      nodeId: messageData.nodeId
+    };
+  } catch (error) {
+    console.error('❌ Error retrieving node content:', error);
+    return null;
+  }
+};
+
+/**
  * Save generated content as a message and link it to a node
  * @param {string} chatId - Study session chat ID
  * @param {string} nodeId - Node ID to link the message to
@@ -510,5 +553,6 @@ export default {
   pauseStudySession,
   resumeStudySession,
   getStudyProgress,
+  getNodeContent,
   saveNodeContent
 };

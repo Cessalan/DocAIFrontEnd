@@ -2570,3 +2570,409 @@ body.dark-mode .start-study-doc-name {
     display: none;
   }
 }
+
+/* ============================================
+   STUDY PLAN OVERVIEW V2 - Duolingo Style
+   Bold circular progress rings, type icons
+   ============================================ */
+
+.study-overview-v2 {
+  /* Remove decorative doodles for cleaner look */
+}
+
+.study-overview-v2 .study-overview-doodle {
+  display: none;
+}
+
+/* Header V2 - No numeric progress badge */
+.study-overview-header-v2 {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 24px;
+  padding: 0 8px;
+}
+
+/* Path container V2 */
+.study-overview-path-v2 {
+  position: relative;
+  z-index: 1;
+  flex: 1;
+  padding: 20px 0 120px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.study-path-nodes-v2 {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Individual node V2 */
+.study-path-node-v2 {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+}
+
+.study-path-node-v2:hover:not(.locked) {
+  transform: translateX(var(--hover-offset, 0)) scale(1.05);
+}
+
+.study-path-node-v2.locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+/* Node wrapper - contains ring and inner circle */
+.study-node-wrapper {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Progress ring SVG */
+.study-node-ring {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: rotate(0deg);
+}
+
+.study-node-ring .ring-bg {
+  stroke: rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .study-node-ring .ring-bg {
+  stroke: rgba(255, 255, 255, 0.1);
+}
+
+.study-node-ring .ring-progress {
+  transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.study-node-ring .ring-progress.done {
+  stroke: #2ed573;
+}
+
+.study-node-ring .ring-progress.active {
+  stroke: #e88d7d;
+}
+
+/* Inner circle with icon */
+.study-node-inner {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  z-index: 1;
+}
+
+.study-node-inner svg {
+  width: 32px;
+  height: 32px;
+  transition: all 0.2s ease;
+}
+
+/* Done state */
+.study-path-node-v2.done .study-node-inner {
+  background: linear-gradient(135deg, #2ed573 0%, #26b85f 100%);
+  box-shadow:
+    0 6px 20px rgba(46, 213, 115, 0.4),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+.study-path-node-v2.done .study-node-inner svg {
+  stroke: white;
+  width: 36px;
+  height: 36px;
+}
+
+/* Active state */
+.study-path-node-v2.active .study-node-inner {
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  box-shadow:
+    0 6px 24px rgba(232, 141, 125, 0.5),
+    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+}
+
+.study-path-node-v2.active .study-node-inner svg {
+  fill: white;
+  width: 34px;
+  height: 34px;
+}
+
+/* Locked state */
+.study-path-node-v2.locked .study-node-inner {
+  background: linear-gradient(135deg, #5a5a5a 0%, #4a4a4a 100%);
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.2),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .study-path-node-v2.locked .study-node-inner {
+  background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
+}
+
+.study-path-node-v2.locked .study-node-inner svg {
+  fill: rgba(255, 255, 255, 0.4);
+  width: 28px;
+  height: 28px;
+}
+
+/* Pulse animation for active node */
+.study-node-pulse {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  border: 3px solid #e88d7d;
+  animation: nodeActivePulse 2s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes nodeActivePulse {
+  0% {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1.3);
+    opacity: 0;
+  }
+}
+
+/* START label for active node */
+.study-node-start-label {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: white;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 4px 12px;
+  border-radius: 6px;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  z-index: 5;
+}
+
+.study-node-start-label::after {
+  content: '';
+  position: absolute;
+  bottom: -5px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 6px solid transparent;
+  border-right: 6px solid transparent;
+  border-top: 6px solid #1a1a1a;
+}
+
+/* Connector lines V2 */
+.study-path-connector-v2 {
+  position: absolute;
+  top: -24px;
+  left: 50%;
+  width: 4px;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 2px;
+  transform: translateX(calc(-50% + var(--connector-offset, 0px) / 2));
+}
+
+.study-path-connector-v2.done {
+  background: #2ed573;
+}
+
+.dark-mode .study-path-connector-v2 {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Node label card V2 */
+.study-node-label-v2 {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 180px;
+  padding: 12px 16px;
+  background: rgba(50, 50, 50, 0.95);
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+  z-index: 2;
+}
+
+.study-node-label-v2.right {
+  left: calc(100% + 16px);
+}
+
+.study-node-label-v2.left {
+  right: calc(100% + 16px);
+  text-align: right;
+}
+
+.study-path-node-v2:hover:not(.locked) .study-node-label-v2 {
+  transform: translateY(-50%) scale(1.02);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+}
+
+/* Type badge */
+.node-type-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  margin-bottom: 6px;
+}
+
+.node-type-badge.lesson {
+  background: rgba(232, 141, 125, 0.2);
+  color: #f4a896;
+}
+
+.node-type-badge.quiz {
+  background: rgba(232, 141, 125, 0.2);
+  color: #e88d7d;
+}
+
+.node-type-badge.flashcard {
+  background: rgba(100, 200, 150, 0.2);
+  color: #64c896;
+}
+
+.node-type-badge.audio {
+  background: rgba(150, 130, 220, 0.2);
+  color: #9682dc;
+}
+
+.node-type-badge.mindmap {
+  background: rgba(100, 180, 220, 0.2);
+  color: #64b4dc;
+}
+
+.node-type-badge.review {
+  background: rgba(220, 180, 100, 0.2);
+  color: #dcb464;
+}
+
+.study-path-node-v2.done .node-type-badge {
+  background: rgba(46, 213, 115, 0.2);
+  color: #2ed573;
+}
+
+/* Node title V2 */
+.node-title-v2 {
+  display: block;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+  color: #f0f0f0;
+  line-height: 1.3;
+  font-weight: 600;
+}
+
+.study-path-node-v2.locked .node-title-v2 {
+  color: #888;
+}
+
+/* Locked hint */
+.node-locked-hint {
+  display: block;
+  font-size: 11px;
+  color: #666;
+  margin-top: 4px;
+  font-style: italic;
+}
+
+/* Light mode adjustments */
+.study-overview-v2:not(.dark-mode) .study-node-label-v2 {
+  background: white;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.study-overview-v2:not(.dark-mode) .node-title-v2 {
+  color: #333;
+}
+
+.study-overview-v2:not(.dark-mode) .study-node-ring .ring-bg {
+  stroke: rgba(0, 0, 0, 0.1);
+}
+
+.study-overview-v2:not(.dark-mode) .study-path-connector-v2 {
+  background: rgba(0, 0, 0, 0.15);
+}
+
+/* Responsive V2 */
+@media (max-width: 900px) {
+  .study-node-label-v2 {
+    display: none;
+  }
+
+  .study-path-node-v2:hover:not(.locked)::after {
+    content: attr(data-label);
+    position: absolute;
+    bottom: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    white-space: nowrap;
+    z-index: 10;
+  }
+}
+
+@media (max-width: 600px) {
+  .study-node-wrapper {
+    width: 80px;
+    height: 80px;
+  }
+
+  .study-node-inner {
+    width: 58px;
+    height: 58px;
+  }
+
+  .study-node-inner svg {
+    width: 26px;
+    height: 26px;
+  }
+
+  .study-node-pulse {
+    width: 80px;
+    height: 80px;
+  }
+
+  .study-path-nodes-v2 {
+    gap: 16px;
+  }
+
+  .study-path-connector-v2 {
+    height: 20px;
+    top: -18px;
+  }
+
+  .study-node-start-label {
+    font-size: 10px;
+    padding: 3px 10px;
+  }
+}
