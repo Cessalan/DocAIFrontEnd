@@ -675,3 +675,199 @@ export const speech_to_text = async (audioBlob) => {
     throw error;
   }
 };
+
+// ============================================
+// STUDY SESSION API CALLS
+// ============================================
+
+/**
+ * Plan a study path based on uploaded documents
+ * AI analyzes document complexity and generates appropriate number of nodes
+ *
+ * @param {string} chat_id - Chat ID where documents are uploaded
+ * @param {string[]} upload_ids - IDs of uploads to study from
+ * @param {string} language - Language for content generation
+ * @returns {Promise<Object>} - AI-generated study path
+ *
+ * Expected response:
+ * {
+ *   unitTitle: "Cardiovascular Pharmacology",
+ *   unitSubtitle: "Heart Medications & Mechanisms",
+ *   complexity: "intermediate",
+ *   estimatedMinutes: 30,
+ *   nodes: [
+ *     { type: "lesson", label: "Introduction", difficulty: 1, tags: ["intro"] },
+ *     { type: "flashcard", label: "Key Terms", difficulty: 1, tags: ["vocab"] },
+ *     ...
+ *   ]
+ * }
+ */
+export const plan_study_path = async (chat_id, upload_ids, language = 'en') => {
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    upload_ids: upload_ids,
+    language: language
+  });
+
+  try {
+    console.log("📚 Requesting AI study path plan...");
+
+    const response = await fetch(`${FAST_API_BASE}/study/plan`, {
+      method: "POST",
+      headers: header,
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Study path planning failed: ${response.status} - ${errorText}`);
+    }
+
+    const pathData = await response.json();
+    console.log("✅ Study path planned:", pathData);
+    return pathData;
+
+  } catch (error) {
+    console.error("❌ Error planning study path:", error);
+    throw error;
+  }
+};
+
+/**
+ * Generate a single study item (lesson, flashcard, quiz, or audio config)
+ *
+ * @param {string} chat_id - Study session chat ID
+ * @param {string} node_type - Type of content: 'lesson' | 'flashcard' | 'quiz' | 'audio'
+ * @param {string} node_label - Label/topic for the node
+ * @param {string[]} context_tags - Tags for context
+ * @param {string[]} asked_hashes - Previously asked content hashes (anti-repeat)
+ * @param {string} language - Language for content
+ * @returns {Promise<Object>} - Generated content with hash
+ *
+ * Expected responses by type:
+ *
+ * Quiz:
+ * {
+ *   type: "quiz",
+ *   content: {
+ *     question: "What is...?",
+ *     options: ["A. ...", "B. ...", "C. ...", "D. ..."],
+ *     correctIndex: 1,
+ *     rationale: "Because..."
+ *   },
+ *   hash: "content-hash"
+ * }
+ *
+ * Lesson:
+ * {
+ *   type: "lesson",
+ *   content: {
+ *     title: "Introduction to...",
+ *     body: "Content here (5-8 lines)",
+ *     keyPoints: ["Point 1", "Point 2", "Point 3"]
+ *   },
+ *   hash: "content-hash"
+ * }
+ *
+ * Flashcard:
+ * {
+ *   type: "flashcard",
+ *   content: {
+ *     front: "Question or term",
+ *     back: "Answer or definition"
+ *   },
+ *   hash: "content-hash"
+ * }
+ *
+ * Audio:
+ * {
+ *   type: "audio",
+ *   content: {
+ *     topic: "Topic for audio",
+ *     intent: "teach",
+ *     suggestedDuration: 2
+ *   },
+ *   hash: "content-hash"
+ * }
+ */
+export const generate_study_item = async (
+  chat_id,
+  node_type,
+  node_label,
+  context_tags = [],
+  asked_hashes = [],
+  language = 'en'
+) => {
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    node_type: node_type,
+    node_label: node_label,
+    context_tags: context_tags,
+    asked_hashes: asked_hashes,
+    language: language
+  });
+
+  try {
+    console.log(`📝 Generating study ${node_type}:`, node_label);
+
+    const response = await fetch(`${FAST_API_BASE}/study/generate-item`, {
+      method: "POST",
+      headers: header,
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Study item generation failed: ${response.status} - ${errorText}`);
+    }
+
+    const itemData = await response.json();
+    console.log(`✅ Study ${node_type} generated`);
+    return itemData;
+
+  } catch (error) {
+    console.error(`❌ Error generating study ${node_type}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Submit an answer for a study quiz question
+ *
+ * @param {string} chat_id - Study session chat ID
+ * @param {string} node_id - Node ID of the quiz
+ * @param {Object} answer - User's answer { selectedIndex: number }
+ * @param {Object} question - The question data for validation
+ * @returns {Promise<Object>} - Feedback { isCorrect, rationale, xpEarned }
+ */
+export const submit_study_answer = async (chat_id, node_id, answer, question) => {
+  const requestBody = JSON.stringify({
+    chat_id: chat_id,
+    node_id: node_id,
+    answer: answer,
+    question: question
+  });
+
+  try {
+    console.log("📤 Submitting study answer...");
+
+    const response = await fetch(`${FAST_API_BASE}/study/submit-answer`, {
+      method: "POST",
+      headers: header,
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Answer submission failed: ${response.status} - ${errorText}`);
+    }
+
+    const feedback = await response.json();
+    console.log("✅ Answer feedback received");
+    return feedback;
+
+  } catch (error) {
+    console.error("❌ Error submitting answer:", error);
+    throw error;
+  }
+};

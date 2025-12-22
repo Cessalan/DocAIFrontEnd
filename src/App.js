@@ -194,6 +194,9 @@ function ChatLayout() {
     // Update URL to reflect the selected chat
     if (chatId) {
       navigate(`/c/${chatId}`);
+    } else {
+      // No chat selected - navigate to dashboard
+      navigate('/');
     }
 
     if (isMobile()) {

@@ -94,6 +94,11 @@ import ExamCountdown from '../Common/ExamCountdown';
 // Mindmap
 import ChatMindmap from './ChatMindmap';
 
+// Study Mode
+import StartStudyModal from '../StudyMode/StartStudyModal';
+import StudyModeContainer from '../StudyMode/StudyModeContainer';
+import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
+
 /**
  * ChatInterface Component - A messenger-like interface for AI chat
  * Features: Text messaging with AI, File uploads, Quiz/Summary/Scenario generation
@@ -205,6 +210,13 @@ const ChatInterface = ({
   // Quiz mode selector state (NCLEX vs Knowledge)
   const [showQuizModeSelector, setShowQuizModeSelector] = useState(false);
   const [pendingQuizMessageData, setPendingQuizMessageData] = useState(null);
+
+  // Study mode state
+  const [showStartStudyModal, setShowStartStudyModal] = useState(false);
+  const [isStudyMode, setIsStudyMode] = useState(false);
+  const [studyState, setStudyState] = useState(null);
+  const [pendingStudyDocs, setPendingStudyDocs] = useState([]);
+  const [pendingStudyTopics, setPendingStudyTopics] = useState([]);
 
   /**
  * activeQuizProgress structure:
@@ -552,7 +564,7 @@ const ChatInterface = ({
     // Get chat title and check if it's a game chat or exam chat
     latestRequestedChatIdRef.current = chatId; // Track the latest request
     const chatDocRef = doc(db, "chats", chatId);
-    getDoc(chatDocRef).then((docSnapshot) => {
+    getDoc(chatDocRef).then(async (docSnapshot) => {
       // Guard against stale responses - if user clicked another chat, ignore this response
       if (latestRequestedChatIdRef.current !== chatId) {
         console.log('🚫 Ignoring stale chat data for:', chatId, 'current chat is:', latestRequestedChatIdRef.current);
@@ -576,10 +588,30 @@ const ChatInterface = ({
         } else {
           setCurrentExamData(null);
         }
+
+        // Check if this is a study session - if so, auto-enter study mode
+        if (chatData.isStudySession) {
+          console.log('📚 This chat is a study session, entering study mode');
+          try {
+            const studySessionData = await getStudySession(chatId);
+            if (studySessionData) {
+              setStudyState(studySessionData);
+              setIsStudyMode(true);
+            }
+          } catch (error) {
+            console.error('❌ Error loading study session:', error);
+          }
+        } else {
+          // Not a study session, make sure we're not in study mode
+          setIsStudyMode(false);
+          setStudyState(null);
+        }
       } else {
         setIsGameChat(false);
         setGameState(null);
         setCurrentExamData(null);
+        setIsStudyMode(false);
+        setStudyState(null);
       }
       // Mark chat data as loaded - now safe to render empty states
       setIsChatDataLoaded(true);
@@ -2519,6 +2551,20 @@ const ChatInterface = ({
         savePostUpload().catch(err => console.error('❌ Failed to save post-upload actions:', err));
 
         console.log('✅ Post-upload message added to chat');
+
+        // Check if user clicked "Study Journey" card - auto-open the modal
+        if (window._pendingStudyJourney) {
+          console.log('📚 Auto-opening Study Journey modal after upload');
+          window._pendingStudyJourney = false;
+          const docsForStudy = (update.filenames || []).map((filename, idx) => ({
+            id: `doc-${idx}`,
+            name: filename,
+            filename: filename
+          }));
+          setPendingStudyDocs(docsForStudy);
+          setPendingStudyTopics(update.topics || []);
+          setShowStartStudyModal(true);
+        }
         break;
     }
   };
@@ -2614,6 +2660,20 @@ const ChatInterface = ({
       console.log('🎯 Opening quiz mode selector');
       setPendingQuizMessageData(messageData);
       setShowQuizModeSelector(true);
+      return;
+    }
+
+    // Special handling for study journey - show start study modal
+    if (actionId === 'studyjourney') {
+      console.log('📚 Opening study journey modal');
+      // Get uploaded docs info from the message data
+      const docsForStudy = (messageData.filenames || []).map((filename, idx) => ({
+        id: `doc-${idx}`,
+        name: filename,
+        filename: filename
+      }));
+      setPendingStudyDocs(docsForStudy);
+      setShowStartStudyModal(true);
       return;
     }
 
@@ -3050,8 +3110,34 @@ const ChatInterface = ({
     <div style={{ display: 'flex', height: '100vh' }}>
       <ProgressDashboard />
 
+      {/* Study Mode - Full screen overlay when active */}
+      {isStudyMode && studyState && (
+        <StudyModeContainer
+          chatId={currentChatID}
+          studyState={studyState}
+          onExit={() => {
+            // Study sessions should always stay as study sessions
+            // Exit means navigate away from this chat entirely
+            console.log('📚 Exiting study session - navigating to dashboard');
+            if (onChatSelected) {
+              onChatSelected(null); // Clear selection, will navigate to /c or dashboard
+            }
+          }}
+          onComplete={() => {
+            // Study session completed - navigate away
+            console.log('📚 Study session completed - navigating to dashboard');
+            if (onChatSelected) {
+              onChatSelected(null);
+            }
+          }}
+          language={i18n?.language || 'en'}
+        />
+      )}
+
+      {/* Regular Chat Interface - Hidden when in study mode */}
       <div
         className="chat-container"
+        style={{ display: isStudyMode ? 'none' : undefined }}
       >
         {/* Nursing Background Icons */}
         <div className="nursing-icon">💊</div>
@@ -3121,22 +3207,56 @@ const ChatInterface = ({
         {/* Empty State - Regular chat: show two-card layout */}
         {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData && (
           <div className="empty-chat-state">
-            <div className="empty-chat-actions">
-              {/* Upload Card */}
-              <div className="empty-action-card" onClick={openFileUploadDialog}>
-                <SvgFileUpload />
+            <div className="empty-chat-actions two-cards">
+              {/* Study Journey Card - Recommended, guided learning */}
+              <div className="empty-action-card study-journey-card recommended" onClick={() => {
+                // Open file dialog, then show study modal after upload
+                documentFileInputRef.current?.click();
+                // Set flag to show study modal after upload completes
+                window._pendingStudyJourney = true;
+              }}>
+                <span className="recommended-badge">{t('chat.recommended', 'Recommended')}</span>
+                <div className="empty-action-icon-svg study-journey-icon">
+                  {/* Graduation cap / learning path icon */}
+                  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Graduation cap */}
+                    <path d="M24 8L4 18L24 28L44 18L24 8Z" fill="#e88d7d" stroke="#c46a5a" strokeWidth="2" strokeLinejoin="round"/>
+                    <path d="M12 23V33C12 33 18 38 24 38C30 38 36 33 36 33V23" stroke="#c46a5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M40 20V32" stroke="#c46a5a" strokeWidth="2" strokeLinecap="round"/>
+                    <circle cx="40" cy="34" r="2" fill="#c46a5a"/>
+                    {/* Sparkles */}
+                    <circle cx="10" cy="12" r="1.5" fill="#fbbf24"/>
+                    <circle cx="38" cy="10" r="1.5" fill="#fbbf24"/>
+                    <circle cx="8" cy="28" r="1" fill="#fbbf24"/>
+                  </svg>
+                </div>
                 <div className="empty-action-content">
-                  <p className="empty-action-title">{t('chat.uploadDocument', 'Upload Document')}</p>
-                  <p className="empty-action-subtitle">{t('chat.uploadHint', 'PDF, images, notes')}</p>
+                  <p className="empty-action-title">{t('chat.studyJourney', 'Study Journey')}</p>
+                  <p className="empty-action-subtitle">{t('chat.studyJourneyHint', 'Guided lessons, quizzes & flashcards')}</p>
                 </div>
               </div>
 
-              {/* Exam Prep Card */}
-              <div className="empty-action-card" onClick={() => setShowExamPrepModal(true)}>
-                <span className="empty-action-icon">🎯</span>
+              {/* Upload & Chat Card - Simple document chat */}
+              <div className="empty-action-card upload-chat-card" onClick={openFileUploadDialog}>
+                <div className="empty-action-icon-svg upload-chat-icon">
+                  {/* Chat bubbles with document */}
+                  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    {/* Document */}
+                    <rect x="8" y="6" width="20" height="26" rx="3" fill="#d4f0fc" stroke="#4169e1" strokeWidth="2"/>
+                    <path d="M13 14H23" stroke="#4169e1" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M13 20H20" stroke="#4169e1" strokeWidth="2" strokeLinecap="round"/>
+                    <path d="M13 26H17" stroke="#4169e1" strokeWidth="2" strokeLinecap="round"/>
+                    {/* Chat bubble */}
+                    <path d="M26 22C26 19.79 27.79 18 30 18H38C40.21 18 42 19.79 42 22V30C42 32.21 40.21 34 38 34H34L30 38V34H30C27.79 34 26 32.21 26 30V22Z" fill="#ffd6e0" stroke="#db2777" strokeWidth="2"/>
+                    {/* Chat dots */}
+                    <circle cx="31" cy="26" r="1.5" fill="#db2777"/>
+                    <circle cx="35" cy="26" r="1.5" fill="#db2777"/>
+                    <circle cx="39" cy="26" r="1.5" fill="#db2777"/>
+                  </svg>
+                </div>
                 <div className="empty-action-content">
-                  <p className="empty-action-title">{t('chat.prepareExam', 'Prepare for Exam')}</p>
-                  <p className="empty-action-subtitle">{t('chat.examHint', 'Track your progress')}</p>
+                  <p className="empty-action-title">{t('chat.uploadChat', 'Upload & Chat')}</p>
+                  <p className="empty-action-subtitle">{t('chat.uploadChatHint', 'Ask questions about your documents')}</p>
                 </div>
               </div>
             </div>
@@ -3161,6 +3281,28 @@ const ChatInterface = ({
           }}
           onSelectMode={handleQuizModeSelect}
           topics={pendingQuizMessageData?.topics || []}
+        />
+
+        {/* Start Study Journey Modal */}
+        <StartStudyModal
+          isOpen={showStartStudyModal}
+          onClose={() => {
+            setShowStartStudyModal(false);
+            setPendingStudyDocs([]);
+            setPendingStudyTopics([]);
+          }}
+          onStart={(newStudyState) => {
+            console.log('📚 Study session started:', newStudyState);
+            setStudyState(newStudyState);
+            setIsStudyMode(true);
+            setShowStartStudyModal(false);
+            setPendingStudyDocs([]);
+            setPendingStudyTopics([]);
+          }}
+          chatId={currentChatID}
+          uploadedDocs={pendingStudyDocs}
+          topics={pendingStudyTopics}
+          language={i18n?.language || 'en'}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
