@@ -41,7 +41,8 @@ const PostUploadActions = ({
       flashcards: 'postUpload.flashcardsLabel',
       studysheet: 'postUpload.studysheetLabel',
       audio: 'postUpload.audioLabel',
-      mindmap: 'postUpload.mindmapLabel'
+      mindmap: 'postUpload.mindmapLabel',
+      studyjourney: 'postUpload.studyjourneyLabel'
     };
     const key = labelKeys[actionId];
     return key ? t(key, fallbackLabel) : fallbackLabel;
@@ -94,6 +95,19 @@ const PostUploadActions = ({
             <path d="M12 5H18" stroke="currentColor" strokeWidth="1.5"/>
             {/* Bottom horizontal to right node */}
             <path d="M12 19H18" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        );
+      case 'studyjourney':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Path/road icon representing a learning journey */}
+            <path d="M12 2L12 22" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeDasharray="3 3"/>
+            <circle cx="12" cy="5" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="12" cy="12" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+            <circle cx="12" cy="19" r="2.5" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M14.5 5L18 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M6 12L9.5 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+            <path d="M14.5 19L18 19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
           </svg>
         );
       default:

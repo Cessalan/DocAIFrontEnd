@@ -181,6 +181,11 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
     if (onChatSelected) {
       onChatSelected(chatId);
     }
+
+    // Close sidebar after selecting a chat
+    if (onCloseSidebar) {
+      onCloseSidebar();
+    }
   };
 
   const handleDeleteChat = async (e, chatId) => {

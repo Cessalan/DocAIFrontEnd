@@ -202,6 +202,20 @@
   color: #7c3aed;
 }
 
+/* Study Journey - Coral/Peach sticky note (matches study mode) */
+.post-upload-action-btn.action-studyjourney {
+  background: linear-gradient(135deg, #ffd6cc 0%, #ffe4d9 100%);
+  border-color: rgba(232, 141, 125, 0.25);
+}
+.post-upload-action-btn.action-studyjourney:hover {
+  border-color: rgba(232, 141, 125, 0.5);
+  background: linear-gradient(135deg, #ffcabf 0%, #ffd9cc 100%);
+}
+.action-studyjourney .action-icon-circle {
+  background: rgba(232, 141, 125, 0.35);
+  color: #e88d7d;
+}
+
 /* -----------------------------------------
    ANIMATION
    ----------------------------------------- */
@@ -225,6 +239,7 @@
 .post-upload-action-btn:nth-child(3) { animation-delay: 0.2s; }
 .post-upload-action-btn:nth-child(4) { animation-delay: 0.25s; }
 .post-upload-action-btn:nth-child(5) { animation-delay: 0.3s; }
+.post-upload-action-btn:nth-child(6) { animation-delay: 0.35s; }
 
 @keyframes buttonPopIn {
   0% {
@@ -298,6 +313,13 @@ body.dark-mode .post-upload-action-btn.action-mindmap {
 }
 body.dark-mode .post-upload-action-btn.action-mindmap:hover {
   border-color: rgba(139, 92, 246, 0.6);
+}
+
+body.dark-mode .post-upload-action-btn.action-studyjourney {
+  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
+}
+body.dark-mode .post-upload-action-btn.action-studyjourney:hover {
+  border-color: rgba(232, 141, 125, 0.7);
 }
 
 /* ============================================
