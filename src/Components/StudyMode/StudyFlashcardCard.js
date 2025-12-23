@@ -1,17 +1,148 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import StudyProgressBar from './StudyProgressBar';
 
 /**
- * StudyFlashcardCard - Single flip flashcard in study mode
- *
- * @param {Object} content - Flashcard content { front, back }
- * @param {Function} onReview - Callback when user reviews (got it / need review)
- * @param {Function} onContinue - Callback when user is ready to continue
+ * Parse markdown-style formatting into HTML
+ * Supports: **bold**, • bullets, and line breaks
  */
-const StudyFlashcardCard = ({ content, onReview, onContinue }) => {
+const parseFlashcardText = (text) => {
+  if (!text) return '';
+
+  let parsed = text
+    // Convert **bold** to <strong>
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    // Convert bullet points to proper list items
+    .replace(/•\s*/g, '<br/>• ')
+    // Convert newlines to <br/>
+    .replace(/\n/g, '<br/>');
+
+  // Clean up any double <br/> at the start
+  parsed = parsed.replace(/^<br\/>/, '');
+
+  return parsed;
+};
+
+/**
+ * StudyFlashcardCard - Multiple flashcards in study mode (Duolingo-style)
+ * Cards marked "need review" are shown again until mastered.
+ *
+ * @param {Object} content - Flashcard content { cards: [{ front, back }, ...] } or legacy { front, back }
+ * @param {Object} savedProgress - Saved progress for resuming { cardStatuses, queueIndex, isReviewRound }
+ * @param {Function} onReview - Callback when user reviews (got it / need review)
+ * @param {Function} onContinue - Callback when user completes all cards
+ */
+const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) => {
+  // Debug: log savedProgress on every render
+  console.log('🃏 StudyFlashcardCard rendered, savedProgress:', savedProgress);
+
   const [isFlipped, setIsFlipped] = useState(false);
   const [hasReviewed, setHasReviewed] = useState(false);
 
-  const { front, back } = content || {};
+  // Track card statuses: 'pending' | 'mastered' | 'review'
+  // Initialize from savedProgress if available to avoid flash of empty progress
+  const [cardStatuses, setCardStatuses] = useState(() =>
+    savedProgress?.cardStatuses || {}
+  );
+
+  // Queue of card indices to show (includes review cards at the end)
+  const [cardQueue, setCardQueue] = useState([]);
+  // Initialize queueIndex from savedProgress to show correct card immediately
+  const [queueIndex, setQueueIndex] = useState(() =>
+    savedProgress?.queueIndex || 0
+  );
+
+  // Track if we're in review round
+  const [isReviewRound, setIsReviewRound] = useState(() =>
+    savedProgress?.isReviewRound || false
+  );
+
+  // Handle both new format { cards: [...] } and legacy format { front, back }
+  const cards = useMemo(() => content?.cards || [content], [content]);
+  const totalCards = cards.length;
+
+  // Track if we've already restored progress (to avoid re-initializing)
+  const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
+
+  // Restore from saved progress OR initialize fresh queue
+  useEffect(() => {
+    // Skip if no cards yet
+    if (totalCards === 0) return;
+
+    // If we have saved progress to restore
+    if (savedProgress?.cardStatuses && Object.keys(savedProgress.cardStatuses).length > 0) {
+      if (!hasRestoredProgress) {
+        console.log('📊 Restoring flashcard progress:', savedProgress);
+
+        setCardStatuses(savedProgress.cardStatuses);
+        setIsReviewRound(savedProgress.isReviewRound || false);
+
+        // Rebuild the queue based on saved state
+        if (savedProgress.isReviewRound) {
+          // In review round - queue only contains cards that need review
+          const reviewCards = Object.entries(savedProgress.cardStatuses)
+            .filter(([_, status]) => status === 'review')
+            .map(([idx]) => parseInt(idx));
+          setCardQueue(reviewCards);
+          setQueueIndex(savedProgress.queueIndex || 0);
+        } else {
+          // First pass - start from where we left off
+          setCardQueue(cards.map((_, i) => i));
+          setQueueIndex(savedProgress.queueIndex || 0);
+        }
+
+        setHasRestoredProgress(true);
+      }
+    } else if (cardQueue.length === 0 && !hasRestoredProgress) {
+      // Fresh start - only if we haven't restored and queue is empty
+      console.log('🆕 Fresh start - initializing card queue');
+      setCardQueue(cards.map((_, i) => i));
+    }
+  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress]);
+
+  // Current card from queue
+  const currentQueuePosition = cardQueue[queueIndex];
+  const currentCard = cards[currentQueuePosition] || {};
+  const { front, back } = currentCard;
+
+  // Calculate progress
+  const masteredCount = Object.values(cardStatuses).filter(s => s === 'mastered').length;
+
+  // Check if all cards are mastered
+  const allMastered = masteredCount === totalCards;
+
+  // Progress bar logic:
+  // - Show how many cards have been reviewed (not just queue position)
+  // - This correctly reflects progress when restoring mid-session
+  const getProgressValues = () => {
+    if (allMastered) {
+      // All done - full progress
+      return { current: totalCards, total: totalCards, includeCurrentAsComplete: false };
+    }
+
+    // Count cards that have been reviewed (mastered or marked for review)
+    const reviewedCount = Object.keys(cardStatuses).length;
+
+    if (isReviewRound) {
+      // Review round - show progress toward mastering all
+      // Progress = mastered cards out of total
+      return {
+        current: masteredCount,
+        total: totalCards,
+        includeCurrentAsComplete: hasReviewed && cardStatuses[currentQueuePosition] === 'mastered'
+      };
+    }
+
+    // First pass - show how many cards have been reviewed
+    // Use the greater of: reviewed count or queue position (for cards not yet acted on)
+    const progressCount = Math.max(reviewedCount, queueIndex);
+    return {
+      current: progressCount,
+      total: totalCards,
+      includeCurrentAsComplete: hasReviewed
+    };
+  };
+
+  const progressValues = getProgressValues();
 
   // Flashcard icon
   const FlashcardIcon = () => (
@@ -59,15 +190,90 @@ const StudyFlashcardCard = ({ content, onReview, onContinue }) => {
 
   const handleGotIt = () => {
     setHasReviewed(true);
+    const newStatuses = { ...cardStatuses, [currentQueuePosition]: 'mastered' };
+    setCardStatuses(newStatuses);
+
     if (onReview) {
-      onReview({ status: 'got_it' });
+      onReview({
+        status: 'got_it',
+        cardIndex: currentQueuePosition,
+        progress: {
+          cardStatuses: newStatuses,
+          queueIndex: queueIndex,
+          isReviewRound: isReviewRound
+        }
+      });
     }
   };
 
   const handleNeedReview = () => {
     setHasReviewed(true);
+    const newStatuses = { ...cardStatuses, [currentQueuePosition]: 'review' };
+    setCardStatuses(newStatuses);
+
     if (onReview) {
-      onReview({ status: 'need_review' });
+      onReview({
+        status: 'need_review',
+        cardIndex: currentQueuePosition,
+        progress: {
+          cardStatuses: newStatuses,
+          queueIndex: queueIndex,
+          isReviewRound: isReviewRound
+        }
+      });
+    }
+  };
+
+  const handleNextCard = () => {
+    const nextQueueIndex = queueIndex + 1;
+
+    // Check if we've finished the current queue
+    if (nextQueueIndex >= cardQueue.length) {
+      // Get cards that need review
+      const cardsToReview = Object.entries(cardStatuses)
+        .filter(([_, status]) => status === 'review')
+        .map(([idx, _]) => parseInt(idx));
+
+      if (cardsToReview.length > 0) {
+        // Start review round with cards that need review
+        setCardQueue(cardsToReview);
+        setQueueIndex(0);
+        setIsReviewRound(true);
+        setIsFlipped(false);
+        setHasReviewed(false);
+
+        // Save progress when entering review round
+        if (onReview) {
+          onReview({
+            status: 'next_card',
+            cardIndex: null,
+            progress: {
+              cardStatuses: cardStatuses,
+              queueIndex: 0,
+              isReviewRound: true
+            }
+          });
+        }
+      }
+      // If no cards to review, allMastered will be true and we show completion
+    } else {
+      // Move to next card in queue
+      setQueueIndex(nextQueueIndex);
+      setIsFlipped(false);
+      setHasReviewed(false);
+
+      // Save progress after advancing to next card
+      if (onReview) {
+        onReview({
+          status: 'next_card',
+          cardIndex: null,
+          progress: {
+            cardStatuses: cardStatuses,
+            queueIndex: nextQueueIndex,
+            isReviewRound: isReviewRound
+          }
+        });
+      }
     }
   };
 
@@ -77,8 +283,23 @@ const StudyFlashcardCard = ({ content, onReview, onContinue }) => {
         <div className="study-card-icon flashcard">
           <FlashcardIcon />
         </div>
-        <h2 className="study-card-title">Flashcard</h2>
+        <h2 className="study-card-title">Flashcards</h2>
       </div>
+
+      {/* Progress bar - fills as you go through cards, completes when all mastered */}
+      <StudyProgressBar
+        current={progressValues.current}
+        total={progressValues.total}
+        includeCurrentAsComplete={progressValues.includeCurrentAsComplete}
+      />
+
+      {/* Review badge - show when reviewing cards */}
+      {isReviewRound && !allMastered && (
+        <div className="study-review-badge">
+          <RefreshIcon />
+          <span>Reviewing {cardQueue.length} card{cardQueue.length > 1 ? 's' : ''}</span>
+        </div>
+      )}
 
       <div className="study-card-content study-flashcard-content-area">
         {/* Flip card */}
@@ -92,9 +313,10 @@ const StudyFlashcardCard = ({ content, onReview, onContinue }) => {
           >
             {/* Front */}
             <div className="study-flashcard-face study-flashcard-front">
-              <p className="study-flashcard-text">
-                {front || 'Loading...'}
-              </p>
+              <div
+                className="study-flashcard-text"
+                dangerouslySetInnerHTML={{ __html: parseFlashcardText(front) || 'Loading...' }}
+              />
               <span className="study-flashcard-hint">
                 <TapIcon />
                 Tap to flip
@@ -103,9 +325,10 @@ const StudyFlashcardCard = ({ content, onReview, onContinue }) => {
 
             {/* Back */}
             <div className="study-flashcard-face study-flashcard-back">
-              <p className="study-flashcard-text">
-                {back || 'Loading...'}
-              </p>
+              <div
+                className="study-flashcard-text"
+                dangerouslySetInnerHTML={{ __html: parseFlashcardText(back) || 'Loading...' }}
+              />
               <span className="study-flashcard-hint">
                 <TapIcon />
                 Tap to flip back
@@ -132,12 +355,33 @@ const StudyFlashcardCard = ({ content, onReview, onContinue }) => {
               </button>
             </div>
           )}
+
+          {/* Next card button - show after reviewing if not all mastered */}
+          {hasReviewed && !allMastered && (
+            <div className="study-flashcard-actions">
+              <button
+                className="study-flashcard-btn next"
+                onClick={(e) => { e.stopPropagation(); handleNextCard(); }}
+              >
+                Next Card
+                <ArrowRightIcon />
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Continue button - only show after reviewing */}
-      {hasReviewed && (
-        <div className="study-card-footer">
+      {/* Summary and Continue - show when all cards mastered */}
+      {allMastered && (
+        <div className="study-card-footer study-card-footer-stacked">
+          <div className="study-completion-message">
+            Great job! You've mastered all the cards.
+          </div>
+          <div className="study-flashcard-summary">
+            <span className="summary-item got-it">
+              <CheckIcon /> {totalCards} mastered
+            </span>
+          </div>
           <button className="study-continue-btn" onClick={onContinue}>
             Continue
             <ArrowRightIcon />

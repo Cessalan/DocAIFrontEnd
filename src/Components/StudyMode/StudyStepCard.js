@@ -9,6 +9,7 @@ import StudyAudioCard from './StudyAudioCard';
  *
  * @param {Object} node - Current active node
  * @param {Object} content - Generated content for the node
+ * @param {Object} savedProgress - Saved progress for resuming (flashcard/quiz)
  * @param {boolean} isLoading - Whether content is being generated
  * @param {boolean} isGeneratingAudio - Whether audio is being generated
  * @param {string} audioGeneratingMessage - Message during audio generation
@@ -20,6 +21,7 @@ import StudyAudioCard from './StudyAudioCard';
 const StudyStepCard = ({
   node,
   content,
+  savedProgress = null,
   isLoading = false,
   isGeneratingAudio = false,
   audioGeneratingMessage = '',
@@ -69,6 +71,7 @@ const StudyStepCard = ({
       return (
         <StudyQuizCard
           content={content}
+          savedProgress={savedProgress}
           onAnswer={onAnswer}
           onContinue={onContinue}
         />
@@ -78,6 +81,7 @@ const StudyStepCard = ({
       return (
         <StudyFlashcardCard
           content={content}
+          savedProgress={savedProgress}
           onReview={onReview}
           onContinue={onContinue}
         />

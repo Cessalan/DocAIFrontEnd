@@ -1,8 +1,9 @@
 import React from 'react';
+import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
 
 /**
  * StudyModeHeader - Header bar for study mode
- * Shows unit title, progress, and exit button
+ * Shows NurseQuizAI branding, exit button, and unit title
  *
  * @param {string} unitTitle - Main title of the study unit
  * @param {string} unitSubtitle - Subtitle/description
@@ -13,16 +14,29 @@ import React from 'react';
 const StudyModeHeader = ({
   unitTitle = 'Study Session',
   unitSubtitle = '',
-  currentStep = 1,
-  totalSteps = 1,
   onExit
 }) => {
-  const progressPercent = Math.round((currentStep / totalSteps) * 100);
-
   return (
     <div className="study-mode-header">
       <div className="study-header-inner">
-        <div className="study-header-left">
+        {/* Left side: Brand logo */}
+        <div className="study-header-brand">
+          <HeartLogo className="study-brand-logo" />
+          <span className="study-brand-name">NurseQuizAI</span>
+        </div>
+
+        {/* Center: title */}
+        <div className="study-header-center">
+          <div className="study-header-info">
+            <h1 className="study-unit-title">{unitTitle}</h1>
+            {unitSubtitle && (
+              <p className="study-unit-subtitle">{unitSubtitle}</p>
+            )}
+          </div>
+        </div>
+
+        {/* Right side: Exit button */}
+        <div className="study-header-right">
           <button
             className="study-exit-btn"
             onClick={onExit}
@@ -33,27 +47,6 @@ const StudyModeHeader = ({
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-
-          <div className="study-header-info">
-            <h1 className="study-unit-title">{unitTitle}</h1>
-            {unitSubtitle && (
-              <p className="study-unit-subtitle">{unitSubtitle}</p>
-            )}
-          </div>
-        </div>
-
-        <div className="study-header-right">
-          <div className="study-progress-indicator">
-            <span className="study-progress-text">
-              Step {currentStep} of {totalSteps}
-            </span>
-            <div className="study-progress-bar">
-              <div
-                className="study-progress-fill"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-          </div>
         </div>
       </div>
     </div>

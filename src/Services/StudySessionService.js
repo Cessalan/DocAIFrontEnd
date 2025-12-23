@@ -464,6 +464,7 @@ export const getNodeContent = async (chatId, messageId) => {
       return null;
     }
 
+    console.log('🔍 Fetching content for messageId:', messageId, 'in chat:', chatId);
     const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
     const messageSnap = await getDoc(messageRef);
 
@@ -474,9 +475,11 @@ export const getNodeContent = async (chatId, messageId) => {
 
     const messageData = messageSnap.data();
     console.log('📬 Retrieved saved content for message:', messageId);
+    console.log('📊 flashcardProgress in Firestore:', messageData.flashcardProgress);
+    console.log('📊 quizProgress in Firestore:', messageData.quizProgress);
 
     // Return the studyContent field (primary content storage)
-    // Also include type-specific fields as fallback
+    // Also include type-specific fields and progress data
     return {
       studyContent: messageData.studyContent,
       quizData: messageData.quizData,
@@ -484,7 +487,10 @@ export const getNodeContent = async (chatId, messageId) => {
       lessonData: messageData.lessonData,
       audioData: messageData.audioData,
       type: messageData.type,
-      nodeId: messageData.nodeId
+      nodeId: messageData.nodeId,
+      // Include progress data for resuming mid-session
+      flashcardProgress: messageData.flashcardProgress || null,
+      quizProgress: messageData.quizProgress || null
     };
   } catch (error) {
     console.error('❌ Error retrieving node content:', error);
@@ -542,6 +548,75 @@ export const saveNodeContent = async (chatId, nodeId, content, type) => {
   }
 };
 
+/**
+ * Save flashcard progress (which cards are mastered/review)
+ * This allows resuming mid-session without losing progress.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {string} messageId - Message ID of the flashcard content
+ * @param {Object} progress - Progress state { cardStatuses, queueIndex, isReviewRound }
+ */
+export const saveFlashcardProgress = async (chatId, messageId, progress) => {
+  try {
+    if (!messageId) {
+      console.log('⚠️ No messageId, cannot save flashcard progress');
+      return;
+    }
+
+    console.log('💾 Saving flashcard progress to messageId:', messageId);
+    console.log('💾 Progress data:', JSON.stringify(progress, null, 2));
+
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+
+    await updateDoc(messageRef, {
+      flashcardProgress: {
+        cardStatuses: progress.cardStatuses || {},
+        queueIndex: progress.queueIndex || 0,
+        isReviewRound: progress.isReviewRound || false,
+        lastUpdated: serverTimestamp()
+      }
+    });
+
+    console.log('✅ Flashcard progress saved successfully');
+  } catch (error) {
+    console.error('❌ Error saving flashcard progress:', error);
+    // Don't throw - this is non-critical
+  }
+};
+
+/**
+ * Save quiz progress (which questions answered, scores)
+ * This allows resuming mid-session without losing progress.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {string} messageId - Message ID of the quiz content
+ * @param {Object} progress - Progress state { currentIndex, answeredQuestions, scores }
+ */
+export const saveQuizProgress = async (chatId, messageId, progress) => {
+  try {
+    if (!messageId) {
+      console.log('⚠️ No messageId, cannot save quiz progress');
+      return;
+    }
+
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+
+    await updateDoc(messageRef, {
+      quizProgress: {
+        currentIndex: progress.currentIndex || 0,
+        answeredQuestions: progress.answeredQuestions || [],
+        scores: progress.scores || { correct: 0, incorrect: 0 },
+        lastUpdated: serverTimestamp()
+      }
+    });
+
+    console.log('✅ Quiz progress saved');
+  } catch (error) {
+    console.error('❌ Error saving quiz progress:', error);
+    // Don't throw - this is non-critical
+  }
+};
+
 export default {
   createStudySession,
   getActiveStudySession,
@@ -554,5 +629,7 @@ export default {
   resumeStudySession,
   getStudyProgress,
   getNodeContent,
-  saveNodeContent
+  saveNodeContent,
+  saveFlashcardProgress,
+  saveQuizProgress
 };
