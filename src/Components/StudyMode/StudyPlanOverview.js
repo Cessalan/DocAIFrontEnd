@@ -156,13 +156,6 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
 
       {/* Header - simplified without numeric progress */}
       <div className="study-overview-header-v2">
-        <button className="study-overview-exit" onClick={onExit} aria-label="Exit study mode">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 5 12 12 19" />
-          </svg>
-        </button>
-
         <div className="study-overview-title-section">
           <h1 className="study-overview-title">
             {topics.length > 0 ? topics[0] : t('study.yourStudyPlan', 'Your Study Plan')}
@@ -266,24 +259,6 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
         </div>
       </div>
 
-      {/* Continue button */}
-      {nodes.some(n => n.status === 'active') && (
-        <div className="study-overview-action">
-          <button
-            className="study-overview-continue"
-            onClick={() => {
-              const activeNode = nodes.find(n => n.status === 'active');
-              if (activeNode) onNodeSelect(activeNode);
-            }}
-          >
-            <span>{t('study.continue', 'Continue')}</span>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="5" y1="12" x2="19" y2="12" />
-              <polyline points="12 5 19 12 12 19" />
-            </svg>
-          </button>
-        </div>
-      )}
     </div>
   );
 };
