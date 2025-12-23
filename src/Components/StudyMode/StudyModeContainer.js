@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import StudyModeHeader from './StudyModeHeader';
 import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
@@ -11,7 +11,9 @@ import {
   completeNodeAndAdvance,
   addAskedHash,
   saveNodeContent,
-  getNodeContent
+  getNodeContent,
+  saveFlashcardProgress,
+  saveQuizProgress
 } from '../../Services/StudySessionService';
 
 import './StudyMode.css';
@@ -47,6 +49,8 @@ const StudyModeContainer = ({
   const [activeNodeId, setActiveNodeId] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
   const [currentContent, setCurrentContent] = useState(null);
+  const [savedProgress, setSavedProgress] = useState(null); // Flashcard/quiz progress
+  const currentMessageIdRef = useRef(null); // Ref to track messageId for saving progress
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioMessage, setAudioMessage] = useState('');
@@ -85,9 +89,12 @@ const StudyModeContainer = ({
   // Handle starting/loading a node's content
   const handleStartNode = useCallback(async (node) => {
     console.log('📚 Starting node:', node);
+    console.log('📬 Node messageId:', node.messageId || 'NONE - will generate new content');
     setView('node');
     setIsLoadingContent(true);
     setCurrentContent(null);
+    setSavedProgress(null);
+    currentMessageIdRef.current = null; // Reset ref
     setActiveNode(node);
     setActiveNodeId(node.id);
 
@@ -111,6 +118,16 @@ const StudyModeContainer = ({
         if (savedContent?.studyContent) {
           console.log('✅ Retrieved saved content, skipping generation');
           setCurrentContent(savedContent.studyContent);
+          currentMessageIdRef.current = node.messageId;
+
+          // Restore saved progress if available
+          if (savedContent.flashcardProgress) {
+            console.log('📊 Restoring flashcard progress:', savedContent.flashcardProgress);
+            setSavedProgress(savedContent.flashcardProgress);
+          } else if (savedContent.quizProgress) {
+            console.log('📊 Restoring quiz progress:', savedContent.quizProgress);
+            setSavedProgress(savedContent.quizProgress);
+          }
 
           // Set mascot back to nurse
           setMascotState({
@@ -163,6 +180,7 @@ const StudyModeContainer = ({
       ));
 
       setCurrentContent(result.content);
+      currentMessageIdRef.current = messageId;
 
       // Set mascot back to nurse
       setMascotState({
@@ -190,28 +208,56 @@ const StudyModeContainer = ({
   const handleAnswer = useCallback((answerData) => {
     console.log('📝 Answer submitted:', answerData);
 
-    // Update mascot based on correctness
-    setMascotState({
-      type: 'nurse',
-      isExcited: answerData.isCorrect,
-      isSurprised: !answerData.isCorrect,
-      lookDirection: 'center'
-    });
+    // Only update mascot for actual answers (not navigation)
+    if (answerData.isCorrect !== null) {
+      // Update mascot based on correctness
+      setMascotState({
+        type: 'nurse',
+        isExcited: answerData.isCorrect,
+        isSurprised: !answerData.isCorrect,
+        lookDirection: 'center'
+      });
 
-    // Reset surprised state after a moment
-    if (!answerData.isCorrect) {
-      setTimeout(() => {
-        setMascotState(prev => ({
-          ...prev,
-          isSurprised: false
-        }));
-      }, 1500);
+      // Reset surprised state after a moment
+      if (!answerData.isCorrect) {
+        setTimeout(() => {
+          setMascotState(prev => ({
+            ...prev,
+            isSurprised: false
+          }));
+        }, 1500);
+      }
     }
-  }, []);
+
+    // Save quiz progress if we have a messageId (use ref for latest value)
+    const messageId = currentMessageIdRef.current;
+    if (messageId && answerData.progress) {
+      saveQuizProgress(chatId, messageId, answerData.progress);
+
+      // Calculate and update node progress percentage for the overview ring
+      // New format uses questionStatuses object instead of answeredQuestions array
+      if (answerData.progress.questionStatuses && currentContent?.questions) {
+        const totalQuestions = currentContent.questions.length;
+        const correctCount = Object.values(answerData.progress.questionStatuses)
+          .filter(status => status === 'correct').length;
+        const progressPercent = Math.round((correctCount / totalQuestions) * 100);
+
+        // Update local node state with progress
+        setNodes(prev => prev.map(n =>
+          n.id === activeNodeId ? { ...n, nodeProgress: progressPercent } : n
+        ));
+
+        // Also persist to Firestore
+        updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
+      }
+    }
+  }, [chatId, activeNodeId, currentContent]);
 
   // Handle flashcard review
   const handleReview = useCallback((reviewData) => {
     console.log('📖 Flashcard reviewed:', reviewData);
+    console.log('📖 currentMessageIdRef.current at review time:', currentMessageIdRef.current);
+    console.log('📖 reviewData.progress:', reviewData.progress);
 
     // Set excited if they got it
     if (reviewData.status === 'got_it') {
@@ -222,7 +268,31 @@ const StudyModeContainer = ({
         lookDirection: 'center'
       });
     }
-  }, []);
+
+    // Save flashcard progress if we have a messageId (use ref for latest value)
+    const messageId = currentMessageIdRef.current;
+    if (messageId && reviewData.progress) {
+      console.log('💾 Calling saveFlashcardProgress with messageId:', messageId);
+      saveFlashcardProgress(chatId, messageId, reviewData.progress);
+
+      // Calculate and update node progress percentage for the overview ring
+      if (reviewData.progress.cardStatuses && currentContent?.cards) {
+        const totalCards = currentContent.cards.length;
+        const reviewedCards = Object.keys(reviewData.progress.cardStatuses).length;
+        const progressPercent = Math.round((reviewedCards / totalCards) * 100);
+
+        // Update local node state with progress
+        setNodes(prev => prev.map(n =>
+          n.id === activeNodeId ? { ...n, nodeProgress: progressPercent } : n
+        ));
+
+        // Also persist to Firestore
+        updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
+      }
+    } else {
+      console.log('⚠️ NOT saving progress - messageId:', messageId, 'progress:', !!reviewData.progress);
+    }
+  }, [chatId, activeNodeId, currentContent]);
 
   // Handle audio generation trigger
   const handleGenerateAudio = useCallback(async (audioConfig) => {
@@ -368,6 +438,7 @@ const StudyModeContainer = ({
               <StudyStepCard
                 node={activeNode}
                 content={currentContent}
+                savedProgress={savedProgress}
                 isLoading={false}
                 isGeneratingAudio={isGeneratingAudio}
                 audioGeneratingMessage={audioMessage}

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './StudyMode.css';
@@ -13,11 +13,25 @@ import './StudyMode.css';
  */
 const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
   const { t } = useTranslation();
+  const activeNodeRef = useRef(null);
 
   const nodes = studyState?.path?.nodes || [];
   const topics = studyState?.path?.topics || [];
   const completedCount = nodes.filter(n => n.status === 'done').length;
   const totalNodes = nodes.length;
+
+  // Auto-scroll to active node when component mounts
+  useEffect(() => {
+    if (activeNodeRef.current) {
+      // Small delay to ensure DOM is ready
+      setTimeout(() => {
+        activeNodeRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center'
+        });
+      }, 100);
+    }
+  }, [nodes]);
   const progressPercent = totalNodes > 0 ? (completedCount / totalNodes) * 100 : 0;
 
   // Get encouraging message based on progress
@@ -106,14 +120,21 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
   };
 
   // Calculate progress ring values
-  const getProgressRing = (status, index, nodes) => {
+  const getProgressRing = (node) => {
+    const { status, nodeProgress } = node;
+
     // Done nodes: full ring
     if (status === 'done') {
       return { progress: 100, color: 'done' };
     }
-    // Active node: show partial progress based on completed nodes before it
+    // Active node: show partial progress if available, otherwise show ring without fill
     if (status === 'active') {
-      return { progress: 100, color: 'active' };
+      // If node has progress (flashcard/quiz), show that percentage
+      if (nodeProgress !== undefined && nodeProgress > 0) {
+        return { progress: nodeProgress, color: 'active' };
+      }
+      // No progress yet - show empty ring with active styling
+      return { progress: 0, color: 'active' };
     }
     // Locked: no progress
     return { progress: 0, color: 'locked' };
@@ -162,7 +183,7 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
             const isDone = node.status === 'done';
             const isLocked = node.status === 'locked';
             const offset = getNodeOffset(index);
-            const ringData = getProgressRing(node.status, index, nodes);
+            const ringData = getProgressRing(node);
 
             // SVG progress ring calculations
             const radius = 44;
@@ -172,6 +193,7 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
             return (
               <div
                 key={node.id}
+                ref={isActive ? activeNodeRef : null}
                 className={`study-path-node-v2 ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isLocked ? 'locked' : ''}`}
                 style={{ transform: `translateX(${offset}px)` }}
                 onClick={() => !isLocked && onNodeSelect(node)}

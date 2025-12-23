@@ -99,12 +99,15 @@
 .study-mode-header {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   padding: 16px 24px;
-  background: linear-gradient(180deg, var(--bg-paper) 0%, rgba(253, 248, 243, 0.95) 100%);
-  border-bottom: 2px dashed rgba(232, 141, 125, 0.2);
+  padding-left: 72px; /* Position after sidebar toggle button (20px + 42px + 10px gap) */
+  background: transparent;
+  border-bottom: none;
   position: relative;
   z-index: 10;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .study-mode-header > .study-header-inner {
@@ -112,13 +115,45 @@
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  max-width: 800px;
+  gap: 24px;
 }
 
-/* Dark mode header */
+/* Dark mode header - seamless with background */
 .dark-mode .study-mode-header {
-  background: linear-gradient(180deg, #2f2f2f 0%, rgba(47, 47, 47, 0.95) 100%);
-  border-bottom-color: rgba(232, 141, 125, 0.15);
+  background: transparent;
+  border-bottom: none;
+}
+
+/* Brand section - NurseQuizAI logo and name */
+.study-header-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.study-brand-logo {
+  width: 28px;
+  height: 28px;
+  color: var(--study-coral);
+}
+
+.study-brand-name {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--study-coral);
+  letter-spacing: -0.02em;
+}
+
+/* Center section - title (absolutely positioned to be truly centered) */
+.study-header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
 }
 
 .study-header-left {
@@ -175,6 +210,8 @@
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-shrink: 0;
+  margin-left: auto;
 }
 
 .study-progress-indicator {
@@ -585,6 +622,39 @@
 }
 
 /* -----------------------------------------
+   PROGRESS BAR - Warm feminine pastel style
+   ----------------------------------------- */
+.study-progress-bar-container {
+  width: calc(100% - 48px);
+  margin: 12px 24px 20px 24px;
+  height: 10px;
+  background: linear-gradient(90deg, #fce7e3 0%, #fdf2f8 50%, #fae8ff 100%);
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid rgba(232, 141, 125, 0.15);
+}
+
+.dark-mode .study-progress-bar-container {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.study-progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #fda4af 0%, #fb7185 50%, #f472b6 100%);
+  border-radius: 10px;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow:
+    0 1px 3px rgba(251, 113, 133, 0.25),
+    inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+.dark-mode .study-progress-bar-fill {
+  background: linear-gradient(90deg, rgba(232, 141, 125, 0.7) 0%, rgba(232, 141, 125, 0.85) 50%, rgba(219, 112, 147, 0.8) 100%);
+  box-shadow: none;
+}
+
+/* -----------------------------------------
    LESSON CARD STYLES
    ----------------------------------------- */
 .study-lesson-body {
@@ -671,19 +741,29 @@
   background: rgba(232, 141, 125, 0.1);
 }
 
+/* Correct answer - bold green background with thick border */
 .study-quiz-option.correct {
   border-color: var(--node-done);
-  background: rgba(46, 213, 115, 0.1);
+  border-width: 5px;
+  background: rgba(46, 213, 115, 0.35);
+  box-shadow: 0 3px 12px rgba(46, 213, 115, 0.4);
 }
 
+/* Wrong answer - bold peach highlight with thick border */
 .study-quiz-option.incorrect {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.1);
+  border-color: var(--study-coral);
+  border-width: 5px;
+  background: rgba(232, 141, 125, 0.25);
+  box-shadow: 0 3px 12px rgba(232, 141, 125, 0.4);
 }
 
 .study-quiz-option.disabled {
   cursor: not-allowed;
-  opacity: 0.7;
+}
+
+/* Keep correct/incorrect answers visible (don't dim with general disabled opacity) */
+.study-quiz-option.disabled:not(.correct):not(.incorrect) {
+  opacity: 0.6;
 }
 
 .study-quiz-option-letter {
@@ -710,10 +790,12 @@
 .study-quiz-option.correct .study-quiz-option-letter {
   background: var(--node-done);
   color: white;
+  box-shadow: 0 2px 8px rgba(46, 213, 115, 0.4);
 }
 
+/* Wrong answer letter in peach/coral */
 .study-quiz-option.incorrect .study-quiz-option-letter {
-  background: #ef4444;
+  background: var(--study-coral);
   color: white;
 }
 
@@ -747,9 +829,10 @@
   border: 1.5px solid rgba(5, 150, 105, 0.3);
 }
 
+/* Incorrect feedback - neutral background, only key text in red */
 .study-quiz-feedback.incorrect {
-  background: rgba(255, 214, 224, 0.8);
-  border: 1.5px solid rgba(239, 68, 68, 0.3);
+  background: rgba(100, 100, 100, 0.08);
+  border: 1.5px solid rgba(100, 100, 100, 0.2);
 }
 
 .study-quiz-feedback-header {
@@ -774,7 +857,7 @@
 }
 
 .study-quiz-feedback.incorrect .study-quiz-feedback-icon {
-  background: #ef4444;
+  background: #dc2626;
   color: white;
 }
 
@@ -789,28 +872,187 @@
 }
 
 .study-quiz-feedback.incorrect .study-quiz-feedback-title {
+  color: #dc2626;
+}
+
+/* Correct answer display - Duolingo style */
+.study-quiz-correct-answer {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding-left: 38px;
+  margin-bottom: 10px;
+}
+
+.study-quiz-correct-answer .correct-answer-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #dc2626;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.study-quiz-correct-answer .correct-answer-text {
+  font-size: 14px;
+  font-weight: 500;
   color: #b91c1c;
 }
 
-.study-quiz-feedback-rationale {
+/* Short rationale - concise one-liner */
+.study-quiz-feedback-short {
   font-size: 14px;
+  line-height: 1.5;
+  margin: 0;
+  padding-left: 38px; /* Align with text after icon */
+}
+
+.study-quiz-feedback.correct .study-quiz-feedback-short {
+  color: #065f46;
+}
+
+/* Rationale text stays readable - light color for dark mode */
+.study-quiz-feedback.incorrect .study-quiz-feedback-short {
+  color: #d4d4d4;
+}
+
+/* Learn more button */
+.study-quiz-learn-more-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  margin-left: 38px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.study-quiz-feedback.correct .study-quiz-learn-more-btn {
+  color: #047857;
+}
+
+/* Learn more button - readable in dark mode */
+.study-quiz-feedback.incorrect .study-quiz-learn-more-btn {
+  color: #a3a3a3;
+}
+
+.study-quiz-learn-more-btn:hover {
+  opacity: 0.7;
+}
+
+.study-quiz-learn-more-btn svg {
+  flex-shrink: 0;
+}
+
+/* Full rationale - expandable details */
+.study-quiz-feedback-rationale {
+  font-size: 13px;
   line-height: 1.6;
   color: var(--text-primary);
+  margin-top: 12px;
+  padding: 12px 14px;
+  margin-left: 38px;
+  background: rgba(255, 255, 255, 0.5);
+  border-radius: 8px;
+  border-left: 3px solid currentColor;
+}
+
+/* Style for parsed rationale content */
+.study-quiz-feedback-rationale strong {
+  font-weight: 600;
+  color: inherit;
+}
+
+.study-quiz-feedback.correct .study-quiz-feedback-rationale {
+  color: #065f46;
+  border-left-color: #10b981;
+  background: rgba(16, 185, 129, 0.08);
+}
+
+/* Expanded rationale - readable in dark mode */
+.study-quiz-feedback.incorrect .study-quiz-feedback-rationale {
+  color: #d4d4d4;
+  border-left-color: rgba(150, 150, 150, 0.4);
+  background: rgba(100, 100, 100, 0.1);
+}
+
+/* Duolingo-style action button inside feedback */
+.study-quiz-feedback-btn {
+  width: 100%;
+  padding: 14px 24px;
+  margin-top: 16px;
+  border: none;
+  border-radius: 12px;
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 15px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.study-quiz-feedback-btn.correct {
+  background: var(--node-done);
+  color: white;
+  box-shadow: 0 4px 0 #1a9d5c;
+}
+
+.study-quiz-feedback-btn.correct:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #1a9d5c;
+}
+
+.study-quiz-feedback-btn.correct:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #1a9d5c;
+}
+
+.study-quiz-feedback-btn.incorrect {
+  background: #dc2626;
+  color: white;
+  box-shadow: 0 4px 0 #991b1b;
+}
+
+.study-quiz-feedback-btn.incorrect:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 #991b1b;
+}
+
+.study-quiz-feedback-btn.incorrect:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 #991b1b;
 }
 
 /* -----------------------------------------
    FLASHCARD STYLES
    ----------------------------------------- */
 
-/* Special styling for flashcard card */
+/* Special styling for flashcard card - center it on screen */
+.study-flashcard-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 500px;
+}
+
 .study-flashcard-card .study-card-content {
   padding: 20px 24px 28px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .study-flashcard-content-area {
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
 .study-flashcard-wrapper {
@@ -819,12 +1061,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
 }
 
 .study-flashcard {
   width: 100%;
-  max-width: 520px;
-  height: 200px;
+  max-width: 600px;
+  height: 280px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -884,17 +1127,38 @@
 
 .study-flashcard-text {
   font-family: 'Patrick Hand', cursive;
-  font-size: 20px;
-  font-weight: 600;
+  font-size: 19px;
+  font-weight: 500;
   color: #3d3d3d;
-  line-height: 1.5;
+  line-height: 1.7;
   margin: 0;
   max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 4;
-  -webkit-box-orient: vertical;
+  text-align: left;
+  overflow-y: auto;
+  max-height: 220px;
+  padding: 0 12px;
+  width: 100%;
+}
+
+/* Bold text styling within flashcards */
+.study-flashcard-text strong {
+  font-weight: 700;
+  color: #7c3aed;
+}
+
+.dark-mode .study-flashcard-text strong {
+  color: #a78bfa;
+}
+
+/* Front of card - centered, larger text */
+.study-flashcard-front .study-flashcard-text {
+  font-size: 22px;
+  font-weight: 600;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: none;
 }
 
 .study-flashcard-hint {
@@ -1023,7 +1287,7 @@
 @media (max-width: 600px) {
   .study-flashcard {
     max-width: 100%;
-    height: 180px;
+    height: 240px;
   }
 
   .study-flashcard-face {
@@ -1031,8 +1295,16 @@
   }
 
   .study-flashcard-text {
-    font-size: 18px;
-    -webkit-line-clamp: 3;
+    font-size: 17px;
+    max-height: 180px;
+  }
+
+  .study-flashcard-front .study-flashcard-text {
+    font-size: 19px;
+  }
+
+  .study-flashcard-card {
+    min-height: 420px;
   }
 
   .study-flashcard-btn {
@@ -1624,8 +1896,8 @@ body.dark-mode .study-mode-container::before {
 }
 
 body.dark-mode .study-mode-header {
-  background: #2f2f2f;
-  border-bottom-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+  border-bottom: none;
 }
 
 body.dark-mode .study-unit-title,
@@ -1798,14 +2070,69 @@ body.dark-mode .start-study-doc-name {
    Shows only the current step, centered
    ============================================ */
 
+/* Focused mode scrolling fix:
+   - .study-mode-container is position:fixed with overflow:hidden
+   - .study-main-content has flex:1 to fill remaining space after header
+   - We put overflow-y:auto on .study-main-content so it scrolls when content overflows
+   - .study-focused-layout is just for centering, no height constraint */
+
+.study-mode-focused .study-main-content {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  flex: 1;
+  min-height: 0; /* Critical: allows flex child to shrink and enable scrolling */
+  overflow-y: auto; /* This element scrolls */
+  overflow-x: hidden;
+}
+
+/* Custom scrollbar styling for focused mode - warm coral aesthetic */
+.study-mode-focused .study-main-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.study-mode-focused .study-main-content::-webkit-scrollbar-track {
+  background: rgba(248, 200, 196, 0.3);
+  border-radius: 4px;
+}
+
+.study-mode-focused .study-main-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--study-coral) 0%, var(--study-coral-dark) 100%);
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.study-mode-focused .study-main-content::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, var(--study-coral-hover) 0%, var(--study-coral-dark) 100%);
+}
+
+/* Firefox scrollbar styling */
+.study-mode-focused .study-main-content {
+  scrollbar-width: thin;
+  scrollbar-color: var(--study-coral) rgba(248, 200, 196, 0.3);
+}
+
+/* Dark mode scrollbar */
+body.dark-mode .study-mode-focused .study-main-content::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .study-mode-focused .study-main-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(232, 141, 125, 0.7) 0%, rgba(196, 106, 90, 0.8) 100%);
+}
+
+body.dark-mode .study-mode-focused .study-main-content {
+  scrollbar-color: rgba(232, 141, 125, 0.7) rgba(255, 255, 255, 0.05);
+}
+
 .study-mode-focused .study-focused-layout {
   display: flex;
   justify-content: center;
   align-items: flex-start;
   width: 100%;
-  height: 100%;
-  padding: 32px 24px;
-  overflow-y: auto;
+  padding: 16px 24px;
+  padding-top: 12px;
+  /* No height or overflow - let parent handle scrolling */
 }
 
 .study-content-centered {
@@ -1813,7 +2140,8 @@ body.dark-mode .start-study-doc-name {
   flex-direction: column;
   align-items: center;
   width: 100%;
-  max-width: 800px;
+  max-width: 600px;
+  margin: 0 auto;
   position: relative;
 }
 
@@ -1875,6 +2203,162 @@ body.dark-mode .start-study-doc-name {
 .study-mode-focused .study-step-card {
   max-width: 100%;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: visible;
+}
+
+/* Hide sticky tape decorations in focused mode for cleaner look */
+.study-mode-focused .study-step-card::before,
+.study-mode-focused .study-step-card::after {
+  display: none;
+}
+
+/* Card content in focused mode - no scroll, compact */
+.study-mode-focused .study-card-content {
+  padding: 12px 20px 16px;
+  overflow: visible;
+}
+
+/* ============================================
+   COMPACT QUIZ STYLES FOR FOCUSED MODE
+   Reduces sizes to fit everything on screen
+   ============================================ */
+
+/* Increase max-width for quiz cards */
+.study-mode-focused .study-content-centered {
+  max-width: 700px;
+}
+
+/* Compact question text */
+.study-mode-focused .study-quiz-question {
+  font-size: 15px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+/* Compact options */
+.study-mode-focused .study-quiz-options {
+  gap: 6px;
+}
+
+.study-mode-focused .study-quiz-option {
+  padding: 8px 12px;
+  gap: 8px;
+}
+
+.study-mode-focused .study-quiz-option-letter {
+  width: 24px;
+  height: 24px;
+  font-size: 11px;
+  border-radius: 5px;
+}
+
+.study-mode-focused .study-quiz-option-text {
+  font-size: 13px;
+  line-height: 1.3;
+}
+
+/* Compact feedback */
+.study-mode-focused .study-quiz-feedback {
+  margin-top: 10px;
+  padding: 10px 12px;
+}
+
+.study-mode-focused .study-quiz-feedback-header {
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.study-mode-focused .study-quiz-feedback-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.study-mode-focused .study-quiz-feedback-icon svg {
+  width: 11px;
+  height: 11px;
+}
+
+.study-mode-focused .study-quiz-feedback-title {
+  font-size: 13px;
+}
+
+.study-mode-focused .study-quiz-feedback-reassurance {
+  font-size: 11px;
+  margin: 0 0 4px 0;
+  padding-left: 26px;
+}
+
+.study-mode-focused .study-quiz-feedback-short {
+  font-size: 12px;
+  line-height: 1.35;
+  padding-left: 26px;
+}
+
+.study-mode-focused .study-quiz-learn-more-btn {
+  font-size: 11px;
+  margin-left: 26px;
+  margin-top: 4px;
+  padding: 2px 0;
+}
+
+.study-mode-focused .study-quiz-feedback-rationale {
+  font-size: 11px;
+  line-height: 1.4;
+  margin-top: 6px;
+  padding: 8px 10px;
+  margin-left: 26px;
+}
+
+/* Compact review badge */
+.study-mode-focused .study-review-badge {
+  padding: 6px 12px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+/* Compact card header */
+.study-mode-focused .study-card-header {
+  padding: 12px 20px;
+  gap: 8px;
+}
+
+.study-mode-focused .study-card-icon {
+  width: 32px;
+  height: 32px;
+}
+
+.study-mode-focused .study-card-title {
+  font-size: 18px;
+}
+
+/* Compact progress bar */
+.study-mode-focused .study-progress-bar-container {
+  margin: 8px 20px 12px 20px;
+  width: calc(100% - 40px);
+}
+
+/* Compact footer */
+.study-mode-focused .study-card-footer {
+  padding: 8px 20px 12px;
+}
+
+/* Compact continue button */
+.study-mode-focused .study-continue-btn {
+  padding: 10px 24px;
+  font-size: 14px;
+}
+
+/* Keep header and footer from shrinking */
+.study-mode-focused .study-card-header,
+.study-mode-focused .study-card-footer {
+  flex-shrink: 0;
+}
+
+/* Progress bar should not shrink */
+.study-mode-focused .study-progress-bar-container {
+  flex-shrink: 0;
 }
 
 /* Responsive adjustments for focused mode */
@@ -2974,5 +3458,298 @@ body.dark-mode .start-study-doc-name {
   .study-node-start-label {
     font-size: 10px;
     padding: 3px 10px;
+  }
+}
+
+/* ============================================
+   MULTI-ITEM CARDS - Progress & Summary
+   For flashcards and quizzes with multiple items
+   ============================================ */
+
+/* Progress indicator in header */
+.study-card-progress {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+  margin-left: auto;
+  padding: 6px 12px;
+  background: rgba(232, 141, 125, 0.15);
+  border-radius: 20px;
+}
+
+.study-card-progress .progress-current {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 18px;
+  font-weight: 700;
+  color: #e88d7d;
+}
+
+.study-card-progress .progress-separator {
+  font-size: 14px;
+  color: #999;
+  margin: 0 2px;
+}
+
+.study-card-progress .progress-total {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  color: #888;
+}
+
+/* Progress dots */
+.study-progress-dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 0;
+  margin-bottom: 8px;
+}
+
+.progress-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(232, 141, 125, 0.2);
+  transition: all 0.3s ease;
+}
+
+.progress-dot.active {
+  background: #e88d7d;
+  transform: scale(1.2);
+  box-shadow: 0 0 8px rgba(232, 141, 125, 0.5);
+}
+
+.progress-dot.completed {
+  background: #2ed573;
+}
+
+.dark-mode .progress-dot {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.dark-mode .progress-dot.active {
+  background: #e88d7d;
+}
+
+.dark-mode .progress-dot.completed {
+  background: #2ed573;
+}
+
+/* Stacked footer layout for completion screen */
+.study-card-footer-stacked {
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 24px 24px 32px;
+}
+
+.study-completion-message {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 18px;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+.dark-mode .study-completion-message {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+/* Flashcard & Quiz summary - shared styles */
+.study-flashcard-summary,
+.study-quiz-summary {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.study-flashcard-summary .summary-item,
+.study-quiz-summary .summary-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 15px;
+  padding: 10px 16px;
+  border-radius: 20px;
+}
+
+.study-flashcard-summary .summary-item svg,
+.study-quiz-summary .summary-item svg {
+  width: 16px;
+  height: 16px;
+}
+
+.study-flashcard-summary .summary-item.got-it,
+.study-quiz-summary .summary-item.got-it {
+  background: rgba(46, 213, 115, 0.15);
+  color: #2ed573;
+}
+
+.study-flashcard-summary .summary-item.need-review,
+.study-quiz-summary .summary-item.need-review {
+  background: rgba(255, 165, 0, 0.15);
+  color: #ffa500;
+}
+
+/* Review badge - shown when reviewing cards */
+.study-review-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin: 0 24px 12px 24px;
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.15) 0%, rgba(255, 193, 7, 0.1) 100%);
+  border: 1px solid rgba(255, 165, 0, 0.25);
+  border-radius: 20px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  color: #f59e0b;
+  animation: reviewBadgePulse 2s ease-in-out infinite;
+}
+
+.study-review-badge svg {
+  width: 16px;
+  height: 16px;
+}
+
+.dark-mode .study-review-badge {
+  background: linear-gradient(135deg, rgba(255, 165, 0, 0.12) 0%, rgba(255, 193, 7, 0.08) 100%);
+  border-color: rgba(255, 165, 0, 0.2);
+  color: #fbbf24;
+}
+
+@keyframes reviewBadgePulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+/* Next card button */
+.study-flashcard-btn.next {
+  background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 25px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(100, 181, 246, 0.3);
+}
+
+.study-flashcard-btn.next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(100, 181, 246, 0.4);
+}
+
+.study-flashcard-btn.next svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* Quiz summary */
+.study-quiz-summary {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  justify-content: center;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: rgba(232, 141, 125, 0.08);
+  border-radius: 16px;
+}
+
+.quiz-score-circle {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.3);
+}
+
+.quiz-score-circle .score-percent {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 20px;
+  font-weight: 700;
+  color: white;
+}
+
+.quiz-score-details {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.quiz-score-details .score-correct,
+.quiz-score-details .score-incorrect {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+}
+
+.quiz-score-details .score-correct {
+  color: #2ed573;
+}
+
+.quiz-score-details .score-incorrect {
+  color: #ff6b6b;
+}
+
+.quiz-score-details svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 600px) {
+  .study-progress-dots {
+    gap: 6px;
+  }
+
+  .progress-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .study-card-progress {
+    padding: 4px 10px;
+  }
+
+  .study-card-progress .progress-current {
+    font-size: 16px;
+  }
+
+  .study-flashcard-summary {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .study-quiz-summary {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .quiz-score-circle {
+    width: 56px;
+    height: 56px;
+  }
+
+  .quiz-score-circle .score-percent {
+    font-size: 18px;
   }
 }
