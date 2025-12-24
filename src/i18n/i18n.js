@@ -28,8 +28,13 @@ const resources = {
         prepareExam: "Prepare for Exam",
         examHint: "Track your progress",
         examUploadCta: "Upload your files",
-        examUploadHint: "PDFs, images, notes — we’ll generate quizzes, sheets, and flashcards.",
-        examPrepLead: "Drop your notes and we’ll prep your study plan."
+        examUploadHint: "PDFs, images, notes — we'll generate quizzes, sheets, and flashcards.",
+        examPrepLead: "Drop your notes and we'll prep your study plan.",
+        studyJourney: "Study Journey",
+        studyJourneyHint: "Guided lessons, quizzes & flashcards",
+        uploadChat: "Upload & Chat",
+        uploadChatHint: "Ask questions about your documents",
+        recommended: "Recommended"
       },
 
       // Common UI Elements
@@ -724,6 +729,92 @@ const resources = {
         viralMessageNoTopics: "I found this amazing {{topic}} quiz with {{totalQuestions}} questions! Think you can ace it?",
         defaultQuizName: "Nursing Quiz",
         defaultMessage: "Check out this nursing quiz!"
+      },
+
+      // Study Mode
+      study: {
+        // StartStudyModal
+        startJourney: "Start Study Journey",
+        preparingJourney: "Preparing Your Journey",
+        analyzingDocs: "Analyzing your documents...",
+        creatingPath: "Creating your personalized study path...",
+        savingProgress: "Setting up your journey...",
+        ready: "Ready to learn!",
+        errorGenerating: "Failed to create study path. Please try again.",
+        document: "document",
+        documents: "documents",
+        topicsLabel: "Your lessons will cover:",
+        more: "more",
+        journeyDescription: "I'll create a personalized study path based on your documents, with lessons, flashcards, quizzes, and audio to help you learn effectively.",
+        featureLessons: "Bite-sized lessons",
+        featureFlashcards: "Flashcards",
+        featureQuizzes: "Quiz questions",
+        featureAudio: "Audio lessons",
+        generating: "Creating...",
+        beginJourney: "Begin Journey",
+
+        // StudyPlanOverview
+        yourStudyPlan: "Your Study Plan",
+        comingSoon: "Coming soon!",
+        start: "START",
+
+        // Node types
+        nodeType: {
+          lesson: "Lesson",
+          quiz: "Quiz",
+          flashcard: "Flashcard",
+          audio: "Audio",
+          mindmap: "Mind Map",
+          review: "Review"
+        },
+
+        // StudyModeContainer & loading states
+        preparing: "Preparing your {{type}}...",
+        startingSession: "Starting your study session...",
+        exitStudyMode: "Exit Study Mode",
+
+        // StudyLessonCard
+        lessonTitle: "Lesson",
+        keyPoints: "Key Points",
+        loadingLesson: "Loading lesson content...",
+
+        // StudyQuizCard
+        quickCheck: "Quick Check",
+        correct: "Correct!",
+        incorrect: "Incorrect",
+        correctAnswer: "Correct Answer:",
+        learnMore: "Learn more",
+        showLess: "Show less",
+        continue: "CONTINUE",
+        gotIt: "GOT IT",
+        reviewing: "Reviewing {{count}} question",
+        reviewing_plural: "Reviewing {{count}} questions",
+        excellentWork: "Excellent work! You got them all right.",
+        correctCount: "{{count}} correct",
+
+        // StudyFlashcardCard
+        flashcardsTitle: "Flashcards",
+        tapToFlip: "Tap to flip",
+        tapToFlipBack: "Tap to flip back",
+        gotItBtn: "Got it!",
+        needReview: "Need review",
+        nextCard: "Next Card",
+        reviewingCards: "Reviewing {{count}} card",
+        reviewingCards_plural: "Reviewing {{count}} cards",
+        greatJob: "Great job! You've mastered all the cards.",
+        masteredCount: "{{count}} mastered",
+
+        // StudyAudioCard
+        listenLearn: "Listen & Learn",
+        creatingAudioLesson: "Creating your audio lesson...",
+        generatingAudioProgress: "Generating audio... {{progress}}%",
+        convertingToSpeech: "Converting to speech...",
+        failedToGenerate: "Failed to generate audio",
+        retry: "Retry",
+
+        // Common
+        continueBtn: "Continue",
+        loading: "Loading..."
       }
     }
   },
@@ -753,7 +844,12 @@ const resources = {
         examHint: "Suivre mes progrès",
         examUploadCta: "Importer tes fichiers",
         examUploadHint: "PDF, images, notes — on génère quiz, fiches et flashcards.",
-        examPrepLead: "Dépose tes notes, on prépare ton plan d'étude pour l'examen."
+        examPrepLead: "Dépose tes notes, on prépare ton plan d'étude pour l'examen.",
+        studyJourney: "Parcours d'étude",
+        studyJourneyHint: "Leçons guidées, quiz et flashcards",
+        uploadChat: "Importer et discuter",
+        uploadChatHint: "Pose des questions sur tes documents",
+        recommended: "Recommandé"
       },
 
       // Common UI Elements
@@ -1448,6 +1544,92 @@ const resources = {
         viralMessageNoTopics: "J'ai trouvé cet incroyable quiz {{topic}} avec {{totalQuestions}} questions! Penses-tu pouvoir le réussir?",
         defaultQuizName: "Quiz d'infirmière",
         defaultMessage: "Découvre ce quiz d'infirmière!"
+      },
+
+      // Study Mode
+      study: {
+        // StartStudyModal
+        startJourney: "Commencer le parcours d'étude",
+        preparingJourney: "Préparation de ton parcours",
+        analyzingDocs: "Analyse de tes documents...",
+        creatingPath: "Création de ton parcours d'étude personnalisé...",
+        savingProgress: "Mise en place de ton parcours...",
+        ready: "Prêt à apprendre!",
+        errorGenerating: "Échec de la création du parcours. Réessaie.",
+        document: "document",
+        documents: "documents",
+        topicsLabel: "Tes leçons couvriront:",
+        more: "de plus",
+        journeyDescription: "Je vais créer un parcours d'étude personnalisé basé sur tes documents, avec des leçons, des flashcards, des quiz et de l'audio pour t'aider à apprendre efficacement.",
+        featureLessons: "Leçons courtes",
+        featureFlashcards: "Flashcards",
+        featureQuizzes: "Questions de quiz",
+        featureAudio: "Leçons audio",
+        generating: "Création...",
+        beginJourney: "Commencer",
+
+        // StudyPlanOverview
+        yourStudyPlan: "Ton plan d'étude",
+        comingSoon: "Bientôt disponible!",
+        start: "COMMENCER",
+
+        // Node types
+        nodeType: {
+          lesson: "Leçon",
+          quiz: "Quiz",
+          flashcard: "Flashcard",
+          audio: "Audio",
+          mindmap: "Carte mentale",
+          review: "Révision"
+        },
+
+        // StudyModeContainer & loading states
+        preparing: "Préparation de ta {{type}}...",
+        startingSession: "Démarrage de ta session d'étude...",
+        exitStudyMode: "Quitter le mode étude",
+
+        // StudyLessonCard
+        lessonTitle: "Leçon",
+        keyPoints: "Points clés",
+        loadingLesson: "Chargement du contenu de la leçon...",
+
+        // StudyQuizCard
+        quickCheck: "Vérification rapide",
+        correct: "Correct!",
+        incorrect: "Incorrect",
+        correctAnswer: "Bonne réponse:",
+        learnMore: "En savoir plus",
+        showLess: "Réduire",
+        continue: "CONTINUER",
+        gotIt: "COMPRIS",
+        reviewing: "Révision de {{count}} question",
+        reviewing_plural: "Révision de {{count}} questions",
+        excellentWork: "Excellent travail! Tu as tout bon.",
+        correctCount: "{{count}} correct",
+
+        // StudyFlashcardCard
+        flashcardsTitle: "Flashcards",
+        tapToFlip: "Appuie pour retourner",
+        tapToFlipBack: "Appuie pour revenir",
+        gotItBtn: "Je sais!",
+        needReview: "À revoir",
+        nextCard: "Carte suivante",
+        reviewingCards: "Révision de {{count}} carte",
+        reviewingCards_plural: "Révision de {{count}} cartes",
+        greatJob: "Bravo! Tu as maîtrisé toutes les cartes.",
+        masteredCount: "{{count}} maîtrisée",
+
+        // StudyAudioCard
+        listenLearn: "Écoute et apprends",
+        creatingAudioLesson: "Création de ta leçon audio...",
+        generatingAudioProgress: "Génération audio... {{progress}}%",
+        convertingToSpeech: "Conversion en parole...",
+        failedToGenerate: "Échec de la génération audio",
+        retry: "Réessayer",
+
+        // Common
+        continueBtn: "Continuer",
+        loading: "Chargement..."
       }
     }
   }

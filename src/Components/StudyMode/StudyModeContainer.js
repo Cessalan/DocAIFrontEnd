@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import StudyModeHeader from './StudyModeHeader';
 import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import BrainMascot from '../QuizRoom/BrainMascot';
 
-import { generate_study_item } from '../../Services/FastAPICalls';
+import { generate_study_item, generate_study_audio } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
@@ -38,9 +39,11 @@ const StudyModeContainer = ({
   chatId,
   studyState,
   onExit,
-  onComplete,
-  language = 'en'
+  onComplete
 }) => {
+  const { t, i18n } = useTranslation();
+  const language = i18n.language || 'en';
+
   // View state: 'node' (showing content) | 'overview' (showing plan)
   const [view, setView] = useState('overview');
 
@@ -298,17 +301,49 @@ const StudyModeContainer = ({
   const handleGenerateAudio = useCallback(async (audioConfig) => {
     console.log('🎵 Generating audio:', audioConfig);
     setIsGeneratingAudio(true);
-    setAudioMessage('Creating your audio lesson...');
+    setAudioMessage(t('study.creatingAudioLesson', 'Creating your audio lesson...'));
 
-    // Audio generation would be handled by the existing audio pipeline
-    // This is a placeholder - the actual implementation would call your backend
+    try {
+      // Call the backend to generate audio
+      const result = await generate_study_audio(
+        chatId,
+        audioConfig.topic,
+        audioConfig.intent || 'teach',
+        audioConfig.duration || 2,
+        language,
+        // Progress callback
+        (progress) => {
+          if (progress.status === 'audio_generating') {
+            setAudioMessage(progress.message || t('audio.generatingAudio', 'Generating audio...'));
+          } else if (progress.status === 'audio_script_ready') {
+            setAudioMessage(t('study.convertingToSpeech', 'Converting to speech...'));
+          } else if (progress.status === 'audio_tts_progress') {
+            setAudioMessage(t('study.generatingAudioProgress', { progress: progress.progress || 50, defaultValue: `Generating audio... ${progress.progress || 50}%` }));
+          }
+        }
+      );
 
-    // For now, simulate completion after a delay
-    setTimeout(() => {
+      if (result && result.audioBase64) {
+        // Update the current content with the audio data
+        setCurrentContent(prev => ({
+          ...prev,
+          audioBase64: result.audioBase64,
+          audioDuration: result.audioDuration,
+          script: result.script
+        }));
+
+        console.log('✅ Audio generated successfully');
+      } else {
+        console.error('❌ No audio data received');
+        setAudioMessage(t('study.failedToGenerate', 'Failed to generate audio'));
+      }
+    } catch (error) {
+      console.error('❌ Audio generation failed:', error);
+      setAudioMessage(`Error: ${error.message}`);
+    } finally {
       setIsGeneratingAudio(false);
-      setAudioMessage('');
-    }, 3000);
-  }, []);
+    }
+  }, [chatId, language]);
 
   // Handle continue to next node
   const handleContinue = useCallback(async () => {
@@ -430,7 +465,7 @@ const StudyModeContainer = ({
                 <div className="study-loading">
                   <div className="study-loading-spinner" />
                   <p className="study-loading-text">
-                    Preparing your {activeNode?.type || 'lesson'}...
+                    {t('study.preparing', { type: t(`study.nodeType.${activeNode?.type}`, activeNode?.type || 'lesson').toLowerCase(), defaultValue: `Preparing your ${activeNode?.type || 'lesson'}...` })}
                   </p>
                 </div>
               </div>
@@ -452,7 +487,7 @@ const StudyModeContainer = ({
                 <div className="study-loading">
                   <div className="study-loading-spinner" />
                   <p className="study-loading-text">
-                    Starting your study session...
+                    {t('study.startingSession', 'Starting your study session...')}
                   </p>
                 </div>
               </div>

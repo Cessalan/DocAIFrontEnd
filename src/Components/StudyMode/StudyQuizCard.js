@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 
 /**
@@ -11,6 +12,8 @@ import StudyProgressBar from './StudyProgressBar';
  * @param {Function} onContinue - Callback when user completes all questions
  */
 const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
+  const { t } = useTranslation();
+
   // Handle both new format { questions: [...] } and legacy format { question, options, ... }
   const questions = content?.questions || [content];
   const totalQuestions = questions.length;
@@ -400,7 +403,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
         <div className="study-card-icon quiz">
           <QuizIcon />
         </div>
-        <h2 className="study-card-title">Quick Check</h2>
+        <h2 className="study-card-title">{t('study.quickCheck', 'Quick Check')}</h2>
       </div>
 
       {/* Progress bar - Duolingo style */}
@@ -414,7 +417,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
       {isReviewRound && !allCorrect && (
         <div className="study-review-badge">
           <RefreshIcon />
-          <span>Reviewing {questionQueue.length} question{questionQueue.length > 1 ? 's' : ''}</span>
+          <span>{t('study.reviewing', { count: questionQueue.length, defaultValue: `Reviewing ${questionQueue.length} question${questionQueue.length > 1 ? 's' : ''}` })}</span>
         </div>
       )}
 
@@ -466,14 +469,14 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
                   {isCorrect ? <CheckIcon /> : <XIcon />}
                 </div>
                 <span className="study-quiz-feedback-title">
-                  {isCorrect ? 'Correct!' : 'Incorrect'}
+                  {isCorrect ? t('study.correct', 'Correct!') : t('study.incorrect', 'Incorrect')}
                 </span>
               </div>
 
               {/* Show correct answer when wrong - Duolingo style */}
               {!isCorrect && (
                 <div className="study-quiz-correct-answer">
-                  <span className="correct-answer-label">Correct Answer:</span>
+                  <span className="correct-answer-label">{t('study.correctAnswer', 'Correct Answer:')}</span>
                   <span className="correct-answer-text">
                     {letters[correctIndex]}. {stripLetterPrefix(options[correctIndex])}
                   </span>
@@ -497,12 +500,12 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
                     {showFullRationale ? (
                       <>
                         <ChevronUpIcon />
-                        Show less
+                        {t('study.showLess', 'Show less')}
                       </>
                     ) : (
                       <>
                         <ChevronDownIcon />
-                        Learn more
+                        {t('study.learnMore', 'Learn more')}
                       </>
                     )}
                   </button>
@@ -522,7 +525,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
                   className={`study-quiz-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
                   onClick={handleNextQuestion}
                 >
-                  {isCorrect ? 'CONTINUE' : 'GOT IT'}
+                  {isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT')}
                 </button>
               )}
             </div>
@@ -534,15 +537,15 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
       {allCorrect && (
         <div className="study-card-footer study-card-footer-stacked">
           <div className="study-completion-message">
-            Excellent work! You got them all right.
+            {t('study.excellentWork', 'Excellent work! You got them all right.')}
           </div>
           <div className="study-quiz-summary">
             <span className="summary-item got-it">
-              <CheckIcon /> {totalQuestions} correct
+              <CheckIcon /> {t('study.correctCount', { count: totalQuestions, defaultValue: `${totalQuestions} correct` })}
             </span>
           </div>
           <button className="study-continue-btn" onClick={onContinue}>
-            Continue
+            {t('study.continueBtn', 'Continue')}
             <ArrowRightIcon />
           </button>
         </div>

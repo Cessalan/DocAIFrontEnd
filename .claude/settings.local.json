@@ -12,7 +12,8 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(wc:*)",
-      "Bash(node scripts/generate-blog-html.js:*)"
+      "Bash(node scripts/generate-blog-html.js:*)",
+      "Bash(xargs cat:*)"
     ],
     "deny": [],
     "ask": []

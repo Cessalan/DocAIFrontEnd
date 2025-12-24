@@ -255,7 +255,7 @@ const StudyPlanOverview = ({ studyState, onNodeSelect }) => {
 
                   {/* START label for active node */}
                   {isActive && (
-                    <div className="study-node-start-label">START</div>
+                    <div className="study-node-start-label">{t('study.start', 'START')}</div>
                   )}
                 </div>
 

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import ChatAudioPlayer from '../ChatInerface/ChatAudioPlayer';
 
 /**
@@ -18,8 +19,12 @@ const StudyAudioCard = ({
   onGenerateAudio,
   onContinue
 }) => {
+  const { t } = useTranslation();
   const [hasListened, setHasListened] = useState(false);
   const [audioReady, setAudioReady] = useState(false);
+
+  // Use ref to prevent duplicate calls (survives re-renders)
+  const isGeneratingRef = useRef(false);
 
   const { topic, intent, suggestedDuration, audioBase64, firebaseUrl } = content || {};
 
@@ -46,16 +51,33 @@ const StudyAudioCard = ({
     </svg>
   );
 
-  // Auto-trigger audio generation if not ready
+  // Track if we've already attempted generation to prevent infinite retries
+  const [hasAttempted, setHasAttempted] = useState(false);
+
+  // Auto-trigger audio generation if not ready (only once)
   useEffect(() => {
-    if (!audioReady && !isGenerating && onGenerateAudio) {
+    // Use ref to prevent duplicate calls even during re-renders
+    if (!audioReady && !isGenerating && !hasAttempted && !isGeneratingRef.current && onGenerateAudio && topic) {
+      console.log('🎵 StudyAudioCard: Triggering audio generation for:', topic);
+      setHasAttempted(true);
+      isGeneratingRef.current = true;
       onGenerateAudio({
         topic,
         intent: intent || 'teach',
         duration: suggestedDuration || 2
       });
     }
-  }, [audioReady, isGenerating, onGenerateAudio, topic, intent, suggestedDuration]);
+  }, [audioReady, isGenerating, hasAttempted, onGenerateAudio, topic, intent, suggestedDuration]);
+
+  // Reset ref when audio is ready or on unmount
+  useEffect(() => {
+    if (audioReady) {
+      isGeneratingRef.current = false;
+    }
+    return () => {
+      isGeneratingRef.current = false;
+    };
+  }, [audioReady]);
 
   // Mark as listened when audio ends
   const handleAudioEnd = () => {
@@ -68,7 +90,7 @@ const StudyAudioCard = ({
         <div className="study-card-icon audio">
           <AudioIcon />
         </div>
-        <h2 className="study-card-title">Listen & Learn</h2>
+        <h2 className="study-card-title">{t('study.listenLearn', 'Listen & Learn')}</h2>
       </div>
 
       <div className="study-card-content">
@@ -84,7 +106,7 @@ const StudyAudioCard = ({
                 <div className="study-audio-loading-bar" />
               </div>
               <p className="study-audio-status">
-                {generatingMessage || 'Generating audio lesson...'}
+                {generatingMessage || t('study.creatingAudioLesson', 'Creating your audio lesson...')}
               </p>
             </div>
           ) : audioReady ? (
@@ -98,16 +120,45 @@ const StudyAudioCard = ({
             />
           ) : (
             <div className="study-audio-generating">
-              <div className="study-audio-loading-bars">
-                <div className="study-audio-loading-bar" />
-                <div className="study-audio-loading-bar" />
-                <div className="study-audio-loading-bar" />
-                <div className="study-audio-loading-bar" />
-                <div className="study-audio-loading-bar" />
-              </div>
-              <p className="study-audio-status">
-                Preparing audio...
-              </p>
+              {hasAttempted && !isGenerating ? (
+                // Show retry button if generation failed
+                <>
+                  <p className="study-audio-status" style={{ color: '#ff6b6b', marginBottom: '12px' }}>
+                    {generatingMessage || t('study.failedToGenerate', 'Failed to generate audio')}
+                  </p>
+                  <button
+                    className="study-retry-btn"
+                    onClick={() => {
+                      setHasAttempted(false); // Reset to allow retry
+                    }}
+                    style={{
+                      padding: '8px 16px',
+                      background: 'var(--primary-color, #4CAF50)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      fontSize: '14px'
+                    }}
+                  >
+                    {t('study.retry', 'Retry')}
+                  </button>
+                </>
+              ) : (
+                // Show loading state
+                <>
+                  <div className="study-audio-loading-bars">
+                    <div className="study-audio-loading-bar" />
+                    <div className="study-audio-loading-bar" />
+                    <div className="study-audio-loading-bar" />
+                    <div className="study-audio-loading-bar" />
+                    <div className="study-audio-loading-bar" />
+                  </div>
+                  <p className="study-audio-status">
+                    {generatingMessage || t('study.creatingAudioLesson', 'Creating your audio lesson...')}
+                  </p>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -117,7 +168,7 @@ const StudyAudioCard = ({
       {audioReady && (
         <div className="study-card-footer">
           <button className="study-continue-btn" onClick={onContinue}>
-            Continue
+            {t('study.continueBtn', 'Continue')}
             <ArrowRightIcon />
           </button>
         </div>

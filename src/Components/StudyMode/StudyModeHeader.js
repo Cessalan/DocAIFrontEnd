@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * StudyModeHeader - Header bar for study mode
@@ -9,10 +10,12 @@ import React from 'react';
  * @param {Function} onExit - Callback to exit study mode
  */
 const StudyModeHeader = ({
-  unitTitle = 'Study Session',
+  unitTitle,
   unitSubtitle = '',
   onExit
 }) => {
+  const { t } = useTranslation();
+  const displayTitle = unitTitle || t('study.yourStudyPlan', 'Study Session');
   return (
     <div className="study-mode-header">
       <div className="study-header-inner">
@@ -22,7 +25,7 @@ const StudyModeHeader = ({
         {/* Center: title */}
         <div className="study-header-center">
           <div className="study-header-info">
-            <h1 className="study-unit-title">{unitTitle}</h1>
+            <h1 className="study-unit-title">{displayTitle}</h1>
             {unitSubtitle && (
               <p className="study-unit-subtitle">{unitSubtitle}</p>
             )}
@@ -34,7 +37,7 @@ const StudyModeHeader = ({
           <button
             className="study-exit-btn"
             onClick={onExit}
-            title="Exit Study Mode"
+            title={t('study.exitStudyMode', 'Exit Study Mode')}
           >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18" />

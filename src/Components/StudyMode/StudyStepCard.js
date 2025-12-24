@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import StudyLessonCard from './StudyLessonCard';
 import StudyQuizCard from './StudyQuizCard';
 import StudyFlashcardCard from './StudyFlashcardCard';
@@ -30,6 +31,8 @@ const StudyStepCard = ({
   onGenerateAudio,
   onContinue
 }) => {
+  const { t } = useTranslation();
+
   // Loading state
   if (isLoading) {
     return (
@@ -37,7 +40,7 @@ const StudyStepCard = ({
         <div className="study-loading">
           <div className="study-loading-spinner" />
           <p className="study-loading-text">
-            Preparing your {node?.type || 'content'}...
+            {t('study.preparing', { type: t(`study.nodeType.${node?.type}`, node?.type || 'content').toLowerCase(), defaultValue: `Preparing your ${node?.type || 'content'}...` })}
           </p>
         </div>
       </div>
@@ -50,7 +53,7 @@ const StudyStepCard = ({
       <div className="study-step-card">
         <div className="study-loading">
           <p className="study-loading-text">
-            Click START on a node to begin
+            {t('study.startingSession', 'Starting your study session...')}
           </p>
         </div>
       </div>

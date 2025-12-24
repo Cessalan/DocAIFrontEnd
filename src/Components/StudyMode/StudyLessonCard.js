@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 
 /**
  * StudyLessonCard - Displays a mini-lesson in study mode
@@ -7,6 +8,7 @@ import React from 'react';
  * @param {Function} onContinue - Callback when user is ready to continue
  */
 const StudyLessonCard = ({ content, onContinue }) => {
+  const { t } = useTranslation();
   const { title, body, keyPoints = [] } = content || {};
 
   // Book icon for lesson
@@ -42,13 +44,13 @@ const StudyLessonCard = ({ content, onContinue }) => {
         <div className="study-card-icon lesson">
           <LessonIcon />
         </div>
-        <h2 className="study-card-title">{title || 'Lesson'}</h2>
+        <h2 className="study-card-title">{title || t('study.lessonTitle', 'Lesson')}</h2>
       </div>
 
       <div className="study-card-content">
         {/* Main lesson body */}
         <div className="study-lesson-body">
-          {body || 'Loading lesson content...'}
+          {body || t('study.loadingLesson', 'Loading lesson content...')}
         </div>
 
         {/* Key points section */}
@@ -56,7 +58,7 @@ const StudyLessonCard = ({ content, onContinue }) => {
           <div className="study-lesson-key-points">
             <h4>
               <LightbulbIcon />
-              Key Points
+              {t('study.keyPoints', 'Key Points')}
             </h4>
             <ul>
               {keyPoints.map((point, index) => (
@@ -69,7 +71,7 @@ const StudyLessonCard = ({ content, onContinue }) => {
 
       <div className="study-card-footer">
         <button className="study-continue-btn" onClick={onContinue}>
-          Continue
+          {t('study.continueBtn', 'Continue')}
           <ArrowRightIcon />
         </button>
       </div>

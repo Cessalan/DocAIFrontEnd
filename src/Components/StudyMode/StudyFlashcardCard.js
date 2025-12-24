@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 
 /**
@@ -32,6 +33,8 @@ const parseFlashcardText = (text) => {
  * @param {Function} onContinue - Callback when user completes all cards
  */
 const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) => {
+  const { t } = useTranslation();
+
   // Debug: log savedProgress on every render
   console.log('🃏 StudyFlashcardCard rendered, savedProgress:', savedProgress);
 
@@ -283,7 +286,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
         <div className="study-card-icon flashcard">
           <FlashcardIcon />
         </div>
-        <h2 className="study-card-title">Flashcards</h2>
+        <h2 className="study-card-title">{t('study.flashcardsTitle', 'Flashcards')}</h2>
       </div>
 
       {/* Progress bar - fills as you go through cards, completes when all mastered */}
@@ -297,7 +300,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
       {isReviewRound && !allMastered && (
         <div className="study-review-badge">
           <RefreshIcon />
-          <span>Reviewing {cardQueue.length} card{cardQueue.length > 1 ? 's' : ''}</span>
+          <span>{t('study.reviewingCards', { count: cardQueue.length, defaultValue: `Reviewing ${cardQueue.length} card${cardQueue.length > 1 ? 's' : ''}` })}</span>
         </div>
       )}
 
@@ -319,7 +322,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
               />
               <span className="study-flashcard-hint">
                 <TapIcon />
-                Tap to flip
+                {t('study.tapToFlip', 'Tap to flip')}
               </span>
             </div>
 
@@ -327,11 +330,11 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
             <div className="study-flashcard-face study-flashcard-back">
               <div
                 className="study-flashcard-text"
-                dangerouslySetInnerHTML={{ __html: parseFlashcardText(back) || 'Loading...' }}
+                dangerouslySetInnerHTML={{ __html: parseFlashcardText(back) || t('study.loading', 'Loading...') }}
               />
               <span className="study-flashcard-hint">
                 <TapIcon />
-                Tap to flip back
+                {t('study.tapToFlipBack', 'Tap to flip back')}
               </span>
             </div>
           </div>
@@ -344,14 +347,14 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
                 onClick={(e) => { e.stopPropagation(); handleGotIt(); }}
               >
                 <CheckIcon />
-                Got it!
+                {t('study.gotItBtn', 'Got it!')}
               </button>
               <button
                 className="study-flashcard-btn review"
                 onClick={(e) => { e.stopPropagation(); handleNeedReview(); }}
               >
                 <RefreshIcon />
-                Need review
+                {t('study.needReview', 'Need review')}
               </button>
             </div>
           )}
@@ -363,7 +366,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
                 className="study-flashcard-btn next"
                 onClick={(e) => { e.stopPropagation(); handleNextCard(); }}
               >
-                Next Card
+                {t('study.nextCard', 'Next Card')}
                 <ArrowRightIcon />
               </button>
             </div>
@@ -375,15 +378,15 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
       {allMastered && (
         <div className="study-card-footer study-card-footer-stacked">
           <div className="study-completion-message">
-            Great job! You've mastered all the cards.
+            {t('study.greatJob', "Great job! You've mastered all the cards.")}
           </div>
           <div className="study-flashcard-summary">
             <span className="summary-item got-it">
-              <CheckIcon /> {totalCards} mastered
+              <CheckIcon /> {t('study.masteredCount', { count: totalCards, defaultValue: `${totalCards} mastered` })}
             </span>
           </div>
           <button className="study-continue-btn" onClick={onContinue}>
-            Continue
+            {t('study.continueBtn', 'Continue')}
             <ArrowRightIcon />
           </button>
         </div>
