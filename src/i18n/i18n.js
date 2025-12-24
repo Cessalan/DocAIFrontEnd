@@ -34,7 +34,11 @@ const resources = {
         studyJourneyHint: "Guided lessons, quizzes & flashcards",
         uploadChat: "Upload & Chat",
         uploadChatHint: "Ask questions about your documents",
-        recommended: "Recommended"
+        recommended: "Recommended",
+        studyPlanStartsHere: "Your study plan starts here",
+        uploadWeHandle: "Upload your notes. We'll take care of the rest.",
+        uploadMyNotes: "Upload my notes",
+        progressSaved: "progress saved"
       },
 
       // Common UI Elements
@@ -198,7 +202,8 @@ const resources = {
         newChat: "New chat",
         expandSidebar: "Expand sidebar",
         usage: "Analytics",
-        logout: "Logout"
+        logout: "Logout",
+        studySession: "Study Session"
       },
 
       // Sign Up
@@ -849,7 +854,11 @@ const resources = {
         studyJourneyHint: "Leçons guidées, quiz et flashcards",
         uploadChat: "Importer et discuter",
         uploadChatHint: "Pose des questions sur tes documents",
-        recommended: "Recommandé"
+        recommended: "Recommandé",
+        studyPlanStartsHere: "Ton plan d'étude commence ici",
+        uploadWeHandle: "Importe tes notes. On s'occupe du reste.",
+        uploadMyNotes: "Importer mes notes",
+        progressSaved: "progression sauvegardée"
       },
 
       // Common UI Elements
@@ -1013,7 +1022,8 @@ const resources = {
         newChat: "Nouveau chat",
         expandSidebar: "Ouvrir le menu",
         usage: "Analytiques",
-        logout: "Déconnexion"
+        logout: "Déconnexion",
+        studySession: "Session d'étude"
       },
 
       // Sign Up

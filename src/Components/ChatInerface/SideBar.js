@@ -300,14 +300,26 @@ const getchatDate = (timestamp) => {
         {chats.map((chat) => (
          <div
               key={chat.id}
-              className={`conversation-item ${activeChatId === chat.id ? "active" : ""}`}
+              className={`conversation-item ${activeChatId === chat.id ? "active" : ""} ${chat.isStudySession ? "study-session" : ""}`}
               onClick={() => handleSelectChat(chat.id)}
               onMouseEnter={() => setHoveredChatId(chat.id)}
               onMouseLeave={() => setHoveredChatId(null)}
               style={{ position: 'relative' }}
             >
-              {/* File count badge */}
-              {chatFileCounts[chat.id] > 0 && (
+              {/* Study session icon */}
+              {chat.isStudySession && (
+                <div className="study-session-icon" title={t('side.studySession', 'Study Session')}>
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M12 3L2 9L12 15L22 9L12 3Z" fill="currentColor" opacity="0.9"/>
+                    <path d="M6 12V17C6 17 9 20 12 20C15 20 18 17 18 17V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                    <path d="M20 10V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                    <circle cx="20" cy="17.5" r="1.5" fill="currentColor"/>
+                  </svg>
+                </div>
+              )}
+
+              {/* File count badge - only show for non-study sessions */}
+              {!chat.isStudySession && chatFileCounts[chat.id] > 0 && (
                 <div className="file-count-badge">
                   <span className="paperclip-icon">📎</span>
                   <span className="file-count-number">{chatFileCounts[chat.id]}</span>

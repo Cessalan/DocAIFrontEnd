@@ -3204,60 +3204,39 @@ const ChatInterface = ({
           </div>
         )}
 
-        {/* Empty State - Regular chat: show two-card layout */}
+        {/* Empty State - Regular chat: single focused CTA */}
         {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData && (
           <div className="empty-chat-state">
-            <div className="empty-chat-actions two-cards">
-              {/* Study Journey Card - Recommended, guided learning */}
-              <div className="empty-action-card study-journey-card recommended" onClick={() => {
-                // Open file dialog, then show study modal after upload
+            <div className="empty-chat-single-cta">
+              {/* Main upload CTA - defaults to Study Journey */}
+              <div className="empty-cta-card" onClick={() => {
                 documentFileInputRef.current?.click();
-                // Set flag to show study modal after upload completes
                 window._pendingStudyJourney = true;
               }}>
-                <span className="recommended-badge">{t('chat.recommended', 'Recommended')}</span>
-                <div className="empty-action-icon-svg study-journey-icon">
-                  {/* Graduation cap / learning path icon */}
-                  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <div className="empty-cta-icon">
+                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     {/* Graduation cap */}
-                    <path d="M24 8L4 18L24 28L44 18L24 8Z" fill="#e88d7d" stroke="#c46a5a" strokeWidth="2" strokeLinejoin="round"/>
-                    <path d="M12 23V33C12 33 18 38 24 38C30 38 36 33 36 33V23" stroke="#c46a5a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M40 20V32" stroke="#c46a5a" strokeWidth="2" strokeLinecap="round"/>
-                    <circle cx="40" cy="34" r="2" fill="#c46a5a"/>
+                    <path d="M32 12L6 26L32 40L58 26L32 12Z" fill="#e88d7d" stroke="#c46a5a" strokeWidth="2.5" strokeLinejoin="round"/>
+                    <path d="M16 32V46C16 46 24 52 32 52C40 52 48 46 48 46V32" stroke="#c46a5a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    <path d="M52 28V44" stroke="#c46a5a" strokeWidth="2.5" strokeLinecap="round"/>
+                    <circle cx="52" cy="47" r="3" fill="#c46a5a"/>
                     {/* Sparkles */}
-                    <circle cx="10" cy="12" r="1.5" fill="#fbbf24"/>
-                    <circle cx="38" cy="10" r="1.5" fill="#fbbf24"/>
-                    <circle cx="8" cy="28" r="1" fill="#fbbf24"/>
+                    <circle cx="12" cy="18" r="2" fill="#fbbf24"/>
+                    <circle cx="52" cy="14" r="2" fill="#fbbf24"/>
+                    <circle cx="10" cy="38" r="1.5" fill="#fbbf24"/>
                   </svg>
                 </div>
-                <div className="empty-action-content">
-                  <p className="empty-action-title">{t('chat.studyJourney', 'Study Journey')}</p>
-                  <p className="empty-action-subtitle">{t('chat.studyJourneyHint', 'Guided lessons, quizzes & flashcards')}</p>
-                </div>
-              </div>
-
-              {/* Upload & Chat Card - Simple document chat */}
-              <div className="empty-action-card upload-chat-card" onClick={openFileUploadDialog}>
-                <div className="empty-action-icon-svg upload-chat-icon">
-                  {/* Chat bubbles with document */}
-                  <svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {/* Document */}
-                    <rect x="8" y="6" width="20" height="26" rx="3" fill="#d4f0fc" stroke="#4169e1" strokeWidth="2"/>
-                    <path d="M13 14H23" stroke="#4169e1" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M13 20H20" stroke="#4169e1" strokeWidth="2" strokeLinecap="round"/>
-                    <path d="M13 26H17" stroke="#4169e1" strokeWidth="2" strokeLinecap="round"/>
-                    {/* Chat bubble */}
-                    <path d="M26 22C26 19.79 27.79 18 30 18H38C40.21 18 42 19.79 42 22V30C42 32.21 40.21 34 38 34H34L30 38V34H30C27.79 34 26 32.21 26 30V22Z" fill="#ffd6e0" stroke="#db2777" strokeWidth="2"/>
-                    {/* Chat dots */}
-                    <circle cx="31" cy="26" r="1.5" fill="#db2777"/>
-                    <circle cx="35" cy="26" r="1.5" fill="#db2777"/>
-                    <circle cx="39" cy="26" r="1.5" fill="#db2777"/>
+                <h2 className="empty-cta-title">{t('chat.studyPlanStartsHere', 'Your study plan starts here')}</h2>
+                <p className="empty-cta-subtitle">{t('chat.uploadWeHandle', "Upload your notes. We'll take care of the rest.")}</p>
+                <button className="empty-cta-button">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="17 8 12 3 7 8" />
+                    <line x1="12" y1="3" x2="12" y2="15" />
                   </svg>
-                </div>
-                <div className="empty-action-content">
-                  <p className="empty-action-title">{t('chat.uploadChat', 'Upload & Chat')}</p>
-                  <p className="empty-action-subtitle">{t('chat.uploadChatHint', 'Ask questions about your documents')}</p>
-                </div>
+                  {t('chat.uploadMyNotes', 'Upload my notes')}
+                </button>
+                <span className="empty-cta-note">{t('chat.progressSaved', 'progress saved')}</span>
               </div>
             </div>
           </div>

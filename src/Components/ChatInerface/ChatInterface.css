@@ -1332,6 +1332,160 @@ body.dark-mode .nursing-icon {
     line-height: 1.3;
   }
 
+  /* ============================================
+     SINGLE CTA EMPTY STATE - Focused Upload
+     ============================================ */
+  .empty-chat-single-cta {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+  }
+
+  .empty-cta-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+    padding: 40px 48px;
+    background: linear-gradient(135deg, #fff5f2 0%, #ffe8e4 100%);
+    border: 2px solid rgba(232, 141, 125, 0.3);
+    border-radius: 24px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-align: center;
+    box-shadow: 0 4px 20px rgba(232, 141, 125, 0.12);
+    max-width: 320px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .empty-cta-card::before {
+    content: '';
+    position: absolute;
+    top: -10px;
+    right: 20%;
+    width: 60px;
+    height: 20px;
+    background: rgba(255, 248, 184, 0.9);
+    border: 1px solid rgba(217, 119, 6, 0.15);
+    transform: rotate(3deg);
+    z-index: 1;
+  }
+
+  .empty-cta-card:hover {
+    background: linear-gradient(135deg, #ffefeb 0%, #ffddd7 100%);
+    border-color: rgba(232, 141, 125, 0.5);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 32px rgba(232, 141, 125, 0.2);
+  }
+
+  .empty-cta-icon {
+    width: 72px;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .empty-cta-icon svg {
+    width: 100%;
+    height: 100%;
+  }
+
+  .empty-cta-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--primary-coral-dark);
+    margin: 0;
+  }
+
+  .empty-cta-subtitle {
+    font-size: 14px;
+    color: #777;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  .empty-cta-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 12px 24px;
+    background: linear-gradient(135deg, var(--primary-coral) 0%, var(--primary-coral-dark) 100%);
+    color: white;
+    font-size: 15px;
+    font-weight: 600;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+    box-shadow: 0 4px 12px rgba(232, 141, 125, 0.3);
+    margin-top: 8px;
+  }
+
+  .empty-cta-button:hover {
+    background: linear-gradient(135deg, var(--primary-coral-hover) 0%, var(--primary-coral-dark) 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(232, 141, 125, 0.4);
+  }
+
+  .empty-cta-button svg {
+    width: 18px;
+    height: 18px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+  }
+
+  /* Dark mode for single CTA */
+  body.dark-mode .empty-cta-card {
+    background: linear-gradient(135deg, rgba(184, 165, 212, 0.15) 0%, rgba(184, 165, 212, 0.08) 100%);
+    border-color: rgba(184, 165, 212, 0.3);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  }
+
+  body.dark-mode .empty-cta-card::before {
+    background: rgba(184, 165, 212, 0.3);
+    border-color: rgba(184, 165, 212, 0.2);
+  }
+
+  body.dark-mode .empty-cta-card:hover {
+    background: linear-gradient(135deg, rgba(184, 165, 212, 0.2) 0%, rgba(184, 165, 212, 0.12) 100%);
+    border-color: rgba(184, 165, 212, 0.5);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+  }
+
+  body.dark-mode .empty-cta-title {
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .empty-cta-subtitle {
+    color: #9ca3af;
+  }
+
+  body.dark-mode .empty-cta-button {
+    background: linear-gradient(135deg, var(--dark-accent) 0%, var(--dark-accent-hover) 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  body.dark-mode .empty-cta-button:hover {
+    background: linear-gradient(135deg, var(--dark-accent-hover) 0%, #9a87be 100%);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  /* "progress saved" note under button */
+  .empty-cta-note {
+    font-size: 12px;
+    color: #999;
+    margin-top: 4px;
+    opacity: 0.8;
+  }
+
+  body.dark-mode .empty-cta-note {
+    color: #6b7280;
+  }
+
   /* Exam-linked empty state - compact */
   .empty-chat-state.exam-linked {
     display: flex;
