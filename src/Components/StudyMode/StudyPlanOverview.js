@@ -1,17 +1,17 @@
 import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
+import StudyPathMascot from '../QuizRoom/StudyPathMascot';
 import './StudyMode.css';
 
 /**
  * StudyPlanOverview - Duolingo-style study path with bold circular progress
  * Shows all nodes in a winding path layout with type-specific icons
+ * Mascots appear along the path: colored at active node, gray further ahead
  *
  * @param {Object} studyState - Study state with path and nodes
  * @param {Function} onNodeSelect - Callback when a node is selected
- * @param {Function} onExit - Callback to exit study mode entirely
  */
-const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
+const StudyPlanOverview = ({ studyState, onNodeSelect }) => {
   const { t } = useTranslation();
   const activeNodeRef = useRef(null);
 
@@ -32,20 +32,34 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
       }, 100);
     }
   }, [nodes]);
-  const progressPercent = totalNodes > 0 ? (completedCount / totalNodes) * 100 : 0;
 
-  // Get encouraging message based on progress
-  const getMascotMessage = () => {
-    if (completedCount === 0) {
-      return t('study.mascot.start', "Let's start learning! 📚");
-    } else if (progressPercent < 50) {
-      return t('study.mascot.keepGoing', "You're doing great! Keep going! ✨");
-    } else if (progressPercent < 100) {
-      return t('study.mascot.almostThere', "Almost there! You've got this! 💪");
-    } else {
-      return t('study.mascot.completed', "Amazing! You completed everything! 🎉");
+  // Find the active node index for mascot positioning
+  const activeNodeIndex = nodes.findIndex(n => n.status === 'active');
+
+  // Determine which nodes should have mascots
+  // Place mascot at active node (colored) and at intervals further down (gray)
+  const getMascotPositions = () => {
+    const positions = [];
+
+    // Always show colored mascot at active node position
+    if (activeNodeIndex >= 0) {
+      positions.push({ index: activeNodeIndex, isActive: true });
+    } else if (completedCount === totalNodes && totalNodes > 0) {
+      // All completed - show at the end
+      positions.push({ index: totalNodes - 1, isActive: true });
     }
+
+    // Show gray mascots at intervals after the active node
+    // Place them every 3-4 nodes after active, similar to Duolingo checkpoints
+    const mascotInterval = 4;
+    for (let i = activeNodeIndex + mascotInterval; i < totalNodes; i += mascotInterval) {
+      positions.push({ index: i, isActive: false });
+    }
+
+    return positions;
   };
+
+  const mascotPositions = getMascotPositions();
 
   // Get type-specific icon for each node type
   const getNodeIcon = (type, status) => {
@@ -140,21 +154,14 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
     return { progress: 0, color: 'locked' };
   };
 
+  // Check if a mascot should be shown at this node index
+  const getMascotAtIndex = (index) => {
+    return mascotPositions.find(pos => pos.index === index);
+  };
+
   return (
     <div className="study-overview-container study-overview-v2">
-      {/* Mascot with speech bubble */}
-      <div className="study-overview-mascot">
-        <div className="study-mascot-speech-bubble">
-          <span>{getMascotMessage()}</span>
-        </div>
-        <NurseQuizMascot
-          size={80}
-          isExcited={progressPercent >= 50}
-          lookDirection="center"
-        />
-      </div>
-
-      {/* Header - simplified without numeric progress */}
+      {/* Header with title */}
       <div className="study-overview-header-v2">
         <div className="study-overview-title-section">
           <h1 className="study-overview-title">
@@ -177,6 +184,13 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
             const isLocked = node.status === 'locked';
             const offset = getNodeOffset(index);
             const ringData = getProgressRing(node);
+
+            // Check if mascot should appear at this node
+            const mascotData = getMascotAtIndex(index);
+            const hasMascot = !!mascotData;
+            // Label is on right for even indices, left for odd
+            // Mascot goes on the opposite side
+            const mascotSide = index % 2 === 0 ? 'left' : 'right';
 
             // SVG progress ring calculations
             const radius = 44;
@@ -244,6 +258,16 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onExit }) => {
                     <div className="study-node-start-label">START</div>
                   )}
                 </div>
+
+                {/* Mascot positioned next to node */}
+                {hasMascot && (
+                  <div className={`study-path-mascot-wrapper ${mascotSide}`}>
+                    <StudyPathMascot
+                      size={70}
+                      isActive={mascotData.isActive}
+                    />
+                  </div>
+                )}
 
                 {/* Node label card */}
                 <div className={`study-node-label-v2 ${index % 2 === 0 ? 'right' : 'left'}`}>

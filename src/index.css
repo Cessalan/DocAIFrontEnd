@@ -114,6 +114,56 @@ body.dark-mode .app-wrapper {
 }
 
 /* ============================================
+   GLOBAL BRANDING - NurseQuizAI logo
+   Positioned next to sidebar, responds to sidebar state
+   ============================================ */
+.app-global-brand {
+  position: fixed;
+  top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  z-index: 1001;
+  transition: left var(--transition-normal);
+}
+
+/* When sidebar is open (320px width) */
+.app-global-brand.sidebar-open {
+  left: 336px; /* 320px sidebar + 16px padding */
+}
+
+/* When sidebar is closed (80px rail) */
+.app-global-brand.sidebar-closed {
+  left: 96px; /* 80px rail + 16px padding */
+}
+
+.app-brand-logo {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+
+.app-brand-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary-coral);
+  letter-spacing: 0.5px;
+}
+
+/* Dark mode branding */
+body.dark-mode .app-brand-name {
+  color: var(--dark-accent);
+}
+
+/* Hide on mobile */
+@media (max-width: 768px) {
+  .app-global-brand {
+    display: none;
+  }
+}
+
+/* ============================================
    SIDEBAR - WARM NOTEBOOK STYLE
    ============================================ */
 .sidebar {

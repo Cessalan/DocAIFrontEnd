@@ -1,14 +1,11 @@
 import React from 'react';
-import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
 
 /**
  * StudyModeHeader - Header bar for study mode
- * Shows NurseQuizAI branding, exit button, and unit title
+ * Shows exit button and unit title (branding is handled by App.js)
  *
  * @param {string} unitTitle - Main title of the study unit
  * @param {string} unitSubtitle - Subtitle/description
- * @param {number} currentStep - Current step number (1-indexed)
- * @param {number} totalSteps - Total number of steps
  * @param {Function} onExit - Callback to exit study mode
  */
 const StudyModeHeader = ({
@@ -19,11 +16,8 @@ const StudyModeHeader = ({
   return (
     <div className="study-mode-header">
       <div className="study-header-inner">
-        {/* Left side: Brand logo */}
-        <div className="study-header-brand">
-          <HeartLogo className="study-brand-logo" />
-          <span className="study-brand-name">NurseQuizAI</span>
-        </div>
+        {/* Left side: empty spacer for balance */}
+        <div className="study-header-left"></div>
 
         {/* Center: title */}
         <div className="study-header-center">

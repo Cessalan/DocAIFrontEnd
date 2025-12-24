@@ -2393,11 +2393,37 @@ body.dark-mode .study-mode-focused .study-main-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(180deg, #fff9f5 0%, #fff5eb 50%, #ffeee5 100%);
+  background: #fef7f4;
   padding: 24px;
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 100;
+}
+
+/* Pretty scrollbar for study overview */
+.study-overview-container::-webkit-scrollbar {
+  width: 10px;
+}
+
+.study-overview-container::-webkit-scrollbar-track {
+  background: rgba(232, 141, 125, 0.1);
+  border-radius: 10px;
+}
+
+.study-overview-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #e88d7d 0%, #f4a896 100%);
+  border-radius: 10px;
+  border: 2px solid #fef7f4;
+}
+
+.study-overview-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #d67a6a 0%, #e88d7d 100%);
+}
+
+/* Firefox scrollbar */
+.study-overview-container {
+  scrollbar-width: thin;
+  scrollbar-color: #e88d7d rgba(232, 141, 125, 0.1);
 }
 
 .study-overview-container > * {
@@ -2406,7 +2432,24 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 .dark-mode .study-overview-container {
-  background: linear-gradient(180deg, #2f2f2f 0%, #1a1a1a 100%);
+  background: #2f2f2f;
+}
+
+.dark-mode .study-overview-container::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.dark-mode .study-overview-container::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #4a4a4a 0%, #5a5a5a 100%);
+  border: 2px solid #2f2f2f;
+}
+
+.dark-mode .study-overview-container::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #5a5a5a 0%, #6a6a6a 100%);
+}
+
+.dark-mode .study-overview-container {
+  scrollbar-color: #4a4a4a rgba(255, 255, 255, 0.05);
 }
 
 /* Decorative doodles - warmer and more playful */
@@ -2437,103 +2480,10 @@ body.dark-mode .study-mode-focused .study-main-content {
   opacity: 0.12;
 }
 
-/* Mascot with speech bubble */
-.study-overview-mascot {
-  position: fixed;
-  bottom: 100px;
-  right: 20px;
-  z-index: 115;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  animation: mascotBounceIn 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  max-width: none !important;
-  width: auto !important;
-}
-
-@keyframes mascotBounceIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.3) translateY(50px);
-  }
-  60% {
-    transform: scale(1.1) translateY(-5px);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1) translateY(0);
-  }
-}
-
-.study-mascot-speech-bubble {
-  position: relative;
-  background: white;
-  border-radius: 16px;
-  padding: 10px 16px;
-  margin-bottom: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-  border: 2px solid rgba(232, 141, 125, 0.2);
-  max-width: 180px;
-  animation: speechBubblePop 0.4s ease-out 0.3s both;
-}
-
-@keyframes speechBubblePop {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.study-mascot-speech-bubble::after {
-  content: '';
-  position: absolute;
-  bottom: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-top: 10px solid white;
-}
-
-.study-mascot-speech-bubble::before {
-  content: '';
-  position: absolute;
-  bottom: -14px;
-  left: 50%;
-  transform: translateX(-50%);
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-top: 12px solid rgba(232, 141, 125, 0.2);
-}
-
-.study-mascot-speech-bubble span {
-  font-family: 'Patrick Hand', cursive;
-  font-size: 14px;
-  color: #3d3d3d;
-  line-height: 1.4;
-  display: block;
-  text-align: center;
-}
-
-.dark-mode .study-mascot-speech-bubble {
-  background: #3d3d3d;
-  border-color: rgba(232, 141, 125, 0.3);
-}
-
-.dark-mode .study-mascot-speech-bubble::after {
-  border-top-color: #3d3d3d;
-}
-
-.dark-mode .study-mascot-speech-bubble::before {
-  border-top-color: rgba(232, 141, 125, 0.3);
-}
-
-.dark-mode .study-mascot-speech-bubble span {
-  color: #f0f0f0;
+/* OLD: Mascot with speech bubble - no longer used, mascots now inline on path */
+/* Keeping for potential future use */
+.study-overview-mascot-old {
+  display: none;
 }
 
 /* Header */
@@ -2578,22 +2528,36 @@ body.dark-mode .study-mode-focused .study-main-content {
 
 .study-overview-title {
   font-family: 'Patrick Hand', cursive;
-  font-size: 26px;
+  font-size: 36px;
   font-weight: 700;
   color: #3d3d3d;
   margin: 0;
   line-height: 1.2;
+  background: linear-gradient(135deg, #e88d7d 0%, #c46a5a 50%, #e88d7d 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 8px rgba(232, 141, 125, 0.2);
+  letter-spacing: 0.5px;
 }
 
 .dark-mode .study-overview-title {
-  color: #f5f5f5;
+  background: linear-gradient(135deg, #f4a896 0%, #e88d7d 50%, #f4a896 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .study-overview-subtitle {
   font-family: 'Patrick Hand', cursive;
-  font-size: 14px;
-  color: #888;
-  margin: 4px 0 0 0;
+  font-size: 16px;
+  color: #7a7a7a;
+  margin: 8px 0 0 0;
+  letter-spacing: 0.3px;
+}
+
+.dark-mode .study-overview-subtitle {
+  color: #a0a0a0;
 }
 
 .study-overview-progress-badge {
@@ -2992,7 +2956,7 @@ body.dark-mode .study-mode-focused .study-main-content {
   }
 
   .study-overview-title {
-    font-size: 22px;
+    font-size: 28px;
   }
 
   .study-overview-progress-badge {
@@ -3033,22 +2997,6 @@ body.dark-mode .study-mode-focused .study-main-content {
     font-size: 18px;
   }
 
-  /* Smaller mascot on mobile */
-  .study-overview-mascot {
-    bottom: 90px;
-    right: 10px;
-    transform: scale(0.85);
-  }
-
-  .study-mascot-speech-bubble {
-    max-width: 150px;
-    padding: 8px 12px;
-  }
-
-  .study-mascot-speech-bubble span {
-    font-size: 12px;
-  }
-
   /* Hide some doodles on mobile */
   .doodle-5, .doodle-6 {
     display: none;
@@ -3068,15 +3016,56 @@ body.dark-mode .study-mode-focused .study-main-content {
   display: none;
 }
 
-/* Header V2 - No numeric progress badge */
+/* Header V2 - Sticky header */
 .study-overview-header-v2 {
-  position: relative;
-  z-index: 1;
+  position: sticky;
+  top: -24px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 24px 16px 16px 16px;
+  margin-top: -24px;
+  /* Extend to full viewport width while staying in container */
+  width: 100vw;
+  max-width: none !important;
+  margin-left: calc(-50vw + 50%);
+  background: #fef7f4;
+}
+
+.dark-mode .study-overview-header-v2 {
+  background: #2f2f2f;
+}
+
+/* Brand section in header V2 */
+.study-overview-brand {
+  position: fixed;
+  left: 80px;
+  top: 16px;
   display: flex;
   align-items: center;
-  gap: 16px;
-  margin-bottom: 24px;
-  padding: 0 8px;
+  gap: 10px;
+  z-index: 101;
+}
+
+.study-overview-logo {
+  width: 28px;
+  height: 28px;
+}
+
+.study-overview-brand-name {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  color: #e88d7d;
+}
+
+.dark-mode .study-overview-brand-name {
+  color: #f4a896;
 }
 
 /* Path container V2 */
@@ -3375,6 +3364,51 @@ body.dark-mode .study-mode-focused .study-main-content {
   color: #666;
   margin-top: 4px;
   font-style: italic;
+}
+
+/* ========================================
+   Study Path Mascot Positioning
+   ======================================== */
+.study-path-mascot-wrapper {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 3;
+  pointer-events: none;
+}
+
+.study-path-mascot-wrapper.left {
+  right: calc(100% + 20px);
+}
+
+.study-path-mascot-wrapper.right {
+  left: calc(100% + 20px);
+}
+
+/* Inactive mascot styling */
+.study-path-mascot.inactive {
+  filter: saturate(0);
+}
+
+/* Add subtle animation for active mascot */
+.study-path-mascot.active {
+  animation: mascotFloat 3s ease-in-out infinite;
+}
+
+@keyframes mascotFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Hide mascot on smaller screens where label is also hidden */
+@media (max-width: 900px) {
+  .study-path-mascot-wrapper {
+    display: none;
+  }
 }
 
 /* Light mode adjustments */

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 
 import ChatInterface from "./Components/ChatInerface/ChatInterface";
+import { ReactComponent as HeartLogo } from './assets/favicon.svg';
 import SideBar from "./Components/ChatInerface/SideBar";
 import CollapsedSidebarRail from "./Components/ChatInerface/CollapsedSidebarRail";
 import Login from "./Components/Auth/Login";
@@ -238,6 +239,11 @@ function ChatLayout() {
 
   return (
     <div className="app-wrapper">
+      {/* Global NurseQuizAI branding - positioned next to sidebar */}
+      <div className={`app-global-brand ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
+        <HeartLogo className="app-brand-logo" />
+        <span className="app-brand-name">NurseQuizAI</span>
+      </div>
 
       {/* Toggle button - show on mobile always, or on desktop when sidebar is open */}
       {(isMobile() || sidebarOpen) && (
