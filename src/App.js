@@ -39,6 +39,8 @@ function ChatLayout() {
   // Pending files state - when user uploads from landing page, this gets set
   // and ChatInterface will pick it up and process it as a normal upload
   const [pendingUploadFiles, setPendingUploadFiles] = useState([]);
+  // Flag to trigger study mode automatically after upload from landing page
+  const [goToStudyMode, setGoToStudyMode] = useState(false);
 
   // Sync selectedChatId with URL param when it changes
   // This ensures navigation from dashboard (which only uses navigate()) works correctly
@@ -156,6 +158,11 @@ function ChatLayout() {
 
       // Set the pending files - ChatInterface will handle the upload
       setPendingUploadFiles(restoredFiles);
+
+      // Check if we should go to study mode after upload
+      if (uploadState.goToStudyMode) {
+        setGoToStudyMode(true);
+      }
 
     } catch (error) {
       console.error('Failed to restore pending upload:', error);
@@ -282,6 +289,8 @@ function ChatLayout() {
           pendingUploadFiles={pendingUploadFiles}
           onPendingUploadProcessed={clearPendingUpload}
           sidebarOpen={sidebarOpen}
+          goToStudyMode={goToStudyMode}
+          onStudyModeTriggered={() => setGoToStudyMode(false)}
         />
       </div>
 

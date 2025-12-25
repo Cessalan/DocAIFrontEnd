@@ -87,10 +87,14 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
   const [showReviewTransition, setShowReviewTransition] = useState(false);
   const [reviewTransitionCount, setReviewTransitionCount] = useState(0);
   const [hasShownMilestone, setHasShownMilestone] = useState(false);
+  const [waitingForNextCard, setWaitingForNextCard] = useState(false);
   const startTimeRef = useRef(Date.now());
 
   // Handle both new format { cards: [...] } and legacy format { front, back }
   const cards = useMemo(() => content?.cards || [content], [content]);
+  const isStreaming = content?._isStreaming || false;
+  const expectedTotal = content?._expectedTotal || cards.length;
+  // Use actual cards length for logic, but expectedTotal for progress display
   const totalCards = cards.length;
 
   // Track if we've already restored progress (to avoid re-initializing)
@@ -125,12 +129,24 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
 
         setHasRestoredProgress(true);
       }
-    } else if (cardQueue.length === 0 && !hasRestoredProgress) {
-      // Fresh start - only if we haven't restored and queue is empty
-      console.log('🆕 Fresh start - initializing card queue');
-      setCardQueue(cards.map((_, i) => i));
+    } else if (!hasRestoredProgress) {
+      // Fresh start or streaming - update queue to match available cards
+      // This allows us to show cards as they stream in
+      const newQueue = cards.map((_, i) => i);
+      if (newQueue.length !== cardQueue.length) {
+        console.log(`🔄 Updating card queue: ${cardQueue.length} -> ${newQueue.length}`);
+        setCardQueue(newQueue);
+
+        // If user was waiting for next card, auto-advance now
+        if (waitingForNextCard && newQueue.length > queueIndex + 1) {
+          setWaitingForNextCard(false);
+          setQueueIndex(queueIndex + 1);
+          setIsFlipped(false);
+          setHasReviewed(false);
+        }
+      }
     }
-  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress]);
+  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress, waitingForNextCard, queueIndex]);
 
   // Current card from queue
   const currentQueuePosition = cardQueue[queueIndex];
@@ -190,17 +206,21 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
   // Progress bar logic:
   // Progress only advances when user clicks "Next Card" (not when flipping or reviewing)
   // This matches Duolingo behavior - progress fills as you complete cards
+  // Use expectedTotal (12) for progress bar during streaming for consistent display
   const getProgressValues = () => {
+    // Use expectedTotal (12) for progress bar total during streaming
+    const displayTotal = expectedTotal;
+
     if (allMastered) {
       // All done - full progress
-      return { current: totalCards, total: totalCards, includeCurrentAsComplete: false };
+      return { current: displayTotal, total: displayTotal, includeCurrentAsComplete: false };
     }
 
     if (isReviewRound) {
       // Review round - show mastered cards out of total
       return {
         current: masteredCount,
-        total: totalCards,
+        total: totalCards, // Use actual count during review
         includeCurrentAsComplete: hasReviewed && cardStatuses[currentQueuePosition] === 'mastered'
       };
     }
@@ -209,7 +229,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
     // Current card fills when user clicks "Got it" or "Need review"
     return {
       current: queueIndex,
-      total: totalCards,
+      total: displayTotal,
       includeCurrentAsComplete: hasReviewed
     };
   };
@@ -304,6 +324,15 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
 
     // Check if we've finished the current queue
     if (nextQueueIndex >= cardQueue.length) {
+      // If still streaming and we haven't reached expected total, wait for more
+      if (isStreaming && totalCards < expectedTotal) {
+        // Show waiting state - user went through cards faster than generation
+        setWaitingForNextCard(true);
+        setIsFlipped(false);
+        setHasReviewed(false);
+        return;
+      }
+
       // Get cards that need review
       const cardsToReview = Object.entries(cardStatuses)
         .filter(([_, status]) => status === 'review')
@@ -426,6 +455,16 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
               {t('study.startReview', "Let's Go!")}
               <ArrowRightIcon />
             </button>
+          </div>
+        </div>
+      ) : (isStreaming && totalCards === 0) || waitingForNextCard ? (
+        // Show loading state while waiting for first flashcard or next card to stream in
+        <div className="study-card-content">
+          <div className="study-streaming-loading">
+            <div className="study-loading-spinner" />
+            <p className="study-loading-text">
+              {t('study.generatingFlashcards', 'Generating flashcards...')}
+            </p>
           </div>
         </div>
       ) : (

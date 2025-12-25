@@ -344,12 +344,14 @@ const QuizRoomLanding = () => {
       );
 
       // Store file metadata
+      // goToStudyMode flag tells ChatInterface to automatically start study mode after upload
       const uploadState = {
         files: fileArray.map(f => ({
           fileName: f.name,
           fileType: f.type
         })),
-        timestamp: Date.now()
+        timestamp: Date.now(),
+        goToStudyMode: true // Automatically enter study mode after upload from landing page
       };
 
       // Save to sessionStorage - ChatLayout will restore these

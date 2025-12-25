@@ -10,8 +10,9 @@ import './StudyMode.css';
  *
  * @param {Object} studyState - Study state with path and nodes
  * @param {Function} onNodeSelect - Callback when a node is selected
+ * @param {boolean} sidebarOpen - Whether the sidebar is open (for centering)
  */
-const StudyPlanOverview = ({ studyState, onNodeSelect }) => {
+const StudyPlanOverview = ({ studyState, onNodeSelect, sidebarOpen = true }) => {
   const { t } = useTranslation();
   const activeNodeRef = useRef(null);
 
@@ -160,7 +161,7 @@ const StudyPlanOverview = ({ studyState, onNodeSelect }) => {
   };
 
   return (
-    <div className="study-overview-container study-overview-v2">
+    <div className={`study-overview-container study-overview-v2 ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
       {/* Header with title */}
       <div className="study-overview-header-v2">
         <div className="study-overview-title-section">

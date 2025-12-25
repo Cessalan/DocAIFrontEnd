@@ -19,6 +19,9 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
 
   // Handle both new format { questions: [...] } and legacy format { question, options, ... }
   const questions = content?.questions || [content];
+  const isStreaming = content?._isStreaming || false;
+  const expectedTotal = content?._expectedTotal || questions.length;
+  // Use actual questions length for logic, but expectedTotal for progress display
   const totalQuestions = questions.length;
 
   // UI state
@@ -52,9 +55,11 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
   const [showReviewTransition, setShowReviewTransition] = useState(false);
   const [reviewTransitionCount, setReviewTransitionCount] = useState(0);
   const [hasShownMilestone, setHasShownMilestone] = useState(false);
+  const [waitingForNextQuestion, setWaitingForNextQuestion] = useState(false);
   const startTimeRef = useRef(Date.now());
 
   // Restore from saved progress OR initialize fresh queue
+  // Also handle streaming: update queue as new questions arrive
   useEffect(() => {
     if (totalQuestions === 0) return;
 
@@ -81,12 +86,22 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
 
         setHasRestoredProgress(true);
       }
-    } else if (questionQueue.length === 0 && !hasRestoredProgress) {
-      // Fresh start
-      console.log('🆕 Fresh start - initializing question queue');
-      setQuestionQueue(questions.map((_, i) => i));
+    } else if (!hasRestoredProgress) {
+      // Fresh start or streaming - update queue to match available questions
+      // This allows us to show questions as they stream in
+      const newQueue = questions.map((_, i) => i);
+      if (newQueue.length !== questionQueue.length) {
+        console.log(`🔄 Updating question queue: ${questionQueue.length} -> ${newQueue.length}`);
+        setQuestionQueue(newQueue);
+
+        // If user was waiting for next question, auto-advance now
+        if (waitingForNextQuestion && newQueue.length > queueIndex + 1) {
+          setWaitingForNextQuestion(false);
+          setQueueIndex(queueIndex + 1);
+        }
+      }
     }
-  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress]);
+  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex]);
 
   // Current question from queue
   const currentQueuePosition = questionQueue[queueIndex];
@@ -192,10 +207,14 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
   // Progress bar logic (same as flashcards):
   // - First pass: progress = queueIndex (advances on "Next Question" click, not on answer)
   // - Review round: progress = correctCountBeforeCurrent, current shown via includeCurrentAsComplete
+  // - Use expectedTotal (12) for progress bar during streaming for consistent display
   const getProgressValues = () => {
+    // Use expectedTotal (12) for progress bar total during streaming
+    const displayTotal = expectedTotal;
+
     if (allCorrect) {
       // All done - full progress
-      return { current: totalQuestions, total: totalQuestions, includeCurrentAsComplete: false };
+      return { current: displayTotal, total: displayTotal, includeCurrentAsComplete: false };
     }
 
     if (isReviewRound) {
@@ -203,7 +222,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
       // Use correctCountBeforeCurrent so it doesn't jump when answering
       return {
         current: correctCountBeforeCurrent,
-        total: totalQuestions,
+        total: totalQuestions, // Use actual count during review
         includeCurrentAsComplete: showFeedback && questionStatuses[currentQueuePosition] === 'correct'
       };
     }
@@ -212,7 +231,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
     // Only advances when clicking "Next Question", not when answering
     return {
       current: queueIndex,
-      total: totalQuestions,
+      total: displayTotal,
       includeCurrentAsComplete: showFeedback
     };
   };
@@ -375,6 +394,18 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
 
     // Check if we've finished the current queue
     if (nextQueueIndex >= questionQueue.length) {
+      // If still streaming and we haven't reached expected total, wait for more
+      // The queue will update via useEffect when new questions arrive
+      if (isStreaming && totalQuestions < expectedTotal) {
+        // Show waiting state - user answered faster than generation
+        setWaitingForNextQuestion(true);
+        setSelectedIndex(null);
+        setShowFeedback(false);
+        setIsCorrect(false);
+        setShowFullRationale(false);
+        return;
+      }
+
       // Get questions that were incorrect (need review)
       const questionsToReview = Object.entries(questionStatuses)
         .filter(([_, status]) => status === 'incorrect')
@@ -533,6 +564,16 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
               {t('study.startReview', "Let's Go!")}
               <ArrowRightIcon />
             </button>
+          </div>
+        </div>
+      ) : (isStreaming && totalQuestions === 0) || waitingForNextQuestion ? (
+        // Show loading state while waiting for first question or next question to stream in
+        <div className="study-card-content">
+          <div className="study-streaming-loading">
+            <div className="study-loading-spinner" />
+            <p className="study-loading-text">
+              {t('study.generatingQuestions', 'Generating questions...')}
+            </p>
           </div>
         </div>
       ) : (

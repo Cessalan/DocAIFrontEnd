@@ -2680,6 +2680,28 @@ body.dark-mode .study-mode-focused .study-main-content {
   overflow-y: auto;
   overflow-x: hidden;
   z-index: 100;
+  /* Sidebar offset - use CSS custom property for dynamic centering */
+  --sidebar-width: 320px;
+  --rail-width: 60px;
+  transition: left 0.3s ease;
+}
+
+/* Sidebar open - shift container to account for sidebar */
+.study-overview-container.sidebar-open {
+  left: var(--sidebar-width);
+}
+
+/* Sidebar collapsed - shift container to account for rail */
+.study-overview-container.sidebar-collapsed {
+  left: var(--rail-width);
+}
+
+/* Mobile - no sidebar offset */
+@media (max-width: 768px) {
+  .study-overview-container.sidebar-open,
+  .study-overview-container.sidebar-collapsed {
+    left: 0;
+  }
 }
 
 /* Pretty scrollbar for study overview */
@@ -3310,13 +3332,21 @@ body.dark-mode .study-mode-focused .study-main-content {
   text-align: center;
   gap: 8px;
   margin-bottom: 24px;
-  padding: 24px 16px 16px 16px;
+  /* Add top padding to push title below the fixed global brand (logo at top:16px + ~40px height) */
+  padding: 64px 16px 16px 16px;
   margin-top: -24px;
   /* Extend to full viewport width while staying in container */
   width: 100vw;
   max-width: none !important;
   margin-left: calc(-50vw + 50%);
   background: #fef7f4;
+}
+
+/* Mobile - less top padding since brand is hidden */
+@media (max-width: 768px) {
+  .study-overview-header-v2 {
+    padding: 24px 16px 16px 16px;
+  }
 }
 
 .dark-mode .study-overview-header-v2 {
@@ -3936,6 +3966,97 @@ body.dark-mode .study-mode-focused .study-main-content {
   }
   50% {
     opacity: 0.7;
+  }
+}
+
+/* -----------------------------------------
+   STREAMING INDICATORS
+   Show progress while cards are being generated
+   ----------------------------------------- */
+
+/* Streaming badge - shown while more cards are loading */
+.study-streaming-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 14px;
+  margin: 0 24px 12px 24px;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.12) 0%, rgba(139, 92, 246, 0.08) 100%);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: 16px;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 13px;
+  color: #6366f1;
+}
+
+.study-streaming-dot {
+  width: 8px;
+  height: 8px;
+  background: #6366f1;
+  border-radius: 50%;
+  animation: streamingPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes streamingPulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+}
+
+.dark-mode .study-streaming-badge {
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+  border-color: rgba(99, 102, 241, 0.25);
+  color: #818cf8;
+}
+
+.dark-mode .study-streaming-dot {
+  background: #818cf8;
+}
+
+/* Streaming loading state - shown when waiting for first card */
+.study-streaming-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 16px;
+}
+
+.study-streaming-loading .study-loading-spinner {
+  width: 48px;
+  height: 48px;
+  border: 3px solid rgba(99, 102, 241, 0.2);
+  border-top-color: #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.study-streaming-loading .study-loading-text {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+.study-streaming-loading .study-loading-subtext {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 15px;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
   }
 }
 

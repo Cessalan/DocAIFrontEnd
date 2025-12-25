@@ -62,7 +62,7 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
     // Create a title from topics if available
     const topics = pathResult.topics || [];
     const title = topics.length > 0
-      ? `Study: ${topics.slice(0, 2).join(', ')}`
+      ? topics.slice(0, 2).join(', ')
       : 'Study Session';
 
     const studyData = {

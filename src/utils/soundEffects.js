@@ -4,6 +4,9 @@
  * Features: Convolution reverb, filtering, compression, rich harmonics
  */
 
+// Import the correct answer audio file
+import correctAnswerSound from '../assets/correctanswer.wav';
+
 // Audio context singleton
 let audioContext = null;
 // Convolution reverb impulse response (cached)
@@ -134,79 +137,25 @@ const createRichTone = (ctx, frequency, startTime, duration, volume = 0.3) => {
   return masterChain;
 };
 
+// Cache the audio element for reuse
+let correctAudio = null;
+
 /**
- * Play a "correct/success" sound - Premium satisfying chime!
- * Rich harmonics, reverb tail, punchy attack - maximum dopamine
+ * Play a "correct/success" sound - Uses the custom audio file
  */
 export const playCorrectSound = () => {
   try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-
-    // === MAIN CHIME - Rich bell-like tone ===
-    createRichTone(ctx, 880, now, 0.6, 0.35); // A5
-
-    // === SPARKLE LAYER - High shimmer ===
-    const sparkleFreqs = [1760, 2217.46, 2637.02]; // A6, C#7, E7 (A major triad high)
-    sparkleFreqs.forEach((freq, i) => {
-      const delay = 0.03 + (i * 0.025);
-      createRichTone(ctx, freq, now + delay, 0.3, 0.12 - (i * 0.03));
-    });
-
-    // === BASS LAYER - Warm foundation ===
-    const bassOsc = ctx.createOscillator();
-    const bassGain = ctx.createGain();
-    const bassFilter = ctx.createBiquadFilter();
-
-    bassFilter.type = 'lowpass';
-    bassFilter.frequency.value = 400;
-    bassFilter.Q.value = 1;
-
-    bassOsc.frequency.value = 220; // A3
-    bassOsc.type = 'sine';
-
-    bassGain.gain.setValueAtTime(0, now);
-    bassGain.gain.linearRampToValueAtTime(0.3, now + 0.01);
-    bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-
-    bassOsc.connect(bassFilter);
-    bassFilter.connect(bassGain);
-    bassGain.connect(ctx.destination);
-
-    bassOsc.start(now);
-    bassOsc.stop(now + 0.25);
-
-    // === IMPACT TRANSIENT - The "pop" ===
-    const noiseBuffer = ctx.createBuffer(1, ctx.sampleRate * 0.05, ctx.sampleRate);
-    const noiseData = noiseBuffer.getChannelData(0);
-    for (let i = 0; i < noiseData.length; i++) {
-      noiseData[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / noiseData.length, 8);
+    // Create audio element if not cached, or reset if exists
+    if (!correctAudio) {
+      correctAudio = new Audio(correctAnswerSound);
+      correctAudio.volume = 0.7;
     }
 
-    const noiseSource = ctx.createBufferSource();
-    noiseSource.buffer = noiseBuffer;
-
-    const noiseFilter = ctx.createBiquadFilter();
-    noiseFilter.type = 'bandpass';
-    noiseFilter.frequency.value = 2000;
-    noiseFilter.Q.value = 2;
-
-    const noiseGain = ctx.createGain();
-    noiseGain.gain.value = 0.15;
-
-    noiseSource.connect(noiseFilter);
-    noiseFilter.connect(noiseGain);
-    noiseGain.connect(ctx.destination);
-
-    noiseSource.start(now);
-
-    // === ASCENDING GRACE NOTES ===
-    const graceNotes = [1318.51, 1567.98, 1760]; // E6, G6, A6
-    graceNotes.forEach((freq, i) => {
-      const startTime = now + 0.08 + (i * 0.05);
-      createRichTone(ctx, freq, startTime, 0.25, 0.08 - (i * 0.015));
+    // Reset to beginning if already playing
+    correctAudio.currentTime = 0;
+    correctAudio.play().catch(e => {
+      console.warn('Could not play correct sound:', e);
     });
-
   } catch (e) {
     console.warn('Could not play correct sound:', e);
   }

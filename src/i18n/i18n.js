@@ -857,7 +857,15 @@ const resources = {
         reviewQuestionMessage_plural: "You have {{count}} questions to review. Let's try again!",
         startReview: "Let's Go!",
         finishLesson: "Finish",
-        close: "Close"
+        close: "Close",
+
+        // Streaming indicators
+        generatingQuestions: "Generating questions...",
+        questionsWillAppear: "Questions will appear as they are ready",
+        generatingFlashcards: "Generating flashcards...",
+        cardsWillAppear: "Cards will appear as they are ready",
+        loadingMore: "Loading questions ({{current}}/{{total}})...",
+        loadingMoreCards: "Loading cards ({{current}}/{{total}})..."
       }
     }
   },
@@ -1715,7 +1723,15 @@ const resources = {
         reviewQuestionMessage_plural: "Tu as {{count}} questions à revoir. On réessaie!",
         startReview: "C'est parti!",
         finishLesson: "Terminer",
-        close: "Fermer"
+        close: "Fermer",
+
+        // Streaming indicators
+        generatingQuestions: "Génération des questions...",
+        questionsWillAppear: "Les questions apparaîtront au fur et à mesure",
+        generatingFlashcards: "Génération des flashcards...",
+        cardsWillAppear: "Les cartes apparaîtront au fur et à mesure",
+        loadingMore: "Chargement des questions ({{current}}/{{total}})...",
+        loadingMoreCards: "Chargement des cartes ({{current}}/{{total}})..."
       }
     }
   }

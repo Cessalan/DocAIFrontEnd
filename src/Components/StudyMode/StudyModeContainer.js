@@ -6,7 +6,7 @@ import StudyPlanOverview from './StudyPlanOverview';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import BrainMascot from '../QuizRoom/BrainMascot';
 
-import { generate_study_item, generate_study_audio } from '../../Services/FastAPICalls';
+import { generate_study_item_stream, generate_study_audio } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
@@ -149,16 +149,67 @@ const StudyModeContainer = ({
       }
 
       // ========================================
-      // GENERATE NEW CONTENT (no saved content found)
+      // GENERATE NEW CONTENT WITH STREAMING
+      // Show cards/questions progressively as they arrive
       // ========================================
       console.log('🔄 Generating new content for node:', node.id);
-      const result = await generate_study_item(
+
+      // For quiz and flashcard, we stream and show progressively
+      // For lesson, we just wait for the complete content
+      const isStreamable = node.type === 'quiz' || node.type === 'flashcard';
+
+      // Initialize empty content structure for progressive display
+      if (isStreamable) {
+        setIsLoadingContent(false); // Stop showing loading spinner
+        if (node.type === 'quiz') {
+          setCurrentContent({ questions: [], _isStreaming: true, _expectedTotal: 12 });
+        } else if (node.type === 'flashcard') {
+          setCurrentContent({ cards: [], _isStreaming: true, _expectedTotal: 12 });
+        }
+      }
+
+      // Progress callback for streaming updates
+      const handleStreamProgress = (data) => {
+        console.log('📥 Stream progress:', data.status);
+
+        // Handle individual question arrival
+        if (data.status === 'question_ready' && data.question) {
+          const question = data.question;
+          const answer = question.answer || 'A)';
+          const answerLetter = answer[0] || 'A';
+          const correctIndex = answerLetter.charCodeAt(0) - 'A'.charCodeAt(0);
+
+          const formattedQuestion = {
+            question: question.question || '',
+            options: question.options || [],
+            correctIndex: correctIndex,
+            rationale: question.justification || '',
+            topic: question.topic || node.label
+          };
+
+          setCurrentContent(prev => ({
+            ...prev,
+            questions: [...(prev?.questions || []), formattedQuestion]
+          }));
+        }
+
+        // Handle individual flashcard arrival
+        if (data.status === 'flashcard_ready' && data.flashcard) {
+          setCurrentContent(prev => ({
+            ...prev,
+            cards: [...(prev?.cards || []), data.flashcard]
+          }));
+        }
+      };
+
+      const result = await generate_study_item_stream(
         chatId,
         node.type,
         node.label,
         node.tags || [],
         askedHashes,
-        language
+        language,
+        handleStreamProgress
       );
 
       // Save the content hash for anti-repeat
@@ -183,6 +234,7 @@ const StudyModeContainer = ({
         n.id === node.id ? { ...n, messageId } : n
       ));
 
+      // Set final content (removes _isStreaming flag)
       setCurrentContent(result.content);
       currentMessageIdRef.current = messageId;
 
@@ -442,6 +494,7 @@ const StudyModeContainer = ({
         studyState={currentStudyState}
         onNodeSelect={handleNodeSelect}
         onExit={handleExitStudy}
+        sidebarOpen={sidebarOpen}
       />
     );
   }

@@ -36,7 +36,10 @@ import CookingEmoji from './Emojis/CookingEmoji.js';
 import GearEmoji from './Emojis/GearEmoji.js';
 import ThinkingEmoji from './Emojis/ThinkingEmoji.js';
 
-// Servicess
+// Contexts
+import { useAuth } from '../../Contexts/AuthContext/AuthContext';
+
+// Services
 import { formatDate, formatFileSize } from '../../Services/Formatting.js';
 import {
   AppendToChat,
@@ -110,8 +113,13 @@ const ChatInterface = ({
   viewAllChatsMode = false,
   pendingUploadFiles = [],         // Files to upload after returning from login
   onPendingUploadProcessed = null, // Callback when pending upload is handled
-  sidebarOpen = true               // Sidebar state for study mode centering
+  sidebarOpen = true,              // Sidebar state for study mode centering
+  goToStudyMode = false,           // Flag to auto-trigger study mode after upload from landing page
+  onStudyModeTriggered = null      // Callback when study mode flag has been consumed
 }) => {
+
+  // Auth context - need reactive auth state for pending upload processing
+  const { isUserLoggedIn } = useAuth() || {};
 
   // Progress tracking context
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
@@ -164,16 +172,14 @@ const ChatInterface = ({
   const pendingUploadProcessedRef = useRef(false);
   const [shouldProcessPendingUpload, setShouldProcessPendingUpload] = useState(false);
 
-  // Set flag when pendingUploadFiles arrives
+  // Set flag when pendingUploadFiles arrives AND user is logged in
+  // Uses isUserLoggedIn from AuthContext for reactive auth state
   useEffect(() => {
-    if (pendingUploadFiles.length > 0 && !pendingUploadProcessedRef.current) {
-      const user = auth.currentUser;
-      if (user) {
-        console.log(`📤 Pending upload files detected: ${pendingUploadFiles.length} file(s)`);
-        setShouldProcessPendingUpload(true);
-      }
+    if (pendingUploadFiles.length > 0 && !pendingUploadProcessedRef.current && isUserLoggedIn) {
+      console.log(`📤 Pending upload files detected: ${pendingUploadFiles.length} file(s), user logged in`);
+      setShouldProcessPendingUpload(true);
     }
-  }, [pendingUploadFiles]);
+  }, [pendingUploadFiles, isUserLoggedIn]);
 
   // Reset the processed flag when pendingUploadFiles becomes empty
   useEffect(() => {
@@ -2200,6 +2206,16 @@ const ChatInterface = ({
     pendingUploadProcessedRef.current = true;
     setShouldProcessPendingUpload(false);
 
+    // If coming from landing page with study mode flag, set the global flag
+    // so that post_upload_message handler will go directly to study mode
+    if (goToStudyMode) {
+      console.log('📚 Landing page upload with study mode - setting _pendingStudyJourney flag');
+      window._pendingStudyJourney = true;
+      if (onStudyModeTriggered) {
+        onStudyModeTriggered();
+      }
+    }
+
     // Create a fake event object to trigger the existing handleFileSelect
     const fakeEvent = {
       target: {
@@ -2215,7 +2231,7 @@ const ChatInterface = ({
     if (onPendingUploadProcessed) {
       onPendingUploadProcessed();
     }
-  }, [shouldProcessPendingUpload, pendingUploadFiles, onPendingUploadProcessed]);
+  }, [shouldProcessPendingUpload, pendingUploadFiles, onPendingUploadProcessed, goToStudyMode, onStudyModeTriggered]);
 
   // Progress handler - add this as a new function in your component
   const handleUploadProgress = (update, fileTracker, chatId) => {
