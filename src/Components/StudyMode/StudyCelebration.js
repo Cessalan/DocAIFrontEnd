@@ -1,6 +1,10 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
+import BookMascot from '../QuizRoom/BookMascot';
+import PillMascot from '../QuizRoom/PillMascot';
+import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
+import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 
 /**
  * StudyCelebration - Duolingo-style celebration
@@ -31,6 +35,20 @@ const StudyCelebration = ({
 
   // Store a random index on mount to keep message consistent
   const [messageIndex] = useState(() => Math.floor(Math.random() * 4));
+
+  // Store a random mascot index on mount
+  const [mascotIndex] = useState(() => Math.floor(Math.random() * 5));
+
+  // Array of mascot components to choose from
+  const mascots = [
+    { Component: NurseQuizMascot, hasExcited: true },
+    { Component: BookMascot, hasExcited: false },
+    { Component: PillMascot, hasExcited: false },
+    { Component: CoffeeCupMascot, hasExcited: false },
+    { Component: MatchaCupMascot, hasExcited: false }
+  ];
+
+  const selectedMascot = mascots[mascotIndex % mascots.length];
 
   // Stagger animation entrance
   useEffect(() => {
@@ -125,7 +143,11 @@ const StudyCelebration = ({
 
         {/* Mascot with celebration animation - smaller for inline */}
         <div className="celebration-mascot">
-          <NurseQuizMascot size={inline ? 100 : 160} isExcited={type === 'complete'} />
+          <selectedMascot.Component
+            size={inline ? 100 : 160}
+            isActive={true}
+            {...(selectedMascot.hasExcited ? { isExcited: type === 'complete' } : {})}
+          />
           {/* Celebration sparkles around mascot - only for completion */}
           {type === 'complete' && (
             <div className="mascot-sparkles">

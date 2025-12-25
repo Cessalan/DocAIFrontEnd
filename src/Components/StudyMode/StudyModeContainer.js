@@ -5,7 +5,10 @@ import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import BrainMascot from '../QuizRoom/BrainMascot';
-
+import BookMascot from '../QuizRoom/BookMascot';
+import PillMascot from '../QuizRoom/PillMascot';
+import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
+import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import { generate_study_item_stream, generate_study_audio } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
@@ -16,8 +19,16 @@ import {
   saveFlashcardProgress,
   saveQuizProgress
 } from '../../Services/StudySessionService';
-
 import './StudyMode.css';
+
+// Mascots that can be randomly selected (excluding NurseQuiz and Brain which have special states)
+const SIDE_MASCOTS = [
+  { Component: NurseQuizMascot, hasEmotions: true },
+  { Component: BookMascot, hasEmotions: false },
+  { Component: PillMascot, hasEmotions: false },
+  { Component: CoffeeCupMascot, hasEmotions: false },
+  { Component: MatchaCupMascot, hasEmotions: false }
+];
 
 /**
  * StudyModeContainer - Main orchestrator for study mode
@@ -66,6 +77,9 @@ const StudyModeContainer = ({
     isSurprised: false,
     lookDirection: 'center'
   });
+
+  // Random mascot selection for the side mascot - persists during session
+  const [sideMascot] = useState(() => SIDE_MASCOTS[Math.floor(Math.random() * SIDE_MASCOTS.length)]);
 
   // Initialize from studyState
   useEffect(() => {
@@ -549,12 +563,18 @@ const StudyModeContainer = ({
             <div className="study-mascot-side">
               {mascotState.type === 'brain' ? (
                 <BrainMascot size={90} />
-              ) : (
-                <NurseQuizMascot
+              ) : sideMascot.hasEmotions ? (
+                <sideMascot.Component
                   size={90}
                   isExcited={mascotState.isExcited}
                   isSurprised={mascotState.isSurprised}
                   lookDirection={mascotState.lookDirection}
+                />
+              ) : (
+                <sideMascot.Component
+                  size={90}
+                  isActive={true}
+                  isExcited={mascotState.isExcited}
                 />
               )}
             </div>

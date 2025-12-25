@@ -1,9 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import BrainMascot from '../QuizRoom/BrainMascot';
+import BookMascot from '../QuizRoom/BookMascot';
+import PillMascot from '../QuizRoom/PillMascot';
+import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
+import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import { plan_study_path } from '../../Services/FastAPICalls';
 import { createStudySession } from '../../Services/StudySessionService';
 import './StudyMode.css';
+
+// Array of mascot components to randomly choose from
+const MASCOTS = [
+  BrainMascot,
+  BookMascot,
+  PillMascot,
+  CoffeeCupMascot,
+  MatchaCupMascot
+];
 
 /**
  * StartStudyModal - Modal for starting a new study journey
@@ -33,6 +46,9 @@ const StartStudyModal = ({
   const [error, setError] = useState(null);
   const [generatedPath, setGeneratedPath] = useState(null);
   const [hasAutoStarted, setHasAutoStarted] = useState(false);
+
+  // Random mascot selection - stored in state so it persists during modal lifecycle
+  const [MascotComponent] = useState(() => MASCOTS[Math.floor(Math.random() * MASCOTS.length)]);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -116,9 +132,9 @@ const StartStudyModal = ({
 
         {/* Modal content */}
         <div className="study-modal-content">
-          {/* Mascot */}
+          {/* Mascot - randomly selected */}
           <div className="study-modal-mascot">
-            <BrainMascot size={80} />
+            <MascotComponent size={80} isActive={true} />
           </div>
 
           {/* Title */}

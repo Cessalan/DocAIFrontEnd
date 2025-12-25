@@ -13,7 +13,8 @@
       "Bash(grep:*)",
       "Bash(wc:*)",
       "Bash(node scripts/generate-blog-html.js:*)",
-      "Bash(xargs cat:*)"
+      "Bash(xargs cat:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []

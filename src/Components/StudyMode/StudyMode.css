@@ -3425,96 +3425,177 @@ body.dark-mode .study-mode-focused .study-main-content {
   justify-content: center;
 }
 
-/* Progress ring SVG */
+/* Progress ring SVG - hand-drawn style with thick dashed stroke */
 .study-node-ring {
   position: absolute;
   width: 100%;
   height: 100%;
-  transform: rotate(0deg);
+  transform: rotate(-3deg); /* Slight tilt for hand-drawn feel */
 }
 
 .study-node-ring .ring-bg {
-  stroke: rgba(255, 255, 255, 0.15);
+  stroke: rgba(150, 150, 150, 0.3);
+  stroke-width: 6;
+  stroke-dasharray: 8 4; /* Dashed line for sketchy look */
 }
 
 .dark-mode .study-node-ring .ring-bg {
-  stroke: rgba(255, 255, 255, 0.1);
+  stroke: rgba(100, 100, 100, 0.4);
 }
 
 .study-node-ring .ring-progress {
   transition: stroke-dashoffset 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+  stroke-width: 8;
+  filter: drop-shadow(1px 2px 1px rgba(0,0,0,0.2));
 }
 
 .study-node-ring .ring-progress.done {
-  stroke: #2ed573;
+  stroke: #4bc88a;
 }
 
 .study-node-ring .ring-progress.active {
   stroke: #e88d7d;
 }
 
-/* Inner circle with icon */
+/* Light mode ring adjustments */
+.study-overview-v2:not(.dark-mode) .study-node-ring .ring-bg {
+  stroke: rgba(0, 0, 0, 0.1);
+}
+
+/* Inner circle with icon - Hand-drawn school aesthetic */
 .study-node-inner {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
+  width: 75px;
+  height: 75px;
+  /* Slightly irregular border-radius for hand-drawn feel */
+  border-radius: 47% 53% 52% 48% / 48% 52% 48% 52%;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.3s ease;
   z-index: 1;
+  position: relative;
+  /* Sketch-like border */
+  border: 3px solid rgba(0, 0, 0, 0.15);
+}
+
+/* Add a subtle "paper texture" overlay */
+.study-node-inner::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(255,255,255,0.3) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(0,0,0,0.05) 0%, transparent 40%);
+  pointer-events: none;
 }
 
 .study-node-inner svg {
   width: 32px;
   height: 32px;
   transition: all 0.2s ease;
+  /* Slight rotation for hand-drawn feel */
+  transform: rotate(-2deg);
 }
 
-/* Done state */
+/* Done state - soft mint green, hand-drawn style */
 .study-path-node-v2.done .study-node-inner {
-  background: linear-gradient(135deg, #2ed573 0%, #26b85f 100%);
+  background: linear-gradient(145deg, #7ee8b8 0%, #5dd69a 50%, #4bc88a 100%);
+  border: 3px solid #3cb878;
   box-shadow:
-    0 6px 20px rgba(46, 213, 115, 0.4),
-    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+    0 4px 0 #3aad70,
+    0 6px 15px rgba(93, 214, 154, 0.35),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.4);
+  /* Wobbly border for sketch effect */
+  border-radius: 52% 48% 47% 53% / 46% 54% 46% 54%;
+}
+
+.study-path-node-v2.done .study-node-inner:hover {
+  transform: translateY(2px) rotate(1deg);
+  box-shadow:
+    0 2px 0 #3aad70,
+    0 4px 10px rgba(93, 214, 154, 0.3);
 }
 
 .study-path-node-v2.done .study-node-inner svg {
   stroke: white;
+  fill: none;
   width: 36px;
   height: 36px;
+  stroke-width: 3;
+  transform: rotate(2deg);
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.1));
 }
 
-/* Active state */
+/* Active state - warm peachy coral, hand-drawn style */
 .study-path-node-v2.active .study-node-inner {
-  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  background: linear-gradient(145deg, #f4b8a8 0%, #e99a88 50%, #e88d7d 100%);
+  border: 3px solid #d67a6a;
   box-shadow:
-    0 6px 24px rgba(232, 141, 125, 0.5),
-    inset 0 -3px 0 rgba(0, 0, 0, 0.15);
+    0 4px 0 #c46a5a,
+    0 6px 18px rgba(232, 141, 125, 0.4),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.35);
+  /* Different wobbly border */
+  border-radius: 48% 52% 54% 46% / 52% 48% 52% 48%;
+  animation: gentleWobble 3s ease-in-out infinite;
+}
+
+@keyframes gentleWobble {
+  0%, 100% {
+    border-radius: 48% 52% 54% 46% / 52% 48% 52% 48%;
+    transform: rotate(0deg);
+  }
+  25% {
+    border-radius: 50% 50% 52% 48% / 48% 52% 50% 50%;
+  }
+  50% {
+    border-radius: 52% 48% 48% 52% / 50% 50% 48% 52%;
+    transform: rotate(1deg);
+  }
+  75% {
+    border-radius: 46% 54% 50% 50% / 52% 48% 54% 46%;
+  }
+}
+
+.study-path-node-v2.active .study-node-inner:hover {
+  transform: translateY(2px) rotate(-1deg);
+  box-shadow:
+    0 2px 0 #c46a5a,
+    0 4px 12px rgba(232, 141, 125, 0.35);
 }
 
 .study-path-node-v2.active .study-node-inner svg {
   fill: white;
   width: 34px;
   height: 34px;
+  transform: rotate(-3deg);
+  filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.15));
 }
 
-/* Locked state */
+/* Locked state - soft gray with sketch style */
 .study-path-node-v2.locked .study-node-inner {
-  background: linear-gradient(135deg, #5a5a5a 0%, #4a4a4a 100%);
+  background: linear-gradient(145deg, #8a8a8a 0%, #6a6a6a 50%, #5a5a5a 100%);
+  border: 3px solid #4a4a4a;
   box-shadow:
-    0 4px 12px rgba(0, 0, 0, 0.2),
-    inset 0 -2px 0 rgba(0, 0, 0, 0.2);
+    0 4px 0 #3a3a3a,
+    0 5px 12px rgba(0, 0, 0, 0.2),
+    inset 2px 2px 4px rgba(255, 255, 255, 0.1);
+  border-radius: 50% 50% 48% 52% / 52% 48% 50% 50%;
 }
 
 .dark-mode .study-path-node-v2.locked .study-node-inner {
-  background: linear-gradient(135deg, #3d3d3d 0%, #2d2d2d 100%);
+  background: linear-gradient(145deg, #5a5a5a 0%, #4a4a4a 50%, #3a3a3a 100%);
+  border: 3px solid #2a2a2a;
+  box-shadow:
+    0 4px 0 #222,
+    0 5px 12px rgba(0, 0, 0, 0.3);
 }
 
 .study-path-node-v2.locked .study-node-inner svg {
-  fill: rgba(255, 255, 255, 0.4);
+  fill: rgba(255, 255, 255, 0.35);
   width: 28px;
   height: 28px;
+  transform: rotate(1deg);
 }
 
 /* Pulse animation for active node - DISABLED */
@@ -3522,63 +3603,73 @@ body.dark-mode .study-mode-focused .study-main-content {
   display: none;
 }
 
-/* START label for active node - bold and prominent */
-.study-node-start-label {
+/* Progress bar for partial completion - hand-drawn style */
+.study-node-progress-bar {
   position: absolute;
-  top: -18px;
+  bottom: -12px;
   left: 50%;
-  transform: translateX(-50%);
-  background: var(--study-coral);
-  color: white;
-  font-size: 13px;
-  font-weight: 800;
-  letter-spacing: 1px;
-  padding: 6px 16px;
-  border-radius: 8px;
-  white-space: nowrap;
-  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.5);
-  z-index: 5;
-  animation: startLabelPulse 2s ease-in-out infinite;
+  transform: translateX(-50%) rotate(-1deg);
+  width: 60px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 6px 4px 5px 4px;
+  overflow: hidden;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  box-shadow: inset 1px 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-@keyframes startLabelPulse {
-  0%, 100% {
-    box-shadow: 0 4px 12px rgba(232, 141, 125, 0.5);
-  }
-  50% {
-    box-shadow: 0 4px 20px rgba(232, 141, 125, 0.8);
-  }
+.study-node-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #7ee8b8 0%, #5dd69a 100%);
+  border-radius: 4px 2px 3px 4px;
+  transition: width 0.3s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.4);
+}
+
+/* Light mode progress bar */
+.study-overview-v2:not(.dark-mode) .study-node-progress-bar {
+  background: rgba(0, 0, 0, 0.08);
+  border-color: rgba(0, 0, 0, 0.08);
+}
+
+/* START label for active node - hand-drawn style */
+.study-node-start-label {
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%) rotate(-2deg);
+  background: linear-gradient(145deg, #f4a896 0%, #e88d7d 100%);
+  border: 2px solid #d67a6a;
+  color: white;
+  font-family: 'Patrick Hand', cursive;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  padding: 5px 14px;
+  /* Hand-drawn irregular border */
+  border-radius: 12px 8px 10px 6px;
+  white-space: nowrap;
+  box-shadow:
+    0 3px 0 #c46a5a,
+    0 5px 10px rgba(232, 141, 125, 0.4);
+  z-index: 5;
+  animation: none;
 }
 
 .study-node-start-label::after {
   content: '';
   position: absolute;
-  bottom: -6px;
+  bottom: -8px;
   left: 50%;
-  transform: translateX(-50%);
-  border-left: 8px solid transparent;
-  border-right: 8px solid transparent;
-  border-top: 8px solid var(--study-coral);
+  transform: translateX(-50%) rotate(2deg);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #e88d7d;
 }
 
-/* Connector lines V2 */
+/* Connector lines V2 - hidden */
 .study-path-connector-v2 {
-  position: absolute;
-  top: -24px;
-  left: 50%;
-  width: 4px;
-  height: 28px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 2px;
-  transform: translateX(calc(-50% + var(--connector-offset, 0px) / 2));
-}
-
-.study-path-connector-v2.done {
-  background: #2ed573;
-}
-
-.dark-mode .study-path-connector-v2 {
-  background: rgba(255, 255, 255, 0.15);
+  display: none;
 }
 
 /* Node label card V2 */
@@ -3739,7 +3830,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 .study-overview-v2:not(.dark-mode) .study-path-connector-v2 {
-  background: rgba(0, 0, 0, 0.15);
+  display: none;
 }
 
 /* Responsive V2 */
@@ -3766,13 +3857,13 @@ body.dark-mode .study-mode-focused .study-main-content {
 
 @media (max-width: 600px) {
   .study-node-wrapper {
-    width: 80px;
-    height: 80px;
+    width: 70px;
+    height: 70px;
   }
 
   .study-node-inner {
-    width: 58px;
-    height: 58px;
+    width: 60px;
+    height: 60px;
   }
 
   .study-node-inner svg {
@@ -3780,23 +3871,14 @@ body.dark-mode .study-mode-focused .study-main-content {
     height: 26px;
   }
 
-  .study-node-pulse {
-    width: 80px;
-    height: 80px;
-  }
-
   .study-path-nodes-v2 {
     gap: 16px;
   }
 
-  .study-path-connector-v2 {
-    height: 20px;
-    top: -18px;
-  }
-
   .study-node-start-label {
-    font-size: 10px;
-    padding: 3px 10px;
+    font-size: 11px;
+    padding: 4px 10px;
+    top: -16px;
   }
 }
 

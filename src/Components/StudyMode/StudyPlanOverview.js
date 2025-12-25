@@ -193,11 +193,6 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, sidebarOpen = true }) => 
             // Mascot goes on the opposite side
             const mascotSide = index % 2 === 0 ? 'left' : 'right';
 
-            // SVG progress ring calculations
-            const radius = 44;
-            const circumference = 2 * Math.PI * radius;
-            const strokeDashoffset = circumference - (ringData.progress / 100) * circumference;
-
             return (
               <div
                 key={node.id}
@@ -218,34 +213,6 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, sidebarOpen = true }) => 
 
                 {/* Node with progress ring */}
                 <div className="study-node-wrapper">
-                  {/* Progress ring (SVG circle) */}
-                  <svg className="study-node-ring" viewBox="0 0 100 100">
-                    {/* Background ring */}
-                    <circle
-                      className="ring-bg"
-                      cx="50"
-                      cy="50"
-                      r={radius}
-                      fill="none"
-                      strokeWidth="8"
-                    />
-                    {/* Progress ring */}
-                    {!isLocked && (
-                      <circle
-                        className={`ring-progress ${ringData.color}`}
-                        cx="50"
-                        cy="50"
-                        r={radius}
-                        fill="none"
-                        strokeWidth="8"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={strokeDashoffset}
-                        transform="rotate(-90 50 50)"
-                      />
-                    )}
-                  </svg>
-
                   {/* Inner circle with icon */}
                   <div className="study-node-inner">
                     {getNodeIcon(node.type, node.status)}
@@ -254,9 +221,21 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, sidebarOpen = true }) => 
                   {/* Pulse effect for active */}
                   {isActive && <div className="study-node-pulse" />}
 
-                  {/* START label for active node */}
+                  {/* Progress indicator - shows partial progress */}
+                  {!isLocked && !isDone && ringData.progress > 0 && (
+                    <div className="study-node-progress-bar">
+                      <div
+                        className="study-node-progress-fill"
+                        style={{ width: `${ringData.progress}%` }}
+                      />
+                    </div>
+                  )}
+
+                  {/* START/CONTINUE label for active node */}
                   {isActive && (
-                    <div className="study-node-start-label">{t('study.start', 'START')}</div>
+                    <div className="study-node-start-label">
+                      {ringData.progress > 0 ? t('study.continue', 'CONTINUE') : t('study.start', 'START')}
+                    </div>
                   )}
                 </div>
 
