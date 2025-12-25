@@ -24,13 +24,15 @@ const StartStudyModal = ({
   chatId,
   uploadedDocs = [],
   topics = [],
-  language = 'en'
+  language = 'en',
+  autoStart = false // Skip confirmation and start immediately
 }) => {
   const { t } = useTranslation();
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationStep, setGenerationStep] = useState('');
   const [error, setError] = useState(null);
   const [generatedPath, setGeneratedPath] = useState(null);
+  const [hasAutoStarted, setHasAutoStarted] = useState(false);
 
   // Reset state when modal opens
   useEffect(() => {
@@ -39,6 +41,7 @@ const StartStudyModal = ({
       setGenerationStep('');
       setError(null);
       setGeneratedPath(null);
+      setHasAutoStarted(false);
     }
   }, [isOpen]);
 
@@ -88,6 +91,15 @@ const StartStudyModal = ({
       setIsGenerating(false);
     }
   };
+
+  // Auto-start when modal opens if autoStart is true (skip confirmation)
+  useEffect(() => {
+    if (isOpen && autoStart && !hasAutoStarted && !isGenerating && uploadedDocs.length > 0) {
+      setHasAutoStarted(true);
+      handleStartJourney();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, autoStart, hasAutoStarted, isGenerating, uploadedDocs.length]);
 
   if (!isOpen) return null;
 

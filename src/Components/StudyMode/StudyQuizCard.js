@@ -1,6 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
+import StudyCelebration from './StudyCelebration';
+import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
 
 /**
  * StudyQuizCard - Multiple quiz questions in study mode (Duolingo-style)
@@ -42,6 +44,14 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
 
   // Track if we've already restored progress
   const [hasRestoredProgress, setHasRestoredProgress] = useState(false);
+
+  // Celebration and transition state
+  const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
+  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
+  const [showReviewTransition, setShowReviewTransition] = useState(false);
+  const [reviewTransitionCount, setReviewTransitionCount] = useState(0);
+  const [hasShownMilestone, setHasShownMilestone] = useState(false);
+  const startTimeRef = useRef(Date.now());
 
   // Restore from saved progress OR initialize fresh queue
   useEffect(() => {
@@ -133,6 +143,50 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
   const correctCountBeforeCurrent = getCorrectCountBeforeCurrent();
   const correctCount = Object.values(questionStatuses).filter(s => s === 'correct').length;
   const allCorrect = correctCount === totalQuestions;
+
+  // Calculate XP earned (10 XP per correct answer on first try)
+  const xpEarned = correctCount * 10;
+
+  // Check for 30% milestone celebration
+  const progressPercentage = (correctCount / totalQuestions) * 100;
+  const isPerfect = correctCount === totalQuestions && Object.values(questionStatuses).every(s => s === 'correct');
+
+  // Trigger milestone celebration at 30%
+  useEffect(() => {
+    if (progressPercentage >= 30 && !hasShownMilestone && !isReviewRound && correctCount > 0) {
+      setShowMilestoneCelebration(true);
+      setHasShownMilestone(true);
+      playMilestoneSound();
+    }
+  }, [progressPercentage, hasShownMilestone, isReviewRound, correctCount]);
+
+  // Trigger completion celebration when all correct
+  useEffect(() => {
+    if (allCorrect && totalQuestions > 0) {
+      // Small delay to let the UI update first
+      const timer = setTimeout(() => {
+        setShowCompletionCelebration(true);
+        playCelebrationSound();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [allCorrect, totalQuestions]);
+
+  // Handle milestone celebration continue
+  const handleMilestoneContinue = () => {
+    setShowMilestoneCelebration(false);
+  };
+
+  // Handle completion celebration continue
+  const handleCompletionContinue = () => {
+    setShowCompletionCelebration(false);
+    if (onContinue) onContinue();
+  };
+
+  // Calculate time taken
+  const getTimeTaken = () => {
+    return Math.floor((Date.now() - startTimeRef.current) / 1000);
+  };
 
   // Progress bar logic (same as flashcards):
   // - First pass: progress = queueIndex (advances on "Next Question" click, not on answer)
@@ -286,6 +340,13 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
     setIsCorrect(correct);
     setShowFeedback(true);
 
+    // Play sound effect based on answer
+    if (correct) {
+      playCorrectSound();
+    } else {
+      playIncorrectSound();
+    }
+
     // Update question status
     const newStatuses = {
       ...questionStatuses,
@@ -319,10 +380,13 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
         .map(([idx]) => parseInt(idx));
 
       if (questionsToReview.length > 0) {
-        // Start review round with incorrect questions
+        // Show review transition screen before starting review round
+        setReviewTransitionCount(questionsToReview.length);
+        setShowReviewTransition(true);
+
+        // Prepare the review queue (will be activated when transition continues)
         setQuestionQueue(questionsToReview);
         setQueueIndex(0);
-        setIsReviewRound(true);
         setSelectedIndex(null);
         setShowFeedback(false);
         setIsCorrect(false);
@@ -365,6 +429,12 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
         });
       }
     }
+  };
+
+  // Handle review transition continue
+  const handleReviewTransitionContinue = () => {
+    setShowReviewTransition(false);
+    setIsReviewRound(true);
   };
 
   const getOptionClass = (index) => {
@@ -413,142 +483,189 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue }) => {
         includeCurrentAsComplete={progressValues.includeCurrentAsComplete}
       />
 
-      {/* Review badge - show when reviewing questions */}
-      {isReviewRound && !allCorrect && (
-        <div className="study-review-badge">
-          <RefreshIcon />
-          <span>{t('study.reviewing', { count: questionQueue.length, defaultValue: `Reviewing ${questionQueue.length} question${questionQueue.length > 1 ? 's' : ''}` })}</span>
+      {/* Show celebration/transition INSIDE the card content, or show quiz content */}
+      {showMilestoneCelebration ? (
+        <div className="study-card-content">
+          <StudyCelebration
+            type="milestone"
+            inline={true}
+            correctCount={correctCount}
+            totalCount={totalQuestions}
+            onContinue={handleMilestoneContinue}
+          />
         </div>
-      )}
-
-      <div className="study-card-content">
-        {/* Question text */}
-        <p className="study-quiz-question">{question || 'Loading question...'}</p>
-
-        {/* DEV MODE: Show correct answer for testing */}
-        {process.env.NODE_ENV === 'development' && (
-          <div style={{
-            background: '#fef3c7',
-            border: '1px dashed #f59e0b',
-            padding: '4px 8px',
-            borderRadius: '4px',
-            marginBottom: '6px',
-            fontSize: '10px',
-            color: '#92400e'
-          }}>
-            🧪 DEV: Answer <strong>{letters[correctIndex] || '?'}</strong>
-          </div>
-        )}
-
-        {/* Options */}
-        <div className="study-quiz-options">
-          {options.map((option, index) => (
-            <button
-              key={index}
-              className={getOptionClass(index)}
-              onClick={() => handleOptionClick(index)}
-              disabled={showFeedback}
-            >
-              <span className="study-quiz-option-letter">
-                {letters[index]}
-              </span>
-              <span className="study-quiz-option-text">{stripLetterPrefix(option)}</span>
+      ) : showCompletionCelebration ? (
+        <div className="study-card-content">
+          <StudyCelebration
+            type="complete"
+            xpEarned={xpEarned}
+            timeSeconds={getTimeTaken()}
+            isPerfect={isPerfect}
+            inline={true}
+            onContinue={handleCompletionContinue}
+          />
+        </div>
+      ) : showReviewTransition ? (
+        <div className="study-card-content">
+          <div className="study-review-transition">
+            <div className="review-transition-icon">
+              <RefreshIcon />
+            </div>
+            <h3 className="review-transition-title">
+              {t('study.timeToReview', 'Time to Review!')}
+            </h3>
+            <p className="review-transition-message">
+              {t('study.reviewQuestionMessage', {
+                count: reviewTransitionCount,
+                defaultValue: `You have ${reviewTransitionCount} question${reviewTransitionCount > 1 ? 's' : ''} to review. Let's try again!`
+              })}
+            </p>
+            <button className="study-continue-btn" onClick={handleReviewTransitionContinue}>
+              {t('study.startReview', "Let's Go!")}
+              <ArrowRightIcon />
             </button>
-          ))}
+          </div>
         </div>
+      ) : (
+        <>
+          {/* Review badge - show when reviewing questions */}
+          {isReviewRound && !allCorrect && (
+            <div className="study-review-badge">
+              <RefreshIcon />
+              <span>{t('study.reviewing', { count: questionQueue.length, defaultValue: `Reviewing ${questionQueue.length} question${questionQueue.length > 1 ? 's' : ''}` })}</span>
+            </div>
+          )}
 
-        {/* Feedback */}
-        {showFeedback && (() => {
-          const shortRationale = getShortRationale(rationale);
-          const hasMore = hasMoreRationale(rationale, shortRationale);
+          <div className="study-card-content">
+            {/* Question text */}
+            <p className="study-quiz-question">{question || 'Loading question...'}</p>
 
-          return (
-            <div className={`study-quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
-              <div className="study-quiz-feedback-header">
-                <div className="study-quiz-feedback-icon">
-                  {isCorrect ? <CheckIcon /> : <XIcon />}
+            {/* DEV MODE: Show correct answer for testing */}
+            {process.env.NODE_ENV === 'development' && (
+              <div style={{
+                background: '#fef3c7',
+                border: '1px dashed #f59e0b',
+                padding: '4px 8px',
+                borderRadius: '4px',
+                marginBottom: '6px',
+                fontSize: '10px',
+                color: '#92400e'
+              }}>
+                🧪 DEV: Answer <strong>{letters[correctIndex] || '?'}</strong>
+              </div>
+            )}
+
+            {/* Options */}
+            <div className="study-quiz-options">
+              {options.map((option, index) => (
+                <button
+                  key={index}
+                  className={getOptionClass(index)}
+                  onClick={() => handleOptionClick(index)}
+                  disabled={showFeedback}
+                >
+                  <span className="study-quiz-option-letter">
+                    {letters[index]}
+                  </span>
+                  <span className="study-quiz-option-text">{stripLetterPrefix(option)}</span>
+                </button>
+              ))}
+            </div>
+
+            {/* Feedback */}
+            {showFeedback && (() => {
+              const shortRationale = getShortRationale(rationale);
+              const hasMore = hasMoreRationale(rationale, shortRationale);
+
+              return (
+                <div className={`study-quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
+                  <div className="study-quiz-feedback-header">
+                    <div className="study-quiz-feedback-icon">
+                      {isCorrect ? <CheckIcon /> : <XIcon />}
+                    </div>
+                    <span className="study-quiz-feedback-title">
+                      {isCorrect ? t('study.correct', 'Correct!') : t('study.incorrect', 'Incorrect')}
+                    </span>
+                  </div>
+
+                  {/* Show correct answer when wrong - Duolingo style */}
+                  {!isCorrect && (
+                    <div className="study-quiz-correct-answer">
+                      <span className="correct-answer-label">{t('study.correctAnswer', 'Correct Answer:')}</span>
+                      <span className="correct-answer-text">
+                        {letters[correctIndex]}. {stripLetterPrefix(options[correctIndex])}
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Short rationale - always visible */}
+                  {shortRationale && (
+                    <p className="study-quiz-feedback-short">
+                      {shortRationale}
+                    </p>
+                  )}
+
+                  {/* Expandable full rationale */}
+                  {hasMore && (
+                    <>
+                      <button
+                        className="study-quiz-learn-more-btn"
+                        onClick={() => setShowFullRationale(!showFullRationale)}
+                      >
+                        {showFullRationale ? (
+                          <>
+                            <ChevronUpIcon />
+                            {t('study.showLess', 'Show less')}
+                          </>
+                        ) : (
+                          <>
+                            <ChevronDownIcon />
+                            {t('study.learnMore', 'Learn more')}
+                          </>
+                        )}
+                      </button>
+
+                      {showFullRationale && (
+                        <div
+                          className="study-quiz-feedback-rationale"
+                          dangerouslySetInnerHTML={{ __html: rationale }}
+                        />
+                      )}
+                    </>
+                  )}
+
+                  {/* Duolingo-style action button inside feedback */}
+                  {(hasMoreQuestions || needsReviewRound()) && (
+                    <button
+                      className={`study-quiz-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
+                      onClick={handleNextQuestion}
+                    >
+                      {isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT')}
+                    </button>
+                  )}
                 </div>
-                <span className="study-quiz-feedback-title">
-                  {isCorrect ? t('study.correct', 'Correct!') : t('study.incorrect', 'Incorrect')}
+              );
+            })()}
+          </div>
+
+          {/* Summary and Continue - show when all questions are correct */}
+          {allCorrect && (
+            <div className="study-card-footer study-card-footer-stacked">
+              <div className="study-completion-message">
+                {t('study.excellentWork', 'Excellent work! You got them all right.')}
+              </div>
+              <div className="study-quiz-summary">
+                <span className="summary-item got-it">
+                  <CheckIcon /> {t('study.correctCount', { count: totalQuestions, defaultValue: `${totalQuestions} correct` })}
                 </span>
               </div>
-
-              {/* Show correct answer when wrong - Duolingo style */}
-              {!isCorrect && (
-                <div className="study-quiz-correct-answer">
-                  <span className="correct-answer-label">{t('study.correctAnswer', 'Correct Answer:')}</span>
-                  <span className="correct-answer-text">
-                    {letters[correctIndex]}. {stripLetterPrefix(options[correctIndex])}
-                  </span>
-                </div>
-              )}
-
-              {/* Short rationale - always visible */}
-              {shortRationale && (
-                <p className="study-quiz-feedback-short">
-                  {shortRationale}
-                </p>
-              )}
-
-              {/* Expandable full rationale */}
-              {hasMore && (
-                <>
-                  <button
-                    className="study-quiz-learn-more-btn"
-                    onClick={() => setShowFullRationale(!showFullRationale)}
-                  >
-                    {showFullRationale ? (
-                      <>
-                        <ChevronUpIcon />
-                        {t('study.showLess', 'Show less')}
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDownIcon />
-                        {t('study.learnMore', 'Learn more')}
-                      </>
-                    )}
-                  </button>
-
-                  {showFullRationale && (
-                    <div
-                      className="study-quiz-feedback-rationale"
-                      dangerouslySetInnerHTML={{ __html: rationale }}
-                    />
-                  )}
-                </>
-              )}
-
-              {/* Duolingo-style action button inside feedback */}
-              {(hasMoreQuestions || needsReviewRound()) && (
-                <button
-                  className={`study-quiz-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
-                  onClick={handleNextQuestion}
-                >
-                  {isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT')}
-                </button>
-              )}
+              <button className="study-continue-btn" onClick={onContinue}>
+                {t('study.continueBtn', 'Continue')}
+                <ArrowRightIcon />
+              </button>
             </div>
-          );
-        })()}
-      </div>
-
-      {/* Summary and Continue - show when all questions are correct */}
-      {allCorrect && (
-        <div className="study-card-footer study-card-footer-stacked">
-          <div className="study-completion-message">
-            {t('study.excellentWork', 'Excellent work! You got them all right.')}
-          </div>
-          <div className="study-quiz-summary">
-            <span className="summary-item got-it">
-              <CheckIcon /> {t('study.correctCount', { count: totalQuestions, defaultValue: `${totalQuestions} correct` })}
-            </span>
-          </div>
-          <button className="study-continue-btn" onClick={onContinue}>
-            {t('study.continueBtn', 'Continue')}
-            <ArrowRightIcon />
-          </button>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -819,7 +819,44 @@ const resources = {
 
         // Common
         continueBtn: "Continue",
-        loading: "Loading..."
+        loading: "Loading...",
+
+        // Celebration messages
+        wayToGo: "Way to go!",
+        fantastic: "Fantastic!",
+        keepItUp: "Keep it up!",
+        youreOnFire: "You're on fire!",
+        lessonComplete: "Lesson complete!",
+        amazingWork: "Amazing work!",
+        youDidIt: "You did it!",
+        totalXP: "TOTAL XP",
+        perfect: "PERFECT!",
+        speedy: "SPEEDY",
+        claimXP: "CLAIM XP",
+
+        // Milestone messages - context-aware based on performance
+        // Great performance (80%+)
+        milestoneGreat1: "You're doing great!",
+        milestoneGreat2: "Excellent progress!",
+        milestoneGreat3: "Keep up the momentum!",
+        // Okay performance (50-79%)
+        milestoneOkay1: "You're making progress!",
+        milestoneOkay2: "Keep going, you got this!",
+        milestoneOkay3: "Stay focused!",
+        // Struggling (<50%)
+        milestoneStruggle1: "You can do this!",
+        milestoneStruggle2: "I admire your perseverance!",
+        milestoneStruggle3: "Don't give up!",
+        milestoneStruggle4: "Every attempt makes you stronger!",
+
+        // Review transition
+        timeToReview: "Time to Review!",
+        reviewMessage: "You have {{count}} card to review. Let's go over them again!",
+        reviewMessage_plural: "You have {{count}} cards to review. Let's go over them again!",
+        reviewQuestionMessage: "You have {{count}} question to review. Let's try again!",
+        reviewQuestionMessage_plural: "You have {{count}} questions to review. Let's try again!",
+        startReview: "Let's Go!",
+        finishLesson: "Finish"
       }
     }
   },
@@ -1639,7 +1676,44 @@ const resources = {
 
         // Common
         continueBtn: "Continuer",
-        loading: "Chargement..."
+        loading: "Chargement...",
+
+        // Celebration messages
+        wayToGo: "Bravo!",
+        fantastic: "Fantastique!",
+        keepItUp: "Continue comme ça!",
+        youreOnFire: "Tu es en feu!",
+        lessonComplete: "Leçon terminée!",
+        amazingWork: "Travail incroyable!",
+        youDidIt: "Tu l'as fait!",
+        totalXP: "XP TOTAL",
+        perfect: "PARFAIT!",
+        speedy: "RAPIDE",
+        claimXP: "RÉCUPÉRER XP",
+
+        // Milestone messages - context-aware based on performance
+        // Great performance (80%+)
+        milestoneGreat1: "Tu t'en sors très bien!",
+        milestoneGreat2: "Excellente progression!",
+        milestoneGreat3: "Continue sur cette lancée!",
+        // Okay performance (50-79%)
+        milestoneOkay1: "Tu progresses!",
+        milestoneOkay2: "Continue, tu y arrives!",
+        milestoneOkay3: "Reste concentré!",
+        // Struggling (<50%)
+        milestoneStruggle1: "Tu peux le faire!",
+        milestoneStruggle2: "J'admire ta persévérance!",
+        milestoneStruggle3: "N'abandonne pas!",
+        milestoneStruggle4: "Chaque essai te rend plus fort!",
+
+        // Review transition
+        timeToReview: "C'est l'heure de réviser!",
+        reviewMessage: "Tu as {{count}} carte à revoir. On les reprend ensemble!",
+        reviewMessage_plural: "Tu as {{count}} cartes à revoir. On les reprend ensemble!",
+        reviewQuestionMessage: "Tu as {{count}} question à revoir. On réessaie!",
+        reviewQuestionMessage_plural: "Tu as {{count}} questions à revoir. On réessaie!",
+        startReview: "C'est parti!",
+        finishLesson: "Terminer"
       }
     }
   }

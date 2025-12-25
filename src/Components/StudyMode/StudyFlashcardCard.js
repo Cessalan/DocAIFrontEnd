@@ -1,6 +1,8 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
+import StudyCelebration from './StudyCelebration';
+import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound, playFlipSound } from '../../utils/soundEffects';
 
 /**
  * Parse markdown-style formatting into HTML
@@ -9,16 +11,35 @@ import StudyProgressBar from './StudyProgressBar';
 const parseFlashcardText = (text) => {
   if (!text) return '';
 
+  // Ensure text is a string (handle objects/arrays gracefully)
+  if (typeof text !== 'string') {
+    console.warn('parseFlashcardText received non-string:', text);
+    return String(text);
+  }
+
+  // Debug: log input
+  console.log('📝 parseFlashcardText input:', text);
+  console.log('📝 Has asterisks:', text.includes('**'));
+
   let parsed = text
-    // Convert **bold** to <strong>
+    // Convert **bold** to <strong> - use global flag and non-greedy match
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    // Convert bullet points to proper list items
-    .replace(/•\s*/g, '<br/>• ')
+    // Convert comma-bullet patterns (,•) to line breaks
+    .replace(/,\s*•/g, '<br/>• ')
+    // Convert standalone bullet points to line breaks (not at start)
+    .replace(/([^>])•\s*/g, '$1<br/>• ')
+    // Handle bullet at the very start
+    .replace(/^•\s*/, '• ')
     // Convert newlines to <br/>
     .replace(/\n/g, '<br/>');
 
-  // Clean up any double <br/> at the start
-  parsed = parsed.replace(/^<br\/>/, '');
+  // Clean up any <br/> at the start
+  parsed = parsed.replace(/^(<br\/>)+/, '');
+  // Clean up multiple consecutive <br/>
+  parsed = parsed.replace(/(<br\/>){2,}/g, '<br/>');
+
+  // Debug: log output
+  console.log('📝 parseFlashcardText output:', parsed);
 
   return parsed;
 };
@@ -58,6 +79,14 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
   const [isReviewRound, setIsReviewRound] = useState(() =>
     savedProgress?.isReviewRound || false
   );
+
+  // Celebration and transition state
+  const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
+  const [showCompletionCelebration, setShowCompletionCelebration] = useState(false);
+  const [showReviewTransition, setShowReviewTransition] = useState(false);
+  const [reviewTransitionCount, setReviewTransitionCount] = useState(0);
+  const [hasShownMilestone, setHasShownMilestone] = useState(false);
+  const startTimeRef = useRef(Date.now());
 
   // Handle both new format { cards: [...] } and legacy format { front, back }
   const cards = useMemo(() => content?.cards || [content], [content]);
@@ -113,21 +142,61 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
   // Check if all cards are mastered
   const allMastered = masteredCount === totalCards;
 
+  // Calculate XP earned (10 XP per mastered card)
+  const xpEarned = masteredCount * 10;
+
+  // Check for 30% milestone celebration
+  const progressPercentage = (masteredCount / totalCards) * 100;
+  const isPerfect = masteredCount === totalCards;
+
+  // Trigger milestone celebration at 30%
+  useEffect(() => {
+    if (progressPercentage >= 30 && !hasShownMilestone && !isReviewRound && masteredCount > 0) {
+      setShowMilestoneCelebration(true);
+      setHasShownMilestone(true);
+      playMilestoneSound();
+    }
+  }, [progressPercentage, hasShownMilestone, isReviewRound, masteredCount]);
+
+  // Trigger completion celebration when all mastered
+  useEffect(() => {
+    if (allMastered && totalCards > 0) {
+      // Small delay to let the UI update first
+      const timer = setTimeout(() => {
+        setShowCompletionCelebration(true);
+        playCelebrationSound();
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [allMastered, totalCards]);
+
+  // Handle milestone celebration continue
+  const handleMilestoneContinue = () => {
+    setShowMilestoneCelebration(false);
+  };
+
+  // Handle completion celebration continue
+  const handleCompletionContinue = () => {
+    setShowCompletionCelebration(false);
+    if (onContinue) onContinue();
+  };
+
+  // Calculate time taken
+  const getTimeTaken = () => {
+    return Math.floor((Date.now() - startTimeRef.current) / 1000);
+  };
+
   // Progress bar logic:
-  // - Show how many cards have been reviewed (not just queue position)
-  // - This correctly reflects progress when restoring mid-session
+  // Progress only advances when user clicks "Next Card" (not when flipping or reviewing)
+  // This matches Duolingo behavior - progress fills as you complete cards
   const getProgressValues = () => {
     if (allMastered) {
       // All done - full progress
       return { current: totalCards, total: totalCards, includeCurrentAsComplete: false };
     }
 
-    // Count cards that have been reviewed (mastered or marked for review)
-    const reviewedCount = Object.keys(cardStatuses).length;
-
     if (isReviewRound) {
-      // Review round - show progress toward mastering all
-      // Progress = mastered cards out of total
+      // Review round - show mastered cards out of total
       return {
         current: masteredCount,
         total: totalCards,
@@ -135,11 +204,10 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
       };
     }
 
-    // First pass - show how many cards have been reviewed
-    // Use the greater of: reviewed count or queue position (for cards not yet acted on)
-    const progressCount = Math.max(reviewedCount, queueIndex);
+    // First pass - progress = queueIndex (cards we've moved past)
+    // Current card fills when user clicks "Got it" or "Need review"
     return {
-      current: progressCount,
+      current: queueIndex,
       total: totalCards,
       includeCurrentAsComplete: hasReviewed
     };
@@ -189,10 +257,12 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
 
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
+    playFlipSound();
   };
 
   const handleGotIt = () => {
     setHasReviewed(true);
+    playCorrectSound();
     const newStatuses = { ...cardStatuses, [currentQueuePosition]: 'mastered' };
     setCardStatuses(newStatuses);
 
@@ -211,6 +281,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
 
   const handleNeedReview = () => {
     setHasReviewed(true);
+    playIncorrectSound();
     const newStatuses = { ...cardStatuses, [currentQueuePosition]: 'review' };
     setCardStatuses(newStatuses);
 
@@ -238,10 +309,13 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
         .map(([idx, _]) => parseInt(idx));
 
       if (cardsToReview.length > 0) {
-        // Start review round with cards that need review
+        // Show review transition screen before starting review round
+        setReviewTransitionCount(cardsToReview.length);
+        setShowReviewTransition(true);
+
+        // Prepare the review queue (will be activated when transition continues)
         setCardQueue(cardsToReview);
         setQueueIndex(0);
-        setIsReviewRound(true);
         setIsFlipped(false);
         setHasReviewed(false);
 
@@ -280,6 +354,12 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
     }
   };
 
+  // Handle review transition continue
+  const handleReviewTransitionContinue = () => {
+    setShowReviewTransition(false);
+    setIsReviewRound(true);
+  };
+
   return (
     <div className="study-step-card study-flashcard-card">
       <div className="study-card-header">
@@ -296,100 +376,147 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
         includeCurrentAsComplete={progressValues.includeCurrentAsComplete}
       />
 
-      {/* Review badge - show when reviewing cards */}
-      {isReviewRound && !allMastered && (
-        <div className="study-review-badge">
-          <RefreshIcon />
-          <span>{t('study.reviewingCards', { count: cardQueue.length, defaultValue: `Reviewing ${cardQueue.length} card${cardQueue.length > 1 ? 's' : ''}` })}</span>
+      {/* Show celebration/transition INSIDE the card content, or show flashcard content */}
+      {showMilestoneCelebration ? (
+        <div className="study-card-content">
+          <StudyCelebration
+            type="milestone"
+            inline={true}
+            correctCount={masteredCount}
+            totalCount={totalCards}
+            onContinue={handleMilestoneContinue}
+          />
         </div>
-      )}
-
-      <div className="study-card-content study-flashcard-content-area">
-        {/* Flip card */}
-        <div className="study-flashcard-wrapper">
-          <div
-            className={`study-flashcard ${isFlipped ? 'flipped' : ''}`}
-            onClick={handleFlip}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => e.key === 'Enter' && handleFlip()}
-          >
-            {/* Front */}
-            <div className="study-flashcard-face study-flashcard-front">
-              <div
-                className="study-flashcard-text"
-                dangerouslySetInnerHTML={{ __html: parseFlashcardText(front) || 'Loading...' }}
-              />
-              <span className="study-flashcard-hint">
-                <TapIcon />
-                {t('study.tapToFlip', 'Tap to flip')}
-              </span>
+      ) : showCompletionCelebration ? (
+        <div className="study-card-content">
+          <StudyCelebration
+            type="complete"
+            xpEarned={xpEarned}
+            timeSeconds={getTimeTaken()}
+            isPerfect={isPerfect}
+            inline={true}
+            onContinue={handleCompletionContinue}
+          />
+        </div>
+      ) : showReviewTransition ? (
+        <div className="study-card-content">
+          <div className="study-review-transition">
+            <div className="review-transition-icon">
+              <RefreshIcon />
             </div>
-
-            {/* Back */}
-            <div className="study-flashcard-face study-flashcard-back">
-              <div
-                className="study-flashcard-text"
-                dangerouslySetInnerHTML={{ __html: parseFlashcardText(back) || t('study.loading', 'Loading...') }}
-              />
-              <span className="study-flashcard-hint">
-                <TapIcon />
-                {t('study.tapToFlipBack', 'Tap to flip back')}
-              </span>
-            </div>
+            <h3 className="review-transition-title">
+              {t('study.timeToReview', 'Time to Review!')}
+            </h3>
+            <p className="review-transition-message">
+              {t('study.reviewMessage', {
+                count: reviewTransitionCount,
+                defaultValue: `You have ${reviewTransitionCount} card${reviewTransitionCount > 1 ? 's' : ''} to review. Let's go over them again!`
+              })}
+            </p>
+            <button className="study-continue-btn" onClick={handleReviewTransitionContinue}>
+              {t('study.startReview', "Let's Go!")}
+              <ArrowRightIcon />
+            </button>
           </div>
-
-          {/* Review actions - only show when flipped and not yet reviewed */}
-          {isFlipped && !hasReviewed && (
-            <div className="study-flashcard-actions">
-              <button
-                className="study-flashcard-btn got-it"
-                onClick={(e) => { e.stopPropagation(); handleGotIt(); }}
-              >
-                <CheckIcon />
-                {t('study.gotItBtn', 'Got it!')}
-              </button>
-              <button
-                className="study-flashcard-btn review"
-                onClick={(e) => { e.stopPropagation(); handleNeedReview(); }}
-              >
-                <RefreshIcon />
-                {t('study.needReview', 'Need review')}
-              </button>
+        </div>
+      ) : (
+        <>
+          {/* Review badge - show when reviewing cards */}
+          {isReviewRound && !allMastered && (
+            <div className="study-review-badge">
+              <RefreshIcon />
+              <span>{t('study.reviewingCards', { count: cardQueue.length, defaultValue: `Reviewing ${cardQueue.length} card${cardQueue.length > 1 ? 's' : ''}` })}</span>
             </div>
           )}
 
-          {/* Next card button - show after reviewing if not all mastered */}
-          {hasReviewed && !allMastered && (
-            <div className="study-flashcard-actions">
-              <button
-                className="study-flashcard-btn next"
-                onClick={(e) => { e.stopPropagation(); handleNextCard(); }}
+          <div className="study-card-content study-flashcard-content-area">
+            {/* Flip card */}
+            <div className="study-flashcard-wrapper">
+              <div
+                className={`study-flashcard ${isFlipped ? 'flipped' : ''}`}
+                onClick={handleFlip}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => e.key === 'Enter' && handleFlip()}
               >
-                {t('study.nextCard', 'Next Card')}
+                {/* Front */}
+                <div className="study-flashcard-face study-flashcard-front">
+                  <div
+                    className="study-flashcard-text"
+                    dangerouslySetInnerHTML={{ __html: parseFlashcardText(front) || 'Loading...' }}
+                  />
+                  <span className="study-flashcard-hint">
+                    <TapIcon />
+                    {t('study.tapToFlip', 'Tap to flip')}
+                  </span>
+                </div>
+
+                {/* Back */}
+                <div className="study-flashcard-face study-flashcard-back">
+                  <div
+                    className="study-flashcard-text"
+                    dangerouslySetInnerHTML={{ __html: parseFlashcardText(back) || t('study.loading', 'Loading...') }}
+                  />
+                  <span className="study-flashcard-hint">
+                    <TapIcon />
+                    {t('study.tapToFlipBack', 'Tap to flip back')}
+                  </span>
+                </div>
+              </div>
+
+              {/* Review actions - only show when flipped and not yet reviewed */}
+              {isFlipped && !hasReviewed && (
+                <div className="study-flashcard-actions">
+                  <button
+                    className="study-flashcard-btn got-it"
+                    onClick={(e) => { e.stopPropagation(); handleGotIt(); }}
+                  >
+                    <CheckIcon />
+                    {t('study.gotItBtn', 'Got it!')}
+                  </button>
+                  <button
+                    className="study-flashcard-btn review"
+                    onClick={(e) => { e.stopPropagation(); handleNeedReview(); }}
+                  >
+                    <RefreshIcon />
+                    {t('study.needReview', 'Need review')}
+                  </button>
+                </div>
+              )}
+
+              {/* Next card button - show after reviewing if not all mastered */}
+              {hasReviewed && !allMastered && (
+                <div className="study-flashcard-actions">
+                  <button
+                    className="study-flashcard-btn got-it"
+                    onClick={(e) => { e.stopPropagation(); handleNextCard(); }}
+                  >
+                    {t('study.continueBtn', 'Continue')}
+                    <ArrowRightIcon />
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Summary and Continue - show when all cards mastered */}
+          {allMastered && (
+            <div className="study-card-footer study-card-footer-stacked">
+              <div className="study-completion-message">
+                {t('study.greatJob', "Great job! You've mastered all the cards.")}
+              </div>
+              <div className="study-flashcard-summary">
+                <span className="summary-item got-it">
+                  <CheckIcon /> {t('study.masteredCount', { count: totalCards, defaultValue: `${totalCards} mastered` })}
+                </span>
+              </div>
+              <button className="study-continue-btn" onClick={onContinue}>
+                {t('study.continueBtn', 'Continue')}
                 <ArrowRightIcon />
               </button>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Summary and Continue - show when all cards mastered */}
-      {allMastered && (
-        <div className="study-card-footer study-card-footer-stacked">
-          <div className="study-completion-message">
-            {t('study.greatJob', "Great job! You've mastered all the cards.")}
-          </div>
-          <div className="study-flashcard-summary">
-            <span className="summary-item got-it">
-              <CheckIcon /> {t('study.masteredCount', { count: totalCards, defaultValue: `${totalCards} mastered` })}
-            </span>
-          </div>
-          <button className="study-continue-btn" onClick={onContinue}>
-            {t('study.continueBtn', 'Continue')}
-            <ArrowRightIcon />
-          </button>
-        </div>
+        </>
       )}
     </div>
   );

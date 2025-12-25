@@ -700,6 +700,146 @@
 }
 
 /* -----------------------------------------
+   MULTI-PAGE LESSON STYLES (Duolingo-style)
+   ----------------------------------------- */
+.study-lesson-multipage {
+  max-width: 520px;
+}
+
+.study-lesson-page-content {
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.study-lesson-page-title {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.study-lesson-page-body {
+  font-size: 18px;
+  line-height: 1.8;
+  color: var(--text-primary);
+}
+
+.study-lesson-page-body strong {
+  color: var(--study-coral-dark);
+  font-weight: 600;
+  background: linear-gradient(180deg, transparent 60%, rgba(232, 141, 125, 0.2) 60%);
+  padding: 0 2px;
+}
+
+/* Highlight box for key points */
+.study-lesson-highlight {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: var(--sticky-yellow);
+  padding: 14px 18px;
+  border-radius: 8px 12px 10px 8px;
+  border: 1.5px solid rgba(217, 119, 6, 0.15);
+  transform: rotate(-0.3deg);
+  margin-top: auto;
+}
+
+.study-lesson-highlight svg {
+  flex-shrink: 0;
+  color: #f59e0b;
+  margin-top: 2px;
+}
+
+.study-lesson-highlight span {
+  font-size: 15px;
+  font-weight: 500;
+  color: #78350f;
+  line-height: 1.5;
+}
+
+/* Multi-page footer with navigation */
+.study-lesson-footer-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  position: relative;
+}
+
+/* Previous button */
+.study-lesson-nav-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(100, 100, 100, 0.08);
+  border: 1.5px solid rgba(100, 100, 100, 0.15);
+  color: var(--text-secondary);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition-wobbly);
+}
+
+.study-lesson-nav-btn:hover:not(:disabled) {
+  background: rgba(100, 100, 100, 0.15);
+  transform: scale(1.05);
+}
+
+.study-lesson-nav-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.study-lesson-nav-btn.hidden {
+  visibility: hidden;
+}
+
+.study-lesson-nav-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+/* Page dots indicator */
+.study-lesson-page-dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: absolute;
+  bottom: -30px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.page-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(100, 100, 100, 0.2);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.page-dot:hover {
+  background: rgba(100, 100, 100, 0.4);
+  transform: scale(1.2);
+}
+
+.page-dot.active {
+  width: 24px;
+  border-radius: 4px;
+  background: var(--study-coral);
+}
+
+.page-dot.completed {
+  background: var(--node-done);
+}
+
+/* -----------------------------------------
    QUIZ CARD STYLES
    ----------------------------------------- */
 .study-quiz-question {
@@ -1942,10 +2082,45 @@ body.dark-mode .study-mode-header {
 body.dark-mode .study-unit-title,
 body.dark-mode .study-card-title,
 body.dark-mode .study-lesson-body,
+body.dark-mode .study-lesson-page-title,
+body.dark-mode .study-lesson-page-body,
 body.dark-mode .study-quiz-question,
 body.dark-mode .study-quiz-option-text,
 body.dark-mode .study-flashcard-content {
   color: #e5e5e5;
+}
+
+/* Multi-page lesson dark mode */
+body.dark-mode .study-lesson-page-body strong {
+  color: #f5a898;
+  background: linear-gradient(180deg, transparent 60%, rgba(232, 141, 125, 0.3) 60%);
+}
+
+body.dark-mode .study-lesson-highlight {
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+body.dark-mode .study-lesson-highlight span {
+  color: #fcd34d;
+}
+
+body.dark-mode .study-lesson-nav-btn {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.15);
+  color: #a0a0a0;
+}
+
+body.dark-mode .study-lesson-nav-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+body.dark-mode .page-dot {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+body.dark-mode .page-dot:hover {
+  background: rgba(255, 255, 255, 0.4);
 }
 
 body.dark-mode .study-unit-subtitle,
@@ -3912,4 +4087,593 @@ body.dark-mode .study-mode-focused .study-main-content {
     transform: scaleY(1);
     opacity: 1;
   }
+}
+
+/* ============================================
+   CELEBRATION OVERLAY - Duolingo-style rewards
+   ============================================ */
+
+/* Inline celebration - stays inside card */
+.study-celebration-inline {
+  position: relative;
+  width: 100%;
+  min-height: 350px;
+  background: linear-gradient(135deg,
+    rgba(88, 214, 141, 0.15) 0%,
+    rgba(72, 199, 116, 0.1) 100%
+  );
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  animation: inlineCelebrationFadeIn 0.3s ease-out;
+}
+
+.study-celebration-inline .celebration-confetti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+}
+
+.study-celebration-inline .celebration-content {
+  padding: 24px;
+  max-width: 100%;
+}
+
+.study-celebration-inline .celebration-message {
+  font-size: 28px;
+  margin-bottom: 12px;
+}
+
+.study-celebration-inline .celebration-mascot {
+  margin-bottom: 16px;
+}
+
+.study-celebration-inline .celebration-stats {
+  margin-bottom: 20px;
+  gap: 10px;
+}
+
+.study-celebration-inline .stat-card {
+  padding: 10px 16px;
+  min-width: 80px;
+}
+
+.study-celebration-inline .stat-label {
+  font-size: 10px;
+  margin-bottom: 4px;
+}
+
+.study-celebration-inline .stat-icon {
+  font-size: 18px;
+}
+
+.study-celebration-inline .stat-number {
+  font-size: 22px;
+}
+
+.study-celebration-inline .celebration-continue-btn {
+  padding: 14px 36px;
+  font-size: 18px;
+  border-radius: 12px;
+}
+
+.study-celebration-inline .sparkle {
+  font-size: 18px;
+}
+
+.study-celebration-inline .confetti-particle {
+  width: 8px;
+  height: 8px;
+}
+
+@keyframes inlineCelebrationFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Dark mode inline celebration */
+.dark-mode .study-celebration-inline {
+  background: linear-gradient(135deg,
+    rgba(88, 214, 141, 0.12) 0%,
+    rgba(72, 199, 116, 0.08) 100%
+  );
+}
+
+/* Full screen overlay - Neutral grey background */
+.study-celebration-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg,
+    rgba(75, 85, 95, 0.97) 0%,
+    rgba(60, 70, 80, 0.98) 50%,
+    rgba(50, 60, 70, 1) 100%
+  );
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: celebrationFadeIn 0.3s ease-out;
+}
+
+@keyframes celebrationFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Confetti particles container */
+.celebration-confetti {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Individual confetti particles */
+.confetti-particle {
+  position: absolute;
+  top: -20px;
+  width: 12px;
+  height: 12px;
+  border-radius: 2px;
+  animation: confettiFall 2s ease-out forwards;
+}
+
+.confetti-0 { background: #FFD700; } /* Gold */
+.confetti-1 { background: #FF6B6B; } /* Red */
+.confetti-2 { background: #4ECDC4; } /* Teal */
+.confetti-3 { background: #45B7D1; } /* Blue */
+.confetti-4 { background: #96CEB4; } /* Green */
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg) scale(0.5);
+    opacity: 0;
+  }
+}
+
+/* Main content container */
+.celebration-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 40px;
+  max-width: 400px;
+  transform: translateY(30px);
+  opacity: 0;
+  transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.celebration-content.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Mascot container with sparkles */
+.celebration-mascot {
+  position: relative;
+  margin-bottom: 24px;
+  animation: mascotBounce 0.6s ease-out;
+}
+
+@keyframes mascotBounce {
+  0% {
+    transform: scale(0.3) translateY(50px);
+  }
+  50% {
+    transform: scale(1.1) translateY(-10px);
+  }
+  70% {
+    transform: scale(0.95) translateY(5px);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Sparkles around mascot */
+.mascot-sparkles {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+}
+
+.sparkle {
+  position: absolute;
+  font-size: 24px;
+  animation: sparkleFloat 1.5s ease-in-out infinite;
+}
+
+.sparkle-1 {
+  top: -10px;
+  left: -20px;
+  animation-delay: 0s;
+}
+
+.sparkle-2 {
+  top: 20px;
+  right: -25px;
+  animation-delay: 0.3s;
+}
+
+.sparkle-3 {
+  bottom: 10px;
+  left: -15px;
+  animation-delay: 0.6s;
+}
+
+@keyframes sparkleFloat {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-8px) scale(1.2);
+    opacity: 0.8;
+  }
+}
+
+/* Celebration message - Green for positive reinforcement, above mascot */
+.celebration-message {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 42px;
+  font-weight: 700;
+  color: #7dd3a0;
+  margin: 0 0 20px;
+  text-shadow: 2px 3px 0px rgba(0, 0, 0, 0.2);
+  animation: messagePopIn 0.4s ease-out 0.1s both;
+}
+
+@keyframes messagePopIn {
+  0% {
+    transform: scale(0.5);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Stats container */
+.celebration-stats {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 40px;
+  flex-wrap: wrap;
+  justify-content: center;
+  transform: translateY(20px);
+  opacity: 0;
+  transition: all 0.4s ease-out;
+}
+
+.celebration-stats.visible {
+  transform: translateY(0);
+  opacity: 1;
+}
+
+/* Individual stat card */
+.stat-card {
+  background: rgba(255, 255, 255, 0.2);
+  backdrop-filter: blur(10px);
+  border-radius: 16px;
+  padding: 16px 24px;
+  min-width: 100px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  animation: statCardPop 0.4s ease-out backwards;
+}
+
+.stat-card:nth-child(1) { animation-delay: 0.5s; }
+.stat-card:nth-child(2) { animation-delay: 0.65s; }
+.stat-card:nth-child(3) { animation-delay: 0.8s; }
+
+@keyframes statCardPop {
+  0% {
+    transform: scale(0) rotate(-10deg);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+.stat-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.stat-value {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.stat-icon {
+  font-size: 22px;
+}
+
+.stat-number {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 28px;
+  font-weight: 700;
+  color: white;
+}
+
+/* XP card special styling */
+.xp-card {
+  background: linear-gradient(135deg,
+    rgba(255, 215, 0, 0.3) 0%,
+    rgba(255, 193, 7, 0.2) 100%
+  );
+  border-color: rgba(255, 215, 0, 0.5);
+}
+
+/* Perfect score card */
+.perfect-card {
+  background: linear-gradient(135deg,
+    rgba(46, 213, 115, 0.3) 0%,
+    rgba(39, 174, 96, 0.2) 100%
+  );
+  border-color: rgba(46, 213, 115, 0.5);
+}
+
+/* Time card */
+.time-card {
+  background: linear-gradient(135deg,
+    rgba(78, 205, 196, 0.3) 0%,
+    rgba(69, 183, 209, 0.2) 100%
+  );
+  border-color: rgba(78, 205, 196, 0.5);
+}
+
+/* Continue/Claim XP button - Green for positive action */
+.celebration-continue-btn {
+  background: linear-gradient(135deg, #58d68d 0%, #48c774 100%);
+  color: white;
+  border: none;
+  border-radius: 16px;
+  padding: 18px 48px;
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 20px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow:
+    0 4px 0 #3db36b,
+    0 8px 24px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+  animation: buttonAppear 0.4s ease-out 0.9s both;
+}
+
+@keyframes buttonAppear {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.celebration-continue-btn:hover {
+  transform: translateY(-3px);
+  background: linear-gradient(135deg, #65dc98 0%, #52d27e 100%);
+  box-shadow:
+    0 6px 0 #3db36b,
+    0 12px 32px rgba(0, 0, 0, 0.25);
+}
+
+.celebration-continue-btn:active {
+  transform: translateY(2px);
+  box-shadow:
+    0 2px 0 #3db36b,
+    0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+/* Dark mode celebration adjustments */
+body.dark-mode .study-celebration-overlay {
+  background: linear-gradient(180deg,
+    rgba(45, 50, 55, 0.98) 0%,
+    rgba(35, 40, 45, 1) 50%,
+    rgba(28, 32, 36, 1) 100%
+  );
+}
+
+body.dark-mode .celebration-message {
+  color: #7dd3a0;
+}
+
+body.dark-mode .celebration-continue-btn {
+  background: linear-gradient(135deg, #48c774 0%, #3db36b 100%);
+  color: white;
+}
+
+body.dark-mode .celebration-continue-btn:hover {
+  background: linear-gradient(135deg, #58d68d 0%, #48c774 100%);
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .celebration-content {
+    padding: 24px;
+  }
+
+  .celebration-message {
+    font-size: 32px;
+  }
+
+  .celebration-stats {
+    gap: 10px;
+  }
+
+  .stat-card {
+    padding: 12px 18px;
+    min-width: 85px;
+  }
+
+  .stat-number {
+    font-size: 24px;
+  }
+
+  .celebration-continue-btn {
+    padding: 14px 36px;
+    font-size: 18px;
+  }
+}
+
+/* ============================================
+   REVIEW TRANSITION SCREEN
+   ============================================ */
+
+.study-review-transition {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 24px;
+  min-height: 300px;
+  background: linear-gradient(135deg,
+    rgba(255, 193, 7, 0.12) 0%,
+    rgba(255, 152, 0, 0.08) 100%
+  );
+  border-radius: 16px;
+  animation: reviewTransitionFadeIn 0.4s ease-out;
+}
+
+.review-transition-icon {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #ffc107 0%, #ff9800 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 20px;
+  animation: reviewIconPulse 2s ease-in-out infinite;
+}
+
+.review-transition-icon svg {
+  width: 40px;
+  height: 40px;
+  color: white;
+  stroke: white;
+}
+
+.review-transition-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text-primary, #2c2c2c);
+  margin: 0 0 12px 0;
+}
+
+.review-transition-message {
+  font-size: 16px;
+  color: var(--text-secondary, #6b6b6b);
+  margin: 0 0 28px 0;
+  max-width: 280px;
+  line-height: 1.5;
+}
+
+@keyframes reviewTransitionFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes reviewIconPulse {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 4px 20px rgba(255, 152, 0, 0.3);
+  }
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 6px 30px rgba(255, 152, 0, 0.5);
+  }
+}
+
+/* Dark mode review transition */
+.dark-mode .study-review-transition {
+  background: linear-gradient(135deg,
+    rgba(255, 193, 7, 0.18) 0%,
+    rgba(255, 152, 0, 0.12) 100%
+  );
+}
+
+.dark-mode .review-transition-title {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+.dark-mode .review-transition-message {
+  color: #e8e8e8;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================================
+   MILESTONE CELEBRATION - Encouraging, not celebratory
+   ============================================ */
+
+.study-milestone-inline {
+  background: linear-gradient(135deg,
+    rgba(100, 181, 246, 0.15) 0%,
+    rgba(66, 165, 245, 0.1) 100%
+  );
+}
+
+.study-milestone-inline .celebration-message {
+  color: var(--text-primary, #2c2c2c);
+  font-size: 24px;
+}
+
+/* Dark mode milestone */
+.dark-mode .study-milestone-inline {
+  background: linear-gradient(135deg,
+    rgba(100, 181, 246, 0.15) 0%,
+    rgba(66, 165, 245, 0.1) 100%
+  );
+}
+
+.dark-mode .study-milestone-inline .celebration-message {
+  color: #ffffff;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }

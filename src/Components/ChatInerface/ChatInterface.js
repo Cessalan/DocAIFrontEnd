@@ -2490,6 +2490,21 @@ const ChatInterface = ({
       case 'post_upload_message':
         console.log('📬 Post-upload message received:', update);
 
+        // Check if user clicked "Study Journey" card - skip post-upload actions and go directly to study mode
+        if (window._pendingStudyJourney) {
+          console.log('📚 Study Journey mode - skipping post-upload actions, going directly to study mode');
+          window._pendingStudyJourney = false;
+          const docsForStudy = (update.filenames || []).map((filename, idx) => ({
+            id: `doc-${idx}`,
+            name: filename,
+            filename: filename
+          }));
+          setPendingStudyDocs(docsForStudy);
+          setPendingStudyTopics(update.topics || []);
+          setShowStartStudyModal(true);
+          break; // Skip creating post-upload message - saves tokens and goes straight to study
+        }
+
         // Create a new assistant message with the friendly text + actions
         const postUploadMsgId = `post-upload-${Date.now()}`;
         const postUploadMsg = {
@@ -2551,20 +2566,6 @@ const ChatInterface = ({
         savePostUpload().catch(err => console.error('❌ Failed to save post-upload actions:', err));
 
         console.log('✅ Post-upload message added to chat');
-
-        // Check if user clicked "Study Journey" card - auto-open the modal
-        if (window._pendingStudyJourney) {
-          console.log('📚 Auto-opening Study Journey modal after upload');
-          window._pendingStudyJourney = false;
-          const docsForStudy = (update.filenames || []).map((filename, idx) => ({
-            id: `doc-${idx}`,
-            name: filename,
-            filename: filename
-          }));
-          setPendingStudyDocs(docsForStudy);
-          setPendingStudyTopics(update.topics || []);
-          setShowStartStudyModal(true);
-        }
         break;
     }
   };
@@ -3282,6 +3283,7 @@ const ChatInterface = ({
           uploadedDocs={pendingStudyDocs}
           topics={pendingStudyTopics}
           language={i18n?.language || 'en'}
+          autoStart={true}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
