@@ -1630,6 +1630,45 @@
   font-size: 11px;
 }
 
+/* File formats with icons - outside upload zone */
+.doc-formats {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 12px;
+  font-family: var(--font-main);
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.format-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.format-item svg {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+}
+
+.format-item.images svg {
+  width: 20px;
+  height: 20px;
+}
+
+.format-separator {
+  opacity: 0.5;
+  margin: 0 4px;
+}
+
+.format-size {
+  opacity: 0.6;
+  font-size: 10px;
+}
+
 /* Magic indicator - hidden for cleaner look */
 .magic-indicator {
   display: none;
@@ -5255,6 +5294,10 @@ body.dark-mode .doc-title {
 
 body.dark-mode .doc-subtitle {
   color: #a0a0a0;
+}
+
+body.dark-mode .doc-formats {
+  color: #808080;
 }
 
 /* ============================================

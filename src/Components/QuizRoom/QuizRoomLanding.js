@@ -816,10 +816,25 @@ const QuizRoomLanding = () => {
                 </div>
                 <div className="doc-text">
                   <span className="doc-title">{t('landing.dropNotes', 'Drop your lecture slides here')}</span>
-                  <span className="doc-subtitle">{t('landing.fileFormats', 'PDF, PPT, Word • Up to 15MB')}</span>
+                  <span className="doc-subtitle">{t('landing.noSetup', 'No setup. We guide you step by step.')}</span>
                 </div>
               </button>
-
+              <div className="doc-formats">
+                <span className="format-item pdf">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#E53935"/><text x="12" y="15" textAnchor="middle" fill="white" fontSize="7" fontWeight="bold" fontFamily="Arial">PDF</text></svg>
+                </span>
+                <span className="format-item ppt">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#D14424"/><text x="12" y="15" textAnchor="middle" fill="white" fontSize="6" fontWeight="bold" fontFamily="Arial">PPT</text></svg>
+                </span>
+                <span className="format-item word">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="2" width="18" height="20" rx="2" fill="#2B579A"/><text x="12" y="15" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold" fontFamily="Arial">W</text></svg>
+                </span>
+                <span className="format-item images">
+                  <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" strokeWidth="1.5"/><circle cx="8.5" cy="8.5" r="1.5" fill="currentColor"/><path d="M21 15l-5-5-8 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                </span>
+                <span className="format-separator">•</span>
+                <span className="format-size">15MB max</span>
+              </div>
             </div>
 
             {/* Feature Cards Grid */}

@@ -520,6 +520,7 @@ const resources = {
         uploadNotes: "Upload Your Notes",
         // Hero transformation
         dropNotes: "Drop your lecture slides here",
+        noSetup: "No setup. We guide you step by step.",
         fileFormats: "PDF, PPT, Word, Images • Up to 15MB",
         featureQuiz: "Quizzes",
         featureFlashcards: "Flashcards",
@@ -1386,6 +1387,7 @@ const resources = {
         uploadNotes: "Téléverse tes notes",
         // Hero transformation
         dropNotes: "Dépose tes notes de cours ici",
+        noSetup: "Aucune configuration. On te guide étape par étape.",
         fileFormats: "PDF, PPT, Word, Images • Jusqu'à 15Mo",
         featureQuiz: "Quiz",
         featureFlashcards: "Flashcards",
