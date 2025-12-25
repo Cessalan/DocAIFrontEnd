@@ -52,8 +52,9 @@ const parseFlashcardText = (text) => {
  * @param {Object} savedProgress - Saved progress for resuming { cardStatuses, queueIndex, isReviewRound }
  * @param {Function} onReview - Callback when user reviews (got it / need review)
  * @param {Function} onContinue - Callback when user completes all cards
+ * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) => {
+const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Debug: log savedProgress on every render
@@ -367,6 +368,14 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue }) =>
           <FlashcardIcon />
         </div>
         <h2 className="study-card-title">{t('study.flashcardsTitle', 'Flashcards')}</h2>
+        {onExit && (
+          <button className="study-card-close-btn" onClick={onExit} title={t('study.close', 'Close')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       {/* Progress bar - fills as you go through cards, completes when all mastered */}

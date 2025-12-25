@@ -73,6 +73,28 @@
     radial-gradient(at 50% 80%, rgba(232, 223, 245, 0.1) 0px, transparent 50%);
   overflow: hidden;
   z-index: 100;
+  /* Sidebar offset - use CSS custom property for dynamic centering */
+  --sidebar-width: 320px;
+  --rail-width: 60px;
+  transition: left 0.3s ease, padding-left 0.3s ease;
+}
+
+/* Sidebar open - shift container to account for sidebar */
+.study-mode-container.sidebar-open {
+  left: var(--sidebar-width);
+}
+
+/* Sidebar collapsed - shift container to account for rail */
+.study-mode-container.sidebar-collapsed {
+  left: var(--rail-width);
+}
+
+/* Mobile - no sidebar offset */
+@media (max-width: 768px) {
+  .study-mode-container.sidebar-open,
+  .study-mode-container.sidebar-collapsed {
+    left: 0;
+  }
 }
 
 /* Notebook paper lines texture */
@@ -517,7 +539,7 @@
    ----------------------------------------- */
 .study-step-card {
   width: 100%;
-  max-width: 800px;
+  max-width: 900px;
   background: linear-gradient(180deg, #ffffff 0%, #fffef9 100%);
   border: 2px solid rgba(100, 100, 100, 0.08);
   border-radius: 16px 20px 18px 16px;
@@ -611,10 +633,54 @@
 
 .study-card-title {
   font-family: 'Kalam', 'Patrick Hand', cursive;
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+  flex: 1; /* Allow title to take remaining space */
+}
+
+/* Close button inside card header - subtle style */
+.study-card-close-btn {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  opacity: 0.5;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.study-card-close-btn:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary);
+  opacity: 1;
+}
+
+.study-card-close-btn:active {
+  transform: scale(0.95);
+}
+
+.study-card-close-btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Dark mode close button */
+body.dark-mode .study-card-close-btn {
+  color: rgba(255, 255, 255, 0.4);
+}
+
+body.dark-mode .study-card-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .study-card-content {
@@ -703,7 +769,7 @@
    MULTI-PAGE LESSON STYLES (Duolingo-style)
    ----------------------------------------- */
 .study-lesson-multipage {
-  max-width: 520px;
+  max-width: 620px;
 }
 
 .study-lesson-page-content {
@@ -715,7 +781,7 @@
 
 .study-lesson-page-title {
   font-family: 'Kalam', 'Patrick Hand', cursive;
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
@@ -723,7 +789,7 @@
 }
 
 .study-lesson-page-body {
-  font-size: 18px;
+  font-size: 20px;
   line-height: 1.8;
   color: var(--text-primary);
 }
@@ -755,7 +821,7 @@
 }
 
 .study-lesson-highlight span {
-  font-size: 15px;
+  font-size: 17px;
   font-weight: 500;
   color: #78350f;
   line-height: 1.5;
@@ -843,7 +909,7 @@
    QUIZ CARD STYLES
    ----------------------------------------- */
 .study-quiz-question {
-  font-size: 19px;
+  font-size: 22px;
   font-weight: 500;
   color: var(--text-primary);
   margin-bottom: 28px;
@@ -860,7 +926,7 @@
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 14px 18px;
+  padding: 16px 20px;
   background: #ffffff;
   border: 2px solid rgba(100, 100, 100, 0.12);
   border-radius: 10px 12px 11px 10px;
@@ -940,9 +1006,9 @@
 }
 
 .study-quiz-option-text {
-  font-size: 15px;
+  font-size: 17px;
   color: var(--text-primary);
-  line-height: 1.4;
+  line-height: 1.5;
 }
 
 /* Quiz feedback */
@@ -1206,8 +1272,8 @@
 
 .study-flashcard {
   width: 100%;
-  max-width: 600px;
-  height: 280px;
+  max-width: 700px;
+  height: 320px;
   position: relative;
   transform-style: preserve-3d;
   transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1238,7 +1304,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 24px 40px;
+  padding: 28px 28px 44px;
   text-align: center;
   box-sizing: border-box;
   overflow: hidden;
@@ -1267,7 +1333,7 @@
 
 .study-flashcard-text {
   font-family: 'Patrick Hand', cursive;
-  font-size: 19px;
+  font-size: 21px;
   font-weight: 500;
   color: #3d3d3d;
   line-height: 1.7;
@@ -1275,8 +1341,8 @@
   max-width: 100%;
   text-align: left;
   overflow-y: auto;
-  max-height: 220px;
-  padding: 0 12px;
+  max-height: 260px;
+  padding: 0 16px;
   width: 100%;
 }
 
@@ -1292,7 +1358,7 @@
 
 /* Front of card - centered, larger text */
 .study-flashcard-front .study-flashcard-text {
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 600;
   text-align: center;
   display: flex;
@@ -2293,6 +2359,7 @@ body.dark-mode .start-study-doc-name {
 .study-mode-focused .study-main-content {
   display: flex;
   justify-content: center;
+  align-items: stretch;
   width: 100%;
   flex: 1;
   min-height: 0; /* Critical: allows flex child to shrink and enable scrolling */
@@ -2342,11 +2409,12 @@ body.dark-mode .study-mode-focused .study-main-content {
 .study-mode-focused .study-focused-layout {
   display: flex;
   justify-content: center;
-  align-items: flex-start;
+  align-items: center;
   width: 100%;
-  padding: 16px 24px;
-  padding-top: 12px;
-  /* No height or overflow - let parent handle scrolling */
+  min-height: 100%;
+  padding: 24px;
+  box-sizing: border-box;
+  /* Center cards vertically in the available space */
 }
 
 .study-content-centered {

@@ -18,6 +18,7 @@ import StudyAudioCard from './StudyAudioCard';
  * @param {Function} onReview - Callback for flashcard reviews
  * @param {Function} onGenerateAudio - Callback to trigger audio generation
  * @param {Function} onContinue - Callback when step is completed
+ * @param {Function} onExit - Callback to exit/close the current card
  */
 const StudyStepCard = ({
   node,
@@ -29,7 +30,8 @@ const StudyStepCard = ({
   onAnswer,
   onReview,
   onGenerateAudio,
-  onContinue
+  onContinue,
+  onExit
 }) => {
   const { t } = useTranslation();
 
@@ -67,6 +69,7 @@ const StudyStepCard = ({
         <StudyLessonCard
           content={content}
           onContinue={onContinue}
+          onExit={onExit}
         />
       );
 
@@ -77,6 +80,7 @@ const StudyStepCard = ({
           savedProgress={savedProgress}
           onAnswer={onAnswer}
           onContinue={onContinue}
+          onExit={onExit}
         />
       );
 
@@ -87,6 +91,7 @@ const StudyStepCard = ({
           savedProgress={savedProgress}
           onReview={onReview}
           onContinue={onContinue}
+          onExit={onExit}
         />
       );
 
@@ -98,6 +103,7 @@ const StudyStepCard = ({
           generatingMessage={audioGeneratingMessage}
           onGenerateAudio={onGenerateAudio}
           onContinue={onContinue}
+          onExit={onExit}
         />
       );
 

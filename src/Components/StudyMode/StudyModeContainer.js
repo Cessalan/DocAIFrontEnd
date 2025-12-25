@@ -38,6 +38,7 @@ import './StudyMode.css';
 const StudyModeContainer = ({
   chatId,
   studyState,
+  sidebarOpen = true,
   onExit,
   onComplete
 }) => {
@@ -447,13 +448,10 @@ const StudyModeContainer = ({
 
   // Render node content view
   return (
-    <div className="study-mode-container study-mode-focused">
+    <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
       <StudyModeHeader
         unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
         unitSubtitle={studyState?.path?.unitSubtitle || ''}
-        currentStep={currentStep}
-        totalSteps={totalSteps}
-        onExit={handleExitNode}
       />
 
       <div className="study-main-content">
@@ -481,6 +479,7 @@ const StudyModeContainer = ({
                 onReview={handleReview}
                 onGenerateAudio={handleGenerateAudio}
                 onContinue={handleContinue}
+                onExit={handleExitNode}
               />
             ) : (
               <div className="study-step-card">

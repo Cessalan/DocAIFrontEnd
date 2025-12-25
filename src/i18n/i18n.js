@@ -856,7 +856,8 @@ const resources = {
         reviewQuestionMessage: "You have {{count}} question to review. Let's try again!",
         reviewQuestionMessage_plural: "You have {{count}} questions to review. Let's try again!",
         startReview: "Let's Go!",
-        finishLesson: "Finish"
+        finishLesson: "Finish",
+        close: "Close"
       }
     }
   },
@@ -1713,7 +1714,8 @@ const resources = {
         reviewQuestionMessage: "Tu as {{count}} question à revoir. On réessaie!",
         reviewQuestionMessage_plural: "Tu as {{count}} questions à revoir. On réessaie!",
         startReview: "C'est parti!",
-        finishLesson: "Terminer"
+        finishLesson: "Terminer",
+        close: "Fermer"
       }
     }
   }

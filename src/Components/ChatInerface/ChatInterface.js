@@ -109,7 +109,8 @@ const ChatInterface = ({
   onCloseSidebar,
   viewAllChatsMode = false,
   pendingUploadFiles = [],         // Files to upload after returning from login
-  onPendingUploadProcessed = null  // Callback when pending upload is handled
+  onPendingUploadProcessed = null, // Callback when pending upload is handled
+  sidebarOpen = true               // Sidebar state for study mode centering
 }) => {
 
   // Progress tracking context
@@ -3116,6 +3117,7 @@ const ChatInterface = ({
         <StudyModeContainer
           chatId={currentChatID}
           studyState={studyState}
+          sidebarOpen={sidebarOpen}
           onExit={() => {
             // Study sessions should always stay as study sessions
             // Exit means navigate away from this chat entirely

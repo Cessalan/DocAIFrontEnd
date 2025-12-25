@@ -281,6 +281,7 @@ function ChatLayout() {
           viewAllChatsMode={viewAllChatsMode}
           pendingUploadFiles={pendingUploadFiles}
           onPendingUploadProcessed={clearPendingUpload}
+          sidebarOpen={sidebarOpen}
         />
       </div>
 
