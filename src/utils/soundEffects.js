@@ -4,8 +4,9 @@
  * Features: Convolution reverb, filtering, compression, rich harmonics
  */
 
-// Import the correct answer audio file
+// Import audio files
 import correctAnswerSound from '../assets/correctanswer.wav';
+import finishedSound from '../assets/finished.mp3';
 
 // Audio context singleton
 let audioContext = null;
@@ -137,8 +138,9 @@ const createRichTone = (ctx, frequency, startTime, duration, volume = 0.3) => {
   return masterChain;
 };
 
-// Cache the audio element for reuse
+// Cache the audio elements for reuse
 let correctAudio = null;
+let celebrationAudio = null;
 
 /**
  * Play a "correct/success" sound - Uses the custom audio file
@@ -220,40 +222,22 @@ export const playIncorrectSound = () => {
 };
 
 /**
- * Play a "celebration/completion" sound - Triumphant fanfare!
- * Rich ascending arpeggio with full reverb
+ * Play a "celebration/completion" sound - Uses the custom finished.mp3 file
+ * Played when user completes a quiz, flashcard set, or lesson
  */
 export const playCelebrationSound = () => {
   try {
-    const ctx = getAudioContext();
-    const now = ctx.currentTime;
-
-    // Triumphant C major arpeggio with extensions
-    const notes = [
-      { freq: 523.25, time: 0, duration: 0.8 },      // C5
-      { freq: 659.25, time: 0.1, duration: 0.7 },    // E5
-      { freq: 783.99, time: 0.2, duration: 0.6 },    // G5
-      { freq: 1046.50, time: 0.3, duration: 0.8 },   // C6
-      { freq: 1318.51, time: 0.4, duration: 0.6 },   // E6
-    ];
-
-    notes.forEach(({ freq, time, duration }) => {
-      createRichTone(ctx, freq, now + time, duration, 0.25);
-    });
-
-    // Final chord - full C major
-    const chordNotes = [523.25, 659.25, 783.99, 1046.50];
-    chordNotes.forEach((freq) => {
-      createRichTone(ctx, freq, now + 0.5, 1.2, 0.15);
-    });
-
-    // Victory shimmer
-    for (let i = 0; i < 5; i++) {
-      const shimmerFreq = 2000 + (i * 200);
-      const shimmerTime = now + 0.55 + (i * 0.03);
-      createRichTone(ctx, shimmerFreq, shimmerTime, 0.4, 0.05);
+    // Create audio element if not cached, or reset if exists
+    if (!celebrationAudio) {
+      celebrationAudio = new Audio(finishedSound);
+      celebrationAudio.volume = 0.7;
     }
 
+    // Reset to beginning if already playing
+    celebrationAudio.currentTime = 0;
+    celebrationAudio.play().catch(e => {
+      console.warn('Could not play celebration sound:', e);
+    });
   } catch (e) {
     console.warn('Could not play celebration sound:', e);
   }

@@ -44,12 +44,14 @@ const SIDE_MASCOTS = [
  * @param {Object} studyState - Study state from Firestore { path, status, askedHashes, ... }
  * @param {Function} onExit - Callback to exit study mode entirely (navigate away)
  * @param {Function} onComplete - Callback when study session is completed
+ * @param {Function} onCloseSidebar - Callback to close the sidebar when user interacts with content
  * @param {string} language - Language for content generation
  */
 const StudyModeContainer = ({
   chatId,
   studyState,
   sidebarOpen = true,
+  onCloseSidebar,
   onExit,
   onComplete
 }) => {
@@ -108,6 +110,12 @@ const StudyModeContainer = ({
   const handleStartNode = useCallback(async (node) => {
     console.log('📚 Starting node:', node);
     console.log('📬 Node messageId:', node.messageId || 'NONE - will generate new content');
+
+    // Close sidebar when user starts interacting with content
+    if (onCloseSidebar) {
+      onCloseSidebar();
+    }
+
     setView('node');
     setIsLoadingContent(true);
     setCurrentContent(null);
@@ -272,7 +280,7 @@ const StudyModeContainer = ({
     } finally {
       setIsLoadingContent(false);
     }
-  }, [chatId, askedHashes, language]);
+  }, [chatId, askedHashes, language, onCloseSidebar]);
 
   // Handle quiz answer
   const handleAnswer = useCallback((answerData) => {

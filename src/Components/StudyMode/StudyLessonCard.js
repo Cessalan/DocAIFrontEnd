@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
-import { playCelebrationSound } from '../../utils/soundEffects';
+import { playCelebrationSound, playCorrectSound } from '../../utils/soundEffects';
 
 /**
  * StudyLessonCard - Multi-page lesson with swipeable cards
@@ -71,6 +71,8 @@ const StudyLessonCard = ({ content, onContinue, onExit }) => {
   // Handle next page or show celebration
   const handleNext = () => {
     if (isMultiPage && currentPage < totalPages - 1) {
+      // Play correct sound for "Got it!" button
+      playCorrectSound();
       setCurrentPage(prev => prev + 1);
     } else {
       // Show celebration instead of immediately continuing
@@ -169,7 +171,7 @@ const StudyLessonCard = ({ content, onContinue, onExit }) => {
               </button>
 
               {/* Next/Continue button */}
-              <button className="study-continue-btn" onClick={handleNext}>
+              <button className="study-continue-btn study-lesson-btn-green" onClick={handleNext}>
                 {isLastPage ? t('study.finishLesson', 'Finish') : t('study.gotItBtn', 'Got it!')}
                 <ArrowRightIcon />
               </button>
@@ -247,7 +249,7 @@ const StudyLessonCard = ({ content, onContinue, onExit }) => {
           </div>
 
           <div className="study-card-footer">
-            <button className="study-continue-btn" onClick={handleNext}>
+            <button className="study-continue-btn study-lesson-btn-green" onClick={handleNext}>
               {t('study.finishLesson', 'Finish')}
               <ArrowRightIcon />
             </button>

@@ -1650,6 +1650,29 @@ body.dark-mode .study-card-close-btn:hover {
   height: 18px;
 }
 
+/* Green lesson button - "Got it!" / "Je sais!" */
+.study-lesson-btn-green {
+  background: linear-gradient(135deg, #58d68d 0%, #48c774 100%);
+  box-shadow: 0 4px 0 #3db36b, 0 6px 16px rgba(72, 199, 116, 0.3);
+}
+
+.study-lesson-btn-green:hover {
+  background: linear-gradient(135deg, #65dc98 0%, #52d27e 100%);
+  box-shadow: 0 5px 0 #3db36b, 0 10px 24px rgba(72, 199, 116, 0.4);
+}
+
+.study-lesson-btn-green:active {
+  box-shadow: 0 2px 0 #3db36b, 0 4px 12px rgba(72, 199, 116, 0.3);
+}
+
+body.dark-mode .study-lesson-btn-green {
+  background: linear-gradient(135deg, #48c774 0%, #3db36b 100%);
+}
+
+body.dark-mode .study-lesson-btn-green:hover {
+  background: linear-gradient(135deg, #58d68d 0%, #48c774 100%);
+}
+
 /* -----------------------------------------
    LOADING STATE
    ----------------------------------------- */

@@ -766,7 +766,7 @@ const resources = {
 
         // Node types
         nodeType: {
-          lesson: "Lesson",
+          lesson: "Quick Review",
           quiz: "Quiz",
           flashcard: "Flashcard",
           audio: "Audio",
@@ -780,7 +780,7 @@ const resources = {
         exitStudyMode: "Exit Study Mode",
 
         // StudyLessonCard
-        lessonTitle: "Lesson",
+        lessonTitle: "Quick Review",
         keyPoints: "Key Points",
         loadingLesson: "Loading lesson content...",
 
@@ -1633,7 +1633,7 @@ const resources = {
 
         // Node types
         nodeType: {
-          lesson: "Leçon",
+          lesson: "Révision",
           quiz: "Quiz",
           flashcard: "Flashcard",
           audio: "Audio",
@@ -1647,7 +1647,7 @@ const resources = {
         exitStudyMode: "Quitter le mode étude",
 
         // StudyLessonCard
-        lessonTitle: "Leçon",
+        lessonTitle: "Révision Rapide",
         keyPoints: "Points clés",
         loadingLesson: "Chargement du contenu de la leçon...",
 

@@ -3134,6 +3134,7 @@ const ChatInterface = ({
           chatId={currentChatID}
           studyState={studyState}
           sidebarOpen={sidebarOpen}
+          onCloseSidebar={onCloseSidebar}
           onExit={() => {
             // Study sessions should always stay as study sessions
             // Exit means navigate away from this chat entirely

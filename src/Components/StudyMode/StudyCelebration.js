@@ -16,7 +16,8 @@ import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
  * @param {boolean} isPerfect - Whether user got 100% correct
  * @param {boolean} inline - If true, renders inside parent container instead of full screen
  * @param {number} correctCount - Number of correct answers (for context-aware messages)
- * @param {number} totalCount - Total number of items (for context-aware messages)
+ * @param {number} totalCount - Total number of items currently received (for context-aware messages)
+ * @param {number} expectedTotal - Expected total items (default 12, used during streaming for accurate ratios)
  * @param {Function} onContinue - Callback when user clicks continue
  */
 const StudyCelebration = ({
@@ -27,6 +28,7 @@ const StudyCelebration = ({
   inline = true,
   correctCount = 0,
   totalCount = 0,
+  expectedTotal = 0,
   onContinue
 }) => {
   const { t } = useTranslation();
@@ -68,6 +70,15 @@ const StudyCelebration = ({
   };
 
   // Calculate performance ratio for context-aware messages
+  // This ratio determines the encouragement message shown:
+  // - ≥80%: "You're doing great!" (high performance on attempted items)
+  // - 50-79%: "You're making progress!" (moderate performance)
+  // - <50%: "You can do this!" / "Don't give up!" (needs encouragement)
+  //
+  // Use totalCount (actual items attempted/received) as the denominator
+  // because we want to measure how well they're doing on what they've tried,
+  // not their progress toward the total expected items.
+  // Example: 4 correct out of 5 attempted = 80% → great performance message
   const performanceRatio = totalCount > 0 ? correctCount / totalCount : 1;
 
   // Get message based on type and performance - use useMemo so t() is called fresh

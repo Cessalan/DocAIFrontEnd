@@ -86,9 +86,10 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
 
         setHasRestoredProgress(true);
       }
-    } else if (!hasRestoredProgress) {
+    } else if (!hasRestoredProgress && !isReviewRound) {
       // Fresh start or streaming - update queue to match available questions
       // This allows us to show questions as they stream in
+      // Don't reset queue if we're in review round (queue is already filtered to incorrect questions)
       const newQueue = questions.map((_, i) => i);
       if (newQueue.length !== questionQueue.length) {
         console.log(`🔄 Updating question queue: ${questionQueue.length} -> ${newQueue.length}`);
@@ -101,7 +102,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
         }
       }
     }
-  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex]);
+  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex, isReviewRound]);
 
   // Current question from queue
   const currentQueuePosition = questionQueue[queueIndex];
@@ -158,23 +159,32 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
 
   const correctCountBeforeCurrent = getCorrectCountBeforeCurrent();
   const correctCount = Object.values(questionStatuses).filter(s => s === 'correct').length;
-  const allCorrect = correctCount === totalQuestions;
+
+  // Only consider "all correct" when:
+  // 1. We have answered all available questions correctly, AND
+  // 2. If streaming, we have received all expected questions
+  const allQuestionsReceived = !isStreaming || totalQuestions >= expectedTotal;
+  const allCorrect = correctCount === totalQuestions && totalQuestions > 0 && allQuestionsReceived;
 
   // Calculate XP earned (10 XP per correct answer on first try)
   const xpEarned = correctCount * 10;
 
-  // Check for 30% milestone celebration
-  const progressPercentage = (correctCount / totalQuestions) * 100;
+  // Milestone calculation constants
+  // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual questions received
+  // This prevents milestone from triggering too early during streaming (e.g., 1/1 = 100% vs 1/12 = 8%)
+  const milestoneTotal = expectedTotal || 12;
+  const minQuestionsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total (e.g., 4 out of 12)
   const isPerfect = correctCount === totalQuestions && Object.values(questionStatuses).every(s => s === 'correct');
 
   // Trigger milestone celebration at 30%
+  // Only trigger when we've answered at least 4 questions (30% of 12) to ensure meaningful progress
   useEffect(() => {
-    if (progressPercentage >= 30 && !hasShownMilestone && !isReviewRound && correctCount > 0) {
+    if (correctCount >= minQuestionsForMilestone && !hasShownMilestone && !isReviewRound) {
       setShowMilestoneCelebration(true);
       setHasShownMilestone(true);
       playMilestoneSound();
     }
-  }, [progressPercentage, hasShownMilestone, isReviewRound, correctCount]);
+  }, [correctCount, minQuestionsForMilestone, hasShownMilestone, isReviewRound]);
 
   // Trigger completion celebration when all correct
   useEffect(() => {
@@ -416,6 +426,9 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
         setReviewTransitionCount(questionsToReview.length);
         setShowReviewTransition(true);
 
+        // Set review round FIRST to prevent useEffect from resetting the queue
+        setIsReviewRound(true);
+
         // Prepare the review queue (will be activated when transition continues)
         setQuestionQueue(questionsToReview);
         setQueueIndex(0);
@@ -466,7 +479,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
   // Handle review transition continue
   const handleReviewTransitionContinue = () => {
     setShowReviewTransition(false);
-    setIsReviewRound(true);
+    // isReviewRound is already set to true when entering review mode
   };
 
   const getOptionClass = (index) => {
@@ -489,12 +502,15 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
     return classes;
   };
 
-  // Check if there are more questions in the queue
+  // Check if there are more questions in the queue OR more are being streamed
   const hasMoreQuestions = queueIndex < questionQueue.length - 1;
+  const moreQuestionsExpected = isStreaming && totalQuestions < expectedTotal;
+  const shouldShowContinueButton = hasMoreQuestions || moreQuestionsExpected;
 
   // Check if we need to start review round after current question
   const needsReviewRound = () => {
-    if (hasMoreQuestions) return false;
+    // If more questions are coming, don't start review yet
+    if (hasMoreQuestions || moreQuestionsExpected) return false;
     const incorrectCount = Object.values(questionStatuses).filter(s => s === 'incorrect').length;
     return incorrectCount > 0;
   };
@@ -531,6 +547,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
             inline={true}
             correctCount={correctCount}
             totalCount={totalQuestions}
+            expectedTotal={milestoneTotal}
             onContinue={handleMilestoneContinue}
           />
         </div>
@@ -685,7 +702,7 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
                   )}
 
                   {/* Duolingo-style action button inside feedback */}
-                  {(hasMoreQuestions || needsReviewRound()) && (
+                  {(shouldShowContinueButton || needsReviewRound()) && (
                     <button
                       className={`study-quiz-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
                       onClick={handleNextQuestion}

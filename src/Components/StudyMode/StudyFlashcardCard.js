@@ -91,7 +91,13 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
   const startTimeRef = useRef(Date.now());
 
   // Handle both new format { cards: [...] } and legacy format { front, back }
-  const cards = useMemo(() => content?.cards || [content], [content]);
+  const cards = useMemo(() => {
+    if (!content) {
+      console.log('⚠️ Flashcard content is null/undefined');
+      return [];
+    }
+    return content.cards || [content];
+  }, [content]);
   const isStreaming = content?._isStreaming || false;
   const expectedTotal = content?._expectedTotal || cards.length;
   // Use actual cards length for logic, but expectedTotal for progress display
@@ -129,9 +135,10 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
 
         setHasRestoredProgress(true);
       }
-    } else if (!hasRestoredProgress) {
+    } else if (!hasRestoredProgress && !isReviewRound) {
       // Fresh start or streaming - update queue to match available cards
       // This allows us to show cards as they stream in
+      // Don't reset queue if we're in review round (queue is already filtered to review cards)
       const newQueue = cards.map((_, i) => i);
       if (newQueue.length !== cardQueue.length) {
         console.log(`🔄 Updating card queue: ${cardQueue.length} -> ${newQueue.length}`);
@@ -146,12 +153,25 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
         }
       }
     }
-  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress, waitingForNextCard, queueIndex]);
+  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress, waitingForNextCard, queueIndex, isReviewRound]);
 
   // Current card from queue
   const currentQueuePosition = cardQueue[queueIndex];
-  const currentCard = cards[currentQueuePosition] || {};
+  const currentCard = (currentQueuePosition !== undefined && cards[currentQueuePosition]) ? cards[currentQueuePosition] : {};
   const { front, back } = currentCard;
+
+  // Debug logging for review mode issues
+  if (isReviewRound && !front) {
+    console.log('🔍 Review mode debug:', {
+      cardQueue,
+      queueIndex,
+      currentQueuePosition,
+      cardsLength: cards.length,
+      cards: cards.slice(0, 3), // First 3 cards for debugging
+      currentCard,
+      content: content ? { hasCards: !!content.cards, cardsLength: content.cards?.length } : null
+    });
+  }
 
   // Calculate progress
   const masteredCount = Object.values(cardStatuses).filter(s => s === 'mastered').length;
@@ -162,18 +182,22 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
   // Calculate XP earned (10 XP per mastered card)
   const xpEarned = masteredCount * 10;
 
-  // Check for 30% milestone celebration
-  const progressPercentage = (masteredCount / totalCards) * 100;
+  // Milestone calculation constants
+  // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual cards received
+  // This prevents milestone from triggering too early during streaming (e.g., 1/1 = 100% vs 1/12 = 8%)
+  const milestoneTotal = expectedTotal || 12;
+  const minCardsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total (e.g., 4 out of 12)
   const isPerfect = masteredCount === totalCards;
 
   // Trigger milestone celebration at 30%
+  // Only trigger when we've mastered at least 4 cards (30% of 12) to ensure meaningful progress
   useEffect(() => {
-    if (progressPercentage >= 30 && !hasShownMilestone && !isReviewRound && masteredCount > 0) {
+    if (masteredCount >= minCardsForMilestone && !hasShownMilestone && !isReviewRound) {
       setShowMilestoneCelebration(true);
       setHasShownMilestone(true);
       playMilestoneSound();
     }
-  }, [progressPercentage, hasShownMilestone, isReviewRound, masteredCount]);
+  }, [masteredCount, minCardsForMilestone, hasShownMilestone, isReviewRound]);
 
   // Trigger completion celebration when all mastered
   useEffect(() => {
@@ -343,6 +367,9 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
         setReviewTransitionCount(cardsToReview.length);
         setShowReviewTransition(true);
 
+        // Set review round FIRST to prevent useEffect from resetting the queue
+        setIsReviewRound(true);
+
         // Prepare the review queue (will be activated when transition continues)
         setCardQueue(cardsToReview);
         setQueueIndex(0);
@@ -387,7 +414,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
   // Handle review transition continue
   const handleReviewTransitionContinue = () => {
     setShowReviewTransition(false);
-    setIsReviewRound(true);
+    // isReviewRound is already set to true when entering review mode
   };
 
   return (
@@ -422,6 +449,7 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
             inline={true}
             correctCount={masteredCount}
             totalCount={totalCards}
+            expectedTotal={milestoneTotal}
             onContinue={handleMilestoneContinue}
           />
         </div>
@@ -457,13 +485,23 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
             </button>
           </div>
         </div>
-      ) : (isStreaming && totalCards === 0) || waitingForNextCard ? (
-        // Show loading state while waiting for first flashcard or next card to stream in
+      ) : (isStreaming && totalCards === 0) || waitingForNextCard || (cardQueue.length === 0 && !allMastered) ? (
+        // Show loading state while waiting for first flashcard, next card to stream in, or queue not ready
         <div className="study-card-content">
           <div className="study-streaming-loading">
             <div className="study-loading-spinner" />
             <p className="study-loading-text">
               {t('study.generatingFlashcards', 'Generating flashcards...')}
+            </p>
+          </div>
+        </div>
+      ) : !front && isReviewRound ? (
+        // Edge case: in review mode but card not found - this shouldn't happen but handle gracefully
+        <div className="study-card-content">
+          <div className="study-streaming-loading">
+            <div className="study-loading-spinner" />
+            <p className="study-loading-text">
+              {t('study.loadingCard', 'Loading card...')}
             </p>
           </div>
         </div>
