@@ -10,11 +10,12 @@ import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilesto
  *
  * @param {Object} content - Quiz content { questions: [{ question, options, correctIndex, rationale }, ...] } or legacy single question
  * @param {Object} savedProgress - Saved progress for resuming { questionStatuses, queueIndex, isReviewRound }
+ * @param {boolean} isReviewMode - If true, this is a review of completed content (only 5 XP)
  * @param {Function} onAnswer - Callback when answer is submitted
  * @param {Function} onContinue - Callback when user completes all questions
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit }) => {
+const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Handle both new format { questions: [...] } and legacy format { question, options, ... }
@@ -166,8 +167,10 @@ const StudyQuizCard = ({ content, savedProgress, onAnswer, onContinue, onExit })
   const allQuestionsReceived = !isStreaming || totalQuestions >= expectedTotal;
   const allCorrect = correctCount === totalQuestions && totalQuestions > 0 && allQuestionsReceived;
 
-  // Calculate XP earned (10 XP per correct answer on first try)
-  const xpEarned = correctCount * 10;
+  // Calculate XP earned
+  // Review mode: flat 5 XP for completing review
+  // Normal mode: 10 XP per correct answer on first try
+  const xpEarned = isReviewMode ? 5 : correctCount * 10;
 
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual questions received

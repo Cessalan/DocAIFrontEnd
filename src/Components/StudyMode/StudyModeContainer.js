@@ -73,6 +73,14 @@ const StudyModeContainer = ({
   const [audioMessage, setAudioMessage] = useState('');
   const [askedHashes, setAskedHashes] = useState([]);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Review confirmation modal state for completed nodes
+  const [showReviewConfirm, setShowReviewConfirm] = useState(false);
+  const [nodeToReview, setNodeToReview] = useState(null);
+
+  // Track if current node is being reviewed (gives only 5 XP)
+  const [isReviewingNode, setIsReviewingNode] = useState(false);
+
   const [mascotState, setMascotState] = useState({
     type: 'nurse', // 'nurse' | 'brain'
     isExcited: false,
@@ -123,6 +131,9 @@ const StudyModeContainer = ({
     currentMessageIdRef.current = null; // Reset ref
     setActiveNode(node);
     setActiveNodeId(node.id);
+
+    // Track if this is a review of completed content (for 5 XP instead of full XP)
+    setIsReviewingNode(node.isReview === true);
 
     // Set mascot to thinking
     setMascotState({
@@ -495,10 +506,36 @@ const StudyModeContainer = ({
   }, [onExit]);
 
   // Handle node selection from overview
+  // Shows confirmation dialog for completed nodes
   const handleNodeSelect = useCallback((node) => {
     console.log('📚 Node selected from overview:', node);
+
+    // If node is already done, show confirmation dialog
+    if (node.status === 'done') {
+      setNodeToReview(node);
+      setShowReviewConfirm(true);
+      return;
+    }
+
+    // Otherwise, start the node directly
     handleStartNode(node);
   }, [handleStartNode]);
+
+  // Handle confirming review of completed node
+  const handleConfirmReview = useCallback(() => {
+    if (nodeToReview) {
+      // Pass isReview flag so cards know to give only 5 XP
+      handleStartNode({ ...nodeToReview, isReview: true });
+    }
+    setShowReviewConfirm(false);
+    setNodeToReview(null);
+  }, [nodeToReview, handleStartNode]);
+
+  // Handle canceling review
+  const handleCancelReview = useCallback(() => {
+    setShowReviewConfirm(false);
+    setNodeToReview(null);
+  }, []);
 
   // Build studyState for overview (with updated nodes)
   const currentStudyState = {
@@ -512,12 +549,45 @@ const StudyModeContainer = ({
   // Render overview (Duolingo-style path)
   if (view === 'overview') {
     return (
-      <StudyPlanOverview
-        studyState={currentStudyState}
-        onNodeSelect={handleNodeSelect}
-        onExit={handleExitStudy}
-        sidebarOpen={sidebarOpen}
-      />
+      <>
+        <StudyPlanOverview
+          studyState={currentStudyState}
+          onNodeSelect={handleNodeSelect}
+          onExit={handleExitStudy}
+          sidebarOpen={sidebarOpen}
+        />
+
+        {/* Review Confirmation Modal */}
+        {showReviewConfirm && nodeToReview && (
+          <div className="review-confirm-overlay" onClick={handleCancelReview}>
+            <div className="review-confirm-modal" onClick={(e) => e.stopPropagation()}>
+              <div className="review-confirm-icon">
+                <svg viewBox="0 0 24 24" fill="currentColor" width="48" height="48">
+                  <path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 13.01 17.75 13.97 17.3 14.8L18.76 16.26C19.54 15.03 20 13.57 20 12C20 7.58 16.42 4 12 4ZM12 18C8.69 18 6 15.31 6 12C6 10.99 6.25 10.03 6.7 9.2L5.24 7.74C4.46 8.97 4 10.43 4 12C4 16.42 7.58 20 12 20V23L16 19L12 15V18Z" />
+                </svg>
+              </div>
+              <h3 className="review-confirm-title">
+                {t('study.reviewNode', 'Review this lesson?')}
+              </h3>
+              <p className="review-confirm-description">
+                {t('study.reviewNodeDescription', "You've already completed this lesson. Would you like to review it again?")}
+              </p>
+              <div className="review-confirm-xp">
+                <span className="xp-badge">+5 XP</span>
+                <span className="xp-text">{t('study.earnXpReview', 'for reviewing')}</span>
+              </div>
+              <div className="review-confirm-buttons">
+                <button className="review-confirm-cancel" onClick={handleCancelReview}>
+                  {t('common.cancel', 'Cancel')}
+                </button>
+                <button className="review-confirm-button" onClick={handleConfirmReview}>
+                  {t('study.reviewNow', 'Review Now')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </>
     );
   }
 
@@ -548,6 +618,7 @@ const StudyModeContainer = ({
                 content={currentContent}
                 savedProgress={savedProgress}
                 isLoading={false}
+                isReviewMode={isReviewingNode}
                 isGeneratingAudio={isGeneratingAudio}
                 audioGeneratingMessage={audioMessage}
                 onAnswer={handleAnswer}

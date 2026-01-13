@@ -50,11 +50,12 @@ const parseFlashcardText = (text) => {
  *
  * @param {Object} content - Flashcard content { cards: [{ front, back }, ...] } or legacy { front, back }
  * @param {Object} savedProgress - Saved progress for resuming { cardStatuses, queueIndex, isReviewRound }
+ * @param {boolean} isReviewMode - If true, this is a review of completed content (only 5 XP)
  * @param {Function} onReview - Callback when user reviews (got it / need review)
  * @param {Function} onContinue - Callback when user completes all cards
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onExit }) => {
+const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onReview, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Debug: log savedProgress on every render
@@ -179,8 +180,10 @@ const StudyFlashcardCard = ({ content, savedProgress, onReview, onContinue, onEx
   // Check if all cards are mastered
   const allMastered = masteredCount === totalCards;
 
-  // Calculate XP earned (10 XP per mastered card)
-  const xpEarned = masteredCount * 10;
+  // Calculate XP earned
+  // Review mode: flat 5 XP for completing review
+  // Normal mode: 10 XP per mastered card
+  const xpEarned = isReviewMode ? 5 : masteredCount * 10;
 
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual cards received

@@ -10,10 +10,11 @@ import { playCelebrationSound, playCorrectSound } from '../../utils/soundEffects
  *
  * @param {Object} content - Lesson content { title, pages: [{ title, content, highlight }] }
  *                          OR legacy format { title, body, keyPoints }
+ * @param {boolean} isReviewMode - If true, this is a review of completed content (only 5 XP)
  * @param {Function} onContinue - Callback when user completes all pages
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyLessonCard = ({ content, onContinue, onExit }) => {
+const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) => {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -32,8 +33,10 @@ const StudyLessonCard = ({ content, onContinue, onExit }) => {
     return Math.floor((Date.now() - startTimeRef.current) / 1000);
   };
 
-  // XP for lessons (5 XP per page read)
-  const xpEarned = totalPages * 5;
+  // XP for lessons
+  // Review mode: flat 5 XP for completing review
+  // Normal mode: 5 XP per page read
+  const xpEarned = isReviewMode ? 5 : totalPages * 5;
 
   // Book icon for lesson
   const LessonIcon = () => (

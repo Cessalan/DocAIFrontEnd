@@ -2051,6 +2051,81 @@ body.dark-mode .study-modal-topic-more {
   color: #9ca3af;
 }
 
+/* Dark mode for study modal */
+body.dark-mode .study-modal {
+  background: linear-gradient(180deg, #2d2d2d 0%, #252525 100%);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+body.dark-mode .study-modal::before {
+  background: rgba(255, 248, 184, 0.2);
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+body.dark-mode .study-modal-close {
+  background: rgba(255, 255, 255, 0.08);
+  color: #9ca3af;
+}
+
+body.dark-mode .study-modal-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #e5e7eb;
+}
+
+body.dark-mode .study-modal-title {
+  color: #f3f4f6;
+}
+
+body.dark-mode .study-modal-docs {
+  background: rgba(232, 141, 125, 0.1);
+  border-color: rgba(232, 141, 125, 0.3);
+}
+
+body.dark-mode .study-modal-doc-icon {
+  background: rgba(65, 105, 225, 0.2);
+  color: #93c5fd;
+}
+
+body.dark-mode .study-modal-doc-count {
+  color: #f3f4f6;
+}
+
+body.dark-mode .study-modal-doc-names {
+  color: #9ca3af;
+}
+
+body.dark-mode .study-modal-step {
+  color: #9ca3af;
+}
+
+body.dark-mode .study-modal-loader-dot {
+  background: #e88d7d;
+}
+
+body.dark-mode .study-modal-description {
+  color: #9ca3af;
+}
+
+body.dark-mode .study-modal-feature {
+  color: #e5e7eb;
+}
+
+body.dark-mode .study-modal-cancel {
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #9ca3af;
+}
+
+body.dark-mode .study-modal-cancel:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode .study-modal-error {
+  background: rgba(239, 68, 68, 0.15);
+  border-color: rgba(239, 68, 68, 0.35);
+  color: #fca5a5;
+}
+
 .study-modal-description {
   font-size: 14px;
   color: #6b6b6b;
@@ -4970,4 +5045,194 @@ body.dark-mode .celebration-continue-btn:hover {
 .dark-mode .study-milestone-inline .celebration-message {
   color: #ffffff;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+
+/* ============================================
+   REVIEW CONFIRMATION MODAL
+   Shown when user clicks on a completed node
+   ============================================ */
+
+.review-confirm-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  animation: fadeIn 0.2s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.review-confirm-modal {
+  background: var(--bg-paper, #fffef9);
+  border-radius: 20px;
+  padding: 32px;
+  max-width: 380px;
+  width: 90%;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+  animation: slideUp 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.review-confirm-icon {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 20px;
+  background: linear-gradient(135deg, var(--study-coral-light, #f4a896) 0%, var(--study-coral, #e88d7d) 100%);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.review-confirm-icon svg {
+  width: 36px;
+  height: 36px;
+}
+
+.review-confirm-title {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary, #3d3d3d);
+  margin: 0 0 12px;
+}
+
+.review-confirm-description {
+  font-size: 0.95rem;
+  color: var(--text-secondary, #6b6b6b);
+  margin: 0 0 20px;
+  line-height: 1.5;
+}
+
+.review-confirm-xp {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #fff8b8 0%, #ffeea8 100%);
+  border-radius: 12px;
+  border: 2px dashed #d4c86a;
+}
+
+.review-confirm-xp .xp-badge {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #7a6b0a;
+  background: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.review-confirm-xp .xp-text {
+  font-size: 0.9rem;
+  color: #7a6b0a;
+  font-weight: 500;
+}
+
+.review-confirm-buttons {
+  display: flex;
+  gap: 12px;
+}
+
+.review-confirm-cancel {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #f5f5f5;
+  border: 2px solid #e0e0e0;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.review-confirm-cancel:hover {
+  background: #ebebeb;
+  border-color: #d0d0d0;
+}
+
+.review-confirm-button {
+  flex: 1;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: linear-gradient(135deg, var(--study-coral, #e88d7d) 0%, var(--study-coral-dark, #c46a5a) 100%);
+  border: none;
+  color: white;
+  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.3);
+}
+
+.review-confirm-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(232, 141, 125, 0.4);
+}
+
+.review-confirm-button:active {
+  transform: translateY(0);
+}
+
+/* Dark mode for review modal */
+.dark-mode .review-confirm-modal {
+  background: #2a2a2a;
+}
+
+.dark-mode .review-confirm-title {
+  color: #ffffff;
+}
+
+.dark-mode .review-confirm-description {
+  color: #b0b0b0;
+}
+
+.dark-mode .review-confirm-xp {
+  background: linear-gradient(135deg, rgba(255, 248, 184, 0.15) 0%, rgba(255, 238, 168, 0.1) 100%);
+  border-color: rgba(212, 200, 106, 0.3);
+}
+
+.dark-mode .review-confirm-xp .xp-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffd54f;
+}
+
+.dark-mode .review-confirm-xp .xp-text {
+  color: #ffd54f;
+}
+
+.dark-mode .review-confirm-cancel {
+  background: #3a3a3a;
+  border-color: #4a4a4a;
+  color: #b0b0b0;
+}
+
+.dark-mode .review-confirm-cancel:hover {
+  background: #444444;
+  border-color: #555555;
 }

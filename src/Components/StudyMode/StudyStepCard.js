@@ -12,6 +12,7 @@ import StudyAudioCard from './StudyAudioCard';
  * @param {Object} content - Generated content for the node
  * @param {Object} savedProgress - Saved progress for resuming (flashcard/quiz)
  * @param {boolean} isLoading - Whether content is being generated
+ * @param {boolean} isReviewMode - Whether this is a review of completed content (gives only 5 XP)
  * @param {boolean} isGeneratingAudio - Whether audio is being generated
  * @param {string} audioGeneratingMessage - Message during audio generation
  * @param {Function} onAnswer - Callback for quiz answers
@@ -25,6 +26,7 @@ const StudyStepCard = ({
   content,
   savedProgress = null,
   isLoading = false,
+  isReviewMode = false,
   isGeneratingAudio = false,
   audioGeneratingMessage = '',
   onAnswer,
@@ -68,6 +70,7 @@ const StudyStepCard = ({
       return (
         <StudyLessonCard
           content={content}
+          isReviewMode={isReviewMode}
           onContinue={onContinue}
           onExit={onExit}
         />
@@ -78,6 +81,7 @@ const StudyStepCard = ({
         <StudyQuizCard
           content={content}
           savedProgress={savedProgress}
+          isReviewMode={isReviewMode}
           onAnswer={onAnswer}
           onContinue={onContinue}
           onExit={onExit}
@@ -89,6 +93,7 @@ const StudyStepCard = ({
         <StudyFlashcardCard
           content={content}
           savedProgress={savedProgress}
+          isReviewMode={isReviewMode}
           onReview={onReview}
           onContinue={onContinue}
           onExit={onExit}
@@ -101,6 +106,7 @@ const StudyStepCard = ({
           content={content}
           isGenerating={isGeneratingAudio}
           generatingMessage={audioGeneratingMessage}
+          isReviewMode={isReviewMode}
           onGenerateAudio={onGenerateAudio}
           onContinue={onContinue}
           onExit={onExit}
