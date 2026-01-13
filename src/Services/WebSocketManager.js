@@ -1,6 +1,7 @@
 // WebSocketManager.js - Replace FastAPICall.js functions
 
 import { WS_BASE_URL } from './config';
+import { devLog } from './devLogger';
 
 // ============================================================================
 // WebSocket Connection Management
@@ -26,7 +27,7 @@ class WebSocketManager {
         return ws;
       }
       // Clean up stale connection (CONNECTING, CLOSING, or CLOSED)
-      console.log(`🧹 Cleaning up stale WebSocket for chat ${chatId} (readyState: ${ws.readyState})`);
+      devLog(`🧹 Cleaning up stale WebSocket for chat ${chatId} (readyState: ${ws.readyState})`);
       try {
         // Force close if still connecting or closing
         if (ws.readyState === WebSocket.CONNECTING || ws.readyState === WebSocket.CLOSING) {
@@ -57,7 +58,7 @@ class WebSocketManager {
 
       ws.onopen = () => {
         clearTimeout(connectionTimeout);
-        console.log(`✅ WebSocket connected for chat ${chatId}`);
+        devLog(`✅ WebSocket connected for chat ${chatId}`);
         this.connections.set(chatId, ws);
 
         // Start keepalive ping to maintain connection
@@ -72,7 +73,7 @@ class WebSocketManager {
 
         // Retry once if this is the first attempt (handles race condition with closing connection)
         if (retryCount < 1) {
-          console.log(`🔄 Retrying WebSocket connection for chat ${chatId}...`);
+          devLog(`🔄 Retrying WebSocket connection for chat ${chatId}...`);
           setTimeout(() => {
             this.createConnection(chatId, retryCount + 1)
               .then(resolve)
@@ -85,7 +86,7 @@ class WebSocketManager {
 
       ws.onclose = (event) => {
         clearTimeout(connectionTimeout);
-        console.log(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
+        devLog(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
         this.stopKeepalive(chatId);
         this.connections.delete(chatId);
         // Connection will be re-established on next message if needed
@@ -102,7 +103,7 @@ class WebSocketManager {
       if (ws.readyState === WebSocket.OPEN) {
         try {
           ws.send(JSON.stringify({ type: 'ping' }));
-          console.log(`🏓 Sent keepalive ping for chat ${chatId}`);
+          devLog(`🏓 Sent keepalive ping for chat ${chatId}`);
         } catch (e) {
           console.warn(`Failed to send keepalive ping for chat ${chatId}`);
           this.stopKeepalive(chatId);
@@ -169,14 +170,14 @@ class WebSocketManager {
   // Cancel ongoing streaming
   async cancelStream(chatId) {
     try {
-      console.log(`🛑 Cancelling stream for chat ${chatId}`);
+      devLog(`🛑 Cancelling stream for chat ${chatId}`);
       const success = await this.sendMessage(chatId, {
         type: 'cancel_stream',
         chat_id: chatId
       });
 
       if (success) {
-        console.log(`✅ Cancel request sent for chat ${chatId}`);
+        devLog(`✅ Cancel request sent for chat ${chatId}`);
         return true;
       }
       return false;
@@ -202,7 +203,7 @@ export const ask_llm_websocket = async (
   onStreamEnd
 ) => {
   try {
-    console.log(`🚀 Starting WebSocket chat for ${chat_id}`);
+    devLog(`🚀 Starting WebSocket chat for ${chat_id}`);
 
     // Get WebSocket connection
     const ws = await wsManager.getConnection(chat_id);
@@ -213,7 +214,7 @@ export const ask_llm_websocket = async (
     });
 
     // Send chat message
-    console.log('📤 Sending message to backend:', {
+    devLog('📤 Sending message to backend:', {
       type: 'chat_message',
       input: userPrompt.substring(0, 100) + '...',
       chat_id: chat_id
@@ -232,7 +233,7 @@ export const ask_llm_websocket = async (
       throw new Error('Failed to send message via WebSocket');
     }
 
-    console.log('✅ Message sent successfully to backend');
+    devLog('✅ Message sent successfully to backend');
 
   } catch (error) {
     console.error('WebSocket chat error:', error);
@@ -256,10 +257,10 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
 
     case 'stream_chunk':
       // Handle all the streaming formats from your current implementation
-      console.log('📦 Stream chunk received:', data?.status || 'no status', data);
+      devLog('📦 Stream chunk received:', data?.status || 'no status', data);
       if (data.status) {
         // Handle status updates (quiz generation, study sheets, etc.)
-        console.log('📦 Calling onStatusUpdate with status:', data.status);
+        devLog('📦 Calling onStatusUpdate with status:', data.status);
         onStatusUpdate(data);
       }
       else if (data.answer_chunk) {
@@ -324,15 +325,15 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       }
       // Handle mindmap generation
       else if (data.status === "mindmap_generating") {
-        console.log("🧠 Mindmap generation started");
+        devLog("🧠 Mindmap generation started");
         onStatusUpdate({
           status: "mindmap_generating",
           message: data.message
         });
       }
       else if (data.status === "mindmap_complete") {
-        console.log("✅ Mindmap complete received from backend");
-        console.log("📦 Mindmap data:", data.mindmap_data ? `${data.mindmap_data.nodes?.length} nodes` : "NO DATA");
+        devLog("✅ Mindmap complete received from backend");
+        devLog("📦 Mindmap data:", data.mindmap_data ? `${data.mindmap_data.nodes?.length} nodes` : "NO DATA");
         onStatusUpdate({
           status: "mindmap_complete",
           mindmap_data: data.mindmap_data
@@ -340,7 +341,7 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       }
 
       if (data.status === "suggested_prompts" && data.suggestions) {
-        console.log("📝 Received suggestions:", data.suggestions);
+        devLog("📝 Received suggestions:", data.suggestions);
         onStatusUpdate({
           status: "suggested_prompts",
           suggestions: data.suggestions,
@@ -354,7 +355,7 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
         onStreamEnd();
       }
       // Connection stays open for follow-up requests (5 min idle timeout)
-      console.log(`✅ Stream complete for ${chatId} - connection stays open for follow-up requests`);
+      devLog(`✅ Stream complete for ${chatId} - connection stays open for follow-up requests`);
       break;
 
     case 'error':
@@ -366,7 +367,7 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
 
     case 'pong':
       // Handle keepalive response - confirms connection is alive
-      console.log('🏓 Received pong - connection alive');
+      devLog('🏓 Received pong - connection alive');
       break;
 
     default:
@@ -448,7 +449,7 @@ export const sendGameQuizRequest = async (chatId, questionCount = 5, difficulty 
     });
 
     if (success) {
-      console.log(`🎮 Game quiz request sent for chat ${chatId}`);
+      devLog(`🎮 Game quiz request sent for chat ${chatId}`);
     }
 
     return success;
@@ -477,7 +478,7 @@ export const sendGameDeliver = async (chatId, serumCollected) => {
     });
 
     if (success) {
-      console.log(`🧪 Delivery request sent: ${serumCollected}mL`);
+      devLog(`🧪 Delivery request sent: ${serumCollected}mL`);
     }
 
     return success;
@@ -508,7 +509,7 @@ export const sendGameRetry = async (chatId, questionCount = 5, difficulty = "med
     });
 
     if (success) {
-      console.log(`🔄 Retry request sent for chat ${chatId}`);
+      devLog(`🔄 Retry request sent for chat ${chatId}`);
     }
 
     return success;
@@ -635,7 +636,7 @@ export const setupGameMessageListener = (chatId, handlers = {}) => {
 
       default:
         // Unknown game status - might be chat-related
-        console.log("Unknown game status:", status);
+        devLog("Unknown game status:", status);
     }
   });
 };

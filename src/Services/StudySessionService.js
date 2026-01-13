@@ -22,6 +22,7 @@ import {
   arrayUnion
 } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
+import { devLog } from './devLogger';
 
 /**
  * Create a new study session from the existing chat
@@ -93,7 +94,7 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
     };
 
     await updateDoc(chatRef, studyData);
-    console.log('✅ Study session created for chat:', chatId);
+    devLog('✅ Study session created for chat:', chatId);
 
     // Return the study state for the frontend
     return {
@@ -230,7 +231,7 @@ export const updateStudyPath = async (chatId, pathUpdates) => {
     });
 
     await updateDoc(chatRef, updates);
-    console.log('✅ Study path updated');
+    devLog('✅ Study path updated');
   } catch (error) {
     console.error('❌ Error updating study path:', error);
     throw error;
@@ -274,7 +275,7 @@ export const updateNodeStatus = async (chatId, nodeId, nodeUpdates) => {
       updatedAt: serverTimestamp()
     });
 
-    console.log('✅ Node status updated:', nodeId, nodeUpdates);
+    devLog('✅ Node status updated:', nodeId, nodeUpdates);
   } catch (error) {
     console.error('❌ Error updating node status:', error);
     throw error;
@@ -338,7 +339,7 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
       updatedAt: serverTimestamp()
     });
 
-    console.log('✅ Node completed, advanced to:', nextNodeId || 'STUDY COMPLETE');
+    devLog('✅ Node completed, advanced to:', nextNodeId || 'STUDY COMPLETE');
 
     return {
       nextNodeId,
@@ -367,7 +368,7 @@ export const addAskedHash = async (chatId, hash) => {
       updatedAt: serverTimestamp()
     });
 
-    console.log('✅ Added hash to anti-repeat list');
+    devLog('✅ Added hash to anti-repeat list');
   } catch (error) {
     console.error('❌ Error adding hash:', error);
     throw error;
@@ -388,7 +389,7 @@ export const pauseStudySession = async (chatId) => {
       updatedAt: serverTimestamp()
     });
 
-    console.log('✅ Study session paused');
+    devLog('✅ Study session paused');
   } catch (error) {
     console.error('❌ Error pausing study session:', error);
     throw error;
@@ -409,7 +410,7 @@ export const resumeStudySession = async (chatId) => {
       updatedAt: serverTimestamp()
     });
 
-    console.log('✅ Study session resumed');
+    devLog('✅ Study session resumed');
   } catch (error) {
     console.error('❌ Error resuming study session:', error);
     throw error;
@@ -460,23 +461,23 @@ export const getStudyProgress = async (chatId) => {
 export const getNodeContent = async (chatId, messageId) => {
   try {
     if (!messageId) {
-      console.log('📭 No messageId provided, content needs to be generated');
+      devLog('📭 No messageId provided, content needs to be generated');
       return null;
     }
 
-    console.log('🔍 Fetching content for messageId:', messageId, 'in chat:', chatId);
+    devLog('🔍 Fetching content for messageId:', messageId, 'in chat:', chatId);
     const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
     const messageSnap = await getDoc(messageRef);
 
     if (!messageSnap.exists()) {
-      console.log('📭 Message not found:', messageId);
+      devLog('📭 Message not found:', messageId);
       return null;
     }
 
     const messageData = messageSnap.data();
-    console.log('📬 Retrieved saved content for message:', messageId);
-    console.log('📊 flashcardProgress in Firestore:', messageData.flashcardProgress);
-    console.log('📊 quizProgress in Firestore:', messageData.quizProgress);
+    devLog('📬 Retrieved saved content for message:', messageId);
+    devLog('📊 flashcardProgress in Firestore:', messageData.flashcardProgress);
+    devLog('📊 quizProgress in Firestore:', messageData.quizProgress);
 
     // Return the studyContent field (primary content storage)
     // Also include type-specific fields and progress data
@@ -540,7 +541,7 @@ export const saveNodeContent = async (chatId, nodeId, content, type) => {
     // Update the node with the message ID
     await updateNodeStatus(chatId, nodeId, { messageId });
 
-    console.log('✅ Node content saved:', messageId);
+    devLog('✅ Node content saved:', messageId);
     return messageId;
   } catch (error) {
     console.error('❌ Error saving node content:', error);
@@ -559,12 +560,12 @@ export const saveNodeContent = async (chatId, nodeId, content, type) => {
 export const saveFlashcardProgress = async (chatId, messageId, progress) => {
   try {
     if (!messageId) {
-      console.log('⚠️ No messageId, cannot save flashcard progress');
+      devLog('⚠️ No messageId, cannot save flashcard progress');
       return;
     }
 
-    console.log('💾 Saving flashcard progress to messageId:', messageId);
-    console.log('💾 Progress data:', JSON.stringify(progress, null, 2));
+    devLog('💾 Saving flashcard progress to messageId:', messageId);
+    devLog('💾 Progress data:', JSON.stringify(progress, null, 2));
 
     const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
 
@@ -577,7 +578,7 @@ export const saveFlashcardProgress = async (chatId, messageId, progress) => {
       }
     });
 
-    console.log('✅ Flashcard progress saved successfully');
+    devLog('✅ Flashcard progress saved successfully');
   } catch (error) {
     console.error('❌ Error saving flashcard progress:', error);
     // Don't throw - this is non-critical
@@ -595,7 +596,7 @@ export const saveFlashcardProgress = async (chatId, messageId, progress) => {
 export const saveQuizProgress = async (chatId, messageId, progress) => {
   try {
     if (!messageId) {
-      console.log('⚠️ No messageId, cannot save quiz progress');
+      devLog('⚠️ No messageId, cannot save quiz progress');
       return;
     }
 
@@ -610,7 +611,7 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
       }
     });
 
-    console.log('✅ Quiz progress saved');
+    devLog('✅ Quiz progress saved');
   } catch (error) {
     console.error('❌ Error saving quiz progress:', error);
     // Don't throw - this is non-critical

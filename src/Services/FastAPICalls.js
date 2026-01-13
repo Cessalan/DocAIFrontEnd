@@ -1,5 +1,6 @@
 import { auth } from '../Firebase/config';
 import { API_BASE_URL } from './config';
+import { devLog } from './devLogger';
 
 const FAST_API_BASE = API_BASE_URL;
 const header = {"Content-Type": "application/json"};
@@ -14,7 +15,7 @@ export const ask_llm = async(userPrompt,chatHistory,documents,chat_id) =>
         chat_id:chat_id
     });
     
-    console.log("Request sent to Fast API:",requestBody);
+    devLog("Request sent to Fast API:",requestBody);
     
     try
     {
@@ -72,7 +73,7 @@ export const ask_llm_stream = async (language,
     chat_id: chat_id
   });
 
-  console.log("Request sent to FastAPI /chat/stream:", requestBody);
+  devLog("Request sent to FastAPI /chat/stream:", requestBody);
 
   try {
     // Initiate the fetch request to the streaming endpoint.
@@ -101,7 +102,7 @@ export const ask_llm_stream = async (language,
       // Read a single chunk from the stream. 'done' is true when the stream ends.
       const { done, value } = await reader.read();
       if (done) {
-          console.log("Stream complete.");
+          devLog("Stream complete.");
           break;
       }
 
@@ -127,13 +128,13 @@ export const ask_llm_stream = async (language,
               // HANDLE NORMAL TEXT DURING CONVO
               else if (jsonChunk.answer_chunk) {
                   // This is what makes it stream!
-                    // console.log(' Received chunk:', jsonChunk);
-                    // console.log(' Timestamp:', Date.now());
+                    // devLog(' Received chunk:', jsonChunk);
+                    // devLog(' Timestamp:', Date.now());
                   onTokenReceived(jsonChunk.answer_chunk);
               }
               else if(jsonChunk.html)
               {
-                console.log("I GOT THE HTML",jsonChunk.html);
+                devLog("I GOT THE HTML",jsonChunk.html);
                 onStatusUpdate
                 ({
                   status: "studysheet_generated",
@@ -211,7 +212,7 @@ export const embed_docs = async (documents,chatId) => {
 
     const vectors = result.json();
 
-    console.log("EMBED RESULT " + vectors);
+    devLog("EMBED RESULT " + vectors);
 
     return vectors;
 }
@@ -228,7 +229,7 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
   try {
     // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
     const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
-    console.log('📤 Upload language:', language, '-> normalized:', normalizedLang);
+    devLog('📤 Upload language:', language, '-> normalized:', normalizedLang);
 
     // Prepare FormData
     const formData = new FormData();
@@ -347,7 +348,7 @@ export const generate_summary = async(chat_id, file_name, language) => {
 
    try{
 
-    console.log("generate_summary API Request started");
+    devLog("generate_summary API Request started");
     const response = await fetch(`${FAST_API_BASE}/chat/generate-summary`, {
       method: "POST",
       headers: {
@@ -362,7 +363,7 @@ export const generate_summary = async(chat_id, file_name, language) => {
     }
 
     const summary_json = await response.json();
-    console.log("Fast API response quiz generation: ", summary_json)
+    devLog("Fast API response quiz generation: ", summary_json)
     return summary_json;
 
   }catch(error)
@@ -381,7 +382,7 @@ export const stream_summary = async(chat_id, file_name, language, onTokenReceive
       language: language
     });
   
-    console.log("Request sent to FastAPI /chat/generate-summary (STREAMING):", requestBody);
+    devLog("Request sent to FastAPI /chat/generate-summary (STREAMING):", requestBody);
   
     try {
       const response = await fetch(`${FAST_API_BASE}/chat/generate-summary`, {
@@ -406,7 +407,7 @@ export const stream_summary = async(chat_id, file_name, language, onTokenReceive
       while (true) {
         const { done, value } = await reader.read();
         if (done) {
-            console.log("Summary stream complete.");
+            devLog("Summary stream complete.");
             break;
         }
   
@@ -500,7 +501,7 @@ export const generate_quiz = async(chat_id, file_name, currentLanguage, options 
     }
 
     const quiz_json = await response.json();
-    console.log("Fast API response quiz generation: ", quiz_json);
+    devLog("Fast API response quiz generation: ", quiz_json);
     return quiz_json;
 
   } catch(error) {
@@ -533,7 +534,7 @@ export const generate_flashcards = async(chat_id, file_name, currentLanguage, nu
     }
 
     const flashcard_json = await response.json();
-    console.log("Fast API response flashcard generation: ", flashcard_json);
+    devLog("Fast API response flashcard generation: ", flashcard_json);
     return flashcard_json;
 
   } catch(error) {
@@ -550,7 +551,7 @@ export const generate_scenario = async(chat_id,file_name)=> {
 
    try{
 
-    console.log("generate_scenario API Request started");
+    devLog("generate_scenario API Request started");
     const response = await fetch(`${FAST_API_BASE}/chat/generate-scenario`, {
       method: "POST",
       headers: {
@@ -565,7 +566,7 @@ export const generate_scenario = async(chat_id,file_name)=> {
     }
 
     const scenario_json = await response.json();
-    console.log("Fast API response scenario generation: ", scenario_json)
+    devLog("Fast API response scenario generation: ", scenario_json)
     return scenario_json;
 
   }catch(error)
@@ -710,7 +711,7 @@ export const plan_study_path = async (chat_id, upload_ids, language = 'en') => {
   });
 
   try {
-    console.log("📚 Requesting AI study path plan...");
+    devLog("📚 Requesting AI study path plan...");
 
     const response = await fetch(`${FAST_API_BASE}/study/plan`, {
       method: "POST",
@@ -724,7 +725,7 @@ export const plan_study_path = async (chat_id, upload_ids, language = 'en') => {
     }
 
     const pathData = await response.json();
-    console.log("✅ Study path planned:", pathData);
+    devLog("✅ Study path planned:", pathData);
     return pathData;
 
   } catch (error) {
@@ -808,7 +809,7 @@ export const generate_study_item = async (
   });
 
   try {
-    console.log(`📝 Generating study ${node_type}:`, node_label);
+    devLog(`📝 Generating study ${node_type}:`, node_label);
 
     const response = await fetch(`${FAST_API_BASE}/study/generate-item`, {
       method: "POST",
@@ -822,7 +823,7 @@ export const generate_study_item = async (
     }
 
     const itemData = await response.json();
-    console.log(`✅ Study ${node_type} generated`);
+    devLog(`✅ Study ${node_type} generated`);
     return itemData;
 
   } catch (error) {
@@ -865,7 +866,7 @@ export const generate_study_item_stream = async (
   });
 
   try {
-    console.log(`🌊 Streaming study ${node_type}:`, node_label);
+    devLog(`🌊 Streaming study ${node_type}:`, node_label);
 
     const response = await fetch(`${FAST_API_BASE}/study/generate-item-stream`, {
       method: "POST",
@@ -924,7 +925,7 @@ export const generate_study_item_stream = async (
       }
     }
 
-    console.log(`✅ Study ${node_type} streamed successfully`);
+    devLog(`✅ Study ${node_type} streamed successfully`);
     return result;
 
   } catch (error) {
@@ -964,7 +965,7 @@ export const generate_study_audio = async (
   });
 
   try {
-    console.log(`🎵 Generating study audio: ${topic}`);
+    devLog(`🎵 Generating study audio: ${topic}`);
 
     const response = await fetch(`${FAST_API_BASE}/study/generate-audio`, {
       method: "POST",
@@ -1011,7 +1012,7 @@ export const generate_study_audio = async (
 
               // Capture final result when audio is ready
               if (data.status === 'audio_ready') {
-                console.log('🎵 Received audio_ready, audio size:', data.audio_base64?.length || 0);
+                devLog('🎵 Received audio_ready, audio size:', data.audio_base64?.length || 0);
                 result = {
                   audioBase64: data.audio_base64,
                   audioDuration: data.audio_duration,
@@ -1048,7 +1049,7 @@ export const generate_study_audio = async (
           try {
             const data = JSON.parse(line.slice(6));
             if (data.status === 'audio_ready') {
-              console.log('🎵 Received audio_ready from buffer, audio size:', data.audio_base64?.length || 0);
+              devLog('🎵 Received audio_ready from buffer, audio size:', data.audio_base64?.length || 0);
               result = {
                 audioBase64: data.audio_base64,
                 audioDuration: data.audio_duration,
@@ -1064,7 +1065,7 @@ export const generate_study_audio = async (
       }
     }
 
-    console.log(`✅ Study audio generated successfully, result:`, result ? 'has data' : 'no data');
+    devLog(`✅ Study audio generated successfully, result:`, result ? 'has data' : 'no data');
     return result;
 
   } catch (error) {
@@ -1091,7 +1092,7 @@ export const submit_study_answer = async (chat_id, node_id, answer, question) =>
   });
 
   try {
-    console.log("📤 Submitting study answer...");
+    devLog("📤 Submitting study answer...");
 
     const response = await fetch(`${FAST_API_BASE}/study/submit-answer`, {
       method: "POST",
@@ -1105,7 +1106,7 @@ export const submit_study_answer = async (chat_id, node_id, answer, question) =>
     }
 
     const feedback = await response.json();
-    console.log("✅ Answer feedback received");
+    devLog("✅ Answer feedback received");
     return feedback;
 
   } catch (error) {

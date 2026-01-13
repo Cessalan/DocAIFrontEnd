@@ -101,6 +101,7 @@ import ChatMindmap from './ChatMindmap';
 import StartStudyModal from '../StudyMode/StartStudyModal';
 import StudyModeContainer from '../StudyMode/StudyModeContainer';
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
+import { devLog } from '../../Services/devLogger';
 
 /**
  * ChatInterface Component - A messenger-like interface for AI chat
@@ -126,9 +127,9 @@ const ChatInterface = ({
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
-    console.log('🔍 Component mounted, checking URL...');
-    console.log('🔍 Current URL:', window.location.href);
-    console.log('🔍 Search params:', window.location.search);
+    devLog('🔍 Component mounted, checking URL...');
+    devLog('🔍 Current URL:', window.location.href);
+    devLog('🔍 Search params:', window.location.search);
   }, []);
 
   // ============================================
@@ -159,7 +160,7 @@ const ChatInterface = ({
       sessionStorage.removeItem('pendingQuizPrompt');
       sessionStorage.removeItem('pendingQuizTopic');
 
-      console.log('📚 Pre-filled practice prompt from quiz share:', pendingTopic);
+      devLog('📚 Pre-filled practice prompt from quiz share:', pendingTopic);
     }
   }, [chatId]);
 
@@ -176,7 +177,7 @@ const ChatInterface = ({
   // Uses isUserLoggedIn from AuthContext for reactive auth state
   useEffect(() => {
     if (pendingUploadFiles.length > 0 && !pendingUploadProcessedRef.current && isUserLoggedIn) {
-      console.log(`📤 Pending upload files detected: ${pendingUploadFiles.length} file(s), user logged in`);
+      devLog(`📤 Pending upload files detected: ${pendingUploadFiles.length} file(s), user logged in`);
       setShouldProcessPendingUpload(true);
     }
   }, [pendingUploadFiles, isUserLoggedIn]);
@@ -299,9 +300,63 @@ const ChatInterface = ({
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
+  // Streaming throttle refs - prevents excessive re-renders during token streaming
+  const streamingThrottleRef = useRef(null);
+  const streamingContentRef = useRef('');
+  const streamingMessageIdRef = useRef(null);
+
   // ============================================
   // HELPER FUNCTIONS
   // ============================================
+
+  /**
+   * Flushes the current streaming content to the UI.
+   * Called on a throttled interval during streaming and once at the end.
+   */
+  const flushStreamingContent = useCallback(() => {
+    const content = streamingContentRef.current;
+    const messageId = streamingMessageIdRef.current;
+
+    if (!messageId) return;
+
+    setChatMessages(prev =>
+      prev.map(msg => {
+        if (msg.id === messageId && msg.type !== 'quiz' && msg.type !== 'flashcard') {
+          return { ...msg, content, isStreaming: true };
+        }
+        return msg;
+      })
+    );
+  }, []);
+
+  /**
+   * Schedules a throttled UI update for streaming content.
+   * Batches rapid token arrivals into ~14 updates/second for smooth performance.
+   */
+  const scheduleStreamingUpdate = useCallback(() => {
+    // If no pending update, schedule one
+    if (!streamingThrottleRef.current) {
+      streamingThrottleRef.current = setTimeout(() => {
+        flushStreamingContent();
+        streamingThrottleRef.current = null;
+      }, 70); // ~14 updates/second - visually smooth, much less CPU
+    }
+  }, [flushStreamingContent]);
+
+  /**
+   * Cleanup streaming throttle state. Call when streaming ends or on error.
+   */
+  const cleanupStreamingThrottle = useCallback(() => {
+    if (streamingThrottleRef.current) {
+      clearTimeout(streamingThrottleRef.current);
+      streamingThrottleRef.current = null;
+    }
+    // Flush any remaining content
+    flushStreamingContent();
+    // Reset refs
+    streamingContentRef.current = '';
+    streamingMessageIdRef.current = null;
+  }, [flushStreamingContent]);
 
   // COST OPTIMIZATION: Don't pre-warm WebSocket connection
   // Connect on-demand when user sends a message (handled by ask_llm_websocket)
@@ -315,6 +370,11 @@ const ChatInterface = ({
       return () => {
         closeWebSocketConnection(currentChatID);
         setConnectionStatus('disconnected');
+        // Clean up any pending streaming throttle
+        if (streamingThrottleRef.current) {
+          clearTimeout(streamingThrottleRef.current);
+          streamingThrottleRef.current = null;
+        }
       };
     }
   }, [currentChatID]);
@@ -326,7 +386,7 @@ const ChatInterface = ({
     const urlPrompt = params.get('prompt');  // ✅ Renamed to avoid conflicts
 
     if (urlPrompt) {
-      console.log('📝 Setting prompt from URL:', urlPrompt);
+      devLog('📝 Setting prompt from URL:', urlPrompt);
       setUserInputText(urlPrompt);  // Already decoded by URLSearchParams
 
       // Clear URL params after reading
@@ -420,15 +480,8 @@ const ChatInterface = ({
     }
   }, [chatMessages.length, isAiTyping]);
 
-  // Auto-scroll during streaming (smooth, continuous scrolling like ChatGPT)
-  useEffect(() => {
-    if (isAiTyping && hasInitiallyScrolledRef.current) {
-      // Only scroll if user is near bottom (don't force scroll if they scrolled up)
-      if (isNearBottom()) {
-        scrollToBottom('smooth');
-      }
-    }
-  }, [chatMessages, isAiTyping, scrollToBottom, isNearBottom]);
+  // Auto-scroll during streaming disabled - let user read at their own pace
+  // The scroll-to-bottom button is available if they want to jump to latest content
 
   // Premium textarea auto-resize - ChatGPT/Gemini style
   useLayoutEffect(() => {
@@ -574,7 +627,7 @@ const ChatInterface = ({
     getDoc(chatDocRef).then(async (docSnapshot) => {
       // Guard against stale responses - if user clicked another chat, ignore this response
       if (latestRequestedChatIdRef.current !== chatId) {
-        console.log('🚫 Ignoring stale chat data for:', chatId, 'current chat is:', latestRequestedChatIdRef.current);
+        devLog('🚫 Ignoring stale chat data for:', chatId, 'current chat is:', latestRequestedChatIdRef.current);
         return;
       }
       if (docSnapshot.exists()) {
@@ -582,7 +635,7 @@ const ChatInterface = ({
         setChatTitle(chatData.title);
         // Check if this is a game-type chat
         const isGame = chatData.type === 'game';
-        console.log('🎮 Chat type check:', { chatId, type: chatData.type, isGame, gameState: chatData.gameState });
+        devLog('🎮 Chat type check:', { chatId, type: chatData.type, isGame, gameState: chatData.gameState });
         setIsGameChat(isGame);
         setGameState(chatData.gameState || null);
         // Check if this chat is linked to an exam
@@ -598,7 +651,7 @@ const ChatInterface = ({
 
         // Check if this is a study session - if so, auto-enter study mode
         if (chatData.isStudySession) {
-          console.log('📚 This chat is a study session, entering study mode');
+          devLog('📚 This chat is a study session, entering study mode');
           try {
             const studySessionData = await getStudySession(chatId);
             if (studySessionData) {
@@ -658,7 +711,7 @@ const ChatInterface = ({
             ((msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap') && notInFirebase);
 
           if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap')) {
-            console.log(`🔄 Preserving ${msg.type} message ${msg.id} (isStreaming: ${msg.isStreaming}, notInFirebase: ${notInFirebase})`);
+            devLog(`🔄 Preserving ${msg.type} message ${msg.id} (isStreaming: ${msg.isStreaming}, notInFirebase: ${notInFirebase})`);
           }
 
           return shouldPreserve;
@@ -833,20 +886,20 @@ const ChatInterface = ({
 
           // Empathetic message start
           if (statusUpdate.status === "empathetic_message_start") {
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            console.log("💬 EMPATHETIC MESSAGE START");
-            console.log("   - Removing generic placeholder:", streamingMessageId);
-            console.log("   - Creating empathetic message bubble");
+            devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            devLog("💬 EMPATHETIC MESSAGE START");
+            devLog("   - Removing generic placeholder:", streamingMessageId);
+            devLog("   - Creating empathetic message bubble");
 
             // Create a NEW message bubble for empathetic text
             empatheticMessageId = `empathetic-${Date.now()}`;
-            console.log("   - New empatheticMessageId:", empatheticMessageId);
+            devLog("   - New empatheticMessageId:", empatheticMessageId);
 
             setChatMessages(prev => {
-              console.log("   - Messages before filter:", prev.length);
+              devLog("   - Messages before filter:", prev.length);
               // Remove the generic placeholder if it exists
               const filtered = prev.filter(msg => msg.id !== streamingMessageId);
-              console.log("   - Messages after filter:", filtered.length);
+              devLog("   - Messages after filter:", filtered.length);
 
               return [...filtered, {
                 id: empatheticMessageId,
@@ -858,13 +911,13 @@ const ChatInterface = ({
               }];
             });
 
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
             return;
           }
 
           // Empathetic message chunk (stream text)
           if (statusUpdate.status === "empathetic_message_chunk") {
-            console.log("💬 Empathetic chunk:", statusUpdate.chunk);
+            devLog("💬 Empathetic chunk:", statusUpdate.chunk);
 
             setChatMessages(prev =>
               prev.map(msg =>
@@ -879,7 +932,7 @@ const ChatInterface = ({
 
           // Empathetic message complete
           if (statusUpdate.status === "empathetic_message_complete") {
-            console.log("✅ Empathetic message complete");
+            devLog("✅ Empathetic message complete");
 
             // Mark empathetic message as complete and save to Firebase
             setChatMessages(prev =>
@@ -906,7 +959,7 @@ const ChatInterface = ({
 
           // Quiz generation progress
           if (statusUpdate.status === "quiz_generating") {
-            console.log("generating quiz streaming");
+            devLog("generating quiz streaming");
             isQuizGeneratingRef.current = true;
 
             // If empathetic message exists, create a SECOND bubble for quiz
@@ -965,7 +1018,7 @@ const ChatInterface = ({
 
           // Individual quiz question ready
           if (statusUpdate.status === "quiz_question") {
-            console.log("📝 Quiz question received:", statusUpdate.total_so_far);
+            devLog("📝 Quiz question received:", statusUpdate.total_so_far);
 
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
@@ -974,7 +1027,7 @@ const ChatInterface = ({
               prev.map(msg => {
                 if (msg.id === targetMessageId && msg.type === 'quiz') {
                   const newQuizData = [...(msg.quizData || []), statusUpdate.question];
-                  console.log("✅ Appended question, total:", newQuizData.length);
+                  devLog("✅ Appended question, total:", newQuizData.length);
 
                   return {
                     ...msg,
@@ -992,7 +1045,7 @@ const ChatInterface = ({
 
           // Quiz complete
           if (statusUpdate.status === "quiz_complete") {
-            console.log("quiz completed");
+            devLog("quiz completed");
 
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
@@ -1005,7 +1058,7 @@ const ChatInterface = ({
           // Flashcard generation progress (EXACTLY like quiz)
           // Flashcard generation progress
           if (statusUpdate.status === "flashcard_generating") {
-            console.log("📇 Flashcard generation streaming started");
+            devLog("📇 Flashcard generation streaming started");
             isQuizGeneratingRef.current = true;
 
             const localizedFlashcardMsg = t('loading.generatingFlashcards', 'Generating flashcards...');
@@ -1036,13 +1089,13 @@ const ChatInterface = ({
 
           // Individual flashcard ready (EXACTLY like quiz_question)
           if (statusUpdate.status === "flashcard_ready") {
-            console.log("📇 Flashcard received:", statusUpdate.total_so_far);
+            devLog("📇 Flashcard received:", statusUpdate.total_so_far);
 
             setChatMessages(prev =>
               prev.map(msg => {
                 if (msg.id === streamingMessageId && msg.type === 'flashcard') {
                   const newFlashcardData = [...(msg.flashcardData || []), statusUpdate.flashcard];
-                  console.log("✅ Appended flashcard, total:", newFlashcardData.length);
+                  devLog("✅ Appended flashcard, total:", newFlashcardData.length);
 
                   return {
                     ...msg,
@@ -1059,7 +1112,7 @@ const ChatInterface = ({
 
           // Flashcards complete (EXACTLY like quiz_complete)
           if (statusUpdate.status === "flashcard_complete") {
-            console.log("✅ Flashcards completed");
+            devLog("✅ Flashcards completed");
 
             handleFlashcardComplete(statusUpdate.flashcard_data, streamingMessageId, updatedChatId);
             setStreamingStatus(null);
@@ -1068,14 +1121,14 @@ const ChatInterface = ({
 
           // Prompts suggestions
           if (statusUpdate.status === "suggested_prompts" && statusUpdate.suggestions) {
-            console.log("💡 Received suggestions:", statusUpdate.suggestions);
+            devLog("💡 Received suggestions:", statusUpdate.suggestions);
             setSuggestedPrompts(statusUpdate.suggestions);
             return;
           }
 
           // Mindmap generation started
           if (statusUpdate.status === "mindmap_generating") {
-            console.log("🧠 Mindmap generation started");
+            devLog("🧠 Mindmap generation started");
             isQuizGeneratingRef.current = true;
 
             setChatMessages(prev => {
@@ -1104,7 +1157,7 @@ const ChatInterface = ({
           // Mindmap complete - let handleMindmapComplete handle both state update and Firebase save
           // (similar to handleFlashcardComplete pattern to avoid race conditions)
           if (statusUpdate.status === "mindmap_complete") {
-            console.log("✅ Mindmap completed with", statusUpdate.mindmap_data?.nodes?.length, "nodes");
+            devLog("✅ Mindmap completed with", statusUpdate.mindmap_data?.nodes?.length, "nodes");
 
             // Single state update + Firebase save in handler (avoid duplicate setChatMessages calls)
             handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId);
@@ -1115,7 +1168,7 @@ const ChatInterface = ({
           // Study sheet generation trigger - create inline message
           // Handle both "study_sheet_trigger" (from tools) and "study_sheet_start" (from generator)
           if (statusUpdate.status === "study_sheet_trigger" || statusUpdate.status === "study_sheet_start") {
-            console.log("📚 Study sheet started:", statusUpdate);
+            devLog("📚 Study sheet started:", statusUpdate);
 
             // Check if we already have a streaming studysheet to avoid duplicates
             setChatMessages(prev => {
@@ -1140,7 +1193,7 @@ const ChatInterface = ({
 
           // Study sheet chunk - append content
           if (statusUpdate.status === "study_sheet_chunk") {
-            console.log("📚 Study sheet chunk received");
+            devLog("📚 Study sheet chunk received");
             setChatMessages(prev =>
               prev.map(msg =>
                 msg.type === 'studysheet' && msg.isStreaming
@@ -1153,7 +1206,7 @@ const ChatInterface = ({
 
           // Study sheet complete
           if (statusUpdate.status === "study_sheet_complete") {
-            console.log("📚 Study sheet complete");
+            devLog("📚 Study sheet complete");
 
             // First, find the streaming study sheet BEFORE updating state
             setChatMessages(prev => {
@@ -1173,12 +1226,12 @@ const ChatInterface = ({
                   timestamp: streamingStudySheet.timestamp || new Date()
                 };
 
-                console.log("📚 Saving study sheet to Firebase:", messageForFirebase.id);
+                devLog("📚 Saving study sheet to Firebase:", messageForFirebase.id);
                 AppendToChat(updatedChatId || currentChatID, messageForFirebase)
-                  .then(() => console.log('✅ Study sheet saved to Firebase'))
+                  .then(() => devLog('✅ Study sheet saved to Firebase'))
                   .catch(err => console.error('❌ Failed to save study sheet:', err));
               } else {
-                console.log("⚠️ No streaming study sheet found to save");
+                devLog("⚠️ No streaming study sheet found to save");
               }
 
               // Update state to mark as complete
@@ -1193,7 +1246,7 @@ const ChatInterface = ({
 
           // Study sheet error
           if (statusUpdate.status === "study_sheet_error") {
-            console.log("📚 Study sheet error:", statusUpdate.message);
+            devLog("📚 Study sheet error:", statusUpdate.message);
             setChatMessages(prev =>
               prev.map(msg =>
                 msg.type === 'studysheet' && msg.isStreaming
@@ -1208,7 +1261,7 @@ const ChatInterface = ({
 
           // Audio options - show confirmation card for user to select duration
           if (statusUpdate.status === "audio_options") {
-            console.log("🎙️ Audio options received:", statusUpdate);
+            devLog("🎙️ Audio options received:", statusUpdate);
 
             // IMPORTANT: Set flag to skip onStreamEnd callback
             // This prevents the empty finalMessage from being saved/displayed
@@ -1241,7 +1294,7 @@ const ChatInterface = ({
 
           // Audio generating - show generating state
           if (statusUpdate.status === "audio_generating" || statusUpdate.status === "audio_script_ready" || statusUpdate.status === "audio_tts_progress") {
-            console.log("🎙️ Audio generating:", statusUpdate.message);
+            devLog("🎙️ Audio generating:", statusUpdate.message);
 
             // Map backend status to translation key for bilingual support
             const getAudioStatusKey = (status) => {
@@ -1284,7 +1337,7 @@ const ChatInterface = ({
 
           // Audio ready - show the player with audio and save to Firebase
           if (statusUpdate.status === "audio_ready") {
-            console.log("🎙️ Audio ready:", statusUpdate.topic);
+            devLog("🎙️ Audio ready:", statusUpdate.topic);
 
             // Save audio to Firebase Storage and then save chat message
             if (currentChatID && statusUpdate.audio_base64) {
@@ -1294,7 +1347,7 @@ const ChatInterface = ({
                 duration: statusUpdate.audio_duration
               }).then(async (result) => {
                 if (result.success) {
-                  console.log("🎙️ Audio saved to Firebase Storage:", result.downloadURL);
+                  devLog("🎙️ Audio saved to Firebase Storage:", result.downloadURL);
 
                   // Update the message in UI with Firebase URL
                   setChatMessages(prev =>
@@ -1321,7 +1374,7 @@ const ChatInterface = ({
 
                   try {
                     await AppendToChat(currentChatID, audioMessageForFirebase);
-                    console.log("🎙️ Audio message saved to Firestore");
+                    devLog("🎙️ Audio message saved to Firestore");
                   } catch (err) {
                     console.error("🎙️ Failed to save audio message to Firestore:", err);
                   }
@@ -1351,14 +1404,14 @@ const ChatInterface = ({
 
           // Audio complete
           if (statusUpdate.status === "audio_complete") {
-            console.log("🎙️ Audio generation complete");
+            devLog("🎙️ Audio generation complete");
             setIsAiTyping(false);
             return;
           }
 
           // Audio error
           if (statusUpdate.status === "audio_error") {
-            console.log("🎙️ Audio error:", statusUpdate.message);
+            devLog("🎙️ Audio error:", statusUpdate.message);
             setChatMessages(prev =>
               prev.map(msg =>
                 msg.type === 'audio_player' && msg.isGenerating
@@ -1376,77 +1429,50 @@ const ChatInterface = ({
           setStreamingStatus(statusUpdate);
         },
 
-        // Token callback - handles regular text streaming
+        // Token callback - handles regular text streaming (THROTTLED for performance)
         (chunk) => {
-          console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-          console.log('📦 CHUNK RECEIVED:', chunk);
-          console.log('📏 Current fullResponse length:', fullResponse.length);
-          console.log('🆔 streamingMessageId:', streamingMessageId);
-          console.log('🆔 empatheticMessageId:', empatheticMessageId);
+          // Accumulate content in ref (no re-render)
+          fullResponse = fullResponse + chunk;
+          streamingContentRef.current = fullResponse;
+          streamingMessageIdRef.current = streamingMessageId;
 
-          fullResponse = (fullResponse + chunk);
-
-          console.log('📏 NEW fullResponse length:', fullResponse.length);
-
+          // Clear streaming status on first content
           if (fullResponse.length > 0 && streamingStatus) {
             setStreamingStatus(null);
           }
 
-          setChatMessages(prev => {
-            console.log('🔍 Total messages in state:', prev.length);
-
-            const found = prev.find(m => m.id === streamingMessageId);
-            console.log('✅ Found streamingMessage:', !!found);
-            if (found) {
-              console.log('   - ID:', found.id);
-              console.log('   - Type:', found.type || 'undefined');
-              console.log('   - isStreaming:', found.isStreaming);
-              console.log('   - Content length:', found.content?.length || 0);
-            }
-
-            const updated = prev.map(msg => {
-              if (msg.id === streamingMessageId && msg.type !== 'quiz' && msg.type !== 'flashcard') {
-                console.log('🎨 UPDATING MESSAGE');
-                console.log('   - Previous content length:', msg.content?.length || 0);
-                console.log('   - New content length:', fullResponse.length);
-                console.log('   - isStreaming: true');
-                return { ...msg, content: fullResponse, isStreaming: true };
-              }
-              return msg;
-            });
-
-            console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-            return updated;
-          });
+          // Schedule throttled UI update (~14/sec instead of 100+/sec)
+          scheduleStreamingUpdate();
         },
 
         // Complete callback - handles end of stream
         async () => {
+          // Clean up throttle and flush any remaining content
+          cleanupStreamingThrottle();
+
           setStreamingStatus(null);
-          setIsStreaming(false); // Streaming complete
+          setIsStreaming(false);
 
           // Check if this was a quiz (don't save quiz as text)
           if (isQuizGeneratingRef.current) {
-            console.log("⏭️ Skipping complete callback - was a quiz");
             isQuizGeneratingRef.current = false;
             setIsAiTyping(false);
             return;
           }
 
-          // Only save text responses
-          // ✅ FIX: Reuse streamingMessageId to prevent duplicates
+          // Build final message with complete content
           const finalMessage = {
-            id: streamingMessageId, // Reuse the streaming placeholder ID
+            id: streamingMessageId,
             role: "assistant",
             content: fullResponse,
             timestamp: new Date(),
             isStreaming: false
           };
 
-          console.log('💾 Saving final message with ID:', streamingMessageId);
+          // Save to Firebase
           await AppendToChat(updatedChatId || currentChatID, finalMessage);
 
-          console.log('🔄 Updating streaming message to final (isStreaming: false)');
+          // Final UI update - mark streaming complete
           setChatMessages(prev =>
             prev.map(msg =>
               msg.id === streamingMessageId ? finalMessage : msg
@@ -1458,8 +1484,12 @@ const ChatInterface = ({
       );
     } catch (error) {
       console.error("WebSocket streaming error:", error);
+
+      // Clean up throttle on error
+      cleanupStreamingThrottle();
+
       setStreamingStatus(null);
-      setIsStreaming(false); // Streaming stopped due to error
+      setIsStreaming(false);
 
       setChatMessages(prev =>
         prev.map(msg =>
@@ -1484,16 +1514,15 @@ const ChatInterface = ({
   // ============================================
 
   const handleStopStreaming = async () => {
-    console.log('🛑 User requested to stop streaming');
+    // Clean up streaming throttle immediately
+    cleanupStreamingThrottle();
 
     try {
       // Send cancel message via WebSocket
       const success = await cancelWebSocketStream(currentChatID);
 
       if (success) {
-        console.log('✅ Stop request sent successfully');
-
-        // Immediately update UI state
+        // Update UI state
         setIsStreaming(false);
         setIsAiTyping(false);
         setStreamingStatus(null);
@@ -1504,7 +1533,7 @@ const ChatInterface = ({
             if (msg.isStreaming) {
               // Handle quiz messages - finalize with whatever was generated
               if (msg.type === 'quiz' && msg.quizData && msg.quizData.length > 0) {
-                console.log(`🛑 Finalizing quiz with ${msg.quizData.length} questions`);
+                devLog(`🛑 Finalizing quiz with ${msg.quizData.length} questions`);
                 return {
                   ...msg,
                   isStreaming: false,
@@ -1515,7 +1544,7 @@ const ChatInterface = ({
 
               // Handle flashcard messages - finalize with whatever was generated
               if (msg.type === 'flashcard' && msg.flashcardData && msg.flashcardData.length > 0) {
-                console.log(`🛑 Finalizing flashcards with ${msg.flashcardData.length} cards`);
+                devLog(`🛑 Finalizing flashcards with ${msg.flashcardData.length} cards`);
                 return {
                   ...msg,
                   isStreaming: false,
@@ -1527,7 +1556,7 @@ const ChatInterface = ({
               // Handle mindmap messages - remove if stopped mid-generation (no partial mindmaps)
               if (msg.type === 'mindmap') {
                 if (msg.mindmapData && msg.mindmapData.nodes && msg.mindmapData.nodes.length > 0) {
-                  console.log(`🛑 Finalizing mindmap with ${msg.mindmapData.nodes.length} nodes`);
+                  devLog(`🛑 Finalizing mindmap with ${msg.mindmapData.nodes.length} nodes`);
                   return {
                     ...msg,
                     isStreaming: false,
@@ -1535,7 +1564,7 @@ const ChatInterface = ({
                   };
                 }
                 // No data yet - remove the placeholder
-                console.log(`🛑 Removing incomplete mindmap message: ${msg.id}`);
+                devLog(`🛑 Removing incomplete mindmap message: ${msg.id}`);
                 return null;
               }
 
@@ -1549,7 +1578,7 @@ const ChatInterface = ({
               }
 
               // Empty messages with no data - remove them
-              console.log(`🛑 Removing empty streaming message: ${msg.id}`);
+              devLog(`🛑 Removing empty streaming message: ${msg.id}`);
               return null;
             }
             return msg;
@@ -1571,7 +1600,7 @@ const ChatInterface = ({
     * Handle suggestion click - auto-send the suggested prompt
     */
   const handleSuggestionClick = useCallback((suggestion) => {
-    console.log("💡 User clicked suggestion:", suggestion);
+    devLog("💡 User clicked suggestion:", suggestion);
 
     // Haptic feedback on mobile
     if (navigator.vibrate) {
@@ -1594,18 +1623,18 @@ const ChatInterface = ({
         return handleFlashcardReview(answerData);
       }
 
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-      console.log("📝 Quiz answer received:");
-      console.log("  Message ID:", answerData.messageId);
-      console.log("  Question Index:", answerData.quizIndex);
-      console.log("  Selected:", answerData.selectedOptionText);
-      console.log("  Correct?", answerData.isCorrect ? "✓" : "✗");
+      devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      devLog("📝 Quiz answer received:");
+      devLog("  Message ID:", answerData.messageId);
+      devLog("  Question Index:", answerData.quizIndex);
+      devLog("  Selected:", answerData.selectedOptionText);
+      devLog("  Correct?", answerData.isCorrect ? "✓" : "✗");
 
       // ✅ FIX: Prevent double-submission
       const answerKey = `${answerData.messageId}-${answerData.quizIndex}`;
       if (submittedAnswersRef.current.has(answerKey)) {
-        console.log("  ⚠️ Answer already submitted, ignoring duplicate");
-        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        devLog("  ⚠️ Answer already submitted, ignoring duplicate");
+        devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         return;
       }
       submittedAnswersRef.current.add(answerKey);
@@ -1613,10 +1642,10 @@ const ChatInterface = ({
       // ✅ Track progress: XP, serum, and topic stats
       const quizTopic = answerData.topic || null;
       if (answerData.isCorrect) {
-        console.log("  🎯 Recording correct answer for progress tracking");
+        devLog("  🎯 Recording correct answer for progress tracking");
         addCorrectAnswer(quizTopic);
       } else {
-        console.log("  📊 Recording incorrect answer for topic stats");
+        devLog("  📊 Recording incorrect answer for topic stats");
         addIncorrectAnswer(quizTopic);
       }
 
@@ -1624,8 +1653,8 @@ const ChatInterface = ({
       const quizMessage = chatMessages.find(msg => msg.id === answerData.messageId);
       const isStreaming = quizMessage?.isStreaming;
 
-      console.log("  Quiz streaming?", isStreaming ? "YES ⏳" : "NO ✓");
-      console.log("  Current quiz questions:", quizMessage?.quizData?.length || 0);
+      devLog("  Quiz streaming?", isStreaming ? "YES ⏳" : "NO ✓");
+      devLog("  Current quiz questions:", quizMessage?.quizData?.length || 0);
 
       // ✅ Update UI immediately (optimistic update)
       setChatMessages(prev =>
@@ -1669,14 +1698,14 @@ const ChatInterface = ({
             }
           });
 
-          console.log("  ✓ Updated UI state for Q" + (answerData.quizIndex + 1));
+          devLog("  ✓ Updated UI state for Q" + (answerData.quizIndex + 1));
           return { ...msg, quizData: updatedQuizData };
         })
       );
 
       // ✅ FIX: If still streaming, store in REF (synchronous!)
       if (isStreaming) {
-        console.log("  ⏳ Storing in pendingQuizAnswersRef (will save when quiz completes)");
+        devLog("  ⏳ Storing in pendingQuizAnswersRef (will save when quiz completes)");
 
         // ✅ Direct ref mutation - happens IMMEDIATELY (no async delay)
         if (!pendingQuizAnswersRef.current[answerData.messageId]) {
@@ -1684,16 +1713,16 @@ const ChatInterface = ({
         }
         pendingQuizAnswersRef.current[answerData.messageId][answerData.quizIndex] = answerData;
 
-        console.log("  📦 Pending answers now:",
+        devLog("  📦 Pending answers now:",
           Object.keys(pendingQuizAnswersRef.current[answerData.messageId]).length
         );
-        console.log("  📦 Full pending object:", pendingQuizAnswersRef.current);
-        console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+        devLog("  📦 Full pending object:", pendingQuizAnswersRef.current);
+        devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         return; // Don't save to Firebase yet
       }
 
       // ✅ If NOT streaming, save immediately to Firebase
-      console.log("  💾 Quiz is finalized - saving to Firebase immediately");
+      devLog("  💾 Quiz is finalized - saving to Firebase immediately");
       await UpdateQuizAnswer(
         currentChatID,
         answerData.messageId,
@@ -1701,8 +1730,8 @@ const ChatInterface = ({
         answerData
       );
 
-      console.log("  ✅ Saved to Firebase successfully");
-      console.log("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+      devLog("  ✅ Saved to Firebase successfully");
+      devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     } catch (error) {
       console.error("❌ Failed to save quiz answer:", error);
@@ -1711,7 +1740,7 @@ const ChatInterface = ({
   };
 
   const handleQuizInteraction = useCallback((quizId) => {
-    console.log('📝 Quiz interaction:', quizId);
+    devLog('📝 Quiz interaction:', quizId);
     if (quizId === null) {
       setActiveQuizId(null);
       setActiveQuizProgress(null);
@@ -1727,7 +1756,7 @@ const ChatInterface = ({
    * @param {Object} quizData - Quiz progress data from ChatMessage
    */
   const handleQuizVisibilityChange = useCallback((quizData) => {
-    console.log('👁️ Quiz visibility change:', {
+    devLog('👁️ Quiz visibility change:', {
       messageId: quizData.messageId,
       isVisible: quizData.isVisible,
       activeQuizId: activeQuizId,
@@ -1737,15 +1766,15 @@ const ChatInterface = ({
     if (quizData.isVisible) {
       // Only show sticky if this is the active quiz
       if (quizData.messageId === activeQuizId) {
-        console.log('✅ Showing sticky bar for active quiz');
+        devLog('✅ Showing sticky bar for active quiz');
         setActiveQuizProgress(quizData);
       } else {
-        console.log('⏭️ Ignoring non-active quiz');
+        devLog('⏭️ Ignoring non-active quiz');
       }
     } else {
       setActiveQuizProgress(prev => {
         if (prev && prev.messageId === quizData.messageId) {
-          console.log('✅ Hiding sticky bar (inline visible)');
+          devLog('✅ Hiding sticky bar (inline visible)');
           return null;
         }
         return prev;
@@ -1754,14 +1783,14 @@ const ChatInterface = ({
   }, [activeQuizId]); // Important: Add activeQuizId to dependencies
 
   const handleQuizComplete = async (quizData, messageId, chatId) => {
-    console.log("✅ Quiz complete, finalizing message");
-    console.log("Backend sent", quizData?.length, "questions");
+    devLog("✅ Quiz complete, finalizing message");
+    devLog("Backend sent", quizData?.length, "questions");
     setStreamingStatus(null);
 
     // ✅ Get pending answers from ref FIRST
     const pendingAnswers = pendingQuizAnswersRef.current[messageId] || {};
-    console.log("📦 Pending answers from REF:", pendingAnswers);
-    console.log("📦 Number of pending answers:", Object.keys(pendingAnswers).length);
+    devLog("📦 Pending answers from REF:", pendingAnswers);
+    devLog("📦 Number of pending answers:", Object.keys(pendingAnswers).length);
 
     // ✅ NEW FIX: Build merged data BEFORE touching state
     // Trust the ref as the source of truth for streaming answers
@@ -1769,7 +1798,7 @@ const ChatInterface = ({
       const pendingAnswer = pendingAnswers[idx];
 
       if (pendingAnswer) {
-        console.log(`✓ Q${idx + 1}: Using pending answer from REF`);
+        devLog(`✓ Q${idx + 1}: Using pending answer from REF`);
         return {
           ...question,
           userSelection: {
@@ -1781,11 +1810,11 @@ const ChatInterface = ({
         };
       }
 
-      console.log(`- Q${idx + 1}: No answer`);
+      devLog(`- Q${idx + 1}: No answer`);
       return question;
     });
 
-    console.log("📊 Final merge result:",
+    devLog("📊 Final merge result:",
       mergedQuizData.filter(q => q.userSelection).length,
       "answered questions out of",
       mergedQuizData.length
@@ -1808,16 +1837,16 @@ const ChatInterface = ({
     );
 
     // ✅ Save to Firebase with merged data (with retry)
-    console.log("💾 Saving to Firebase:",
+    devLog("💾 Saving to Firebase:",
       mergedQuizData.filter(q => q.userSelection).length,
       "answered questions"
     );
 
-    console.log("🔍 DEBUG - mergedQuizData contents:", mergedQuizData);
+    devLog("🔍 DEBUG - mergedQuizData contents:", mergedQuizData);
 
     mergedQuizData.forEach((q, idx) => {
       if (q.userSelection) {
-        console.log(`  Q${idx + 1}: ${q.userSelection.isCorrect ? '✓' : '✗'} - ${q.userSelection.selectedOptionText}`);
+        devLog(`  Q${idx + 1}: ${q.userSelection.isCorrect ? '✓' : '✗'} - ${q.userSelection.selectedOptionText}`);
       }
     });
 
@@ -1831,19 +1860,19 @@ const ChatInterface = ({
       timestamp: new Date()
     };
 
-    console.log("🔍 DEBUG - messageToSave.quizData:", messageToSave.quizData);
-    console.log("🔍 DEBUG - messageToSave.quizData length:", messageToSave.quizData.length);
+    devLog("🔍 DEBUG - messageToSave.quizData:", messageToSave.quizData);
+    devLog("🔍 DEBUG - messageToSave.quizData length:", messageToSave.quizData.length);
 
     // ✅ Try to save, retry once if it fails
     try {
       await AppendToChat(chatId, messageToSave);
-      console.log("✅ Firebase save successful");
+      devLog("✅ Firebase save successful");
     } catch (error) {
       console.error("❌ Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         await AppendToChat(chatId, messageToSave);
-        console.log("✅ Firebase save successful on retry");
+        devLog("✅ Firebase save successful on retry");
       } catch (retryError) {
         console.error("❌ Firebase save failed on retry:", retryError);
         // Don't throw - let user continue, data is in UI
@@ -1853,22 +1882,22 @@ const ChatInterface = ({
     // ✅ Clear ref
     if (pendingQuizAnswersRef.current[messageId]) {
       delete pendingQuizAnswersRef.current[messageId];
-      console.log("🧹 Cleared pending answers from ref");
+      devLog("🧹 Cleared pending answers from ref");
     }
 
     // ✅ Clear submission tracking for this quiz
     submittedAnswersRef.current = new Set(
       Array.from(submittedAnswersRef.current).filter(key => !key.startsWith(messageId))
     );
-    console.log("🧹 Cleared submission tracking for quiz");
+    devLog("🧹 Cleared submission tracking for quiz");
 
     setIsAiTyping(false);
-    console.log("✅ Quiz save complete!");
+    devLog("✅ Quiz save complete!");
   };
 
   const handleFlashcardComplete = async (flashcardData, messageId, chatId) => {
-    console.log("✅ Flashcards complete, finalizing message");
-    console.log("📦 Backend sent", flashcardData?.length, "flashcards");
+    devLog("✅ Flashcards complete, finalizing message");
+    devLog("📦 Backend sent", flashcardData?.length, "flashcards");
     setStreamingStatus(null);
 
     // Initialize flashcard data with status (same as quiz initializes with answers)
@@ -1879,7 +1908,7 @@ const ChatInterface = ({
       lastReviewed: null
     }));
 
-    console.log("🎴 Initialized flashcards:", initializedFlashcards);
+    devLog("🎴 Initialized flashcards:", initializedFlashcards);
 
     // ✅ Update UI state (EXACTLY like handleQuizComplete)
     setChatMessages(prev =>
@@ -1898,7 +1927,7 @@ const ChatInterface = ({
     );
 
     // ✅ Save to Firebase with retry (EXACTLY like handleQuizComplete)
-    console.log("💾 Saving to Firebase:",
+    devLog("💾 Saving to Firebase:",
       flashcardData.length,
       "flashcards"
     );
@@ -1916,13 +1945,13 @@ const ChatInterface = ({
     // ✅ Try to save, retry once if it fails (EXACTLY like quiz)
     try {
       await AppendToChat(chatId, messageToSave);
-      console.log("✅ Firebase save successful");
+      devLog("✅ Firebase save successful");
     } catch (error) {
       console.error("❌ Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         await AppendToChat(chatId, messageToSave);
-        console.log("✅ Firebase save successful on retry");
+        devLog("✅ Firebase save successful on retry");
       } catch (retryError) {
         console.error("❌ Firebase save failed on retry:", retryError);
         // Don't throw - let user continue, data is in UI
@@ -1930,24 +1959,24 @@ const ChatInterface = ({
     }
 
     setIsAiTyping(false);
-    console.log("✅ Flashcard save complete!");
+    devLog("✅ Flashcard save complete!");
   };
 
   const handleMindmapComplete = async (mindmapData, messageId, chatId) => {
-    console.log("✅ Mindmap complete, finalizing message");
-    console.log("📦 Backend sent mindmap with", mindmapData?.nodes?.length, "nodes");
-    console.log("🆔 Target messageId:", messageId);
+    devLog("✅ Mindmap complete, finalizing message");
+    devLog("📦 Backend sent mindmap with", mindmapData?.nodes?.length, "nodes");
+    devLog("🆔 Target messageId:", messageId);
     setStreamingStatus(null);
 
     // ✅ Update UI state - this is the ONLY place state is updated for mindmap_complete
     setChatMessages(prev => {
-      console.log("🔍 Looking for message to update...");
+      devLog("🔍 Looking for message to update...");
       const targetMsg = prev.find(msg => msg.id === messageId);
-      console.log("📍 Found target message:", targetMsg ? `type=${targetMsg.type}, isStreaming=${targetMsg.isStreaming}` : "NOT FOUND");
+      devLog("📍 Found target message:", targetMsg ? `type=${targetMsg.type}, isStreaming=${targetMsg.isStreaming}` : "NOT FOUND");
 
       return prev.map(msg => {
         if (msg.id === messageId && msg.type === 'mindmap') {
-          console.log("✅ Updating mindmap message with data");
+          devLog("✅ Updating mindmap message with data");
           return {
             ...msg,
             mindmapData: mindmapData,
@@ -1961,7 +1990,7 @@ const ChatInterface = ({
     });
 
     // ✅ Save to Firebase
-    console.log("💾 Saving mindmap to Firebase");
+    devLog("💾 Saving mindmap to Firebase");
 
     const messageToSave = {
       id: messageId,
@@ -1975,25 +2004,25 @@ const ChatInterface = ({
 
     try {
       await AppendToChat(chatId, messageToSave);
-      console.log("✅ Mindmap Firebase save successful");
+      devLog("✅ Mindmap Firebase save successful");
     } catch (error) {
       console.error("❌ Mindmap Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
         await AppendToChat(chatId, messageToSave);
-        console.log("✅ Mindmap Firebase save successful on retry");
+        devLog("✅ Mindmap Firebase save successful on retry");
       } catch (retryError) {
         console.error("❌ Mindmap Firebase save failed on retry:", retryError);
       }
     }
 
     setIsAiTyping(false);
-    console.log("✅ Mindmap save complete!");
+    devLog("✅ Mindmap save complete!");
   };
 
   const handleFlashcardReview = async (reviewData) => {
     try {
-      console.log("📇 Flashcard review received:", reviewData);
+      devLog("📇 Flashcard review received:", reviewData);
 
       // Update UI immediately (optimistic update)
       setChatMessages(prev =>
@@ -2012,7 +2041,7 @@ const ChatInterface = ({
               : card
           );
 
-          console.log("✅ Updated flashcard UI state for card", reviewData.cardIndex + 1);
+          devLog("✅ Updated flashcard UI state for card", reviewData.cardIndex + 1);
           return { ...msg, flashcardData: updatedFlashcardData };
         })
       );
@@ -2025,7 +2054,7 @@ const ChatInterface = ({
         reviewData
       );
 
-      console.log("✅ Flashcard review saved to Firebase");
+      devLog("✅ Flashcard review saved to Firebase");
     } catch (error) {
       console.error("❌ Error saving flashcard review:", error);
     }
@@ -2117,8 +2146,8 @@ const ChatInterface = ({
     };
 
     setChatMessages(prev => [...prev, loadingMessage]);
-    console.log(`📦 Created loading message BEFORE upload: ${loadingMsgId}`);
-    console.log(`   File count: ${files.length}`);
+    devLog(`📦 Created loading message BEFORE upload: ${loadingMsgId}`);
+    devLog(`   File count: ${files.length}`);
 
     setLoadingState('fileUpload', true);
 
@@ -2202,14 +2231,14 @@ const ChatInterface = ({
     if (!shouldProcessPendingUpload || pendingUploadFiles.length === 0) return;
     if (pendingUploadProcessedRef.current) return;
 
-    console.log(`📤 Processing ${pendingUploadFiles.length} pending upload(s) from landing page`);
+    devLog(`📤 Processing ${pendingUploadFiles.length} pending upload(s) from landing page`);
     pendingUploadProcessedRef.current = true;
     setShouldProcessPendingUpload(false);
 
     // If coming from landing page with study mode flag, set the global flag
     // so that post_upload_message handler will go directly to study mode
     if (goToStudyMode) {
-      console.log('📚 Landing page upload with study mode - setting _pendingStudyJourney flag');
+      devLog('📚 Landing page upload with study mode - setting _pendingStudyJourney flag');
       window._pendingStudyJourney = true;
       if (onStudyModeTriggered) {
         onStudyModeTriggered();
@@ -2235,11 +2264,11 @@ const ChatInterface = ({
 
   // Progress handler - add this as a new function in your component
   const handleUploadProgress = (update, fileTracker, chatId) => {
-    console.log('📦 Upload progress:', update.type, update);
+    devLog('📦 Upload progress:', update.type, update);
 
     switch (update.type) {
       case 'batch_start':
-        console.log(`🚀 Starting upload of ${update.total_files} files`);
+        devLog(`🚀 Starting upload of ${update.total_files} files`);
         // Loading message already created in handleFileSelect!
         // Just update fileCount and filenames if needed
         const batchMsgId = uploadMessageIdRef.current;
@@ -2265,20 +2294,20 @@ const ChatInterface = ({
         break;
 
       case 'insight_batch':
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-        console.log(`🔍 INSIGHT_BATCH RECEIVED`);
-        console.log(`   Filename: ${update.filename}`);
-        console.log(`   Topics:`, update.topics);
-        console.log(`   Concepts:`, update.concepts);
+        devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        devLog(`🔍 INSIGHT_BATCH RECEIVED`);
+        devLog(`   Filename: ${update.filename}`);
+        devLog(`   Topics:`, update.topics);
+        devLog(`   Concepts:`, update.concepts);
 
         const msgId = uploadMessageIdRef.current;
         if (!msgId) {
           console.error('⚠️ No uploadMessageId - this should never happen now!');
-          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+          devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           return;
         }
 
-        console.log(`   Message ID: ${msgId}`);
+        devLog(`   Message ID: ${msgId}`);
 
         // 🆕 FIX: Accumulate in REF first (synchronous, no race!)
         const newInsight = {
@@ -2288,28 +2317,28 @@ const ChatInterface = ({
           documentType: update.document_type
         };
 
-        console.log(`   Created insight object:`, newInsight);
+        devLog(`   Created insight object:`, newInsight);
 
         // CRITICAL: Check ref BEFORE push
-        console.log(`   🔍 Accumulator BEFORE push:`, uploadInsightsAccumulatorRef.current.length, 'items');
-        console.log(`   🔍 Accumulator contents BEFORE:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+        devLog(`   🔍 Accumulator BEFORE push:`, uploadInsightsAccumulatorRef.current.length, 'items');
+        devLog(`   🔍 Accumulator contents BEFORE:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
 
         uploadInsightsAccumulatorRef.current.push(newInsight);
 
         // CRITICAL: Check ref AFTER push
-        console.log(`   ✅ Accumulator AFTER push:`, uploadInsightsAccumulatorRef.current.length, 'items');
-        console.log(`   ✅ Accumulator contents AFTER:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+        devLog(`   ✅ Accumulator AFTER push:`, uploadInsightsAccumulatorRef.current.length, 'items');
+        devLog(`   ✅ Accumulator contents AFTER:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
 
         // Update state with ALL accumulated insights (prevents race)
         setChatMessages(prev => {
-          console.log(`   🔍 setChatMessages called`);
-          console.log(`   🔍 Total messages in state:`, prev.length);
+          devLog(`   🔍 setChatMessages called`);
+          devLog(`   🔍 Total messages in state:`, prev.length);
 
           const updated = prev.map(msg => {
             if (msg.id === msgId && msg.type === 'upload_loading') {
-              console.log(`   ✅ Found upload_loading message!`);
-              console.log(`   📊 Current insights in message:`, msg.insights?.length || 0);
-              console.log(`   📊 New insights from ref:`, uploadInsightsAccumulatorRef.current.length);
+              devLog(`   ✅ Found upload_loading message!`);
+              devLog(`   📊 Current insights in message:`, msg.insights?.length || 0);
+              devLog(`   📊 New insights from ref:`, uploadInsightsAccumulatorRef.current.length);
 
               return {
                 ...msg,
@@ -2319,15 +2348,15 @@ const ChatInterface = ({
             return msg;
           });
 
-          console.log(`   ✅ State update complete`);
+          devLog(`   ✅ State update complete`);
           return updated;
         });
 
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
         break;
 
       case 'upload_summary':
-        console.log(`📝 Upload summary received:`, update.summary);
+        devLog(`📝 Upload summary received:`, update.summary);
 
         setUploadSummary(update.summary);
 
@@ -2337,7 +2366,7 @@ const ChatInterface = ({
         // Do NOT transition yet - wait for all_complete
         setChatMessages(prev => prev.map(msg => {
           if (msg.id === summaryMsgId && msg.type === 'upload_loading') {
-            console.log('📝 Adding summary to loading message (still showing all insights)');
+            devLog('📝 Adding summary to loading message (still showing all insights)');
             return {
               ...msg,
               summary: update.summary,
@@ -2363,28 +2392,28 @@ const ChatInterface = ({
         break;
 
       case 'embedding_progress':
-        console.log(`🔤 Embedding progress: ${update.stage}`);
+        devLog(`🔤 Embedding progress: ${update.stage}`);
         break;
 
       case 'embedding_complete':
-        console.log(`✅ Embedded: ${update.word_count} words, ${update.chunks} chunks`);
+        devLog(`✅ Embedded: ${update.word_count} words, ${update.chunks} chunks`);
         break;
 
       case 'firebase_start':
-        console.log(`☁️ Starting Firebase upload...`);
+        devLog(`☁️ Starting Firebase upload...`);
         break;
 
       case 'firebase_complete':
-        console.log(`✅ Firebase uploaded: ${update.firebase_url}`);
+        devLog(`✅ Firebase uploaded: ${update.firebase_url}`);
         break;
 
       case 'quiz_complete':
-        console.log(`📝 Quiz generated: ${update.question_count} questions`);
+        devLog(`📝 Quiz generated: ${update.question_count} questions`);
         break;
 
       case 'file_complete':
         // Remove individual file messages - we're showing insights instead
-        console.log(`✅ File complete: ${update.filename}`);
+        devLog(`✅ File complete: ${update.filename}`);
         break;
 
       case 'file_error':
@@ -2405,32 +2434,32 @@ const ChatInterface = ({
         break;
 
       case 'all_complete':
-        console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
-        console.log(`🎉 ALL_COMPLETE RECEIVED`);
-        console.log(`   Completed: ${update.completed_files}/${update.total_files}`);
+        devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+        devLog(`🎉 ALL_COMPLETE RECEIVED`);
+        devLog(`   Completed: ${update.completed_files}/${update.total_files}`);
 
         setIsUploadAnalyzing(false);
 
         const completeMsgId = uploadMessageIdRef.current;
         if (!completeMsgId) {
           console.warn('⚠️ No uploadMessageId found for completion');
-          console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+          devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           return;
         }
 
-        console.log(`   Message ID: ${completeMsgId}`);
-        console.log(`   🔍 Accumulator final count: ${uploadInsightsAccumulatorRef.current.length}`);
-        console.log(`   🔍 Accumulator final files:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+        devLog(`   Message ID: ${completeMsgId}`);
+        devLog(`   🔍 Accumulator final count: ${uploadInsightsAccumulatorRef.current.length}`);
+        devLog(`   🔍 Accumulator final files:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
 
         // Mark the loading message as complete AND save to Firebase
         setChatMessages(prev => {
-          console.log(`   🔍 Total messages in state: ${prev.length}`);
+          devLog(`   🔍 Total messages in state: ${prev.length}`);
 
           return prev.map(msg => {
             if (msg.id === completeMsgId && msg.type === 'upload_loading') {
-              console.log(`   ✅ Found upload_loading message to complete`);
-              console.log(`   📊 Message insights BEFORE completion:`, msg.insights?.length || 0, 'items');
-              console.log(`   📊 Files in message:`, msg.insights?.map(i => i.filename) || []);
+              devLog(`   ✅ Found upload_loading message to complete`);
+              devLog(`   📊 Message insights BEFORE completion:`, msg.insights?.length || 0, 'items');
+              devLog(`   📊 Files in message:`, msg.insights?.map(i => i.filename) || []);
 
               // Create the completed version - PRESERVE ALL FIELDS including original timestamp
               // We keep the original timestamp so LoadingMessageBox stays in correct position
@@ -2444,11 +2473,11 @@ const ChatInterface = ({
                 // NOTE: Don't update timestamp - preserve original creation time for correct ordering
               };
 
-              console.log(`   📊 Completed message created:`);
-              console.log(`      - Insight count: ${completedMsg.insights?.length}`);
-              console.log(`      - Files:`, completedMsg.insights?.map(i => i.filename));
-              console.log(`      - Has summary: ${!!completedMsg.summary}`);
-              console.log(`      - File count: ${completedMsg.fileCount}`);
+              devLog(`   📊 Completed message created:`);
+              devLog(`      - Insight count: ${completedMsg.insights?.length}`);
+              devLog(`      - Files:`, completedMsg.insights?.map(i => i.filename));
+              devLog(`      - Has summary: ${!!completedMsg.summary}`);
+              devLog(`      - File count: ${completedMsg.fileCount}`);
 
               // Save to Firebase immediately
               const messageForFirebase = {
@@ -2464,12 +2493,12 @@ const ChatInterface = ({
                 language: completedMsg.language || currentLanguage
               };
 
-              console.log('💾 Saving to Firebase with', messageForFirebase.insights?.length, 'insights');
+              devLog('💾 Saving to Firebase with', messageForFirebase.insights?.length, 'insights');
 
               // Save LoadingMessageBox to Firebase and store the promise
               // This ensures it gets a serverTimestamp BEFORE the post-upload message
               const savePromise = AppendToChat(chatId, messageForFirebase)
-                .then(() => console.log('✅ Saved completed insights to Firebase'))
+                .then(() => devLog('✅ Saved completed insights to Firebase'))
                 .catch(err => console.error('❌ Failed to save:', err));
 
               // Store the promise so post-upload can wait for it
@@ -2505,11 +2534,11 @@ const ChatInterface = ({
       // - Action buttons (Quiz, Flashcards, Study Sheet)
       // ============================================
       case 'post_upload_message':
-        console.log('📬 Post-upload message received:', update);
+        devLog('📬 Post-upload message received:', update);
 
         // Check if user clicked "Study Journey" card - skip post-upload actions and go directly to study mode
         if (window._pendingStudyJourney) {
-          console.log('📚 Study Journey mode - skipping post-upload actions, going directly to study mode');
+          devLog('📚 Study Journey mode - skipping post-upload actions, going directly to study mode');
           window._pendingStudyJourney = false;
           const docsForStudy = (update.filenames || []).map((filename, idx) => ({
             id: `doc-${idx}`,
@@ -2548,7 +2577,7 @@ const ChatInterface = ({
             return msgFilenamesKey === filenamesKey;
           });
           if (alreadyExists) {
-            console.log('⚠️ Post-upload message for these files already exists, skipping duplicate');
+            devLog('⚠️ Post-upload message for these files already exists, skipping duplicate');
             return prev;
           }
           return [...prev, postUploadMsg];
@@ -2577,12 +2606,12 @@ const ChatInterface = ({
           // Small delay to ensure serverTimestamp ordering
           await new Promise(resolve => setTimeout(resolve, 100));
           await AppendToChat(chatId, postUploadForFirebase);
-          console.log('✅ Post-upload actions saved to Firebase');
+          devLog('✅ Post-upload actions saved to Firebase');
         };
 
         savePostUpload().catch(err => console.error('❌ Failed to save post-upload actions:', err));
 
-        console.log('✅ Post-upload message added to chat');
+        devLog('✅ Post-upload message added to chat');
         break;
     }
   };
@@ -2658,12 +2687,12 @@ const ChatInterface = ({
   // 3. Send as a user message (triggers normal chat flow)
   // ============================================
   const handlePostUploadAction = async (actionId, messageData) => {
-    console.log('🎯 Post-upload action clicked:', actionId, messageData);
-    console.log('🎯 Current chatId:', currentChatID);
+    devLog('🎯 Post-upload action clicked:', actionId, messageData);
+    devLog('🎯 Current chatId:', currentChatID);
 
     // Block action if system is busy (prevents triggering multiple actions simultaneously)
     if (isSystemBusy()) {
-      console.log('⚠️ System is busy, ignoring post-upload action');
+      devLog('⚠️ System is busy, ignoring post-upload action');
       return;
     }
 
@@ -2675,7 +2704,7 @@ const ChatInterface = ({
 
     // Special handling for quiz - show mode selector modal
     if (actionId === 'quiz') {
-      console.log('🎯 Opening quiz mode selector');
+      devLog('🎯 Opening quiz mode selector');
       setPendingQuizMessageData(messageData);
       setShowQuizModeSelector(true);
       return;
@@ -2683,7 +2712,7 @@ const ChatInterface = ({
 
     // Special handling for study journey - show start study modal
     if (actionId === 'studyjourney') {
-      console.log('📚 Opening study journey modal');
+      devLog('📚 Opening study journey modal');
       // Get uploaded docs info from the message data
       const docsForStudy = (messageData.filenames || []).map((filename, idx) => ({
         id: `doc-${idx}`,
@@ -2731,7 +2760,7 @@ const ChatInterface = ({
     };
 
     const promptToSend = prompts[actionId];
-    console.log('🎯 Prompt to send:', promptToSend);
+    devLog('🎯 Prompt to send:', promptToSend);
 
     if (!promptToSend) {
       console.warn('Unknown action:', actionId);
@@ -2741,14 +2770,14 @@ const ChatInterface = ({
     // Step 3: Send as user message (uses existing chat flow)
     // This triggers the normal AI response handling
     // We pass null for the event and the prompt as customPrompt
-    console.log('🎯 Calling handleSendNewUserMessage...');
+    devLog('🎯 Calling handleSendNewUserMessage...');
     await handleSendNewUserMessage(null, promptToSend);
-    console.log('🎯 handleSendNewUserMessage completed');
+    devLog('🎯 handleSendNewUserMessage completed');
   };
 
   // Handle quiz mode selection from the modal
   const handleQuizModeSelect = async (quizMode) => {
-    console.log('🎯 Quiz mode selected:', quizMode);
+    devLog('🎯 Quiz mode selected:', quizMode);
 
     if (!pendingQuizMessageData) {
       console.warn('No pending quiz message data');
@@ -2782,7 +2811,7 @@ const ChatInterface = ({
       });
     }
 
-    console.log('🎯 Quiz prompt with mode:', quizPrompt);
+    devLog('🎯 Quiz prompt with mode:', quizPrompt);
 
     // Clear pending data
     setPendingQuizMessageData(null);
@@ -2933,7 +2962,7 @@ const ChatInterface = ({
   // ============================================
   const handleQuizFeedback = useCallback(async (messageId, feedbackData) => {
     try {
-      console.log("📝 Saving quiz feedback:", { messageId, feedbackData });
+      devLog("📝 Saving quiz feedback:", { messageId, feedbackData });
       await SaveQuizFeedback(currentChatID, messageId, feedbackData);
 
       // Update local state to reflect feedback given
@@ -2954,7 +2983,7 @@ const ChatInterface = ({
   // ============================================
   const handleFlashcardFeedback = useCallback(async (messageId, feedbackData) => {
     try {
-      console.log("📝 Saving flashcard feedback:", { messageId, feedbackData });
+      devLog("📝 Saving flashcard feedback:", { messageId, feedbackData });
       await SaveQuizFeedback(currentChatID, messageId, feedbackData);
 
       // Update local state to reflect feedback given
@@ -2989,7 +3018,7 @@ const ChatInterface = ({
     }
 
     try {
-      console.log("🗑️ Deleting message:", messageId);
+      devLog("🗑️ Deleting message:", messageId);
 
       // Delete from Firebase
       await DeleteMessage(currentChatID, messageId);
@@ -2997,7 +3026,7 @@ const ChatInterface = ({
       // Update local state to remove the message
       setChatMessages(prev => prev.filter(msg => msg.id !== messageId));
 
-      console.log("✅ Message deleted successfully");
+      devLog("✅ Message deleted successfully");
     } catch (error) {
       console.error("❌ Failed to delete message:", error);
       alert("Failed to delete message: " + error.message);
@@ -3005,7 +3034,7 @@ const ChatInterface = ({
   }, [currentChatID]);
 
   const hasMessages = chatMessages.length > 0;
-  console.log('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
+  devLog('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 
   // ============================================
@@ -3115,7 +3144,7 @@ const ChatInterface = ({
         onChatSelected(docRef.id);
       }
 
-      console.log('📚 Created exam prep chat:', docRef.id, 'for exam:', newExam.id);
+      devLog('📚 Created exam prep chat:', docRef.id, 'for exam:', newExam.id);
 
     } catch (error) {
       console.error('Error creating exam prep chat:', error);
@@ -3138,14 +3167,14 @@ const ChatInterface = ({
           onExit={() => {
             // Study sessions should always stay as study sessions
             // Exit means navigate away from this chat entirely
-            console.log('📚 Exiting study session - navigating to dashboard');
+            devLog('📚 Exiting study session - navigating to dashboard');
             if (onChatSelected) {
               onChatSelected(null); // Clear selection, will navigate to /c or dashboard
             }
           }}
           onComplete={() => {
             // Study session completed - navigate away
-            console.log('📚 Study session completed - navigating to dashboard');
+            devLog('📚 Study session completed - navigating to dashboard');
             if (onChatSelected) {
               onChatSelected(null);
             }
@@ -3291,7 +3320,7 @@ const ChatInterface = ({
             setPendingStudyTopics([]);
           }}
           onStart={(newStudyState) => {
-            console.log('📚 Study session started:', newStudyState);
+            devLog('📚 Study session started:', newStudyState);
             setStudyState(newStudyState);
             setIsStudyMode(true);
             setShowStartStudyModal(false);

@@ -17,6 +17,7 @@ import {
 } from "firebase/firestore";
 
 import { generate_title } from '../Services/FastAPICalls.js';
+import { devLog } from './devLogger';
 
 const CreateNewChatWithMessage = async (messageObject) => {
   try {
@@ -30,7 +31,7 @@ const CreateNewChatWithMessage = async (messageObject) => {
     let chat_title_promise = await generate_title(messageObject.content);
     let chat_title = chat_title_promise.title;
 
-    console.log("chat title created: ", chat_title);
+    devLog("chat title created: ", chat_title);
 
     // create a new chat document
     const newChat = {
@@ -51,7 +52,7 @@ const CreateNewChatWithMessage = async (messageObject) => {
     });
 
     // log that it was successful
-    console.log("✅ New chat created and message added to:", chatRef.id);
+    devLog("✅ New chat created and message added to:", chatRef.id);
 
     return chatRef.id;
 
@@ -86,8 +87,8 @@ const AppendToChat = async (chatId, messageObject) => {
   }
 
   try {
-    console.log("Attempting to upload to chatID:" + chatId);
-    console.log("message object: ", messageObject);
+    devLog("Attempting to upload to chatID:" + chatId);
+    devLog("message object: ", messageObject);
 
     // check if there has been messages
     const chatHasMessages = await ChatHasMessages(chatId);
@@ -108,14 +109,14 @@ const AppendToChat = async (chatId, messageObject) => {
         });
 
         // show that the update was successful
-        console.log("✅ Chat title updated");
+        devLog("✅ Chat title updated");
 
       } catch (error) {
         console.error("❌ Error updating chat title:", error);
       }
     }
 
-    console.log("Adding message do addDoc: ", messageObject)
+    devLog("Adding message do addDoc: ", messageObject)
 
     // add a message in the collection inside chat
     await addDoc(collection(db, "chats", chatId, "messages"), {
@@ -156,18 +157,18 @@ const GetFileMetadataByName = async (chatId, filename) => {
   const snapshot = await getDocs(q);
 
   if (snapshot.empty) {
-    console.log("No matching document found.");
+    devLog("No matching document found.");
     return null;
   }
 
   const result = snapshot.docs[0].data(); // Get first match (you can loop if needed)
-  console.log("Found file metadata:", result);
+  devLog("Found file metadata:", result);
   return result;
 };
 
 export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSelection) => {
   try {
-    console.log("Attempting to update quiz answer:", { chatId, messageId, questionText });
+    devLog("Attempting to update quiz answer:", { chatId, messageId, questionText });
 
     let messageRef;
     let messageDoc;
@@ -179,16 +180,16 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
       messageDoc = await getDoc(messageRef);
 
       if (messageDoc.exists()) {
-        console.log("Found message via direct access");
+        devLog("Found message via direct access");
         actualDocId = messageId;
       }
     } catch (directAccessError) {
-      console.log("Direct access failed, will try query approach");
+      devLog("Direct access failed, will try query approach");
     }
 
     // STEP 2: If direct access failed, query for document with matching id field
     if (!messageDoc || !messageDoc.exists()) {
-      console.log("Querying for message with id field:", messageId);
+      devLog("Querying for message with id field:", messageId);
 
       const messagesRef = collection(db, "chats", chatId, "messages");
       const q = query(messagesRef, where("id", "==", messageId));
@@ -203,10 +204,10 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
       actualDocId = messageDoc.id;
       messageRef = doc(db, "chats", chatId, "messages", actualDocId);
 
-      console.log("Found message via query, Firebase doc ID:", actualDocId);
+      devLog("Found message via query, Firebase doc ID:", actualDocId);
     }
 
-    console.log("Message found, data:", messageDoc.data());
+    devLog("Message found, data:", messageDoc.data());
 
     const messageData = messageDoc.data();
     const quizData = [...messageData.quizData];
@@ -261,7 +262,7 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
       updatedAt: new Date()
     });
 
-    console.log("Quiz answer saved successfully to document:", actualDocId);
+    devLog("Quiz answer saved successfully to document:", actualDocId);
     return { success: true, docId: actualDocId };
 
   } catch (error) {
@@ -272,7 +273,7 @@ export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSele
 
 export const UpdateFlashcardReview = async (chatId, messageId, cardIndex, reviewData) => {
   try {
-    console.log("Attempting to update flashcard review:", { chatId, messageId, cardIndex });
+    devLog("Attempting to update flashcard review:", { chatId, messageId, cardIndex });
 
     let messageRef;
     let messageDoc;
@@ -284,16 +285,16 @@ export const UpdateFlashcardReview = async (chatId, messageId, cardIndex, review
       messageDoc = await getDoc(messageRef);
 
       if (messageDoc.exists()) {
-        console.log("Found message via direct access");
+        devLog("Found message via direct access");
         actualDocId = messageId;
       }
     } catch (directAccessError) {
-      console.log("Direct access failed, will try query approach");
+      devLog("Direct access failed, will try query approach");
     }
 
     // STEP 2: If direct access failed, query for document with matching id field
     if (!messageDoc || !messageDoc.exists()) {
-      console.log("Querying for message with id field:", messageId);
+      devLog("Querying for message with id field:", messageId);
 
       const messagesRef = collection(db, "chats", chatId, "messages");
       const q = query(messagesRef, where("id", "==", messageId));
@@ -307,10 +308,10 @@ export const UpdateFlashcardReview = async (chatId, messageId, cardIndex, review
       actualDocId = messageDoc.id;
       messageRef = doc(db, "chats", chatId, "messages", actualDocId);
 
-      console.log("Found message via query, Firebase doc ID:", actualDocId);
+      devLog("Found message via query, Firebase doc ID:", actualDocId);
     }
 
-    console.log("Message found, data:", messageDoc.data());
+    devLog("Message found, data:", messageDoc.data());
 
     const messageData = messageDoc.data();
     const flashcardData = [...messageData.flashcardData];
@@ -334,7 +335,7 @@ export const UpdateFlashcardReview = async (chatId, messageId, cardIndex, review
       updatedAt: new Date()
     });
 
-    console.log("Flashcard review saved successfully to document:", actualDocId);
+    devLog("Flashcard review saved successfully to document:", actualDocId);
     return { success: true, docId: actualDocId };
 
   } catch (error) {
@@ -346,7 +347,7 @@ export const UpdateFlashcardReview = async (chatId, messageId, cardIndex, review
 
 export const DeleteChat = async (chatId) => {
   try {
-    console.log("🗑️ Deleting chat:", chatId);
+    devLog("🗑️ Deleting chat:", chatId);
 
     // 1. Delete messages subcollection
     const messagesRef = collection(db, "chats", chatId, "messages");
@@ -356,7 +357,7 @@ export const DeleteChat = async (chatId) => {
       deleteDoc(docSnap.ref)
     );
     await Promise.all(messageDeletePromises);
-    console.log("✅ Deleted", messagesSnapshot.size, "messages");
+    devLog("✅ Deleted", messagesSnapshot.size, "messages");
 
     // 2. Delete uploads subcollection (file metadata)
     const uploadsRef = collection(db, "chats", chatId, "uploads");
@@ -366,28 +367,28 @@ export const DeleteChat = async (chatId) => {
       deleteDoc(docSnap.ref)
     );
     await Promise.all(uploadsDeletePromises);
-    console.log("✅ Deleted", uploadsSnapshot.size, "upload metadata documents");
+    devLog("✅ Deleted", uploadsSnapshot.size, "upload metadata documents");
 
     // 3. Delete chat document
     await deleteDoc(doc(db, "chats", chatId));
-    console.log("✅ Deleted chat document");
+    devLog("✅ Deleted chat document");
 
     // 4. Delete uploaded files in Storage: /chats/{chatId}/
     const chatStorageRef = ref(storage, `chats/${chatId}`);
     await deleteFolder(chatStorageRef);
-    console.log("✅ Deleted /chats/{chatId} folder (uploads, audio)");
+    devLog("✅ Deleted /chats/{chatId} folder (uploads, audio)");
 
     // 5. Delete per-file vector store files: /FileVectorStore/{chatId}/
     const fileVectorStoreRef = ref(storage, `FileVectorStore/${chatId}`);
     await deleteFolder(fileVectorStoreRef);
-    console.log("✅ Deleted /FileVectorStore/{chatId} folder");
+    devLog("✅ Deleted /FileVectorStore/{chatId} folder");
 
     // 6. Delete combined vector store: /vectorstores/{chatId}/
     const combinedVectorStoreRef = ref(storage, `vectorstores/${chatId}`);
     await deleteFolder(combinedVectorStoreRef);
-    console.log("✅ Deleted /vectorstores/{chatId} folder");
+    devLog("✅ Deleted /vectorstores/{chatId} folder");
 
-    console.log("✅ Chat fully deleted: messages, uploads, files, and embeddings");
+    devLog("✅ Chat fully deleted: messages, uploads, files, and embeddings");
     return { success: true };
 
   } catch (error) {
@@ -423,7 +424,7 @@ async function deleteFolder(folderRef) {
 // Function to save quiz feedback
 export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
   try {
-    console.log("Attempting to save quiz feedback:", { chatId, messageId, feedbackData });
+    devLog("Attempting to save quiz feedback:", { chatId, messageId, feedbackData });
 
     let messageRef;
     let messageDoc;
@@ -435,16 +436,16 @@ export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
       messageDoc = await getDoc(messageRef);
 
       if (messageDoc.exists()) {
-        console.log("Found message via direct access");
+        devLog("Found message via direct access");
         actualDocId = messageId;
       }
     } catch (directAccessError) {
-      console.log("Direct access failed, will try query approach");
+      devLog("Direct access failed, will try query approach");
     }
 
     // STEP 2: If direct access failed, query for document with matching id field
     if (!messageDoc || !messageDoc.exists()) {
-      console.log("Querying for message with id field:", messageId);
+      devLog("Querying for message with id field:", messageId);
 
       const messagesRef = collection(db, "chats", chatId, "messages");
       const q = query(messagesRef, where("id", "==", messageId));
@@ -459,7 +460,7 @@ export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
       actualDocId = messageDoc.id;
       messageRef = doc(db, "chats", chatId, "messages", actualDocId);
 
-      console.log("Found message via query, Firebase doc ID:", actualDocId);
+      devLog("Found message via query, Firebase doc ID:", actualDocId);
     }
 
     // Update the message document with feedback data
@@ -471,7 +472,7 @@ export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
       updatedAt: new Date()
     });
 
-    console.log("Quiz feedback saved successfully to document:", actualDocId);
+    devLog("Quiz feedback saved successfully to document:", actualDocId);
     return { success: true, docId: actualDocId };
 
   } catch (error) {
@@ -486,7 +487,7 @@ export const SaveQuizFeedback = async (chatId, messageId, feedbackData) => {
  */
 export const GetAllQuizFeedbacks = async () => {
   try {
-    console.log("📥 Fetching all quiz feedbacks...");
+    devLog("📥 Fetching all quiz feedbacks...");
 
     const userId = auth.currentUser?.uid;
     const chatsRef = collection(db, "chats");
@@ -551,7 +552,7 @@ export const GetAllQuizFeedbacks = async () => {
       return timeB - timeA;
     });
 
-    console.log(`✅ Fetched ${allFeedbacks.length} quiz feedbacks`);
+    devLog(`✅ Fetched ${allFeedbacks.length} quiz feedbacks`);
     return allFeedbacks;
 
   } catch (error) {
@@ -567,7 +568,7 @@ export const GetAllQuizFeedbacks = async () => {
  */
 export const GetAllQuizzes = async () => {
   try {
-    console.log("📥 Fetching all quizzes...");
+    devLog("📥 Fetching all quizzes...");
 
     const chatsRef = collection(db, "chats");
     const chatsSnapshot = await getDocs(chatsRef);
@@ -628,7 +629,7 @@ export const GetAllQuizzes = async () => {
       return timeB - timeA;
     });
 
-    console.log(`✅ Fetched ${allQuizzes.length} total quizzes`);
+    devLog(`✅ Fetched ${allQuizzes.length} total quizzes`);
     return allQuizzes;
 
   } catch (error) {
@@ -643,7 +644,7 @@ export const GetAllQuizzes = async () => {
  */
 export const GetAllFlashcardFeedbacks = async () => {
   try {
-    console.log("📥 Fetching all flashcard feedbacks...");
+    devLog("📥 Fetching all flashcard feedbacks...");
 
     const userId = auth.currentUser?.uid;
     const chatsRef = collection(db, "chats");
@@ -708,7 +709,7 @@ export const GetAllFlashcardFeedbacks = async () => {
       return timeB - timeA;
     });
 
-    console.log(`✅ Fetched ${allFeedbacks.length} flashcard feedbacks`);
+    devLog(`✅ Fetched ${allFeedbacks.length} flashcard feedbacks`);
     return allFeedbacks;
 
   } catch (error) {
@@ -725,7 +726,7 @@ export const GetAllFlashcardFeedbacks = async () => {
  */
 export const DeleteMessage = async (chatId, messageId) => {
   try {
-    console.log("🗑️ Deleting message:", messageId, "from chat:", chatId);
+    devLog("🗑️ Deleting message:", messageId, "from chat:", chatId);
 
     let messageRef;
     let messageDoc;
@@ -737,16 +738,16 @@ export const DeleteMessage = async (chatId, messageId) => {
       messageDoc = await getDoc(messageRef);
 
       if (messageDoc.exists()) {
-        console.log("Found message via direct access");
+        devLog("Found message via direct access");
         actualDocId = messageId;
       }
     } catch (directAccessError) {
-      console.log("Direct access failed, will try query approach");
+      devLog("Direct access failed, will try query approach");
     }
 
     // STEP 2: If direct access failed, query for document with matching id field
     if (!messageDoc || !messageDoc.exists()) {
-      console.log("Querying for message with id field:", messageId);
+      devLog("Querying for message with id field:", messageId);
 
       const messagesRef = collection(db, "chats", chatId, "messages");
       const q = query(messagesRef, where("id", "==", messageId));
@@ -760,12 +761,12 @@ export const DeleteMessage = async (chatId, messageId) => {
       actualDocId = messageDoc.id;
       messageRef = doc(db, "chats", chatId, "messages", actualDocId);
 
-      console.log("Found message via query, Firebase doc ID:", actualDocId);
+      devLog("Found message via query, Firebase doc ID:", actualDocId);
     }
 
     // Delete the message
     await deleteDoc(messageRef);
-    console.log("✅ Message deleted successfully:", actualDocId);
+    devLog("✅ Message deleted successfully:", actualDocId);
 
     return { success: true, docId: actualDocId };
 

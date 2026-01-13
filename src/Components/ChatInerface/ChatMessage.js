@@ -16,6 +16,7 @@ import StreamingIndicator from "./StreamingIndicator";
 
 import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
+import { devLog } from '../../Services/devLogger';
 
 /**
  * ChatMessage Component - With Single-Question Quiz Navigation & Skip
@@ -104,15 +105,15 @@ const ChatMessage = ({
 
     try {
       if (Array.isArray(message.flashcardData)) {
-        console.log("✅ Flashcard data parsed successfully:", message.flashcardData.length, "cards");
-        console.log("📋 Message type:", message.type);
-        console.log("📋 Message ID:", message.id);
+        devLog("✅ Flashcard data parsed successfully:", message.flashcardData.length, "cards");
+        devLog("📋 Message type:", message.type);
+        devLog("📋 Message ID:", message.id);
         return message.flashcardData;
       }
 
       if (typeof message.flashcardData === "string") {
         const parsed = JSON.parse(message.flashcardData);
-        console.log("✅ Flashcard data parsed from string:", parsed.length, "cards");
+        devLog("✅ Flashcard data parsed from string:", parsed.length, "cards");
         return parsed;
       }
 
@@ -368,9 +369,9 @@ const ChatMessage = ({
 
   // Targeted practice handler
   const handleStartTargetedPractice = useCallback((prompt) => {
-    console.log("🎯 ChatMessage: handleStartTargetedPractice called with prompt:", prompt.substring(0, 100) + "...");
+    devLog("🎯 ChatMessage: handleStartTargetedPractice called with prompt:", prompt.substring(0, 100) + "...");
     if (onSendMessage) {
-      console.log("✅ ChatMessage: Calling onSendMessage with null event and custom prompt");
+      devLog("✅ ChatMessage: Calling onSendMessage with null event and custom prompt");
       // Pass null as event, prompt as customPrompt (second parameter)
       onSendMessage(null, prompt);
     } else {
@@ -385,16 +386,16 @@ const ChatMessage = ({
   // Initialize flashcard view
   useEffect(() => {
     if (parsedFlashcardData) {
-      console.log("🔄 Initializing flashcard view, total cards:", parsedFlashcardData.length);
+      devLog("🔄 Initializing flashcard view, total cards:", parsedFlashcardData.length);
       const firstUnreviewed = parsedFlashcardData.findIndex(card => !card.userReview);
-      console.log("🔍 First unreviewed card index:", firstUnreviewed);
+      devLog("🔍 First unreviewed card index:", firstUnreviewed);
 
       if (firstUnreviewed === -1 && parsedFlashcardData.length > 0) {
-        console.log("📊 All cards reviewed, showing results");
+        devLog("📊 All cards reviewed, showing results");
         setShowFlashcardResults(true);
       } else {
         const targetIndex = firstUnreviewed !== -1 ? firstUnreviewed : 0;
-        console.log("🎯 Setting current card index to:", targetIndex);
+        devLog("🎯 Setting current card index to:", targetIndex);
         setCurrentCardIndex(targetIndex);
         setShowFlashcardResults(false);
       }
@@ -578,7 +579,7 @@ const ChatMessage = ({
   // DERIVED VALUES (safe after guard)
   // ============================================
 
-  console.log("msg check before role:", message)
+  devLog("msg check before role:", message)
   // Support both 'role' (standard) and 'sender' (legacy game quizzes)
   const isAI = message.role === "assistant" || message.sender === "ai";
   const isUser = message.role === "user" || message.sender === "user";
@@ -694,9 +695,9 @@ const ChatMessage = ({
 
         {/* Flashcard Display - Single Card Navigation */}
         {isAI && Array.isArray(parsedFlashcardData) && parsedFlashcardData.length > 0 && (() => {
-          console.log("🎴 RENDERING FLASHCARDS - Total:", parsedFlashcardData.length);
-          console.log("🎴 Current card index:", currentCardIndex);
-          console.log("🎴 Show results:", showFlashcardResults);
+          devLog("🎴 RENDERING FLASHCARDS - Total:", parsedFlashcardData.length);
+          devLog("🎴 Current card index:", currentCardIndex);
+          devLog("🎴 Show results:", showFlashcardResults);
           return true;
         })() && (
           <div className="message-text">
