@@ -3,31 +3,30 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI NCLEX Question Generator (From Your Nursing Notes) | NurseQuizAI</title>
-  <meta name="description" content="Generate 10+ NCLEX-style questions in 30 seconds from your PDFs, PowerPoints, or notes. Free AI question generator for nursing students.">
-  <link rel="canonical" href="https://nursequizai.com/ai-nclex-question-generator">
+  <title>Nursify AI Alternative: Generate Quizzes From Your Own Notes | NurseQuizAI</title>
+  <meta name="description" content="Looking for a Nursify AI alternative? NurseQuizAI turns YOUR nursing notes into NCLEX quizzes, flashcards & audio summaries. Free to try.">
+  <link rel="canonical" href="https://nursequizai.com/nursify-ai-alternative">
   <link rel="icon" href="/favicon.ico">
   <meta name="robots" content="index, follow">
   <!-- Open Graph -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://nursequizai.com/ai-nclex-question-generator">
-  <meta property="og:title" content="AI NCLEX Question Generator (From Your Nursing Notes) | NurseQuizAI">
-  <meta property="og:description" content="Generate 10+ NCLEX-style questions in 30 seconds from your PDFs, PowerPoints, or notes. Free AI question generator for nursing students.">
+  <meta property="og:url" content="https://nursequizai.com/nursify-ai-alternative">
+  <meta property="og:title" content="Nursify AI Alternative: Generate Quizzes From Your Own Notes | NurseQuizAI">
+  <meta property="og:description" content="Looking for a Nursify AI alternative? NurseQuizAI turns YOUR nursing notes into NCLEX quizzes, flashcards & audio summaries. Free to try.">
   <meta property="og:image" content="https://nursequizai.com/og-image-main.jpg">
   <!-- Twitter Card -->
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="AI NCLEX Question Generator (From Your Nursing Notes)">
-  <meta name="twitter:description" content="Generate 10+ NCLEX-style questions in 30 seconds from your PDFs, PowerPoints, or notes.">
+  <meta name="twitter:title" content="Nursify AI Alternative: Generate Quizzes From Your Own Notes">
+  <meta name="twitter:description" content="NurseQuizAI turns YOUR nursing notes into NCLEX quizzes, flashcards & audio summaries. Free to try.">
   <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700&family=Kalam:wght@400;700&display=swap" rel="stylesheet">
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {"@type": "Question","name": "How many NCLEX questions can I generate?","acceptedAnswer":{"@type": "Answer","text": "You can generate 10+ NCLEX-style questions from a single file upload. The AI extracts key nursing concepts and creates practice questions including SATA, prioritization, and clinical judgment."}},
-      {"@type": "Question","name": "What file types are supported?","acceptedAnswer":{"@type": "Answer","text": "Upload PDFs, PowerPoints (PPT/PPTX), Word documents (DOC/DOCX), or images of your nursing notes."}},
-      {"@type": "Question","name": "Is it free to use?","acceptedAnswer":{"@type": "Answer","text": "Yes, you can try sample quizzes and upload files to generate NCLEX questions for free."}},
-      {"@type": "Question","name": "Are these real NCLEX questions?","acceptedAnswer":{"@type": "Answer","text": "These are AI-generated questions in NCLEX style (including SATA and clinical reasoning) based on YOUR notes - not from actual NCLEX exams, but formatted the same way."}}
+      {"@type": "Question","name": "How is NurseQuizAI different from Nursify AI?","acceptedAnswer":{"@type": "Answer","text": "NurseQuizAI generates NCLEX questions from YOUR uploaded notes, not a pre-made question bank. You get personalized practice based on what you're actually studying."}},
+      {"@type": "Question","name": "Can I still use pre-made questions?","acceptedAnswer":{"@type": "Answer","text": "Yes, you can try sample quizzes without uploading anything. But the real power is generating questions from your own nursing content."}},
+      {"@type": "Question","name": "Is there a free trial?","acceptedAnswer":{"@type": "Answer","text": "Yes, you can try sample quizzes and upload files to generate NCLEX questions for free."}}
     ]
   }
   </script>
@@ -46,7 +45,6 @@
       --text-muted: #999999;
       --bg-paper: #fffef9;
       --bg-warm: linear-gradient(180deg, #fffef9 0%, #fff5eb 50%, #fef0e8 100%);
-      --shadow-paper: 0 2px 8px rgba(0, 0, 0, 0.06), 0 8px 24px rgba(0, 0, 0, 0.04);
       --shadow-lifted: 0 12px 32px rgba(0, 0, 0, 0.08);
       --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
       --font-handwritten: 'Kalam', cursive;
@@ -160,6 +158,44 @@
       color: var(--text-primary);
     }
 
+    .comparison {
+      margin: 24px 0;
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      background: white;
+    }
+
+    .comparison table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .comparison th, .comparison td {
+      padding: 14px 18px;
+      text-align: left;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    }
+
+    .comparison th {
+      background: var(--accent-butter);
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .comparison td {
+      color: var(--text-secondary);
+      font-size: 14px;
+    }
+
+    .comparison tr:last-child td { border-bottom: none; }
+    .comparison tr:hover td { background: rgba(255, 243, 205, 0.3); }
+
+    .check { color: #22c55e; font-weight: 600; }
+    .cross { color: #ef4444; }
+    .neutral { color: var(--text-muted); }
+
     .feature-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -268,6 +304,7 @@
       .card { padding: 24px; }
       h1 { font-size: 26px; }
       .feature-grid { grid-template-columns: 1fr; }
+      .comparison th, .comparison td { padding: 10px 12px; font-size: 13px; }
     }
   </style>
 </head>
@@ -278,33 +315,73 @@
       <span class="brand-name">NurseQuizAI</span>
     </div>
 
-    <div class="eyebrow">AI NCLEX Question Generator</div>
-    <h1>Turn Your Nursing Notes Into <span class="highlight">NCLEX Questions</span> in 30 Seconds</h1>
+    <div class="eyebrow">Nursify AI Alternative</div>
+    <h1>A Smarter Alternative: NCLEX Prep From <span class="highlight">YOUR Notes</span></h1>
 
     <p class="lead">
-      Upload a PDF, PowerPoint, or Word doc and instantly get NCLEX-style practice questions including SATA, prioritization, and clinical judgment.
+      Unlike generic question banks, NurseQuizAI generates personalized NCLEX practice from your actual study materials. Upload your notes, get custom quizzes.
     </p>
 
     <div class="ctas">
-      <a href="/signup" class="btn-primary">Upload Your Notes Free</a>
+      <a href="/signup" class="btn-primary">Try Free</a>
+    </div>
+
+    <div class="comparison">
+      <table>
+        <tr>
+          <th>Feature</th>
+          <th>NurseQuizAI</th>
+          <th>Nursify AI</th>
+        </tr>
+        <tr>
+          <td>Uses YOUR notes</td>
+          <td><span class="check">Yes</span></td>
+          <td><span class="cross">No</span></td>
+        </tr>
+        <tr>
+          <td>Generates custom questions</td>
+          <td><span class="check">Yes</span></td>
+          <td><span class="cross">No</span></td>
+        </tr>
+        <tr>
+          <td>Flashcards from uploads</td>
+          <td><span class="check">Yes</span></td>
+          <td><span class="cross">No</span></td>
+        </tr>
+        <tr>
+          <td>Audio summaries</td>
+          <td><span class="check">Yes</span></td>
+          <td><span class="neutral">-</span></td>
+        </tr>
+        <tr>
+          <td>SATA questions</td>
+          <td><span class="check">Yes</span></td>
+          <td><span class="check">Yes</span></td>
+        </tr>
+        <tr>
+          <td>Free tier</td>
+          <td><span class="check">Yes</span></td>
+          <td><span class="check">Yes</span></td>
+        </tr>
+      </table>
     </div>
 
     <div class="feature-grid">
       <div class="feature-card">
-        <div class="feature-icon pink">📝</div>
-        <span class="feature-text">Generate 10+ NCLEX questions from one upload</span>
+        <div class="feature-icon pink">📚</div>
+        <span class="feature-text">Your notes = your weak areas covered</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon green">✓</div>
-        <span class="feature-text">SATA, prioritization & clinical judgment included</span>
+        <div class="feature-icon green">🎯</div>
+        <span class="feature-text">Not limited to pre-made question banks</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon blue">💡</div>
-        <span class="feature-text">Get rationales for every answer</span>
+        <div class="feature-icon blue">🔄</div>
+        <span class="feature-text">Multiple formats: quiz, flashcard, audio, study sheet</span>
       </div>
       <div class="feature-card">
-        <div class="feature-icon yellow">🎧</div>
-        <span class="feature-text">Also creates flashcards, audio & study sheets</span>
+        <div class="feature-icon yellow">✓</div>
+        <span class="feature-text">NCLEX-style SATA and clinical reasoning</span>
       </div>
     </div>
 
@@ -316,21 +393,21 @@
     <div class="faq">
       <h3>FAQ</h3>
       <div class="faq-item">
-        <strong>How many questions can I generate?</strong>
-        <p>10+ NCLEX-style questions per file upload, including SATA and clinical reasoning formats.</p>
+        <strong>How is this different from Nursify?</strong>
+        <p>NurseQuizAI generates questions from YOUR uploaded notes, not a generic question bank. You study what you need to study.</p>
       </div>
       <div class="faq-item">
-        <strong>What file types work?</strong>
-        <p>PDF, PowerPoint, Word docs, and images of your notes.</p>
+        <strong>Can I still use pre-made questions?</strong>
+        <p>Yes, try our sample quizzes without uploading anything. But the real power is personalized practice from your content.</p>
       </div>
       <div class="faq-item">
-        <strong>Is it free?</strong>
-        <p>Yes - try sample quizzes and upload files to generate questions for free.</p>
+        <strong>Is there a free trial?</strong>
+        <p>Yes - sample quizzes and file uploads are free to try.</p>
       </div>
     </div>
 
     <div class="links">
-      <a href="/nursify-ai-alternative">Nursify AI Alternative</a>
+      <a href="/ai-nclex-question-generator">AI NCLEX Question Generator</a>
       <a href="/best-free-ai-nursing-students">Best Free AI for Nursing</a>
       <a href="/quizlet-alternative-nursing">Quizlet Alternative</a>
       <a href="/anki-alternative-nclex">Anki Alternative</a>
