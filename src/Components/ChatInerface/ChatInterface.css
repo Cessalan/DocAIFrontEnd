@@ -1486,6 +1486,265 @@ body.dark-mode .nursing-icon {
     color: #6b7280;
   }
 
+  /* ============================================
+     PRE-UPLOAD ACTION BUTTONS
+     Colorful sticky-note style buttons shown before upload
+     Positioned above the chat input area (fixed position like input-area)
+     ============================================ */
+  .pre-upload-actions-container {
+    display: flex;
+    justify-content: flex-start; /* Align to start like input-area content */
+    position: fixed;
+    bottom: 145px; /* Space above the input area */
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-width: 800px; /* Match input-area max-width */
+    margin: 0 auto; /* Center like input-area */
+    padding: 0 32px 16px; /* Match input-area horizontal padding */
+    z-index: 29;
+    box-sizing: border-box;
+  }
+
+  /* Adjust pre-upload buttons position when sidebar rail is visible */
+  .main-content.rail-shifted .pre-upload-actions-container {
+    left: 60px;
+    width: calc(100% - 60px);
+  }
+
+  /* Adjust pre-upload buttons position when full sidebar is open */
+  .main-content.shifted .pre-upload-actions-container {
+    left: 320px;
+    width: calc(100% - 320px);
+  }
+
+  .pre-upload-buttons {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start; /* Align buttons to start */
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .pre-upload-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 12px 7px 9px;
+    border: 1.5px solid rgba(100, 100, 100, 0.12);
+    border-radius: 8px 10px 8px 9px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06), 0 2px 8px rgba(0, 0, 0, 0.04);
+    min-height: 34px;
+    font-family: inherit;
+  }
+
+  /* Slight rotations for organic feel */
+  .pre-upload-btn:nth-child(1) { transform: rotate(-0.5deg); }
+  .pre-upload-btn:nth-child(2) { transform: rotate(0.5deg); }
+  .pre-upload-btn:nth-child(3) { transform: rotate(-0.3deg); }
+  .pre-upload-btn:nth-child(4) { transform: rotate(0.4deg); }
+  .pre-upload-btn:nth-child(5) { transform: rotate(-0.4deg); }
+
+  .pre-upload-btn:hover {
+    transform: translateY(-3px) rotate(0deg) scale(1.02);
+    box-shadow: 3px 3px 0px rgba(60, 60, 60, 0.08), 0 6px 16px rgba(0, 0, 0, 0.08);
+  }
+
+  .pre-upload-btn:active {
+    transform: translateY(-1px) scale(0.98);
+    box-shadow: 1px 1px 0px rgba(60, 60, 60, 0.06), 0 2px 4px rgba(0, 0, 0, 0.04);
+  }
+
+  .pre-upload-btn .action-label {
+    font-size: 12px;
+    font-weight: 500;
+    color: #3d3d3d;
+    white-space: nowrap;
+    line-height: 1.2;
+  }
+
+  .pre-upload-btn .action-icon-circle {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 5px 6px 5px 5px;
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    flex-shrink: 0;
+  }
+
+  .pre-upload-btn .action-icon-circle svg {
+    width: 13px;
+    height: 13px;
+  }
+
+  .pre-upload-btn:hover .action-icon-circle {
+    transform: rotate(-10deg) scale(1.1);
+  }
+
+  /* All pre-upload buttons - Neutral muted style */
+  .pre-upload-btn.action-quiz,
+  .pre-upload-btn.action-flashcards,
+  .pre-upload-btn.action-studysheet,
+  .pre-upload-btn.action-audio,
+  .pre-upload-btn.action-mindmap {
+    background: #ffffff;
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .pre-upload-btn.action-quiz:hover,
+  .pre-upload-btn.action-flashcards:hover,
+  .pre-upload-btn.action-studysheet:hover,
+  .pre-upload-btn.action-audio:hover,
+  .pre-upload-btn.action-mindmap:hover {
+    background: #fafafa;
+    border-color: rgba(0, 0, 0, 0.15);
+  }
+
+  /* Icon circles - subtle gray with muted icon colors */
+  .pre-upload-btn.action-quiz .action-icon-circle,
+  .pre-upload-btn.action-flashcards .action-icon-circle,
+  .pre-upload-btn.action-studysheet .action-icon-circle,
+  .pre-upload-btn.action-audio .action-icon-circle,
+  .pre-upload-btn.action-mindmap .action-icon-circle {
+    background: rgba(0, 0, 0, 0.05);
+    color: #666666;
+  }
+
+  /* Staggered entrance animation */
+  .pre-upload-btn {
+    animation: preUploadBtnIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55) backwards;
+  }
+  .pre-upload-btn:nth-child(1) { animation-delay: 0.1s; }
+  .pre-upload-btn:nth-child(2) { animation-delay: 0.15s; }
+  .pre-upload-btn:nth-child(3) { animation-delay: 0.2s; }
+  .pre-upload-btn:nth-child(4) { animation-delay: 0.25s; }
+  .pre-upload-btn:nth-child(5) { animation-delay: 0.3s; }
+
+  @keyframes preUploadBtnIn {
+    0% {
+      opacity: 0;
+      transform: translateY(15px) scale(0.9);
+    }
+    60% {
+      transform: translateY(-3px) scale(1.02);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  /* Dark mode for pre-upload buttons */
+  body.dark-mode .pre-upload-btn {
+    border-color: rgba(255, 255, 255, 0.1);
+    box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.2), 0 2px 8px rgba(0, 0, 0, 0.15);
+  }
+
+  body.dark-mode .pre-upload-btn:hover {
+    box-shadow: 3px 3px 0px rgba(0, 0, 0, 0.25), 0 6px 16px rgba(0, 0, 0, 0.2);
+  }
+
+  body.dark-mode .pre-upload-btn .action-label {
+    color: #e0e0e0;
+  }
+
+  /* Dark mode - neutral style for all buttons */
+  body.dark-mode .pre-upload-btn.action-quiz,
+  body.dark-mode .pre-upload-btn.action-flashcards,
+  body.dark-mode .pre-upload-btn.action-studysheet,
+  body.dark-mode .pre-upload-btn.action-audio,
+  body.dark-mode .pre-upload-btn.action-mindmap {
+    background: #2a2a2a;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+
+  body.dark-mode .pre-upload-btn.action-quiz .action-icon-circle,
+  body.dark-mode .pre-upload-btn.action-flashcards .action-icon-circle,
+  body.dark-mode .pre-upload-btn.action-studysheet .action-icon-circle,
+  body.dark-mode .pre-upload-btn.action-audio .action-icon-circle,
+  body.dark-mode .pre-upload-btn.action-mindmap .action-icon-circle {
+    background: rgba(255, 255, 255, 0.1);
+    color: #a0a0a0;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 600px) {
+    .pre-upload-actions-container {
+      padding: 0 16px 12px;
+      bottom: 110px;
+    }
+
+    /* Override desktop sidebar adjustments on mobile */
+    .main-content.rail-shifted .pre-upload-actions-container,
+    .main-content.shifted .pre-upload-actions-container {
+      left: 0;
+      width: 100%;
+    }
+
+    .pre-upload-buttons {
+      gap: 8px;
+    }
+
+    .pre-upload-btn {
+      padding: 9px 14px 9px 10px;
+      gap: 7px;
+      min-height: 38px;
+    }
+
+    .pre-upload-btn .action-icon-circle {
+      width: 26px;
+      height: 26px;
+      min-width: 26px;
+    }
+
+    .pre-upload-btn .action-icon-circle svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .pre-upload-btn .action-label {
+      font-size: 12px;
+    }
+  }
+
+  @media (max-width: 400px) {
+    .pre-upload-actions-container {
+      padding: 0 12px 10px;
+      bottom: 100px;
+    }
+
+    .pre-upload-buttons {
+      gap: 6px;
+    }
+
+    .pre-upload-btn {
+      padding: 8px 12px 8px 9px;
+      gap: 6px;
+      min-height: 36px;
+    }
+
+    .pre-upload-btn .action-icon-circle {
+      width: 24px;
+      height: 24px;
+      min-width: 24px;
+    }
+
+    .pre-upload-btn .action-icon-circle svg {
+      width: 13px;
+      height: 13px;
+    }
+
+    .pre-upload-btn .action-label {
+      font-size: 11px;
+    }
+  }
+
   /* Exam-linked empty state - compact */
   .empty-chat-state.exam-linked {
     display: flex;

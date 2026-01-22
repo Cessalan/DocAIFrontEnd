@@ -226,6 +226,9 @@ const ChatInterface = ({
   const [pendingStudyDocs, setPendingStudyDocs] = useState([]);
   const [pendingStudyTopics, setPendingStudyTopics] = useState([]);
 
+  // Pre-upload action selection (when user picks action before uploading)
+  const [pendingStudyAction, setPendingStudyAction] = useState(null);
+
   /**
  * activeQuizProgress structure:
  * {
@@ -286,6 +289,8 @@ const ChatInterface = ({
   const uploadInsightsAccumulatorRef = useRef([]);
   // Track the latest requested chat ID to prevent stale async responses
   const latestRequestedChatIdRef = useRef(null);
+  // Track pre-selected study action (ref for async callback access)
+  const pendingStudyActionRef = useRef(null);
 
   // Track if user is at bottom of chat
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -2551,6 +2556,44 @@ const ChatInterface = ({
           break; // Skip creating post-upload message - saves tokens and goes straight to study
         }
 
+        // Check if user pre-selected a study action before uploading
+        if (pendingStudyActionRef.current) {
+          devLog('🎯 Pre-selected action detected:', pendingStudyActionRef.current);
+          const actionToTrigger = pendingStudyActionRef.current;
+          pendingStudyActionRef.current = null; // Clear ref immediately
+          setPendingStudyAction(null); // Clear state too
+
+          // Create the post-upload message with showActions: false (since we're auto-triggering)
+          const autoTriggerMsgId = `post-upload-${Date.now()}`;
+          const autoTriggerMsg = {
+            id: autoTriggerMsgId,
+            role: 'assistant',
+            type: 'post_upload_actions',
+            content: update.message,
+            topics: update.topics || [],
+            filenames: update.filenames || [],
+            actions: update.actions || [],
+            showActions: false, // Don't show buttons since we're auto-triggering
+            timestamp: Date.now()
+          };
+
+          // Add message to chat first
+          setChatMessages(prev => [...prev, autoTriggerMsg]);
+
+          // Save to Firebase
+          AppendToChat(chatId, {
+            ...autoTriggerMsg,
+            showActions: false
+          }).catch(err => console.error('❌ Failed to save auto-trigger post-upload:', err));
+
+          // Trigger the pre-selected action after a short delay
+          setTimeout(() => {
+            handlePreSelectedAction(actionToTrigger, autoTriggerMsg);
+          }, 200);
+
+          break; // Skip the normal post-upload flow
+        }
+
         // Create a new assistant message with the friendly text + actions
         const postUploadMsgId = `post-upload-${Date.now()}`;
         const postUploadMsg = {
@@ -2821,6 +2864,75 @@ const ChatInterface = ({
     await handleSendNewUserMessage(null, quizPrompt);
   };
 
+  // ============================================
+  // HANDLE PRE-SELECTED ACTION
+  // When user picks an action BEFORE uploading, this triggers it automatically
+  // Key difference: Quiz skips the mode selector and uses default (nclex)
+  // ============================================
+  const handlePreSelectedAction = async (actionId, messageData) => {
+    devLog('🎯 Executing pre-selected action:', actionId);
+
+    const topicsStr = messageData.topics?.length > 0
+      ? messageData.topics.join(', ')
+      : 'the uploaded material';
+
+    // For quiz: auto-generate with default NCLEX mode (skip modal)
+    if (actionId === 'quiz') {
+      const quizPrompt = t('postUpload.nclexQuizPrompt', {
+        topics: topicsStr,
+        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}. Use clinical scenarios testing judgment.`
+      });
+      devLog('🎯 Auto-triggering quiz with NCLEX mode');
+      await handleSendNewUserMessage(null, quizPrompt);
+      return;
+    }
+
+    // For audio: show the AudioConfirmCard (user still picks duration)
+    if (actionId === 'audio') {
+      const audioOptionsId = `audio-options-${Date.now()}`;
+      setChatMessages(prev => [
+        ...prev,
+        {
+          id: audioOptionsId,
+          role: 'assistant',
+          type: 'audio_options',
+          topic: topicsStr,
+          intent: 'teach',
+          styleName: 'Full Lesson',
+          styleDescription: 'Structured lesson with examples and clinical context',
+          durations: ['2min', '5min', '10min'],
+          defaultDuration: '5min',
+          timestamp: new Date()
+        }
+      ]);
+      return;
+    }
+
+    // For study journey: open the study modal
+    if (actionId === 'studyjourney') {
+      const docsForStudy = (messageData.filenames || []).map((filename, idx) => ({
+        id: `doc-${idx}`,
+        name: filename,
+        filename: filename
+      }));
+      setPendingStudyDocs(docsForStudy);
+      setShowStartStudyModal(true);
+      return;
+    }
+
+    // For flashcards, studysheet, mindmap: send the prompt directly
+    const prompts = {
+      flashcards: t('postUpload.flashcardsPrompt', { topics: topicsStr }),
+      studysheet: t('postUpload.studysheetPrompt'),
+      mindmap: t('postUpload.mindmapPrompt', { topics: topicsStr })
+    };
+
+    const promptToSend = prompts[actionId];
+    if (promptToSend) {
+      devLog('🎯 Auto-triggering action:', actionId, 'with prompt:', promptToSend);
+      await handleSendNewUserMessage(null, promptToSend);
+    }
+  };
 
 
   // --- Updated handleSummary function using streaming logic ---
@@ -3153,6 +3265,67 @@ const ChatInterface = ({
     }
   };
 
+  // ============================================
+  // PRE-UPLOAD ACTION HELPERS
+  // Icons and labels for the pre-upload study option buttons
+  // ============================================
+  const getPreUploadIcon = (actionId) => {
+    switch (actionId) {
+      case 'quiz':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="4" y="4" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M8 10L10 12L16 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
+      case 'flashcards':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="3" y="6" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="9" y="9" width="12" height="9" rx="2" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        );
+      case 'audio':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M12 4V20M8 8V16M4 11V13M16 6V18M20 9V15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        );
+      case 'studysheet':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8l-6-6z" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M14 2v6h6M8 13h8M8 17h6" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+          </svg>
+        );
+      case 'mindmap':
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <rect x="2" y="9" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="18" y="2" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <rect x="18" y="16" width="4" height="6" rx="1" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M6 12H12" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M12 5V19" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M12 5H18" stroke="currentColor" strokeWidth="1.5"/>
+            <path d="M12 19H18" stroke="currentColor" strokeWidth="1.5"/>
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
+
+  const getPreUploadLabel = (actionId) => {
+    const labels = {
+      quiz: t('postUpload.quizLabel', 'Quiz me'),
+      flashcards: t('postUpload.flashcardsLabel', 'Create flashcards'),
+      studysheet: t('postUpload.studysheetLabel', 'Study sheet'),
+      audio: t('postUpload.audioLabel', 'Audio summary'),
+      mindmap: t('postUpload.mindmapLabel', 'Concept map')
+    };
+    return labels[actionId] || actionId;
+  };
+
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <ProgressDashboard />
@@ -3258,10 +3431,7 @@ const ChatInterface = ({
           <div className="empty-chat-state">
             <div className="empty-chat-single-cta">
               {/* Main upload CTA - defaults to Study Journey */}
-              <div className="empty-cta-card" onClick={() => {
-                documentFileInputRef.current?.click();
-                window._pendingStudyJourney = true;
-              }}>
+              <div className="empty-cta-card">
                 <div className="empty-cta-icon">
                   <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
                     {/* Graduation cap */}
@@ -3277,7 +3447,11 @@ const ChatInterface = ({
                 </div>
                 <h2 className="empty-cta-title">{t('chat.studyPlanStartsHere', 'Your study plan starts here')}</h2>
                 <p className="empty-cta-subtitle">{t('chat.uploadWeHandle', "Upload your notes. We'll take care of the rest.")}</p>
-                <button className="empty-cta-button">
+                <button className="empty-cta-button" onClick={(e) => {
+                  e.stopPropagation();
+                  documentFileInputRef.current?.click();
+                  window._pendingStudyJourney = true;
+                }}>
                   <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
@@ -3773,6 +3947,32 @@ const ChatInterface = ({
           )}
         </div>
 
+
+        {/* Pre-upload study options - shown only when chat is empty, positioned above input */}
+        {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData && (
+          <div className="pre-upload-actions-container">
+            <div className="pre-upload-buttons">
+              {['quiz', 'flashcards', 'studysheet', 'audio', 'mindmap'].map(actionId => (
+                <button
+                  key={actionId}
+                  className={`pre-upload-btn action-${actionId}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setPendingStudyAction(actionId);
+                    pendingStudyActionRef.current = actionId;
+                    documentFileInputRef.current?.click();
+                  }}
+                  type="button"
+                >
+                  <span className="action-icon-circle">
+                    {getPreUploadIcon(actionId)}
+                  </span>
+                  <span className="action-label">{getPreUploadLabel(actionId)}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Input Area */}
         <form className="input-area" onSubmit={handleSendNewUserMessage}>
