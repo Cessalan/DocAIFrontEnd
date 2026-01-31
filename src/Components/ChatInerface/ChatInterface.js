@@ -79,7 +79,8 @@ import StudyGuideGenerator from './StudyGuideGenerator.js';
 import StudySheetLivePreview from './StudySheetLivePreview.js';
 import StudySheetSimple from './StudySheetSimple.js';
 import StickyQuizProgress from './StickyQuizProgress';
-import SuggestedPrompts from './SuggestedPrompts';
+// DISABLED: Suggested prompts feature - see comment where component was rendered
+// import SuggestedPrompts from './SuggestedPrompts';
 import AudioConfirmCard from './AudioConfirmCard';
 import ChatAudioPlayer from './ChatAudioPlayer';
 
@@ -3914,14 +3915,20 @@ const ChatInterface = ({
             }} />
           )}
 
-          {/*  //NEW: Suggested Prompts - Above Input  */}
-          <div className='message ai-message'>
+          {/* ═══════════════════════════════════════════════════════════════════
+              DISABLED: Suggested Prompts - Above Input
+              ═══════════════════════════════════════════════════════════════════
+              Commenting out to save tokens - analytics showed low usage.
+              Backend no longer sends suggested_prompts, so this would be empty anyway.
+              Can be re-enabled by uncommenting the code below.
+              ═══════════════════════════════════════════════════════════════════ */}
+          {/* <div className='message ai-message'>
             <SuggestedPrompts
               suggestions={suggestedPrompts}
               onSuggestionClick={handleSuggestionClick}
               isLoading={isAiTyping}
             />
-          </div>
+          </div> */}
 
 
           {/* Scroll to Bottom Button */}
