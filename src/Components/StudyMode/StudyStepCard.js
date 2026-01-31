@@ -13,6 +13,7 @@ import StudyAudioCard from './StudyAudioCard';
  * @param {Object} savedProgress - Saved progress for resuming (flashcard/quiz)
  * @param {boolean} isLoading - Whether content is being generated
  * @param {boolean} isReviewMode - Whether this is a review of completed content (gives only 5 XP)
+ * @param {boolean} viewOnly - Dev mode: view without tracking progress
  * @param {boolean} isGeneratingAudio - Whether audio is being generated
  * @param {string} audioGeneratingMessage - Message during audio generation
  * @param {Function} onAnswer - Callback for quiz answers
@@ -27,6 +28,7 @@ const StudyStepCard = ({
   savedProgress = null,
   isLoading = false,
   isReviewMode = false,
+  viewOnly = false,
   isGeneratingAudio = false,
   audioGeneratingMessage = '',
   onAnswer,
@@ -82,6 +84,7 @@ const StudyStepCard = ({
           content={content}
           savedProgress={savedProgress}
           isReviewMode={isReviewMode}
+          viewOnly={viewOnly}
           onAnswer={onAnswer}
           onContinue={onContinue}
           onExit={onExit}
@@ -94,6 +97,7 @@ const StudyStepCard = ({
           content={content}
           savedProgress={savedProgress}
           isReviewMode={isReviewMode}
+          viewOnly={viewOnly}
           onReview={onReview}
           onContinue={onContinue}
           onExit={onExit}

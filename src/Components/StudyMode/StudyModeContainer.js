@@ -21,6 +21,9 @@ import {
 } from '../../Services/StudySessionService';
 import './StudyMode.css';
 
+// Dev mode flag - only true in development builds
+const isDev = process.env.NODE_ENV === 'development';
+
 // Mascots that can be randomly selected (excluding NurseQuiz and Brain which have special states)
 const SIDE_MASCOTS = [
   { Component: NurseQuizMascot, hasEmotions: true },
@@ -53,7 +56,8 @@ const StudyModeContainer = ({
   sidebarOpen = true,
   onCloseSidebar,
   onExit,
-  onComplete
+  onComplete,
+  viewOnly = false // Dev mode: view without triggering reviews or saving progress
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n.language || 'en';
@@ -245,31 +249,37 @@ const StudyModeContainer = ({
         handleStreamProgress
       );
 
-      // Save the content hash for anti-repeat
-      if (result.hash) {
-        await addAskedHash(chatId, result.hash);
-        setAskedHashes(prev => [...prev, result.hash]);
+      // Skip saving in viewOnly mode
+      if (!viewOnly) {
+        // Save the content hash for anti-repeat
+        if (result.hash) {
+          await addAskedHash(chatId, result.hash);
+          setAskedHashes(prev => [...prev, result.hash]);
+        }
+
+        // Save content as a message and link to node
+        const messageId = await saveNodeContent(
+          chatId,
+          node.id,
+          result.content,
+          node.type
+        );
+
+        // Update node with messageId
+        await updateNodeStatus(chatId, node.id, { messageId });
+
+        // Update local state
+        setNodes(prev => prev.map(n =>
+          n.id === node.id ? { ...n, messageId } : n
+        ));
+
+        currentMessageIdRef.current = messageId;
+      } else {
+        console.log('👁️ Dev viewOnly mode - skipping save operations');
       }
-
-      // Save content as a message and link to node
-      const messageId = await saveNodeContent(
-        chatId,
-        node.id,
-        result.content,
-        node.type
-      );
-
-      // Update node with messageId
-      await updateNodeStatus(chatId, node.id, { messageId });
-
-      // Update local state
-      setNodes(prev => prev.map(n =>
-        n.id === node.id ? { ...n, messageId } : n
-      ));
 
       // Set final content (removes _isStreaming flag)
       setCurrentContent(result.content);
-      currentMessageIdRef.current = messageId;
 
       // Set mascot back to nurse
       setMascotState({
@@ -291,7 +301,7 @@ const StudyModeContainer = ({
     } finally {
       setIsLoadingContent(false);
     }
-  }, [chatId, askedHashes, language, onCloseSidebar]);
+  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly]);
 
   // Handle quiz answer
   const handleAnswer = useCallback((answerData) => {
@@ -319,8 +329,9 @@ const StudyModeContainer = ({
     }
 
     // Save quiz progress if we have a messageId (use ref for latest value)
+    // Skip saving in viewOnly mode
     const messageId = currentMessageIdRef.current;
-    if (messageId && answerData.progress) {
+    if (messageId && answerData.progress && !viewOnly) {
       saveQuizProgress(chatId, messageId, answerData.progress);
 
       // Calculate and update node progress percentage for the overview ring
@@ -340,7 +351,7 @@ const StudyModeContainer = ({
         updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
       }
     }
-  }, [chatId, activeNodeId, currentContent]);
+  }, [chatId, activeNodeId, currentContent, viewOnly]);
 
   // Handle flashcard review
   const handleReview = useCallback((reviewData) => {
@@ -359,8 +370,9 @@ const StudyModeContainer = ({
     }
 
     // Save flashcard progress if we have a messageId (use ref for latest value)
+    // Skip saving in viewOnly mode
     const messageId = currentMessageIdRef.current;
-    if (messageId && reviewData.progress) {
+    if (messageId && reviewData.progress && !viewOnly) {
       console.log('💾 Calling saveFlashcardProgress with messageId:', messageId);
       saveFlashcardProgress(chatId, messageId, reviewData.progress);
 
@@ -378,10 +390,10 @@ const StudyModeContainer = ({
         // Also persist to Firestore
         updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
       }
-    } else {
+    } else if (!viewOnly) {
       console.log('⚠️ NOT saving progress - messageId:', messageId, 'progress:', !!reviewData.progress);
     }
-  }, [chatId, activeNodeId, currentContent]);
+  }, [chatId, activeNodeId, currentContent, viewOnly]);
 
   // Handle audio generation trigger
   const handleGenerateAudio = useCallback(async (audioConfig) => {
@@ -506,9 +518,16 @@ const StudyModeContainer = ({
   }, [onExit]);
 
   // Handle node selection from overview
-  // Shows confirmation dialog for completed nodes
+  // Shows confirmation dialog for completed nodes (unless in viewOnly mode)
   const handleNodeSelect = useCallback((node) => {
     console.log('📚 Node selected from overview:', node);
+
+    // In viewOnly mode (dev), skip confirmation and don't track as review
+    if (viewOnly) {
+      console.log('👁️ Dev viewOnly mode - viewing node without triggering review');
+      handleStartNode({ ...node, isReview: false, _viewOnly: true });
+      return;
+    }
 
     // If node is already done, show confirmation dialog
     if (node.status === 'done') {
@@ -519,7 +538,7 @@ const StudyModeContainer = ({
 
     // Otherwise, start the node directly
     handleStartNode(node);
-  }, [handleStartNode]);
+  }, [handleStartNode, viewOnly]);
 
   // Handle confirming review of completed node
   const handleConfirmReview = useCallback(() => {
@@ -550,6 +569,24 @@ const StudyModeContainer = ({
   if (view === 'overview') {
     return (
       <>
+        {/* Dev mode indicator */}
+        {viewOnly && isDev && (
+          <div style={{
+            position: 'fixed',
+            top: 10,
+            right: 10,
+            background: '#ff9800',
+            color: '#000',
+            padding: '6px 12px',
+            borderRadius: 4,
+            fontSize: 12,
+            fontWeight: 600,
+            zIndex: 9999,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.2)'
+          }}>
+            👁️ VIEW ONLY MODE
+          </div>
+        )}
         <StudyPlanOverview
           studyState={currentStudyState}
           onNodeSelect={handleNodeSelect}
@@ -619,6 +656,7 @@ const StudyModeContainer = ({
                 savedProgress={savedProgress}
                 isLoading={false}
                 isReviewMode={isReviewingNode}
+                viewOnly={viewOnly}
                 isGeneratingAudio={isGeneratingAudio}
                 audioGeneratingMessage={audioMessage}
                 onAnswer={handleAnswer}

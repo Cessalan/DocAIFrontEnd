@@ -1261,6 +1261,58 @@ body.dark-mode .study-card-close-btn:hover {
   justify-content: center;
 }
 
+/* Dev mode navigation arrows */
+.study-dev-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding: 8px 16px;
+  background: rgba(255, 152, 0, 0.1);
+  border: 1px dashed rgba(255, 152, 0, 0.4);
+  border-radius: 8px;
+}
+
+.study-dev-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: #ff9800;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.study-dev-nav-btn:hover:not(:disabled) {
+  background: #f57c00;
+  transform: scale(1.1);
+}
+
+.study-dev-nav-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.study-dev-nav-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.study-dev-nav-counter {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ff9800;
+  min-width: 60px;
+  text-align: center;
+}
+
 .study-flashcard-wrapper {
   perspective: 1000px;
   width: 100%;

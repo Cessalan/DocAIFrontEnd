@@ -3337,6 +3337,7 @@ const ChatInterface = ({
           studyState={studyState}
           sidebarOpen={sidebarOpen}
           onCloseSidebar={onCloseSidebar}
+          viewOnly={viewAllChatsMode} // Dev mode: view without triggering reviews
           onExit={() => {
             // Study sessions should always stay as study sessions
             // Exit means navigate away from this chat entirely

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { handleSignOut } from "../../Firebase/auth";
 import { db, auth } from "../../Firebase/config";
@@ -92,6 +92,9 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
   // State for file counts
   const [chatFileCounts, setChatFileCounts] = useState({});
 
+  // Track which chat IDs we've already loaded file counts for
+  const loadedFileCountsRef = useRef(new Set());
+
   // Function to load file count for a specific chat using existing loadFilesForChat
   const loadFileCountForChat = async (chatId) => {
     try {
@@ -103,19 +106,34 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
     }
   };
 
-  // Load file counts for all chats
-  const loadFileCountsForAllChats = async (chatList) => {
-    const counts = {};
+  // Load file counts only for NEW chats (not already loaded)
+  const loadFileCountsForNewChats = async (chatList) => {
+    // Find chats we haven't loaded yet
+    const newChats = chatList.filter(chat => !loadedFileCountsRef.current.has(chat.id));
 
-    // Use Promise.all to load counts concurrently
-    const countPromises = chatList.map(async (chat) => {
-      const count = await loadFileCountForChat(chat.id);
-      counts[chat.id] = count;
-      return { chatId: chat.id, count };
-    });
+    if (newChats.length === 0) return;
 
-    await Promise.all(countPromises);
-    setChatFileCounts(counts);
+    // Load counts for new chats only (batch of 3 at a time to avoid overwhelming browser)
+    const batchSize = 3;
+    for (let i = 0; i < newChats.length; i += batchSize) {
+      const batch = newChats.slice(i, i + batchSize);
+      const countPromises = batch.map(async (chat) => {
+        const count = await loadFileCountForChat(chat.id);
+        return { chatId: chat.id, count };
+      });
+
+      const results = await Promise.all(countPromises);
+
+      // Update state and tracking
+      setChatFileCounts(prev => {
+        const updated = { ...prev };
+        results.forEach(({ chatId, count }) => {
+          updated[chatId] = count;
+          loadedFileCountsRef.current.add(chatId);
+        });
+        return updated;
+      });
+    }
   };
 
   // Load all chats AND their file counts
@@ -145,14 +163,18 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
       }));
       setChats(updatedChats);
 
-      // Load file counts for all chats
+      // Only load file counts for NEW chats (prevents repeated Storage calls on every Firestore update)
       if (updatedChats.length > 0) {
-        await loadFileCountsForAllChats(updatedChats);
+        await loadFileCountsForNewChats(updatedChats);
       }
     });
 
     // Cleanup listener on unmount
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      // Clear the loaded tracking when dependencies change
+      loadedFileCountsRef.current.clear();
+    };
   }, [user, viewAllChats, isDevelopment]); // Re-run when viewAllChats changes
   
 

@@ -51,11 +51,12 @@ const parseFlashcardText = (text) => {
  * @param {Object} content - Flashcard content { cards: [{ front, back }, ...] } or legacy { front, back }
  * @param {Object} savedProgress - Saved progress for resuming { cardStatuses, queueIndex, isReviewRound }
  * @param {boolean} isReviewMode - If true, this is a review of completed content (only 5 XP)
+ * @param {boolean} viewOnly - Dev mode: view without tracking progress, shows nav arrows
  * @param {Function} onReview - Callback when user reviews (got it / need review)
  * @param {Function} onContinue - Callback when user completes all cards
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onReview, onContinue, onExit }) => {
+const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onReview, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Debug: log savedProgress on every render
@@ -112,6 +113,17 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
     // Skip if no cards yet
     if (totalCards === 0) return;
 
+    // In viewOnly mode, always use a simple sequential queue for all cards
+    if (viewOnly) {
+      const fullQueue = cards.map((_, i) => i);
+      if (cardQueue.length !== fullQueue.length) {
+        console.log('👁️ viewOnly mode - initializing full card queue');
+        setCardQueue(fullQueue);
+        setQueueIndex(0);
+      }
+      return;
+    }
+
     // If we have saved progress to restore
     if (savedProgress?.cardStatuses && Object.keys(savedProgress.cardStatuses).length > 0) {
       if (!hasRestoredProgress) {
@@ -154,7 +166,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
         }
       }
     }
-  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress, waitingForNextCard, queueIndex, isReviewRound]);
+  }, [savedProgress, cards, totalCards, cardQueue.length, hasRestoredProgress, waitingForNextCard, queueIndex, isReviewRound, viewOnly]);
 
   // Current card from queue
   const currentQueuePosition = cardQueue[queueIndex];
@@ -303,6 +315,32 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
     </svg>
   );
 
+  // Arrow left icon (for dev nav)
+  const ArrowLeftIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="19" y1="12" x2="5" y2="12" />
+      <polyline points="12 19 5 12 12 5" />
+    </svg>
+  );
+
+  // Dev mode navigation - go to previous card
+  const handleDevPrev = () => {
+    if (queueIndex > 0) {
+      setQueueIndex(queueIndex - 1);
+      setIsFlipped(false);
+      setHasReviewed(false);
+    }
+  };
+
+  // Dev mode navigation - go to next card
+  const handleDevNext = () => {
+    if (queueIndex < totalCards - 1) {
+      setQueueIndex(queueIndex + 1);
+      setIsFlipped(false);
+      setHasReviewed(false);
+    }
+  };
+
   const handleFlip = () => {
     setIsFlipped(!isFlipped);
     playFlipSound();
@@ -445,7 +483,8 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
       />
 
       {/* Show celebration/transition INSIDE the card content, or show flashcard content */}
-      {showMilestoneCelebration ? (
+      {/* In viewOnly mode, skip all celebrations and show cards directly */}
+      {!viewOnly && showMilestoneCelebration ? (
         <div className="study-card-content">
           <StudyCelebration
             type="milestone"
@@ -456,7 +495,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
             onContinue={handleMilestoneContinue}
           />
         </div>
-      ) : showCompletionCelebration ? (
+      ) : !viewOnly && showCompletionCelebration ? (
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
@@ -467,7 +506,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
             onContinue={handleCompletionContinue}
           />
         </div>
-      ) : showReviewTransition ? (
+      ) : !viewOnly && showReviewTransition ? (
         <div className="study-card-content">
           <div className="study-review-transition">
             <div className="review-transition-icon">
@@ -488,7 +527,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
             </button>
           </div>
         </div>
-      ) : (isStreaming && totalCards === 0) || waitingForNextCard || (cardQueue.length === 0 && !allMastered) ? (
+      ) : !viewOnly && ((isStreaming && totalCards === 0) || waitingForNextCard || (cardQueue.length === 0 && !allMastered)) ? (
         // Show loading state while waiting for first flashcard, next card to stream in, or queue not ready
         <div className="study-card-content">
           <div className="study-streaming-loading">
@@ -519,6 +558,31 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
           )}
 
           <div className="study-card-content study-flashcard-content-area">
+            {/* Dev mode navigation arrows */}
+            {viewOnly && (
+              <div className="study-dev-nav">
+                <button
+                  className="study-dev-nav-btn prev"
+                  onClick={handleDevPrev}
+                  disabled={queueIndex === 0}
+                  title="Previous card"
+                >
+                  <ArrowLeftIcon />
+                </button>
+                <span className="study-dev-nav-counter">
+                  {queueIndex + 1} / {totalCards}
+                </span>
+                <button
+                  className="study-dev-nav-btn next"
+                  onClick={handleDevNext}
+                  disabled={queueIndex >= totalCards - 1}
+                  title="Next card"
+                >
+                  <ArrowRightIcon />
+                </button>
+              </div>
+            )}
+
             {/* Flip card */}
             <div className="study-flashcard-wrapper">
               <div
@@ -553,8 +617,8 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
                 </div>
               </div>
 
-              {/* Review actions - only show when flipped and not yet reviewed */}
-              {isFlipped && !hasReviewed && (
+              {/* Review actions - only show when flipped and not yet reviewed (hide in viewOnly mode) */}
+              {!viewOnly && isFlipped && !hasReviewed && (
                 <div className="study-flashcard-actions">
                   <button
                     className="study-flashcard-btn got-it"
@@ -573,8 +637,8 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
                 </div>
               )}
 
-              {/* Next card button - show after reviewing if not all mastered */}
-              {hasReviewed && !allMastered && (
+              {/* Next card button - show after reviewing if not all mastered (hide in viewOnly mode) */}
+              {!viewOnly && hasReviewed && !allMastered && (
                 <div className="study-flashcard-actions">
                   <button
                     className="study-flashcard-btn got-it"
@@ -588,8 +652,8 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, onRe
             </div>
           </div>
 
-          {/* Summary and Continue - show when all cards mastered */}
-          {allMastered && (
+          {/* Summary and Continue - show when all cards mastered (hide in viewOnly mode) */}
+          {!viewOnly && allMastered && (
             <div className="study-card-footer study-card-footer-stacked">
               <div className="study-completion-message">
                 {t('study.greatJob', "Great job! You've mastered all the cards.")}

@@ -11,11 +11,12 @@ import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilesto
  * @param {Object} content - Quiz content { questions: [{ question, options, correctIndex, rationale }, ...] } or legacy single question
  * @param {Object} savedProgress - Saved progress for resuming { questionStatuses, queueIndex, isReviewRound }
  * @param {boolean} isReviewMode - If true, this is a review of completed content (only 5 XP)
+ * @param {boolean} viewOnly - Dev mode: view without tracking progress, shows nav arrows
  * @param {Function} onAnswer - Callback when answer is submitted
  * @param {Function} onContinue - Callback when user completes all questions
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer, onContinue, onExit }) => {
+const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onAnswer, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Handle both new format { questions: [...] } and legacy format { question, options, ... }
@@ -64,6 +65,17 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
   useEffect(() => {
     if (totalQuestions === 0) return;
 
+    // In viewOnly mode, always use a simple sequential queue for all questions
+    if (viewOnly) {
+      const fullQueue = questions.map((_, i) => i);
+      if (questionQueue.length !== fullQueue.length) {
+        console.log('👁️ viewOnly mode - initializing full question queue');
+        setQuestionQueue(fullQueue);
+        setQueueIndex(0);
+      }
+      return;
+    }
+
     if (savedProgress?.questionStatuses && Object.keys(savedProgress.questionStatuses).length > 0) {
       if (!hasRestoredProgress) {
         console.log('📊 Restoring quiz progress:', savedProgress);
@@ -103,7 +115,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
         }
       }
     }
-  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex, isReviewRound]);
+  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex, isReviewRound, viewOnly]);
 
   // Current question from queue
   const currentQueuePosition = questionQueue[queueIndex];
@@ -543,7 +555,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
       />
 
       {/* Show celebration/transition INSIDE the card content, or show quiz content */}
-      {showMilestoneCelebration ? (
+      {/* In viewOnly mode, skip all celebrations and show questions directly */}
+      {!viewOnly && showMilestoneCelebration ? (
         <div className="study-card-content">
           <StudyCelebration
             type="milestone"
@@ -554,7 +567,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
             onContinue={handleMilestoneContinue}
           />
         </div>
-      ) : showCompletionCelebration ? (
+      ) : !viewOnly && showCompletionCelebration ? (
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
@@ -565,7 +578,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
             onContinue={handleCompletionContinue}
           />
         </div>
-      ) : showReviewTransition ? (
+      ) : !viewOnly && showReviewTransition ? (
         <div className="study-card-content">
           <div className="study-review-transition">
             <div className="review-transition-icon">
@@ -586,7 +599,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
             </button>
           </div>
         </div>
-      ) : (isStreaming && totalQuestions === 0) || waitingForNextQuestion ? (
+      ) : !viewOnly && ((isStreaming && totalQuestions === 0) || waitingForNextQuestion) ? (
         // Show loading state while waiting for first question or next question to stream in
         <div className="study-card-content">
           <div className="study-streaming-loading">
@@ -603,6 +616,51 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, onAnswer,
             <div className="study-review-badge">
               <RefreshIcon />
               <span>{t('study.reviewing', { count: questionQueue.length, defaultValue: `Reviewing ${questionQueue.length} question${questionQueue.length > 1 ? 's' : ''}` })}</span>
+            </div>
+          )}
+
+          {/* Dev mode navigation arrows */}
+          {viewOnly && (
+            <div className="study-dev-nav">
+              <button
+                className="study-dev-nav-btn prev"
+                onClick={() => {
+                  if (queueIndex > 0) {
+                    setQueueIndex(queueIndex - 1);
+                    setSelectedIndex(null);
+                    setShowFeedback(false);
+                    setShowFullRationale(false);
+                  }
+                }}
+                disabled={queueIndex === 0}
+                title="Previous question"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="19" y1="12" x2="5" y2="12" />
+                  <polyline points="12 19 5 12 12 5" />
+                </svg>
+              </button>
+              <span className="study-dev-nav-counter">
+                {queueIndex + 1} / {totalQuestions}
+              </span>
+              <button
+                className="study-dev-nav-btn next"
+                onClick={() => {
+                  if (queueIndex < totalQuestions - 1) {
+                    setQueueIndex(queueIndex + 1);
+                    setSelectedIndex(null);
+                    setShowFeedback(false);
+                    setShowFullRationale(false);
+                  }
+                }}
+                disabled={queueIndex >= totalQuestions - 1}
+                title="Next question"
+              >
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="12 5 19 12 12 19" />
+                </svg>
+              </button>
             </div>
           )}
 
