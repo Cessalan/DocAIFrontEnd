@@ -250,6 +250,32 @@ body.dark-mode .loading-text {
     }
 }
 
+/* Personalized Recommendation */
+.onboarding-recommendation {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.08), rgba(168, 85, 247, 0.08));
+    border: 1px solid rgba(99, 102, 241, 0.2);
+    border-radius: 16px;
+    padding: 20px 24px;
+    margin-bottom: 8px;
+    text-align: left;
+}
+
+body.dark-mode .onboarding-recommendation {
+    background: linear-gradient(135deg, rgba(129, 140, 248, 0.12), rgba(192, 132, 252, 0.12));
+    border-color: rgba(129, 140, 248, 0.25);
+}
+
+.recommendation-text {
+    font-size: 15px;
+    line-height: 1.6;
+    color: #4b5563;
+    margin: 0;
+}
+
+body.dark-mode .recommendation-text {
+    color: #d1d5db;
+}
+
 .onboarding-start-btn {
     background: linear-gradient(135deg, #6366f1, #a855f7);
     color: white;
@@ -273,6 +299,44 @@ body.dark-mode .loading-text {
 
 .onboarding-start-btn:active {
     transform: translateY(1px);
+}
+
+/* Upload button variant */
+.onboarding-upload-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.onboarding-upload-btn .upload-icon {
+    font-size: 20px;
+}
+
+/* Skip link (secondary action) */
+.onboarding-skip-link {
+    background: none;
+    border: none;
+    color: #9ca3af;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    margin-top: 16px;
+    padding: 8px 16px;
+    transition: color 0.2s ease;
+}
+
+.onboarding-skip-link:hover {
+    color: #6b7280;
+    text-decoration: underline;
+}
+
+body.dark-mode .onboarding-skip-link {
+    color: #6b7280;
+}
+
+body.dark-mode .onboarding-skip-link:hover {
+    color: #9ca3af;
 }
 
 /* Dev Mode Skip Button */

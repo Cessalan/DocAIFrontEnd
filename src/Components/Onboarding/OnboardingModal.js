@@ -1,13 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
-import { createUserProfile } from '../../Services/UserService';
+import { createUserProfile, getWowEffectConfig } from '../../Services/UserService';
 import './Onboarding.css';
 
-const OnboardingModal = () => {
+/**
+ * OnboardingModal - Captures user intent and guides them to their first action
+ *
+ * @param {function} onFilesSelected - Callback when user uploads files from onboarding
+ *   Called with (files: File[], actionType: string) where actionType is 'studyjourney', 'flashcards', etc.
+ */
+const OnboardingModal = ({ onFilesSelected }) => {
     const { t } = useTranslation();
     const { currentUser, setIsProfileComplete, setUserProfile } = useAuth();
     const [step, setStep] = useState(1);
+    const fileInputRef = useRef(null);
 
     // Development mode detection
     const isDevelopment = process.env.NODE_ENV === 'development';
@@ -64,6 +71,28 @@ const OnboardingModal = () => {
 
     const handleStartLearning = () => {
         setIsProfileComplete(true);
+    };
+
+    // Handle file selection from the upload button
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files || []);
+        if (files.length === 0) return;
+
+        const wowConfig = getWowEffectConfig(formData.studyGoal, formData.reviewFormat);
+        const actionType = wowConfig?.actionId || 'studyjourney';
+
+        // Pass files and action type to parent
+        if (onFilesSelected) {
+            onFilesSelected(files, actionType);
+        }
+
+        // Close onboarding
+        setIsProfileComplete(true);
+    };
+
+    // Trigger file input click
+    const handleUploadClick = () => {
+        fileInputRef.current?.click();
     };
 
     // Dev mode: Skip onboarding entirely
@@ -161,12 +190,50 @@ const OnboardingModal = () => {
                             <div className="step-content success-step">
                                 <div className="success-icon">🎉</div>
                                 <h2 className="onboarding-title">{t('onboarding.success.title')}</h2>
-                                <p className="onboarding-intro">{t('onboarding.success.message')}</p>
+
+                                {/* Personalized recommendation based on their choices */}
+                                {(() => {
+                                    const wowConfig = getWowEffectConfig(formData.studyGoal, formData.reviewFormat);
+                                    if (wowConfig) {
+                                        return (
+                                            <div className="onboarding-recommendation">
+                                                <p className="recommendation-text">
+                                                    {t(`onboarding.recommendation.${wowConfig.actionId}`, {
+                                                        goal: formData.studyGoal,
+                                                        defaultValue: t('onboarding.success.message')
+                                                    })}
+                                                </p>
+                                            </div>
+                                        );
+                                    }
+                                    return <p className="onboarding-intro">{t('onboarding.success.message')}</p>;
+                                })()}
+
+                                {/* Hidden file input */}
+                                <input
+                                    type="file"
+                                    ref={fileInputRef}
+                                    onChange={handleFileChange}
+                                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.ppt,.pptx"
+                                    multiple
+                                    style={{ display: 'none' }}
+                                />
+
+                                {/* Primary CTA: Upload files */}
                                 <button
-                                    className="onboarding-start-btn"
+                                    className="onboarding-start-btn onboarding-upload-btn"
+                                    onClick={handleUploadClick}
+                                >
+                                    <span className="upload-icon">📄</span>
+                                    {t('onboarding.success.uploadButton', 'Upload My Notes')}
+                                </button>
+
+                                {/* Secondary: Skip for now */}
+                                <button
+                                    className="onboarding-skip-link"
                                     onClick={handleStartLearning}
                                 >
-                                    {t('onboarding.success.button')}
+                                    {t('onboarding.success.skipLink', "I'll do this later")}
                                 </button>
                             </div>
                         )}

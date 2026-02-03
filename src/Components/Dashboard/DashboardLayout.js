@@ -160,7 +160,47 @@ function DashboardLayout() {
         </div>
       </div>
 
-      {!isProfileComplete && <OnboardingModal />}
+      {!isProfileComplete && (
+        <OnboardingModal
+          onFilesSelected={(files, actionType) => {
+            console.log('📚 Onboarding files selected from dashboard:', files.length, 'files, action:', actionType);
+            // Store files in sessionStorage for ChatInterface to pick up
+            // This is similar to how landing page handles it
+            const filesBase64 = [];
+            const fileInfos = [];
+
+            // Convert files to base64 for sessionStorage
+            Promise.all(
+              files.map((file, index) => {
+                return new Promise((resolve) => {
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    filesBase64.push(reader.result);
+                    fileInfos.push({
+                      fileName: file.name,
+                      fileType: file.type,
+                      size: file.size
+                    });
+                    resolve();
+                  };
+                  reader.readAsDataURL(file);
+                });
+              })
+            ).then(() => {
+              // Store in sessionStorage
+              sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+              sessionStorage.setItem('pendingUploadState', JSON.stringify({
+                files: fileInfos,
+                timestamp: Date.now(),
+                goToStudyMode: actionType === 'studyjourney'
+              }));
+
+              // Navigate to chat
+              navigate('/c');
+            });
+          }}
+        />
+      )}
     </div>
   );
 }

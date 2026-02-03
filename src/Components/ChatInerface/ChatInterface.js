@@ -21,6 +21,7 @@ import {
 import ChatMessage from './ChatMessage';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
+import FirstUploadWowCard from './FirstUploadWowCard';
 import QuizModeSelector from './QuizModeSelector';
 
 // SVG Components
@@ -102,6 +103,7 @@ import ChatMindmap from './ChatMindmap';
 import StartStudyModal from '../StudyMode/StartStudyModal';
 import StudyModeContainer from '../StudyMode/StudyModeContainer';
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
+import { markFirstUploadComplete, getWowEffectConfig } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
 
 /**
@@ -121,7 +123,7 @@ const ChatInterface = ({
 }) => {
 
   // Auth context - need reactive auth state for pending upload processing
-  const { isUserLoggedIn } = useAuth() || {};
+  const { isUserLoggedIn, userProfile, currentUser, setUserProfile } = useAuth() || {};
 
   // Progress tracking context
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
@@ -2595,6 +2597,61 @@ const ChatInterface = ({
           break; // Skip the normal post-upload flow
         }
 
+        // ============================================
+        // FIRST UPLOAD "WOW EFFECT"
+        // If this is the user's first upload, show a personalized message
+        // based on their onboarding choices instead of the 6-button grid.
+        // ============================================
+        devLog('🔍 Checking for first upload wow effect:', {
+          hasUserProfile: !!userProfile,
+          hasCompletedFirstUpload: userProfile?.hasCompletedFirstUpload,
+          onboarding: userProfile?.onboarding
+        });
+
+        if (userProfile && !userProfile.hasCompletedFirstUpload) {
+          const { studyGoal, reviewFormat } = userProfile.onboarding || {};
+          devLog('🔍 Onboarding values:', { studyGoal, reviewFormat });
+          const wowConfig = getWowEffectConfig(studyGoal, reviewFormat);
+          devLog('🔍 Wow config result:', wowConfig);
+
+          if (wowConfig) {
+            devLog('✨ First upload detected! Showing personalized wow card:', wowConfig);
+
+            // Mark first upload complete in Firebase (fire and forget)
+            if (currentUser?.uid) {
+              markFirstUploadComplete(currentUser.uid)
+                .then(() => {
+                  // Update local userProfile to prevent re-triggering on next upload
+                  setUserProfile(prev => ({ ...prev, hasCompletedFirstUpload: true }));
+                  devLog('✅ First upload marked complete');
+                })
+                .catch(err => console.error('❌ Failed to mark first upload:', err));
+            }
+
+            // Create the wow message with special type
+            const wowMsgId = `first-upload-wow-${Date.now()}`;
+            const wowMsg = {
+              id: wowMsgId,
+              role: 'assistant',
+              type: 'first_upload_wow', // Special type for wow card
+              content: update.message,
+              topics: update.topics || [],
+              filenames: update.filenames || [],
+              studyGoal: studyGoal,
+              actionId: wowConfig.actionId,
+              timestamp: Date.now()
+            };
+
+            setChatMessages(prev => [...prev, wowMsg]);
+
+            // Save to Firebase
+            AppendToChat(chatId, wowMsg)
+              .catch(err => console.error('❌ Failed to save wow message:', err));
+
+            break; // Skip normal post-upload flow
+          }
+        }
+
         // Create a new assistant message with the friendly text + actions
         const postUploadMsgId = `post-upload-${Date.now()}`;
         const postUploadMsg = {
@@ -3596,13 +3653,13 @@ const ChatInterface = ({
               // Hidden once complete AND post_upload_actions exists (to avoid redundancy)
               // ============================================
               if (message.type === 'upload_loading') {
-                // Hide completed LoadingMessageBox if PostUploadActions exists
+                // Hide completed LoadingMessageBox if PostUploadActions or FirstUploadWowCard exists
                 // This avoids showing redundant info after the friendly action message appears
                 if (!message.isLoading) {
-                  const hasPostUploadActions = chatMessages.some(
-                    msg => msg.type === 'post_upload_actions'
+                  const hasPostUploadMessage = chatMessages.some(
+                    msg => msg.type === 'post_upload_actions' || msg.type === 'first_upload_wow'
                   );
-                  if (hasPostUploadActions) {
+                  if (hasPostUploadMessage) {
                     return null; // Hide the completed loading box
                   }
                 }
@@ -3660,6 +3717,30 @@ const ChatInterface = ({
                         showActions={message.showActions}
                         disabled={isSystemBusy()}
                         onAction={(actionId) => handlePostUploadAction(actionId, message)}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // FIRST UPLOAD WOW CARD
+              // Personalized "aha moment" for first-time uploaders.
+              // Shows a single CTA based on their onboarding choices.
+              // ============================================
+              if (message.type === 'first_upload_wow') {
+                return (
+                  <div key={message.id} className="message ai-message">
+                    <div className="message-content">
+                      <FirstUploadWowCard
+                        studyGoal={message.studyGoal}
+                        actionId={message.actionId}
+                        topics={message.topics}
+                        disabled={isSystemBusy()}
+                        onAction={(actionId) => {
+                          devLog('🎯 Wow card CTA clicked:', actionId);
+                          handlePreSelectedAction(actionId, message);
+                        }}
                       />
                     </div>
                   </div>

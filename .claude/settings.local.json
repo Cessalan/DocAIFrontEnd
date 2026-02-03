@@ -15,7 +15,8 @@
       "Bash(node scripts/generate-blog-html.js:*)",
       "Bash(xargs cat:*)",
       "Bash(git checkout:*)",
-      "Bash(firebase deploy:*)"
+      "Bash(firebase deploy:*)",
+      "Bash(pip show:*)"
     ],
     "deny": [],
     "ask": []

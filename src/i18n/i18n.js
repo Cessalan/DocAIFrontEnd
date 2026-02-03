@@ -446,6 +446,27 @@ const resources = {
           title: "All set! 🚀",
           message: "Thanks for setting up your profile. You're ready to start learning!",
           button: "Start Learning"
+        },
+        recommendation: {
+          studyjourney: "Since you're preparing for {{goal}} and want to track progress, we'll guide you through a personalized Study Journey. Upload your notes to get started!",
+          flashcards: "Since you're preparing for {{goal}} and want to export flashcards, we'll create cards you can use in Anki or Quizlet. Upload your notes to get started!",
+          studysheet: "Since you're preparing for {{goal}} and want printable content, we'll create a study sheet for you. Upload your notes to get started!"
+        }
+      },
+
+      // First Upload "Wow Effect" - Personalized messages based on onboarding choices
+      wowEffect: {
+        flashcards: "I see you're preparing for {{goal}} and want to use flashcard apps. Let me create flashcards from {{topics}} that you can export!",
+        studyjourney: "I see you're preparing for {{goal}} and want to track your progress. Let's begin your personalized study journey through {{topics}}!",
+        studysheet: "I see you're preparing for {{goal}} and want printable content. Let me create a study sheet from {{topics}}!",
+        default: "Great! I've analyzed {{topics}}. Let's get started!",
+        defaultTopics: "your material",
+        defaultGoal: "your studies",
+        cta: {
+          flashcards: "Create My Flashcards",
+          studyjourney: "Begin My Study Journey",
+          studysheet: "Create My Study Sheet",
+          default: "Get Started"
         }
       },
 
@@ -1313,6 +1334,27 @@ const resources = {
           title: "C'est tout bon! 🚀",
           message: "Merci d'avoir configuré votre profil. Vous êtes prêt à apprendre!",
           button: "Commencer l'apprentissage"
+        },
+        recommendation: {
+          studyjourney: "Puisque tu prépares {{goal}} et que tu veux suivre tes progrès, on va te guider à travers un Parcours d'étude personnalisé. Importe tes notes pour commencer!",
+          flashcards: "Puisque tu prépares {{goal}} et que tu veux exporter des flashcards, on va créer des cartes pour Anki ou Quizlet. Importe tes notes pour commencer!",
+          studysheet: "Puisque tu prépares {{goal}} et que tu veux du contenu imprimable, on va créer une feuille d'étude pour toi. Importe tes notes pour commencer!"
+        }
+      },
+
+      // First Upload "Wow Effect" - Messages personnalisés basés sur les choix d'intégration
+      wowEffect: {
+        flashcards: "Je vois que tu prépares {{goal}} et que tu veux utiliser des apps de flashcards. Je vais créer des flashcards de {{topics}} que tu pourras exporter!",
+        studyjourney: "Je vois que tu prépares {{goal}} et que tu veux suivre tes progrès. Commençons ton parcours d'étude personnalisé sur {{topics}}!",
+        studysheet: "Je vois que tu prépares {{goal}} et que tu veux du contenu imprimable. Je vais créer une feuille d'étude à partir de {{topics}}!",
+        default: "Super! J'ai analysé {{topics}}. On commence!",
+        defaultTopics: "ton matériel",
+        defaultGoal: "tes études",
+        cta: {
+          flashcards: "Créer mes flashcards",
+          studyjourney: "Commencer mon parcours d'étude",
+          studysheet: "Créer ma feuille d'étude",
+          default: "Commencer"
         }
       },
 

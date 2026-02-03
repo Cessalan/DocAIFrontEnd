@@ -244,6 +244,23 @@ function ChatLayout() {
     setPendingUploadFiles([]);
   };
 
+  // Handle files selected from onboarding modal
+  // This sets up the files to be uploaded and triggers study mode
+  const handleOnboardingFilesSelected = (files, actionType) => {
+    console.log('📚 Onboarding files selected:', files.length, 'files, action:', actionType);
+
+    // Set the pending files for ChatInterface to pick up
+    setPendingUploadFiles(files);
+
+    // If the action is studyjourney, trigger study mode
+    if (actionType === 'studyjourney') {
+      setGoToStudyMode(true);
+    }
+
+    // Navigate to a new chat (no chatId means new chat)
+    navigate('/c');
+  };
+
   return (
     <div className="app-wrapper">
       {/* Global NurseQuizAI branding - positioned next to sidebar */}
@@ -294,7 +311,7 @@ function ChatLayout() {
         />
       </div>
 
-      {!isProfileComplete && <OnboardingModal />}
+      {!isProfileComplete && <OnboardingModal onFilesSelected={handleOnboardingFilesSelected} />}
     </div>
   );
 }

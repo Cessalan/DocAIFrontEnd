@@ -1,0 +1,385 @@
+/* ============================================
+   FIRST UPLOAD WOW CARD
+   ============================================
+   Personalized "aha moment" card shown after first upload.
+   Single prominent CTA instead of 6-button grid.
+
+   STRUCTURE:
+   .first-upload-wow-card
+     └── .wow-message (personalized text)
+     └── .wow-cta-btn (single prominent button)
+           └── .wow-icon-circle
+           └── .wow-cta-label
+           └── .wow-arrow
+   ============================================ */
+
+/* -----------------------------------------
+   CSS VARIABLES - Match PostUploadActions
+   ----------------------------------------- */
+.first-upload-wow-card {
+  --sticky-blue: #d4f0fc;
+  --sticky-pink: #ffd6e0;
+  --sticky-green: #d8f5d8;
+  --sticky-yellow: #fff8b8;
+  --sticky-purple: #e8dff5;
+  --sticky-coral: linear-gradient(135deg, #ffd6cc 0%, #ffe4d9 100%);
+
+  --text-primary: #3d3d3d;
+  --text-secondary: #6b6b6b;
+
+  --transition-wobbly: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* -----------------------------------------
+   CONTAINER
+   ----------------------------------------- */
+.first-upload-wow-card {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  animation: wowFadeIn 0.5s ease-out;
+}
+
+/* -----------------------------------------
+   PERSONALIZED MESSAGE
+   Slightly larger and more prominent than PostUploadActions
+   ----------------------------------------- */
+.wow-message {
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--text-primary);
+  margin: 0;
+}
+
+/* -----------------------------------------
+   CTA BUTTON
+   Larger, more prominent single button
+   ----------------------------------------- */
+.wow-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 22px 14px 16px;
+  background: #ffffff;
+  border: 2px solid rgba(100, 100, 100, 0.15);
+  border-radius: 14px 16px 14px 15px; /* Organic shape */
+  cursor: pointer;
+  transition: all 0.35s var(--transition-wobbly);
+  box-shadow:
+    3px 3px 0px rgba(60, 60, 60, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06);
+  text-align: left;
+  min-height: 56px;
+  max-width: fit-content;
+  transform: rotate(-0.5deg);
+}
+
+.wow-cta-btn:hover {
+  transform: translateY(-4px) rotate(0deg) scale(1.03);
+  box-shadow:
+    4px 4px 0px rgba(60, 60, 60, 0.1),
+    0 8px 20px rgba(0, 0, 0, 0.1);
+}
+
+.wow-cta-btn:active {
+  transform: translateY(-2px) scale(0.98);
+  box-shadow:
+    2px 2px 0px rgba(60, 60, 60, 0.08),
+    0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+/* -----------------------------------------
+   ICON CIRCLE
+   ----------------------------------------- */
+.wow-icon-circle {
+  width: 34px;
+  height: 34px;
+  min-width: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px 10px 9px 8px; /* Organic shape */
+  transition: all 0.35s var(--transition-wobbly);
+  flex-shrink: 0;
+}
+
+.wow-icon-circle svg {
+  width: 18px;
+  height: 18px;
+}
+
+.wow-cta-btn:hover .wow-icon-circle {
+  transform: rotate(-12deg) scale(1.12);
+}
+
+/* -----------------------------------------
+   CTA LABEL
+   ----------------------------------------- */
+.wow-cta-label {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+/* -----------------------------------------
+   ARROW INDICATOR
+   ----------------------------------------- */
+.wow-arrow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 4px;
+  transition: transform 0.3s ease;
+}
+
+.wow-arrow svg {
+  width: 18px;
+  height: 18px;
+  color: var(--text-secondary);
+}
+
+.wow-cta-btn:hover .wow-arrow {
+  transform: translateX(4px);
+}
+
+/* -----------------------------------------
+   ACTION-SPECIFIC COLORS
+   Match PostUploadActions palette
+   ----------------------------------------- */
+
+/* Flashcards - Pink sticky note */
+.wow-cta-btn.action-flashcards {
+  background: var(--sticky-pink);
+}
+.wow-cta-btn.action-flashcards:hover {
+  border-color: rgba(219, 39, 119, 0.5);
+}
+.action-flashcards .wow-icon-circle {
+  background: rgba(255, 105, 180, 0.3);
+  color: #db2777;
+}
+
+/* Study Journey - Coral/Peach (hero action) */
+.wow-cta-btn.action-studyjourney {
+  background: var(--sticky-coral);
+  border-color: rgba(232, 141, 125, 0.3);
+}
+.wow-cta-btn.action-studyjourney:hover {
+  border-color: rgba(232, 141, 125, 0.6);
+  background: linear-gradient(135deg, #ffcabf 0%, #ffd9cc 100%);
+}
+.action-studyjourney .wow-icon-circle {
+  background: rgba(232, 141, 125, 0.4);
+  color: #d97a6a;
+}
+
+/* Study Sheet - Yellow sticky note */
+.wow-cta-btn.action-studysheet {
+  background: var(--sticky-yellow);
+}
+.wow-cta-btn.action-studysheet:hover {
+  border-color: rgba(217, 119, 6, 0.5);
+}
+.action-studysheet .wow-icon-circle {
+  background: rgba(255, 193, 7, 0.4);
+  color: #d97706;
+}
+
+/* Quiz fallback - Blue sticky note */
+.wow-cta-btn.action-quiz {
+  background: var(--sticky-blue);
+}
+.wow-cta-btn.action-quiz:hover {
+  border-color: rgba(65, 105, 225, 0.5);
+}
+.action-quiz .wow-icon-circle {
+  background: rgba(100, 149, 237, 0.35);
+  color: #4169e1;
+}
+
+/* -----------------------------------------
+   ANIMATION
+   ----------------------------------------- */
+@keyframes wowFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.wow-cta-btn {
+  animation: wowButtonPop 0.5s var(--transition-wobbly) 0.15s backwards;
+}
+
+@keyframes wowButtonPop {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.9) rotate(-0.5deg);
+  }
+  60% {
+    transform: translateY(-4px) scale(1.03) rotate(0deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1) rotate(-0.5deg);
+  }
+}
+
+/* -----------------------------------------
+   DISABLED STATE
+   ----------------------------------------- */
+.wow-cta-btn.btn-disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+  transform: none !important;
+}
+
+.wow-cta-btn.btn-disabled:hover {
+  transform: none !important;
+  box-shadow:
+    3px 3px 0px rgba(60, 60, 60, 0.08),
+    0 4px 12px rgba(0, 0, 0, 0.06) !important;
+}
+
+.wow-cta-btn.btn-disabled .wow-icon-circle,
+.wow-cta-btn.btn-disabled .wow-arrow {
+  transform: none !important;
+}
+
+/* -----------------------------------------
+   DARK MODE
+   ----------------------------------------- */
+body.dark-mode .wow-message {
+  color: #e5e7eb;
+}
+
+body.dark-mode .wow-cta-btn {
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow:
+    3px 3px 0px rgba(0, 0, 0, 0.25),
+    0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+body.dark-mode .wow-cta-btn:hover {
+  box-shadow:
+    4px 4px 0px rgba(0, 0, 0, 0.3),
+    0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .wow-cta-label {
+  color: #1f1f1f;
+}
+
+body.dark-mode .wow-arrow svg {
+  color: #4a4a4a;
+}
+
+/* Dark mode colors - slightly muted but vibrant */
+body.dark-mode .wow-cta-btn.action-flashcards {
+  background: #ffc5d3;
+}
+body.dark-mode .wow-cta-btn.action-flashcards:hover {
+  border-color: rgba(219, 39, 119, 0.7);
+}
+
+body.dark-mode .wow-cta-btn.action-studyjourney {
+  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
+}
+body.dark-mode .wow-cta-btn.action-studyjourney:hover {
+  border-color: rgba(232, 141, 125, 0.8);
+}
+
+body.dark-mode .wow-cta-btn.action-studysheet {
+  background: #ffefa6;
+}
+body.dark-mode .wow-cta-btn.action-studysheet:hover {
+  border-color: rgba(217, 119, 6, 0.7);
+}
+
+body.dark-mode .wow-cta-btn.action-quiz {
+  background: #b8e4f7;
+}
+body.dark-mode .wow-cta-btn.action-quiz:hover {
+  border-color: rgba(100, 149, 237, 0.7);
+}
+
+/* -----------------------------------------
+   MOBILE RESPONSIVE
+   ----------------------------------------- */
+@media (max-width: 600px) {
+  .first-upload-wow-card {
+    gap: 14px;
+  }
+
+  .wow-message {
+    font-size: 14.5px;
+  }
+
+  .wow-cta-btn {
+    padding: 12px 18px 12px 14px;
+    gap: 10px;
+    min-height: 50px;
+  }
+
+  .wow-icon-circle {
+    width: 30px;
+    height: 30px;
+    min-width: 30px;
+  }
+
+  .wow-icon-circle svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .wow-cta-label {
+    font-size: 14px;
+  }
+
+  .wow-arrow svg {
+    width: 16px;
+    height: 16px;
+  }
+}
+
+@media (max-width: 400px) {
+  .first-upload-wow-card {
+    gap: 12px;
+  }
+
+  .wow-message {
+    font-size: 14px;
+  }
+
+  .wow-cta-btn {
+    padding: 10px 14px 10px 12px;
+    gap: 8px;
+    min-height: 46px;
+  }
+
+  .wow-icon-circle {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+  }
+
+  .wow-icon-circle svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .wow-cta-label {
+    font-size: 13px;
+  }
+
+  .wow-arrow svg {
+    width: 14px;
+    height: 14px;
+  }
+}
