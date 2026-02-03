@@ -49,20 +49,47 @@ const ChatQuizStream = ({
       else if (typeof answerValue === 'string') {
         const trimmed = answerValue.trim();
 
-        // Pattern 1: Explicit "Option X" or "Answer X" format
-        const explicitMatch = trimmed.match(/^(?:Option|Answer)[:\s]+([A-F])(?:\b|$)/i);
+        // Pattern 1: "Option X is correct" or "Option X:" or "Option X " (with anything after)
+        const optionIsCorrectMatch = trimmed.match(/^Option\s+([A-F])(?:\s+is\s+correct|\s*:|(?=\s|$))/i);
 
-        // Pattern 2: Standalone letter with optional punctuation "A", "A.", "(A)", "[A]"
+        // Pattern 2: Explicit "Answer: X" or "Answer X" format
+        const answerMatch = trimmed.match(/^Answer[:\s]+([A-F])(?:\b|$)/i);
+
+        // Pattern 3: Standalone letter with optional punctuation "A", "A.", "(A)", "[A]"
         const standaloneMatch = trimmed.match(/^[\(\[]?([A-F])[\.\)\]]?$/i);
 
-        if (explicitMatch) {
-          correctIndex = explicitMatch[1].toUpperCase().charCodeAt(0) - 65;
+        // Pattern 4: Just letter followed by any text (e.g., "A. They regulate..." - extract first letter)
+        const letterStartMatch = trimmed.match(/^([A-F])[\.\)\:\s]/i);
+
+        if (optionIsCorrectMatch) {
+          correctIndex = optionIsCorrectMatch[1].toUpperCase().charCodeAt(0) - 65;
+        } else if (answerMatch) {
+          correctIndex = answerMatch[1].toUpperCase().charCodeAt(0) - 65;
         } else if (standaloneMatch) {
           correctIndex = standaloneMatch[1].toUpperCase().charCodeAt(0) - 65;
+        } else if (letterStartMatch) {
+          correctIndex = letterStartMatch[1].toUpperCase().charCodeAt(0) - 65;
         }
       }
 
-      // Strategy 5: Full text match (if not found by letter)
+      // Strategy 5: Extract letter from sentences like "Option A is correct because..."
+      if (correctIndex === -1 && typeof answerValue === 'string') {
+        // Look for "Option X is correct" anywhere in the string
+        const optionCorrectAnywhere = answerValue.match(/Option\s+([A-F])\s+is\s+correct/i);
+        if (optionCorrectAnywhere) {
+          correctIndex = optionCorrectAnywhere[1].toUpperCase().charCodeAt(0) - 65;
+        }
+      }
+
+      // Strategy 5b: Check if justification contains "Option X is correct" (fallback)
+      if (correctIndex === -1 && q.justification) {
+        const justificationMatch = q.justification.match(/Option\s+([A-F])\s+is\s+correct/i);
+        if (justificationMatch) {
+          correctIndex = justificationMatch[1].toUpperCase().charCodeAt(0) - 65;
+        }
+      }
+
+      // Strategy 6: Full text match (if not found by letter)
       if (correctIndex === -1 && q.options && answerValue) {
         const answerStr = String(answerValue).trim();
 
@@ -71,7 +98,7 @@ const ChatQuizStream = ({
         if (exactMatch !== -1) {
           correctIndex = exactMatch;
         } else {
-          // Strategy 6: Normalize both and compare
+          // Strategy 7: Normalize both and compare
           const normalizeText = (text) => {
             return String(text)
               .trim()
@@ -99,18 +126,27 @@ const ChatQuizStream = ({
         }
       }
 
-      // Debug logging
-      console.log('🎯 Quiz correctIndex calculation:', {
-        questionPreview: q.question?.substring(0, 50),
-        answer: q.answer,
-        correct_answer: q.correct_answer,
-        answerValue: answerValue,
-        correctIndex: q.correctIndex,
-        correct_index: q.correct_index,
-        calculatedIndex: correctIndex,
-        optionsCount: q.options?.length,
-        options: q.options?.map((o, i) => `${i}: ${String(o).substring(0, 30)}...`)
-      });
+      // Debug logging - especially useful when correctIndex is -1
+      if (correctIndex === -1) {
+        console.warn('⚠️ Quiz correctIndex could not be determined:', {
+          questionPreview: q.question?.substring(0, 50),
+          rawAnswer: q.answer,
+          rawCorrectAnswer: q.correct_answer,
+          answerValue: answerValue,
+          answerValueType: typeof answerValue,
+          answerValueLength: answerValue?.length,
+          providedCorrectIndex: q.correctIndex,
+          providedCorrectIndexSnake: q.correct_index,
+          optionsCount: q.options?.length,
+          options: q.options?.map((o, i) => `${i}: ${String(o).substring(0, 50)}`)
+        });
+      } else {
+        console.log('🎯 Quiz correctIndex calculated:', {
+          questionPreview: q.question?.substring(0, 50),
+          answerValue: String(answerValue).substring(0, 50),
+          calculatedIndex: correctIndex
+        });
+      }
 
       return {
         ...q,

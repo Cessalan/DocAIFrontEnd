@@ -1535,30 +1535,47 @@ const ChatInterface = ({
         setIsAiTyping(false);
         setStreamingStatus(null);
 
+        // Collect messages to save to Firebase BEFORE updating state
+        const messagesToSave = [];
+
         // Remove or finalize streaming messages
-        setChatMessages(prev =>
-          prev.map(msg => {
+        setChatMessages(prev => {
+          const updatedMessages = prev.map(msg => {
             if (msg.isStreaming) {
               // Handle quiz messages - finalize with whatever was generated
               if (msg.type === 'quiz' && msg.quizData && msg.quizData.length > 0) {
                 devLog(`🛑 Finalizing quiz with ${msg.quizData.length} questions`);
-                return {
+                const finalizedMsg = {
                   ...msg,
                   isStreaming: false,
                   stopped: true,
                   content: `Quiz stopped - ${msg.quizData.length} questions generated`
                 };
+                // Queue for Firebase save
+                messagesToSave.push({
+                  type: 'quiz',
+                  id: msg.id,
+                  data: finalizedMsg
+                });
+                return finalizedMsg;
               }
 
               // Handle flashcard messages - finalize with whatever was generated
               if (msg.type === 'flashcard' && msg.flashcardData && msg.flashcardData.length > 0) {
                 devLog(`🛑 Finalizing flashcards with ${msg.flashcardData.length} cards`);
-                return {
+                const finalizedMsg = {
                   ...msg,
                   isStreaming: false,
                   stopped: true,
                   content: `Flashcards stopped - ${msg.flashcardData.length} cards generated`
                 };
+                // Queue for Firebase save
+                messagesToSave.push({
+                  type: 'flashcard',
+                  id: msg.id,
+                  data: finalizedMsg
+                });
+                return finalizedMsg;
               }
 
               // Handle mindmap messages - remove if stopped mid-generation (no partial mindmaps)
@@ -1590,8 +1607,37 @@ const ChatInterface = ({
               return null;
             }
             return msg;
-          }).filter(Boolean) // Remove null entries
-        );
+          }).filter(Boolean); // Remove null entries
+
+          return updatedMessages;
+        });
+
+        // Save stopped quiz/flashcard messages to Firebase
+        for (const msgToSave of messagesToSave) {
+          try {
+            devLog(`💾 Saving stopped ${msgToSave.type} to Firebase:`, msgToSave.id);
+            const messageForFirebase = {
+              id: msgToSave.data.id,
+              role: 'assistant',
+              type: msgToSave.type,
+              content: msgToSave.data.content,
+              isStreaming: false,
+              stopped: true,
+              timestamp: new Date()
+            };
+
+            if (msgToSave.type === 'quiz') {
+              messageForFirebase.quizData = msgToSave.data.quizData;
+            } else if (msgToSave.type === 'flashcard') {
+              messageForFirebase.flashcardData = msgToSave.data.flashcardData;
+            }
+
+            await AppendToChat(currentChatID, messageForFirebase);
+            devLog(`✅ Stopped ${msgToSave.type} saved to Firebase`);
+          } catch (saveError) {
+            console.error(`❌ Failed to save stopped ${msgToSave.type} to Firebase:`, saveError);
+          }
+        }
       } else {
         console.error('❌ Failed to send stop request');
       }
@@ -1711,34 +1757,71 @@ const ChatInterface = ({
         })
       );
 
-      // ✅ FIX: If still streaming, store in REF (synchronous!)
+      // ✅ If still streaming, also store in REF (for handleQuizComplete to merge later)
       if (isStreaming) {
-        devLog("  ⏳ Storing in pendingQuizAnswersRef (will save when quiz completes)");
-
-        // ✅ Direct ref mutation - happens IMMEDIATELY (no async delay)
+        devLog("  ⏳ Quiz still streaming - storing in pendingQuizAnswersRef");
         if (!pendingQuizAnswersRef.current[answerData.messageId]) {
           pendingQuizAnswersRef.current[answerData.messageId] = {};
         }
         pendingQuizAnswersRef.current[answerData.messageId][answerData.quizIndex] = answerData;
-
-        devLog("  📦 Pending answers now:",
-          Object.keys(pendingQuizAnswersRef.current[answerData.messageId]).length
-        );
-        devLog("  📦 Full pending object:", pendingQuizAnswersRef.current);
-        devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-        return; // Don't save to Firebase yet
+        devLog("  📦 Pending answers count:", Object.keys(pendingQuizAnswersRef.current[answerData.messageId]).length);
       }
 
-      // ✅ If NOT streaming, save immediately to Firebase
-      devLog("  💾 Quiz is finalized - saving to Firebase immediately");
-      await UpdateQuizAnswer(
-        currentChatID,
-        answerData.messageId,
-        answerData.questionText,
-        answerData
-      );
+      // ✅ ALWAYS try to save to Firebase immediately (save as you go)
+      devLog("  💾 Saving answer to Firebase...");
+      try {
+        await UpdateQuizAnswer(
+          currentChatID,
+          answerData.messageId,
+          answerData.questionText,
+          answerData
+        );
+        devLog("  ✅ Saved to Firebase successfully");
+      } catch (updateError) {
+        // If UpdateQuizAnswer fails (e.g., message not in Firebase yet), try to create it
+        devLog("  ⚠️ UpdateQuizAnswer failed, attempting to save full quiz message...");
+        console.warn("UpdateQuizAnswer failed:", updateError.message);
 
-      devLog("  ✅ Saved to Firebase successfully");
+        // Find the quiz message in state and save the whole thing
+        const quizMessageForSave = chatMessages.find(msg => msg.id === answerData.messageId && msg.type === 'quiz');
+        if (quizMessageForSave && quizMessageForSave.quizData) {
+          try {
+            // Update the quizData with the user's answer
+            const updatedQuizData = quizMessageForSave.quizData.map((q, idx) => {
+              if (idx === answerData.quizIndex) {
+                return {
+                  ...q,
+                  userSelection: {
+                    questionType: 'mcq',
+                    selectedIndex: answerData.selectedOptionIndex,
+                    selectedOptionText: answerData.selectedOptionText,
+                    isCorrect: answerData.isCorrect,
+                    timestamp: answerData.timestamp
+                  }
+                };
+              }
+              return q;
+            });
+
+            const messageToSave = {
+              id: answerData.messageId,
+              role: 'assistant',
+              type: 'quiz',
+              quizData: updatedQuizData,
+              content: `Quiz (${updatedQuizData.length} questions)`,
+              isStreaming: isStreaming, // Preserve streaming status
+              timestamp: new Date()
+            };
+
+            await AppendToChat(currentChatID, messageToSave);
+            devLog("  ✅ Full quiz message saved to Firebase as fallback");
+          } catch (fallbackError) {
+            console.error("❌ Fallback save also failed:", fallbackError);
+          }
+        } else {
+          devLog("  ⚠️ Could not find quiz message in state for fallback save");
+        }
+      }
       devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
     } catch (error) {
