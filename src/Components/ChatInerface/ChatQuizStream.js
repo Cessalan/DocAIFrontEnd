@@ -45,12 +45,25 @@ const ChatQuizStream = ({
       else if (answerValue !== undefined && !isNaN(parseInt(answerValue)) && parseInt(answerValue) < (q.options?.length || 0)) {
         correctIndex = parseInt(answerValue);
       }
-      // Strategy 4: If answer is a letter like "A", "B", "C", "D"
-      else if (typeof answerValue === 'string' && /^[A-Fa-f]$/.test(answerValue.trim())) {
-        correctIndex = answerValue.trim().toUpperCase().charCodeAt(0) - 65; // A=0, B=1, C=2, D=3
+      // Strategy 4: Robust Letter Parsing
+      else if (typeof answerValue === 'string') {
+        const trimmed = answerValue.trim();
+
+        // Pattern 1: Explicit "Option X" or "Answer X" format
+        const explicitMatch = trimmed.match(/^(?:Option|Answer)[:\s]+([A-F])(?:\b|$)/i);
+
+        // Pattern 2: Standalone letter with optional punctuation "A", "A.", "(A)", "[A]"
+        const standaloneMatch = trimmed.match(/^[\(\[]?([A-F])[\.\)\]]?$/i);
+
+        if (explicitMatch) {
+          correctIndex = explicitMatch[1].toUpperCase().charCodeAt(0) - 65;
+        } else if (standaloneMatch) {
+          correctIndex = standaloneMatch[1].toUpperCase().charCodeAt(0) - 65;
+        }
       }
-      // Strategy 5: If answer matches the full option text exactly
-      else if (q.options && answerValue) {
+
+      // Strategy 5: Full text match (if not found by letter)
+      if (correctIndex === -1 && q.options && answerValue) {
         const answerStr = String(answerValue).trim();
 
         // Try exact match first
@@ -70,15 +83,19 @@ const ChatQuizStream = ({
 
           const normalizedAnswer = normalizeText(answerStr);
 
-          correctIndex = q.options.findIndex(opt => {
-            const normalizedOpt = normalizeText(opt);
-            // Check various matching strategies
-            return normalizedOpt === normalizedAnswer ||
-                   normalizedOpt.includes(normalizedAnswer) ||
-                   normalizedAnswer.includes(normalizedOpt) ||
-                   // Also try matching first 50 chars in case of truncation
-                   normalizedOpt.substring(0, 50) === normalizedAnswer.substring(0, 50);
-          });
+          // Only proceed with fuzzy match if we have enough content
+          // This prevents "A" from matching "Apple" via includes()
+          if (normalizedAnswer.length >= 2) {
+            correctIndex = q.options.findIndex(opt => {
+              const normalizedOpt = normalizeText(opt);
+              // Check various matching strategies
+              return normalizedOpt === normalizedAnswer ||
+                normalizedOpt.includes(normalizedAnswer) ||
+                (normalizedAnswer.length > 5 && normalizedAnswer.includes(normalizedOpt)) ||
+                // Also try matching first 50 chars in case of truncation
+                (normalizedAnswer.length > 10 && normalizedOpt.substring(0, 50) === normalizedAnswer.substring(0, 50));
+            });
+          }
         }
       }
 
