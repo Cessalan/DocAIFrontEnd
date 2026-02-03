@@ -312,6 +312,7 @@ body.dark-mode .quiz-xp-animation {
 }
 
 .quiz-compact-progress-track {
+  position: relative;
   height: 3px;
   background: rgba(233, 216, 253, 0.6);
   border-radius: 2px;
@@ -323,6 +324,69 @@ body.dark-mode .quiz-xp-animation {
   background: linear-gradient(90deg, #9f7aea, #6b46c1);
   border-radius: 2px;
   transition: width 0.4s ease;
+}
+
+/* Streaming progress indicator - shimmer effect on progress bar */
+.quiz-progress-streaming-indicator {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(159, 122, 234, 0.4) 50%,
+    transparent 100%
+  );
+  animation: progressShimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes progressShimmer {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* Streaming badge in title */
+.quiz-streaming-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-left: 8px;
+  padding: 2px 6px;
+  background: rgba(159, 122, 234, 0.15);
+  border-radius: 10px;
+}
+
+.streaming-dot-mini {
+  width: 4px;
+  height: 4px;
+  background: #9f7aea;
+  border-radius: 50%;
+  animation: streamingPulse 1.2s ease-in-out infinite;
+}
+
+.streaming-dot-mini:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.streaming-dot-mini:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes streamingPulse {
+  0%, 60%, 100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  30% {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 /* ============================================
@@ -1748,6 +1812,24 @@ body.dark-mode .quiz-compact-progress-track {
 body.dark-mode .quiz-compact-progress-fill {
   background: linear-gradient(90deg, #e5e7eb, #d1d5db);
   box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode streaming indicators */
+body.dark-mode .quiz-streaming-badge {
+  background: rgba(139, 92, 246, 0.25);
+}
+
+body.dark-mode .streaming-dot-mini {
+  background: #a78bfa;
+}
+
+body.dark-mode .quiz-progress-streaming-indicator {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(167, 139, 250, 0.4) 50%,
+    transparent 100%
+  );
 }
 
 /* Quiz Modal - Dark */

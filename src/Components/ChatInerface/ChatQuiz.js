@@ -89,7 +89,9 @@ function ChatQuiz(props) {
     skippedQuestions = [], // New prop for skipped questions
     onNavigate, // New prop for navigation
     onFeedbackSubmit, // New prop for feedback submission
-    feedbackData // Feedback data from message (if already submitted)
+    feedbackData, // Feedback data from message (if already submitted)
+    isStreaming = false, // Whether quiz is still being generated
+    expectedTotal = 10 // Expected total questions (for progress bar during streaming)
   } = props;
 
   // State
@@ -130,10 +132,13 @@ function ChatQuiz(props) {
 
   const isCorrect = selectedIndex === correctIndex;
 
+  // Use expectedTotal for progress bar during streaming, actual total otherwise
+  const progressTotal = isStreaming ? Math.max(expectedTotal, totalQuestions) : totalQuestions;
+
   const progressStyle = useMemo(() => {
-    if (totalQuestions === 0) return { width: '0%' };
-    return { width: `${((quizIndex + 1) / totalQuestions) * 100}%` };
-  }, [quizIndex, totalQuestions]);
+    if (progressTotal === 0) return { width: '0%' };
+    return { width: `${((quizIndex + 1) / progressTotal) * 100}%` };
+  }, [quizIndex, progressTotal]);
 
   // Effects
   useEffect(() => {
@@ -500,10 +505,17 @@ function ChatQuiz(props) {
             <div className="quiz-compact-header">
               <div className="quiz-compact-title-row">
                 <span className="quiz-compact-title">
-                  {t('quiz.question')} {quizIndex + 1} {t('quiz.of')} {totalQuestions}
+                  {t('quiz.question')} {quizIndex + 1} {t('quiz.of')} {isStreaming ? `${totalQuestions}+` : totalQuestions}
                   {isReviewing && (
                     <span className="review-badge">
                       {' ('}{t('quiz.review')}{')'}
+                    </span>
+                  )}
+                  {isStreaming && (
+                    <span className="quiz-streaming-badge">
+                      <span className="streaming-dot-mini"></span>
+                      <span className="streaming-dot-mini"></span>
+                      <span className="streaming-dot-mini"></span>
                     </span>
                   )}
                 </span>
@@ -520,6 +532,9 @@ function ChatQuiz(props) {
               </div>
               <div className="quiz-compact-progress-track">
                 <div className="quiz-compact-progress-fill" style={progressStyle} />
+                {isStreaming && (
+                  <div className="quiz-progress-streaming-indicator" />
+                )}
               </div>
             </div>
 
