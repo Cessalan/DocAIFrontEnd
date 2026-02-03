@@ -244,6 +244,35 @@ const ChatQuizStream = ({
     }
   }, [questions, totalQuestions, isStreaming, isReviewRound, questionQueue.length, queueIndex, waitingForNextQuestion]);
 
+  // ✅ Sync questionStatuses with quizData.userSelection when props update (save as you go)
+  // This ensures answers are persisted and restored correctly when quizData is updated from Firebase
+  useEffect(() => {
+    if (totalQuestions === 0) return;
+
+    // Build status map from current quizData userSelections
+    const statusesFromProps = {};
+    questions.forEach((q, idx) => {
+      if (q.userSelection) {
+        statusesFromProps[idx] = q.userSelection.isCorrect ? 'correct' : 'incorrect';
+      }
+    });
+
+    // Merge with existing statuses (props take precedence for answered questions)
+    setQuestionStatuses(prev => {
+      const merged = { ...prev };
+      let hasChanges = false;
+
+      Object.entries(statusesFromProps).forEach(([idx, status]) => {
+        if (merged[idx] !== status) {
+          merged[idx] = status;
+          hasChanges = true;
+        }
+      });
+
+      return hasChanges ? merged : prev;
+    });
+  }, [questions, totalQuestions]);
+
   // Current question
   const currentQueuePosition = questionQueue[queueIndex] ?? 0;
   const currentQuestion = questions[currentQueuePosition] || {};
@@ -286,9 +315,44 @@ const ChatQuizStream = ({
     setShowFullRationale(false);
   }, []);
 
+  // Track previous queue position to detect navigation
+  const prevQueuePositionRef = useRef(currentQueuePosition);
+
+  // ✅ Restore UI state when navigating to a NEW question
+  // In review round, allow re-answering so reset state when navigating
+  useEffect(() => {
+    // Only run when actually navigating to a different question
+    if (prevQueuePositionRef.current === currentQueuePosition) {
+      return;
+    }
+    prevQueuePositionRef.current = currentQueuePosition;
+
+    // In review round, questions should be answerable again - reset state for each question
+    if (isReviewRound) {
+      // Reset to allow re-answering
+      setSelectedIndex(null);
+      setShowFeedback(false);
+      setIsCorrect(false);
+      setShowFullRationale(false);
+      return;
+    }
+
+    const currentQ = questions[currentQueuePosition];
+    if (currentQ?.userSelection) {
+      // Question was previously answered - restore the UI state
+      const userSel = currentQ.userSelection;
+      setSelectedIndex(userSel.selectedIndex ?? userSel.selectedOptionIndex ?? null);
+      setIsCorrect(userSel.isCorrect);
+      setShowFeedback(true);
+      setShowFullRationale(false);
+    }
+    // If no userSelection, the question is unanswered - state should already be clean from resetQuestionState
+  }, [currentQueuePosition, isReviewRound, questions]);
+
   // Strip letter prefix from options
   const stripLetterPrefix = (text) => {
     if (!text) return '';
+    if (typeof text !== 'string') return String(text);
     return text.replace(/^[A-Fa-f][).:]\s*/, '');
   };
 
@@ -368,25 +432,29 @@ const ChatQuizStream = ({
         return;
       }
 
-      // Check for review round
+      // Check for questions that still need review (answered incorrectly)
       const questionsToReview = Object.entries(questionStatuses)
         .filter(([_, status]) => status === 'incorrect')
         .map(([idx]) => parseInt(idx));
 
       if (questionsToReview.length > 0) {
-        setReviewTransitionCount(questionsToReview.length);
-        setShowReviewTransition(true);
-        setIsReviewRound(true);
+        if (!isReviewRound) {
+          // First time entering review round - show transition
+          setReviewTransitionCount(questionsToReview.length);
+          setShowReviewTransition(true);
+          setIsReviewRound(true);
+        }
+        // Cycle through incorrect questions again (whether first time or continuing review)
         setQuestionQueue(questionsToReview);
         setQueueIndex(0);
         resetQuestionState();
       }
-      // If no review needed, allCorrect will trigger completion
+      // If no questions to review, allCorrect will trigger completion
     } else {
       setQueueIndex(nextQueueIndex);
       resetQuestionState();
     }
-  }, [queueIndex, questionQueue.length, isStreaming, totalQuestions, expectedTotal, questionStatuses, resetQuestionState]);
+  }, [queueIndex, questionQueue.length, isStreaming, totalQuestions, expectedTotal, questionStatuses, resetQuestionState, isReviewRound]);
 
   // Calculate progress for display
   const getProgressPercent = () => {
@@ -613,9 +681,12 @@ const ChatQuizStream = ({
         </div>
         <div className="cqs-progress-text">
           <span className="cqs-progress-count">
-            {queueIndex + 1} / {isStreaming ? `${totalQuestions}+` : totalQuestions}
+            {isReviewRound
+              ? `${queueIndex + 1} / ${questionQueue.length}`
+              : `${queueIndex + 1} / ${isStreaming ? `${totalQuestions}+` : totalQuestions}`
+            }
           </span>
-          {isStreaming && (
+          {isStreaming && !isReviewRound && (
             <span className="cqs-streaming-indicator">
               <span className="cqs-streaming-dot"></span>
               <span className="cqs-streaming-dot"></span>
@@ -624,7 +695,7 @@ const ChatQuizStream = ({
           )}
           {isReviewRound && (
             <span className="cqs-review-badge">
-              <RefreshIcon /> {t('quiz.review', 'Review')}
+              <RefreshIcon /> {t('quiz.review', 'Review')} ({questionQueue.length} {t('quiz.remaining', 'left')})
             </span>
           )}
         </div>
