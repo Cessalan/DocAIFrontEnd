@@ -252,7 +252,7 @@ const resources = {
         mindmapPrompt: "Create a concept map for: {{topics}}",
         // Quiz mode-specific prompts
         knowledgeQuizPrompt: "Generate a knowledge test quiz about {{topics}}. Use direct factual questions, not clinical scenarios.",
-        nclexQuizPrompt: "Generate an NCLEX-style quiz about {{topics}}. Use clinical scenarios testing judgment."
+        nclexQuizPrompt: "Generate an NCLEX-style quiz about {{topics}}. Use multiple choice questions (MCQ format) with clinical scenarios testing judgment. Do not use case study format."
       },
 
       // Mindmap Modal
@@ -1140,7 +1140,7 @@ const resources = {
         mindmapPrompt: "Crée un schéma conceptuel pour : {{topics}}",
         // Quiz mode-specific prompts
         knowledgeQuizPrompt: "Génère un quiz de connaissances sur {{topics}}. Utilise des questions factuelles directes, pas de scénarios cliniques.",
-        nclexQuizPrompt: "Génère un quiz de style NCLEX sur {{topics}}. Utilise des scénarios cliniques testant le jugement."
+        nclexQuizPrompt: "Génère un quiz de style NCLEX sur {{topics}}. Utilise des questions à choix multiples (format QCM) avec des scénarios cliniques testant le jugement. Ne pas utiliser le format étude de cas."
       },
 
       // Mindmap Modal

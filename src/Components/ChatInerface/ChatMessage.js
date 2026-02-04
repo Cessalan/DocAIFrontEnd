@@ -303,10 +303,11 @@ const ChatMessage = ({
         )}
 
         {/* Quiz Display - New High-Dopamine Streaming Quiz */}
-        {isAI && Array.isArray(parsedQuizData) && parsedQuizData.length > 0 && (
+        {/* Render immediately when type is 'quiz' to show skeleton while streaming */}
+        {isAI && (message.type === 'quiz' || (Array.isArray(parsedQuizData) && parsedQuizData.length > 0)) && (
           <div className="message-text">
             <ChatQuizStream
-              quizData={parsedQuizData}
+              quizData={parsedQuizData || []}
               messageId={message.id}
               isStreaming={message.isStreaming}
               expectedTotal={10}

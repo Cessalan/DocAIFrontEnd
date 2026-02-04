@@ -170,7 +170,10 @@ const ChatQuizStream = ({
   const [queueIndex, setQueueIndex] = useState(0);
   const [questionStatuses, setQuestionStatuses] = useState({});
   const [isReviewRound, setIsReviewRound] = useState(false);
-  const [questionQueue, setQuestionQueue] = useState([]);
+  // Initialize queue with indices when questions exist - critical for streaming!
+  const [questionQueue, setQuestionQueue] = useState(() =>
+    quizData.length > 0 ? quizData.map((_, i) => i) : []
+  );
 
   // Celebration states
   const [showMilestoneCelebration, setShowMilestoneCelebration] = useState(false);
@@ -273,8 +276,9 @@ const ChatQuizStream = ({
     });
   }, [questions, totalQuestions]);
 
-  // Current question
-  const currentQueuePosition = questionQueue[queueIndex] ?? 0;
+  // Current question - use direct index if queue not yet populated (streaming)
+  // This ensures the first question shows IMMEDIATELY when it arrives
+  const currentQueuePosition = questionQueue.length > 0 ? (questionQueue[queueIndex] ?? 0) : queueIndex;
   const currentQuestion = questions[currentQueuePosition] || {};
   const { question, options = [], correctIndex, rationale, topic } = currentQuestion;
 
@@ -638,19 +642,48 @@ const ChatQuizStream = ({
     );
   }
 
-  // Render waiting for questions (streaming)
-  if ((isStreaming && totalQuestions === 0) || waitingForNextQuestion) {
+  // Render waiting for questions (streaming) - Now shows skeleton preview
+  // Only show skeleton if NO questions at all, or if waiting for next AND current question isn't ready
+  const hasValidCurrentQuestion = currentQuestion && currentQuestion.question && options.length > 0;
+  if ((isStreaming && totalQuestions === 0) || (waitingForNextQuestion && !hasValidCurrentQuestion)) {
     return (
       <div className="chat-quiz-stream-card">
-        <div className="cqs-loading">
-          <div className="cqs-loading-spinner" />
-          <p className="cqs-loading-text">
-            {t('study.generatingQuestions', 'Generating questions...')}
-          </p>
-          <div className="cqs-loading-dots">
-            <span className="cqs-loading-dot"></span>
-            <span className="cqs-loading-dot"></span>
-            <span className="cqs-loading-dot"></span>
+        <div className="cqs-skeleton-loading">
+          {/* Progress indicator */}
+          <div className="cqs-skeleton-progress">
+            <div className="cqs-skeleton-progress-bar">
+              <div className="cqs-skeleton-progress-pulse" />
+            </div>
+            <div className="cqs-skeleton-progress-text">
+              <span className="cqs-skeleton-count">
+                {waitingForNextQuestion
+                  ? t('study.loadingNextQuestion', 'Loading next question...')
+                  : t('study.generatingQuestions', 'Generating questions...')}
+              </span>
+              <span className="cqs-streaming-indicator">
+                <span className="cqs-streaming-dot"></span>
+                <span className="cqs-streaming-dot"></span>
+                <span className="cqs-streaming-dot"></span>
+              </span>
+            </div>
+          </div>
+
+          {/* Skeleton question */}
+          <div className="cqs-skeleton-question">
+            <div className="cqs-skeleton-line cqs-skeleton-line-long"></div>
+            <div className="cqs-skeleton-line cqs-skeleton-line-medium"></div>
+          </div>
+
+          {/* Skeleton options */}
+          <div className="cqs-skeleton-options">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="cqs-skeleton-option" style={{ animationDelay: `${i * 0.1}s` }}>
+                <div className="cqs-skeleton-option-letter"></div>
+                <div className="cqs-skeleton-option-text">
+                  <div className="cqs-skeleton-line cqs-skeleton-line-full"></div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
       </div>
@@ -660,6 +693,9 @@ const ChatQuizStream = ({
   // Render quiz question
   const shortRationale = getShortRationale(rationale);
   const hasMore = hasMoreRationale(rationale, shortRationale);
+
+  // Key for question animation - changes when question changes
+  const questionKey = `question-${currentQueuePosition}-${isReviewRound ? 'review' : 'initial'}`;
 
   return (
     <div className="chat-quiz-stream-card">
@@ -701,117 +737,143 @@ const ChatQuizStream = ({
         </div>
       </div>
 
-      {/* Topic badge */}
-      {topic && (
-        <div className="cqs-topic-badge">
-          <span className="cqs-topic-icon">📚</span>
-          <span className="cqs-topic-text">{topic}</span>
+      {/* Question content with animation wrapper */}
+      <div key={questionKey} className="cqs-question-wrapper cqs-question-enter">
+        {/* Question number badge */}
+        <div className="cqs-question-number">
+          {t('quiz.questionNumber', 'Question')} {queueIndex + 1}
+          {isStreaming && !isReviewRound && ` ${t('quiz.of', 'of')} ${totalQuestions}+`}
+          {!isStreaming && !isReviewRound && ` ${t('quiz.of', 'of')} ${totalQuestions}`}
         </div>
-      )}
 
-      {/* Question */}
-      <div className="cqs-question">
-        {question || 'Loading question...'}
-      </div>
-
-      {/* Options */}
-      <div className="cqs-options">
-        {options.map((option, index) => {
-          let optionClass = 'cqs-option';
-          if (showFeedback) {
-            optionClass += ' disabled';
-            if (index === selectedIndex) {
-              if (isCorrect) {
-                optionClass += ' correct';
-              } else {
-                optionClass += ' incorrect';
-              }
-            }
-          } else if (index === selectedIndex) {
-            optionClass += ' selected';
-          }
-
-          return (
-            <button
-              key={index}
-              className={optionClass}
-              onClick={() => handleOptionClick(index)}
-              disabled={showFeedback}
-            >
-              <span className="cqs-option-letter">{letters[index]}</span>
-              <span className="cqs-option-text">{stripLetterPrefix(option)}</span>
-            </button>
-          );
-        })}
-      </div>
-
-      {/* Feedback */}
-      {showFeedback && (
-        <div className={`cqs-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
-          <div className="cqs-feedback-header">
-            <div className="cqs-feedback-icon">
-              {isCorrect ? <CheckIcon /> : <XIcon />}
-            </div>
-            <span className="cqs-feedback-title">
-              {isCorrect ? t('study.correct', 'Correct!') : t('study.incorrect', 'Incorrect')}
-            </span>
+        {/* Topic badge */}
+        {topic && (
+          <div className="cqs-topic-badge">
+            <span className="cqs-topic-icon">📚</span>
+            <span className="cqs-topic-text">{topic}</span>
           </div>
+        )}
 
-          {/* Show correct answer when wrong */}
-          {!isCorrect && correctIndex >= 0 && correctIndex < options.length && (
-            <div className="cqs-correct-answer">
-              <span className="cqs-correct-label">{t('study.correctAnswer', 'Correct Answer:')}</span>
-              <span className="cqs-correct-text">
-                {letters[correctIndex]}. {stripLetterPrefix(options[correctIndex])}
+        {/* Question */}
+        <div className="cqs-question">
+          {question || 'Loading question...'}
+        </div>
+
+        {/* Options */}
+        <div className="cqs-options">
+          {options.map((option, index) => {
+            let optionClass = 'cqs-option cqs-option-enter';
+            if (showFeedback) {
+              optionClass += ' disabled';
+              if (index === selectedIndex) {
+                if (isCorrect) {
+                  optionClass += ' correct';
+                } else {
+                  optionClass += ' incorrect';
+                }
+              }
+            } else if (index === selectedIndex) {
+              optionClass += ' selected';
+            }
+
+            return (
+              <button
+                key={index}
+                className={optionClass}
+                onClick={() => handleOptionClick(index)}
+                disabled={showFeedback}
+                style={{ animationDelay: `${index * 0.05}s` }}
+              >
+                <span className="cqs-option-letter">{letters[index]}</span>
+                <span className="cqs-option-text">{stripLetterPrefix(option)}</span>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Feedback */}
+        {showFeedback && (
+          <div className={`cqs-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
+            <div className="cqs-feedback-header">
+              <div className="cqs-feedback-icon">
+                {isCorrect ? <CheckIcon /> : <XIcon />}
+              </div>
+              <span className="cqs-feedback-title">
+                {isCorrect ? t('study.correct', 'Correct!') : t('study.incorrect', 'Incorrect')}
               </span>
             </div>
-          )}
 
-          {/* Short rationale */}
-          {shortRationale && (
-            <p className="cqs-feedback-short">{shortRationale}</p>
-          )}
+            {/* Show correct answer when wrong */}
+            {!isCorrect && correctIndex >= 0 && correctIndex < options.length && (
+              <div className="cqs-correct-answer">
+                <span className="cqs-correct-label">{t('study.correctAnswer', 'Correct Answer:')}</span>
+                <span className="cqs-correct-text">
+                  {letters[correctIndex]}. {stripLetterPrefix(options[correctIndex])}
+                </span>
+              </div>
+            )}
 
-          {/* Learn more button */}
-          {hasMore && (
-            <>
-              <button
-                className="cqs-learn-more-btn"
-                onClick={() => setShowFullRationale(!showFullRationale)}
-              >
-                {showFullRationale ? (
-                  <>
-                    <ChevronUpIcon />
-                    {t('study.showLess', 'Show less')}
-                  </>
-                ) : (
-                  <>
-                    <ChevronDownIcon />
-                    {t('study.learnMore', 'Learn more')}
-                  </>
+            {/* Short rationale */}
+            {shortRationale && (
+              <p className="cqs-feedback-short">{shortRationale}</p>
+            )}
+
+            {/* Learn more button */}
+            {hasMore && (
+              <>
+                <button
+                  className="cqs-learn-more-btn"
+                  onClick={() => setShowFullRationale(!showFullRationale)}
+                >
+                  {showFullRationale ? (
+                    <>
+                      <ChevronUpIcon />
+                      {t('study.showLess', 'Show less')}
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDownIcon />
+                      {t('study.learnMore', 'Learn more')}
+                    </>
+                  )}
+                </button>
+
+                {showFullRationale && (
+                  <div
+                    className="cqs-feedback-rationale"
+                    dangerouslySetInnerHTML={{ __html: rationale }}
+                  />
                 )}
+              </>
+            )}
+
+            {/* Continue/Next button */}
+            {(hasMoreQuestions || moreQuestionsExpected || needsReviewRound()) && (
+              <button
+                className={`cqs-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
+                onClick={handleNextQuestion}
+              >
+                {isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT')}
               </button>
+            )}
+          </div>
+        )}
 
-              {showFullRationale && (
-                <div
-                  className="cqs-feedback-rationale"
-                  dangerouslySetInnerHTML={{ __html: rationale }}
-                />
-              )}
-            </>
-          )}
-
-          {/* Continue/Next button */}
-          {(hasMoreQuestions || moreQuestionsExpected || needsReviewRound()) && (
-            <button
-              className={`cqs-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
-              onClick={handleNextQuestion}
-            >
-              {isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT')}
-            </button>
-          )}
-        </div>
-      )}
+        {/* Streaming status - shows when more questions are generating */}
+        {isStreaming && !isReviewRound && !showFeedback && totalQuestions < expectedTotal && (
+          <div className="cqs-streaming-status">
+            <span className="cqs-streaming-status-text">
+              {t('quiz.generatingMore', 'Generating more questions')}
+            </span>
+            <span className="cqs-streaming-status-count">{totalQuestions}/{expectedTotal}</span>
+            <span className="cqs-streaming-indicator">
+              <span className="cqs-streaming-dot"></span>
+              <span className="cqs-streaming-dot"></span>
+              <span className="cqs-streaming-dot"></span>
+            </span>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

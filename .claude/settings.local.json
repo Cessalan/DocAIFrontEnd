@@ -16,9 +16,13 @@
       "Bash(xargs cat:*)",
       "Bash(git checkout:*)",
       "Bash(firebase deploy:*)",
-      "Bash(pip show:*)"
+      "Bash(pip show:*)",
+      "Bash(npx eslint:*)"
     ],
     "deny": [],
-    "ask": []
+    "ask": [],
+    "additionalDirectories": [
+      "c:\\Users\\Billion\\Desktop\\NQBackEnd\\NQBackEnd2\\tools"
+    ]
   }
 }
