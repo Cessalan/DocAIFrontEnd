@@ -426,10 +426,11 @@ const ChatQuizStream = ({
         correctOptionText: options[correctIndex],
         isCorrect: correct,
         timestamp: new Date().toISOString(),
-        topic: topic || null
+        topic: topic || null,
+        isReviewAttempt: isReviewRound // Flag to tell parent to override existing answer
       });
     }
-  }, [showFeedback, correctIndex, questionStatuses, currentQueuePosition, messageId, question, options, topic, onAnswerSelect]);
+  }, [showFeedback, correctIndex, questionStatuses, currentQueuePosition, messageId, question, options, topic, onAnswerSelect, isReviewRound]);
 
   // Handle next question
   const handleNextQuestion = useCallback(() => {
@@ -598,15 +599,6 @@ const ChatQuizStream = ({
           </div>
 
           <div className="cqs-completion-buttons">
-            <button
-              className="cqs-completion-btn"
-              onClick={() => {
-                setShowCompletionCelebration(false);
-                if (onComplete) onComplete({ xpEarned, timeTaken, isPerfect, correctCount, totalQuestions });
-              }}
-            >
-              {t('study.claimXP', 'CLAIM XP')} 🎉
-            </button>
             <button
               className="cqs-review-questions-btn"
               onClick={() => {

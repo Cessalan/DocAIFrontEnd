@@ -1684,14 +1684,18 @@ const ChatInterface = ({
       devLog("  Selected:", answerData.selectedOptionText);
       devLog("  Correct?", answerData.isCorrect ? "✓" : "✗");
 
-      // ✅ FIX: Prevent double-submission
+      // ✅ FIX: Prevent double-submission (but allow review attempts to override)
       const answerKey = `${answerData.messageId}-${answerData.quizIndex}`;
-      if (submittedAnswersRef.current.has(answerKey)) {
+      if (submittedAnswersRef.current.has(answerKey) && !answerData.isReviewAttempt) {
         devLog("  ⚠️ Answer already submitted, ignoring duplicate");
         devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
         return;
       }
       submittedAnswersRef.current.add(answerKey);
+
+      if (answerData.isReviewAttempt) {
+        devLog("  🔄 Review attempt - updating previous answer");
+      }
 
       // ✅ Track progress: XP, serum, and topic stats
       const quizTopic = answerData.topic || null;
