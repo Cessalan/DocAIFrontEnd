@@ -183,6 +183,10 @@ const ChatQuizStream = ({
   const [hasShownMilestone, setHasShownMilestone] = useState(false);
   const [waitingForNextQuestion, setWaitingForNextQuestion] = useState(false);
 
+  // Post-completion review mode (browse questions without answering)
+  const [isPostReviewMode, setIsPostReviewMode] = useState(false);
+  const [postReviewIndex, setPostReviewIndex] = useState(0);
+
   // XP animation
   const [showXpPopup, setShowXpPopup] = useState(false);
 
@@ -227,8 +231,10 @@ const ChatQuizStream = ({
         } else {
           setQueueIndex(firstUnanswered);
         }
-        hasRestoredProgress.current = true;
       }
+      // Always mark as restored after first check, even if no data to restore
+      // This prevents the restore logic from running again when userSelection is saved
+      hasRestoredProgress.current = true;
     }
 
     // Update queue for streaming
@@ -302,14 +308,15 @@ const ChatQuizStream = ({
 
   // Trigger completion celebration
   useEffect(() => {
-    if (allCorrect && totalQuestions > 0 && !showCompletionCelebration) {
+    // Don't auto-trigger if already in post-review mode
+    if (allCorrect && totalQuestions > 0 && !showCompletionCelebration && !isPostReviewMode) {
       const timer = setTimeout(() => {
         setShowCompletionCelebration(true);
         playCelebrationSound();
       }, 500);
       return () => clearTimeout(timer);
     }
-  }, [allCorrect, totalQuestions, showCompletionCelebration]);
+  }, [allCorrect, totalQuestions, showCompletionCelebration, isPostReviewMode]);
 
   // Reset question state helper
   const resetQuestionState = useCallback(() => {
@@ -452,8 +459,11 @@ const ChatQuizStream = ({
         setQuestionQueue(questionsToReview);
         setQueueIndex(0);
         resetQuestionState();
+      } else {
+        // No questions to review - all correct, trigger completion immediately
+        setShowCompletionCelebration(true);
+        playCelebrationSound();
       }
-      // If no questions to review, allCorrect will trigger completion
     } else {
       setQueueIndex(nextQueueIndex);
       resetQuestionState();
@@ -466,7 +476,10 @@ const ChatQuizStream = ({
     if (displayTotal === 0) return 0;
     if (allCorrect) return 100;
     if (isReviewRound) {
-      return (correctCount / totalQuestions) * 100;
+      // In review mode, show progress through the review queue (not overall correctness)
+      const reviewTotal = questionQueue.length;
+      if (reviewTotal === 0) return 0;
+      return ((queueIndex + (showFeedback ? 1 : 0)) / reviewTotal) * 100;
     }
     return ((queueIndex + (showFeedback ? 1 : 0)) / displayTotal) * 100;
   };
@@ -582,35 +595,29 @@ const ChatQuizStream = ({
                 <span className="cqs-stat-number">{xpEarned}</span>
               </div>
             </div>
-
-            {isPerfect && (
-              <div className="cqs-stat-card cqs-stat-perfect">
-                <span className="cqs-stat-label">{t('study.perfect', 'PERFECT!')}</span>
-                <div className="cqs-stat-value">
-                  <span className="cqs-stat-icon">🎯</span>
-                  <span className="cqs-stat-number">100%</span>
-                </div>
-              </div>
-            )}
-
-            <div className="cqs-stat-card cqs-stat-time">
-              <span className="cqs-stat-label">{t('study.speedy', 'TIME')}</span>
-              <div className="cqs-stat-value">
-                <span className="cqs-stat-icon">⏱️</span>
-                <span className="cqs-stat-number">{formatTime(timeTaken)}</span>
-              </div>
-            </div>
           </div>
 
-          <button
-            className="cqs-completion-btn"
-            onClick={() => {
-              setShowCompletionCelebration(false);
-              if (onComplete) onComplete({ xpEarned, timeTaken, isPerfect, correctCount, totalQuestions });
-            }}
-          >
-            {t('study.claimXP', 'CLAIM XP')} 🎉
-          </button>
+          <div className="cqs-completion-buttons">
+            <button
+              className="cqs-completion-btn"
+              onClick={() => {
+                setShowCompletionCelebration(false);
+                if (onComplete) onComplete({ xpEarned, timeTaken, isPerfect, correctCount, totalQuestions });
+              }}
+            >
+              {t('study.claimXP', 'CLAIM XP')} 🎉
+            </button>
+            <button
+              className="cqs-review-questions-btn"
+              onClick={() => {
+                setShowCompletionCelebration(false);
+                setIsPostReviewMode(true);
+                setPostReviewIndex(0);
+              }}
+            >
+              {t('study.reviewQuestions', 'Review Questions')} 📖
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -637,6 +644,120 @@ const ChatQuizStream = ({
           >
             {t('study.startReview', "Let's Go!")} →
           </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Render post-completion review mode (browse questions without answering)
+  if (isPostReviewMode) {
+    const reviewQuestion = questions[postReviewIndex] || {};
+    const reviewOptions = reviewQuestion.options || [];
+    const reviewCorrectIndex = reviewQuestion.correctIndex;
+    const reviewRationale = reviewQuestion.rationale;
+
+    return (
+      <div className="chat-quiz-stream-card">
+        {/* Progress bar for review */}
+        <div className="cqs-progress-container">
+          <div className="cqs-progress-bar">
+            <div
+              className="cqs-progress-fill"
+              style={{ width: `${((postReviewIndex + 1) / totalQuestions) * 100}%` }}
+            />
+          </div>
+          <div className="cqs-progress-text">
+            <span className="cqs-progress-count">
+              {postReviewIndex + 1} / {totalQuestions}
+            </span>
+            <span className="cqs-review-badge">
+              📖 {t('study.reviewMode', 'Review Mode')}
+            </span>
+          </div>
+        </div>
+
+        {/* Question content */}
+        <div className="cqs-question-wrapper">
+          {/* Question number badge */}
+          <div className="cqs-question-number">
+            {t('quiz.questionNumber', 'Question')} {postReviewIndex + 1} {t('quiz.of', 'of')} {totalQuestions}
+          </div>
+
+          {/* Topic badge */}
+          {reviewQuestion.topic && (
+            <div className="cqs-topic-badge">
+              <span className="cqs-topic-icon">📚</span>
+              <span className="cqs-topic-text">{reviewQuestion.topic}</span>
+            </div>
+          )}
+
+          {/* Question */}
+          <div className="cqs-question">
+            {reviewQuestion.question || 'Loading question...'}
+          </div>
+
+          {/* Options - show correct answer highlighted */}
+          <div className="cqs-options">
+            {reviewOptions.map((option, index) => {
+              const isCorrectOption = index === reviewCorrectIndex;
+              return (
+                <div
+                  key={index}
+                  className={`cqs-option disabled ${isCorrectOption ? 'correct' : ''}`}
+                >
+                  <span className="cqs-option-letter">{letters[index]}</span>
+                  <span className="cqs-option-text">{stripLetterPrefix(option)}</span>
+                  {isCorrectOption && <span className="cqs-correct-indicator">✓</span>}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Always show rationale in review mode */}
+          {reviewRationale && (
+            <div className="cqs-feedback correct" style={{ marginTop: '20px' }}>
+              <div className="cqs-feedback-header">
+                <div className="cqs-feedback-icon">
+                  <CheckIcon />
+                </div>
+                <span className="cqs-feedback-title">{t('study.explanation', 'Explanation')}</span>
+              </div>
+              <div
+                className="cqs-feedback-rationale"
+                style={{ marginLeft: 0, marginTop: '12px' }}
+                dangerouslySetInnerHTML={{ __html: reviewRationale }}
+              />
+            </div>
+          )}
+
+          {/* Navigation buttons */}
+          <div className="cqs-post-review-nav">
+            <button
+              className="cqs-nav-btn cqs-nav-prev"
+              onClick={() => setPostReviewIndex(prev => Math.max(0, prev - 1))}
+              disabled={postReviewIndex === 0}
+            >
+              ← {t('study.previous', 'Previous')}
+            </button>
+
+            <button
+              className="cqs-nav-btn cqs-nav-done"
+              onClick={() => {
+                setIsPostReviewMode(false);
+                if (onComplete) onComplete({ xpEarned, timeTaken, isPerfect, correctCount, totalQuestions });
+              }}
+            >
+              {t('study.done', 'Done')}
+            </button>
+
+            <button
+              className="cqs-nav-btn cqs-nav-next"
+              onClick={() => setPostReviewIndex(prev => Math.min(totalQuestions - 1, prev + 1))}
+              disabled={postReviewIndex === totalQuestions - 1}
+            >
+              {t('study.next', 'Next')} →
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -847,15 +968,16 @@ const ChatQuizStream = ({
               </>
             )}
 
-            {/* Continue/Next button */}
-            {(hasMoreQuestions || moreQuestionsExpected || needsReviewRound()) && (
-              <button
-                className={`cqs-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
-                onClick={handleNextQuestion}
-              >
-                {isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT')}
-              </button>
-            )}
+            {/* Continue/Next button - always show when feedback is visible */}
+            <button
+              className={`cqs-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
+              onClick={handleNextQuestion}
+            >
+              {hasMoreQuestions || moreQuestionsExpected || needsReviewRound()
+                ? (isCorrect ? t('study.continue', 'CONTINUE') : t('study.gotIt', 'GOT IT'))
+                : t('study.finish', 'FINISH')
+              }
+            </button>
           </div>
         )}
 

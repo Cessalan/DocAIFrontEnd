@@ -286,6 +286,7 @@
   background: rgba(46, 213, 115, 0.2);
   box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
   animation: correctPop 0.4s ease-out;
+  opacity: 1; /* Ensure visibility - prevents animation override from hiding option */
 }
 
 @keyframes correctPop {
@@ -301,6 +302,7 @@
   background: rgba(232, 141, 125, 0.2);
   box-shadow: 0 0 15px rgba(232, 141, 125, 0.3);
   animation: incorrectShake 0.4s ease-out;
+  opacity: 1; /* Ensure visibility - prevents animation override from hiding option */
 }
 
 @keyframes incorrectShake {
@@ -1199,6 +1201,153 @@ body.dark-mode .cqs-question-number {
 .cqs-review-btn:active {
   transform: translateY(3px);
   box-shadow: 0 3px 0 var(--cqs-coral-dark);
+}
+
+/* -----------------------------------------
+   POST-COMPLETION REVIEW MODE
+   ----------------------------------------- */
+.cqs-completion-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  max-width: 300px;
+}
+
+.cqs-review-questions-btn {
+  padding: 12px 24px;
+  background: transparent;
+  color: var(--cqs-text-secondary);
+  border: 2px solid rgba(150, 150, 150, 0.3);
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cqs-review-questions-btn:hover {
+  background: rgba(150, 150, 150, 0.1);
+  border-color: rgba(150, 150, 150, 0.5);
+  color: var(--cqs-text-primary);
+}
+
+.cqs-post-review-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(150, 150, 150, 0.2);
+}
+
+.cqs-nav-btn {
+  padding: 12px 20px;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cqs-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cqs-nav-prev,
+.cqs-nav-next {
+  background: rgba(150, 150, 150, 0.15);
+  color: var(--cqs-text-secondary);
+}
+
+.cqs-nav-prev:hover:not(:disabled),
+.cqs-nav-next:hover:not(:disabled) {
+  background: rgba(150, 150, 150, 0.25);
+  color: var(--cqs-text-primary);
+}
+
+.cqs-nav-done {
+  background: var(--cqs-coral);
+  color: white;
+  box-shadow: 0 4px 0 var(--cqs-coral-dark);
+}
+
+.cqs-nav-done:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 var(--cqs-coral-dark);
+}
+
+.cqs-nav-done:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 var(--cqs-coral-dark);
+}
+
+.cqs-correct-indicator {
+  margin-left: auto;
+  color: var(--cqs-correct);
+  font-size: 18px;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+/* Post-review mode specific styles */
+.cqs-question-wrapper .cqs-options {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cqs-question-wrapper .cqs-option {
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.cqs-question-wrapper .cqs-option-text {
+  flex: 1;
+  min-width: 0;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Post-review mode feedback box */
+.cqs-question-wrapper .cqs-feedback {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cqs-question-wrapper .cqs-feedback-rationale {
+  width: 100%;
+  box-sizing: border-box;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+/* Dark mode for post-review */
+body.dark-mode .cqs-review-questions-btn {
+  color: var(--cqs-text-secondary);
+  border-color: rgba(150, 150, 180, 0.3);
+}
+
+body.dark-mode .cqs-review-questions-btn:hover {
+  background: rgba(150, 150, 180, 0.15);
+  border-color: rgba(150, 150, 180, 0.5);
+}
+
+body.dark-mode .cqs-post-review-nav {
+  border-top-color: rgba(150, 150, 180, 0.2);
+}
+
+body.dark-mode .cqs-nav-prev,
+body.dark-mode .cqs-nav-next {
+  background: rgba(150, 150, 180, 0.15);
+}
+
+body.dark-mode .cqs-nav-prev:hover:not(:disabled),
+body.dark-mode .cqs-nav-next:hover:not(:disabled) {
+  background: rgba(150, 150, 180, 0.25);
 }
 
 /* -----------------------------------------
