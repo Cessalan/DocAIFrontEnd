@@ -15,6 +15,7 @@ const ChatQuizStream = ({
   messageId,
   isStreaming = false,
   expectedTotal = 10,
+  generatingCurrent = 0,
   onAnswerSelect,
   onComplete,
   onFeedbackSubmit,
@@ -758,26 +759,36 @@ const ChatQuizStream = ({
   // Render waiting for questions (streaming) - Now shows skeleton preview
   // Only show skeleton if NO questions at all, or if waiting for next AND current question isn't ready
   const hasValidCurrentQuestion = currentQuestion && currentQuestion.question && options.length > 0;
+  // Use generatingCurrent for progress when no questions received yet, otherwise use totalQuestions
+  const progressValue = totalQuestions > 0 ? totalQuestions : generatingCurrent;
+  const generationProgress = expectedTotal > 0 ? Math.round((progressValue / expectedTotal) * 100) : 0;
+
   if ((isStreaming && totalQuestions === 0) || (waitingForNextQuestion && !hasValidCurrentQuestion)) {
     return (
       <div className="chat-quiz-stream-card">
         <div className="cqs-skeleton-loading">
-          {/* Progress indicator */}
+          {/* Progress indicator with real percentage */}
           <div className="cqs-skeleton-progress">
-            <div className="cqs-skeleton-progress-bar">
-              <div className="cqs-skeleton-progress-pulse" />
+            <div className="cqs-generation-progress-bar">
+              <div
+                className="cqs-generation-progress-fill"
+                style={{ width: `${generationProgress}%` }}
+              />
+              {generationProgress === 0 && (
+                <div className="cqs-skeleton-progress-pulse" />
+              )}
             </div>
             <div className="cqs-skeleton-progress-text">
               <span className="cqs-skeleton-count">
-                {waitingForNextQuestion
-                  ? t('study.loadingNextQuestion', 'Loading next question...')
+                {generatingCurrent > 0
+                  ? t('study.generatingProgress', {
+                      current: generatingCurrent,
+                      total: expectedTotal,
+                      defaultValue: `Generating question ${generatingCurrent} of ${expectedTotal}...`
+                    })
                   : t('study.generatingQuestions', 'Generating questions...')}
               </span>
-              <span className="cqs-streaming-indicator">
-                <span className="cqs-streaming-dot"></span>
-                <span className="cqs-streaming-dot"></span>
-                <span className="cqs-streaming-dot"></span>
-              </span>
+              <span className="cqs-generation-percent">{generationProgress}%</span>
             </div>
           </div>
 

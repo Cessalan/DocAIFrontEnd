@@ -687,6 +687,33 @@
   color: var(--cqs-coral);
 }
 
+/* Generation Progress Bar - shows real progress during quiz generation */
+.cqs-generation-progress-bar {
+  position: relative;
+  height: 10px;
+  background: rgba(232, 141, 125, 0.15);
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.cqs-generation-progress-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  background: linear-gradient(90deg, var(--cqs-coral) 0%, var(--cqs-coral-light) 100%);
+  border-radius: 5px;
+  transition: width 0.4s ease-out;
+}
+
+.cqs-generation-percent {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--cqs-coral);
+  min-width: 40px;
+  text-align: right;
+}
+
 .cqs-skeleton-question {
   margin-bottom: 24px;
 }

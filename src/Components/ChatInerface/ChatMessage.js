@@ -310,7 +310,8 @@ const ChatMessage = ({
               quizData={parsedQuizData || []}
               messageId={message.id}
               isStreaming={message.isStreaming}
-              expectedTotal={10}
+              expectedTotal={message.expectedTotal || parsedQuizData?.length || 4}
+              generatingCurrent={message.generatingCurrent || 0}
               onAnswerSelect={handleQuizAnswerSelect}
               onComplete={(stats) => {
                 devLog('Quiz completed:', stats);

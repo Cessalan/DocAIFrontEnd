@@ -984,7 +984,12 @@ const ChatInterface = ({
                 if (existingQuiz) {
                   return prev.map(msg =>
                     msg.id === quizMessageId
-                      ? { ...msg, content: statusUpdate.message }
+                      ? {
+                        ...msg,
+                        content: statusUpdate.message,
+                        expectedTotal: statusUpdate.total || msg.expectedTotal || 4,
+                        generatingCurrent: statusUpdate.current || msg.generatingCurrent || 0
+                      }
                       : msg
                   );
                 }
@@ -996,6 +1001,8 @@ const ChatInterface = ({
                   type: 'quiz',
                   content: statusUpdate.message,
                   quizData: [],
+                  expectedTotal: statusUpdate.total || 4,
+                  generatingCurrent: statusUpdate.current || 0,
                   isStreaming: true,
                   timestamp: new Date()
                 }];
@@ -1010,6 +1017,8 @@ const ChatInterface = ({
                       type: 'quiz',
                       content: statusUpdate.message,
                       quizData: [],
+                      expectedTotal: statusUpdate.total || 4,
+                      generatingCurrent: statusUpdate.current || 0,
                       isStreaming: true
                     }
                     : msg
@@ -2890,11 +2899,24 @@ const ChatInterface = ({
       ? messageData.topics.join(', ')
       : 'the uploaded material';
 
-    // Special handling for quiz - show mode selector modal
+    // Quiz action - directly generate knowledge quiz using the document (no modal)
     if (actionId === 'quiz') {
-      devLog('🎯 Opening quiz mode selector');
-      setPendingQuizMessageData(messageData);
-      setShowQuizModeSelector(true);
+      devLog('🎯 Generating knowledge quiz directly from document');
+
+      // Hide action buttons on this message
+      setChatMessages(prev => prev.map(msg =>
+        msg.id === messageData.id
+          ? { ...msg, showActions: false }
+          : msg
+      ));
+
+      // Generate knowledge quiz prompt - backend will use document content by default
+      const quizPrompt = t('postUpload.knowledgeQuizPrompt', {
+        topics: topicsStr,
+        defaultValue: `Quiz me on ${topicsStr} using the content from my document.`
+      });
+
+      await handleSendNewUserMessage(null, quizPrompt);
       return;
     }
 
