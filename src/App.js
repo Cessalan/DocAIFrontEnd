@@ -15,7 +15,6 @@ import DedicatedQuizPage from "./Components/QuizRoom/DedicatedQuizPage";
 import BlogList from "./Components/Blog/BlogList";
 import BlogPost from "./Components/Blog/BlogPost";
 import QuestionBankAdmin from "./Components/Admin/QuestionBankAdmin";
-import DashboardLayout from "./Components/Dashboard/DashboardLayout";
 import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
@@ -339,12 +338,12 @@ function App() {
         <Route path="/admin/question-bank" element={<QuestionBankAdmin />} />
       )}
 
-      {/* Home - Dashboard */}
+      {/* Home - Redirect to chat */}
       <Route
         path="/"
         element={
           <ProtectedRoute>
-            <DashboardLayout />
+            <ChatLayout />
           </ProtectedRoute>
         }
       />
