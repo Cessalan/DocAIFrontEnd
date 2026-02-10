@@ -205,6 +205,19 @@ const ChatInterface = ({
   const [isUploadAnalyzing, setIsUploadAnalyzing] = useState(false);
   const [uploadMessageId, setUploadMessageId] = useState(null);
 
+  // File error toast state
+  const [fileErrorToast, setFileErrorToast] = useState(null);
+
+  // Auto-dismiss file error toast after 5 seconds
+  useEffect(() => {
+    if (fileErrorToast) {
+      const timer = setTimeout(() => {
+        setFileErrorToast(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [fileErrorToast]);
+
   // State for sticky quiz progress bar
   const [activeQuizProgress, setActiveQuizProgress] = useState(null);
 
@@ -2187,9 +2200,49 @@ const ChatInterface = ({
     return newChatRef.id;
   };
 
+  // Supported file types for upload
+  const SUPPORTED_MIME_TYPES = [
+    'application/pdf',
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    'application/vnd.ms-powerpoint',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/plain',
+    'text/markdown'
+  ];
+  const SUPPORTED_EXTENSIONS = /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|txt|md)$/i;
+
+  const isFileTypeSupported = (file) => {
+    return SUPPORTED_MIME_TYPES.includes(file.type) || SUPPORTED_EXTENSIONS.test(file.name);
+  };
+
   const handleFileSelect = async (e) => {
-    const files = Array.from(e.target.files);
-    if (files.length === 0) return;
+    const allFiles = Array.from(e.target.files);
+    if (allFiles.length === 0) return;
+
+    // Validate file types
+    const supportedFiles = allFiles.filter(isFileTypeSupported);
+    const unsupportedFiles = allFiles.filter(file => !isFileTypeSupported(file));
+
+    // Handle unsupported files
+    if (unsupportedFiles.length > 0) {
+      const unsupportedNames = unsupportedFiles.map(f => f.name).join(', ');
+
+      if (supportedFiles.length === 0) {
+        // All files are unsupported
+        setFileErrorToast(t('landing.unsupportedFileType', { files: unsupportedNames }));
+        if (e.target) e.target.value = '';
+        return;
+      } else {
+        // Some files are unsupported, continue with the rest
+        setFileErrorToast(t('landing.unsupportedFileTypePartial', { files: unsupportedNames }));
+      }
+    }
+
+    // Continue with only supported files
+    const files = supportedFiles;
 
     const user = auth.currentUser;
     if (!user) {
@@ -3529,6 +3582,23 @@ const ChatInterface = ({
         className="chat-container"
         style={{ display: isStudyMode ? 'none' : undefined }}
       >
+        {/* File Error Toast */}
+        {fileErrorToast && (
+          <div className="file-error-toast">
+            <div className="file-error-toast-content">
+              <span className="file-error-toast-icon">⚠️</span>
+              <span className="file-error-toast-message">{fileErrorToast}</span>
+              <button
+                className="file-error-toast-close"
+                onClick={() => setFileErrorToast(null)}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Nursing Background Icons */}
         <div className="nursing-icon">💊</div>
         <div className="nursing-icon">🩺</div>

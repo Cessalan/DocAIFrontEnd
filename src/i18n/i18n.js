@@ -624,6 +624,9 @@ const resources = {
         generatingQuestions: "Generating NCLEX-style questions...",
         analyzingNotes: "Analyzing your notes",
         uploadError: "Failed to process your file. Please try again.",
+        unsupportedFileType: "Unsupported file type: {{files}}. Only PDF, Word, PowerPoint, Excel, and text files are supported.",
+        unsupportedFileTypePartial: "Some files were skipped (unsupported type): {{files}}. Processing the rest.",
+        supportedFormats: "Supported formats: PDF, Word, PowerPoint, Excel, Text",
         // File size error modal
         fileTooLargeTitle: "File too large",
         fileTooLargeMessage: "The maximum file size is {{maxSize}}MB per file.",
@@ -1512,6 +1515,9 @@ const resources = {
         generatingQuestions: "Génération des questions NCLEX...",
         analyzingNotes: "Analyse de tes notes",
         uploadError: "Échec du traitement de ton fichier. Réessaie.",
+        unsupportedFileType: "Type de fichier non supporté : {{files}}. Seuls les fichiers PDF, Word, PowerPoint, Excel et texte sont acceptés.",
+        unsupportedFileTypePartial: "Certains fichiers ont été ignorés (type non supporté) : {{files}}. Traitement des autres fichiers.",
+        supportedFormats: "Formats acceptés : PDF, Word, PowerPoint, Excel, Texte",
         // File size error modal
         fileTooLargeTitle: "Fichier trop volumineux",
         fileTooLargeMessage: "La taille maximale est de {{maxSize}}Mo par fichier.",

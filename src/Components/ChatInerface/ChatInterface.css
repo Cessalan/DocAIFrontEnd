@@ -3792,3 +3792,105 @@ body.dark-mode .voice-transcribing span {
     height: 18px;
   }
 }
+
+/* ============================================
+   FILE ERROR TOAST
+   ============================================ */
+.file-error-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10000;
+  animation: toastSlideIn 0.3s ease-out;
+}
+
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.file-error-toast-content {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: linear-gradient(135deg, rgba(30, 30, 35, 0.98), rgba(40, 40, 50, 0.98));
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), 0 0 20px rgba(239, 68, 68, 0.15);
+  backdrop-filter: blur(12px);
+  max-width: 500px;
+}
+
+.file-error-toast-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.file-error-toast-message {
+  color: #f87171;
+  font-size: 0.9rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.file-error-toast-close {
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 8px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.file-error-toast-close:hover {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Light mode */
+body:not(.dark-mode) .file-error-toast-content {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(250, 250, 252, 0.98));
+  border-color: rgba(239, 68, 68, 0.3);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 20px rgba(239, 68, 68, 0.1);
+}
+
+body:not(.dark-mode) .file-error-toast-message {
+  color: #dc2626;
+}
+
+body:not(.dark-mode) .file-error-toast-close {
+  color: rgba(0, 0, 0, 0.4);
+}
+
+body:not(.dark-mode) .file-error-toast-close:hover {
+  color: rgba(0, 0, 0, 0.7);
+}
+
+/* Mobile toast */
+@media (max-width: 768px) {
+  .file-error-toast {
+    top: 10px;
+    left: 10px;
+    right: 10px;
+    transform: none;
+  }
+
+  .file-error-toast-content {
+    max-width: none;
+    padding: 12px 16px;
+  }
+
+  .file-error-toast-message {
+    font-size: 0.85rem;
+  }
+}
