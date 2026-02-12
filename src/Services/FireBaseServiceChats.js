@@ -776,4 +776,40 @@ export const DeleteMessage = async (chatId, messageId) => {
   }
 };
 
+/**
+ * Save or update a message using the message's id as the Firebase document ID.
+ * This uses setDoc which creates OR updates, preventing duplicates.
+ * Use this for quiz/flashcard/mindmap messages that need to be updated after creation.
+ */
+export const SaveOrUpdateMessage = async (chatId, messageObject) => {
+  if (!chatId || !messageObject?.id) {
+    throw new Error("chatId and messageObject.id are required");
+  }
+
+  try {
+    devLog("SaveOrUpdateMessage:", { chatId, messageId: messageObject.id });
+
+    // Use the message's id as the Firebase document ID
+    const messageRef = doc(db, "chats", chatId, "messages", messageObject.id);
+
+    // setDoc with merge: true will create if not exists, or update if exists
+    await setDoc(messageRef, {
+      ...messageObject,
+      timestamp: serverTimestamp()
+    }, { merge: true });
+
+    // Also update the parent chat's updatedAt
+    const chatRef = doc(db, "chats", chatId);
+    await updateDoc(chatRef, {
+      updatedAt: serverTimestamp()
+    });
+
+    devLog("✅ SaveOrUpdateMessage successful");
+    return chatId;
+  } catch (error) {
+    console.error("❌ SaveOrUpdateMessage failed:", error);
+    throw error;
+  }
+};
+
 export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };

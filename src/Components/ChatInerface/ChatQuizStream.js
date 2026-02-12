@@ -984,20 +984,6 @@ const ChatQuizStream = ({
           </div>
         )}
 
-        {/* Streaming status - shows when more questions are generating */}
-        {isStreaming && !isReviewRound && !showFeedback && totalQuestions < expectedTotal && (
-          <div className="cqs-streaming-status">
-            <span className="cqs-streaming-status-text">
-              {t('quiz.generatingMore', 'Generating more questions')}
-            </span>
-            <span className="cqs-streaming-status-count">{totalQuestions}/{expectedTotal}</span>
-            <span className="cqs-streaming-indicator">
-              <span className="cqs-streaming-dot"></span>
-              <span className="cqs-streaming-dot"></span>
-              <span className="cqs-streaming-dot"></span>
-            </span>
-          </div>
-        )}
       </div>
     </div>
   );

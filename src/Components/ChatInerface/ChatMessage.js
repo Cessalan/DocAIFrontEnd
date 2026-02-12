@@ -303,8 +303,8 @@ const ChatMessage = ({
         )}
 
         {/* Quiz Display - New High-Dopamine Streaming Quiz */}
-        {/* Render immediately when type is 'quiz' to show skeleton while streaming */}
-        {isAI && (message.type === 'quiz' || (Array.isArray(parsedQuizData) && parsedQuizData.length > 0)) && (
+        {/* Only render when type is explicitly 'quiz' to prevent duplicate quiz renders */}
+        {isAI && message.type === 'quiz' && (
           <div className="message-text">
             <ChatQuizStream
               quizData={parsedQuizData || []}

@@ -17,12 +17,14 @@
       "Bash(git checkout:*)",
       "Bash(firebase deploy:*)",
       "Bash(pip show:*)",
-      "Bash(npx eslint:*)"
+      "Bash(npx eslint:*)",
+      "WebFetch(domain:nursequizai.com)"
     ],
     "deny": [],
     "ask": [],
     "additionalDirectories": [
-      "c:\\Users\\Billion\\Desktop\\NQBackEnd\\NQBackEnd2\\tools"
+      "c:\\Users\\Billion\\Desktop\\NQBackEnd\\NQBackEnd2\\tools",
+      "c:\\Users\\Billion\\Desktop\\ragfrontend"
     ]
   }
 }

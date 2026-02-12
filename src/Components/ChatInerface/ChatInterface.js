@@ -49,7 +49,8 @@ import {
   UpdateQuizAnswer,
   UpdateFlashcardReview,
   SaveQuizFeedback,
-  DeleteMessage
+  DeleteMessage,
+  SaveOrUpdateMessage
 } from '../../Services/FireBaseServiceChats.js';
 
 import { loadFilesForChat, saveAudioToStorage } from '../../Services/FireBaseFiles.js';
@@ -1029,7 +1030,9 @@ const ChatInterface = ({
                       ...msg,
                       type: 'quiz',
                       content: statusUpdate.message,
-                      quizData: [],
+                      // IMPORTANT: Preserve existing quizData if questions already arrived
+                      // (handles race condition where quiz_question arrives before quiz_generating)
+                      quizData: msg.quizData || [],
                       expectedTotal: statusUpdate.total || 4,
                       generatingCurrent: statusUpdate.current || 0,
                       isStreaming: true
@@ -1055,15 +1058,24 @@ const ChatInterface = ({
 
             setChatMessages(prev =>
               prev.map(msg => {
-                if (msg.id === targetMessageId && msg.type === 'quiz') {
+                // Only update messages that are quiz type OR placeholder (no type/empty content)
+                // This prevents accidentally converting other message types to quiz
+                const isQuizMessage = msg.type === 'quiz';
+                const isPlaceholder = !msg.type && (!msg.content || msg.content === '');
+                const hasQuizData = msg.quizData && msg.quizData.length > 0;
+
+                if (msg.id === targetMessageId && (isQuizMessage || isPlaceholder || hasQuizData)) {
                   const newQuizData = [...(msg.quizData || []), statusUpdate.question];
                   devLog("✅ Appended question, total:", newQuizData.length);
 
                   return {
                     ...msg,
+                    type: 'quiz',
                     quizData: newQuizData,
                     content: `Quiz - ${statusUpdate.total_so_far} questions générées`,
-                    isStreaming: true
+                    isStreaming: true,
+                    expectedTotal: msg.expectedTotal || statusUpdate.total_so_far + 5,
+                    generatingCurrent: msg.generatingCurrent || statusUpdate.total_so_far
                   };
                 }
                 return msg;
@@ -1804,49 +1816,11 @@ const ChatInterface = ({
         );
         devLog("  ✅ Saved to Firebase successfully");
       } catch (updateError) {
-        // If UpdateQuizAnswer fails (e.g., message not in Firebase yet), try to create it
-        devLog("  ⚠️ UpdateQuizAnswer failed, attempting to save full quiz message...");
-        console.warn("UpdateQuizAnswer failed:", updateError.message);
-
-        // Find the quiz message in state and save the whole thing
-        const quizMessageForSave = chatMessages.find(msg => msg.id === answerData.messageId && msg.type === 'quiz');
-        if (quizMessageForSave && quizMessageForSave.quizData) {
-          try {
-            // Update the quizData with the user's answer
-            const updatedQuizData = quizMessageForSave.quizData.map((q, idx) => {
-              if (idx === answerData.quizIndex) {
-                return {
-                  ...q,
-                  userSelection: {
-                    questionType: 'mcq',
-                    selectedIndex: answerData.selectedOptionIndex,
-                    selectedOptionText: answerData.selectedOptionText,
-                    isCorrect: answerData.isCorrect,
-                    timestamp: answerData.timestamp
-                  }
-                };
-              }
-              return q;
-            });
-
-            const messageToSave = {
-              id: answerData.messageId,
-              role: 'assistant',
-              type: 'quiz',
-              quizData: updatedQuizData,
-              content: `Quiz (${updatedQuizData.length} questions)`,
-              isStreaming: isStreaming, // Preserve streaming status
-              timestamp: new Date()
-            };
-
-            await AppendToChat(currentChatID, messageToSave);
-            devLog("  ✅ Full quiz message saved to Firebase as fallback");
-          } catch (fallbackError) {
-            console.error("❌ Fallback save also failed:", fallbackError);
-          }
-        } else {
-          devLog("  ⚠️ Could not find quiz message in state for fallback save");
-        }
+        // UpdateQuizAnswer failed - this is expected during streaming (message not in Firebase yet)
+        // DON'T use AppendToChat as fallback - it creates duplicates!
+        // Instead, rely on pendingQuizAnswersRef which handleQuizComplete will merge
+        devLog("  ⚠️ UpdateQuizAnswer failed (expected during streaming):", updateError.message);
+        devLog("  📦 Answer stored in pendingQuizAnswersRef - will be saved when quiz completes");
       }
       devLog("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
 
@@ -1938,11 +1912,17 @@ const ChatInterface = ({
     );
 
     // ✅ Update UI state with merged data
+    // Only update quiz messages or placeholders - don't convert other message types
     setChatMessages(prev =>
       prev.map(msg => {
-        if (msg.id === messageId && msg.type === 'quiz') {
+        const isQuizMessage = msg.type === 'quiz';
+        const isPlaceholder = !msg.type && (!msg.content || msg.content === '');
+        const hasQuizData = msg.quizData && msg.quizData.length > 0;
+
+        if (msg.id === messageId && (isQuizMessage || isPlaceholder || hasQuizData)) {
           return {
             ...msg,
+            type: 'quiz',
             quizData: mergedQuizData,
             content: currentLanguage === 'fr' ? `Voici votre quiz (${quizData.length} questions)` : `Here's your quiz (${quizData.length} questions)`,
             isStreaming: false,
@@ -1980,15 +1960,15 @@ const ChatInterface = ({
     devLog("🔍 DEBUG - messageToSave.quizData:", messageToSave.quizData);
     devLog("🔍 DEBUG - messageToSave.quizData length:", messageToSave.quizData.length);
 
-    // ✅ Try to save, retry once if it fails
+    // ✅ Save using upsert (creates or updates, no duplicates)
     try {
-      await AppendToChat(chatId, messageToSave);
+      await SaveOrUpdateMessage(chatId, messageToSave);
       devLog("✅ Firebase save successful");
     } catch (error) {
       console.error("❌ Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        await AppendToChat(chatId, messageToSave);
+        await SaveOrUpdateMessage(chatId, messageToSave);
         devLog("✅ Firebase save successful on retry");
       } catch (retryError) {
         console.error("❌ Firebase save failed on retry:", retryError);
@@ -2059,15 +2039,15 @@ const ChatInterface = ({
       timestamp: new Date()
     };
 
-    // ✅ Try to save, retry once if it fails (EXACTLY like quiz)
+    // ✅ Save using upsert (creates or updates, no duplicates)
     try {
-      await AppendToChat(chatId, messageToSave);
+      await SaveOrUpdateMessage(chatId, messageToSave);
       devLog("✅ Firebase save successful");
     } catch (error) {
       console.error("❌ Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        await AppendToChat(chatId, messageToSave);
+        await SaveOrUpdateMessage(chatId, messageToSave);
         devLog("✅ Firebase save successful on retry");
       } catch (retryError) {
         console.error("❌ Firebase save failed on retry:", retryError);
@@ -2119,14 +2099,15 @@ const ChatInterface = ({
       timestamp: new Date()
     };
 
+    // ✅ Save using upsert (creates or updates, no duplicates)
     try {
-      await AppendToChat(chatId, messageToSave);
+      await SaveOrUpdateMessage(chatId, messageToSave);
       devLog("✅ Mindmap Firebase save successful");
     } catch (error) {
       console.error("❌ Mindmap Firebase save failed, retrying once:", error);
       try {
         await new Promise(resolve => setTimeout(resolve, 500));
-        await AppendToChat(chatId, messageToSave);
+        await SaveOrUpdateMessage(chatId, messageToSave);
         devLog("✅ Mindmap Firebase save successful on retry");
       } catch (retryError) {
         console.error("❌ Mindmap Firebase save failed on retry:", retryError);
