@@ -3,138 +3,198 @@
   <!-- Main Pages -->
   <url>
     <loc>https://nursequizai.com/</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/signup</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/login</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
+
+  <!-- Primary Landing Pages -->
+  <url>
+    <loc>https://nursequizai.com/best-ai-study-tool-nclex</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/ai-nclex-question-generator</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/best-free-ai-nursing-students</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Pillar Content Pages (NEW) -->
+  <url>
+    <loc>https://nursequizai.com/nclex-next-gen-guide</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/sata-questions-nclex</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/clinical-judgment-nclex</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.9</priority>
+  </url>
+
+  <!-- Alternative/Comparison Pages -->
   <url>
     <loc>https://nursequizai.com/quizlet-alternative-nursing</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/anki-alternative-nclex</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nursequizai.com/ai-nclex-question-generator</loc>
-    <lastmod>2026-01-19</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/nursify-ai-alternative</loc>
-    <lastmod>2026-01-19</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://nursequizai.com/best-free-ai-nursing-students</loc>
-    <lastmod>2026-01-19</lastmod>
+    <loc>https://nursequizai.com/nursequizai-vs-goodnurse</loc>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.9</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/nursequizai-vs-studyfetch</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/nursequizai-vs-chatgpt</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- Other Landing Pages -->
+  <url>
+    <loc>https://nursequizai.com/ai-quiz-maker-for-nursing</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/free-ai-for-nursing-students</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/nclex-practice-questions-ai</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
   </url>
 
   <!-- Blog Section -->
   <url>
     <loc>https://nursequizai.com/blog</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
 
-  <!-- Blog Posts -->
-  <url>
-    <loc>https://nursequizai.com/blog/quizlet-anki-alternative-nursing</loc>
-    <lastmod>2025-12-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nursequizai.com/blog/nursing-pdf-to-quiz-flashcards</loc>
-    <lastmod>2025-12-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nursequizai.com/blog/audio-summaries-nursing-quizlet-anki-alternative</loc>
-    <lastmod>2025-12-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nursequizai.com/blog/is-nursequizai-free</loc>
-    <lastmod>2025-12-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
+  <!-- Blog Posts - High Priority -->
   <url>
     <loc>https://nursequizai.com/blog/how-to-study-for-nclex-in-30-days</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/blog/best-nclex-study-strategies</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
+    <priority>0.85</priority>
   </url>
   <url>
+    <loc>https://nursequizai.com/blog/nclex-next-gen-guide</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.85</priority>
+  </url>
+
+  <!-- Blog Posts - Standard Priority -->
+  <url>
     <loc>https://nursequizai.com/blog/pharmacology-memorization-tips</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/blog/how-to-use-ai-for-nursing-study</loc>
-    <lastmod>2025-12-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nursequizai.com/blog/convert-notes-to-quiz</loc>
-    <lastmod>2025-12-15</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://nursequizai.com/blog/nclex-next-gen-guide</loc>
-    <lastmod>2025-12-15</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/blog/quizlet-anki-alternative-nursing</loc>
-    <lastmod>2026-01-06</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/blog/nursing-pdf-to-quiz-flashcards</loc>
-    <lastmod>2026-01-06</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://nursequizai.com/blog/audio-summaries-nursing-quizlet-anki-alternative</loc>
-    <lastmod>2026-01-06</lastmod>
+    <lastmod>2026-02-11</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/blog/convert-notes-to-quiz</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://nursequizai.com/blog/is-nursequizai-free</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
+  <!-- French Blog Posts -->
+  <url>
+    <loc>https://nursequizai.com/fr</loc>
+    <lastmod>2026-02-11</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
   </url>
 </urlset>
