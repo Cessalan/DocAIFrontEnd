@@ -18,7 +18,8 @@
       "Bash(firebase deploy:*)",
       "Bash(pip show:*)",
       "Bash(npx eslint:*)",
-      "WebFetch(domain:nursequizai.com)"
+      "WebFetch(domain:nursequizai.com)",
+      "Bash(npx react-scripts build)"
     ],
     "deny": [],
     "ask": [],

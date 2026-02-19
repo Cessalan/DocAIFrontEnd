@@ -618,6 +618,102 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
   }
 };
 
+/**
+ * Update study performance record incrementally.
+ * Called on every first-attempt quiz answer and flashcard review.
+ * Builds a per-topic strength/weakness profile for future plan tailoring.
+ *
+ * Firestore path: users/{uid}/studyPerformance/{chatId}
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {Object} result - Performance result
+ * @param {string} result.topic - Topic name from the question/card
+ * @param {'quiz'|'flashcard'} result.type - Type of interaction
+ * @param {boolean} [result.correct] - For quiz: was the answer correct
+ * @param {boolean} [result.mastered] - For flashcard: was it mastered on first try
+ * @param {string} [result.concept] - The question text or card front (what they missed)
+ */
+export const updateStudyPerformance = async (chatId, result) => {
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId || !result.topic) return;
+
+    const ref = doc(db, 'users', userId, 'studyPerformance', chatId);
+    const snap = await getDoc(ref);
+    const data = snap.exists() ? snap.data() : { topics: {}, updatedAt: null };
+
+    const topicKey = result.topic;
+    const topic = data.topics[topicKey] || {
+      questionsCorrect: 0,
+      questionsTotal: 0,
+      flashcardsMastered: 0,
+      flashcardsTotal: 0,
+      missedConcepts: []
+    };
+
+    if (result.type === 'quiz') {
+      topic.questionsTotal++;
+      if (result.correct) {
+        topic.questionsCorrect++;
+      } else if (result.concept) {
+        // Only keep last 20 missed concepts to avoid unbounded growth
+        topic.missedConcepts = [...(topic.missedConcepts || []), result.concept].slice(-20);
+      }
+    }
+
+    if (result.type === 'flashcard') {
+      topic.flashcardsTotal++;
+      if (result.mastered) {
+        topic.flashcardsMastered++;
+      } else if (result.concept) {
+        topic.missedConcepts = [...(topic.missedConcepts || []), result.concept].slice(-20);
+      }
+    }
+
+    // Compute strength level
+    const quizAcc = topic.questionsTotal > 0 ? topic.questionsCorrect / topic.questionsTotal : null;
+    const flashAcc = topic.flashcardsTotal > 0 ? topic.flashcardsMastered / topic.flashcardsTotal : null;
+    const scores = [quizAcc, flashAcc].filter(s => s !== null);
+    const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+
+    if (avg !== null) {
+      topic.strengthLevel = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
+    }
+
+    data.topics[topicKey] = topic;
+    data.updatedAt = serverTimestamp();
+    data.chatId = chatId;
+
+    await setDoc(ref, data, { merge: true });
+    devLog('📊 Performance updated:', topicKey, topic.strengthLevel || 'n/a');
+
+    return topic.strengthLevel || null;
+  } catch (error) {
+    console.error('❌ Error updating study performance:', error);
+    // Non-critical — don't throw
+    return null;
+  }
+};
+
+/**
+ * Get the study performance record for a session
+ * @param {string} chatId - Study session chat ID
+ * @returns {Promise<Object|null>} - Performance data or null
+ */
+export const getStudyPerformance = async (chatId) => {
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return null;
+
+    const ref = doc(db, 'users', userId, 'studyPerformance', chatId);
+    const snap = await getDoc(ref);
+    return snap.exists() ? snap.data() : null;
+  } catch (error) {
+    console.error('❌ Error fetching study performance:', error);
+    return null;
+  }
+};
+
 export default {
   createStudySession,
   getActiveStudySession,
@@ -632,5 +728,7 @@ export default {
   getNodeContent,
   saveNodeContent,
   saveFlashcardProgress,
-  saveQuizProgress
+  saveQuizProgress,
+  updateStudyPerformance,
+  getStudyPerformance
 };

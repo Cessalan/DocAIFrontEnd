@@ -17,7 +17,9 @@ import {
   saveNodeContent,
   getNodeContent,
   saveFlashcardProgress,
-  saveQuizProgress
+  saveQuizProgress,
+  updateStudyPerformance,
+  getStudyPerformance
 } from '../../Services/StudySessionService';
 import './StudyMode.css';
 
@@ -84,6 +86,14 @@ const StudyModeContainer = ({
 
   // Track if current node is being reviewed (gives only 5 XP)
   const [isReviewingNode, setIsReviewingNode] = useState(false);
+
+  // Performance tracking animation state
+  const [insightPulse, setInsightPulse] = useState(null); // { type: 'strength'|'weakness'|'noted', topic }
+
+  // Insights modal state
+  const [showInsightsModal, setShowInsightsModal] = useState(false);
+  const [insightsData, setInsightsData] = useState(null);
+  const [insightsLoading, setInsightsLoading] = useState(false);
 
   const [mascotState, setMascotState] = useState({
     type: 'nurse', // 'nurse' | 'brain'
@@ -326,6 +336,29 @@ const StudyModeContainer = ({
           }));
         }, 1500);
       }
+
+      // Track performance on first attempt only (not review round)
+      if (!viewOnly && !answerData.progress?.isReviewRound && answerData.questionIndex != null && currentContent?.questions) {
+        const question = currentContent.questions[answerData.questionIndex];
+        if (question) {
+          const strengthLevel = updateStudyPerformance(chatId, {
+            topic: question.topic || activeNode?.label || 'General',
+            type: 'quiz',
+            correct: answerData.isCorrect,
+            concept: !answerData.isCorrect ? question.question : undefined
+          });
+
+          // Show the subtle tracking animation
+          strengthLevel.then((level) => {
+            setInsightPulse({
+              type: answerData.isCorrect ? 'strength' : 'weakness',
+              topic: question.topic || activeNode?.label || 'General'
+            });
+            // Auto-dismiss after animation
+            setTimeout(() => setInsightPulse(null), 2400);
+          });
+        }
+      }
     }
 
     // Save quiz progress if we have a messageId (use ref for latest value)
@@ -351,7 +384,7 @@ const StudyModeContainer = ({
         updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
       }
     }
-  }, [chatId, activeNodeId, currentContent, viewOnly]);
+  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly]);
 
   // Handle flashcard review
   const handleReview = useCallback((reviewData) => {
@@ -367,6 +400,29 @@ const StudyModeContainer = ({
         isSurprised: false,
         lookDirection: 'center'
       });
+    }
+
+    // Track performance on first attempt only (not review round)
+    if (!viewOnly && !reviewData.progress?.isReviewRound && reviewData.cardIndex != null && currentContent?.cards) {
+      const isMastered = reviewData.status === 'got_it';
+      const card = currentContent.cards[reviewData.cardIndex];
+      if (card) {
+        const strengthLevel = updateStudyPerformance(chatId, {
+          topic: card.topic || activeNode?.label || 'General',
+          type: 'flashcard',
+          mastered: isMastered,
+          concept: !isMastered ? card.front : undefined
+        });
+
+        // Show the subtle tracking animation
+        strengthLevel.then((level) => {
+          setInsightPulse({
+            type: isMastered ? 'strength' : 'weakness',
+            topic: card.topic || activeNode?.label || 'General'
+          });
+          setTimeout(() => setInsightPulse(null), 2400);
+        });
+      }
     }
 
     // Save flashcard progress if we have a messageId (use ref for latest value)
@@ -393,7 +449,7 @@ const StudyModeContainer = ({
     } else if (!viewOnly) {
       console.log('⚠️ NOT saving progress - messageId:', messageId, 'progress:', !!reviewData.progress);
     }
-  }, [chatId, activeNodeId, currentContent, viewOnly]);
+  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly]);
 
   // Handle audio generation trigger
   const handleGenerateAudio = useCallback(async (audioConfig) => {
@@ -556,6 +612,132 @@ const StudyModeContainer = ({
     setNodeToReview(null);
   }, []);
 
+  // Handle mascot click — open insights modal
+  const handleMascotClick = useCallback(async () => {
+    setShowInsightsModal(true);
+    setInsightsLoading(true);
+    try {
+      const data = await getStudyPerformance(chatId);
+      setInsightsData(data);
+    } catch (error) {
+      console.error('Failed to load insights:', error);
+      setInsightsData(null);
+    } finally {
+      setInsightsLoading(false);
+    }
+  }, [chatId]);
+
+  // Insights modal — shared between overview and node view
+  const renderInsightsModal = () => {
+    if (!showInsightsModal) return null;
+    return (
+      <div className="insights-overlay" onClick={() => setShowInsightsModal(false)}>
+        <div className="insights-modal" onClick={(e) => e.stopPropagation()}>
+          <div className="insights-modal__header">
+            <div className="insights-modal__title-row">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="20" height="20">
+                <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <h3>{t('study.yourInsights', 'Your Insights')}</h3>
+            </div>
+            <button className="insights-modal__close" onClick={() => setShowInsightsModal(false)}>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+          <div className="insights-modal__body">
+            {insightsLoading ? (
+              <div className="insights-modal__loading">
+                <div className="study-loading-spinner" />
+                <p>{t('study.loadingInsights', 'Loading...')}</p>
+              </div>
+            ) : !insightsData || !insightsData.topics || Object.keys(insightsData.topics).length === 0 ? (
+              <div className="insights-modal__empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
+                  <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <p>{t('study.noInsightsYet', 'No data yet — complete a quiz or flashcard set to see your insights.')}</p>
+              </div>
+            ) : (
+              <>
+                {Object.entries(insightsData.topics)
+                  .sort(([, a], [, b]) => {
+                    const order = { weak: 0, developing: 1, strong: 2 };
+                    return (order[a.strengthLevel] || 1) - (order[b.strengthLevel] || 1);
+                  })
+                  .map(([topicName, topic]) => {
+                    const quizAcc = topic.questionsTotal > 0
+                      ? Math.round((topic.questionsCorrect / topic.questionsTotal) * 100)
+                      : null;
+                    const flashAcc = topic.flashcardsTotal > 0
+                      ? Math.round((topic.flashcardsMastered / topic.flashcardsTotal) * 100)
+                      : null;
+
+                    return (
+                      <div key={topicName} className={`insights-topic insights-topic--${topic.strengthLevel || 'developing'}`}>
+                        <div className="insights-topic__header">
+                          <span className={`insights-topic__badge insights-topic__badge--${topic.strengthLevel || 'developing'}`}>
+                            {topic.strengthLevel === 'strong' ? t('study.strong', 'Strong')
+                              : topic.strengthLevel === 'weak' ? t('study.weak', 'Needs work')
+                              : t('study.developing', 'Developing')}
+                          </span>
+                          <h4 className="insights-topic__name">{topicName}</h4>
+                        </div>
+
+                        <div className="insights-topic__stats">
+                          {quizAcc !== null && (
+                            <div className="insights-stat">
+                              <div className="insights-stat__bar-track">
+                                <div
+                                  className={`insights-stat__bar-fill insights-stat__bar-fill--${quizAcc >= 85 ? 'strong' : quizAcc >= 60 ? 'developing' : 'weak'}`}
+                                  style={{ width: `${quizAcc}%` }}
+                                />
+                              </div>
+                              <span className="insights-stat__label">
+                                {t('study.quizAccuracy', 'Quiz')} {quizAcc}%
+                                <span className="insights-stat__detail"> ({topic.questionsCorrect}/{topic.questionsTotal})</span>
+                              </span>
+                            </div>
+                          )}
+                          {flashAcc !== null && (
+                            <div className="insights-stat">
+                              <div className="insights-stat__bar-track">
+                                <div
+                                  className={`insights-stat__bar-fill insights-stat__bar-fill--${flashAcc >= 85 ? 'strong' : flashAcc >= 60 ? 'developing' : 'weak'}`}
+                                  style={{ width: `${flashAcc}%` }}
+                                />
+                              </div>
+                              <span className="insights-stat__label">
+                                {t('study.flashcardAccuracy', 'Flashcards')} {flashAcc}%
+                                <span className="insights-stat__detail"> ({topic.flashcardsMastered}/{topic.flashcardsTotal})</span>
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {topic.missedConcepts && topic.missedConcepts.length > 0 && (
+                          <div className="insights-topic__missed">
+                            <span className="insights-topic__missed-label">{t('study.toReview', 'To review:')}</span>
+                            <ul className="insights-topic__missed-list">
+                              {topic.missedConcepts.slice(-3).map((concept, i) => (
+                                <li key={i}>{concept.length > 80 ? concept.substring(0, 80) + '...' : concept}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // Build studyState for overview (with updated nodes)
   const currentStudyState = {
     ...studyState,
@@ -591,8 +773,11 @@ const StudyModeContainer = ({
           studyState={currentStudyState}
           onNodeSelect={handleNodeSelect}
           onExit={handleExitStudy}
+          onShowInsights={handleMascotClick}
           sidebarOpen={sidebarOpen}
         />
+
+        {renderInsightsModal()}
 
         {/* Review Confirmation Modal */}
         {showReviewConfirm && nodeToReview && (
@@ -676,8 +861,34 @@ const StudyModeContainer = ({
               </div>
             )}
 
-            {/* Mascot - positioned to the side */}
-            <div className="study-mascot-side">
+            {/* Mascot - positioned to the side, clickable to show insights */}
+            <div
+              className={`study-mascot-side ${mascotState.isExcited ? 'mascot-celebrate' : ''}`}
+              onClick={handleMascotClick}
+              role="button"
+              tabIndex={0}
+              title={t('study.viewInsights', 'View your progress insights')}
+              style={{ cursor: 'pointer' }}
+            >
+              {/* Insight pulse — floats above mascot */}
+              {insightPulse && (
+                <div className={`insight-pulse insight-pulse--${insightPulse.type}`} key={Date.now()}>
+                  <div className="insight-pulse__icon">
+                    {insightPulse.type === 'strength' ? (
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                        <path d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" />
+                      </svg>
+                    ) : (
+                      <svg viewBox="0 0 20 20" fill="currentColor" width="14" height="14">
+                        <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
+                      </svg>
+                    )}
+                  </div>
+                  <span className="insight-pulse__text">
+                    {insightPulse.type === 'strength' ? t('study.notedStrength', 'Noted as strength') : t('study.notedReview', 'Noted for review')}
+                  </span>
+                </div>
+              )}
               {mascotState.type === 'brain' ? (
                 <BrainMascot size={90} />
               ) : sideMascot.hasEmotions ? (
@@ -698,6 +909,8 @@ const StudyModeContainer = ({
           </div>
         </div>
       </div>
+
+      {renderInsightsModal()}
     </div>
   );
 };

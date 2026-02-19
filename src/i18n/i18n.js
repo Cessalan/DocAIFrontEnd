@@ -890,7 +890,28 @@ const resources = {
         generatingFlashcards: "Generating flashcards...",
         cardsWillAppear: "Cards will appear as they are ready",
         loadingMore: "Loading questions ({{current}}/{{total}})...",
-        loadingMoreCards: "Loading cards ({{current}}/{{total}})..."
+        loadingMoreCards: "Loading cards ({{current}}/{{total}})...",
+
+        // Insights & performance tracking
+        insights: "Insights",
+        yourInsights: "Your Insights",
+        viewInsights: "View your progress insights",
+        loadingInsights: "Loading...",
+        noInsightsYet: "No data yet — complete a quiz or flashcard set to see your insights.",
+        strong: "Strong",
+        developing: "Developing",
+        weak: "Needs work",
+        quizAccuracy: "Quiz",
+        flashcardAccuracy: "Flashcards",
+        toReview: "To review:",
+        notedStrength: "Noted as strength",
+        notedReview: "Noted for review",
+
+        // Review confirmation
+        reviewNode: "Review this lesson?",
+        reviewNodeDescription: "You've already completed this lesson. Would you like to review it again?",
+        earnXpReview: "for reviewing",
+        reviewNow: "Review Now"
       }
     }
   },
@@ -1781,7 +1802,28 @@ const resources = {
         generatingFlashcards: "Génération des flashcards...",
         cardsWillAppear: "Les cartes apparaîtront au fur et à mesure",
         loadingMore: "Chargement des questions ({{current}}/{{total}})...",
-        loadingMoreCards: "Chargement des cartes ({{current}}/{{total}})..."
+        loadingMoreCards: "Chargement des cartes ({{current}}/{{total}})...",
+
+        // Insights & performance tracking
+        insights: "Suivi",
+        yourInsights: "Ton suivi",
+        viewInsights: "Voir ton suivi de progression",
+        loadingInsights: "Chargement...",
+        noInsightsYet: "Pas encore de données — complète un quiz ou des flashcards pour voir ton suivi.",
+        strong: "Maîtrisé",
+        developing: "En progression",
+        weak: "À travailler",
+        quizAccuracy: "Quiz",
+        flashcardAccuracy: "Flashcards",
+        toReview: "À revoir :",
+        notedStrength: "Noté comme acquis",
+        notedReview: "Noté à revoir",
+
+        // Review confirmation
+        reviewNode: "Revoir cette leçon ?",
+        reviewNodeDescription: "Tu as déjà complété cette leçon. Voudrais-tu la revoir ?",
+        earnXpReview: "pour la révision",
+        reviewNow: "Revoir maintenant"
       }
     }
   }

@@ -12,7 +12,7 @@ import './StudyMode.css';
  * @param {Function} onNodeSelect - Callback when a node is selected
  * @param {boolean} sidebarOpen - Whether the sidebar is open (for centering)
  */
-const StudyPlanOverview = ({ studyState, onNodeSelect, sidebarOpen = true }) => {
+const StudyPlanOverview = ({ studyState, onNodeSelect, onShowInsights, sidebarOpen = true }) => {
   const { t } = useTranslation();
   const activeNodeRef = useRef(null);
 
@@ -174,6 +174,18 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, sidebarOpen = true }) => 
             </p>
           )}
         </div>
+        {onShowInsights && (
+          <button
+            className="study-overview-insights-btn"
+            onClick={onShowInsights}
+            title={t('study.viewInsights', 'View your progress insights')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="18" height="18">
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            <span>{t('study.insights', 'Insights')}</span>
+          </button>
+        )}
       </div>
 
       {/* Winding path with bold nodes */}
