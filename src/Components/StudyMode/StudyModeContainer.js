@@ -9,7 +9,7 @@ import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { generate_study_item_stream, generate_study_audio } from '../../Services/FastAPICalls';
+import { generate_study_item_stream, generate_study_audio, plan_review_path } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
@@ -19,7 +19,8 @@ import {
   saveFlashcardProgress,
   saveQuizProgress,
   updateStudyPerformance,
-  getStudyPerformance
+  getStudyPerformance,
+  appendPhase2
 } from '../../Services/StudySessionService';
 import './StudyMode.css';
 
@@ -95,6 +96,11 @@ const StudyModeContainer = ({
   const [insightsData, setInsightsData] = useState(null);
   const [insightsLoading, setInsightsLoading] = useState(false);
 
+  // Phase 2 state
+  const [isGeneratingPhase2, setIsGeneratingPhase2] = useState(false);
+  const [currentPhase, setCurrentPhase] = useState(studyState?.currentPhase || 1);
+  const [totalPhases, setTotalPhases] = useState(studyState?.totalPhases || 1);
+
   const [mascotState, setMascotState] = useState({
     type: 'nurse', // 'nurse' | 'brain'
     isExcited: false,
@@ -112,6 +118,8 @@ const StudyModeContainer = ({
       setActiveNodeId(studyState.path.activeNodeId);
       setAskedHashes(studyState.askedHashes || []);
       setIsComplete(studyState.status === 'completed');
+      setCurrentPhase(studyState.currentPhase || 1);
+      setTotalPhases(studyState.totalPhases || 1);
     }
   }, [studyState]);
 
@@ -123,10 +131,11 @@ const StudyModeContainer = ({
     }
   }, [nodes, activeNodeId]);
 
-  // Calculate progress
-  const completedCount = nodes.filter(n => n.status === 'done').length;
+  // Calculate progress (exclude section_banner pseudo-nodes)
+  const realNodes = nodes.filter(n => n.type !== 'section_banner');
+  const completedCount = realNodes.filter(n => n.status === 'done').length;
   const currentStep = completedCount + 1;
-  const totalSteps = nodes.length;
+  const totalSteps = realNodes.length;
 
   // Handle starting/loading a node's content
   const handleStartNode = useCallback(async (node) => {
@@ -341,8 +350,9 @@ const StudyModeContainer = ({
       if (!viewOnly && !answerData.progress?.isReviewRound && answerData.questionIndex != null && currentContent?.questions) {
         const question = currentContent.questions[answerData.questionIndex];
         if (question) {
+          const topicLabel = activeNode?.label || 'General';
           const strengthLevel = updateStudyPerformance(chatId, {
-            topic: question.topic || activeNode?.label || 'General',
+            topic: topicLabel,
             type: 'quiz',
             correct: answerData.isCorrect,
             concept: !answerData.isCorrect ? question.question : undefined
@@ -352,7 +362,7 @@ const StudyModeContainer = ({
           strengthLevel.then((level) => {
             setInsightPulse({
               type: answerData.isCorrect ? 'strength' : 'weakness',
-              topic: question.topic || activeNode?.label || 'General'
+              topic: topicLabel
             });
             // Auto-dismiss after animation
             setTimeout(() => setInsightPulse(null), 2400);
@@ -407,8 +417,9 @@ const StudyModeContainer = ({
       const isMastered = reviewData.status === 'got_it';
       const card = currentContent.cards[reviewData.cardIndex];
       if (card) {
+        const topicLabel = activeNode?.label || 'General';
         const strengthLevel = updateStudyPerformance(chatId, {
-          topic: card.topic || activeNode?.label || 'General',
+          topic: topicLabel,
           type: 'flashcard',
           mastered: isMastered,
           concept: !isMastered ? card.front : undefined
@@ -418,7 +429,7 @@ const StudyModeContainer = ({
         strengthLevel.then((level) => {
           setInsightPulse({
             type: isMastered ? 'strength' : 'weakness',
-            topic: card.topic || activeNode?.label || 'General'
+            topic: topicLabel
           });
           setTimeout(() => setInsightPulse(null), 2400);
         });
@@ -527,12 +538,17 @@ const StudyModeContainer = ({
       }));
 
       if (result.isComplete) {
-        // Study session complete!
         setIsComplete(true);
-        setView('overview'); // Show overview with all nodes completed
-        if (onComplete) {
-          onComplete();
+        setView('overview');
+
+        if (currentPhase >= 2 || totalPhases >= 2) {
+          // Phase 2 (or beyond) completed — truly done
+          if (onComplete) {
+            onComplete();
+          }
         }
+        // Phase 1 complete, no phase 2 yet — user stays on overview,
+        // first placeholder node becomes active for them to click
       } else {
         // Go back to overview to show progress, user can click next node
         setActiveNodeId(result.nextNodeId);
@@ -550,7 +566,51 @@ const StudyModeContainer = ({
     } catch (error) {
       console.error('❌ Error advancing to next node:', error);
     }
-  }, [chatId, activeNodeId, onComplete]);
+  }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases]);
+
+  // Handle Phase 2 generation — triggered when user clicks first placeholder node
+  const handleStartPhase2 = useCallback(async () => {
+    setIsGeneratingPhase2(true);
+
+    try {
+      const performance = await getStudyPerformance(chatId);
+
+      if (!performance?.topics || Object.keys(performance.topics).length === 0) {
+        // No performance data — skip phase 2, complete normally
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const reviewPath = await plan_review_path(
+        chatId,
+        performance,
+        studyState?.path?.topics || [],
+        language
+      );
+
+      if (!reviewPath?.nodes?.length) {
+        // Empty review plan — skip phase 2
+        if (onComplete) onComplete();
+        return;
+      }
+
+      const updated = await appendPhase2(chatId, reviewPath);
+
+      // Update local state with new nodes and phase info
+      setNodes(updated.path.nodes);
+      setActiveNodeId(updated.path.activeNodeId);
+      setCurrentPhase(updated.currentPhase || 2);
+      setTotalPhases(updated.totalPhases || 2);
+      setIsComplete(false);
+
+    } catch (error) {
+      console.error('❌ Phase 2 generation failed:', error);
+      // Fallback: complete normally
+      if (onComplete) onComplete();
+    } finally {
+      setIsGeneratingPhase2(false);
+    }
+  }, [chatId, studyState, language, onComplete]);
 
   // Handle exit from node view - go back to overview
   const handleExitNode = useCallback(() => {
@@ -662,7 +722,64 @@ const StudyModeContainer = ({
               </div>
             ) : (
               <>
-                {Object.entries(insightsData.topics)
+                {(() => {
+                  // Merge topics with similar names before displaying
+                  const mergedTopics = {};
+                  const strip = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+                  const getWords = (s) => new Set(strip(s).split(/\s+/).filter(w => w.length > 2));
+
+                  const findMergeKey = (name) => {
+                    const strippedName = strip(name);
+                    for (const existing of Object.keys(mergedTopics)) {
+                      const strippedExisting = strip(existing);
+                      // One contains the other
+                      if (strippedExisting.includes(strippedName) || strippedName.includes(strippedExisting)) {
+                        return existing;
+                      }
+                      // Significant word overlap
+                      const newWords = getWords(name);
+                      const existingWords = getWords(existing);
+                      const overlap = [...newWords].filter(w => existingWords.has(w)).length;
+                      if (overlap > 0 && overlap >= Math.min(newWords.size, existingWords.size) * 0.5) {
+                        return existing;
+                      }
+                    }
+                    return null;
+                  };
+
+                  for (const [name, topic] of Object.entries(insightsData.topics)) {
+                    const mergeKey = findMergeKey(name);
+                    if (mergeKey) {
+                      // Merge stats into existing entry
+                      const t = mergedTopics[mergeKey];
+                      t.questionsCorrect += topic.questionsCorrect || 0;
+                      t.questionsTotal += topic.questionsTotal || 0;
+                      t.flashcardsMastered += topic.flashcardsMastered || 0;
+                      t.flashcardsTotal += topic.flashcardsTotal || 0;
+                      t.missedConcepts = [...(t.missedConcepts || []), ...(topic.missedConcepts || [])].slice(-20);
+                      // Keep the longer name as display name
+                      if (name.length > mergeKey.length) {
+                        mergedTopics[name] = t;
+                        delete mergedTopics[mergeKey];
+                      }
+                    } else {
+                      mergedTopics[name] = { ...topic };
+                    }
+                  }
+
+                  // Recompute strength levels after merge
+                  for (const topic of Object.values(mergedTopics)) {
+                    const qAcc = topic.questionsTotal > 0 ? topic.questionsCorrect / topic.questionsTotal : null;
+                    const fAcc = topic.flashcardsTotal > 0 ? topic.flashcardsMastered / topic.flashcardsTotal : null;
+                    const scores = [qAcc, fAcc].filter(s => s !== null);
+                    const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
+                    if (avg !== null) {
+                      topic.strengthLevel = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
+                    }
+                  }
+
+                  return Object.entries(mergedTopics);
+                })()
                   .sort(([, a], [, b]) => {
                     const order = { weak: 0, developing: 1, strong: 2 };
                     return (order[a.strengthLevel] || 1) - (order[b.strengthLevel] || 1);
@@ -738,9 +855,11 @@ const StudyModeContainer = ({
     );
   };
 
-  // Build studyState for overview (with updated nodes)
+  // Build studyState for overview (with updated local state)
   const currentStudyState = {
     ...studyState,
+    currentPhase,
+    totalPhases,
     path: {
       ...studyState?.path,
       nodes: nodes
@@ -775,6 +894,9 @@ const StudyModeContainer = ({
           onExit={handleExitStudy}
           onShowInsights={handleMascotClick}
           sidebarOpen={sidebarOpen}
+          isGeneratingPhase2={isGeneratingPhase2}
+          onStartPhase2={handleStartPhase2}
+          isDev={isDev}
         />
 
         {renderInsightsModal()}

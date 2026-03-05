@@ -735,6 +735,47 @@ export const plan_study_path = async (chat_id, upload_ids, language = 'en') => {
 };
 
 /**
+ * Generate a Phase 2 review study path based on performance data
+ *
+ * @param {string} chat_id - Study session chat ID
+ * @param {Object} performance - Performance data from Firestore (studyPerformance doc)
+ * @param {string[]} original_topics - Topics from phase 1
+ * @param {string} language - Language for content generation
+ * @returns {Promise<Object>} - { nodes, topics, total_nodes, estimated_time_minutes }
+ */
+export const plan_review_path = async (chat_id, performance, original_topics = [], language = 'en') => {
+  const requestBody = JSON.stringify({
+    chat_id,
+    performance,
+    original_topics,
+    language
+  });
+
+  try {
+    devLog("📚 Requesting review study path...");
+
+    const response = await fetch(`${FAST_API_BASE}/study/plan-review`, {
+      method: "POST",
+      headers: header,
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Review path planning failed: ${response.status} - ${errorText}`);
+    }
+
+    const pathData = await response.json();
+    devLog("✅ Review path planned:", pathData);
+    return pathData;
+
+  } catch (error) {
+    console.error("❌ Error planning review path:", error);
+    throw error;
+  }
+};
+
+/**
  * Generate a single study item (lesson, flashcard, quiz, or audio config)
  *
  * @param {string} chat_id - Study session chat ID

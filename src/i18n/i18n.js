@@ -911,7 +911,16 @@ const resources = {
         reviewNode: "Review this lesson?",
         reviewNodeDescription: "You've already completed this lesson. Would you like to review it again?",
         earnXpReview: "for reviewing",
-        reviewNow: "Review Now"
+        reviewNow: "Review Now",
+
+        // Phase 2 — personalized study based on insights
+        sectionLabel: "SECTION {{number}}",
+        basedOnInsights: "Based on Your Insights",
+        generatingPlan: "Analyzing your results...",
+        targetedLesson: "Strengthen Weak Areas",
+        masterConcepts: "Master Key Concepts",
+        proveKnowledge: "Prove Your Knowledge",
+        builtFromResults: "Built from your results"
       }
     }
   },
@@ -1823,7 +1832,16 @@ const resources = {
         reviewNode: "Revoir cette leçon ?",
         reviewNodeDescription: "Tu as déjà complété cette leçon. Voudrais-tu la revoir ?",
         earnXpReview: "pour la révision",
-        reviewNow: "Revoir maintenant"
+        reviewNow: "Revoir maintenant",
+
+        // Phase 2 — étude personnalisée basée sur les points faibles
+        sectionLabel: "SECTION {{number}}",
+        basedOnInsights: "Basé sur tes résultats",
+        generatingPlan: "Analyse de tes résultats...",
+        targetedLesson: "Renforcer tes points faibles",
+        masterConcepts: "Maîtriser les concepts clés",
+        proveKnowledge: "Prouver tes connaissances",
+        builtFromResults: "Construit à partir de tes résultats"
       }
     }
   }

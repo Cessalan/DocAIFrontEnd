@@ -12,14 +12,23 @@ import './StudyMode.css';
  * @param {Function} onNodeSelect - Callback when a node is selected
  * @param {boolean} sidebarOpen - Whether the sidebar is open (for centering)
  */
-const StudyPlanOverview = ({ studyState, onNodeSelect, onShowInsights, sidebarOpen = true }) => {
+const StudyPlanOverview = ({
+  studyState,
+  onNodeSelect,
+  onShowInsights,
+  sidebarOpen = true,
+  isGeneratingPhase2 = false,
+  onStartPhase2,
+  isDev = false
+}) => {
   const { t } = useTranslation();
   const activeNodeRef = useRef(null);
 
   const nodes = studyState?.path?.nodes || [];
   const topics = studyState?.path?.topics || [];
-  const completedCount = nodes.filter(n => n.status === 'done').length;
-  const totalNodes = nodes.length;
+  const realNodes = nodes.filter(n => n.type !== 'section_banner');
+  const completedCount = realNodes.filter(n => n.status === 'done').length;
+  const totalNodes = realNodes.length;
 
   // Auto-scroll to active node when component mounts
   useEffect(() => {
@@ -160,6 +169,19 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onShowInsights, sidebarOp
     return mascotPositions.find(pos => pos.index === index);
   };
 
+  // Check if phase 2 nodes already exist (real ones, not placeholders)
+  const hasPhase2Nodes = nodes.some(n => n.phase === 2);
+
+  // Phase 1 is done when all real nodes are completed and no phase 2 exists yet
+  const phase1AllDone = completedCount === totalNodes && totalNodes > 0 && !hasPhase2Nodes;
+
+  // Placeholder nodes shown before phase 2 is generated
+  const placeholderNodes = [
+    { id: 'ph_1', type: 'lesson', label: t('study.targetedLesson', 'Strengthen Weak Areas') },
+    { id: 'ph_2', type: 'flashcard', label: t('study.masterConcepts', 'Master Key Concepts') },
+    { id: 'ph_3', type: 'quiz', label: t('study.proveKnowledge', 'Prove Your Knowledge') }
+  ];
+
   return (
     <div className={`study-overview-container study-overview-v2 ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
       {/* Header with title */}
@@ -192,6 +214,27 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onShowInsights, sidebarOp
       <div className="study-overview-path-v2">
         <div className="study-path-nodes-v2">
           {nodes.map((node, index) => {
+            // Render section banner divider
+            if (node.type === 'section_banner') {
+              return (
+                <div key={node.id} className="study-section-banner" style={{ transform: 'translateX(0)' }}>
+                  <div className="study-section-banner__divider" />
+                  <div className="study-section-banner__content">
+                    <span className="study-section-banner__badge">
+                      {t('study.sectionLabel', 'SECTION {{number}}', { number: node.phase || 2 })}
+                    </span>
+                    <h3 className="study-section-banner__title">{node.label}</h3>
+                    <p className="study-section-banner__subtitle">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+                        <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {t('study.builtFromResults', 'Built from your results')}
+                    </p>
+                  </div>
+                </div>
+              );
+            }
+
             const isActive = node.status === 'active';
             const isDone = node.status === 'done';
             const isLocked = node.status === 'locked';
@@ -209,9 +252,9 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onShowInsights, sidebarOp
               <div
                 key={node.id}
                 ref={isActive ? activeNodeRef : null}
-                className={`study-path-node-v2 ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isLocked ? 'locked' : ''}`}
+                className={`study-path-node-v2 ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isLocked && !isDev ? 'locked' : ''} ${isLocked && isDev ? 'dev-unlocked' : ''}`}
                 style={{ transform: `translateX(${offset}px)` }}
-                onClick={() => !isLocked && onNodeSelect(node)}
+                onClick={() => (!isLocked || isDev) && onNodeSelect(node)}
               >
                 {/* Connector to previous node */}
                 {index > 0 && (
@@ -272,6 +315,80 @@ const StudyPlanOverview = ({ studyState, onNodeSelect, onShowInsights, sidebarOp
               </div>
             );
           })}
+
+          {/* Phase 2 preview — shown before phase 2 is generated */}
+          {!hasPhase2Nodes && (
+            <>
+              {/* Section divider */}
+              <div className="study-section-banner" style={{ transform: 'translateX(0)' }}>
+                <div className="study-section-banner__divider" />
+                <div className="study-section-banner__content">
+                  <span className="study-section-banner__badge">
+                    {t('study.sectionLabel', 'SECTION {{number}}', { number: 2 })}
+                  </span>
+                  <h3 className="study-section-banner__title">{t('study.basedOnInsights', 'Based on Your Insights')}</h3>
+                  <p className="study-section-banner__subtitle">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="14" height="14">
+                      <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {t('study.builtFromResults', 'Built from your results')}
+                  </p>
+                </div>
+              </div>
+
+              {/* Loading state while generating */}
+              {isGeneratingPhase2 && (
+                <div className="study-phase2-loading" style={{ transform: 'translateX(0)' }}>
+                  <div className="study-loading-spinner" />
+                  <p>{t('study.generatingPlan', 'Analyzing your results...')}</p>
+                </div>
+              )}
+
+              {/* Placeholder nodes — first becomes active when phase 1 is done */}
+              {!isGeneratingPhase2 && placeholderNodes.map((ph, i) => {
+                const isFirstAndReady = i === 0 && phase1AllDone;
+                const canClick = isFirstAndReady || isDev;
+                const phOffset = getNodeOffset(nodes.length + 1 + i);
+
+                return (
+                  <div
+                    key={ph.id}
+                    ref={isFirstAndReady ? activeNodeRef : null}
+                    className={`study-path-node-v2 ${isFirstAndReady ? 'active' : canClick ? 'dev-unlocked' : 'locked'} ${!isFirstAndReady && !isDev ? 'placeholder' : ''}`}
+                    style={{ transform: `translateX(${phOffset}px)` }}
+                    onClick={canClick ? onStartPhase2 : undefined}
+                  >
+                    {/* Connector */}
+                    <div className="study-path-connector-v2" style={{ '--connector-offset': `${phOffset - getNodeOffset(nodes.length + i)}px` }} />
+
+                    <div className="study-node-wrapper">
+                      <div className="study-node-inner">
+                        {getNodeIcon(ph.type, isFirstAndReady ? 'active' : 'locked')}
+                      </div>
+
+                      {/* Pulse effect for the active first placeholder */}
+                      {isFirstAndReady && <div className="study-node-pulse" />}
+
+                      {/* START label for the active first placeholder */}
+                      {isFirstAndReady && (
+                        <div className="study-node-start-label">
+                          {t('study.start', 'START')}
+                        </div>
+                      )}
+                    </div>
+
+                    <div className={`study-node-label-v2 ${i % 2 === 0 ? 'right' : 'left'}`}>
+                      <span className={`node-type-badge ${ph.type}`}>
+                        {t(`study.nodeType.${ph.type}`, ph.type).toUpperCase()}
+                      </span>
+                      <span className="node-title-v2">{ph.label}</span>
+                      {!isFirstAndReady && <span className="node-locked-hint">{t('study.comingSoon', 'Coming soon!')}</span>}
+                    </div>
+                  </div>
+                );
+              })}
+            </>
+          )}
         </div>
       </div>
 

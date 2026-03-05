@@ -202,7 +202,9 @@ export const getStudySession = async (chatId) => {
       chatId: docSnap.id,
       status: data.study?.status || 'active',
       path: data.study?.path || { nodes: [], activeNodeId: null },
-      askedHashes: data.study?.askedHashes || []
+      askedHashes: data.study?.askedHashes || [],
+      currentPhase: data.study?.currentPhase || 1,
+      totalPhases: data.study?.totalPhases || 1
     };
   } catch (error) {
     console.error('❌ Error fetching study session:', error);
@@ -312,8 +314,11 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
       status: 'done'
     };
 
-    // Check if there's a next node
-    const nextIndex = currentIndex + 1;
+    // Find next non-banner node (skip section_banner pseudo-nodes)
+    let nextIndex = currentIndex + 1;
+    while (nextIndex < nodes.length && nodes[nextIndex].type === 'section_banner') {
+      nextIndex++;
+    }
     const hasNextNode = nextIndex < nodes.length;
     let nextNodeId = null;
 
@@ -633,6 +638,46 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
  * @param {boolean} [result.mastered] - For flashcard: was it mastered on first try
  * @param {string} [result.concept] - The question text or card front (what they missed)
  */
+/**
+ * Find the best matching existing topic key, or return the input as-is.
+ * Prevents near-duplicate entries like "Testostérone" vs "Sleep and Testosterone".
+ */
+const findMatchingTopicKey = (newTopic, existingKeys) => {
+  if (!newTopic || existingKeys.length === 0) return newTopic;
+
+  // Exact match (case-insensitive)
+  const exact = existingKeys.find(k => k.toLowerCase() === newTopic.toLowerCase());
+  if (exact) return exact;
+
+  // Strip accents for comparison
+  const strip = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const strippedNew = strip(newTopic);
+
+  // Check if one contains the other (after accent stripping)
+  for (const existing of existingKeys) {
+    const strippedExisting = strip(existing);
+    if (strippedExisting.includes(strippedNew) || strippedNew.includes(strippedExisting)) {
+      return existing;
+    }
+  }
+
+  // Check significant word overlap (words > 2 chars)
+  const words = (s) => new Set(strip(s).split(/\s+/).filter(w => w.length > 2));
+  const newWords = words(newTopic);
+  if (newWords.size === 0) return newTopic;
+
+  for (const existing of existingKeys) {
+    const existingWords = words(existing);
+    const overlap = [...newWords].filter(w => existingWords.has(w)).length;
+    const threshold = Math.min(newWords.size, existingWords.size) * 0.5;
+    if (overlap > 0 && overlap >= threshold) {
+      return existing;
+    }
+  }
+
+  return newTopic;
+};
+
 export const updateStudyPerformance = async (chatId, result) => {
   try {
     const userId = auth.currentUser?.uid;
@@ -642,7 +687,8 @@ export const updateStudyPerformance = async (chatId, result) => {
     const snap = await getDoc(ref);
     const data = snap.exists() ? snap.data() : { topics: {}, updatedAt: null };
 
-    const topicKey = result.topic;
+    // Normalize topic key: merge into existing entry if similar enough
+    const topicKey = findMatchingTopicKey(result.topic, Object.keys(data.topics));
     const topic = data.topics[topicKey] || {
       questionsCorrect: 0,
       questionsTotal: 0,
@@ -714,6 +760,97 @@ export const getStudyPerformance = async (chatId) => {
   }
 };
 
+/**
+ * Append Phase 2 review nodes to an existing study session.
+ * Creates a section_banner pseudo-node between phases.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {Object} reviewPathResult - Result from /study/plan-review
+ * @returns {Promise<Object>} - Updated study state
+ */
+export const appendPhase2 = async (chatId, reviewPathResult) => {
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('User not authenticated');
+
+    const docRef = doc(db, 'chats', chatId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new Error('Study session not found');
+    }
+
+    const data = docSnap.data();
+    const existingNodes = data.study?.path?.nodes || [];
+
+    // Create section banner pseudo-node
+    const bannerLabel = reviewPathResult.topics?.length > 0
+      ? reviewPathResult.topics.slice(0, 2).join(', ')
+      : 'Based on Your Insights';
+
+    const bannerNode = {
+      id: 'section_banner_2',
+      type: 'section_banner',
+      label: bannerLabel,
+      phase: 2,
+      status: 'banner'
+    };
+
+    // Prepare phase 2 nodes with phase field
+    const phase2Nodes = reviewPathResult.nodes.map((node, index) => ({
+      id: node.id || `review-${uuidv4().slice(0, 8)}`,
+      type: node.type,
+      label: node.label,
+      tags: [...(node.tags || []), 'review'],
+      difficulty: node.difficulty || 1,
+      phase: 2,
+      status: index === 0 ? 'active' : 'locked',
+      messageId: null
+    }));
+
+    // Tag existing nodes as phase 1 (backward compat)
+    const taggedExistingNodes = existingNodes.map(n => ({
+      ...n,
+      phase: n.phase || 1
+    }));
+
+    // Combine: existing + banner + phase 2
+    const allNodes = [...taggedExistingNodes, bannerNode, ...phase2Nodes];
+    const newActiveNodeId = phase2Nodes[0]?.id || null;
+
+    // Update Firestore
+    await updateDoc(docRef, {
+      'study.status': 'active',
+      'study.currentPhase': 2,
+      'study.totalPhases': 2,
+      'study.path.nodes': allNodes,
+      'study.path.activeNodeId': newActiveNodeId,
+      'study.path.totalNodes': allNodes.filter(n => n.type !== 'section_banner').length,
+      'study.lastActionAt': serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    devLog('✅ Phase 2 appended with', phase2Nodes.length, 'review nodes');
+
+    return {
+      chatId,
+      status: 'active',
+      currentPhase: 2,
+      totalPhases: 2,
+      path: {
+        topics: data.study?.path?.topics || [],
+        nodes: allNodes,
+        activeNodeId: newActiveNodeId,
+        totalNodes: allNodes.filter(n => n.type !== 'section_banner').length
+      },
+      askedHashes: data.study?.askedHashes || []
+    };
+  } catch (error) {
+    console.error('❌ Error appending Phase 2:', error);
+    throw error;
+  }
+};
+
 export default {
   createStudySession,
   getActiveStudySession,
@@ -730,5 +867,6 @@ export default {
   saveFlashcardProgress,
   saveQuizProgress,
   updateStudyPerformance,
-  getStudyPerformance
+  getStudyPerformance,
+  appendPhase2
 };
