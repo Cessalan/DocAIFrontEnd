@@ -920,7 +920,9 @@ const resources = {
         targetedLesson: "Strengthen Weak Areas",
         masterConcepts: "Master Key Concepts",
         proveKnowledge: "Prove Your Knowledge",
-        builtFromResults: "Built from your results"
+        builtFromResults: "Built from your results",
+        adaptiveFocus: "FOCUS",
+        sessionsAdded: "{{count}} sessions added to your path"
       }
     }
   },
@@ -1841,7 +1843,9 @@ const resources = {
         targetedLesson: "Renforcer tes points faibles",
         masterConcepts: "Maîtriser les concepts clés",
         proveKnowledge: "Prouver tes connaissances",
-        builtFromResults: "Construit à partir de tes résultats"
+        builtFromResults: "Construit à partir de tes résultats",
+        adaptiveFocus: "FOCUS",
+        sessionsAdded: "{{count}} sessions ajoutées à ta route"
       }
     }
   }

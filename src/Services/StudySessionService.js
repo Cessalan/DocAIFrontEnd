@@ -753,7 +753,16 @@ export const getStudyPerformance = async (chatId) => {
 
     const ref = doc(db, 'users', userId, 'studyPerformance', chatId);
     const snap = await getDoc(ref);
-    return snap.exists() ? snap.data() : null;
+    if (snap.exists()) return snap.data();
+
+    // Fallback for dev/viewAllChats mode: look up the chat owner's performance
+    const chatSnap = await getDoc(doc(db, 'chats', chatId));
+    const chatOwnerUserId = chatSnap.exists() ? chatSnap.data()?.userId : null;
+    if (!chatOwnerUserId || chatOwnerUserId === userId) return null;
+
+    const ownerRef = doc(db, 'users', chatOwnerUserId, 'studyPerformance', chatId);
+    const ownerSnap = await getDoc(ownerRef);
+    return ownerSnap.exists() ? ownerSnap.data() : null;
   } catch (error) {
     console.error('❌ Error fetching study performance:', error);
     return null;

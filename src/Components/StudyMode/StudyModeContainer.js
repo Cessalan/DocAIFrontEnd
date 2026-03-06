@@ -100,6 +100,7 @@ const StudyModeContainer = ({
   const [isGeneratingPhase2, setIsGeneratingPhase2] = useState(false);
   const [currentPhase, setCurrentPhase] = useState(studyState?.currentPhase || 1);
   const [totalPhases, setTotalPhases] = useState(studyState?.totalPhases || 1);
+  const [pathUpdateToast, setPathUpdateToast] = useState(null); // { count: number }
 
   const [mascotState, setMascotState] = useState({
     type: 'nurse', // 'nurse' | 'brain'
@@ -603,6 +604,11 @@ const StudyModeContainer = ({
       setTotalPhases(updated.totalPhases || 2);
       setIsComplete(false);
 
+      // Show path update toast
+      const phase2Count = reviewPath.nodes.length;
+      setPathUpdateToast({ count: phase2Count });
+      setTimeout(() => setPathUpdateToast(null), 3500);
+
     } catch (error) {
       console.error('❌ Phase 2 generation failed:', error);
       // Fallback: complete normally
@@ -900,6 +906,14 @@ const StudyModeContainer = ({
         />
 
         {renderInsightsModal()}
+
+        {/* Path update toast — shown after phase 2 is generated */}
+        {pathUpdateToast && (
+          <div className="path-update-toast">
+            <span className="path-update-toast__icon">✦</span>
+            <span>{t('study.sessionsAdded', '{{count}} sessions added to your path', { count: pathUpdateToast.count })}</span>
+          </div>
+        )}
 
         {/* Review Confirmation Modal */}
         {showReviewConfirm && nodeToReview && (

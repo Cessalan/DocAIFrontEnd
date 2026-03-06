@@ -182,6 +182,8 @@ const StudyPlanOverview = ({
     { id: 'ph_3', type: 'quiz', label: t('study.proveKnowledge', 'Prove Your Knowledge') }
   ];
 
+  const masteryPercent = totalNodes > 0 ? Math.round((completedCount / totalNodes) * 100) : 0;
+
   return (
     <div className={`study-overview-container study-overview-v2 ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
       {/* Header with title */}
@@ -194,6 +196,14 @@ const StudyPlanOverview = ({
             <p className="study-overview-subtitle">
               {topics.slice(1, 3).join(', ')}
             </p>
+          )}
+          {/* Mastery progress bar */}
+          {totalNodes > 0 && (
+            <div className="study-mastery-bar-wrapper">
+              <div className="study-mastery-bar">
+                <div className="study-mastery-bar-fill" style={{ width: `${masteryPercent}%` }} />
+              </div>
+            </div>
           )}
         </div>
         {onShowInsights && (
@@ -213,9 +223,22 @@ const StudyPlanOverview = ({
       {/* Winding path with bold nodes */}
       <div className="study-overview-path-v2">
         <div className="study-path-nodes-v2">
-          {nodes.map((node, index) => {
+          {(() => {
+            // Extract base topic by matching against known topics array,
+            // then falling back to stripping " - suffix" patterns
+            const getBaseTopic = (label) => {
+              if (!label) return label;
+              for (const topic of topics) {
+                if (label.toLowerCase().startsWith(topic.toLowerCase())) return topic;
+              }
+              return label.replace(/\s*[-–]\s*\S.*$/, '').trim() || label;
+            };
+
+            let prevTopic = null;
+            return nodes.map((node, index) => {
             // Render section banner divider
             if (node.type === 'section_banner') {
+              prevTopic = null; // reset after banner so first phase-2 node gets a separator
               return (
                 <div key={node.id} className="study-section-banner" style={{ transform: 'translateX(0)' }}>
                   <div className="study-section-banner__divider" />
@@ -241,6 +264,11 @@ const StudyPlanOverview = ({
             const offset = getNodeOffset(index);
             const ringData = getProgressRing(node);
 
+            // Topic separator: show for every topic group including the first
+            const baseTopic = getBaseTopic(node.label);
+            const showTopicSeparator = baseTopic && baseTopic !== prevTopic;
+            prevTopic = baseTopic;
+
             // Check if mascot should appear at this node
             const mascotData = getMascotAtIndex(index);
             const hasMascot = !!mascotData;
@@ -249,10 +277,15 @@ const StudyPlanOverview = ({
             const mascotSide = index % 2 === 0 ? 'left' : 'right';
 
             return (
+              <React.Fragment key={node.id}>
+                {showTopicSeparator && (
+                  <div className="study-topic-separator">
+                    <span className="study-topic-separator__label">{baseTopic}</span>
+                  </div>
+                )}
               <div
-                key={node.id}
                 ref={isActive ? activeNodeRef : null}
-                className={`study-path-node-v2 ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isLocked && !isDev ? 'locked' : ''} ${isLocked && isDev ? 'dev-unlocked' : ''}`}
+                className={`study-path-node-v2 ${isActive ? 'active' : ''} ${isDone ? 'done' : ''} ${isLocked && !isDev ? 'locked' : ''} ${isLocked && isDev ? 'dev-unlocked' : ''} ${node.adaptive ? 'adaptive' : ''}`}
                 style={{ transform: `translateX(${offset}px)` }}
                 onClick={() => (!isLocked || isDev) && onNodeSelect(node)}
               >
@@ -304,20 +337,27 @@ const StudyPlanOverview = ({
                   </div>
                 )}
 
-                {/* Node label card */}
+                {/* Node label — type badge only */}
                 <div className={`study-node-label-v2 ${index % 2 === 0 ? 'right' : 'left'}`}>
-                  <span className={`node-type-badge ${node.type}`}>
-                    {t(`study.nodeType.${node.type}`, node.type).toUpperCase()}
-                  </span>
-                  <span className="node-title-v2">{node.label}</span>
-                  {isLocked && <span className="node-locked-hint">{t('study.comingSoon', 'Coming soon!')}</span>}
+                  {node.adaptive ? (
+                    <span className="node-type-badge adaptive-focus">
+                      {t('study.adaptiveFocus', 'FOCUS')}
+                    </span>
+                  ) : (
+                    <span className={`node-type-badge ${node.type}`}>
+                      {t(`study.nodeType.${node.type}`, node.type).toUpperCase()}
+                    </span>
+                  )}
                 </div>
+
               </div>
+              </React.Fragment>
             );
-          })}
+          });
+          })()}
 
           {/* Phase 2 preview — shown before phase 2 is generated */}
-          {!hasPhase2Nodes && (
+          {false && !hasPhase2Nodes && (
             <>
               {/* Section divider */}
               <div className="study-section-banner" style={{ transform: 'translateX(0)' }}>
@@ -377,13 +417,13 @@ const StudyPlanOverview = ({
                       )}
                     </div>
 
+                    {/* Node label — type badge only */}
                     <div className={`study-node-label-v2 ${i % 2 === 0 ? 'right' : 'left'}`}>
                       <span className={`node-type-badge ${ph.type}`}>
                         {t(`study.nodeType.${ph.type}`, ph.type).toUpperCase()}
                       </span>
-                      <span className="node-title-v2">{ph.label}</span>
-                      {!isFirstAndReady && <span className="node-locked-hint">{t('study.comingSoon', 'Coming soon!')}</span>}
                     </div>
+
                   </div>
                 );
               })}

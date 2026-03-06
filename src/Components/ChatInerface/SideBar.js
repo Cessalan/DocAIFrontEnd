@@ -29,7 +29,7 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
   const navigate = useNavigate();
 
   // Development mode detection
-  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevelopment = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
 
   // Dark mode state
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -372,7 +372,16 @@ const getchatDate = (timestamp) => {
                     {isDevelopment && viewAllChats && (
                       <>
                         <span className="conversation-metadata-separator">•</span>
-                        <span className="conversation-user-id">
+                        <span
+                          className="conversation-user-id"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(chat.userId);
+                            alert('Copied: ' + chat.userId);
+                          }}
+                          title="Click to copy user ID"
+                          style={{ cursor: 'pointer' }}
+                        >
                           {chat.userId}
                         </span>
                       </>
