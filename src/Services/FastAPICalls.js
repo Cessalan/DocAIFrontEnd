@@ -735,6 +735,38 @@ export const plan_study_path = async (chat_id, upload_ids, language = 'en') => {
 };
 
 /**
+ * Generate 5 breadth-first diagnostic questions before the study plan is shown.
+ * One question per major topic, easy→hard. Used to seed initial insight data.
+ *
+ * @param {string} chat_id - Chat ID where documents were uploaded
+ * @param {string[]} upload_ids - Upload IDs to focus on
+ * @param {string} language - Language for questions
+ * @returns {Promise<Object>} - { questions: [{ question, options, correctIndex, rationale, topic }] }
+ */
+export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en') => {
+  try {
+    devLog("🔬 Requesting diagnostic quiz...");
+    const response = await fetch(`${FAST_API_BASE}/study/diagnostic-quiz`, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify({ chat_id, upload_ids, language })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Diagnostic quiz failed: ${response.status} - ${errorText}`);
+    }
+
+    const data = await response.json();
+    devLog("✅ Diagnostic quiz ready:", data.questions?.length, "questions");
+    return data;
+  } catch (error) {
+    console.error("❌ Error generating diagnostic quiz:", error);
+    throw error;
+  }
+};
+
+/**
  * Generate a Phase 2 review study path based on performance data
  *
  * @param {string} chat_id - Study session chat ID

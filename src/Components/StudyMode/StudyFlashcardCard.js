@@ -56,7 +56,7 @@ const parseFlashcardText = (text) => {
  * @param {Function} onContinue - Callback when user completes all cards
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onReview, onContinue, onExit }) => {
+const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, adaptiveMessage = null, onReview, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Debug: log savedProgress on every render
@@ -460,6 +460,13 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
 
   return (
     <div className="study-step-card study-flashcard-card">
+      {/* Adaptive feedback banner — slides in when pattern detected */}
+      {adaptiveMessage && (
+        <div className="flashcard-adaptive-banner">
+          <span className="flashcard-adaptive-banner__icon">🧠</span>
+          <span className="flashcard-adaptive-banner__text">{adaptiveMessage}</span>
+        </div>
+      )}
       <div className="study-card-header">
         <div className="study-card-icon flashcard">
           <FlashcardIcon />

@@ -31,6 +31,7 @@ const StudyStepCard = ({
   viewOnly = false,
   isGeneratingAudio = false,
   audioGeneratingMessage = '',
+  adaptiveMessage = null,
   onAnswer,
   onReview,
   onGenerateAudio,
@@ -98,6 +99,7 @@ const StudyStepCard = ({
           savedProgress={savedProgress}
           isReviewMode={isReviewMode}
           viewOnly={viewOnly}
+          adaptiveMessage={adaptiveMessage}
           onReview={onReview}
           onContinue={onContinue}
           onExit={onExit}

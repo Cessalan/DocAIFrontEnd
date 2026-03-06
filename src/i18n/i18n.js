@@ -842,6 +842,26 @@ const resources = {
         failedToGenerate: "Failed to generate audio",
         retry: "Retry",
 
+        // Diagnostic Quiz
+        diagnosticEyebrow: "Let's see where you stand",
+        diagnosticTitle: "5 quick questions to customize your path",
+        questionOf: "Question {{n}} of {{total}}",
+        baselineTitle: "Your baseline is set!",
+        baselineSubtitle: "Your study path is being personalized...",
+
+        // Quiz Mastery Summary
+        quizComplete: "Quiz Complete",
+        yourScore: "Your Score",
+        improvementPositive: "+{{n}}% improvement from your baseline",
+        improvementNegative: "{{n}}% below your baseline — keep practicing",
+        improvementNeutral: "Same as your baseline — consistency is key",
+        baselineMark: "Your baseline",
+        reviewThese: "To review:",
+
+        // Adaptive Flashcard Toasts
+        adaptiveSpeed: "You're getting these fast! Flagging as strong.",
+        adaptiveMode: "Adaptive Mode: Narrowing down on {{topic}}",
+
         // Common
         continueBtn: "Continue",
         loading: "Loading...",
@@ -1764,6 +1784,26 @@ const resources = {
         convertingToSpeech: "Conversion en parole...",
         failedToGenerate: "Échec de la génération audio",
         retry: "Réessayer",
+
+        // Diagnostic Quiz
+        diagnosticEyebrow: "Voyons où tu en es",
+        diagnosticTitle: "5 questions rapides pour personnaliser ton parcours",
+        questionOf: "Question {{n}} sur {{total}}",
+        baselineTitle: "Ton niveau de base est défini !",
+        baselineSubtitle: "Ton parcours d'étude est en cours de personnalisation...",
+
+        // Quiz Mastery Summary
+        quizComplete: "Quiz terminé",
+        yourScore: "Ton score",
+        improvementPositive: "+{{n}}% d'amélioration par rapport à ta base",
+        improvementNegative: "{{n}}% en dessous de ta base — continue de t'entraîner",
+        improvementNeutral: "Identique à ta base — la constance est la clé",
+        baselineMark: "Ta base",
+        reviewThese: "À revoir :",
+
+        // Adaptive Flashcard Toasts
+        adaptiveSpeed: "Tu les maîtrises rapidement ! Marqué comme fort.",
+        adaptiveMode: "Mode adaptatif : concentration sur {{topic}}",
 
         // Common
         continueBtn: "Continuer",

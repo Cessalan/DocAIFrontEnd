@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import StudyModeHeader from './StudyModeHeader';
 import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
+import QuizMasterySummary from './QuizMasterySummary';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
@@ -102,6 +103,18 @@ const StudyModeContainer = ({
   const [totalPhases, setTotalPhases] = useState(studyState?.totalPhases || 1);
   const [pathUpdateToast, setPathUpdateToast] = useState(null); // { count: number }
 
+  // Quiz mastery summary (shown after every quiz instead of immediately advancing)
+  const [quizSummaryData, setQuizSummaryData] = useState(null);
+  // Performance snapshot captured when a quiz node starts (to calculate improvement)
+  const preNodeSnapshotRef = useRef(null);
+  // Latest quiz progress from handleAnswer (to get final score at completion)
+  const latestQuizProgressRef = useRef(null);
+
+  // Flashcard adaptive feedback
+  const [consecutiveGotIt, setConsecutiveGotIt] = useState(0);
+  const [hasShownAdaptiveMode, setHasShownAdaptiveMode] = useState(false);
+  const [adaptiveFeedback, setAdaptiveFeedback] = useState(null); // { type: 'speed'|'adaptive_mode', topic }
+
   const [mascotState, setMascotState] = useState({
     type: 'nurse', // 'nurse' | 'brain'
     isExcited: false,
@@ -123,6 +136,21 @@ const StudyModeContainer = ({
       setTotalPhases(studyState.totalPhases || 1);
     }
   }, [studyState]);
+
+  // Load insights for current chat; clear immediately when chat changes
+  useEffect(() => {
+    setInsightsData(null);
+    if (!chatId) return;
+    getStudyPerformance(chatId)
+      .then(data => {
+        // Only show panel if there's at least one topic with real data
+        const hasData = data?.topics && Object.values(data.topics).some(
+          t => t.questionsTotal > 0 || t.flashcardsTotal > 0
+        );
+        setInsightsData(hasData ? data : null);
+      })
+      .catch(() => setInsightsData(null));
+  }, [chatId]);
 
   // Update active node when activeNodeId changes
   useEffect(() => {
@@ -158,6 +186,21 @@ const StudyModeContainer = ({
 
     // Track if this is a review of completed content (for 5 XP instead of full XP)
     setIsReviewingNode(node.isReview === true);
+
+    // Reset per-node adaptive state
+    setConsecutiveGotIt(0);
+    setHasShownAdaptiveMode(false);
+    setAdaptiveFeedback(null);
+    latestQuizProgressRef.current = null;
+
+    // Snapshot current performance before quiz starts (for improvement calculation)
+    if (node.type === 'quiz') {
+      getStudyPerformance(chatId).then(data => {
+        preNodeSnapshotRef.current = data;
+      }).catch(() => { preNodeSnapshotRef.current = null; });
+    } else {
+      preNodeSnapshotRef.current = null;
+    }
 
     // Set mascot to thinking
     setMascotState({
@@ -395,6 +438,9 @@ const StudyModeContainer = ({
         updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
       }
     }
+
+    // Track latest quiz progress for mastery summary
+    if (answerData.progress) latestQuizProgressRef.current = answerData.progress;
   }, [chatId, activeNodeId, activeNode, currentContent, viewOnly]);
 
   // Handle flashcard review
@@ -461,7 +507,31 @@ const StudyModeContainer = ({
     } else if (!viewOnly) {
       console.log('⚠️ NOT saving progress - messageId:', messageId, 'progress:', !!reviewData.progress);
     }
-  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly]);
+
+    // ── Adaptive flashcard feedback ───────────────────────────────────────
+    if (!viewOnly) {
+      const topicLabel = activeNode?.label || 'General';
+
+      if (reviewData.status === 'got_it' && !reviewData.progress?.isReviewRound) {
+        const newStreak = consecutiveGotIt + 1;
+        setConsecutiveGotIt(newStreak);
+        if (newStreak >= 3) {
+          setAdaptiveFeedback({ type: 'speed', topic: topicLabel });
+          setTimeout(() => setAdaptiveFeedback(null), 3500);
+          setConsecutiveGotIt(0);
+        }
+      } else if (reviewData.status === 'need_review') {
+        setConsecutiveGotIt(0);
+      }
+
+      // Show "narrowing down" banner the first time review round starts
+      if (reviewData.progress?.isReviewRound && !hasShownAdaptiveMode) {
+        setHasShownAdaptiveMode(true);
+        setAdaptiveFeedback({ type: 'adaptive_mode', topic: topicLabel });
+        setTimeout(() => setAdaptiveFeedback(null), 4000);
+      }
+    }
+  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly, consecutiveGotIt, hasShownAdaptiveMode]);
 
   // Handle audio generation trigger
   const handleGenerateAudio = useCallback(async (audioConfig) => {
@@ -511,63 +581,94 @@ const StudyModeContainer = ({
     }
   }, [chatId, language]);
 
-  // Handle continue to next node
-  const handleContinue = useCallback(async () => {
-    console.log('➡️ Continuing to next node');
-
-    // Set mascot excited
-    setMascotState({
-      type: 'nurse',
-      isExcited: true,
-      isSurprised: false,
-      lookDirection: 'center'
-    });
+  // Advance to next node (extracted so quiz summary can call it after dismissal)
+  const handleAdvanceNode = useCallback(async () => {
+    setMascotState({ type: 'nurse', isExcited: true, isSurprised: false, lookDirection: 'center' });
 
     try {
-      // Complete current node and advance
       const result = await completeNodeAndAdvance(chatId, activeNodeId);
 
-      // Update local state
       setNodes(prev => prev.map(n => {
-        if (n.id === activeNodeId) {
-          return { ...n, status: 'done' };
-        }
-        if (n.id === result.nextNodeId) {
-          return { ...n, status: 'active' };
-        }
+        if (n.id === activeNodeId) return { ...n, status: 'done' };
+        if (n.id === result.nextNodeId) return { ...n, status: 'active' };
         return n;
       }));
+
+      // Refresh insights panel with latest data when returning to overview
+      getStudyPerformance(chatId).then(data => {
+        const hasData = data?.topics && Object.values(data.topics).some(
+          t => t.questionsTotal > 0 || t.flashcardsTotal > 0
+        );
+        setInsightsData(hasData ? data : null);
+      }).catch(() => {});
 
       if (result.isComplete) {
         setIsComplete(true);
         setView('overview');
-
         if (currentPhase >= 2 || totalPhases >= 2) {
-          // Phase 2 (or beyond) completed — truly done
-          if (onComplete) {
-            onComplete();
-          }
+          if (onComplete) onComplete();
         }
-        // Phase 1 complete, no phase 2 yet — user stays on overview,
-        // first placeholder node becomes active for them to click
       } else {
-        // Go back to overview to show progress, user can click next node
         setActiveNodeId(result.nextNodeId);
         setCurrentContent(null);
         setView('overview');
-
-        // Reset mascot
-        setMascotState({
-          type: 'nurse',
-          isExcited: false,
-          isSurprised: false,
-          lookDirection: 'center'
-        });
+        setMascotState({ type: 'nurse', isExcited: false, isSurprised: false, lookDirection: 'center' });
       }
     } catch (error) {
       console.error('❌ Error advancing to next node:', error);
     }
   }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases]);
+
+  // Handle continue to next node
+  const handleContinue = useCallback(async () => {
+    console.log('➡️ Continuing to next node');
+
+    // For quiz nodes (not viewOnly): show mastery summary before advancing
+    if (activeNode?.type === 'quiz' && !viewOnly) {
+      try {
+        const afterData = await getStudyPerformance(chatId);
+        const topicLabel = activeNode?.label || 'General';
+
+        const statuses = latestQuizProgressRef.current?.questionStatuses || {};
+        const total = currentContent?.questions?.length || 0;
+        const correct = Object.values(statuses).filter(s => s === 'correct').length;
+
+        const before = preNodeSnapshotRef.current?.topics?.[topicLabel];
+        const after = afterData?.topics?.[topicLabel];
+
+        const beforeAcc = before?.questionsTotal > 0
+          ? Math.round((before.questionsCorrect / before.questionsTotal) * 100) : null;
+        const afterAcc = after?.questionsTotal > 0
+          ? Math.round((after.questionsCorrect / after.questionsTotal) * 100) : null;
+        const improvement = (beforeAcc !== null && afterAcc !== null) ? afterAcc - beforeAcc : null;
+
+        setQuizSummaryData({
+          topic: topicLabel,
+          correct,
+          total,
+          scorePercent: total > 0 ? Math.round((correct / total) * 100) : 0,
+          strengthLevel: after?.strengthLevel || null,
+          missedConcepts: after?.missedConcepts?.slice(-3) || [],
+          improvement,
+          beforeAcc,
+          afterAcc,
+        });
+        setView('quiz_summary');
+      } catch (err) {
+        console.error('❌ Error building quiz summary:', err);
+        await handleAdvanceNode(); // fallback: advance normally
+      }
+      return;
+    }
+
+    await handleAdvanceNode();
+  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly, handleAdvanceNode]);
+
+  // Continue after user dismisses the mastery summary
+  const handleContinueAfterSummary = useCallback(async () => {
+    setQuizSummaryData(null);
+    await handleAdvanceNode();
+  }, [handleAdvanceNode]);
 
   // Handle Phase 2 generation — triggered when user clicks first placeholder node
   const handleStartPhase2 = useCallback(async () => {
@@ -713,6 +814,31 @@ const StudyModeContainer = ({
               </svg>
             </button>
           </div>
+          {/* Summary chips — shown above the list */}
+          {!insightsLoading && insightsData?.topics && Object.keys(insightsData.topics).length > 0 && (() => {
+            const counts = { strong: 0, developing: 0, weak: 0 };
+            Object.values(insightsData.topics).forEach(tp => {
+              const lvl = tp.strengthLevel || 'developing';
+              counts[lvl] = (counts[lvl] || 0) + 1;
+            });
+            return (
+              <div className="insights-summary">
+                {counts.strong > 0 && <span className="ins-chip ins-chip--strong">
+                  <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="9" height="9"><polyline points="1.5,5.5 3.5,7.5 8.5,2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  {counts.strong} {t('study.strong', 'Strong')}
+                </span>}
+                {counts.developing > 0 && <span className="ins-chip ins-chip--developing">
+                  <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" width="9" height="9"><circle cx="5" cy="5" r="3.5"/><circle cx="5" cy="5" r="1.2" fill="currentColor" stroke="none"/></svg>
+                  {counts.developing} {t('study.developing', 'Developing')}
+                </span>}
+                {counts.weak > 0 && <span className="ins-chip ins-chip--weak">
+                  <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="9" height="9"><line x1="2" y1="2" x2="8" y2="8" strokeLinecap="round"/><line x1="8" y1="2" x2="2" y2="8" strokeLinecap="round"/></svg>
+                  {counts.weak} {t('study.weak', 'Needs Work')}
+                </span>}
+              </div>
+            );
+          })()}
+
           <div className="insights-modal__body">
             {insightsLoading ? (
               <div className="insights-modal__loading">
@@ -729,7 +855,7 @@ const StudyModeContainer = ({
             ) : (
               <>
                 {(() => {
-                  // Merge topics with similar names before displaying
+                  // ── Merge similar topic names ──
                   const mergedTopics = {};
                   const strip = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
                   const getWords = (s) => new Set(strip(s).split(/\s+/).filter(w => w.length > 2));
@@ -738,17 +864,9 @@ const StudyModeContainer = ({
                     const strippedName = strip(name);
                     for (const existing of Object.keys(mergedTopics)) {
                       const strippedExisting = strip(existing);
-                      // One contains the other
-                      if (strippedExisting.includes(strippedName) || strippedName.includes(strippedExisting)) {
-                        return existing;
-                      }
-                      // Significant word overlap
-                      const newWords = getWords(name);
-                      const existingWords = getWords(existing);
-                      const overlap = [...newWords].filter(w => existingWords.has(w)).length;
-                      if (overlap > 0 && overlap >= Math.min(newWords.size, existingWords.size) * 0.5) {
-                        return existing;
-                      }
+                      if (strippedExisting.includes(strippedName) || strippedName.includes(strippedExisting)) return existing;
+                      const overlap = [...getWords(name)].filter(w => getWords(existing).has(w)).length;
+                      if (overlap > 0 && overlap >= Math.min(getWords(name).size, getWords(existing).size) * 0.5) return existing;
                     }
                     return null;
                   };
@@ -756,103 +874,96 @@ const StudyModeContainer = ({
                   for (const [name, topic] of Object.entries(insightsData.topics)) {
                     const mergeKey = findMergeKey(name);
                     if (mergeKey) {
-                      // Merge stats into existing entry
-                      const t = mergedTopics[mergeKey];
-                      t.questionsCorrect += topic.questionsCorrect || 0;
-                      t.questionsTotal += topic.questionsTotal || 0;
-                      t.flashcardsMastered += topic.flashcardsMastered || 0;
-                      t.flashcardsTotal += topic.flashcardsTotal || 0;
-                      t.missedConcepts = [...(t.missedConcepts || []), ...(topic.missedConcepts || [])].slice(-20);
-                      // Keep the longer name as display name
-                      if (name.length > mergeKey.length) {
-                        mergedTopics[name] = t;
-                        delete mergedTopics[mergeKey];
-                      }
+                      const ex = mergedTopics[mergeKey];
+                      ex.questionsCorrect += topic.questionsCorrect || 0;
+                      ex.questionsTotal += topic.questionsTotal || 0;
+                      ex.flashcardsMastered += topic.flashcardsMastered || 0;
+                      ex.flashcardsTotal += topic.flashcardsTotal || 0;
+                      ex.missedConcepts = [...(ex.missedConcepts || []), ...(topic.missedConcepts || [])].slice(-20);
+                      if (name.length > mergeKey.length) { mergedTopics[name] = ex; delete mergedTopics[mergeKey]; }
                     } else {
                       mergedTopics[name] = { ...topic };
                     }
                   }
 
-                  // Recompute strength levels after merge
+                  // ── Recompute strength + compute avg per topic ──
                   for (const topic of Object.values(mergedTopics)) {
                     const qAcc = topic.questionsTotal > 0 ? topic.questionsCorrect / topic.questionsTotal : null;
                     const fAcc = topic.flashcardsTotal > 0 ? topic.flashcardsMastered / topic.flashcardsTotal : null;
                     const scores = [qAcc, fAcc].filter(s => s !== null);
                     const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-                    if (avg !== null) {
-                      topic.strengthLevel = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
-                    }
+                    topic._avg = avg !== null ? Math.round(avg * 100) : 0;
+                    topic.strengthLevel = avg !== null
+                      ? (avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak')
+                      : 'developing';
                   }
 
-                  return Object.entries(mergedTopics);
-                })()
-                  .sort(([, a], [, b]) => {
-                    const order = { weak: 0, developing: 1, strong: 2 };
-                    return (order[a.strengthLevel] || 1) - (order[b.strengthLevel] || 1);
-                  })
-                  .map(([topicName, topic]) => {
-                    const quizAcc = topic.questionsTotal > 0
-                      ? Math.round((topic.questionsCorrect / topic.questionsTotal) * 100)
-                      : null;
-                    const flashAcc = topic.flashcardsTotal > 0
-                      ? Math.round((topic.flashcardsMastered / topic.flashcardsTotal) * 100)
-                      : null;
+                  // ── Group by strength level ──
+                  const groups = { weak: [], developing: [], strong: [] };
+                  for (const [name, topic] of Object.entries(mergedTopics)) {
+                    groups[topic.strengthLevel].push([name, topic]);
+                  }
 
-                    return (
-                      <div key={topicName} className={`insights-topic insights-topic--${topic.strengthLevel || 'developing'}`}>
-                        <div className="insights-topic__header">
-                          <span className={`insights-topic__badge insights-topic__badge--${topic.strengthLevel || 'developing'}`}>
-                            {topic.strengthLevel === 'strong' ? t('study.strong', 'Strong')
-                              : topic.strengthLevel === 'weak' ? t('study.weak', 'Needs work')
-                              : t('study.developing', 'Developing')}
-                          </span>
-                          <h4 className="insights-topic__name">{topicName}</h4>
+                  const groupConfig = [
+                    { key: 'weak',       label: t('study.weak', 'Needs Work'),       icon: <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="10" height="10"><line x1="2" y1="2" x2="8" y2="8" strokeLinecap="round"/><line x1="8" y1="2" x2="2" y2="8" strokeLinecap="round"/></svg> },
+                    { key: 'developing', label: t('study.developing', 'Developing'), icon: <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" width="10" height="10"><circle cx="5" cy="5" r="3.5"/><circle cx="5" cy="5" r="1.2" fill="currentColor" stroke="none"/></svg> },
+                    { key: 'strong',     label: t('study.strong', 'Strong'),         icon: <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="10" height="10"><polyline points="1.5,5.5 3.5,7.5 8.5,2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
+                  ];
+
+                  return groupConfig
+                    .filter(g => groups[g.key].length > 0)
+                    .map(({ key, label, icon }) => (
+                      <div key={key} className={`it-group it-group--${key}`}>
+                        <div className={`it-group__header it-group__header--${key}`}>
+                          <span className="it-group__icon">{icon}</span>
+                          <span className="it-group__label">{label}</span>
+                          <span className="it-group__count">{groups[key].length}</span>
                         </div>
+                        {groups[key].map(([topicName, topic]) => {
+                          const quizAcc = topic.questionsTotal > 0
+                            ? Math.round((topic.questionsCorrect / topic.questionsTotal) * 100) : null;
+                          const flashAcc = topic.flashcardsTotal > 0
+                            ? Math.round((topic.flashcardsMastered / topic.flashcardsTotal) * 100) : null;
+                          const latestMissed = topic.missedConcepts?.slice(-1)[0];
 
-                        <div className="insights-topic__stats">
-                          {quizAcc !== null && (
-                            <div className="insights-stat">
-                              <div className="insights-stat__bar-track">
-                                <div
-                                  className={`insights-stat__bar-fill insights-stat__bar-fill--${quizAcc >= 85 ? 'strong' : quizAcc >= 60 ? 'developing' : 'weak'}`}
-                                  style={{ width: `${quizAcc}%` }}
-                                />
+                          return (
+                            <div key={topicName} className={`it-row it-row--${key}`}>
+                              <div className="it-row__body">
+                                <div className="it-row__top">
+                                  <span className="it-row__name" title={topicName}>{topicName}</span>
+                                  <div className="it-row__scores">
+                                    {quizAcc !== null && (
+                                      <span className="it-score">
+                                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" width="11" height="11"><circle cx="6" cy="6" r="4.5"/><path d="M4.5 4.8c.25-.9 1.8-1.1 2.2 0 .3.8-.5 1.2-1 1.6" strokeLinecap="round"/><circle cx="6" cy="9" r=".6" fill="currentColor" stroke="none"/></svg>
+                                        {quizAcc}%
+                                        <span className="it-score__detail"> {topic.questionsCorrect}/{topic.questionsTotal}</span>
+                                      </span>
+                                    )}
+                                    {flashAcc !== null && (
+                                      <span className="it-score">
+                                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" width="11" height="11"><rect x="1.5" y="3" width="9" height="7" rx="1.2"/><path d="M4 1.5h4" strokeLinecap="round"/><line x1="4" y1="6.5" x2="8" y2="6.5" strokeLinecap="round"/></svg>
+                                        {flashAcc}%
+                                        <span className="it-score__detail"> {topic.flashcardsMastered}/{topic.flashcardsTotal}</span>
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <div className="it-row__track">
+                                  <div className={`it-row__fill it-row__fill--${key}`} style={{ width: `${topic._avg}%` }} />
+                                </div>
+                                {latestMissed && key !== 'strong' && (
+                                  <p className="it-row__missed">
+                                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11" style={{flexShrink:0}}><path d="M2.5 6a3.5 3.5 0 106 3" strokeLinecap="round"/><polyline points="8.5,7.5 9.5,9.5 7,9.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                                    {latestMissed.length > 58 ? latestMissed.substring(0, 58) + '…' : latestMissed}
+                                  </p>
+                                )}
                               </div>
-                              <span className="insights-stat__label">
-                                {t('study.quizAccuracy', 'Quiz')} {quizAcc}%
-                                <span className="insights-stat__detail"> ({topic.questionsCorrect}/{topic.questionsTotal})</span>
-                              </span>
                             </div>
-                          )}
-                          {flashAcc !== null && (
-                            <div className="insights-stat">
-                              <div className="insights-stat__bar-track">
-                                <div
-                                  className={`insights-stat__bar-fill insights-stat__bar-fill--${flashAcc >= 85 ? 'strong' : flashAcc >= 60 ? 'developing' : 'weak'}`}
-                                  style={{ width: `${flashAcc}%` }}
-                                />
-                              </div>
-                              <span className="insights-stat__label">
-                                {t('study.flashcardAccuracy', 'Flashcards')} {flashAcc}%
-                                <span className="insights-stat__detail"> ({topic.flashcardsMastered}/{topic.flashcardsTotal})</span>
-                              </span>
-                            </div>
-                          )}
-                        </div>
-
-                        {topic.missedConcepts && topic.missedConcepts.length > 0 && (
-                          <div className="insights-topic__missed">
-                            <span className="insights-topic__missed-label">{t('study.toReview', 'To review:')}</span>
-                            <ul className="insights-topic__missed-list">
-                              {topic.missedConcepts.slice(-3).map((concept, i) => (
-                                <li key={i}>{concept.length > 80 ? concept.substring(0, 80) + '...' : concept}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        )}
+                          );
+                        })}
                       </div>
-                    );
-                  })}
+                    ));
+                })()}
               </>
             )}
           </div>
@@ -871,6 +982,23 @@ const StudyModeContainer = ({
       nodes: nodes
     }
   };
+
+  // Render quiz mastery summary (intercepts between quiz completion and overview)
+  if (view === 'quiz_summary' && quizSummaryData) {
+    return (
+      <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+        <StudyModeHeader
+          unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
+          unitSubtitle={studyState?.path?.unitSubtitle || ''}
+        />
+        <QuizMasterySummary
+          data={quizSummaryData}
+          onContinue={handleContinueAfterSummary}
+        />
+        {renderInsightsModal()}
+      </div>
+    );
+  }
 
   // Render overview (Duolingo-style path)
   if (view === 'overview') {
@@ -899,6 +1027,7 @@ const StudyModeContainer = ({
           onNodeSelect={handleNodeSelect}
           onExit={handleExitStudy}
           onShowInsights={handleMascotClick}
+          insightsData={insightsData}
           sidebarOpen={sidebarOpen}
           isGeneratingPhase2={isGeneratingPhase2}
           onStartPhase2={handleStartPhase2}
@@ -980,6 +1109,13 @@ const StudyModeContainer = ({
                 viewOnly={viewOnly}
                 isGeneratingAudio={isGeneratingAudio}
                 audioGeneratingMessage={audioMessage}
+                adaptiveMessage={
+                  adaptiveFeedback?.type === 'speed'
+                    ? t('study.adaptiveSpeed', "You're getting these fast! Flagging as strong.")
+                    : adaptiveFeedback?.type === 'adaptive_mode'
+                    ? t('study.adaptiveMode', 'Adaptive Mode: Narrowing down on {{topic}}', { topic: adaptiveFeedback.topic })
+                    : null
+                }
                 onAnswer={handleAnswer}
                 onReview={handleReview}
                 onGenerateAudio={handleGenerateAudio}

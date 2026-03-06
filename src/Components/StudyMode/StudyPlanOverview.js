@@ -16,6 +16,7 @@ const StudyPlanOverview = ({
   studyState,
   onNodeSelect,
   onShowInsights,
+  insightsData = null,
   sidebarOpen = true,
   isGeneratingPhase2 = false,
   onStartPhase2,
@@ -206,7 +207,8 @@ const StudyPlanOverview = ({
             </div>
           )}
         </div>
-        {onShowInsights && (
+        {/* Show insights button only when there's no inline panel (no data yet) */}
+        {onShowInsights && !insightsData?.topics && (
           <button
             className="study-overview-insights-btn"
             onClick={onShowInsights}
@@ -219,6 +221,64 @@ const StudyPlanOverview = ({
           </button>
         )}
       </div>
+
+      {/* ── Inline insights strip — only when data is available ── */}
+      {insightsData?.topics && (() => {
+        const groups = { weak: [], developing: [], strong: [] };
+        for (const [name, tp] of Object.entries(insightsData.topics)) {
+          const qAcc = tp.questionsTotal > 0 ? tp.questionsCorrect / tp.questionsTotal : null;
+          const fAcc = tp.flashcardsTotal > 0 ? tp.flashcardsMastered / tp.flashcardsTotal : null;
+          const scores = [qAcc, fAcc].filter(s => s !== null);
+          if (scores.length === 0) continue;
+          const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
+          const level = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
+          groups[level].push({ name, pct: Math.round(avg * 100), level });
+        }
+        const hasAny = Object.values(groups).some(g => g.length > 0);
+        if (!hasAny) return null;
+
+        const groupConfig = [
+          { key: 'weak',       label: t('study.weak', 'Needs Work'),    icon: '✗' },
+          { key: 'developing', label: t('study.developing', 'Developing'), icon: '◎' },
+          { key: 'strong',     label: t('study.strong', 'Strong'),       icon: '✓' },
+        ];
+
+        return (
+          <div className="study-inline-insights" onClick={onShowInsights} role="button" title={t('study.viewInsights', 'View full insights')}>
+            <div className="sii-header">
+              <svg className="sii-header__icon" viewBox="0 0 14 14" fill="currentColor" width="13" height="13">
+                <rect x="0" y="7" width="3.5" height="7" rx="1"/>
+                <rect x="5.25" y="3.5" width="3.5" height="10.5" rx="1"/>
+                <rect x="10.5" y="0" width="3.5" height="14" rx="1"/>
+              </svg>
+              <span className="sii-header__title">{t('study.insights', 'Insights')}</span>
+              <svg className="sii-header__arrow" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" width="10" height="10">
+                <path d="M2 8L8 2M8 2H4M8 2v4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </div>
+            {groupConfig.filter(g => groups[g.key].length > 0).map(({ key, label, icon }) => (
+              <div key={key} className={`sii-group sii-group--${key}`}>
+                <div className={`sii-group__hdr sii-group__hdr--${key}`}>
+                  <span className="sii-group__icon">{icon}</span>
+                  <span className="sii-group__label">{label}</span>
+                  <span className="sii-group__count">{groups[key].length}</span>
+                </div>
+                {groups[key].slice(0, 3).map(topic => (
+                  <div key={topic.name} className="sii-row">
+                    <span className="sii-row__name" title={topic.name}>{topic.name}</span>
+                    <div className="sii-row__track">
+                      <div
+                        className={`sii-row__fill sii-row__fill--${key}`}
+                        style={{ width: `${Math.max(topic.pct, 8)}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Winding path with bold nodes */}
       <div className="study-overview-path-v2">
