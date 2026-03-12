@@ -33,6 +33,8 @@ const buildDir = path.join(__dirname, '..', 'build');
 
 // Simple YAML frontmatter parser
 function parseFrontmatter(content) {
+  // Normalize Windows line endings to Unix and strip BOM
+  content = content.replace(/^\uFEFF/, '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
   const frontmatterRegex = /^---\n([\s\S]*?)\n---\n([\s\S]*)$/;
   const match = content.match(frontmatterRegex);
 
@@ -386,6 +388,123 @@ function escapeJson(str) {
     .replace(/\t/g, '\\t');
 }
 
+// ============================================
+// LANDING PAGE HTML GENERATOR
+// Writes static SEO HTML into /build/ for
+// Firebase hosting (same pattern as blog posts)
+// ============================================
+function generateLandingPages(jsPath, cssPath) {
+  const pages = [
+    {
+      dir: 'nclex-question-generator',
+      canonical: 'https://nursequizai.com/nclex-question-generator',
+      title: 'Free AI NCLEX Question Generator | NurseQuizAI',
+      description: 'Generate unlimited NCLEX-style practice questions from your own nursing notes in seconds. Supports NGN, SATA, pharmacology, and more. Free to start — no credit card required.',
+      keywords: 'ai nclex question generator, nclex question generator, nclex practice question generator, free nclex question generator, nclex quiz generator, ai nursing questions, ngn question generator',
+    },
+    {
+      dir: 'ai-nclex-question-generator',
+      canonical: 'https://nursequizai.com/ai-nclex-question-generator',
+      title: 'Free AI NCLEX Question Generator | NurseQuizAI',
+      description: 'Generate unlimited NCLEX-style practice questions from your own nursing notes in seconds. Supports NGN, SATA, pharmacology, and more. Free to start — no credit card required.',
+      keywords: 'ai nclex question generator, nclex question generator, free nclex question generator, nclex quiz generator, ai nursing questions',
+    },
+  ];
+
+  for (const page of pages) {
+    const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>${page.title}</title>
+  <meta name="description" content="${page.description}" />
+  <meta name="keywords" content="${page.keywords}" />
+  <link rel="canonical" href="${page.canonical}" />
+  <link rel="icon" href="/NQWarmLogo.png" />
+  <meta property="og:title" content="${page.title}" />
+  <meta property="og:description" content="${page.description}" />
+  <meta property="og:url" content="${page.canonical}" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://nursequizai.com/NQWarmLogo.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${page.title}" />
+  <meta name="twitter:description" content="${page.description}" />
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "NurseQuizAI — AI NCLEX Question Generator",
+    "description": "Generate unlimited NCLEX-style practice questions from your own nursing notes using AI.",
+    "url": "${page.canonical}",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Web",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "publisher": { "@type": "Organization", "name": "NurseQuizAI", "url": "https://nursequizai.com" }
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "Is the AI NCLEX question generator free?", "acceptedAnswer": { "@type": "Answer", "text": "Yes — you can start generating NCLEX questions for free without a credit card." } },
+      { "@type": "Question", "name": "Does it support Next Generation NCLEX (NGN) questions?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The generator produces NGN formats including unfolding case studies, extended multiple response, and matrix/grid questions." } },
+      { "@type": "Question", "name": "How is this different from UWorld or Quizlet?", "acceptedAnswer": { "@type": "Answer", "text": "NurseQuizAI generates NCLEX questions from your own uploaded notes — so you are tested on exactly what you studied." } },
+      { "@type": "Question", "name": "What file types can I upload?", "acceptedAnswer": { "@type": "Answer", "text": "PDF files — lecture slides, textbook chapters, ATI/Hesi modules, professor handouts, and scanned notes all work." } }
+    ]
+  }
+  </script>
+  <link rel="stylesheet" href="${cssPath}">
+  <script defer src="${jsPath}"></script>
+</head>
+<body>
+  <div id="root"></div>
+  <noscript>
+    <main style="max-width:860px;margin:0 auto;padding:40px 20px;font-family:system-ui,sans-serif;color:#3d3d3d;background:#fffef9;">
+      <nav style="margin-bottom:40px;"><a href="/" style="color:#e88d7d;text-decoration:none;font-weight:700;">← NurseQuizAI</a></nav>
+      <h1 style="font-size:2.5rem;font-weight:800;line-height:1.15;margin-bottom:20px;">Free AI NCLEX Question Generator</h1>
+      <p style="font-size:1.15rem;color:#6b6b6b;margin-bottom:32px;line-height:1.65;">Upload your nursing notes and generate unlimited NCLEX-style practice questions in seconds — tailored to your material, not a generic question bank.</p>
+      <a href="/signup" style="display:inline-block;padding:14px 32px;background:#e88d7d;color:white;font-weight:700;text-decoration:none;border-radius:12px;">Generate Questions Free →</a>
+      <section style="margin-top:60px;">
+        <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:24px;">How it works</h2>
+        <ol style="line-height:2;color:#475569;padding-left:20px;">
+          <li><strong>Upload your nursing notes</strong> — PDF, lecture slides, ATI modules, or textbook chapters</li>
+          <li><strong>AI generates NCLEX questions</strong> — multiple choice, SATA, NGN case studies, pharmacology</li>
+          <li><strong>Practice and track progress</strong> — read rationales, review flashcards, identify weak areas</li>
+        </ol>
+      </section>
+      <section style="margin-top:60px;" itemscope itemtype="https://schema.org/FAQPage">
+        <h2 style="font-size:1.75rem;font-weight:700;margin-bottom:24px;">Frequently Asked Questions</h2>
+        <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #eee;">
+          <h3 itemprop="name">Is the AI NCLEX question generator free?</h3>
+          <div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text" style="color:#475569;">Yes — free to start, no credit card required.</p></div>
+        </div>
+        <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question" style="margin-bottom:20px;padding-bottom:20px;border-bottom:1px solid #eee;">
+          <h3 itemprop="name">Does it support NGN questions?</h3>
+          <div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text" style="color:#475569;">Yes — unfolding case studies, extended multiple response, matrix/grid, and trend items.</p></div>
+        </div>
+        <div itemprop="mainEntity" itemscope itemtype="https://schema.org/Question">
+          <h3 itemprop="name">How is this different from UWorld?</h3>
+          <div itemprop="acceptedAnswer" itemscope itemtype="https://schema.org/Answer"><p itemprop="text" style="color:#475569;">NurseQuizAI generates questions from your own notes, not a fixed bank.</p></div>
+        </div>
+      </section>
+      <div style="margin-top:60px;padding:40px;background:rgba(232,141,125,0.08);border-radius:20px;text-align:center;">
+        <h2>Ready to generate your NCLEX questions?</h2>
+        <a href="/signup" style="display:inline-block;padding:14px 32px;background:#e88d7d;color:white;font-weight:700;text-decoration:none;border-radius:12px;">Generate Questions Free →</a>
+      </div>
+    </main>
+  </noscript>
+</body>
+</html>`;
+
+    const dir = path.join(buildDir, page.dir);
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'index.html'), html);
+    console.log(`Generated: /${page.dir}/index.html`);
+  }
+}
+
 // Main
 console.log('Building blog from markdown files...\n');
 
@@ -398,5 +517,15 @@ generateBlogContentJs(posts);
 
 // Generate SEO HTML files (only if build directory exists)
 generateSeoHtml(posts);
+
+// Generate landing page HTML (only if build directory exists)
+if (fs.existsSync(buildDir)) {
+  const indexHtml = fs.readFileSync(path.join(buildDir, 'index.html'), 'utf8');
+  const jsMatch = indexHtml.match(/src="(\/static\/js\/main\.[^"]+\.js)"/);
+  const cssMatch = indexHtml.match(/href="(\/static\/css\/main\.[^"]+\.css)"/);
+  const jsPath = jsMatch ? jsMatch[1] : '/static/js/main.js';
+  const cssPath = cssMatch ? cssMatch[1] : '/static/css/main.css';
+  generateLandingPages(jsPath, cssPath);
+}
 
 console.log('\nBlog build complete!');

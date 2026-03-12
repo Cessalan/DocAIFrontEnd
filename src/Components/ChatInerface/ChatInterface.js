@@ -3665,13 +3665,18 @@ const ChatInterface = ({
                   </svg>
                 </div>
                 <h2 className="empty-cta-title">{t('chat.studyPlanStartsHere', 'Your study plan starts here')}</h2>
-                <p className="empty-cta-subtitle">{t('chat.uploadWeHandle', "Upload your notes. We'll take care of the rest.")}</p>
+                <p className="empty-cta-subtitle">
+                  {t('chat.uploadWeHandle', "Upload your notes. We'll take care of the rest.")}
+                </p>
                 <button className="empty-cta-button" onClick={(e) => {
                   e.stopPropagation();
                   documentFileInputRef.current?.click();
                   window._pendingStudyJourney = true;
                 }}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                  <svg viewBox="0 0 24 24"
+                       fill="none"
+                       stroke="currentColor"
+                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
                     <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
                     <polyline points="17 8 12 3 7 8" />
                     <line x1="12" y1="3" x2="12" y2="15" />
@@ -3743,8 +3748,7 @@ const ChatInterface = ({
             </p>
             <button
               className="game-replay-btn"
-              onClick={() => window.location.href = '/'}
-            >
+              onClick={() => window.location.href = '/'}>
               🏠 Go to Home to Play Again
             </button>
           </div>

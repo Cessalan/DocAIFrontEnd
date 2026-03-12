@@ -9,7 +9,7 @@ import React from 'react';
  * @param {boolean} isActive - Whether to show in color (true) or grayscale (false)
  * @param {string} className - Additional CSS classes
  */
-const StudyPathMascot = ({ size = 80, isActive = true, className = '' }) => {
+const StudyPathMascot = ({ size = 80, isActive = true, className = '', pointingDirection = null }) => {
   // Define color schemes for active vs inactive states
   const colors = isActive
     ? {
@@ -276,9 +276,9 @@ const StudyPathMascot = ({ size = 80, isActive = true, className = '' }) => {
           </g>
 
           {/* FEET */}
-          {/* Left foot */}
-          <g>
-            <ellipse cx="120" cy="258" rx="22" ry="8" fill="#00000015" />
+          {/* Left foot — transforms into pointing hand when isActive && pointingDirection === 'left' */}
+          <g transform={(isActive && pointingDirection === 'left') ? `translate(5, 115) rotate(90) translate(-120, -248)` : undefined}>
+            {!(isActive && pointingDirection === 'left') && <ellipse cx="120" cy="258" rx="22" ry="8" fill="#00000015" />}
             <path
               d="M94 248
                C94 235, 105 228, 120 228
@@ -302,11 +302,22 @@ const StudyPathMascot = ({ size = 80, isActive = true, className = '' }) => {
             <ellipse cx="110" cy="238" rx="14" ry="9" fill="#ffffff" opacity="0.55" />
             <ellipse cx="105" cy="242" rx="7" ry="5" fill="#ffffff" opacity="0.35" />
             <circle cx="130" cy="235" r="2" fill="#ffffff" opacity="0.6" />
+            {/* Pointing finger — extends from LEFT outer toe (becomes index finger after rotate(90)) */}
+            {(isActive && pointingDirection === 'left') && (
+              <g>
+                <rect x="97" y="266" width="19" height="48" rx="9.5"
+                  fill={`url(#footGrad-${uniqueId})`} stroke={`url(#outlineGrad-${uniqueId})`} strokeWidth="2.5" />
+                <ellipse cx="106" cy="313" rx="10" ry="9" fill={`url(#footGrad-${uniqueId})`} stroke={`url(#outlineGrad-${uniqueId})`} strokeWidth="2.5" />
+                <ellipse cx="106" cy="311" rx="7" ry="6" fill={`url(#toeGrad-${uniqueId})`} />
+                <ellipse cx="103" cy="305" rx="4" ry="3" fill="#ffffff" opacity="0.55" />
+                <ellipse cx="106" cy="274" rx="5" ry="3" fill="#ffffff" opacity="0.4" />
+              </g>
+            )}
           </g>
 
-          {/* Right foot */}
-          <g>
-            <ellipse cx="180" cy="258" rx="22" ry="8" fill="#00000015" />
+          {/* Right foot — transforms into pointing hand when isActive && pointingDirection === 'right' */}
+          <g transform={(isActive && pointingDirection === 'right') ? `translate(295, 115) rotate(-90) translate(-180, -248)` : undefined}>
+            {!(isActive && pointingDirection === 'right') && <ellipse cx="180" cy="258" rx="22" ry="8" fill="#00000015" />}
             <path
               d="M154 248
                C154 235, 165 228, 180 228
@@ -330,6 +341,17 @@ const StudyPathMascot = ({ size = 80, isActive = true, className = '' }) => {
             <ellipse cx="170" cy="238" rx="14" ry="9" fill="#ffffff" opacity="0.55" />
             <ellipse cx="165" cy="242" rx="7" ry="5" fill="#ffffff" opacity="0.35" />
             <circle cx="190" cy="235" r="2" fill="#ffffff" opacity="0.6" />
+            {/* Pointing finger — extends from RIGHT outer toe (becomes index finger after rotate(-90)) */}
+            {(isActive && pointingDirection === 'right') && (
+              <g>
+                <rect x="184" y="266" width="19" height="48" rx="9.5"
+                  fill={`url(#footGrad-${uniqueId})`} stroke={`url(#outlineGrad-${uniqueId})`} strokeWidth="2.5" />
+                <ellipse cx="194" cy="313" rx="10" ry="9" fill={`url(#footGrad-${uniqueId})`} stroke={`url(#outlineGrad-${uniqueId})`} strokeWidth="2.5" />
+                <ellipse cx="194" cy="311" rx="7" ry="6" fill={`url(#toeGrad-${uniqueId})`} />
+                <ellipse cx="191" cy="305" rx="4" ry="3" fill="#ffffff" opacity="0.55" />
+                <ellipse cx="194" cy="274" rx="5" ry="3" fill="#ffffff" opacity="0.4" />
+              </g>
+            )}
           </g>
 
           {/* Mini floating heart - only show when active */}

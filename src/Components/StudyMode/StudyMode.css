@@ -2894,6 +2894,15 @@ body.dark-mode .study-mode-focused .study-main-content {
 .study-overview-container > * {
   width: 100%;
   max-width: 600px;
+  position: relative;
+  z-index: 1;
+}
+
+.study-overview-container > .study-bg-canvas {
+  position: sticky;
+  z-index: 0;
+  max-width: none;
+  width: 100%;
 }
 
 .dark-mode .study-overview-container {
@@ -3603,13 +3612,17 @@ body.dark-mode .study-mode-focused .study-main-content {
   flex-direction: column;
   gap: 10px;
   cursor: pointer;
-  transition: box-shadow 0.15s ease, border-color 0.15s ease;
+  opacity: 0.5;
+  filter: saturate(0.4);
+  transition: opacity 0.3s ease, filter 0.3s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   backdrop-filter: blur(8px);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   z-index: 100;
 }
 
 .study-inline-insights:hover {
+  opacity: 1;
+  filter: saturate(1);
   box-shadow: 0 6px 28px rgba(0, 0, 0, 0.12);
   border-color: rgba(232, 141, 125, 0.35);
 }
@@ -3756,7 +3769,7 @@ body.dark-mode .study-mode-focused .study-main-content {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 20px;
+  gap: 68px; /* extra space for Quick Start button + Up Next badge below nodes */
 }
 
 /* Individual node V2 */
@@ -3899,13 +3912,22 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 /* Active state - warm peachy coral, hand-drawn style */
+.study-path-node-v2.active .study-node-wrapper {
+  width: 118px;
+  height: 118px;
+}
+
 .study-path-node-v2.active .study-node-inner {
+  width: 92px;
+  height: 92px;
   background: linear-gradient(145deg, #f4b8a8 0%, #e99a88 50%, #e88d7d 100%);
   border: 3px solid #d67a6a;
   box-shadow:
-    0 4px 0 #c46a5a,
-    0 6px 18px rgba(232, 141, 125, 0.4),
-    inset 2px 2px 4px rgba(255, 255, 255, 0.35);
+    0 5px 0 #c46a5a,
+    0 8px 28px rgba(232, 141, 125, 0.55),
+    0 0 0 8px rgba(232, 141, 125, 0.15),
+    0 0 0 16px rgba(232, 141, 125, 0.06),
+    inset 2px 2px 5px rgba(255, 255, 255, 0.4);
   /* Different wobbly border */
   border-radius: 48% 52% 54% 46% / 52% 48% 52% 48%;
   animation: gentleWobble 3s ease-in-out infinite;
@@ -3937,8 +3959,8 @@ body.dark-mode .study-mode-focused .study-main-content {
 
 .study-path-node-v2.active .study-node-inner svg {
   fill: white;
-  width: 34px;
-  height: 34px;
+  width: 42px;
+  height: 42px;
   transform: rotate(-3deg);
   filter: drop-shadow(1px 1px 0 rgba(0,0,0,0.15));
 }
@@ -4007,39 +4029,112 @@ body.dark-mode .study-mode-focused .study-main-content {
   border-color: rgba(0, 0, 0, 0.08);
 }
 
-/* START label for active node - hand-drawn style */
-.study-node-start-label {
+/* ── Quick Start CTA button (replaces old START label) ── */
+.quick-start-btn {
   position: absolute;
-  top: -20px;
+  bottom: -50px;
   left: 50%;
-  transform: translateX(-50%) rotate(-2deg);
-  background: linear-gradient(145deg, #f4a896 0%, #e88d7d 100%);
-  border: 2px solid #d67a6a;
-  color: white;
-  font-family: 'Patrick Hand', cursive;
-  font-size: 14px;
+  transform: translateX(-50%);
+  background: linear-gradient(135deg, #f4a896 0%, #e88d7d 60%, #d97a6b 100%);
+  border: none;
+  border-radius: 24px;
+  color: #fff;
+  font-size: 12px;
   font-weight: 700;
-  letter-spacing: 0.5px;
-  padding: 5px 14px;
-  /* Hand-drawn irregular border */
-  border-radius: 12px 8px 10px 6px;
+  letter-spacing: 0.3px;
+  padding: 7px 18px;
   white-space: nowrap;
+  cursor: pointer;
+  z-index: 10;
   box-shadow:
-    0 3px 0 #c46a5a,
-    0 5px 10px rgba(232, 141, 125, 0.4);
-  z-index: 5;
-  animation: none;
+    0 4px 14px rgba(232, 141, 125, 0.5),
+    0 2px 4px rgba(0,0,0,0.08);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
-.study-node-start-label::after {
-  content: '';
+.quick-start-btn:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow:
+    0 6px 20px rgba(232, 141, 125, 0.6),
+    0 3px 6px rgba(0,0,0,0.1);
+}
+
+.quick-start-btn:active {
+  transform: translateX(-50%) translateY(1px);
+  box-shadow: 0 2px 8px rgba(232, 141, 125, 0.4);
+}
+
+/* ── "Up Next" badge on the next-preview node ── */
+.up-next-badge {
   position: absolute;
-  bottom: -8px;
+  bottom: -38px;
   left: 50%;
-  transform: translateX(-50%) rotate(2deg);
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-top: 8px solid #e88d7d;
+  transform: translateX(-50%);
+  background: rgba(232, 141, 125, 0.12);
+  border: 1px solid rgba(232, 141, 125, 0.3);
+  border-radius: 20px;
+  color: #d67a6a;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 3px 10px;
+  white-space: nowrap;
+  text-transform: uppercase;
+  z-index: 5;
+}
+
+/* ── Far-locked nodes — heavy mute, padlock icon ── */
+.study-path-node-v2.far-locked {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.study-path-node-v2.far-locked .study-node-inner {
+  background: linear-gradient(145deg, #ede5e1 0%, #d8cdc8 100%);
+  border-color: #c4b8b2;
+  box-shadow: 0 3px 0 #b5a9a3, inset 2px 2px 4px rgba(255,255,255,0.6);
+}
+
+.study-path-node-v2.far-locked .study-node-inner svg {
+  fill: rgba(150, 128, 122, 0.55);
+}
+
+/* ── Next-preview node — gently dimmed, teasing ── */
+.study-path-node-v2.next-preview {
+  opacity: 0.62;
+}
+
+.study-path-node-v2.next-preview .study-node-inner {
+  background: linear-gradient(145deg, #ede5e1 0%, #d8cdc8 100%);
+  border-color: #c4b8b2;
+  box-shadow: 0 3px 0 #b5a9a3, inset 2px 2px 4px rgba(255,255,255,0.6);
+}
+
+.study-path-node-v2.next-preview .study-node-inner svg {
+  fill: rgba(160, 130, 124, 0.6);
+}
+
+/* Dark mode adjustments */
+.dark-mode .quick-start-btn {
+  box-shadow: 0 4px 18px rgba(232, 141, 125, 0.4), 0 2px 4px rgba(0,0,0,0.3);
+}
+
+.dark-mode .up-next-badge {
+  background: rgba(232, 141, 125, 0.08);
+  color: #f4a896;
+  border-color: rgba(244, 168, 150, 0.25);
+}
+
+.dark-mode .study-path-node-v2.far-locked .study-node-inner,
+.dark-mode .study-path-node-v2.next-preview .study-node-inner {
+  background: linear-gradient(145deg, #4a4a4a 0%, #3a3a3a 100%);
+  border-color: #2a2a2a;
+  box-shadow: 0 3px 0 #222;
+}
+
+.dark-mode .study-path-node-v2.far-locked .study-node-inner svg,
+.dark-mode .study-path-node-v2.next-preview .study-node-inner svg {
+  fill: rgba(255,255,255,0.25);
 }
 
 /* Connector lines V2 - hidden */
@@ -4168,18 +4263,38 @@ body.dark-mode .study-mode-focused .study-main-content {
   filter: saturate(0);
 }
 
-/* Add subtle animation for active mascot */
-.study-path-mascot.active {
-  animation: mascotFloat 3s ease-in-out infinite;
+/* Active mascot: direction-aware nudge + idle float */
+.study-path-mascot-wrapper.left .study-path-mascot.active {
+  animation: mascotNudgeRight 4s ease-in-out infinite;
+}
+.study-path-mascot-wrapper.right .study-path-mascot.active {
+  animation: mascotNudgeLeft 4s ease-in-out infinite;
 }
 
-@keyframes mascotFloat {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
+/* Nudge toward the node (right side) then settle into idle float */
+@keyframes mascotNudgeRight {
+  0%        { transform: translateY(0)    translateX(0);    }
+  10%       { transform: translateY(-4px) translateX(0);    }
+  20%       { transform: translateY(-2px) translateX(14px); }
+  30%       { transform: translateY(0)    translateX(0);    }
+  40%       { transform: translateY(-2px) translateX(14px); }
+  52%       { transform: translateY(0)    translateX(0);    }
+  66%, 80%  { transform: translateY(-6px) translateX(0);    }
+  73%       { transform: translateY(0)    translateX(0);    }
+  100%      { transform: translateY(0)    translateX(0);    }
+}
+
+/* Mirror: nudge toward the node (left side) */
+@keyframes mascotNudgeLeft {
+  0%        { transform: translateY(0)    translateX(0);     }
+  10%       { transform: translateY(-4px) translateX(0);     }
+  20%       { transform: translateY(-2px) translateX(-14px); }
+  30%       { transform: translateY(0)    translateX(0);     }
+  40%       { transform: translateY(-2px) translateX(-14px); }
+  52%       { transform: translateY(0)    translateX(0);     }
+  66%, 80%  { transform: translateY(-6px) translateX(0);     }
+  73%       { transform: translateY(0)    translateX(0);     }
+  100%      { transform: translateY(0)    translateX(0);     }
 }
 
 /* Hide mascot on smaller screens where label is also hidden */
@@ -4241,14 +4356,217 @@ body.dark-mode .study-mode-focused .study-main-content {
   }
 
   .study-path-nodes-v2 {
-    gap: 16px;
+    gap: 56px;
   }
 
-  .study-node-start-label {
+  .quick-start-btn {
     font-size: 11px;
-    padding: 4px 10px;
-    top: -16px;
+    padding: 5px 13px;
+    bottom: -44px;
   }
+}
+
+/* ============================================
+   LIVING BACKGROUND CANVAS
+   Subtle floating orbs + SVG doodles
+   ============================================ */
+
+@keyframes sbgFloat {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-22px) scale(1.04); }
+}
+
+@keyframes sbgDrift {
+  0%   { transform: translate(0, 0) rotate(0deg); }
+  33%  { transform: translate(14px, -18px) rotate(6deg); }
+  66%  { transform: translate(-10px, 10px) rotate(-4deg); }
+  100% { transform: translate(0, 0) rotate(0deg); }
+}
+
+@keyframes sbgSpin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes sbgPulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%       { opacity: 0.85; transform: scale(1.15); }
+}
+
+@keyframes sbgWobble {
+  0%, 100% { transform: rotate(-4deg) scale(1); }
+  50%       { transform: rotate(4deg) scale(1.08); }
+}
+
+@keyframes sbgBounce {
+  0%, 100% { transform: translateY(0); }
+  40%       { transform: translateY(-10px); }
+  60%       { transform: translateY(-6px); }
+}
+
+.study-bg-canvas {
+  position: sticky;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  margin-bottom: -100vh;
+  flex-shrink: 0;
+  align-self: stretch;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+  /* Micro dot-grid texture for depth */
+  background-image: radial-gradient(circle, rgba(232, 141, 125, 0.055) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Gradient orbs — large blurred atmosphere */
+.sbg-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+}
+
+/* Top-right — warm coral glow */
+.sbg-orb--1 {
+  width: 480px;
+  height: 480px;
+  top: -140px;
+  right: -100px;
+  background: radial-gradient(circle, rgba(248, 182, 162, 0.36) 0%, rgba(232, 141, 125, 0.1) 60%, transparent 100%);
+  animation: sbgFloat 28s ease-in-out infinite;
+}
+
+/* Bottom-left — soft mint */
+.sbg-orb--2 {
+  width: 420px;
+  height: 420px;
+  bottom: -60px;
+  left: -100px;
+  background: radial-gradient(circle, rgba(175, 218, 198, 0.26) 0%, rgba(130, 200, 175, 0.07) 65%, transparent 100%);
+  animation: sbgDrift 36s ease-in-out infinite;
+}
+
+/* Mid-left — blush rose */
+.sbg-orb--3 {
+  width: 280px;
+  height: 280px;
+  top: 32%;
+  left: -40px;
+  background: radial-gradient(circle, rgba(242, 185, 212, 0.28) 0%, rgba(220, 150, 185, 0.07) 65%, transparent 100%);
+  animation: sbgFloat 22s ease-in-out infinite 6s;
+}
+
+/* Bottom-right — soft lavender */
+.sbg-orb--4 {
+  width: 340px;
+  height: 340px;
+  bottom: 0;
+  right: -80px;
+  background: radial-gradient(circle, rgba(196, 172, 228, 0.26) 0%, rgba(172, 148, 212, 0.07) 65%, transparent 100%);
+  animation: sbgDrift 30s ease-in-out infinite 4s;
+}
+
+/* SVG doodles — base (all stroke-only, minimal fill, very subtle) */
+.sbg-doodle {
+  position: absolute;
+  opacity: 0.12;
+}
+
+/* 1. Stethoscope — top right, large anchor icon */
+.sbg-d1 {
+  width: 74px; height: 88px;
+  top: 8%; right: 5%;
+  color: #e8917e;
+  animation: sbgFloat 32s ease-in-out infinite;
+}
+
+/* 2. Heart + ECG — upper left */
+.sbg-d2 {
+  width: 64px; height: 58px;
+  top: 13%; left: 4%;
+  color: #e8917e;
+  opacity: 0.13;
+  animation: sbgPulse 10s ease-in-out infinite;
+}
+
+/* 3. Syringe — mid right */
+.sbg-d3 {
+  width: 86px; height: 28px;
+  top: 43%; right: 3%;
+  color: #c2a8dc;
+  animation: sbgWobble 22s ease-in-out infinite 2s;
+}
+
+/* 5. Medical cross — lower right quadrant */
+.sbg-d5 {
+  width: 34px; height: 34px;
+  top: 64%; right: 13%;
+  color: #e8917e;
+  opacity: 0.13;
+  animation: sbgSpin 70s linear infinite;
+}
+
+/* 6. Pill capsule — upper left, near top */
+.sbg-d6 {
+  width: 66px; height: 28px;
+  top: 3%; left: 8%;
+  color: #c2a8dc;
+  animation: sbgFloat 26s ease-in-out infinite 1s;
+}
+
+/* 7. Band-aid — lower left */
+.sbg-d7 {
+  width: 58px; height: 58px;
+  bottom: 12%; left: 17%;
+  color: #e8917e;
+  opacity: 0.11;
+  animation: sbgWobble 24s ease-in-out infinite 5s;
+}
+
+/* 8. Thermometer — upper right cluster */
+.sbg-d8 {
+  width: 22px; height: 68px;
+  top: 7%; right: 21%;
+  color: #c2a8dc;
+  animation: sbgFloat 20s ease-in-out infinite 1.5s;
+}
+
+/* 9. ECG heartbeat line — lower left edge */
+.sbg-d9 {
+  width: 110px; height: 32px;
+  bottom: 24%; left: 2%;
+  color: #e8917e;
+  opacity: 0.13;
+  animation: sbgPulse 8s ease-in-out infinite 3s;
+}
+
+/* 10. Medicine bottle — lower right */
+.sbg-d10 {
+  width: 32px; height: 48px;
+  bottom: 5%; right: 6%;
+  color: #c2a8dc;
+  opacity: 0.13;
+  animation: sbgFloat 28s ease-in-out infinite 2.5s;
+}
+
+/* Dark mode */
+.dark-mode .sbg-orb--1 {
+  background: radial-gradient(circle, rgba(232, 141, 125, 0.2) 0%, transparent 70%);
+}
+.dark-mode .sbg-orb--2 {
+  background: radial-gradient(circle, rgba(100, 180, 155, 0.16) 0%, transparent 70%);
+}
+.dark-mode .sbg-orb--3 {
+  background: radial-gradient(circle, rgba(200, 140, 180, 0.18) 0%, transparent 70%);
+}
+.dark-mode .sbg-orb--4 {
+  background: radial-gradient(circle, rgba(172, 148, 212, 0.18) 0%, transparent 70%);
+}
+.dark-mode .sbg-doodle { opacity: 0.11; }
+.dark-mode .study-bg-canvas {
+  background-image: radial-gradient(circle, rgba(232, 141, 125, 0.04) 1px, transparent 1px);
 }
 
 /* ============================================

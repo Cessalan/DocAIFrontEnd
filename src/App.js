@@ -14,6 +14,7 @@ import QuizRoomLanding from "./Components/QuizRoom/QuizRoomLanding";
 import DedicatedQuizPage from "./Components/QuizRoom/DedicatedQuizPage";
 import BlogList from "./Components/Blog/BlogList";
 import BlogPost from "./Components/Blog/BlogPost";
+import NclexQuestionGenerator from "./Components/LandingPages/NclexQuestionGenerator";
 import QuestionBankAdmin from "./Components/Admin/QuestionBankAdmin";
 import './index.css';
 import { auth } from "./Firebase/config";
@@ -332,6 +333,10 @@ function App() {
       {/* Blog Routes - Public for SEO */}
       <Route path="/blog" element={<BlogList />} />
       <Route path="/blog/:slug" element={<BlogPost />} />
+
+      {/* SEO Landing Pages */}
+      <Route path="/nclex-question-generator" element={<NclexQuestionGenerator />} />
+      <Route path="/ai-nclex-question-generator" element={<NclexQuestionGenerator />} />
 
       {/* Admin Routes - DEV ONLY */}
       {isDev && (
