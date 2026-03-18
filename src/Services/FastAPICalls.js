@@ -703,11 +703,12 @@ export const speech_to_text = async (audioBlob) => {
  *   ]
  * }
  */
-export const plan_study_path = async (chat_id, upload_ids, language = 'en') => {
+export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}, language = 'en') => {
   const requestBody = JSON.stringify({
     chat_id: chat_id,
     upload_ids: upload_ids,
-    language: language
+    language: language,
+    userPreferences: user_preferences
   });
 
   try {

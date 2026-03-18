@@ -3135,6 +3135,44 @@ const ChatInterface = ({
     }
   };
 
+  // ============================================
+  // QUICK START (ONBOARDING PIPELINE)
+  // Listen for the custom event from OnboardingModal and trigger the appropriate Study Session
+  // ============================================
+  useEffect(() => {
+    const handleQuickStart = (e) => {
+      const { formData } = e.detail || {};
+      if (!formData) return;
+      
+      const { reviewFormat, userStage, studyGoal } = formData;
+      devLog('🚀 Quick Start Session triggered with format:', reviewFormat, 'Goal:', studyGoal);
+      
+      const wowConfig = getWowEffectConfig(studyGoal, reviewFormat);
+      if (wowConfig) {
+        devLog('🎯 Triggering Quick Start action:', wowConfig.actionId);
+        
+        // Let's create a generic topic for the LLM based on their selected stage or goal
+        const topic = userStage === 'NCLEX Prep' 
+          ? 'NCLEX Preparation' 
+          : 'Nursing fundamentals';
+          
+        const dummyMessage = {
+          id: `quickstart-${Date.now()}`,
+          topics: [topic],
+          filenames: []
+        };
+        
+        // Timeout ensures interface is mounted/ready before sending
+        setTimeout(() => {
+          handlePreSelectedAction(wowConfig.actionId, dummyMessage);
+        }, 500);
+      }
+    };
+
+    window.addEventListener('onQuickStartSession', handleQuickStart);
+    return () => window.removeEventListener('onQuickStartSession', handleQuickStart);
+  }, [handlePreSelectedAction]);
+
 
   // --- Updated handleSummary function using streaming logic ---
   const handleSummaryStream = async (fileName) => {

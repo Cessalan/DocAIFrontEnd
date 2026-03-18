@@ -427,30 +427,44 @@ const resources = {
       onboarding: {
         intro: "To better understand your needs, please answer these quick questions ✨",
         step1Title: "What is your main goal today?",
-        step2Title: "How do you use the questions?",
+        step2Title: "Where are you in your journey?",
+        step3Title: "How do you learn best?",
+        step4Title: "What are you hoping NurseQuizAI helps you achieve?",
         loading: "Setting up your profile...",
-        options: {
-          nclex: "NCLEX Prep 🏥",
-          courseExam: "Course Exam 📚",
-          generalReview: "General Review 💡",
-          flashcards: "Export to Flashcards (Anki/Quizlet) 🗂️",
-          trackProgress: "Track Progress Here 📈",
-          manual: "Print / Manual Copy 📝"
-        },
         tracker: "Question {{current}} of {{total}}",
         processing: {
           analyzing: "Analyzing your preferences...",
           personalizing: "Personalizing your experience..."
         },
+        options: {
+          nclex: "NCLEX Prep",
+          courseExam: "Course Exam",
+          generalReview: "General Review",
+          stage1: "Pre-Nursing / Semester 1",
+          stage2: "Semester 2-3",
+          stage3: "Final Semester / NCLEX Prep",
+          formatPractice: "Practice Questions",
+          formatFlashcards: "Flashcards",
+          formatConcept: "Visual Concept Maps",
+          formatAudio: "Audio Summaries",
+          skipText: "Skip",
+          submitText: "Submit"
+        },
+        expectationPlaceholder: "I struggle with remembering pharmacology...",
         success: {
           title: "All set! 🚀",
           message: "Thanks for setting up your profile. You're ready to start learning!",
           button: "Start Learning"
         },
         recommendation: {
-          studyjourney: "Since you're preparing for {{goal}} and want to track progress, we'll guide you through a personalized Study Journey. Upload your notes to get started!",
-          flashcards: "Since you're preparing for {{goal}} and want to export flashcards, we'll create cards you can use in Anki or Quizlet. Upload your notes to get started!",
-          studysheet: "Since you're preparing for {{goal}} and want printable content, we'll create a study sheet for you. Upload your notes to get started!"
+          studyjourney: "Your profile is set up. Ready to generate a custom session for a student?",
+          flashcards: "Your profile is set up. Ready to generate custom flashcards?",
+          studysheet: "Your profile is set up. Ready to generate a custom study sheet?",
+          default: "Your profile is set up. Ready to generate a custom {{reviewFormat}} session for a {{userStage}} student?"
+        },
+        successButtons: {
+          startSession: "Start My First Session",
+          uploadNotes: "Or upload my class notes instead"
         }
       },
 
@@ -1370,30 +1384,44 @@ const resources = {
       onboarding: {
         intro: "Pour mieux comprendre vos besoins, veuillez répondre à ces questions rapides ✨",
         step1Title: "Quel est votre objectif aujourd'hui?",
-        step2Title: "Comment utilisez-vous les questions?",
+        step2Title: "Où en êtes-vous dans votre parcours ?",
+        step3Title: "Comment apprenez-vous le mieux ?",
+        step4Title: "Qu'espérez-vous que NurseQuizAI vous aide à accomplir ?",
         loading: "Configuration de votre profil...",
-        options: {
-          nclex: "Préparation NCLEX 🏥",
-          courseExam: "Examen de cours 📚",
-          generalReview: "Révision générale 💡",
-          flashcards: "Exporter vers Flashcards (Anki/Quizlet) 🗂️",
-          trackProgress: "Suivre les progrès ici 📈",
-          manual: "Imprimer / Copie manuelle 📝"
-        },
         tracker: "Question {{current}} sur {{total}}",
         processing: {
           analyzing: "Analyse de vos préférences...",
           personalizing: "Personnalisation de votre expérience..."
         },
+        options: {
+          nclex: "Préparation NCLEX",
+          courseExam: "Examen de cours",
+          generalReview: "Révision générale",
+          stage1: "Pré-soins infirmiers / Semestre 1",
+          stage2: "Semestre 2-3",
+          stage3: "Dernier semestre / Préparation NCLEX",
+          formatPractice: "Questions de pratique",
+          formatFlashcards: "Flashcards",
+          formatConcept: "Cartes conceptuelles visuelles",
+          formatAudio: "Résumés audio",
+          skipText: "Passer",
+          submitText: "Soumettre"
+        },
+        expectationPlaceholder: "J'ai du mal à retenir la pharmacologie...",
         success: {
           title: "C'est tout bon! 🚀",
           message: "Merci d'avoir configuré votre profil. Vous êtes prêt à apprendre!",
           button: "Commencer l'apprentissage"
         },
         recommendation: {
-          studyjourney: "Puisque tu prépares {{goal}} et que tu veux suivre tes progrès, on va te guider à travers un Parcours d'étude personnalisé. Importe tes notes pour commencer!",
-          flashcards: "Puisque tu prépares {{goal}} et que tu veux exporter des flashcards, on va créer des cartes pour Anki ou Quizlet. Importe tes notes pour commencer!",
-          studysheet: "Puisque tu prépares {{goal}} et que tu veux du contenu imprimable, on va créer une feuille d'étude pour toi. Importe tes notes pour commencer!"
+          studyjourney: "Votre profil est configuré. Prêt à générer une session personnalisée pour un étudiant ?",
+          flashcards: "Votre profil est configuré. Prêt à générer des flashcards personnalisées ?",
+          studysheet: "Votre profil est configuré. Prêt à générer une fiche de révision personnalisée ?",
+          default: "Votre profil est configuré. Prêt à générer une session **{{reviewFormat}}** personnalisée pour un étudiant en **{{userStage}}** ?"
+        },
+        successButtons: {
+          startSession: "Commencer ma première session",
+          uploadNotes: "Ou téléversez mes notes de cours à la place"
         }
       },
 

@@ -96,7 +96,7 @@ export const getWowEffectConfig = (studyGoal, reviewFormat) => {
     if (reviewFormat.includes('Dev') || reviewFormat.includes('Skip')) return null;
 
     // Mapping based on reviewFormat (primary signal)
-    if (reviewFormat === 'Transfer to flashcard apps') {
+    if (reviewFormat === 'Flashcards') {
         return {
             actionId: 'flashcards',
             messageKey: 'wowEffect.flashcards',
@@ -104,7 +104,7 @@ export const getWowEffectConfig = (studyGoal, reviewFormat) => {
         };
     }
 
-    if (reviewFormat === 'Save scores and track progress') {
+    if (reviewFormat === 'Practice Questions') {
         // Study Journey for all "track progress" users - it's our best feature for this
         return {
             actionId: 'studyjourney',
@@ -113,11 +113,19 @@ export const getWowEffectConfig = (studyGoal, reviewFormat) => {
         };
     }
 
-    if (reviewFormat === 'Print or copy content manually') {
+    if (reviewFormat === 'Visual Concept Maps') {
         return {
-            actionId: 'studysheet',
-            messageKey: 'wowEffect.studysheet',
-            ctaKey: 'wowEffect.cta.studysheet'
+            actionId: 'mindmap',
+            messageKey: 'wowEffect.mindmap',
+            ctaKey: 'wowEffect.cta.mindmap'
+        };
+    }
+    
+    if (reviewFormat === 'Audio Summaries') {
+        return {
+            actionId: 'audio',
+            messageKey: 'wowEffect.audio',
+            ctaKey: 'wowEffect.cta.audio'
         };
     }
 

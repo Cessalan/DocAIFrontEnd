@@ -61,7 +61,8 @@ const StudyModeContainer = ({
   onCloseSidebar,
   onExit,
   onComplete,
-  viewOnly = false // Dev mode: view without triggering reviews or saving progress
+  viewOnly = false, // Dev mode: view without triggering reviews or saving progress
+  autoStart = false // Auto-launch the first node
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n.language || 'en';
@@ -365,6 +366,15 @@ const StudyModeContainer = ({
       setIsLoadingContent(false);
     }
   }, [chatId, askedHashes, language, onCloseSidebar, viewOnly]);
+
+  // Auto-launch the first node if requested
+  const hasAutoStartedNodeRef = useRef(false);
+  useEffect(() => {
+    if (autoStart && view === 'overview' && activeNode && completedCount === 0 && !hasAutoStartedNodeRef.current && !viewOnly) {
+      hasAutoStartedNodeRef.current = true;
+      handleStartNode(activeNode);
+    }
+  }, [autoStart, view, activeNode, completedCount, viewOnly, handleStartNode]);
 
   // Handle quiz answer
   const handleAnswer = useCallback((answerData) => {

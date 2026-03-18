@@ -26,7 +26,8 @@ const StartStudyModal = ({
   uploadedDocs = [],
   topics = [],
   language = 'en',
-  autoStart = false
+  autoStart = false,
+  userPreferences = {}
 }) => {
   const { t } = useTranslation();
 
@@ -75,7 +76,7 @@ const StartStudyModal = ({
     try {
       // Fire both requests in parallel — plan is ready before user finishes 5 Qs
       const [pathResult, diagnosticResult] = await Promise.all([
-        plan_study_path(chatId, uploadIds, language),
+        plan_study_path(chatId, uploadIds, userPreferences, language),
         plan_diagnostic_quiz(chatId, uploadIds, language).catch((err) => {
         console.warn('⚠️ Diagnostic quiz skipped (backend error):', err?.message || err);
         return null;

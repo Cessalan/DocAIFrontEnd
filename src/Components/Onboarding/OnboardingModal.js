@@ -22,15 +22,19 @@ const OnboardingModal = ({ onFilesSelected }) => {
     const [loadingMessage, setLoadingMessage] = useState('onboarding.processing.analyzing');
     const [formData, setFormData] = useState({
         studyGoal: '',
-        reviewFormat: ''
+        userStage: '',
+        reviewFormat: '',
+        userExpectation: ''
     });
 
-    const handleOptionSelect = async (key, value) => {
+    const handleOptionSelect = async (key, value, nextStepOverwrite = null) => {
         const updatedData = { ...formData, [key]: value };
         setFormData(updatedData);
 
-        if (step === 1) {
-            setStep(2);
+        const nextStep = nextStepOverwrite || step + 1;
+
+        if (nextStep < 5) {
+            setStep(nextStep);
         } else {
             // Start fake loading process
             setIsLoading(true);
@@ -61,7 +65,7 @@ const OnboardingModal = ({ onFilesSelected }) => {
             // Update context but don't close modal yet
             setUserProfile(profileData);
             setIsLoading(false);
-            setStep(3); // Move to success step
+            setStep(5); // Move to success step
         } catch (error) {
             console.error("Error saving onboarding data:", error);
             setIsLoading(false);
@@ -71,6 +75,7 @@ const OnboardingModal = ({ onFilesSelected }) => {
 
     const handleStartLearning = () => {
         setIsProfileComplete(true);
+        window.dispatchEvent(new CustomEvent('onQuickStartSession', { detail: formData }));
     };
 
     // Handle file selection from the upload button
@@ -101,7 +106,9 @@ const OnboardingModal = ({ onFilesSelected }) => {
             const profileData = {
                 onboarding: {
                     studyGoal: 'Skipped (Dev)',
-                    reviewFormat: 'Skipped (Dev)'
+                    userStage: 'Skipped (Dev)',
+                    reviewFormat: 'Skipped (Dev)',
+                    userExpectation: ''
                 },
                 email: currentUser.email,
                 displayName: currentUser.displayName || '',
@@ -126,9 +133,9 @@ const OnboardingModal = ({ onFilesSelected }) => {
                     </div>
                 ) : (
                     <>
-                        {step < 3 && (
+                        {step < 5 && (
                             <div className="onboarding-tracker">
-                                {t('onboarding.tracker', { current: step, total: 2 })}
+                                {t('onboarding.tracker', { current: step, total: 4 })}
                             </div>
                         )}
 
@@ -166,50 +173,109 @@ const OnboardingModal = ({ onFilesSelected }) => {
                                 <div className="onboarding-options">
                                     <button
                                         className="onboarding-option-btn"
-                                        onClick={() => handleOptionSelect('reviewFormat', 'Transfer to flashcard apps')}
+                                        onClick={() => handleOptionSelect('userStage', 'Pre-Nursing/Semester 1')}
                                     >
-                                        {t('onboarding.options.flashcards')}
+                                        {t('onboarding.options.stage1')}
                                     </button>
                                     <button
                                         className="onboarding-option-btn"
-                                        onClick={() => handleOptionSelect('reviewFormat', 'Save scores and track progress')}
+                                        onClick={() => handleOptionSelect('userStage', 'Semester 2-3')}
                                     >
-                                        {t('onboarding.options.trackProgress')}
+                                        {t('onboarding.options.stage2')}
                                     </button>
                                     <button
                                         className="onboarding-option-btn"
-                                        onClick={() => handleOptionSelect('reviewFormat', 'Print or copy content manually')}
+                                        onClick={() => handleOptionSelect('userStage', 'Final Semester/NCLEX Prep')}
                                     >
-                                        {t('onboarding.options.manual')}
+                                        {t('onboarding.options.stage3')}
                                     </button>
                                 </div>
                             </div>
                         )}
 
                         {step === 3 && (
+                            <div className="step-content">
+                                <p className="onboarding-intro">{t('onboarding.intro')}</p>
+                                <h2 className="onboarding-title">{t('onboarding.step3Title')}</h2>
+                                <div className="onboarding-options">
+                                    <button
+                                        className="onboarding-option-btn"
+                                        onClick={() => handleOptionSelect('reviewFormat', 'Practice Questions')}
+                                    >
+                                        {t('onboarding.options.formatPractice')}
+                                    </button>
+                                    <button
+                                        className="onboarding-option-btn"
+                                        onClick={() => handleOptionSelect('reviewFormat', 'Flashcards')}
+                                    >
+                                        {t('onboarding.options.formatFlashcards')}
+                                    </button>
+                                    <button
+                                        className="onboarding-option-btn"
+                                        onClick={() => handleOptionSelect('reviewFormat', 'Visual Concept Maps')}
+                                    >
+                                        {t('onboarding.options.formatConcept')}
+                                    </button>
+                                    <button
+                                        className="onboarding-option-btn"
+                                        onClick={() => handleOptionSelect('reviewFormat', 'Audio Summaries')}
+                                    >
+                                        {t('onboarding.options.formatAudio')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 4 && (
+                            <div className="step-content">
+                                <p className="onboarding-intro">{t('onboarding.intro')}</p>
+                                <h2 className="onboarding-title">{t('onboarding.step4Title')}</h2>
+                                <textarea
+                                    className="onboarding-textarea"
+                                    placeholder={t('onboarding.expectationPlaceholder')}
+                                    style={{ width: '100%', height: '100px', margin: '20px 0', padding: '15px', borderRadius: '12px', border: '1px solid var(--border-color)', resize: 'none', fontFamily: 'inherit' }}
+                                    value={formData.userExpectation}
+                                    onChange={(e) => setFormData({...formData, userExpectation: e.target.value})}
+                                ></textarea>
+                                <div className="onboarding-options" style={{ flexDirection: 'row', gap: '10px' }}>
+                                    <button
+                                        className="onboarding-option-btn"
+                                        style={{ backgroundColor: 'transparent', color: 'var(--text-secondary)' }}
+                                        onClick={() => handleOptionSelect('userExpectation', formData.userExpectation || '')}
+                                    >
+                                        {t('onboarding.options.skipText')}
+                                    </button>
+                                    <button
+                                        className="onboarding-start-btn"
+                                        style={{ margin: 0 }}
+                                        onClick={() => handleOptionSelect('userExpectation', formData.userExpectation || '')}
+                                        disabled={!formData.userExpectation}
+                                    >
+                                        {t('onboarding.options.submitText')}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {step === 5 && (
                             <div className="step-content success-step">
                                 <div className="success-icon">🎉</div>
                                 <h2 className="onboarding-title">{t('onboarding.success.title')}</h2>
 
-                                {/* Personalized recommendation based on their choices */}
-                                {(() => {
-                                    const wowConfig = getWowEffectConfig(formData.studyGoal, formData.reviewFormat);
-                                    if (wowConfig) {
-                                        return (
-                                            <div className="onboarding-recommendation">
-                                                <p className="recommendation-text">
-                                                    {t(`onboarding.recommendation.${wowConfig.actionId}`, {
-                                                        goal: formData.studyGoal,
-                                                        defaultValue: t('onboarding.success.message')
-                                                    })}
-                                                </p>
-                                            </div>
-                                        );
-                                    }
-                                    return <p className="onboarding-intro">{t('onboarding.success.message')}</p>;
-                                })()}
+                                <div className="onboarding-recommendation">
+                                    <p className="recommendation-text" dangerouslySetInnerHTML={{ __html: t('onboarding.recommendation.default', { reviewFormat: formData.reviewFormat, userStage: formData.userStage }) }} />
+                                </div>
 
-                                {/* Hidden file input */}
+                                {/* Primary CTA: Start Magic Session */}
+                                <button
+                                    className="onboarding-start-btn onboarding-upload-btn"
+                                    onClick={handleStartLearning}
+                                >
+                                    <span className="upload-icon">✨</span>
+                                    {t('onboarding.successButtons.startSession')}
+                                </button>
+                                
+                                {/* Hidden file input (kept for compatibility if needed elsewhere, though unused here mostly) */}
                                 <input
                                     type="file"
                                     ref={fileInputRef}
@@ -219,34 +285,26 @@ const OnboardingModal = ({ onFilesSelected }) => {
                                     style={{ display: 'none' }}
                                 />
 
-                                {/* Primary CTA: Upload files */}
-                                <button
-                                    className="onboarding-start-btn onboarding-upload-btn"
-                                    onClick={handleUploadClick}
-                                >
-                                    <span className="upload-icon">📄</span>
-                                    {t('onboarding.success.uploadButton', 'Upload My Notes')}
-                                </button>
-
-                                {/* Secondary: Skip for now */}
+                                {/* Secondary: Upload Notes directly */}
                                 <button
                                     className="onboarding-skip-link"
-                                    onClick={handleStartLearning}
+                                    onClick={handleUploadClick}
                                 >
-                                    {t('onboarding.success.skipLink', "I'll do this later")}
+                                    {t('onboarding.successButtons.uploadNotes')}
                                 </button>
                             </div>
                         )}
 
-                        {step < 3 && (
+                        {step < 5 && (
                             <div className="onboarding-progress">
                                 <div className={`progress-dot ${step >= 1 ? 'active' : ''}`}></div>
                                 <div className={`progress-dot ${step >= 2 ? 'active' : ''}`}></div>
+                                <div className={`progress-dot ${step >= 3 ? 'active' : ''}`}></div>
+                                <div className={`progress-dot ${step >= 4 ? 'active' : ''}`}></div>
                             </div>
                         )}
 
-                        {/* Dev mode skip button */}
-                        {isDevelopment && step < 3 && (
+                        {isDevelopment && step < 5 && (
                             <button
                                 className="onboarding-skip-btn"
                                 onClick={handleSkipOnboarding}
