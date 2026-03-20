@@ -10,13 +10,14 @@ import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { generate_study_item_stream, generate_study_audio, plan_review_path } from '../../Services/FastAPICalls';
+import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
   addAskedHash,
   saveNodeContent,
   getNodeContent,
+  updateMindmapData,
   saveFlashcardProgress,
   saveQuizProgress,
   updateStudyPerformance,
@@ -80,6 +81,8 @@ const StudyModeContainer = ({
   const [isLoadingContent, setIsLoadingContent] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioMessage, setAudioMessage] = useState('');
+  const [isGeneratingMindmap, setIsGeneratingMindmap] = useState(false);
+  const [mindmapMessage, setMindmapMessage] = useState('');
   const [askedHashes, setAskedHashes] = useState([]);
   const [isComplete, setIsComplete] = useState(false);
 
@@ -588,6 +591,47 @@ const StudyModeContainer = ({
       setAudioMessage(`Error: ${error.message}`);
     } finally {
       setIsGeneratingAudio(false);
+    }
+  }, [chatId, language]);
+
+  // Handle mindmap generation trigger
+  const handleGenerateMindmap = useCallback(async (mapConfig) => {
+    console.log('🧠 Generating mindmap:', mapConfig);
+    setIsGeneratingMindmap(true);
+    setMindmapMessage(t('study.buildingConceptMap', 'Building your concept map...'));
+
+    try {
+      const result = await generate_study_mindmap(
+        chatId,
+        mapConfig.topic,
+        mapConfig.depth || 'medium',
+        language,
+        (progress) => {
+          if (progress.status === 'mindmap_generating') {
+            setMindmapMessage(progress.message || t('study.buildingConceptMap', 'Building your concept map...'));
+          }
+        }
+      );
+
+      if (result && result.nodes?.length > 0) {
+        setCurrentContent(prev => ({ ...prev, mindmapData: result }));
+
+        // Persist mindmap data to Firestore so re-visiting won't regenerate
+        const messageId = currentMessageIdRef.current;
+        if (messageId) {
+          await updateMindmapData(chatId, messageId, result);
+        }
+
+        console.log('✅ Mindmap generated successfully');
+      } else {
+        console.error('❌ No mindmap data received');
+        setMindmapMessage(t('study.failedToGenerate', 'Failed to generate concept map'));
+      }
+    } catch (error) {
+      console.error('❌ Mindmap generation failed:', error);
+      setMindmapMessage(`Error: ${error.message}`);
+    } finally {
+      setIsGeneratingMindmap(false);
     }
   }, [chatId, language]);
 
@@ -1119,6 +1163,8 @@ const StudyModeContainer = ({
                 viewOnly={viewOnly}
                 isGeneratingAudio={isGeneratingAudio}
                 audioGeneratingMessage={audioMessage}
+                isGeneratingMindmap={isGeneratingMindmap}
+                mindmapGeneratingMessage={mindmapMessage}
                 adaptiveMessage={
                   adaptiveFeedback?.type === 'speed'
                     ? t('study.adaptiveSpeed', "You're getting these fast! Flagging as strong.")
@@ -1129,6 +1175,7 @@ const StudyModeContainer = ({
                 onAnswer={handleAnswer}
                 onReview={handleReview}
                 onGenerateAudio={handleGenerateAudio}
+                onGenerateMindmap={handleGenerateMindmap}
                 onContinue={handleContinue}
                 onExit={handleExitNode}
               />

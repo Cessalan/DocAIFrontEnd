@@ -3572,6 +3572,7 @@ const ChatInterface = ({
       {/* Study Mode - Full screen overlay when active */}
       {isStudyMode && studyState && (
         <StudyModeContainer
+          key={currentChatID}
           chatId={currentChatID}
           studyState={studyState}
           sidebarOpen={sidebarOpen}

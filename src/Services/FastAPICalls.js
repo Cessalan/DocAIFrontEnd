@@ -1149,6 +1149,82 @@ export const generate_study_audio = async (
 };
 
 /**
+ * Generate a concept map for a study mode node (streaming)
+ *
+ * @param {string} chat_id - Study session chat ID
+ * @param {string} topic - Topic for the concept map
+ * @param {string} depth - "shallow" | "medium" | "deep"
+ * @param {string} language - Language for content
+ * @param {Function} onProgress - Callback for progress updates (optional)
+ * @returns {Promise<Object>} - { central_topic, nodes, edges }
+ */
+export const generate_study_mindmap = async (
+  chat_id,
+  topic,
+  depth = 'medium',
+  language = 'en',
+  onProgress = null
+) => {
+  const requestBody = JSON.stringify({ chat_id, topic, depth, language });
+
+  try {
+    devLog(`🧠 Generating study mindmap: ${topic}`);
+
+    const response = await fetch(`${FAST_API_BASE}/study/generate-mindmap`, {
+      method: 'POST',
+      headers: header,
+      body: requestBody
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Study mindmap generation failed: ${response.status} - ${errorText}`);
+    }
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let result = null;
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const messages = buffer.split('\n\n');
+      buffer = messages.pop() || '';
+
+      for (const message of messages) {
+        for (const line of message.split('\n')) {
+          if (!line.startsWith('data: ')) continue;
+          try {
+            const data = JSON.parse(line.slice(6));
+
+            if (onProgress) onProgress(data);
+
+            if (data.status === 'mindmap_complete') {
+              result = data.mindmap_data;
+            }
+            if (data.status === 'error') {
+              throw new Error(data.message || 'Mindmap generation failed');
+            }
+          } catch (parseError) {
+            if (parseError.message?.includes('generation failed')) throw parseError;
+          }
+        }
+      }
+    }
+
+    devLog(`✅ Study mindmap generated successfully`);
+    return result;
+
+  } catch (error) {
+    console.error(`❌ Error generating study mindmap:`, error);
+    throw error;
+  }
+};
+
+/**
  * Submit an answer for a study quiz question
  *
  * @param {string} chat_id - Study session chat ID

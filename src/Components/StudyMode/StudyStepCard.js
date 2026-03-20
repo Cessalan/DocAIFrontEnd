@@ -4,6 +4,7 @@ import StudyLessonCard from './StudyLessonCard';
 import StudyQuizCard from './StudyQuizCard';
 import StudyFlashcardCard from './StudyFlashcardCard';
 import StudyAudioCard from './StudyAudioCard';
+import StudyMindmapCard from './StudyMindmapCard';
 
 /**
  * StudyStepCard - Routes to the correct card component based on node type
@@ -16,9 +17,12 @@ import StudyAudioCard from './StudyAudioCard';
  * @param {boolean} viewOnly - Dev mode: view without tracking progress
  * @param {boolean} isGeneratingAudio - Whether audio is being generated
  * @param {string} audioGeneratingMessage - Message during audio generation
+ * @param {boolean} isGeneratingMindmap - Whether mindmap is being generated
+ * @param {string} mindmapGeneratingMessage - Message during mindmap generation
  * @param {Function} onAnswer - Callback for quiz answers
  * @param {Function} onReview - Callback for flashcard reviews
  * @param {Function} onGenerateAudio - Callback to trigger audio generation
+ * @param {Function} onGenerateMindmap - Callback to trigger mindmap generation
  * @param {Function} onContinue - Callback when step is completed
  * @param {Function} onExit - Callback to exit/close the current card
  */
@@ -31,10 +35,13 @@ const StudyStepCard = ({
   viewOnly = false,
   isGeneratingAudio = false,
   audioGeneratingMessage = '',
+  isGeneratingMindmap = false,
+  mindmapGeneratingMessage = '',
   adaptiveMessage = null,
   onAnswer,
   onReview,
   onGenerateAudio,
+  onGenerateMindmap,
   onContinue,
   onExit
 }) => {
@@ -114,6 +121,18 @@ const StudyStepCard = ({
           generatingMessage={audioGeneratingMessage}
           isReviewMode={isReviewMode}
           onGenerateAudio={onGenerateAudio}
+          onContinue={onContinue}
+          onExit={onExit}
+        />
+      );
+
+    case 'mindmap':
+      return (
+        <StudyMindmapCard
+          content={content}
+          isGenerating={isGeneratingMindmap}
+          generatingMessage={mindmapGeneratingMessage}
+          onGenerateMindmap={onGenerateMindmap}
           onContinue={onContinue}
           onExit={onExit}
         />

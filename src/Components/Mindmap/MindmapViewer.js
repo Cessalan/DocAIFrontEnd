@@ -918,7 +918,7 @@ const MindmapModal = ({ mindmapData, onClose, onNodeClick }) => {
 /**
  * Inline viewer component
  */
-const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
+const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false }) => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const containerRef = useRef(null);
@@ -1069,35 +1069,37 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
     <div className="mindmap-viewer">
       <div className="mindmap-header">
         <h3 className="mindmap-title">{mindmapData.central_topic || 'Mindmap'}</h3>
-        <div className="mindmap-header-actions">
-          <button
-            className="mindmap-action-btn"
-            onClick={handleDownloadPDF}
-            disabled={isDownloading}
-            title="Download PDF"
-          >
-            {isDownloading ? (
-              <span className="mindmap-btn-spinner"></span>
-            ) : (
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
+        {!hideToolbar && (
+          <div className="mindmap-header-actions">
+            <button
+              className="mindmap-action-btn"
+              onClick={handleDownloadPDF}
+              disabled={isDownloading}
+              title="Download PDF"
+            >
+              {isDownloading ? (
+                <span className="mindmap-btn-spinner"></span>
+              ) : (
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              )}
+              <span>PDF</span>
+            </button>
+            <button
+              className="mindmap-expand-btn"
+              onClick={onExpand}
+              title="Expand mindmap"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
               </svg>
-            )}
-            <span>PDF</span>
-          </button>
-          <button
-            className="mindmap-expand-btn"
-            onClick={onExpand}
-            title="Expand mindmap"
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-            </svg>
-            <span>Expand</span>
-          </button>
-        </div>
+              <span>Expand</span>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className="mindmap-container" ref={containerRef}>
@@ -1154,7 +1156,7 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand }) => {
 /**
  * MindmapViewer - Main component that orchestrates inline and modal views
  */
-const MindmapViewer = ({ mindmapData, onNodeClick }) => {
+const MindmapViewer = ({ mindmapData, onNodeClick, hideToolbar = false }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!mindmapData || !mindmapData.nodes || mindmapData.nodes.length === 0) {
@@ -1193,6 +1195,7 @@ const MindmapViewer = ({ mindmapData, onNodeClick }) => {
           mindmapData={mindmapData}
           onNodeClick={onNodeClick}
           onExpand={handleOpenModal}
+          hideToolbar={hideToolbar}
         />
       </ReactFlowProvider>
     </>

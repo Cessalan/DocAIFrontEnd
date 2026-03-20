@@ -492,6 +492,7 @@ export const getNodeContent = async (chatId, messageId) => {
       flashcardData: messageData.flashcardData,
       lessonData: messageData.lessonData,
       audioData: messageData.audioData,
+      mindmapData: messageData.mindmapData || null,
       type: messageData.type,
       nodeId: messageData.nodeId,
       // Include progress data for resuming mid-session
@@ -551,6 +552,36 @@ export const saveNodeContent = async (chatId, nodeId, content, type) => {
   } catch (error) {
     console.error('❌ Error saving node content:', error);
     throw error;
+  }
+};
+
+/**
+ * Persist generated mindmap data back to the existing message document.
+ * Called after the mindmap card auto-generates the visual map, so that
+ * re-visiting the node loads the cached map instead of regenerating.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {string} messageId - Message ID of the mindmap stub content
+ * @param {Object} mindmapData - Generated mindmap { nodes, edges, central_topic, ... }
+ */
+export const updateMindmapData = async (chatId, messageId, mindmapData) => {
+  try {
+    if (!messageId) {
+      devLog('⚠️ No messageId, cannot save mindmap data');
+      return;
+    }
+
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+
+    await updateDoc(messageRef, {
+      mindmapData: mindmapData,
+      'studyContent.mindmapData': mindmapData
+    });
+
+    devLog('✅ Mindmap data saved to message:', messageId);
+  } catch (error) {
+    console.error('❌ Error saving mindmap data:', error);
+    // Non-critical — don't throw
   }
 };
 
@@ -873,6 +904,7 @@ export default {
   getStudyProgress,
   getNodeContent,
   saveNodeContent,
+  updateMindmapData,
   saveFlashcardProgress,
   saveQuizProgress,
   updateStudyPerformance,
