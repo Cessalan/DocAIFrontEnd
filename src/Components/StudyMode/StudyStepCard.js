@@ -42,6 +42,7 @@ const StudyStepCard = ({
   onReview,
   onGenerateAudio,
   onGenerateMindmap,
+  onSaveMindmapProgress,
   onContinue,
   onExit
 }) => {
@@ -132,7 +133,9 @@ const StudyStepCard = ({
           content={content}
           isGenerating={isGeneratingMindmap}
           generatingMessage={mindmapGeneratingMessage}
+          savedProgress={savedProgress}
           onGenerateMindmap={onGenerateMindmap}
+          onSaveProgress={onSaveMindmapProgress}
           onContinue={onContinue}
           onExit={onExit}
         />

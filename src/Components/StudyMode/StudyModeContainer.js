@@ -18,8 +18,10 @@ import {
   saveNodeContent,
   getNodeContent,
   updateMindmapData,
+  updateAudioData,
   saveFlashcardProgress,
   saveQuizProgress,
+  saveMindmapProgress,
   updateStudyPerformance,
   getStudyPerformance,
   appendPhase2
@@ -66,7 +68,7 @@ const StudyModeContainer = ({
   autoStart = false // Auto-launch the first node
 }) => {
   const { t, i18n } = useTranslation();
-  const language = i18n.language || 'en';
+  const language = (i18n.language || 'en').split('-')[0].toLowerCase();
 
   // View state: 'node' (showing content) | 'overview' (showing plan)
   const [view, setView] = useState('overview');
@@ -225,7 +227,13 @@ const StudyModeContainer = ({
 
         if (savedContent?.studyContent) {
           console.log('✅ Retrieved saved content, skipping generation');
-          setCurrentContent(savedContent.studyContent);
+          // For mindmap nodes: merge top-level mindmapData into studyContent as fallback
+          // in case the studyContent.mindmapData nested update didn't persist
+          let contentToSet = savedContent.studyContent;
+          if (node.type === 'mindmap' && savedContent.mindmapData && !contentToSet?.mindmapData) {
+            contentToSet = { ...contentToSet, mindmapData: savedContent.mindmapData };
+          }
+          setCurrentContent(contentToSet);
           currentMessageIdRef.current = node.messageId;
 
           // Restore saved progress if available
@@ -235,6 +243,9 @@ const StudyModeContainer = ({
           } else if (savedContent.quizProgress) {
             console.log('📊 Restoring quiz progress:', savedContent.quizProgress);
             setSavedProgress(savedContent.quizProgress);
+          } else if (savedContent.mindmapProgress) {
+            console.log('📊 Restoring mindmap progress:', savedContent.mindmapProgress);
+            setSavedProgress(savedContent.mindmapProgress);
           }
 
           // Set mascot back to nurse
@@ -563,7 +574,7 @@ const StudyModeContainer = ({
         // Progress callback
         (progress) => {
           if (progress.status === 'audio_generating') {
-            setAudioMessage(progress.message || t('audio.generatingAudio', 'Generating audio...'));
+            setAudioMessage(t('study.creatingAudioLesson', 'Creating your audio lesson...'));
           } else if (progress.status === 'audio_script_ready') {
             setAudioMessage(t('study.convertingToSpeech', 'Converting to speech...'));
           } else if (progress.status === 'audio_tts_progress') {
@@ -582,6 +593,13 @@ const StudyModeContainer = ({
         }));
 
         console.log('✅ Audio generated successfully');
+
+        // Persist to Firebase Storage so re-visiting the node doesn't regenerate
+        const messageId = currentMessageIdRef.current;
+        if (messageId && !viewOnly) {
+          updateAudioData(chatId, messageId, result.audioBase64, result.audioDuration)
+            .catch(err => console.error('Audio persist failed (non-critical):', err));
+        }
       } else {
         console.error('❌ No audio data received');
         setAudioMessage(t('study.failedToGenerate', 'Failed to generate audio'));
@@ -592,7 +610,7 @@ const StudyModeContainer = ({
     } finally {
       setIsGeneratingAudio(false);
     }
-  }, [chatId, language]);
+  }, [chatId, language, viewOnly]);
 
   // Handle mindmap generation trigger
   const handleGenerateMindmap = useCallback(async (mapConfig) => {
@@ -634,6 +652,22 @@ const StudyModeContainer = ({
       setIsGeneratingMindmap(false);
     }
   }, [chatId, language]);
+
+  // Save mindmap traversal progress (which node user is on, which are visited)
+  const handleSaveMindmapProgress = useCallback(async (progress) => {
+    const messageId = currentMessageIdRef.current;
+    if (!messageId || viewOnly) return;
+    await saveMindmapProgress(chatId, messageId, progress);
+
+    // Update node progress ring in the overview
+    if (progress.totalNodes > 0) {
+      const progressPercent = Math.round((progress.visitedNodeIds.length / progress.totalNodes) * 100);
+      setNodes(prev => prev.map(n =>
+        n.id === activeNodeId ? { ...n, nodeProgress: progressPercent } : n
+      ));
+      updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
+    }
+  }, [chatId, activeNodeId, viewOnly]);
 
   // Advance to next node (extracted so quiz summary can call it after dismissal)
   const handleAdvanceNode = useCallback(async () => {
@@ -1176,6 +1210,7 @@ const StudyModeContainer = ({
                 onReview={handleReview}
                 onGenerateAudio={handleGenerateAudio}
                 onGenerateMindmap={handleGenerateMindmap}
+                onSaveMindmapProgress={handleSaveMindmapProgress}
                 onContinue={handleContinue}
                 onExit={handleExitNode}
               />

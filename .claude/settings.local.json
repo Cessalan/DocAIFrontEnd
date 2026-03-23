@@ -19,7 +19,8 @@
       "Bash(pip show:*)",
       "Bash(npx eslint:*)",
       "WebFetch(domain:nursequizai.com)",
-      "Bash(npx react-scripts build)"
+      "Bash(npx react-scripts build)",
+      "Bash(find c:UsersBillionDesktopNQBackEndNQBackEnd2 -type f \\\\\\(-name *tts* -o -name *audio* -o -name *voice* -o -name *sound* \\\\\\) -not -path */node_modules/*)"
     ],
     "deny": [],
     "ask": [],

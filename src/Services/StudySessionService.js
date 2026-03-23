@@ -6,7 +6,8 @@
  * They use the existing chats/{chatId} structure with additional study fields
  */
 
-import { db, auth } from '../Firebase/config';
+import { db, auth, storage } from '../Firebase/config';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   collection,
   doc,
@@ -497,7 +498,8 @@ export const getNodeContent = async (chatId, messageId) => {
       nodeId: messageData.nodeId,
       // Include progress data for resuming mid-session
       flashcardProgress: messageData.flashcardProgress || null,
-      quizProgress: messageData.quizProgress || null
+      quizProgress: messageData.quizProgress || null,
+      mindmapProgress: messageData.mindmapProgress || null
     };
   } catch (error) {
     console.error('❌ Error retrieving node content:', error);
@@ -582,6 +584,46 @@ export const updateMindmapData = async (chatId, messageId, mindmapData) => {
   } catch (error) {
     console.error('❌ Error saving mindmap data:', error);
     // Non-critical — don't throw
+  }
+};
+
+/**
+ * Upload generated audio to Firebase Storage and persist the URL to Firestore.
+ * Called after the audio card auto-generates the audio, so that re-visiting
+ * the node loads from Storage instead of regenerating.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {string} messageId - Message ID of the audio stub content
+ * @param {string} audioBase64 - Base64 encoded audio (MP3)
+ * @param {number} audioDuration - Duration in seconds
+ * @returns {Promise<string|null>} - Firebase Storage download URL, or null on failure
+ */
+export const updateAudioData = async (chatId, messageId, audioBase64, audioDuration) => {
+  try {
+    if (!messageId || !audioBase64) {
+      devLog('⚠️ Missing messageId or audioBase64, cannot save audio');
+      return null;
+    }
+
+    // Convert base64 → bytes and upload to Firebase Storage
+    const audioBytes = Uint8Array.from(atob(audioBase64), c => c.charCodeAt(0));
+    const storageRef = ref(storage, `chats/${chatId}/study_audio/${messageId}.mp3`);
+    await uploadBytes(storageRef, audioBytes, { contentType: 'audio/mpeg' });
+    const firebaseUrl = await getDownloadURL(storageRef);
+
+    // Persist just the URL (not the large base64) to Firestore
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+    await updateDoc(messageRef, {
+      'studyContent.firebaseUrl': firebaseUrl,
+      'studyContent.audioDuration': audioDuration,
+      audioFirebaseUrl: firebaseUrl
+    });
+
+    devLog('✅ Audio uploaded and URL saved:', firebaseUrl);
+    return firebaseUrl;
+  } catch (error) {
+    console.error('❌ Error saving audio data:', error);
+    return null; // Non-critical — don't throw
   }
 };
 
@@ -891,6 +933,36 @@ export const appendPhase2 = async (chatId, reviewPathResult) => {
   }
 };
 
+/**
+ * Save mindmap traversal progress (which node the user is on, which are visited)
+ * @param {string} chatId - Study session chat ID
+ * @param {string} messageId - Message ID of the mindmap content
+ * @param {Object} progress - { currentNodeIndex, visitedNodeIds }
+ */
+export const saveMindmapProgress = async (chatId, messageId, progress) => {
+  try {
+    if (!messageId) {
+      devLog('⚠️ No messageId, cannot save mindmap progress');
+      return;
+    }
+
+    const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
+
+    await updateDoc(messageRef, {
+      mindmapProgress: {
+        currentNodeIndex: progress.currentNodeIndex || 0,
+        visitedNodeIds: progress.visitedNodeIds || [],
+        lastUpdated: serverTimestamp()
+      }
+    });
+
+    devLog('✅ Mindmap progress saved');
+  } catch (error) {
+    console.error('❌ Error saving mindmap progress:', error);
+    // Non-critical — don't throw
+  }
+};
+
 export default {
   createStudySession,
   getActiveStudySession,
@@ -905,9 +977,11 @@ export default {
   getNodeContent,
   saveNodeContent,
   updateMindmapData,
+  updateAudioData,
   saveFlashcardProgress,
   saveQuizProgress,
   updateStudyPerformance,
   getStudyPerformance,
-  appendPhase2
+  appendPhase2,
+  saveMindmapProgress
 };

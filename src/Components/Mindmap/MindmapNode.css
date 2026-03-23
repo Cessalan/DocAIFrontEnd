@@ -2,7 +2,8 @@
 /* White backgrounds with pastel colored borders */
 
 .mindmap-node {
-  padding: 12px 18px;
+  position: relative;
+  padding: 14px 22px;
   border-radius: 16px;
   font-family: 'Outfit', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   font-weight: 500;
@@ -10,10 +11,52 @@
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   border: 3px solid var(--branch-color, #e0e0e0);
   background: white;
-  min-width: 100px;
-  max-width: 180px;
+  min-width: 120px;
+  max-width: 210px;
   text-align: center;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* ============================================
+   STUDY MODE STATES
+   ============================================ */
+
+/* Active (current) node — pulsing highlight */
+.mindmap-node.study-active {
+  box-shadow: 0 0 0 4px var(--branch-color, #4CAF50), 0 6px 24px rgba(0,0,0,0.18);
+  transform: scale(1.1);
+  z-index: 10;
+  animation: study-node-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes study-node-pulse {
+  0%, 100% { box-shadow: 0 0 0 4px var(--branch-color, #4CAF50), 0 6px 20px rgba(0,0,0,0.15); }
+  50%       { box-shadow: 0 0 0 7px var(--branch-color, #4CAF50), 0 6px 28px rgba(0,0,0,0.2); }
+}
+
+/* Visited node — dimmed with green checkmark badge */
+.mindmap-node.study-visited {
+  opacity: 0.45;
+  filter: grayscale(0.2);
+  transform: none;
+}
+
+.mindmap-node.study-visited::after {
+  content: '✓';
+  position: absolute;
+  top: -7px;
+  right: -7px;
+  width: 18px;
+  height: 18px;
+  background: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.25);
+  pointer-events: none;
 }
 
 .mindmap-node:hover {
@@ -31,11 +74,11 @@
   border-width: 4px;
   border-color: #FFD54F;
   color: #5D4037;
-  font-size: 16px;
+  font-size: 17px;
   font-weight: 700;
-  padding: 18px 24px;
-  min-width: 140px;
-  max-width: 220px;
+  padding: 20px 28px;
+  min-width: 165px;
+  max-width: 260px;
   background: linear-gradient(135deg, #FFFDE7 0%, #FFF8E1 100%);
   box-shadow: 0 4px 20px rgba(255, 213, 79, 0.3);
   border-radius: 20px;
@@ -48,11 +91,11 @@
 /* Main nodes - Medium size */
 .mindmap-node-main {
   color: #424242;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 600;
-  padding: 10px 16px;
-  min-width: 90px;
-  max-width: 160px;
+  padding: 12px 20px;
+  min-width: 110px;
+  max-width: 195px;
   background: rgba(255, 255, 255, 0.95);
 }
 
@@ -63,11 +106,11 @@
 /* Sub nodes - Smaller */
 .mindmap-node-sub {
   color: #616161;
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 500;
-  padding: 8px 14px;
-  min-width: 70px;
-  max-width: 140px;
+  padding: 10px 16px;
+  min-width: 88px;
+  max-width: 170px;
   border-width: 2px;
   background: rgba(255, 255, 255, 0.92);
 }
@@ -79,11 +122,11 @@
 /* Detail nodes - Smallest */
 .mindmap-node-detail {
   color: #757575;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
-  padding: 6px 12px;
-  min-width: 60px;
-  max-width: 120px;
+  padding: 8px 14px;
+  min-width: 75px;
+  max-width: 148px;
   border-width: 2px;
   background: rgba(255, 255, 255, 0.9);
 }

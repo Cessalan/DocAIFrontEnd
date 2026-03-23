@@ -17,7 +17,8 @@ const StudyAudioCard = ({
   isGenerating = false,
   generatingMessage = '',
   onGenerateAudio,
-  onContinue
+  onContinue,
+  onExit
 }) => {
   const { t } = useTranslation();
   const [hasListened, setHasListened] = useState(false);
@@ -56,8 +57,10 @@ const StudyAudioCard = ({
 
   // Auto-trigger audio generation if not ready (only once)
   useEffect(() => {
-    // Use ref to prevent duplicate calls even during re-renders
-    if (!audioReady && !isGenerating && !hasAttempted && !isGeneratingRef.current && onGenerateAudio && topic) {
+    // Check content directly (not audioReady state) to avoid React batching race where
+    // audioReady is still false on first render even though firebaseUrl is already in content
+    const hasAudio = !!(audioBase64 || firebaseUrl);
+    if (!hasAudio && !isGenerating && !hasAttempted && !isGeneratingRef.current && onGenerateAudio && topic) {
       console.log('🎵 StudyAudioCard: Triggering audio generation for:', topic);
       setHasAttempted(true);
       isGeneratingRef.current = true;
@@ -67,7 +70,7 @@ const StudyAudioCard = ({
         duration: suggestedDuration || 2
       });
     }
-  }, [audioReady, isGenerating, hasAttempted, onGenerateAudio, topic, intent, suggestedDuration]);
+  }, [audioBase64, firebaseUrl, isGenerating, hasAttempted, onGenerateAudio, topic, intent, suggestedDuration]);
 
   // Reset ref when audio is ready or on unmount
   useEffect(() => {
@@ -79,9 +82,10 @@ const StudyAudioCard = ({
     };
   }, [audioReady]);
 
-  // Mark as listened when audio ends
+  // Mark as listened when audio ends and auto-advance
   const handleAudioEnd = () => {
     setHasListened(true);
+    if (onContinue) onContinue();
   };
 
   return (
@@ -91,6 +95,14 @@ const StudyAudioCard = ({
           <AudioIcon />
         </div>
         <h2 className="study-card-title">{t('study.listenLearn', 'Listen & Learn')}</h2>
+        {onExit && (
+          <button className="study-card-close-btn" onClick={onExit} title={t('study.close', 'Close')}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+        )}
       </div>
 
       <div className="study-card-content">

@@ -918,10 +918,12 @@ const MindmapModal = ({ mindmapData, onClose, onNodeClick }) => {
 /**
  * Inline viewer component
  */
-const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false }) => {
+const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false, activeNodeId = null, visitedNodeIds = null, onInit = null, autoSelectNodeId = null }) => {
   const [selectedNode, setSelectedNode] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const containerRef = useRef(null);
+  const rfRef = useRef(null);
 
   // Transform data first - use horizontal layout for inline view
   const { nodes: transformedNodes, edges: transformedEdges } = useMemo(
@@ -929,15 +931,28 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false 
     [mindmapData]
   );
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(transformedNodes);
+  // Merge study state flags into node data for visual highlighting
+  const studyNodes = useMemo(() => {
+    if (!activeNodeId && !visitedNodeIds?.size) return transformedNodes;
+    return transformedNodes.map(node => ({
+      ...node,
+      data: {
+        ...node.data,
+        studyActive: node.id === activeNodeId,
+        studyVisited: visitedNodeIds?.has(node.id) && node.id !== activeNodeId,
+      }
+    }));
+  }, [transformedNodes, activeNodeId, visitedNodeIds]);
+
+  const [nodes, setNodes, onNodesChange] = useNodesState(studyNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(transformedEdges);
 
-  // Update nodes when mindmapData changes - this is crucial for streaming updates
+  // Update nodes when mindmapData or study state changes
   useEffect(() => {
-    console.log('InlineViewer: mindmapData changed, updating nodes:', transformedNodes.length);
-    setNodes(transformedNodes);
+    console.log('InlineViewer: nodes updated:', studyNodes.length);
+    setNodes(studyNodes);
     setEdges(transformedEdges);
-  }, [transformedNodes, transformedEdges, setNodes, setEdges]);
+  }, [studyNodes, transformedEdges, setNodes, setEdges]);
 
   const handleNodeClick = useCallback((event, node) => {
     setSelectedNode(node);
@@ -949,6 +964,45 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false 
   const handlePaneClick = useCallback(() => {
     setSelectedNode(null);
   }, []);
+
+  // Delayed fitView after init to ensure container has dimensions
+  useEffect(() => {
+    if (!rfRef.current || nodes.length === 0) return;
+    const t = setTimeout(() => {
+      rfRef.current?.fitView({ padding: 0.15, maxZoom: 0.8, duration: 400 });
+    }, 150);
+    return () => clearTimeout(t);
+  }, [nodes.length]);
+
+  // Auto-select node when activeNodeId changes (study mode navigation)
+  useEffect(() => {
+    if (!autoSelectNodeId) { setSelectedNode(null); setTooltipPos(null); return; }
+    const target = nodes.find(n => n.id === autoSelectNodeId);
+    if (target) setSelectedNode(target);
+  }, [autoSelectNodeId, nodes]);
+
+  // Compute tooltip position below the selected node in canvas space.
+  // For study-mode navigation, selectedNode only changes after the pan is done
+  // (controlled by displayNodeId in StudyMindmapCard), so one immediate compute is enough.
+  useEffect(() => {
+    if (!selectedNode || !rfRef.current || !containerRef.current) {
+      setTooltipPos(null);
+      return;
+    }
+    const rf = rfRef.current;
+    const vp = rf.getViewport();
+    const nodeW = selectedNode.measured?.width  ?? selectedNode.width  ?? 150;
+    const nodeH = selectedNode.measured?.height ?? selectedNode.height ?? 50;
+    // Bottom-center of the node in screen-space within the container
+    const screenX = (selectedNode.position.x + nodeW / 2) * vp.zoom + vp.x;
+    const screenY = (selectedNode.position.y + nodeH)      * vp.zoom + vp.y + 10;
+    const cW = containerRef.current.offsetWidth;
+    const cH = containerRef.current.offsetHeight;
+    setTooltipPos({
+      left: Math.max(10, Math.min(screenX, cW - 10)),
+      top:  Math.max(10, Math.min(screenY, cH - 20)),
+    });
+  }, [selectedNode]);
 
   // Download mindmap as PDF
   const handleDownloadPDF = useCallback(async () => {
@@ -1117,6 +1171,7 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false 
           minZoom={0.1}
           maxZoom={2}
           proOptions={{ hideAttribution: true }}
+          onInit={(inst) => { rfRef.current = inst; if (onInit) onInit(inst); }}
           style={{ width: '100%', height: '100%' }}
         >
           <Controls className="mindmap-controls" />
@@ -1127,9 +1182,13 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false 
           />
         </ReactFlow>
 
-        {/* Tooltip for inline with details */}
+        {/* Tooltip for inline with details — positioned below the selected node */}
         {selectedNode && (selectedNode.data?.summary || selectedNode.data?.details?.length > 0) && (
-          <div className="mindmap-tooltip" data-node-type={selectedNode.data?.nodeType}>
+          <div
+            className="mindmap-tooltip"
+            data-node-type={selectedNode.data?.nodeType}
+            style={tooltipPos ? { position: 'absolute', left: tooltipPos.left, top: tooltipPos.top, bottom: 'auto', transform: 'translateX(-50%)' } : {}}
+          >
             <button className="tooltip-close" onClick={() => setSelectedNode(null)} title="Close">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
                 <path d="M18 6L6 18M6 6l12 12" />
@@ -1156,7 +1215,7 @@ const InlineViewer = ({ mindmapData, onNodeClick, onExpand, hideToolbar = false 
 /**
  * MindmapViewer - Main component that orchestrates inline and modal views
  */
-const MindmapViewer = ({ mindmapData, onNodeClick, hideToolbar = false }) => {
+const MindmapViewer = ({ mindmapData, onNodeClick, hideToolbar = false, activeNodeId = null, visitedNodeIds = null, onInit = null, autoSelectNodeId = null }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   if (!mindmapData || !mindmapData.nodes || mindmapData.nodes.length === 0) {
@@ -1196,6 +1255,10 @@ const MindmapViewer = ({ mindmapData, onNodeClick, hideToolbar = false }) => {
           onNodeClick={onNodeClick}
           onExpand={handleOpenModal}
           hideToolbar={hideToolbar}
+          activeNodeId={activeNodeId}
+          visitedNodeIds={visitedNodeIds}
+          onInit={onInit}
+          autoSelectNodeId={autoSelectNodeId}
         />
       </ReactFlowProvider>
     </>

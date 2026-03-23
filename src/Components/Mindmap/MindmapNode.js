@@ -8,11 +8,13 @@ import './MindmapNode.css';
  * Supports expanded mode to show details inline
  */
 const MindmapNode = memo(({ data, selected }) => {
-  const { label, summary, nodeType, details, expanded, branchColor } = data;
+  const { label, summary, nodeType, details, expanded, branchColor, studyActive, studyVisited } = data;
 
   const hasDetails = details && details.length > 0;
   const hasSummary = summary && summary.trim().length > 0;
   const showExpanded = expanded && (hasDetails || hasSummary);
+
+  const studyClass = studyActive ? 'study-active' : studyVisited ? 'study-visited' : '';
 
   // Dynamic style with branch color
   const nodeStyle = branchColor ? {
@@ -22,7 +24,7 @@ const MindmapNode = memo(({ data, selected }) => {
 
   return (
     <div
-      className={`mindmap-node mindmap-node-${nodeType} ${selected ? 'selected' : ''} ${showExpanded ? 'expanded' : ''}`}
+      className={`mindmap-node mindmap-node-${nodeType} ${selected ? 'selected' : ''} ${showExpanded ? 'expanded' : ''} ${studyClass}`}
       style={nodeStyle}
     >
       {/* Input handle (not for central node) */}

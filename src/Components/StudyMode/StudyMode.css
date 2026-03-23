@@ -4957,11 +4957,20 @@ body.dark-mode .study-mode-focused .study-main-content {
    MINDMAP CARD STYLES
    ----------------------------------------- */
 
+/* ── Popup slide-up animation ── */
+@keyframes popupSlideUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 .study-mindmap-card {
   max-width: 100% !important;
   width: 100%;
+  display: flex;
+  flex-direction: column;
 }
 
+/* Loading/generating body */
 .study-mindmap-body {
   flex: 1;
   display: flex;
@@ -4970,23 +4979,319 @@ body.dark-mode .study-mode-focused .study-main-content {
   min-height: 0;
 }
 
-.study-mindmap-body .mindmap-viewer {
-  flex: 1;
-  border-radius: 10px;
-  overflow: hidden;
-}
-
-.study-mindmap-body .mindmap-container {
-  height: 580px !important;
-  min-height: 480px;
-}
-
 .study-mindmap-body .study-audio-generating {
   min-height: 300px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+}
+
+/* ── ReactFlow map area ── */
+.study-mindmap-map-wrap {
+  height: 480px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 10px;
+  margin: 0 12px;
+  border: 1px solid var(--border-color, #eee);
+  position: relative;
+}
+
+.study-mindmap-map-wrap .mindmap-viewer { height: 480px; }
+.study-mindmap-map-wrap .mindmap-header { display: none; }
+.study-mindmap-map-wrap .mindmap-container { height: 480px !important; }
+
+/* ── Concept popup (animated on each step) ── */
+.study-mindmap-popup {
+  margin: 10px 12px 0;
+  padding: 14px 18px;
+  border-radius: 14px;
+  background: var(--surface-color, #f9f9f9);
+  border: 1.5px solid var(--border-color, #e8e8e8);
+  overflow-y: auto;
+  max-height: 180px;
+  animation: popupSlideUp 0.28s cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+.study-mindmap-popup.study-mindmap-type-central { border-left: 4px solid #FFD54F; }
+.study-mindmap-popup.study-mindmap-type-main    { border-left: 4px solid var(--study-coral, #e88d7d); }
+.study-mindmap-popup.study-mindmap-type-sub     { border-left: 4px solid #7ab8f5; }
+.study-mindmap-popup.study-mindmap-type-detail  { border-left: 4px solid #69c987; }
+
+.study-mindmap-popup-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary-color, #4CAF50);
+  margin-bottom: 4px;
+}
+
+.study-mindmap-popup-label {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.study-mindmap-popup-summary {
+  font-size: 13px;
+  color: var(--text-secondary, #555);
+  margin: 0 0 8px;
+  line-height: 1.55;
+}
+
+.study-mindmap-popup-details {
+  margin: 0;
+  padding-left: 18px;
+  font-size: 12px;
+  color: var(--text-secondary, #666);
+  line-height: 1.65;
+}
+
+.study-mindmap-popup-details li { margin-bottom: 3px; }
+
+/* ── Progress bar ── */
+.study-mindmap-progress-bar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 16px 0;
+}
+
+.study-mindmap-progress-bar-track {
+  flex: 1;
+  height: 5px;
+  background: var(--border-color, #e8e8e8);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.study-mindmap-progress-bar-fill {
+  height: 100%;
+  background: var(--primary-color, #4CAF50);
+  border-radius: 3px;
+  transition: width 0.35s ease;
+}
+
+.study-mindmap-progress-label {
+  font-size: 12px;
+  color: var(--text-secondary, #888);
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+/* ── Breadcrumb ── */
+.study-mindmap-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+}
+
+.study-mindmap-breadcrumb-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  color: var(--text-muted, #999);
+  font-weight: 500;
+}
+
+/* ── Concept card (large, centered) ── */
+.study-mindmap-concept-card {
+  background: var(--surface-color, #f9f9f9);
+  border: 1.5px solid var(--border-color, #e8e8e8);
+  border-radius: 16px;
+  padding: 22px 24px;
+  flex: 1;
+  overflow-y: auto;
+}
+
+/* Accent left border by node type */
+.study-mindmap-type-central { border-left: 4px solid #FFD54F; }
+.study-mindmap-type-main    { border-left: 4px solid var(--study-coral, #e88d7d); }
+.study-mindmap-type-sub     { border-left: 4px solid #BAE1FF; }
+.study-mindmap-type-detail  { border-left: 4px solid #BAFFC9; }
+
+.study-mindmap-concept-type {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--primary-color, #4CAF50);
+  margin-bottom: 8px;
+}
+
+.study-mindmap-concept-label {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0 0 12px;
+  line-height: 1.25;
+}
+
+.study-mindmap-concept-summary {
+  font-size: 15px;
+  color: var(--text-secondary, #555);
+  margin: 0 0 14px;
+  line-height: 1.6;
+}
+
+.study-mindmap-concept-details {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 14px;
+  color: var(--text-secondary, #666);
+  line-height: 1.7;
+}
+
+.study-mindmap-concept-details li {
+  margin-bottom: 4px;
+}
+
+/* ── Progress dots ── */
+.study-mindmap-dots {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  flex-wrap: wrap;
+  padding: 2px 0;
+}
+
+.study-mindmap-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--border-color, #ddd);
+  transition: background 0.2s, transform 0.2s;
+  flex-shrink: 0;
+}
+
+.study-mindmap-dot.active {
+  background: var(--study-coral, #e88d7d);
+  transform: scale(1.4);
+}
+
+.study-mindmap-dot.visited {
+  background: var(--primary-color, #4CAF50);
+}
+
+/* ── Navigation row ── */
+.study-mindmap-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 16px 14px;
+  gap: 12px;
+}
+
+.study-mindmap-back-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 9px 18px;
+  background: transparent;
+  color: var(--text-secondary, #666);
+  border: 1.5px solid var(--border-color, #e0e0e0);
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.18s, color 0.18s;
+}
+
+.study-mindmap-back-btn:hover:not(:disabled) {
+  background: var(--bg-cream, #f5f5f5);
+  color: var(--text-primary, #333);
+}
+
+.study-mindmap-back-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.study-mindmap-next-btn {
+  padding: 10px 26px;
+  background: var(--primary-color, #4CAF50);
+  color: white;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.18s, transform 0.15s;
+}
+
+.study-mindmap-next-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.study-mindmap-next-btn:active {
+  transform: translateY(0);
+}
+
+/* ── Complete state ── */
+.study-mindmap-complete-body {
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 12px;
+}
+
+.study-mindmap-done-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: rgba(46, 213, 115, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #2ed573;
+}
+
+.study-mindmap-done-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.study-mindmap-done-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0;
+}
+
+.study-mindmap-done-sub {
+  font-size: 13px;
+  color: var(--text-secondary, #777);
+  margin: 0;
+}
+
+/* Dark mode */
+body.dark-mode .study-mindmap-map-wrap { border-color: var(--border-color, #3a3a3a); }
+
+body.dark-mode .study-mindmap-popup {
+  background: var(--surface-color, #2a2a2a);
+  border-color: var(--border-color, #3a3a3a);
+}
+
+body.dark-mode .study-mindmap-popup-label { color: #f0f0f0; }
+
+body.dark-mode .study-mindmap-popup-summary,
+body.dark-mode .study-mindmap-popup-details { color: #aaa; }
+
+body.dark-mode .study-mindmap-back-btn {
+  border-color: var(--border-color, #444);
+  color: #aaa;
+}
+
+body.dark-mode .study-mindmap-back-btn:hover:not(:disabled) {
+  background: var(--surface-color, #333);
+  color: #eee;
 }
 
 /* -----------------------------------------
