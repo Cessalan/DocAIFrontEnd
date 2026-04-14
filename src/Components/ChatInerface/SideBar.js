@@ -25,7 +25,7 @@ import '../../index.css';
 // translation
 import { useTranslation } from 'react-i18next';
 
-const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewModeChange }) => {
+const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewModeChange, impersonatedUid, onImpersonateUser, onStopImpersonating }) => {
   const navigate = useNavigate();
 
   // Development mode detection
@@ -142,19 +142,15 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
     const chatsRef = collection(db, "chats");
 
-    // Build query based on view mode
-    // In dev mode with viewAllChats=true: show all chats
-    // Otherwise: show only user's chats
-    const chatQuery = isDevelopment && viewAllChats
-      ? query(
-          chatsRef,
-          orderBy("updatedAt", "desc")  // All chats, sorted by most recent
-        )
-      : query(
-          chatsRef,
-          where("userId", "==", user.uid), // Only user's chats
-          orderBy("updatedAt", "desc")     // Sorted by most recent
-        );
+    // Build query based on view mode:
+    // 1. Impersonating a user → show only that user's chats
+    // 2. Dev "view all" mode → show every chat
+    // 3. Normal mode → show only the signed-in user's chats
+    const chatQuery = isDevelopment && impersonatedUid
+      ? query(chatsRef, where("userId", "==", impersonatedUid), orderBy("updatedAt", "desc"))
+      : isDevelopment && viewAllChats
+      ? query(chatsRef, orderBy("updatedAt", "desc"))
+      : query(chatsRef, where("userId", "==", user.uid), orderBy("updatedAt", "desc"));
 
     const unsubscribe = onSnapshot(chatQuery, async (snapshot) => {
       const updatedChats = snapshot.docs.map(doc => ({
@@ -175,7 +171,7 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
       // Clear the loaded tracking when dependencies change
       loadedFileCountsRef.current.clear();
     };
-  }, [user, viewAllChats, isDevelopment]); // Re-run when viewAllChats changes
+  }, [user, viewAllChats, isDevelopment, impersonatedUid]); // Re-run when impersonation or view mode changes
   
 
   const handleNewChat = async () => {
@@ -369,20 +365,26 @@ const getchatDate = (timestamp) => {
                     <span className="conversation-time">
                       {getchatDate(chat.updatedAt)}
                     </span>
-                    {isDevelopment && viewAllChats && (
+                    {isDevelopment && viewAllChats && !impersonatedUid && (
                       <>
                         <span className="conversation-metadata-separator">•</span>
                         <span
                           className="conversation-user-id"
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigator.clipboard.writeText(chat.userId);
-                            alert('Copied: ' + chat.userId);
+                            if (onImpersonateUser) onImpersonateUser(chat.userId);
                           }}
-                          title="Click to copy user ID"
-                          style={{ cursor: 'pointer' }}
+                          title="Click to view as this user"
+                          style={{
+                            cursor: 'pointer',
+                            background: 'rgba(255,107,53,0.15)',
+                            borderRadius: 3,
+                            padding: '1px 5px',
+                            border: '1px solid rgba(255,107,53,0.4)',
+                            fontSize: '11px'
+                          }}
                         >
-                          {chat.userId}
+                          👁 {chat.userId?.slice(0, 8)}…
                         </span>
                       </>
                     )}
@@ -401,6 +403,27 @@ const getchatDate = (timestamp) => {
       </div>
 
       <div className="sidebar-footer">
+        {isDevelopment && impersonatedUid && (
+          <div
+            onClick={onStopImpersonating}
+            style={{
+              background: 'rgba(255,107,53,0.15)',
+              border: '1px solid rgba(255,107,53,0.5)',
+              borderRadius: 6,
+              padding: '6px 10px',
+              marginBottom: 8,
+              cursor: 'pointer',
+              fontSize: '12px',
+              color: '#ff6b35',
+              fontWeight: 600,
+              textAlign: 'center'
+            }}
+            title="Click to stop impersonating"
+          >
+            👁 Viewing as {impersonatedUid.slice(0, 10)}…<br />
+            <span style={{ fontSize: '11px', fontWeight: 400, opacity: 0.8 }}>Click to exit</span>
+          </div>
+        )}
         <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />
         <FeedbackButton
           userId={user?.uid}

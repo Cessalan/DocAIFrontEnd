@@ -77,7 +77,7 @@ const StartStudyModal = ({
       // Fire both requests in parallel — plan is ready before user finishes 5 Qs
       const [pathResult, diagnosticResult] = await Promise.all([
         plan_study_path(chatId, uploadIds, userPreferences, language),
-        plan_diagnostic_quiz(chatId, uploadIds, language).catch((err) => {
+        plan_diagnostic_quiz(chatId, uploadIds, language, userPreferences).catch((err) => {
         console.warn('⚠️ Diagnostic quiz skipped (backend error):', err?.message || err);
         return null;
       })

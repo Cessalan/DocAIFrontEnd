@@ -744,13 +744,13 @@ export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}
  * @param {string} language - Language for questions
  * @returns {Promise<Object>} - { questions: [{ question, options, correctIndex, rationale, topic }] }
  */
-export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en') => {
+export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en', user_preferences = {}) => {
   try {
     devLog("🔬 Requesting diagnostic quiz...");
     const response = await fetch(`${FAST_API_BASE}/study/diagnostic-quiz`, {
       method: "POST",
       headers: header,
-      body: JSON.stringify({ chat_id, upload_ids, language })
+      body: JSON.stringify({ chat_id, upload_ids, language, userPreferences: user_preferences })
     });
 
     if (!response.ok) {
@@ -776,12 +776,13 @@ export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en')
  * @param {string} language - Language for content generation
  * @returns {Promise<Object>} - { nodes, topics, total_nodes, estimated_time_minutes }
  */
-export const plan_review_path = async (chat_id, performance, original_topics = [], language = 'en') => {
+export const plan_review_path = async (chat_id, performance, original_topics = [], language = 'en', user_preferences = {}) => {
   const requestBody = JSON.stringify({
     chat_id,
     performance,
     original_topics,
-    language
+    language,
+    userPreferences: user_preferences
   });
 
   try {

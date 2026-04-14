@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import StudyModeHeader from './StudyModeHeader';
 import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
@@ -69,6 +70,7 @@ const StudyModeContainer = ({
 }) => {
   const { t, i18n } = useTranslation();
   const language = (i18n.language || 'en').split('-')[0].toLowerCase();
+  const { userProfile } = useAuth() || {};
 
   // View state: 'node' (showing content) | 'overview' (showing plan)
   const [view, setView] = useState('overview');
@@ -775,7 +777,8 @@ const StudyModeContainer = ({
         chatId,
         performance,
         studyState?.path?.topics || [],
-        language
+        language,
+        userProfile?.onboarding || {}
       );
 
       if (!reviewPath?.nodes?.length) {

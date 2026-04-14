@@ -3769,6 +3769,7 @@ const ChatInterface = ({
           topics={pendingStudyTopics}
           language={i18n?.language || 'en'}
           autoStart={true}
+          userPreferences={userProfile?.onboarding || {}}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}

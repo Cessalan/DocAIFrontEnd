@@ -36,6 +36,15 @@ function ChatLayout() {
   const [selectedChatId, setSelectedChatId] = useState(urlChatId || null);
   const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
 
+  // Dev-only: impersonate a user by their UID to see their interface
+  const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+  const [impersonatedUid, setImpersonatedUid] = useState(null);
+  const handleStopImpersonating = () => {
+    setImpersonatedUid(null);
+    setSelectedChatId(null);
+    navigate('/c');
+  };
+
   // Pending files state - when user uploads from landing page, this gets set
   // and ChatInterface will pick it up and process it as a normal upload
   const [pendingUploadFiles, setPendingUploadFiles] = useState([]);
@@ -287,17 +296,43 @@ function ChatLayout() {
         />
       )}
 
-      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`}>
+      {/* Dev impersonation banner */}
+      {isDev && impersonatedUid && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, zIndex: 9999,
+          background: '#ff6b35', color: '#fff',
+          padding: '6px 16px', fontSize: '13px', fontWeight: 600,
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
+        }}>
+          <span>👁 DEV — Viewing as: <code style={{ background: 'rgba(0,0,0,0.2)', padding: '1px 6px', borderRadius: 3 }}>{impersonatedUid}</code></span>
+          <button
+            onClick={handleStopImpersonating}
+            style={{
+              background: 'rgba(0,0,0,0.25)', border: 'none', color: '#fff',
+              padding: '3px 12px', borderRadius: 4, cursor: 'pointer',
+              fontWeight: 700, fontSize: '12px'
+            }}
+          >
+            ✕ Exit Impersonation
+          </button>
+        </div>
+      )}
+
+      <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={isDev && impersonatedUid ? { paddingTop: 32 } : {}}>
         <SideBar
           user={user}
           activeChatId={selectedChatId}
           onChatSelected={onSelectChat}
           onCloseSidebar={onCloseSidebar}
           onViewModeChange={setViewAllChatsMode}
+          impersonatedUid={impersonatedUid}
+          onImpersonateUser={setImpersonatedUid}
+          onStopImpersonating={handleStopImpersonating}
         />
       </div>
 
-      <div className={`main-content ${sidebarOpen ? 'shifted' : 'rail-shifted'}`}>
+      <div className={`main-content ${sidebarOpen ? 'shifted' : 'rail-shifted'}`} style={isDev && impersonatedUid ? { paddingTop: 32 } : {}}>
         <ChatInterface
           chatId={selectedChatId}
           onChatSelected={onSelectChat}
