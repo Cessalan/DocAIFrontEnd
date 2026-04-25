@@ -124,6 +124,21 @@ function BackArrowIcon() {
 }
 
 
+function DevCopyJsonButton({ quizData }) {
+  const [copied, setCopied] = React.useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(JSON.stringify(quizData, null, 2)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button className={`dev-btn${copied ? ' reset' : ''}`} onClick={handleCopy}>
+      {copied ? '✓ Copied!' : '📋 Copy Quiz JSON'}
+    </button>
+  );
+}
+
 /**
  * DedicatedQuizPage - A cinematic quiz experience
  *
@@ -1007,6 +1022,7 @@ function DedicatedQuizPage() {
             <button className="dev-btn reset" onClick={devReset}>
               ↺ Reset
             </button>
+            <DevCopyJsonButton quizData={quizData} />
           </div>
         </div>
       )}

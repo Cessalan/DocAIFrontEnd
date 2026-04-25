@@ -102,6 +102,7 @@ function ChatQuiz(props) {
   const [feedbackGiven, setFeedbackGiven] = useState(false);
   const [submittedFeedback, setSubmittedFeedback] = useState(feedbackData);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
+  const [jsonCopied, setJsonCopied] = useState(false);
 
   const handleFeedbackSubmit = (data) => {
     console.log('Quiz Feedback Submitted:', data);
@@ -243,6 +244,14 @@ function ChatQuiz(props) {
       document.body.style.overflow = '';
     }
   }, [setModalOpen]);
+
+  const handleCopyJson = useCallback(() => {
+    const data = allQuizzes.length > 0 ? allQuizzes : (quiz ? [quiz] : []);
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2)).then(() => {
+      setJsonCopied(true);
+      setTimeout(() => setJsonCopied(false), 2000);
+    });
+  }, [allQuizzes, quiz]);
 
   // Early return after all hooks
   if (!quiz && !reviewMode) {
@@ -724,6 +733,27 @@ function ChatQuiz(props) {
     <>
       {renderQuizContent(false)}
       {renderModal()}
+
+      {/* Dev Mode: Copy Quiz JSON */}
+      {isDevelopment && (
+        <div style={{ marginTop: '8px' }}>
+          <button
+            onClick={handleCopyJson}
+            type="button"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '5px 10px', fontSize: '11px', fontWeight: '600',
+              background: jsonCopied ? 'rgba(34,197,94,0.12)' : 'rgba(99,102,241,0.10)',
+              border: `1px solid ${jsonCopied ? 'rgba(34,197,94,0.4)' : 'rgba(99,102,241,0.35)'}`,
+              borderRadius: '6px', cursor: 'pointer',
+              color: jsonCopied ? '#16a34a' : '#6366f1', transition: 'all 0.2s'
+            }}
+          >
+            <span style={{ background: jsonCopied ? '#22c55e' : '#6366f1', color: 'white', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', fontWeight: '700' }}>DEV</span>
+            {jsonCopied ? '✓ Copied!' : 'Copy Quiz JSON'}
+          </button>
+        </div>
+      )}
 
       {/* Dev Mode: Show collected feedback below quiz */}
       {isDevelopment && submittedFeedback && (

@@ -16,6 +16,33 @@ import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
 import { devLog } from '../../Services/devLogger';
 
+function DevCopyJsonButton({ quizData }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(JSON.stringify(quizData, null, 2)).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      type="button"
+      style={{
+        marginTop: '8px', display: 'flex', alignItems: 'center', gap: '6px',
+        padding: '5px 10px', fontSize: '11px', fontWeight: '600',
+        background: copied ? 'rgba(34,197,94,0.12)' : 'rgba(99,102,241,0.10)',
+        border: `1px solid ${copied ? 'rgba(34,197,94,0.4)' : 'rgba(99,102,241,0.35)'}`,
+        borderRadius: '6px', cursor: 'pointer',
+        color: copied ? '#16a34a' : '#6366f1', transition: 'all 0.2s'
+      }}
+    >
+      <span style={{ background: copied ? '#22c55e' : '#6366f1', color: 'white', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', fontWeight: '700' }}>DEV</span>
+      {copied ? '✓ Copied!' : '📋 Copy Quiz JSON'}
+    </button>
+  );
+}
+
 /**
  * ChatMessage Component - With Single-Question Quiz Navigation & Skip
  * 
@@ -322,6 +349,9 @@ const ChatMessage = ({
               onFeedbackSubmit={onFeedbackSubmit}
               feedbackData={message.feedbackData}
             />
+            {process.env.NODE_ENV === 'development' && (
+              <DevCopyJsonButton quizData={parsedQuizData || []} />
+            )}
           </div>
         )}
 

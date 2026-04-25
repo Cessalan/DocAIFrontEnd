@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
+import { getQuestionType } from '../../utils/quizScoring';
+import SATAQuestion from './SATAQuestion';
+import CaseStudyQuestion from './CaseStudyQuestion';
 import './ChatQuizStream.css';
 
 /**
@@ -472,6 +475,38 @@ const ChatQuizStream = ({
     }
   }, [queueIndex, questionQueue.length, isStreaming, totalQuestions, expectedTotal, questionStatuses, resetQuestionState, isReviewRound]);
 
+  // Bridge handler for non-MCQ question types (SATA, CaseStudy).
+  // These components manage their own internal state but we need to feed
+  // the answer result back into ChatQuizStream's progress/scoring system.
+  const handleNonMCQAnswerSelect = useCallback((answerData) => {
+    const correct = answerData.isCorrect === true ||
+      (typeof answerData.percentage === 'number' && answerData.percentage >= 100);
+
+    if (correct) {
+      playCorrectSound();
+      setShowXpPopup(true);
+      setTimeout(() => setShowXpPopup(false), 1500);
+      if (navigator.vibrate) navigator.vibrate(50);
+    } else {
+      playIncorrectSound();
+    }
+
+    setQuestionStatuses(prev => ({
+      ...prev,
+      [currentQueuePosition]: correct ? 'correct' : 'incorrect'
+    }));
+
+    // Forward to parent with messageId so Firebase persistence works
+    if (onAnswerSelect) {
+      onAnswerSelect({
+        ...answerData,
+        messageId,
+        quizIndex: currentQueuePosition,
+        isReviewAttempt: isReviewRound
+      });
+    }
+  }, [currentQueuePosition, isReviewRound, messageId, onAnswerSelect]);
+
   // Calculate progress for display
   const getProgressPercent = () => {
     const displayTotal = isStreaming ? expectedTotal : totalQuestions;
@@ -818,9 +853,91 @@ const ChatQuizStream = ({
   const shortRationale = getShortRationale(rationale);
   const hasMore = hasMoreRationale(rationale, shortRationale);
 
+  // Detect the question type for the current question
+  const currentQuestionType = getQuestionType(currentQuestion);
+  const isLastQuestion = !hasMoreQuestions && !moreQuestionsExpected && !needsReviewRound();
+
   // Key for question animation - changes when question changes
   const questionKey = `question-${currentQueuePosition}-${isReviewRound ? 'review' : 'initial'}`;
 
+  // ── Shared progress header (shown above every question type) ──────────
+  const progressHeader = (
+    <div className="cqs-progress-container">
+      <div className="cqs-progress-bar">
+        <div
+          className="cqs-progress-fill"
+          style={{ width: `${getProgressPercent()}%` }}
+        />
+        {isStreaming && <div className="cqs-progress-shimmer" />}
+      </div>
+      <div className="cqs-progress-text">
+        <span className="cqs-progress-count">
+          {isReviewRound
+            ? `${queueIndex + 1} / ${questionQueue.length}`
+            : `${queueIndex + 1} / ${isStreaming ? `${totalQuestions}+` : totalQuestions}`
+          }
+        </span>
+        {isStreaming && !isReviewRound && (
+          <span className="cqs-streaming-indicator">
+            <span className="cqs-streaming-dot"></span>
+            <span className="cqs-streaming-dot"></span>
+            <span className="cqs-streaming-dot"></span>
+          </span>
+        )}
+        {isReviewRound && (
+          <span className="cqs-review-badge">
+            <RefreshIcon /> {t('quiz.review', 'Review')} ({questionQueue.length} {t('quiz.remaining', 'left')})
+          </span>
+        )}
+      </div>
+    </div>
+  );
+
+  // ── SATA question ──────────────────────────────────────────────────────
+  if (currentQuestionType === 'sata') {
+    return (
+      <div className="chat-quiz-stream-card">
+        {showXpPopup && <div className="cqs-xp-popup">+10 XP</div>}
+        {progressHeader}
+        <SATAQuestion
+          key={questionKey}
+          quiz={currentQuestion}
+          quizIndex={currentQueuePosition}
+          totalQuestions={totalQuestions}
+          onAnswerSelect={handleNonMCQAnswerSelect}
+          onNext={handleNextQuestion}
+          isLastQuestion={isLastQuestion}
+          inModal={false}
+          reviewMode={isReviewRound}
+          previousAnswer={currentQuestion.userSelection || null}
+        />
+      </div>
+    );
+  }
+
+  // ── Case study / ordering / bowtie question ────────────────────────────
+  if (currentQuestionType === 'casestudy' || currentQuestionType === 'ordering' || currentQuestionType === 'bowtie') {
+    return (
+      <div className="chat-quiz-stream-card">
+        {showXpPopup && <div className="cqs-xp-popup">+10 XP</div>}
+        {progressHeader}
+        <CaseStudyQuestion
+          key={questionKey}
+          quiz={currentQuestion}
+          quizIndex={currentQueuePosition}
+          totalQuestions={totalQuestions}
+          onAnswerSelect={handleNonMCQAnswerSelect}
+          onNext={handleNextQuestion}
+          isLastQuestion={isLastQuestion}
+          inModal={false}
+          reviewMode={isReviewRound}
+          previousAnswer={currentQuestion.userSelection || null}
+        />
+      </div>
+    );
+  }
+
+  // ── MCQ (default) ──────────────────────────────────────────────────────
   return (
     <div className="chat-quiz-stream-card">
       {/* XP Popup */}
@@ -831,35 +948,7 @@ const ChatQuizStream = ({
       )}
 
       {/* Progress bar */}
-      <div className="cqs-progress-container">
-        <div className="cqs-progress-bar">
-          <div
-            className="cqs-progress-fill"
-            style={{ width: `${getProgressPercent()}%` }}
-          />
-          {isStreaming && <div className="cqs-progress-shimmer" />}
-        </div>
-        <div className="cqs-progress-text">
-          <span className="cqs-progress-count">
-            {isReviewRound
-              ? `${queueIndex + 1} / ${questionQueue.length}`
-              : `${queueIndex + 1} / ${isStreaming ? `${totalQuestions}+` : totalQuestions}`
-            }
-          </span>
-          {isStreaming && !isReviewRound && (
-            <span className="cqs-streaming-indicator">
-              <span className="cqs-streaming-dot"></span>
-              <span className="cqs-streaming-dot"></span>
-              <span className="cqs-streaming-dot"></span>
-            </span>
-          )}
-          {isReviewRound && (
-            <span className="cqs-review-badge">
-              <RefreshIcon /> {t('quiz.review', 'Review')} ({questionQueue.length} {t('quiz.remaining', 'left')})
-            </span>
-          )}
-        </div>
-      </div>
+      {progressHeader}
 
       {/* Question content with animation wrapper */}
       <div key={questionKey} className="cqs-question-wrapper cqs-question-enter">
