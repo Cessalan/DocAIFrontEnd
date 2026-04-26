@@ -127,6 +127,13 @@ const StudyPlanOverview = ({
             <path d="M12 4V1L8 5L12 9V6C15.31 6 18 8.69 18 12C18 13.01 17.75 13.97 17.3 14.8L18.76 16.26C19.54 15.03 20 13.57 20 12C20 7.58 16.42 4 12 4ZM12 18C8.69 18 6 15.31 6 12C6 10.99 6.25 10.03 6.7 9.2L5.24 7.74C4.46 8.97 4 10.43 4 12C4 16.42 7.58 20 12 20V23L16 19L12 15V18Z" />
           </svg>
         );
+      case 'exam':
+        // Clipboard/exam icon
+        return (
+          <svg viewBox="0 0 24 24" fill="currentColor">
+            <path d="M9 5C9 3.9 9.9 3 11 3H13C14.1 3 15 3.9 15 5H19C20.1 5 21 5.9 21 7V20C21 21.1 20.1 22 19 22H5C3.9 22 3 21.1 3 20V7C3 5.9 3.9 5 5 5H9ZM11 5V4H13V5H11ZM7 9H17V7H7V9ZM7 13H17V11H7V13ZM7 17H13V15H7V17Z" />
+          </svg>
+        );
       default:
         // Star icon for unknown types
         return (
@@ -146,7 +153,7 @@ const StudyPlanOverview = ({
 
   // Estimated minutes per node type (for Quick Start button label)
   const getNodeEstimate = (type) => {
-    const map = { lesson: 5, quiz: 4, flashcard: 3, audio: 6, mindmap: 5, review: 2 };
+    const map = { lesson: 5, quiz: 4, flashcard: 3, audio: 6, mindmap: 5, review: 2, exam: 15 };
     return map[type] || 4;
   };
 
@@ -434,9 +441,10 @@ const StudyPlanOverview = ({
             const ringData = getProgressRing(node);
 
             // Topic separator: show for every topic group including the first
-            const baseTopic = getBaseTopic(node.label);
-            const showTopicSeparator = baseTopic && baseTopic !== prevTopic;
-            prevTopic = baseTopic;
+            // Adaptive nodes are detours within a topic — never trigger a new separator
+            const baseTopic = node.adaptive ? prevTopic : getBaseTopic(node.label);
+            const showTopicSeparator = !node.adaptive && baseTopic && baseTopic !== prevTopic;
+            if (!node.adaptive) prevTopic = baseTopic;
 
             // Check if mascot should appear at this node
             const mascotData = getMascotAtIndex(index);
@@ -461,6 +469,7 @@ const StudyPlanOverview = ({
                   isLocked && !isDev ? (isFarLocked ? 'locked far-locked' : 'locked next-preview') : '',
                   isLocked && isDev  ? 'dev-unlocked' : '',
                   node.adaptive ? 'adaptive' : '',
+                  node.type === 'exam' ? 'exam-node' : '',
                 ].filter(Boolean).join(' ')}
                 style={{ transform: `translateX(${offset}px)` }}
                 onClick={() => (!isLocked || isDev) && onNodeSelect(node)}
@@ -527,11 +536,15 @@ const StudyPlanOverview = ({
                   </div>
                 )}
 
-                {/* Node label — type badge only */}
+                {/* Node label — type badge, or reason for adaptive nodes */}
                 <div className={`study-node-label-v2 ${index % 2 === 0 ? 'right' : 'left'}`}>
-                  {node.adaptive ? (
+                  {node.adaptive && node.reason ? (
+                    <span className="node-type-badge adaptive-reason" title={node.reason}>
+                      {node.reason.length > 28 ? node.reason.substring(0, 28) + '...' : node.reason}
+                    </span>
+                  ) : node.adaptive ? (
                     <span className="node-type-badge adaptive-focus">
-                      {t('study.adaptiveFocus', 'FOCUS')}
+                      {t(`study.nodeType.${node.type}`, node.type).toUpperCase()}
                     </span>
                   ) : (
                     <span className={`node-type-badge ${node.type}`}>

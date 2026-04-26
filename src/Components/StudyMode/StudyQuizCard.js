@@ -39,8 +39,16 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   );
 
   // Track question statuses: 'pending' | 'correct' | 'incorrect'
+  // NOTE: During review round, statuses get overwritten to 'correct' as the student retries.
+  // Use firstAttemptStatuses for scoring/diagnosis (frozen after first pass).
   const [questionStatuses, setQuestionStatuses] = useState(() =>
     savedProgress?.questionStatuses || {}
+  );
+
+  // First-attempt results — frozen when the first pass ends.
+  // This is the truth for scoring: "how did she do before retrying?"
+  const [firstAttemptStatuses, setFirstAttemptStatuses] = useState(() =>
+    savedProgress?.firstAttemptStatuses || {}
   );
 
   // Track if we're in review round
@@ -82,11 +90,16 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
 
         setQuestionStatuses(savedProgress.questionStatuses);
         setIsReviewRound(savedProgress.isReviewRound || false);
+        if (savedProgress.firstAttemptStatuses) {
+          setFirstAttemptStatuses(savedProgress.firstAttemptStatuses);
+        }
 
         // Rebuild the queue based on saved state
         if (savedProgress.isReviewRound) {
           // In review round - queue only contains questions that were incorrect
-          const reviewQuestions = Object.entries(savedProgress.questionStatuses)
+          // Use firstAttemptStatuses (frozen truth) to determine which need review
+          const sourceStatuses = savedProgress.firstAttemptStatuses || savedProgress.questionStatuses;
+          const reviewQuestions = Object.entries(sourceStatuses)
             .filter(([_, status]) => status === 'incorrect')
             .map(([idx]) => parseInt(idx));
           setQuestionQueue(reviewQuestions);
@@ -407,6 +420,9 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         questionIndex: currentQueuePosition,
         progress: {
           questionStatuses: newStatuses,
+          firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+            ? firstAttemptStatuses  // Use frozen snapshot if available
+            : newStatuses,          // First pass — current statuses ARE first-attempt
           queueIndex: queueIndex,
           isReviewRound: isReviewRound
         }
@@ -437,6 +453,11 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         .map(([idx]) => parseInt(idx));
 
       if (questionsToReview.length > 0) {
+        // ── Freeze first-attempt results before review round begins ──
+        // This snapshot is the truth for scoring and diagnosis.
+        const frozenStatuses = { ...questionStatuses };
+        setFirstAttemptStatuses(frozenStatuses);
+
         // Show review transition screen before starting review round
         setReviewTransitionCount(questionsToReview.length);
         setShowReviewTransition(true);
@@ -460,6 +481,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
             questionIndex: null,
             progress: {
               questionStatuses: questionStatuses,
+              firstAttemptStatuses: frozenStatuses,
               queueIndex: 0,
               isReviewRound: true
             }
@@ -483,6 +505,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
           questionIndex: null,
           progress: {
             questionStatuses: questionStatuses,
+            firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+              ? firstAttemptStatuses : questionStatuses,
             queueIndex: nextQueueIndex,
             isReviewRound: isReviewRound
           }

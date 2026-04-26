@@ -1,12 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { plan_study_path, plan_diagnostic_quiz } from '../../Services/FastAPICalls';
-import { createStudySession, updateStudyPerformance } from '../../Services/StudySessionService';
+import { plan_study_path } from '../../Services/FastAPICalls';
+import { createStudySession } from '../../Services/StudySessionService';
 import './StudyMode.css';
 
 const MASCOTS = [BrainMascot, BookMascot, PillMascot, CoffeeCupMascot, MatchaCupMascot];
@@ -32,18 +32,8 @@ const StartStudyModal = ({
   const { t } = useTranslation();
 
   // ── Phase machine ─────────────────────────────────────────
-  // 'idle' | 'loading' | 'diagnostic' | 'baseline' | 'done'
+  // 'idle' | 'loading' | 'done'
   const [phase, setPhase] = useState('idle');
-
-  // Diagnostic state
-  const [diagnosticQuestions, setDiagnosticQuestions] = useState([]);
-  const [currentDiagQ, setCurrentDiagQ] = useState(0);
-  const [diagAnswers, setDiagAnswers] = useState([]); // [{ correct, topic }]
-  const [selectedOption, setSelectedOption] = useState(null); // for flash feedback
-  const [isAnswering, setIsAnswering] = useState(false);     // lock during flash
-
-  // Stored plan while diagnostic runs
-  const pendingPathRef = useRef(null);
 
   // Error
   const [error, setError] = useState(null);
@@ -55,14 +45,8 @@ const StartStudyModal = ({
   useEffect(() => {
     if (isOpen) {
       setPhase('idle');
-      setDiagnosticQuestions([]);
-      setCurrentDiagQ(0);
-      setDiagAnswers([]);
-      setSelectedOption(null);
-      setIsAnswering(false);
       setError(null);
       setHasAutoStarted(false);
-      pendingPathRef.current = null;
     }
   }, [isOpen]);
 
@@ -74,28 +58,12 @@ const StartStudyModal = ({
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
 
     try {
-      // Fire both requests in parallel — plan is ready before user finishes 5 Qs
-      const [pathResult, diagnosticResult] = await Promise.all([
-        plan_study_path(chatId, uploadIds, userPreferences, language),
-        plan_diagnostic_quiz(chatId, uploadIds, language, userPreferences).catch((err) => {
-        console.warn('⚠️ Diagnostic quiz skipped (backend error):', err?.message || err);
-        return null;
-      })
-      ]);
+      const pathResult = await plan_study_path(chatId, uploadIds, userPreferences, language);
 
       if (!pathResult?.nodes?.length) throw new Error('Failed to generate study path');
 
-      pendingPathRef.current = pathResult;
-
-      const questions = diagnosticResult?.questions;
-      if (questions?.length >= 3) {
-        setDiagnosticQuestions(questions.slice(0, 5));
-        setPhase('diagnostic');
-      } else {
-        // Fallback: skip diagnostic if we couldn't get questions
-        console.warn('⚠️ Diagnostic skipped — got', questions?.length ?? 0, 'questions (need ≥3)');
-        await finishSession(pathResult, uploadIds);
-      }
+      // Skip diagnostic — the adaptive path handles personalization dynamically
+      await finishSession(pathResult, uploadIds);
     } catch (err) {
       console.error('Error starting study journey:', err);
       setError(err.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
@@ -103,51 +71,10 @@ const StartStudyModal = ({
     }
   };
 
-  // ── Diagnostic answer handler ──────────────────────────────
-  const handleDiagAnswer = async (selectedIndex) => {
-    if (isAnswering) return;
-    setIsAnswering(true);
-    setSelectedOption(selectedIndex);
-
-    const q = diagnosticQuestions[currentDiagQ];
-    const isCorrect = selectedIndex === q.correctIndex;
-    const newAnswers = [...diagAnswers, { correct: isCorrect, topic: q.topic }];
-    setDiagAnswers(newAnswers);
-
-    // Seed studyPerformance immediately (safe — separate Firestore path from study session)
-    updateStudyPerformance(chatId, {
-      topic: q.topic,
-      type: 'quiz',
-      correct: isCorrect,
-      concept: !isCorrect ? q.question : undefined
-    }).catch(() => {}); // non-blocking, non-critical
-
-    // Brief flash (600ms) then advance
-    await new Promise(r => setTimeout(r, 600));
-
-    if (currentDiagQ < diagnosticQuestions.length - 1) {
-      setCurrentDiagQ(prev => prev + 1);
-      setSelectedOption(null);
-      setIsAnswering(false);
-    } else {
-      // Last question — show baseline score
-      setPhase('baseline');
-      setSelectedOption(null);
-
-      const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
-      // Create session in background while baseline is shown (1.5s)
-      finishSession(pendingPathRef.current, uploadIds, newAnswers);
-    }
-  };
-
   // ── Finish: create session + call onStart ─────────────────
-  const finishSession = async (pathResult, uploadIds, answers = []) => {
+  const finishSession = async (pathResult, uploadIds) => {
     try {
       const studyState = await createStudySession(chatId, pathResult, uploadIds);
-      // Wait for baseline phase to show if answers were given
-      if (answers.length > 0) {
-        await new Promise(r => setTimeout(r, 1500));
-      }
       setPhase('done');
       if (onStart) onStart(studyState);
     } catch (err) {
@@ -171,8 +98,6 @@ const StartStudyModal = ({
   // ── Derived ───────────────────────────────────────────────
   const docNames = uploadedDocs.map(d => d.name || d.filename || 'Document').join(', ');
   const docCount = uploadedDocs.length;
-  const diagCorrect = diagAnswers.filter(a => a.correct).length;
-  const diagTotal = diagAnswers.length;
 
   // ── Render ────────────────────────────────────────────────
   return (
@@ -203,85 +128,6 @@ const StartStudyModal = ({
                 <div className="study-modal-loader-dot" />
               </div>
               <p className="study-modal-step">{t('study.analyzingDocs', 'Analyzing your documents...')}</p>
-            </div>
-          </div>
-        )}
-
-        {/* ── DIAGNOSTIC QUIZ ── */}
-        {phase === 'diagnostic' && diagnosticQuestions.length > 0 && (
-          <div className="study-modal-content diagnostic-phase">
-            <div className="diagnostic-header">
-              <p className="diagnostic-eyebrow">{t('study.diagnosticEyebrow', "Let's see where you stand")}</p>
-              <h2 className="diagnostic-title">{t('study.diagnosticTitle', '5 quick questions to customize your path')}</h2>
-            </div>
-
-            {/* Progress dots */}
-            <div className="diagnostic-progress">
-              {diagnosticQuestions.map((_, i) => (
-                <div
-                  key={i}
-                  className={`diagnostic-dot ${i < currentDiagQ ? 'done' : i === currentDiagQ ? 'active' : ''}`}
-                />
-              ))}
-            </div>
-
-            {/* Question card — uses same CSS classes as the in-study quiz */}
-            <div className="diagnostic-card">
-              <p className="diagnostic-q-count">
-                {t('study.questionOf', 'Question {{n}} of {{total}}', {
-                  n: currentDiagQ + 1,
-                  total: diagnosticQuestions.length
-                })}
-              </p>
-              <p className="diagnostic-question">
-                {diagnosticQuestions[currentDiagQ]?.question}
-              </p>
-              <div className="study-quiz-options">
-                {diagnosticQuestions[currentDiagQ]?.options.map((opt, i) => {
-                  const q = diagnosticQuestions[currentDiagQ];
-                  const isSelected = selectedOption === i;
-                  const isCorrect = i === q.correctIndex;
-                  let cls = 'study-quiz-option';
-                  if (isAnswering) cls += ' disabled';
-                  if (selectedOption !== null) {
-                    if (isSelected) cls += isCorrect ? ' correct' : ' incorrect';
-                    else if (isCorrect) cls += ' correct'; // reveal correct answer
-                  }
-                  return (
-                    <button
-                      key={i}
-                      className={cls}
-                      onClick={() => handleDiagAnswer(i)}
-                      disabled={isAnswering}
-                    >
-                      <span className="study-quiz-option-letter">{String.fromCharCode(65 + i)}</span>
-                      <span className="study-quiz-option-text">{opt}</span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ── BASELINE SCORE ── */}
-        {phase === 'baseline' && (
-          <div className="study-modal-content baseline-phase">
-            <div className="baseline-score-ring">
-              <span className="baseline-score-num">{diagCorrect}</span>
-              <span className="baseline-score-denom">/{diagTotal}</span>
-            </div>
-            <h2 className="baseline-title">{t('study.baselineTitle', 'Your baseline is set!')}</h2>
-            <p className="baseline-subtitle">
-              {t('study.baselineSubtitle', 'Your study path is being personalized...')}
-            </p>
-            <div className="baseline-topics">
-              {diagAnswers.map((a, i) => (
-                <div key={i} className={`baseline-topic-row ${a.correct ? 'correct' : 'incorrect'}`}>
-                  <span className="baseline-topic-icon">{a.correct ? '✓' : '✗'}</span>
-                  <span className="baseline-topic-name">{a.topic}</span>
-                </div>
-              ))}
             </div>
           </div>
         )}

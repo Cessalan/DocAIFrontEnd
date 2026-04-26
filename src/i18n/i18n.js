@@ -35,8 +35,8 @@ const resources = {
         uploadChat: "Upload & Chat",
         uploadChatHint: "Ask questions about your documents",
         recommended: "Recommended",
-        studyPlanStartsHere: "Your study plan starts here",
-        uploadWeHandle: "Upload your notes. We'll take care of the rest.",
+        studyPlanStartsHere: "Prepare for your exam",
+        uploadWeHandle: "Upload your notes and we'll build your personalized study plan.",
         uploadMyNotes: "Upload my notes",
         progressSaved: "progress saved"
       },
@@ -809,7 +809,8 @@ const resources = {
           flashcard: "Flashcard",
           audio: "Audio",
           mindmap: "Mind Map",
-          review: "Review"
+          review: "Review",
+          exam: "Mini-Test"
         },
 
         // StudyModeContainer & loading states
@@ -957,6 +958,108 @@ const resources = {
         builtFromResults: "Built from your results",
         adaptiveFocus: "FOCUS",
         sessionsAdded: "{{count}} sessions added to your path"
+      },
+
+      // NodeTransition — post-node decision screen
+      transition: {
+        // Exit
+        exit: "Exit session",
+
+        // Diagnosis — quiz
+        quizDone: "Quiz Complete",
+        quizExcellent: "{{correct}} of {{total}} on {{topic}}. You crushed it.",
+        quizGood: "{{correct}} of {{total}} on {{topic}}. {{missed}} miss{{missed, plural, one {} other {es}}} — close to solid.",
+        quizMixed: "{{correct}} of {{total}} on {{topic}}. Some gaps worth tightening.",
+        quizTough: "{{correct}} of {{total}} on {{topic}}. This one was tough — that's ok, it means we found what to work on.",
+
+        // Diagnosis — exam
+        examDone: "Exam Complete",
+        examExcellent: "{{correct}} of {{total}} on the {{topic}} exam. Excellent — you're exam-ready.",
+        examGood: "{{correct}} of {{total}} on the {{topic}} exam. {{missed}} to review before you're solid.",
+        examMixed: "{{correct}} of {{total}} on the {{topic}} exam. Some concepts need more work.",
+        examTough: "{{correct}} of {{total}} on the {{topic}} exam. This section needs review — let's strengthen it.",
+
+        // Diagnosis — flashcard
+        flashcardDone: "Flashcards Complete",
+        flashcardExcellent: "{{mastered}} of {{total}} mastered on {{topic}}. Sharp.",
+        flashcardGood: "{{mastered}} of {{total}} mastered on {{topic}}. {{review}} needed another look.",
+        flashcardTough: "{{mastered}} of {{total}} mastered on {{topic}}. These concepts could use more time.",
+
+        // Diagnosis — lesson, audio, mindmap
+        lessonDone: "You covered {{topic}}.",
+        audioDone: "You listened to {{topic}}.",
+        mindmapDone: "You explored {{visited}} of {{total}} concepts in {{topic}}.",
+        mindmapDoneSimple: "You explored the concept map for {{topic}}.",
+
+        // Suggestions
+        suggestNext: "Up next: {{type}} on {{label}}.",
+        suggestContinue: "You're solid here. Next up is {{type}} on {{label}}.",
+        suggestEither: "You could drill the gaps before moving on, or press ahead. Your call.",
+        suggestRemediate: "A focused practice session could help lock these in.",
+
+        // Score bar
+        correct: "Correct",
+        mastered: "Mastered",
+
+        // Missed concepts
+        toReview: "To review:",
+        cardsToReview: "Cards that needed another look:",
+
+        // Action buttons
+        drillGaps: "Drill the {{count}} gap{{count, plural, one {} other {s}}}",
+        practiceMore: "Practice more",
+        moveOn: "Move on to {{topic}}",
+        continue: "Continue",
+        building: "Building your practice...",
+
+        // Remediation labels
+        remediationLesson: "Review: {{topic}}",
+        remediationFlashcard: "Practice: {{topic}}",
+        remediationQuiz: "Focused drill: {{topic}}",
+
+        // Coach / custom request
+        orCustomize: "Or tell the coach what you want",
+        placeholder: "e.g. \"Focus on side effects\" or \"Make it harder\"",
+        goBack: "Go back",
+        soundsGood: "Sounds good",
+        customError: "Something went wrong. Try again or continue to the next step.",
+
+        // Example chips
+        chipHarder: "Make it harder",
+        chipFlashcards: "Just flashcards",
+        chipExplain: "Explain what I missed",
+        chipQuizMe: "Quiz me on this",
+        chipGoDeeper: "Go deeper",
+        chipSkipAhead: "Skip ahead"
+      },
+
+      // Exam — mini-test at end of each section
+      exam: {
+        configTitle: "Mini-Test",
+        configDescription: "Configure your exam to match how your real test will look.",
+        questionTypes: "Question types",
+        typeMCQ: "Multiple Choice",
+        typeMCQDesc: "1 correct answer",
+        typeSATA: "Select All That Apply",
+        typeSATADesc: "Multiple correct answers",
+        typeCaseStudy: "Case Study",
+        typeCaseStudyDesc: "NGN clinical scenarios",
+        questionCount: "Number of questions",
+        timeEstimate: "~{{minutes}} min",
+        simulateTiming: "Simulate exam timing",
+        timerHint: "Countdown per question to practice pacing",
+        customInstructions: "Additional instructions",
+        optional: "optional",
+        customPlaceholder: "e.g. \"My professor focuses on prioritization\" or \"Include drug calculations\"",
+        startExam: "Start Exam",
+        generating: "Building your exam...",
+        generatingHint: "Generating {{count}} questions with mixed formats",
+        examBadge: "EXAM",
+        questionProgress: "{{current}} / {{total}}",
+        nextQuestion: "Next Question",
+        finishExam: "Finish Exam",
+        complete: "Exam Complete",
+        scoreDetail: "{{correct}} of {{total}} correct"
       }
     }
   },
@@ -992,8 +1095,8 @@ const resources = {
         uploadChat: "Importer et discuter",
         uploadChatHint: "Pose des questions sur tes documents",
         recommended: "Recommandé",
-        studyPlanStartsHere: "Ton plan d'étude commence ici",
-        uploadWeHandle: "Importe tes notes. On s'occupe du reste.",
+        studyPlanStartsHere: "Prépare ton examen",
+        uploadWeHandle: "Importe tes notes et on te crée un plan d'étude personnalisé.",
         uploadMyNotes: "Importer mes notes",
         progressSaved: "progression sauvegardée"
       },
@@ -1766,7 +1869,8 @@ const resources = {
           flashcard: "Flashcard",
           audio: "Audio",
           mindmap: "Carte mentale",
-          review: "Révision"
+          review: "Révision",
+          exam: "Mini-Test"
         },
 
         // StudyModeContainer & loading states
@@ -1914,6 +2018,108 @@ const resources = {
         builtFromResults: "Construit à partir de tes résultats",
         adaptiveFocus: "FOCUS",
         sessionsAdded: "{{count}} sessions ajoutées à ta route"
+      },
+
+      // NodeTransition — écran de décision post-nœud
+      transition: {
+        // Quitter
+        exit: "Quitter la session",
+
+        // Diagnostic — quiz
+        quizDone: "Quiz terminé",
+        quizExcellent: "{{correct}} sur {{total}} sur {{topic}}. Tu as tout déchiré.",
+        quizGood: "{{correct}} sur {{total}} sur {{topic}}. {{missed}} erreur{{missed, plural, one {} other {s}}} — presque parfait.",
+        quizMixed: "{{correct}} sur {{total}} sur {{topic}}. Quelques lacunes à combler.",
+        quizTough: "{{correct}} sur {{total}} sur {{topic}}. C'était difficile — c'est correct, ça nous montre quoi travailler.",
+
+        // Diagnostic — examen
+        examDone: "Examen terminé",
+        examExcellent: "{{correct}} sur {{total}} à l'examen {{topic}}. Excellent — tu es prête.",
+        examGood: "{{correct}} sur {{total}} à l'examen {{topic}}. {{missed}} à revoir pour être solide.",
+        examMixed: "{{correct}} sur {{total}} à l'examen {{topic}}. Certains concepts à approfondir.",
+        examTough: "{{correct}} sur {{total}} à l'examen {{topic}}. Cette section mérite une révision — on va la renforcer.",
+
+        // Diagnostic — flashcard
+        flashcardDone: "Flashcards terminées",
+        flashcardExcellent: "{{mastered}} sur {{total}} maîtrisées sur {{topic}}. Bien joué.",
+        flashcardGood: "{{mastered}} sur {{total}} maîtrisées sur {{topic}}. {{review}} à revoir.",
+        flashcardTough: "{{mastered}} sur {{total}} maîtrisées sur {{topic}}. Ces concepts méritent plus de temps.",
+
+        // Diagnostic — leçon, audio, carte mentale
+        lessonDone: "Tu as couvert {{topic}}.",
+        audioDone: "Tu as écouté {{topic}}.",
+        mindmapDone: "Tu as exploré {{visited}} sur {{total}} concepts de {{topic}}.",
+        mindmapDoneSimple: "Tu as exploré la carte mentale de {{topic}}.",
+
+        // Suggestions
+        suggestNext: "Prochaine étape : {{type}} sur {{label}}.",
+        suggestContinue: "Tu maîtrises bien. La suite : {{type}} sur {{label}}.",
+        suggestEither: "Tu peux travailler les lacunes avant de continuer, ou avancer. À toi de choisir.",
+        suggestRemediate: "Une session de pratique ciblée pourrait t'aider à consolider tout ça.",
+
+        // Barre de score
+        correct: "Correct",
+        mastered: "Maîtrisé",
+
+        // Concepts manqués
+        toReview: "À revoir :",
+        cardsToReview: "Cartes qui ont besoin d'un autre regard :",
+
+        // Boutons d'action
+        drillGaps: "Travailler {{count}} lacune{{count, plural, one {} other {s}}}",
+        practiceMore: "Pratiquer encore",
+        moveOn: "Passer à {{topic}}",
+        continue: "Continuer",
+        building: "Préparation de ta pratique...",
+
+        // Labels de remédiation
+        remediationLesson: "Révision : {{topic}}",
+        remediationFlashcard: "Pratique : {{topic}}",
+        remediationQuiz: "Exercice ciblé : {{topic}}",
+
+        // Coach / demande personnalisée
+        orCustomize: "Ou dis au coach ce que tu veux",
+        placeholder: "ex. « Concentre-toi sur les effets secondaires » ou « Rends-le plus difficile »",
+        goBack: "Retour",
+        soundsGood: "Ça me va",
+        customError: "Quelque chose s'est mal passé. Réessaie ou continue à la prochaine étape.",
+
+        // Puces d'exemples
+        chipHarder: "Rends-le plus difficile",
+        chipFlashcards: "Juste des flashcards",
+        chipExplain: "Explique ce que j'ai raté",
+        chipQuizMe: "Teste-moi là-dessus",
+        chipGoDeeper: "Approfondis",
+        chipSkipAhead: "Passer au suivant"
+      },
+
+      // Examen — mini-test à la fin de chaque section
+      exam: {
+        configTitle: "Mini-Test",
+        configDescription: "Configure ton examen pour qu'il ressemble à ton vrai test.",
+        questionTypes: "Types de questions",
+        typeMCQ: "Choix multiple",
+        typeMCQDesc: "1 bonne réponse",
+        typeSATA: "Sélectionner tout ce qui s'applique",
+        typeSATADesc: "Plusieurs bonnes réponses",
+        typeCaseStudy: "Étude de cas",
+        typeCaseStudyDesc: "Scénarios cliniques NGN",
+        questionCount: "Nombre de questions",
+        timeEstimate: "~{{minutes}} min",
+        simulateTiming: "Simuler le temps d'examen",
+        timerHint: "Compte à rebours par question pour pratiquer le rythme",
+        customInstructions: "Instructions supplémentaires",
+        optional: "optionnel",
+        customPlaceholder: "ex. « Mon prof se concentre sur la priorisation » ou « Inclure des calculs de dosage »",
+        startExam: "Commencer l'examen",
+        generating: "Préparation de ton examen...",
+        generatingHint: "Génération de {{count}} questions en formats mixtes",
+        examBadge: "EXAMEN",
+        questionProgress: "{{current}} / {{total}}",
+        nextQuestion: "Question suivante",
+        finishExam: "Terminer l'examen",
+        complete: "Examen terminé",
+        scoreDetail: "{{correct}} sur {{total}} correct"
       }
     }
   }

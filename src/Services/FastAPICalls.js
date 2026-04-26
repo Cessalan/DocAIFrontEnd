@@ -810,6 +810,93 @@ export const plan_review_path = async (chat_id, performance, original_topics = [
 };
 
 /**
+ * Interpret a student's free-text request during a study session.
+ * Returns an echo message (what the system understood) and a node definition.
+ *
+ * @param {string} chat_id - Study session chat ID
+ * @param {string} user_text - What the student typed
+ * @param {string} current_topic - Topic of the node she just completed
+ * @param {string} current_node_type - Type of the node she just completed
+ * @param {string} language - Language for the response
+ * @returns {Promise<Object>} - { understood: bool, echo: string, node: {...} | null }
+ */
+/**
+ * Generate a mixed-format NCLEX-style exam for a study session.
+ *
+ * @param {string} chat_id - Study session chat ID
+ * @param {string} topic - Topic this exam covers
+ * @param {string[]} question_types - Types to include: ["mcq", "sata", "casestudy"]
+ * @param {number} question_count - Number of questions (5-20)
+ * @param {string|null} custom_instructions - Student's custom instructions
+ * @param {string} language - Language
+ * @returns {Promise<Object>} - { questions: [...], hash, examConfig }
+ */
+export const generate_exam = async (chat_id, topic, question_types = ['mcq', 'sata', 'casestudy'], question_count = 10, custom_instructions = null, language = 'en') => {
+  try {
+    devLog("📝 Generating exam:", { topic, question_types, question_count });
+
+    const response = await fetch(`${FAST_API_BASE}/study/generate-exam`, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify({
+        chat_id,
+        topic,
+        question_types,
+        question_count,
+        custom_instructions,
+        language
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Exam generation failed: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    devLog("✅ Exam generated:", result.questions?.length, "questions");
+    return result;
+
+  } catch (error) {
+    console.error("❌ Error generating exam:", error);
+    throw error;
+  }
+};
+
+export const interpret_study_request = async (chat_id, user_text, current_topic, current_node_type, language = 'en', missed_items = [], score_percent = null) => {
+  try {
+    devLog("💬 Interpreting student request:", user_text);
+
+    const response = await fetch(`${FAST_API_BASE}/study/interpret-request`, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify({
+        chat_id,
+        user_text,
+        current_topic,
+        current_node_type,
+        language,
+        missed_items,
+        score_percent
+      })
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      throw new Error(`Interpret request failed: ${response.status} - ${errorText}`);
+    }
+
+    const result = await response.json();
+    devLog("✅ Interpreted request:", result);
+    return result;
+
+  } catch (error) {
+    console.error("❌ Error interpreting study request:", error);
+    throw error;
+  }
+};
+
+/**
  * Generate a single study item (lesson, flashcard, quiz, or audio config)
  *
  * @param {string} chat_id - Study session chat ID

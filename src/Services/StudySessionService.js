@@ -360,6 +360,82 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
 };
 
 /**
+ * Insert a dynamically-generated node into the path right after the current node,
+ * mark the current node as done, and activate the inserted node.
+ *
+ * This is the core path-mutation operation for the adaptive transition feature.
+ * The inserted node becomes the new active node; the originally-planned next node
+ * stays in place (destination is fixed, only the path adapts).
+ *
+ * @param {string} chatId - Study session chat ID
+ * @param {string} currentNodeId - The node the student just completed
+ * @param {Object} newNodeDef - Node definition { type, label, tags, difficulty, adaptive }
+ * @returns {Promise<Object>} - { insertedNode, updatedNodes }
+ */
+export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) => {
+  try {
+    const docRef = doc(db, 'chats', chatId);
+    const docSnap = await getDoc(docRef);
+
+    if (!docSnap.exists()) {
+      throw new Error('Study session not found');
+    }
+
+    const data = docSnap.data();
+    const nodes = [...data.study.path.nodes];
+
+    // Find current node index
+    const currentIndex = nodes.findIndex(n => n.id === currentNodeId);
+    if (currentIndex === -1) {
+      throw new Error(`Node ${currentNodeId} not found`);
+    }
+
+    // Mark current node as done
+    nodes[currentIndex] = {
+      ...nodes[currentIndex],
+      status: 'done'
+    };
+
+    // Build the new node with a unique ID and active status
+    const insertedNode = {
+      id: `adaptive-${uuidv4().slice(0, 8)}`,
+      type: newNodeDef.type,
+      label: newNodeDef.label,
+      tags: newNodeDef.tags || [],
+      difficulty: newNodeDef.difficulty || 1,
+      adaptive: true,
+      reason: newNodeDef.reason || '',
+      status: 'active',
+      messageId: null,
+      // Carry phase from current node so it appears in the right section
+      phase: nodes[currentIndex].phase || 1
+    };
+
+    // Splice the new node right after the current one
+    nodes.splice(currentIndex + 1, 0, insertedNode);
+
+    // Update Firestore
+    await updateDoc(docRef, {
+      'study.path.nodes': nodes,
+      'study.path.activeNodeId': insertedNode.id,
+      'study.path.totalNodes': nodes.filter(n => n.type !== 'section_banner').length,
+      'study.lastActionAt': serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    devLog('✅ Adaptive node inserted after', currentNodeId, '→', insertedNode.id);
+
+    return {
+      insertedNode,
+      updatedNodes: nodes
+    };
+  } catch (error) {
+    console.error('❌ Error inserting adaptive node:', error);
+    throw error;
+  }
+};
+
+/**
  * Add a hash to the askedHashes array (anti-repeat)
  * @param {string} chatId - Study session chat ID
  * @param {string} hash - Content hash to add
@@ -680,14 +756,20 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
 
     const messageRef = doc(db, 'chats', chatId, 'messages', messageId);
 
-    await updateDoc(messageRef, {
-      quizProgress: {
-        currentIndex: progress.currentIndex || 0,
-        answeredQuestions: progress.answeredQuestions || [],
-        scores: progress.scores || { correct: 0, incorrect: 0 },
-        lastUpdated: serverTimestamp()
-      }
-    });
+    const progressData = {
+      currentIndex: progress.currentIndex || 0,
+      answeredQuestions: progress.answeredQuestions || [],
+      scores: progress.scores || { correct: 0, incorrect: 0 },
+      lastUpdated: serverTimestamp()
+    };
+
+    // Persist new fields if present (questionStatuses, firstAttemptStatuses, isReviewRound)
+    if (progress.questionStatuses) progressData.questionStatuses = progress.questionStatuses;
+    if (progress.firstAttemptStatuses) progressData.firstAttemptStatuses = progress.firstAttemptStatuses;
+    if (progress.isReviewRound !== undefined) progressData.isReviewRound = progress.isReviewRound;
+    if (progress.queueIndex !== undefined) progressData.queueIndex = progress.queueIndex;
+
+    await updateDoc(messageRef, { quizProgress: progressData });
 
     devLog('✅ Quiz progress saved');
   } catch (error) {
@@ -970,6 +1052,7 @@ export default {
   updateStudyPath,
   updateNodeStatus,
   completeNodeAndAdvance,
+  insertNodeAfterCurrent,
   addAskedHash,
   pauseStudySession,
   resumeStudySession,

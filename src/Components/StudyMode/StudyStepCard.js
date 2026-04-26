@@ -5,6 +5,7 @@ import StudyQuizCard from './StudyQuizCard';
 import StudyFlashcardCard from './StudyFlashcardCard';
 import StudyAudioCard from './StudyAudioCard';
 import StudyMindmapCard from './StudyMindmapCard';
+import StudyExamCard from './StudyExamCard';
 
 /**
  * StudyStepCard - Routes to the correct card component based on node type
@@ -138,6 +139,18 @@ const StudyStepCard = ({
           onSaveProgress={onSaveMindmapProgress}
           onContinue={onContinue}
           onExit={onExit}
+        />
+      );
+
+    case 'exam':
+      return (
+        <StudyExamCard
+          content={content}
+          savedProgress={savedProgress}
+          onAnswer={onAnswer}
+          onContinue={onContinue}
+          onExit={onExit}
+          viewOnly={viewOnly}
         />
       );
 

@@ -240,6 +240,7 @@ const ChatInterface = ({
   const [showStartStudyModal, setShowStartStudyModal] = useState(false);
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [studyState, setStudyState] = useState(null);
+  const [studyAutoStart, setStudyAutoStart] = useState(false);
   const [pendingStudyDocs, setPendingStudyDocs] = useState([]);
   const [pendingStudyTopics, setPendingStudyTopics] = useState([]);
 
@@ -677,6 +678,7 @@ const ChatInterface = ({
           try {
             const studySessionData = await getStudySession(chatId);
             if (studySessionData) {
+              setStudyAutoStart(false);
               setStudyState(studySessionData);
               setIsStudyMode(true);
             }
@@ -3578,7 +3580,9 @@ const ChatInterface = ({
           sidebarOpen={sidebarOpen}
           onCloseSidebar={onCloseSidebar}
           viewOnly={viewAllChatsMode} // Dev mode: view without triggering reviews
+          autoStart={studyAutoStart}
           onExit={() => {
+            setStudyAutoStart(false);
             // Study sessions should always stay as study sessions
             // Exit means navigate away from this chat entirely
             devLog('📚 Exiting study session - navigating to dashboard');
@@ -3758,6 +3762,7 @@ const ChatInterface = ({
           }}
           onStart={(newStudyState) => {
             devLog('📚 Study session started:', newStudyState);
+            setStudyAutoStart(true);
             setStudyState(newStudyState);
             setIsStudyMode(true);
             setShowStartStudyModal(false);
@@ -4241,31 +4246,7 @@ const ChatInterface = ({
         </div>
 
 
-        {/* Pre-upload study options - shown only when chat is empty, positioned above input */}
-        {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData && (
-          <div className="pre-upload-actions-container">
-            <div className="pre-upload-buttons">
-              {['quiz', 'flashcards', 'studysheet', 'audio', 'mindmap'].map(actionId => (
-                <button
-                  key={actionId}
-                  className={`pre-upload-btn action-${actionId}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setPendingStudyAction(actionId);
-                    pendingStudyActionRef.current = actionId;
-                    documentFileInputRef.current?.click();
-                  }}
-                  type="button"
-                >
-                  <span className="action-icon-circle">
-                    {getPreUploadIcon(actionId)}
-                  </span>
-                  <span className="action-label">{getPreUploadLabel(actionId)}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* Pre-upload study options removed - single CTA card handles upload */}
 
         {/* Input Area */}
         <form className="input-area" onSubmit={handleSendNewUserMessage}>

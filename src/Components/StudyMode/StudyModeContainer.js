@@ -5,16 +5,19 @@ import StudyModeHeader from './StudyModeHeader';
 import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
 import QuizMasterySummary from './QuizMasterySummary';
+import NodeTransition from './NodeTransition';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path } from '../../Services/FastAPICalls';
+import ExamConfigModal from './ExamConfigModal';
+import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
+  insertNodeAfterCurrent,
   addAskedHash,
   saveNodeContent,
   getNodeContent,
@@ -123,6 +126,19 @@ const StudyModeContainer = ({
   const [hasShownAdaptiveMode, setHasShownAdaptiveMode] = useState(false);
   const [adaptiveFeedback, setAdaptiveFeedback] = useState(null); // { type: 'speed'|'adaptive_mode', topic }
 
+  // ── Exam config modal state ─────────────────────────────────────────
+  const [showExamConfig, setShowExamConfig] = useState(false);
+  const [isGeneratingExam, setIsGeneratingExam] = useState(false);
+  const [pendingExamNode, setPendingExamNode] = useState(null); // The exam node awaiting config
+
+  // ── Node Transition state (post-node decision screen) ──────────────
+  const [isLoadingPractice, setIsLoadingPractice] = useState(false);
+  const [isLoadingCustom, setIsLoadingCustom] = useState(false);
+  const [customEcho, setCustomEcho] = useState(null); // { message, node }
+  // Snapshot of flashcard progress at completion time (for transition screen)
+  const latestFlashcardProgressRef = useRef(null);
+  const latestMindmapProgressRef = useRef(null);
+
   const [mascotState, setMascotState] = useState({
     type: 'nurse', // 'nurse' | 'brain'
     isExcited: false,
@@ -178,6 +194,13 @@ const StudyModeContainer = ({
   const handleStartNode = useCallback(async (node) => {
     console.log('📚 Starting node:', node);
     console.log('📬 Node messageId:', node.messageId || 'NONE - will generate new content');
+
+    // ── Exam nodes: show config modal instead of generating immediately ──
+    if (node.type === 'exam' && !node.messageId) {
+      setPendingExamNode(node);
+      setShowExamConfig(true);
+      return;
+    }
 
     // Close sidebar when user starts interacting with content
     if (onCloseSidebar) {
@@ -557,6 +580,9 @@ const StudyModeContainer = ({
         setTimeout(() => setAdaptiveFeedback(null), 4000);
       }
     }
+
+    // Track latest flashcard progress for the transition screen
+    if (reviewData.progress) latestFlashcardProgressRef.current = reviewData.progress;
   }, [chatId, activeNodeId, activeNode, currentContent, viewOnly, consecutiveGotIt, hasShownAdaptiveMode]);
 
   // Handle audio generation trigger
@@ -669,7 +695,22 @@ const StudyModeContainer = ({
       ));
       updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
     }
+
+    // Track latest mindmap progress for the transition screen
+    latestMindmapProgressRef.current = progress;
   }, [chatId, activeNodeId, viewOnly]);
+
+  // ── Find the next planned node (for transition screen preview) ─────
+  const getNextPlannedNode = useCallback(() => {
+    if (!activeNodeId || nodes.length === 0) return null;
+    const currentIndex = nodes.findIndex(n => n.id === activeNodeId);
+    if (currentIndex === -1) return null;
+    // Find next non-banner node
+    for (let i = currentIndex + 1; i < nodes.length; i++) {
+      if (nodes[i].type !== 'section_banner') return nodes[i];
+    }
+    return null;
+  }, [activeNodeId, nodes]);
 
   // Advance to next node (extracted so quiz summary can call it after dismissal)
   const handleAdvanceNode = useCallback(async () => {
@@ -709,52 +750,181 @@ const StudyModeContainer = ({
     }
   }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases]);
 
-  // Handle continue to next node
+  // Handle continue to next node — shows transition screen instead of advancing immediately
   const handleContinue = useCallback(async () => {
-    console.log('➡️ Continuing to next node');
+    console.log('➡️ Node completed, showing transition screen');
 
-    // For quiz nodes (not viewOnly): show mastery summary before advancing
-    if (activeNode?.type === 'quiz' && !viewOnly) {
-      try {
-        const afterData = await getStudyPerformance(chatId);
-        const topicLabel = activeNode?.label || 'General';
-
-        const statuses = latestQuizProgressRef.current?.questionStatuses || {};
-        const total = currentContent?.questions?.length || 0;
-        const correct = Object.values(statuses).filter(s => s === 'correct').length;
-
-        const before = preNodeSnapshotRef.current?.topics?.[topicLabel];
-        const after = afterData?.topics?.[topicLabel];
-
-        const beforeAcc = before?.questionsTotal > 0
-          ? Math.round((before.questionsCorrect / before.questionsTotal) * 100) : null;
-        const afterAcc = after?.questionsTotal > 0
-          ? Math.round((after.questionsCorrect / after.questionsTotal) * 100) : null;
-        const improvement = (beforeAcc !== null && afterAcc !== null) ? afterAcc - beforeAcc : null;
-
-        setQuizSummaryData({
-          topic: topicLabel,
-          correct,
-          total,
-          scorePercent: total > 0 ? Math.round((correct / total) * 100) : 0,
-          strengthLevel: after?.strengthLevel || null,
-          missedConcepts: after?.missedConcepts?.slice(-3) || [],
-          improvement,
-          beforeAcc,
-          afterAcc,
-        });
-        setView('quiz_summary');
-      } catch (err) {
-        console.error('❌ Error building quiz summary:', err);
-        await handleAdvanceNode(); // fallback: advance normally
-      }
+    if (viewOnly) {
+      // Dev mode: skip transition, advance directly
+      await handleAdvanceNode();
       return;
     }
 
-    await handleAdvanceNode();
-  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly, handleAdvanceNode]);
+    // Show the transition screen for ALL node types
+    // Reset transition-related state
+    setIsLoadingPractice(false);
+    setIsLoadingCustom(false);
+    setCustomEcho(null);
+    setView('transition');
+  }, [viewOnly, handleAdvanceNode]);
 
-  // Continue after user dismisses the mastery summary
+  // ── Transition screen: user chose "Move on" ────────────────────────
+  // Advances to next node AND immediately launches it (no overview stop)
+  const handleTransitionContinue = useCallback(async () => {
+    try {
+      const result = await completeNodeAndAdvance(chatId, activeNodeId);
+
+      // Update local node statuses
+      setNodes(prev => prev.map(n => {
+        if (n.id === activeNodeId) return { ...n, status: 'done' };
+        if (n.id === result.nextNodeId) return { ...n, status: 'active' };
+        return n;
+      }));
+
+      // Refresh insights in background
+      getStudyPerformance(chatId).then(data => {
+        const hasData = data?.topics && Object.values(data.topics).some(
+          tp => tp.questionsTotal > 0 || tp.flashcardsTotal > 0
+        );
+        setInsightsData(hasData ? data : null);
+      }).catch(() => {});
+
+      if (result.isComplete) {
+        // Session done — go to overview for the completion state
+        setIsComplete(true);
+        setView('overview');
+        if (currentPhase >= 2 || totalPhases >= 2) {
+          if (onComplete) onComplete();
+        }
+      } else {
+        // Find the next node object and launch it directly
+        setActiveNodeId(result.nextNodeId);
+        setCurrentContent(null);
+
+        // We need the full node object — find it from the updated nodes
+        setNodes(prev => {
+          const nextNode = prev.find(n => n.id === result.nextNodeId);
+          if (nextNode) {
+            // Launch immediately — setTimeout to let state settle
+            setTimeout(() => handleStartNode(nextNode), 0);
+          }
+          return prev;
+        });
+      }
+    } catch (error) {
+      console.error('❌ Error advancing to next node:', error);
+      // Fallback: go to overview
+      setView('overview');
+    }
+  }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases, handleStartNode]);
+
+  // ── Transition screen: user chose "Practice More" ─────────────────
+  const handleTransitionPractice = useCallback(async (remediationNodeDef) => {
+    console.log('📚 Practice More requested:', remediationNodeDef);
+    setIsLoadingPractice(true);
+
+    try {
+      const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
+        chatId,
+        activeNodeId,
+        remediationNodeDef
+      );
+
+      // Update local state with the mutated path
+      setNodes(updatedNodes);
+      setActiveNodeId(insertedNode.id);
+      setActiveNode(insertedNode);
+      setCurrentContent(null);
+      setIsLoadingPractice(false);
+
+      // Go directly to the new node (no overview stop)
+      handleStartNode(insertedNode);
+    } catch (error) {
+      console.error('❌ Error inserting practice node:', error);
+      setIsLoadingPractice(false);
+      // Fallback: just advance normally
+      await handleAdvanceNode();
+    }
+  }, [chatId, activeNodeId, handleAdvanceNode, handleStartNode]);
+
+  // ── Transition screen: user submitted custom request ──────────────
+  const handleTransitionCustomRequest = useCallback(async (userText, context = {}) => {
+    console.log('💬 Custom request:', userText, 'context:', context);
+    setIsLoadingCustom(true);
+    setCustomEcho(null);
+
+    try {
+      const result = await interpret_study_request(
+        chatId,
+        userText,
+        activeNode?.label || '',
+        activeNode?.type || '',
+        language,
+        context.missedItems || [],
+        context.scorePercent
+      );
+
+      if (!result.understood || !result.node) {
+        setCustomEcho({ message: result.echo, node: null, userText });
+      } else {
+        setCustomEcho({ message: result.echo, node: result.node, userText });
+      }
+    } catch (error) {
+      console.error('❌ Error interpreting custom request:', error);
+      setCustomEcho({
+        message: t('transition.customError', 'Something went wrong. Try again or continue to the next step.'),
+        node: null
+      });
+    } finally {
+      setIsLoadingCustom(false);
+    }
+  }, [chatId, activeNode, language, t]);
+
+  // ── Transition screen: user confirmed custom echo ─────────────────
+  const handleConfirmCustom = useCallback(async () => {
+    if (!customEcho?.node) return;
+
+    setIsLoadingPractice(true); // reuse loading state for the insert
+
+    try {
+      const nodeDef = {
+        type: customEcho.node.type,
+        label: customEcho.node.label,
+        tags: [...(customEcho.node.tags || []), 'custom_request'],
+        difficulty: customEcho.node.difficulty || 1,
+        adaptive: true,
+        reason: customEcho.userText || '',
+      };
+
+      const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
+        chatId,
+        activeNodeId,
+        nodeDef
+      );
+
+      setNodes(updatedNodes);
+      setActiveNodeId(insertedNode.id);
+      setActiveNode(insertedNode);
+      setCurrentContent(null);
+      setCustomEcho(null);
+      setIsLoadingPractice(false);
+
+      // Go directly to the new node
+      handleStartNode(insertedNode);
+    } catch (error) {
+      console.error('❌ Error inserting custom node:', error);
+      setIsLoadingPractice(false);
+      setCustomEcho(null);
+      await handleAdvanceNode();
+    }
+  }, [chatId, activeNodeId, customEcho, handleAdvanceNode, handleStartNode]);
+
+  // ── Transition screen: user cancelled custom echo ─────────────────
+  const handleCancelCustom = useCallback(() => {
+    setCustomEcho(null);
+  }, []);
+
+  // Continue after user dismisses the mastery summary (legacy — kept for backward compat)
   const handleContinueAfterSummary = useCallback(async () => {
     setQuizSummaryData(null);
     await handleAdvanceNode();
@@ -810,6 +980,74 @@ const StudyModeContainer = ({
     }
   }, [chatId, studyState, language, onComplete]);
 
+  // ── Exam config: student configured and hit "Start Exam" ─────────
+  const handleExamStart = useCallback(async (examConfig) => {
+    if (!pendingExamNode) return;
+
+    setIsGeneratingExam(true);
+
+    try {
+      const result = await generate_exam(
+        chatId,
+        pendingExamNode.label,
+        examConfig.questionTypes,
+        examConfig.questionCount,
+        examConfig.customInstructions,
+        language
+      );
+
+      if (!result?.questions?.length) {
+        throw new Error('No exam questions generated');
+      }
+
+      // Merge examConfig (timer settings) into the content
+      const examContent = {
+        ...result,
+        examConfig: {
+          ...result.examConfig,
+          timerEnabled: examConfig.timerEnabled,
+          timerSeconds: examConfig.timerSeconds,
+        }
+      };
+
+      // Save content and link to node
+      const messageId = await saveNodeContent(
+        chatId,
+        pendingExamNode.id,
+        examContent,
+        'exam'
+      );
+
+      await updateNodeStatus(chatId, pendingExamNode.id, { messageId });
+
+      // Update local state
+      setNodes(prev => prev.map(n =>
+        n.id === pendingExamNode.id ? { ...n, messageId } : n
+      ));
+
+      // Close modal, start the exam
+      setShowExamConfig(false);
+      setIsGeneratingExam(false);
+
+      // Set up the node view
+      const node = { ...pendingExamNode, messageId };
+      setActiveNode(node);
+      setActiveNodeId(node.id);
+      setCurrentContent(examContent);
+      currentMessageIdRef.current = messageId;
+      setView('node');
+
+      if (onCloseSidebar) onCloseSidebar();
+
+    } catch (error) {
+      console.error('❌ Error generating exam:', error);
+      setIsGeneratingExam(false);
+      setShowExamConfig(false);
+    }
+
+    setPendingExamNode(null);
+  }, [chatId, pendingExamNode, language, onCloseSidebar]);
+
   // Handle exit from node view - go back to overview
   const handleExitNode = useCallback(() => {
     console.log('📚 Exiting node, returning to overview');
@@ -823,9 +1061,12 @@ const StudyModeContainer = ({
     });
   }, []);
 
-  // Handle exit from overview - leave study mode entirely
+  // Handle exit from overview or transition - leave study mode entirely
   const handleExitStudy = useCallback(() => {
     console.log('📚 Exiting study mode');
+    // Clear view immediately so the overlay disappears
+    setView('overview');
+    setCurrentContent(null);
     if (onExit) {
       onExit();
     }
@@ -1074,7 +1315,38 @@ const StudyModeContainer = ({
     }
   };
 
-  // Render quiz mastery summary (intercepts between quiz completion and overview)
+  // Render transition screen (post-node decision moment)
+  if (view === 'transition') {
+    return (
+      <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+        <StudyModeHeader
+          unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
+          unitSubtitle={studyState?.path?.unitSubtitle || ''}
+        />
+        <NodeTransition
+          node={activeNode}
+          content={currentContent}
+          quizProgress={latestQuizProgressRef.current}
+          flashcardProgress={latestFlashcardProgressRef.current}
+          mindmapProgress={latestMindmapProgressRef.current}
+          nextNode={getNextPlannedNode()}
+          performanceData={insightsData}
+          onContinue={handleTransitionContinue}
+          onPracticeMore={handleTransitionPractice}
+          onCustomRequest={handleTransitionCustomRequest}
+          onExit={handleExitStudy}
+          isLoadingPractice={isLoadingPractice}
+          isLoadingCustom={isLoadingCustom}
+          customEcho={customEcho}
+          onConfirmCustom={handleConfirmCustom}
+          onCancelCustom={handleCancelCustom}
+        />
+        {renderInsightsModal()}
+      </div>
+    );
+  }
+
+  // Render quiz mastery summary (legacy fallback)
   if (view === 'quiz_summary' && quizSummaryData) {
     return (
       <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
@@ -1126,6 +1398,15 @@ const StudyModeContainer = ({
         />
 
         {renderInsightsModal()}
+
+        {/* Exam config modal */}
+        <ExamConfigModal
+          isOpen={showExamConfig}
+          onClose={() => { setShowExamConfig(false); setPendingExamNode(null); }}
+          onStart={handleExamStart}
+          topic={pendingExamNode?.label || ''}
+          isLoading={isGeneratingExam}
+        />
 
         {/* Path update toast — shown after phase 2 is generated */}
         {pathUpdateToast && (
