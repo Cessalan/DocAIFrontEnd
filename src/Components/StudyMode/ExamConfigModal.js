@@ -108,7 +108,7 @@ const ExamConfigModal = ({
             </div>
 
             <p className="exam-config__description">
-              {t('exam.configDescription', 'Configure your exam to match how your real test will look.')}
+              {t('exam.configDescription', 'Configure your mini-test to match how your real exam will look.')}
             </p>
 
             {/* Question Types */}
@@ -226,7 +226,7 @@ const ExamConfigModal = ({
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
                 <polygon points="5 3 19 12 5 21 5 3" />
               </svg>
-              {t('exam.startExam', 'Start Exam')}
+              {t('exam.startExam', 'Start Mini-Test')}
             </button>
           </>
         )}

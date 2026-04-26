@@ -1486,6 +1486,307 @@ body.dark-mode .nursing-icon {
     color: #6b7280;
   }
 
+  /* Buttons row for upload + paste */
+  .empty-cta-buttons-row {
+    display: flex;
+    gap: 10px;
+    margin-top: 8px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .empty-cta-buttons-row .empty-cta-button {
+    margin-top: 0;
+    flex: 1;
+    min-width: 150px;
+    justify-content: center;
+  }
+
+  .empty-cta-button.paste-notes-btn {
+    background: linear-gradient(135deg, #8b7db8 0%, #6b5b95 100%);
+    box-shadow: 0 4px 12px rgba(107, 91, 149, 0.3);
+  }
+
+  .empty-cta-button.paste-notes-btn:hover {
+    background: linear-gradient(135deg, #7a6da8 0%, #5e4f87 100%);
+    box-shadow: 0 6px 16px rgba(107, 91, 149, 0.4);
+  }
+
+  body.dark-mode .empty-cta-button.paste-notes-btn {
+    background: linear-gradient(135deg, #6b5b95 0%, #554b7a 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  body.dark-mode .empty-cta-button.paste-notes-btn:hover {
+    background: linear-gradient(135deg, #7a6da8 0%, #6b5b95 100%);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Exam upload buttons row */
+  .exam-upload-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .exam-paste-btn {
+    background: rgba(139, 125, 184, 0.12) !important;
+    border-color: rgba(139, 125, 184, 0.3) !important;
+  }
+
+  body.dark-mode .exam-paste-btn {
+    background: rgba(139, 125, 184, 0.15) !important;
+    border-color: rgba(139, 125, 184, 0.3) !important;
+  }
+
+  /* ============================================
+     PASTE NOTES MODAL — notebook/paper style
+     ============================================ */
+  .paste-notes-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    z-index: 1100;
+    animation: fadeIn 0.2s ease;
+  }
+
+  .paste-notes-modal {
+    background: linear-gradient(180deg, #ffffff 0%, #fffef9 100%);
+    border-radius: 20px 24px 22px 20px;
+    width: 100%;
+    max-width: 520px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+    animation: modalSlideIn 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+
+  /* Decorative tape */
+  .paste-notes-modal::before {
+    content: '';
+    position: absolute;
+    top: -8px;
+    left: 50%;
+    transform: translateX(-50%) rotate(-2deg);
+    width: 80px;
+    height: 24px;
+    background: rgba(255, 248, 184, 0.95);
+    border: 1px solid rgba(217, 119, 6, 0.2);
+    z-index: 2;
+  }
+
+  .paste-notes-header {
+    text-align: center;
+    padding: 32px 28px 16px;
+  }
+
+  .paste-notes-title {
+    font-family: 'Kalam', 'Patrick Hand', cursive;
+    font-size: 24px;
+    font-weight: 700;
+    color: #3d3d3d;
+    margin: 0 0 6px 0;
+  }
+
+  .paste-notes-subtitle {
+    font-size: 14px;
+    color: #6b6b6b;
+    margin: 0;
+  }
+
+  .paste-notes-body {
+    padding: 12px 28px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .paste-notes-textarea {
+    width: 100%;
+    min-height: 220px;
+    max-height: 45vh;
+    padding: 16px 18px;
+    background: rgba(232, 141, 125, 0.04);
+    border: 1.5px dashed rgba(232, 141, 125, 0.25);
+    border-radius: 12px;
+    font-size: 14px;
+    font-family: inherit;
+    color: #3d3d3d;
+    resize: vertical;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-sizing: border-box;
+    line-height: 1.7;
+  }
+
+  .paste-notes-textarea:focus {
+    outline: none;
+    border-color: rgba(232, 141, 125, 0.5);
+    border-style: solid;
+    box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.1);
+    background: #ffffff;
+  }
+
+  .paste-notes-textarea::placeholder {
+    color: #999;
+    font-style: italic;
+  }
+
+  .paste-notes-charcount {
+    text-align: right;
+    font-size: 12px;
+    color: #999;
+    margin-top: 6px;
+    min-height: 18px;
+    font-family: 'Kalam', 'Patrick Hand', cursive;
+  }
+
+  .paste-notes-actions {
+    display: flex;
+    gap: 12px;
+    padding: 16px 28px 24px;
+  }
+
+  .paste-notes-cancel,
+  .paste-notes-submit {
+    flex: 1;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: 'Kalam', 'Patrick Hand', cursive;
+  }
+
+  .paste-notes-cancel {
+    background: rgba(100, 100, 100, 0.06);
+    border: 1.5px solid rgba(100, 100, 100, 0.15);
+    color: #6b6b6b;
+  }
+
+  .paste-notes-cancel:hover {
+    background: rgba(100, 100, 100, 0.12);
+    border-color: rgba(100, 100, 100, 0.25);
+    color: #3d3d3d;
+  }
+
+  .paste-notes-submit {
+    background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+    border: none;
+    color: white;
+    box-shadow: 0 4px 12px rgba(232, 141, 125, 0.3);
+  }
+
+  .paste-notes-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d67a6a 0%, #c46a5a 100%);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(232, 141, 125, 0.4);
+  }
+
+  .paste-notes-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Dark mode - Paste Notes Modal */
+  body.dark-mode .paste-notes-modal {
+    background: linear-gradient(180deg, #2d2d2d 0%, #252525 100%);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+  }
+
+  body.dark-mode .paste-notes-modal::before {
+    background: rgba(255, 248, 184, 0.2);
+    border-color: rgba(217, 119, 6, 0.3);
+  }
+
+  body.dark-mode .paste-notes-title {
+    color: #f3f4f6;
+  }
+
+  body.dark-mode .paste-notes-subtitle {
+    color: #9ca3af;
+  }
+
+  body.dark-mode .paste-notes-textarea {
+    background: rgba(232, 141, 125, 0.06);
+    border-color: rgba(232, 141, 125, 0.2);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .paste-notes-textarea:focus {
+    border-color: rgba(232, 141, 125, 0.45);
+    border-style: solid;
+    background: rgba(232, 141, 125, 0.08);
+    box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.08);
+  }
+
+  body.dark-mode .paste-notes-textarea::placeholder {
+    color: #6b7280;
+  }
+
+  body.dark-mode .paste-notes-charcount {
+    color: #6b7280;
+  }
+
+  body.dark-mode .paste-notes-cancel {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: #9ca3af;
+  }
+
+  body.dark-mode .paste-notes-cancel:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+    color: #e5e7eb;
+  }
+
+  body.dark-mode .paste-notes-submit {
+    background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+    box-shadow: 0 4px 12px rgba(232, 141, 125, 0.25);
+  }
+
+  body.dark-mode .paste-notes-submit:hover:not(:disabled) {
+    background: linear-gradient(135deg, #d67a6a 0%, #c46a5a 100%);
+    box-shadow: 0 6px 16px rgba(232, 141, 125, 0.35);
+  }
+
+  @media (max-width: 480px) {
+    .paste-notes-modal {
+      max-width: 100%;
+    }
+
+    .paste-notes-textarea {
+      min-height: 180px;
+    }
+
+    .paste-notes-actions {
+      flex-direction: column;
+    }
+
+    .empty-cta-buttons-row {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .empty-cta-buttons-row .empty-cta-button {
+      width: 100%;
+      min-width: unset;
+    }
+  }
+
   /* ============================================
      PRE-UPLOAD ACTION BUTTONS
      Colorful sticky-note style buttons shown before upload

@@ -37,7 +37,15 @@ const resources = {
         recommended: "Recommended",
         studyPlanStartsHere: "Prepare for your exam",
         uploadWeHandle: "Upload your notes and we'll build your personalized study plan.",
+        uploadOrPaste: "Upload or paste your notes. We'll take care of the rest.",
         uploadMyNotes: "Upload my notes",
+        pasteMyNotes: "Paste my notes",
+        examPasteCta: "Paste your notes",
+        pasteNotesTitle: "Paste your notes",
+        pasteNotesSubtitle: "Copy and paste your study material below",
+        pasteNotesPlaceholder: "Paste or type your notes here...",
+        startStudying: "Start studying",
+        characters: "characters",
         progressSaved: "progress saved"
       },
 
@@ -1036,7 +1044,7 @@ const resources = {
       // Exam — mini-test at end of each section
       exam: {
         configTitle: "Mini-Test",
-        configDescription: "Configure your exam to match how your real test will look.",
+        configDescription: "Configure your mini-test to match how your real exam will look.",
         questionTypes: "Question types",
         typeMCQ: "Multiple Choice",
         typeMCQDesc: "1 correct answer",
@@ -1051,7 +1059,7 @@ const resources = {
         customInstructions: "Additional instructions",
         optional: "optional",
         customPlaceholder: "e.g. \"My professor focuses on prioritization\" or \"Include drug calculations\"",
-        startExam: "Start Exam",
+        startExam: "Start Mini-Test",
         generating: "Building your exam...",
         generatingHint: "Generating {{count}} questions with mixed formats",
         examBadge: "EXAM",
@@ -1097,7 +1105,15 @@ const resources = {
         recommended: "Recommandé",
         studyPlanStartsHere: "Prépare ton examen",
         uploadWeHandle: "Importe tes notes et on te crée un plan d'étude personnalisé.",
+        uploadOrPaste: "Importe ou colle tes notes. On s'occupe du reste.",
         uploadMyNotes: "Importer mes notes",
+        pasteMyNotes: "Coller mes notes",
+        examPasteCta: "Coller tes notes",
+        pasteNotesTitle: "Colle tes notes",
+        pasteNotesSubtitle: "Copie et colle ton contenu d'étude ci-dessous",
+        pasteNotesPlaceholder: "Colle ou écris tes notes ici...",
+        startStudying: "Commencer à étudier",
+        characters: "caractères",
         progressSaved: "progression sauvegardée"
       },
 
@@ -2096,7 +2112,7 @@ const resources = {
       // Examen — mini-test à la fin de chaque section
       exam: {
         configTitle: "Mini-Test",
-        configDescription: "Configure ton examen pour qu'il ressemble à ton vrai test.",
+        configDescription: "Configure ton mini-test pour qu'il ressemble à ton vrai examen.",
         questionTypes: "Types de questions",
         typeMCQ: "Choix multiple",
         typeMCQDesc: "1 bonne réponse",
@@ -2111,7 +2127,7 @@ const resources = {
         customInstructions: "Instructions supplémentaires",
         optional: "optionnel",
         customPlaceholder: "ex. « Mon prof se concentre sur la priorisation » ou « Inclure des calculs de dosage »",
-        startExam: "Commencer l'examen",
+        startExam: "Commencer le mini-test",
         generating: "Préparation de ton examen...",
         generatingHint: "Génération de {{count}} questions en formats mixtes",
         examBadge: "EXAMEN",

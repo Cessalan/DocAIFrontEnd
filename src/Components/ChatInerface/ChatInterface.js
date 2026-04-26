@@ -232,6 +232,10 @@ const ChatInterface = ({
   const [showExamPrepModal, setShowExamPrepModal] = useState(false);
   const [isCreatingExamChat, setIsCreatingExamChat] = useState(false);
 
+  // Paste notes modal state
+  const [showPasteNotesModal, setShowPasteNotesModal] = useState(false);
+  const [pastedNotesText, setPastedNotesText] = useState('');
+
   // Quiz mode selector state (NCLEX vs Knowledge)
   const [showQuizModeSelector, setShowQuizModeSelector] = useState(false);
   const [pendingQuizMessageData, setPendingQuizMessageData] = useState(null);
@@ -3390,6 +3394,31 @@ const ChatInterface = ({
   devLog('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
   const openFileUploadDialog = () => documentFileInputRef.current?.click();
 
+  // Handle pasted notes submission - converts text to a file and triggers the upload flow
+  const handlePasteNotesSubmit = () => {
+    const text = pastedNotesText.trim();
+    if (!text) return;
+
+    // Create a text file from the pasted content
+    const blob = new Blob([text], { type: 'text/plain' });
+    const file = new File([blob], 'pasted-notes.txt', { type: 'text/plain' });
+
+    // Create a DataTransfer to build a synthetic FileList
+    const dataTransfer = new DataTransfer();
+    dataTransfer.items.add(file);
+
+    // Set the file input and trigger the same upload flow
+    if (documentFileInputRef.current) {
+      documentFileInputRef.current.files = dataTransfer.files;
+      window._pendingStudyJourney = true;
+      documentFileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+
+    // Close modal and reset
+    setShowPasteNotesModal(false);
+    setPastedNotesText('');
+  };
+
   // ============================================
   // VOICE INPUT HANDLERS
   // ============================================
@@ -3674,13 +3703,22 @@ const ChatInterface = ({
               <p className="exam-upload-subtitle">
                 {t('chat.examPrepLead', "Dépose tes notes, on prépare ton plan d'étude pour l'examen.")}
               </p>
-              <button className="exam-start-btn" onClick={openFileUploadDialog}>
-                <span className="exam-start-icon">📤</span>
-                <span className="exam-start-text">
-                  {t('chat.examUploadCta', 'Importer tes fichiers')}
-                </span>
-                <span className="exam-start-arrow">→</span>
-              </button>
+              <div className="exam-upload-buttons">
+                <button className="exam-start-btn" onClick={openFileUploadDialog}>
+                  <span className="exam-start-icon">📤</span>
+                  <span className="exam-start-text">
+                    {t('chat.examUploadCta', 'Importer tes fichiers')}
+                  </span>
+                  <span className="exam-start-arrow">→</span>
+                </button>
+                <button className="exam-start-btn exam-paste-btn" onClick={() => setShowPasteNotesModal(true)}>
+                  <span className="exam-start-icon">📋</span>
+                  <span className="exam-start-text">
+                    {t('chat.examPasteCta', 'Coller tes notes')}
+                  </span>
+                  <span className="exam-start-arrow">→</span>
+                </button>
+              </div>
               <p className="exam-upload-hint">
                 {t('chat.examUploadHint', 'PDF, images, notes — nous générons quiz, fiches et flashcards.')}
               </p>
@@ -3709,23 +3747,36 @@ const ChatInterface = ({
                 </div>
                 <h2 className="empty-cta-title">{t('chat.studyPlanStartsHere', 'Your study plan starts here')}</h2>
                 <p className="empty-cta-subtitle">
-                  {t('chat.uploadWeHandle', "Upload your notes. We'll take care of the rest.")}
+                  {t('chat.uploadOrPaste', "Upload or paste your notes. We'll take care of the rest.")}
                 </p>
-                <button className="empty-cta-button" onClick={(e) => {
-                  e.stopPropagation();
-                  documentFileInputRef.current?.click();
-                  window._pendingStudyJourney = true;
-                }}>
-                  <svg viewBox="0 0 24 24"
-                       fill="none"
-                       stroke="currentColor"
-                      strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="17 8 12 3 7 8" />
-                    <line x1="12" y1="3" x2="12" y2="15" />
-                  </svg>
-                  {t('chat.uploadMyNotes', 'Upload my notes')}
-                </button>
+                <div className="empty-cta-buttons-row">
+                  <button className="empty-cta-button" onClick={(e) => {
+                    e.stopPropagation();
+                    documentFileInputRef.current?.click();
+                    window._pendingStudyJourney = true;
+                  }}>
+                    <svg viewBox="0 0 24 24"
+                         fill="none"
+                         stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    {t('chat.uploadMyNotes', 'Upload my notes')}
+                  </button>
+                  <button className="empty-cta-button paste-notes-btn" onClick={(e) => {
+                    e.stopPropagation();
+                    setShowPasteNotesModal(true);
+                  }}>
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
+                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                    </svg>
+                    {t('chat.pasteMyNotes', 'Paste my notes')}
+                  </button>
+                </div>
                 <span className="empty-cta-note">{t('chat.progressSaved', 'progress saved')}</span>
               </div>
             </div>
@@ -3739,6 +3790,59 @@ const ChatInterface = ({
             onSubmit={handleExamPrepSubmit}
             isSubmitting={isCreatingExamChat}
           />
+        )}
+
+        {/* Paste Notes Modal */}
+        {showPasteNotesModal && (
+          <div className="paste-notes-overlay" onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowPasteNotesModal(false);
+              setPastedNotesText('');
+            }
+          }}>
+            <div className="paste-notes-modal">
+              <div className="paste-notes-header">
+                <h2 className="paste-notes-title">
+                  {t('chat.pasteNotesTitle', 'Paste your notes')}
+                </h2>
+                <p className="paste-notes-subtitle">
+                  {t('chat.pasteNotesSubtitle', 'Copy and paste your study material below')}
+                </p>
+              </div>
+              <div className="paste-notes-body">
+                <textarea
+                  className="paste-notes-textarea"
+                  value={pastedNotesText}
+                  onChange={(e) => setPastedNotesText(e.target.value)}
+                  placeholder={t('chat.pasteNotesPlaceholder', 'Paste or type your notes here...')}
+                  autoFocus
+                />
+                <div className="paste-notes-charcount">
+                  {pastedNotesText.length > 0 && (
+                    <span>{pastedNotesText.length.toLocaleString()} {t('chat.characters', 'characters')}</span>
+                  )}
+                </div>
+              </div>
+              <div className="paste-notes-actions">
+                <button
+                  className="paste-notes-cancel"
+                  onClick={() => {
+                    setShowPasteNotesModal(false);
+                    setPastedNotesText('');
+                  }}
+                >
+                  {t('examPrep.cancel', 'Cancel')}
+                </button>
+                <button
+                  className="paste-notes-submit"
+                  onClick={handlePasteNotesSubmit}
+                  disabled={!pastedNotesText.trim()}
+                >
+                  {t('chat.startStudying', 'Start studying')}
+                </button>
+              </div>
+            </div>
+          </div>
         )}
 
         {/* Quiz Mode Selector Modal */}
