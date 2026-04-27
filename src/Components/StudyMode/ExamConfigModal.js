@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import './StudyMode.css';
 
@@ -36,6 +36,26 @@ const ExamConfigModal = ({
 
   // Custom instructions
   const [customInstructions, setCustomInstructions] = useState('');
+
+  // Rotating loading messages (i18n keys)
+  const loadingKeys = [
+    'loading1', 'loading2', 'loading3', 'loading4', 'loading5',
+    'loading6', 'loading7', 'loading8', 'loading9', 'loading10', 'loading11',
+  ];
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+
+  useEffect(() => {
+    if (!isLoading) {
+      setLoadingMsgIndex(0);
+      return;
+    }
+    const interval = setInterval(() => {
+      setLoadingMsgIndex(prev =>
+        prev < loadingKeys.length - 1 ? prev + 1 : prev
+      );
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isLoading]);
 
   const toggleType = (type) => {
     setQuestionTypes(prev => {
@@ -87,9 +107,13 @@ const ExamConfigModal = ({
         {/* Loading state */}
         {isLoading ? (
           <div className="exam-config__loading">
-            <div className="study-loading-spinner" />
-            <h3>{t('exam.generating', 'Building your exam...')}</h3>
-            <p>{t('exam.generatingHint', 'Generating {{count}} questions with mixed formats', { count: questionCount })}</p>
+            <h3>{t('exam.generating', 'Building your mini-test...')}</h3>
+            <p className="exam-config__loading-msg" key={loadingMsgIndex}>
+              {t(`exam.${loadingKeys[loadingMsgIndex]}`)}
+            </p>
+            <div className="exam-config__loading-dots">
+              <span /><span /><span />
+            </div>
           </div>
         ) : (
           <>

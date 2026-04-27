@@ -384,7 +384,7 @@ const NodeTransition = ({
       difficulty: node.difficulty || 1,
       adaptive: true,
       reason: gapCount > 0
-        ? t('transition.drillGaps', { count: gapCount, defaultValue: `Drill the ${gapCount} gap${gapCount === 1 ? '' : 's'}` })
+        ? t('transition.drillGaps', { count: gapCount, defaultValue: `Review ${gapCount} missed concept${gapCount === 1 ? '' : 's'}` })
         : t('transition.practiceMore', 'Practice more'),
     };
 
@@ -675,7 +675,7 @@ const NodeTransition = ({
                   {result.incorrect > 0 || result.needReview > 0
                     ? t('transition.drillGaps', {
                         count: result.incorrect || result.needReview,
-                        defaultValue: `Drill the ${result.incorrect || result.needReview} gap${(result.incorrect || result.needReview) === 1 ? '' : 's'}`
+                        defaultValue: `Review ${result.incorrect || result.needReview} missed concept${(result.incorrect || result.needReview) === 1 ? '' : 's'}`
                       })
                     : t('transition.practiceMore', 'Practice more')}
                 </span>

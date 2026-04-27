@@ -2,6 +2,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import StudyModeHeader from './StudyModeHeader';
+import StudyLoadingScreen from './StudyLoadingScreen';
 import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
 import QuizMasterySummary from './QuizMasterySummary';
@@ -476,6 +477,21 @@ const StudyModeContainer = ({
         const totalQuestions = currentContent.questions.length;
         const correctCount = Object.values(answerData.progress.questionStatuses)
           .filter(status => status === 'correct').length;
+        const progressPercent = Math.round((correctCount / totalQuestions) * 100);
+
+        // Update local node state with progress
+        setNodes(prev => prev.map(n =>
+          n.id === activeNodeId ? { ...n, nodeProgress: progressPercent } : n
+        ));
+
+        // Also persist to Firestore
+        updateNodeStatus(chatId, activeNodeId, { nodeProgress: progressPercent });
+      }
+      // Exam format: answers is { [index]: { isCorrect, score, maxScore, ... } }
+      else if (answerData.progress.answers && currentContent?.questions) {
+        const totalQuestions = currentContent.questions.length;
+        const examAnswers = answerData.progress.answers;
+        const correctCount = Object.values(examAnswers).filter(a => a.isCorrect).length;
         const progressPercent = Math.round((correctCount / totalQuestions) * 100);
 
         // Update local node state with progress
@@ -1048,6 +1064,31 @@ const StudyModeContainer = ({
     setPendingExamNode(null);
   }, [chatId, pendingExamNode, language, onCloseSidebar]);
 
+  // Handle retake exam — insert a fresh exam node after the completed one and launch it
+  const handleRetakeExam = useCallback(async (examNode) => {
+    try {
+      const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
+        chatId,
+        examNode.id,
+        {
+          type: 'exam',
+          label: examNode.label,
+          tags: examNode.tags || [],
+          difficulty: examNode.difficulty || 1,
+          reason: 'Retake mini-test',
+        }
+      );
+
+      // Update local nodes state
+      setNodes(updatedNodes);
+
+      // Launch the new exam node — no messageId so it opens the config modal
+      handleStartNode(insertedNode);
+    } catch (error) {
+      console.error('❌ Error creating retake exam:', error);
+    }
+  }, [chatId, handleStartNode]);
+
   // Handle exit from node view - go back to overview
   const handleExitNode = useCallback(() => {
     console.log('📚 Exiting node, returning to overview');
@@ -1388,6 +1429,7 @@ const StudyModeContainer = ({
         <StudyPlanOverview
           studyState={currentStudyState}
           onNodeSelect={handleNodeSelect}
+          onRetakeExam={handleRetakeExam}
           onExit={handleExitStudy}
           onShowInsights={handleMascotClick}
           insightsData={insightsData}
@@ -1463,14 +1505,7 @@ const StudyModeContainer = ({
         <div className="study-focused-layout">
           <div className="study-content-centered">
             {isLoadingContent ? (
-              <div className="study-step-card">
-                <div className="study-loading">
-                  <div className="study-loading-spinner" />
-                  <p className="study-loading-text">
-                    {t('study.preparing', { type: t(`study.nodeType.${activeNode?.type}`, activeNode?.type || 'lesson').toLowerCase(), defaultValue: `Preparing your ${activeNode?.type || 'lesson'}...` })}
-                  </p>
-                </div>
-              </div>
+              <StudyLoadingScreen nodeType={activeNode?.type || 'lesson'} />
             ) : currentContent ? (
               <StudyStepCard
                 node={activeNode}

@@ -229,7 +229,7 @@ const StudyExamCard = ({
     return (
       <div className="study-step-card exam-complete">
         <div className="exam-complete__header">
-          <h2>{t('exam.complete', 'Exam Complete')}</h2>
+          <h2>{t('exam.complete', 'Mini-Test Complete')}</h2>
           <p className="exam-complete__score">{summary.percent}%</p>
           <p className="exam-complete__detail">
             {t('exam.scoreDetail', '{{correct}} of {{total}} correct', {
@@ -332,7 +332,7 @@ const StudyExamCard = ({
                   : t('study.learnMore', 'Learn more')}
               </button>
               {showRationale && (
-                <p className="exam-mcq__rationale-text">{currentQuestion.rationale}</p>
+                <p className="exam-mcq__rationale-text" dangerouslySetInnerHTML={{ __html: currentQuestion.rationale }} />
               )}
             </div>
           )}

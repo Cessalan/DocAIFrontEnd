@@ -826,6 +826,40 @@ const resources = {
         startingSession: "Starting your study session...",
         exitStudyMode: "Exit Study Mode",
 
+        // Node-type loading messages (rotating)
+        lessonLoading1: "Summarizing the key concepts...",
+        lessonLoading2: "Highlighting what matters most...",
+        lessonLoading3: "Organizing your review notes...",
+        lessonLoading4: "Simplifying complex ideas...",
+        lessonLoading5: "Building your quick-reference guide...",
+        lessonLoading6: "Almost there...",
+
+        quizLoading1: "Generating practice questions...",
+        quizLoading2: "Targeting your weak spots...",
+        quizLoading3: "Calibrating difficulty level...",
+        quizLoading4: "Writing detailed rationales...",
+        quizLoading5: "Building your personalized quiz...",
+        quizLoading6: "Almost ready...",
+
+        flashcardLoading1: "Creating your flashcards...",
+        flashcardLoading2: "Distilling key terms and concepts...",
+        flashcardLoading3: "Crafting memorable explanations...",
+        flashcardLoading4: "Organizing by topic priority...",
+        flashcardLoading5: "Polishing the final cards...",
+        flashcardLoading6: "Almost ready...",
+
+        audioLoading1: "Preparing your audio review...",
+        audioLoading2: "Structuring the key talking points...",
+        audioLoading3: "Optimizing for easy listening...",
+        audioLoading4: "Building your study podcast...",
+        audioLoading5: "Almost ready to play...",
+
+        mindmapLoading1: "Mapping out the connections...",
+        mindmapLoading2: "Identifying core relationships...",
+        mindmapLoading3: "Organizing the concept hierarchy...",
+        mindmapLoading4: "Designing your visual overview...",
+        mindmapLoading5: "Adding the finishing touches...",
+
         // StudyLessonCard
         lessonTitle: "Quick Review",
         keyPoints: "Key Points",
@@ -944,6 +978,7 @@ const resources = {
         strong: "Strong",
         developing: "Developing",
         weak: "Needs work",
+        retake: "Retake",
         quizAccuracy: "Quiz",
         flashcardAccuracy: "Flashcards",
         toReview: "To review:",
@@ -981,7 +1016,7 @@ const resources = {
         quizTough: "{{correct}} of {{total}} on {{topic}}. This one was tough — that's ok, it means we found what to work on.",
 
         // Diagnosis — exam
-        examDone: "Exam Complete",
+        examDone: "Mini-Test Complete",
         examExcellent: "{{correct}} of {{total}} on the {{topic}} exam. Excellent — you're exam-ready.",
         examGood: "{{correct}} of {{total}} on the {{topic}} exam. {{missed}} to review before you're solid.",
         examMixed: "{{correct}} of {{total}} on the {{topic}} exam. Some concepts need more work.",
@@ -1014,7 +1049,8 @@ const resources = {
         cardsToReview: "Cards that needed another look:",
 
         // Action buttons
-        drillGaps: "Drill the {{count}} gap{{count, plural, one {} other {s}}}",
+        drillGaps_one: "Review {{count}} missed concept",
+        drillGaps_other: "Review {{count}} missed concepts",
         practiceMore: "Practice more",
         moveOn: "Move on to {{topic}}",
         continue: "Continue",
@@ -1060,13 +1096,24 @@ const resources = {
         optional: "optional",
         customPlaceholder: "e.g. \"My professor focuses on prioritization\" or \"Include drug calculations\"",
         startExam: "Start Mini-Test",
-        generating: "Building your exam...",
+        generating: "Building your mini-test...",
         generatingHint: "Generating {{count}} questions with mixed formats",
+        loading1: "Crafting clinical scenarios...",
+        loading2: "Selecting key nursing concepts...",
+        loading3: "Building answer rationales...",
+        loading4: "Mixing question formats...",
+        loading5: "Reviewing for accuracy...",
+        loading6: "Pulling from your study material...",
+        loading7: "Creating realistic patient situations...",
+        loading8: "Writing detailed explanations...",
+        loading9: "Calibrating difficulty level...",
+        loading10: "Polishing the final questions...",
+        loading11: "Almost ready...",
         examBadge: "EXAM",
         questionProgress: "{{current}} / {{total}}",
         nextQuestion: "Next Question",
         finishExam: "Finish Exam",
-        complete: "Exam Complete",
+        complete: "Mini-Test Complete",
         scoreDetail: "{{correct}} of {{total}} correct"
       }
     }
@@ -1894,6 +1941,40 @@ const resources = {
         startingSession: "Démarrage de ta session d'étude...",
         exitStudyMode: "Quitter le mode étude",
 
+        // Node-type loading messages (rotating)
+        lessonLoading1: "Résumé des concepts clés...",
+        lessonLoading2: "Mise en avant de l'essentiel...",
+        lessonLoading3: "Organisation de tes notes de révision...",
+        lessonLoading4: "Simplification des idées complexes...",
+        lessonLoading5: "Création de ton guide de référence...",
+        lessonLoading6: "Presque terminé...",
+
+        quizLoading1: "Génération des questions pratiques...",
+        quizLoading2: "Ciblage de tes points faibles...",
+        quizLoading3: "Calibrage du niveau de difficulté...",
+        quizLoading4: "Rédaction des justifications détaillées...",
+        quizLoading5: "Construction de ton quiz personnalisé...",
+        quizLoading6: "Presque prêt...",
+
+        flashcardLoading1: "Création de tes cartes mémoire...",
+        flashcardLoading2: "Extraction des termes et concepts clés...",
+        flashcardLoading3: "Rédaction d'explications mémorables...",
+        flashcardLoading4: "Organisation par priorité de sujet...",
+        flashcardLoading5: "Peaufinage des cartes finales...",
+        flashcardLoading6: "Presque prêt...",
+
+        audioLoading1: "Préparation de ta révision audio...",
+        audioLoading2: "Structuration des points clés...",
+        audioLoading3: "Optimisation pour une écoute facile...",
+        audioLoading4: "Création de ton podcast d'étude...",
+        audioLoading5: "Presque prêt à écouter...",
+
+        mindmapLoading1: "Cartographie des connexions...",
+        mindmapLoading2: "Identification des relations essentielles...",
+        mindmapLoading3: "Organisation de la hiérarchie conceptuelle...",
+        mindmapLoading4: "Conception de ta vue d'ensemble visuelle...",
+        mindmapLoading5: "Dernières retouches...",
+
         // StudyLessonCard
         lessonTitle: "Révision Rapide",
         keyPoints: "Points clés",
@@ -2012,6 +2093,7 @@ const resources = {
         strong: "Maîtrisé",
         developing: "En progression",
         weak: "À travailler",
+        retake: "Reprendre",
         quizAccuracy: "Quiz",
         flashcardAccuracy: "Flashcards",
         toReview: "À revoir :",
@@ -2049,7 +2131,7 @@ const resources = {
         quizTough: "{{correct}} sur {{total}} sur {{topic}}. C'était difficile — c'est correct, ça nous montre quoi travailler.",
 
         // Diagnostic — examen
-        examDone: "Examen terminé",
+        examDone: "Mini-Test terminé",
         examExcellent: "{{correct}} sur {{total}} à l'examen {{topic}}. Excellent — tu es prête.",
         examGood: "{{correct}} sur {{total}} à l'examen {{topic}}. {{missed}} à revoir pour être solide.",
         examMixed: "{{correct}} sur {{total}} à l'examen {{topic}}. Certains concepts à approfondir.",
@@ -2082,7 +2164,8 @@ const resources = {
         cardsToReview: "Cartes qui ont besoin d'un autre regard :",
 
         // Boutons d'action
-        drillGaps: "Travailler {{count}} lacune{{count, plural, one {} other {s}}}",
+        drillGaps_one: "Réviser {{count}} concept manqué",
+        drillGaps_other: "Réviser {{count}} concepts manqués",
         practiceMore: "Pratiquer encore",
         moveOn: "Passer à {{topic}}",
         continue: "Continuer",
@@ -2128,13 +2211,24 @@ const resources = {
         optional: "optionnel",
         customPlaceholder: "ex. « Mon prof se concentre sur la priorisation » ou « Inclure des calculs de dosage »",
         startExam: "Commencer le mini-test",
-        generating: "Préparation de ton examen...",
+        generating: "Préparation de ton mini-test...",
         generatingHint: "Génération de {{count}} questions en formats mixtes",
+        loading1: "Création de scénarios cliniques...",
+        loading2: "Sélection des concepts clés en soins infirmiers...",
+        loading3: "Rédaction des justifications...",
+        loading4: "Mélange des formats de questions...",
+        loading5: "Vérification de la précision...",
+        loading6: "Extraction de ton matériel d'étude...",
+        loading7: "Création de situations réalistes de patients...",
+        loading8: "Rédaction d'explications détaillées...",
+        loading9: "Calibrage du niveau de difficulté...",
+        loading10: "Peaufinage des questions finales...",
+        loading11: "Presque prêt...",
         examBadge: "EXAMEN",
         questionProgress: "{{current}} / {{total}}",
         nextQuestion: "Question suivante",
         finishExam: "Terminer l'examen",
-        complete: "Examen terminé",
+        complete: "Mini-Test terminé",
         scoreDetail: "{{correct}} sur {{total}} correct"
       }
     }

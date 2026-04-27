@@ -1756,6 +1756,83 @@ body.dark-mode .study-lesson-btn-green:hover {
 }
 
 /* -----------------------------------------
+   PREMIUM LOADING SCREEN (per-node-type)
+   ----------------------------------------- */
+.study-loading-premium {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 32px;
+  min-height: 260px;
+}
+
+.study-loading-premium__icon {
+  color: var(--study-coral, #e88d7d);
+  opacity: 0.7;
+  margin-bottom: 20px;
+  animation: loadingIconPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes loadingIconPulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%      { opacity: 1;   transform: scale(1.08); }
+}
+
+.study-loading-premium__title {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary, #1a1a1a);
+  margin: 0 0 8px;
+}
+
+.dark-mode .study-loading-premium__title {
+  color: #eee;
+}
+
+.study-loading-premium__msg {
+  font-size: 14px;
+  color: var(--text-secondary, #888);
+  margin: 0;
+  animation: premiumMsgFade 0.5s ease-out;
+}
+
+.dark-mode .study-loading-premium__msg {
+  color: #999;
+}
+
+@keyframes premiumMsgFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.study-loading-premium__dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.study-loading-premium__dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--study-coral, #e88d7d);
+  opacity: 0.3;
+  animation: premiumDotPulse 1.4s ease-in-out infinite;
+}
+
+.study-loading-premium__dots span:nth-child(2) { animation-delay: 0.2s; }
+.study-loading-premium__dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes premiumDotPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
+  40%           { opacity: 1;   transform: scale(1.3); }
+}
+
+/* -----------------------------------------
    COMPLETION SCREEN
    ----------------------------------------- */
 .study-complete {
@@ -7008,6 +7085,39 @@ body.dark-mode .celebration-continue-btn:hover {
   color: #888;
 }
 
+.exam-config__loading-msg {
+  animation: examMsgFadeIn 0.5s ease-out;
+}
+
+@keyframes examMsgFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.exam-config__loading-dots {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 16px;
+}
+
+.exam-config__loading-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-primary, #e07a5f);
+  opacity: 0.3;
+  animation: examDotPulse 1.4s ease-in-out infinite;
+}
+
+.exam-config__loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.exam-config__loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes examDotPulse {
+  0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
+  40% { opacity: 1; transform: scale(1.3); }
+}
+
 .dark-mode .exam-config__loading h3 { color: #eee; }
 .dark-mode .exam-config__loading p { color: #999; }
 
@@ -7390,6 +7500,10 @@ body.dark-mode .celebration-continue-btn:hover {
   justify-content: space-between;
   padding: 14px 20px;
   border-bottom: 1px solid #f0f0f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: inherit;
 }
 
 .dark-mode .exam-header {
@@ -7471,13 +7585,15 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .dark-mode .exam-header__exit {
-  border-color: #555;
-  color: #aaa;
+  border-color: rgba(255,255,255,0.25);
+  color: #ddd;
+  background: rgba(255,255,255,0.08);
 }
 
 .dark-mode .exam-header__exit:hover {
-  background: #3a3a3a;
-  color: #ddd;
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  border-color: rgba(255,255,255,0.4);
 }
 
 .exam-progress-bar {
@@ -8950,5 +9066,1281 @@ body.dark-mode .celebration-continue-btn:hover {
   .node-transition__chip {
     font-size: 11px;
     padding: 5px 12px;
+  }
+}
+
+
+/* ============================================
+   STUDY OVERVIEW V3 — Section Cards Layout
+   Replaces the Duolingo winding path with
+   collapsible topic-based section cards.
+   ============================================ */
+
+/* ── V3 container tweaks ── */
+.study-overview-v3 {
+  /* inherits .study-overview-container */
+}
+
+/* ── Header ── */
+.sov3-header {
+  position: sticky;
+  top: -24px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 64px 16px 16px 16px;
+  margin-top: -24px;
+  width: 100vw;
+  max-width: none !important;
+  margin-left: calc(-50vw + 50%);
+  background: #fef7f4;
+}
+
+.dark-mode .sov3-header {
+  background: #2f2f2f;
+}
+
+@media (max-width: 768px) {
+  .sov3-header {
+    padding: 24px 16px 16px 16px;
+  }
+}
+
+.sov3-header__title-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Segmented progress bar ── */
+.sov3-progress-bar {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+  max-width: 480px;
+  height: 6px;
+  margin-top: 8px;
+}
+
+.sov3-progress-segment {
+  border-radius: 3px;
+  transition: background 0.4s ease;
+  min-width: 20px;
+}
+
+.sov3-progress-segment--complete {
+  background: linear-gradient(90deg, #2ed573 0%, #26b85f 100%);
+}
+
+.sov3-progress-segment--active {
+  background: linear-gradient(90deg, #e88d7d 0%, #f4a896 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.sov3-progress-segment--active::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -50%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+  animation: sov3SegmentShimmer 2s ease-in-out infinite;
+}
+
+@keyframes sov3SegmentShimmer {
+  0% { left: -50%; }
+  100% { left: 150%; }
+}
+
+.sov3-progress-segment--locked {
+  background: rgba(184, 184, 184, 0.25);
+}
+
+.dark-mode .sov3-progress-segment--locked {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── Sections container ── */
+.sov3-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  padding-bottom: 80px;
+}
+
+/* ── Section Card ── */
+.sov3-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 16px;
+  border: 1.5px solid rgba(200, 170, 160, 0.2);
+  box-shadow: 0 2px 12px rgba(100, 80, 60, 0.06);
+  padding: 16px 20px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.dark-mode .sov3-card {
+  background: rgba(50, 50, 50, 0.7);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+/* Complete card */
+.sov3-card--complete {
+  cursor: pointer;
+}
+
+.sov3-card--complete:hover {
+  border-color: rgba(46, 213, 115, 0.3);
+  box-shadow: 0 4px 16px rgba(46, 213, 115, 0.08);
+  transform: translateY(-1px);
+}
+
+.dark-mode .sov3-card--complete:hover {
+  border-color: rgba(46, 213, 115, 0.25);
+  box-shadow: 0 4px 16px rgba(46, 213, 115, 0.1);
+}
+
+/* Active card */
+.sov3-card--active {
+  border-left: 4px solid #e88d7d;
+  box-shadow: 0 4px 20px rgba(232, 141, 125, 0.12);
+  border-color: rgba(232, 141, 125, 0.25);
+}
+
+.dark-mode .sov3-card--active {
+  border-left-color: #e88d7d;
+  box-shadow: 0 4px 20px rgba(232, 141, 125, 0.15);
+  border-color: rgba(232, 141, 125, 0.2);
+}
+
+/* Locked card */
+.sov3-card--locked {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.sov3-card--dev {
+  opacity: 0.75;
+  cursor: pointer;
+  border-style: dashed;
+}
+
+/* Phase 2 card */
+.sov3-card--phase2 {
+  cursor: pointer;
+  border-style: dashed;
+  border-color: rgba(232, 141, 125, 0.3);
+  background: rgba(232, 141, 125, 0.04);
+}
+
+.sov3-card--phase2:hover {
+  border-color: rgba(232, 141, 125, 0.5);
+  background: rgba(232, 141, 125, 0.08);
+}
+
+.sov3-card--generating {
+  cursor: wait;
+  opacity: 0.8;
+}
+
+.dark-mode .sov3-card--phase2 {
+  background: rgba(232, 141, 125, 0.06);
+}
+
+/* ── Card Header ── */
+.sov3-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Status indicators */
+.sov3-card__status-icon {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sov3-card__status-icon--complete {
+  background: linear-gradient(135deg, #2ed573 0%, #26b85f 100%);
+  color: white;
+}
+
+.sov3-card__status-icon--active {
+  width: 12px;
+  height: 12px;
+  background: #e88d7d;
+  box-shadow: 0 0 0 4px rgba(232, 141, 125, 0.2);
+  animation: sov3ActivePulse 2s ease-in-out infinite;
+}
+
+@keyframes sov3ActivePulse {
+  0%, 100% { box-shadow: 0 0 0 4px rgba(232, 141, 125, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(232, 141, 125, 0.1); }
+}
+
+.sov3-card__status-icon--locked {
+  background: rgba(184, 184, 184, 0.2);
+  color: #b8b8b8;
+}
+
+.dark-mode .sov3-card__status-icon--locked {
+  background: rgba(255, 255, 255, 0.08);
+  color: #888;
+}
+
+.sov3-card__status-icon--phase2 {
+  background: rgba(232, 141, 125, 0.15);
+  color: #e88d7d;
+}
+
+/* Title group */
+.sov3-card__title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.sov3-card__title {
+  font-family: 'Patrick Hand', cursive;
+  font-size: 18px;
+  font-weight: 600;
+  color: #3d3d3d;
+  margin: 0;
+  line-height: 1.3;
+}
+
+.dark-mode .sov3-card__title {
+  color: #e8e0d8;
+}
+
+.sov3-card__number {
+  font-weight: 700;
+  color: #3d3d3d;
+}
+
+.dark-mode .sov3-card__number {
+  color: #e8e0d8;
+}
+
+.sov3-card__dot {
+  color: #ccc;
+  margin: 0 2px;
+}
+
+.dark-mode .sov3-card__dot {
+  color: #666;
+}
+
+.sov3-card__name {
+  color: #5a5a5a;
+}
+
+.dark-mode .sov3-card__name {
+  color: #c0b8b0;
+}
+
+.sov3-card__summary {
+  font-size: 13px;
+  color: #999;
+  margin: 2px 0 0 0;
+  line-height: 1.4;
+}
+
+.dark-mode .sov3-card__summary {
+  color: #888;
+}
+
+/* Strength level badges in summary */
+.sov3-card__strength--strong { color: #1a7a44; }
+.sov3-card__strength--developing { color: #9a7b00; }
+.sov3-card__strength--weak { color: #c0543a; }
+
+.dark-mode .sov3-card__strength--strong { color: #2ed573; }
+.dark-mode .sov3-card__strength--developing { color: #ffc107; }
+.dark-mode .sov3-card__strength--weak { color: #e88d7d; }
+
+/* Chevron */
+.sov3-card__chevron {
+  flex-shrink: 0;
+  color: #ccc;
+  transition: transform 0.3s ease;
+}
+
+.sov3-card__chevron--open {
+  transform: rotate(180deg);
+}
+
+.dark-mode .sov3-card__chevron {
+  color: #666;
+}
+
+/* Review button */
+.sov3-card__review-btn {
+  flex-shrink: 0;
+  padding: 6px 14px;
+  border: 1.5px solid rgba(46, 213, 115, 0.3);
+  border-radius: 20px;
+  background: rgba(46, 213, 115, 0.08);
+  color: #1a7a44;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sov3-card__review-btn:hover {
+  background: rgba(46, 213, 115, 0.15);
+  border-color: rgba(46, 213, 115, 0.5);
+}
+
+.dark-mode .sov3-card__review-btn {
+  background: rgba(46, 213, 115, 0.1);
+  border-color: rgba(46, 213, 115, 0.2);
+  color: #2ed573;
+}
+
+.dark-mode .sov3-card__review-btn:hover {
+  background: rgba(46, 213, 115, 0.18);
+}
+
+/* ── Steps list (expand/collapse) ── */
+.sov3-card__steps-wrapper {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sov3-card__steps-wrapper--open {
+  grid-template-rows: 1fr;
+}
+
+.sov3-card__steps {
+  overflow: hidden;
+}
+
+.sov3-card__steps-wrapper--open .sov3-card__steps {
+  padding-top: 12px;
+}
+
+/* ── Individual Step Row ── */
+.sov3-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 8px;
+  border-radius: 10px;
+  transition: background 0.2s ease;
+  cursor: pointer;
+}
+
+.sov3-step + .sov3-step {
+  border-top: 1px solid rgba(0, 0, 0, 0.04);
+}
+
+.dark-mode .sov3-step + .sov3-step {
+  border-top-color: rgba(255, 255, 255, 0.04);
+}
+
+.sov3-step:hover:not(.sov3-step--locked) {
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.dark-mode .sov3-step:hover:not(.sov3-step--locked) {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* Step icon */
+.sov3-step__icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.sov3-step__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Done step icon */
+.sov3-step--done .sov3-step__icon {
+  background: rgba(46, 213, 115, 0.15);
+  color: #2ed573;
+}
+
+.sov3-step--done .sov3-step__icon svg {
+  stroke: #2ed573;
+}
+
+/* Active step icon */
+.sov3-step--active .sov3-step__icon {
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  color: white;
+  box-shadow: 0 2px 8px rgba(232, 141, 125, 0.35);
+}
+
+.sov3-step--active .sov3-step__icon svg {
+  fill: white;
+}
+
+/* Locked step icon */
+.sov3-step--locked .sov3-step__icon {
+  background: rgba(184, 184, 184, 0.12);
+  color: #ccc;
+}
+
+.dark-mode .sov3-step--locked .sov3-step__icon {
+  background: rgba(255, 255, 255, 0.06);
+  color: #666;
+}
+
+.sov3-step--locked .sov3-step__icon svg {
+  fill: currentColor;
+  opacity: 0.5;
+}
+
+/* Step content */
+.sov3-step__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.sov3-step__format {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #b8b8b8;
+  line-height: 1.3;
+}
+
+.sov3-step--active .sov3-step__format {
+  color: #e88d7d;
+}
+
+.sov3-step--done .sov3-step__format {
+  color: #aaa;
+}
+
+.dark-mode .sov3-step__format {
+  color: #777;
+}
+
+.dark-mode .sov3-step--active .sov3-step__format {
+  color: #f4a896;
+}
+
+.sov3-step__label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #3d3d3d;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sov3-step--done .sov3-step__label {
+  color: #999;
+}
+
+.sov3-step--locked .sov3-step__label {
+  color: #bbb;
+}
+
+.dark-mode .sov3-step__label {
+  color: #e0d8d0;
+}
+
+.dark-mode .sov3-step--done .sov3-step__label {
+  color: #888;
+}
+
+.dark-mode .sov3-step--locked .sov3-step__label {
+  color: #666;
+}
+
+/* Active step row highlight */
+.sov3-step--active {
+  background: rgba(232, 141, 125, 0.06);
+  border-radius: 12px;
+  padding: 12px 12px;
+}
+
+.dark-mode .sov3-step--active {
+  background: rgba(232, 141, 125, 0.08);
+}
+
+.sov3-step--active .sov3-step__label {
+  font-weight: 600;
+  color: #3d3d3d;
+}
+
+.dark-mode .sov3-step--active .sov3-step__label {
+  color: #f0e8e0;
+}
+
+/* Adaptive step styling */
+.sov3-step--adaptive .sov3-step__format {
+  color: #9b59b6;
+  font-style: italic;
+}
+
+.dark-mode .sov3-step--adaptive .sov3-step__format {
+  color: #bb8fce;
+}
+
+/* Step action area */
+.sov3-step__action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+}
+
+.sov3-step__score {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2ed573;
+  padding: 3px 10px;
+  background: rgba(46, 213, 115, 0.1);
+  border-radius: 12px;
+}
+
+.dark-mode .sov3-step__score {
+  background: rgba(46, 213, 115, 0.12);
+}
+
+/* START button for active step */
+.sov3-step__start-btn {
+  padding: 8px 20px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 12px rgba(232, 141, 125, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sov3-step__start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 16px rgba(232, 141, 125, 0.45);
+}
+
+.sov3-step__start-btn:active {
+  transform: scale(0.98);
+}
+
+/* Time estimate for locked steps */
+.sov3-step__time {
+  font-size: 12px;
+  color: #ccc;
+}
+
+.dark-mode .sov3-step__time {
+  color: #666;
+}
+
+/* Locked step cursor */
+.sov3-step--locked {
+  cursor: default;
+}
+
+/* ── Empty state ── */
+.sov3-empty {
+  text-align: center;
+  padding: 48px 24px;
+  color: #999;
+  font-size: 15px;
+}
+
+.dark-mode .sov3-empty {
+  color: #777;
+}
+
+/* ── Mobile responsive ── */
+@media (max-width: 768px) {
+  .sov3-card {
+    padding: 14px 16px;
+    border-radius: 14px;
+  }
+
+  .sov3-card__title {
+    font-size: 16px;
+  }
+
+  .sov3-step {
+    gap: 10px;
+    padding: 8px 6px;
+  }
+
+  .sov3-step__icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sov3-step__icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .sov3-step__label {
+    font-size: 13px;
+  }
+
+  .sov3-step__start-btn {
+    padding: 7px 16px;
+    font-size: 12px;
+  }
+
+  .sov3-progress-bar {
+    max-width: 100%;
+  }
+}
+
+/* ============================================
+   MILESTONE — Standalone Mini-Test Cards
+   ============================================ */
+
+.sov3-milestone {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 20px;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-radius: 14px;
+  border: 1.5px solid rgba(232, 141, 125, 0.2);
+  box-shadow: 0 2px 12px rgba(232, 141, 125, 0.06);
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.dark-mode .sov3-milestone {
+  background: rgba(50, 50, 50, 0.75);
+  border-color: rgba(232, 141, 125, 0.15);
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.2);
+}
+
+.sov3-milestone:hover:not(.sov3-milestone--locked) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(232, 141, 125, 0.14);
+  border-color: rgba(232, 141, 125, 0.35);
+}
+
+.dark-mode .sov3-milestone:hover:not(.sov3-milestone--locked) {
+  box-shadow: 0 6px 20px rgba(232, 141, 125, 0.12);
+}
+
+/* ── Milestone states ── */
+.sov3-milestone--done {
+  border-color: rgba(46, 213, 115, 0.25);
+  background: rgba(46, 213, 115, 0.04);
+}
+
+.dark-mode .sov3-milestone--done {
+  border-color: rgba(46, 213, 115, 0.18);
+  background: rgba(46, 213, 115, 0.06);
+}
+
+.sov3-milestone--done:hover {
+  border-color: rgba(46, 213, 115, 0.4);
+  box-shadow: 0 6px 20px rgba(46, 213, 115, 0.1);
+}
+
+.sov3-milestone--active {
+  border-color: rgba(232, 141, 125, 0.4);
+  box-shadow: 0 4px 20px rgba(232, 141, 125, 0.15);
+  animation: sov3MilestoneGlow 3s ease-in-out infinite;
+}
+
+@keyframes sov3MilestoneGlow {
+  0%, 100% { box-shadow: 0 4px 20px rgba(232, 141, 125, 0.15); }
+  50% { box-shadow: 0 4px 28px rgba(232, 141, 125, 0.25); }
+}
+
+.dark-mode .sov3-milestone--active {
+  border-color: rgba(232, 141, 125, 0.35);
+}
+
+.sov3-milestone--locked {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sov3-milestone--locked:hover {
+  transform: none;
+  box-shadow: 0 2px 12px rgba(232, 141, 125, 0.06);
+}
+
+/* ── Connector lines ── */
+.sov3-milestone__connector {
+  display: none;
+}
+
+/* ── Milestone icon ── */
+.sov3-milestone__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(232, 141, 125, 0.12) 0%, rgba(232, 141, 125, 0.06) 100%);
+  color: #e88d7d;
+  transition: all 0.2s ease;
+}
+
+.sov3-milestone__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.sov3-milestone--done .sov3-milestone__icon {
+  background: linear-gradient(135deg, rgba(46, 213, 115, 0.15) 0%, rgba(46, 213, 115, 0.08) 100%);
+  color: #2ed573;
+}
+
+.sov3-milestone--active .sov3-milestone__icon {
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  color: white;
+  box-shadow: 0 3px 12px rgba(232, 141, 125, 0.3);
+}
+
+.sov3-milestone--active .sov3-milestone__icon svg {
+  fill: white;
+}
+
+.sov3-milestone--locked .sov3-milestone__icon {
+  background: rgba(184, 184, 184, 0.1);
+  color: #ccc;
+}
+
+.dark-mode .sov3-milestone--locked .sov3-milestone__icon {
+  background: rgba(255, 255, 255, 0.06);
+  color: #666;
+}
+
+/* ── Milestone content ── */
+.sov3-milestone__content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sov3-milestone__badge {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #e88d7d;
+  line-height: 1.3;
+}
+
+.sov3-milestone--done .sov3-milestone__badge {
+  color: #2ed573;
+}
+
+.dark-mode .sov3-milestone__badge {
+  color: #f4a896;
+}
+
+.dark-mode .sov3-milestone--done .sov3-milestone__badge {
+  color: #2ed573;
+}
+
+.sov3-milestone__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #3d3d3d;
+  line-height: 1.4;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sov3-milestone--done .sov3-milestone__label {
+  color: #777;
+}
+
+.sov3-milestone--locked .sov3-milestone__label {
+  color: #bbb;
+}
+
+.dark-mode .sov3-milestone__label {
+  color: #e0d8d0;
+}
+
+.dark-mode .sov3-milestone--done .sov3-milestone__label {
+  color: #999;
+}
+
+.dark-mode .sov3-milestone--locked .sov3-milestone__label {
+  color: #666;
+}
+
+/* ── Milestone action ── */
+.sov3-milestone__action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Score result badge with level */
+.sov3-milestone__result {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1px;
+  padding: 4px 14px;
+  border-radius: 12px;
+  min-width: 56px;
+}
+
+.sov3-milestone__score {
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.sov3-milestone__level {
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  line-height: 1.3;
+}
+
+/* Strong (85%+) */
+.sov3-milestone__result--strong {
+  background: rgba(46, 213, 115, 0.1);
+  border: 1px solid rgba(46, 213, 115, 0.2);
+}
+
+.sov3-milestone__result--strong .sov3-milestone__score { color: #1a7a44; }
+.sov3-milestone__result--strong .sov3-milestone__level { color: #2ed573; }
+
+.dark-mode .sov3-milestone__result--strong {
+  background: rgba(46, 213, 115, 0.12);
+  border-color: rgba(46, 213, 115, 0.18);
+}
+
+.dark-mode .sov3-milestone__result--strong .sov3-milestone__score { color: #2ed573; }
+.dark-mode .sov3-milestone__result--strong .sov3-milestone__level { color: #26b85f; }
+
+/* Developing (60-84%) */
+.sov3-milestone__result--developing {
+  background: rgba(255, 193, 7, 0.08);
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.sov3-milestone__result--developing .sov3-milestone__score { color: #9a7b00; }
+.sov3-milestone__result--developing .sov3-milestone__level { color: #c49b00; }
+
+.dark-mode .sov3-milestone__result--developing {
+  background: rgba(255, 193, 7, 0.1);
+  border-color: rgba(255, 193, 7, 0.15);
+}
+
+.dark-mode .sov3-milestone__result--developing .sov3-milestone__score { color: #ffc107; }
+.dark-mode .sov3-milestone__result--developing .sov3-milestone__level { color: #ffca28; }
+
+/* Weak (<60%) */
+.sov3-milestone__result--weak {
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.2);
+}
+
+.sov3-milestone__result--weak .sov3-milestone__score { color: #c0543a; }
+.sov3-milestone__result--weak .sov3-milestone__level { color: #e88d7d; }
+
+.dark-mode .sov3-milestone__result--weak {
+  background: rgba(232, 141, 125, 0.1);
+  border-color: rgba(232, 141, 125, 0.15);
+}
+
+.dark-mode .sov3-milestone__result--weak .sov3-milestone__score { color: #e88d7d; }
+.dark-mode .sov3-milestone__result--weak .sov3-milestone__level { color: #f4a896; }
+
+/* Fallback "Passed" badge when no score tracked */
+.sov3-milestone__done-badge {
+  font-size: 13px;
+  font-weight: 600;
+  color: #2ed573;
+  padding: 4px 12px;
+  background: rgba(46, 213, 115, 0.1);
+  border-radius: 12px;
+}
+
+.dark-mode .sov3-milestone__done-badge {
+  background: rgba(46, 213, 115, 0.12);
+}
+
+.sov3-milestone__start-btn {
+  padding: 8px 22px;
+  border: none;
+  border-radius: 20px;
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 12px rgba(232, 141, 125, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sov3-milestone__start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 16px rgba(232, 141, 125, 0.45);
+}
+
+.sov3-milestone__start-btn:active {
+  transform: scale(0.98);
+}
+
+.sov3-milestone__retake {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 12px;
+  border: 1px solid rgba(232, 141, 125, 0.3);
+  border-radius: 14px;
+  background: transparent;
+  color: #e88d7d;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.sov3-milestone__retake:hover {
+  background: rgba(232, 141, 125, 0.1);
+  border-color: rgba(232, 141, 125, 0.5);
+}
+
+.sov3-milestone__retake:active {
+  transform: scale(0.96);
+}
+
+.dark-mode .sov3-milestone__retake {
+  color: #f4a896;
+  border-color: rgba(244, 168, 150, 0.25);
+}
+
+.dark-mode .sov3-milestone__retake:hover {
+  background: rgba(244, 168, 150, 0.1);
+  border-color: rgba(244, 168, 150, 0.4);
+}
+
+.sov3-milestone__lock {
+  width: 16px;
+  height: 16px;
+  color: #ccc;
+}
+
+.dark-mode .sov3-milestone__lock {
+  color: #666;
+}
+
+/* ── Milestone mobile ── */
+@media (max-width: 768px) {
+  .sov3-milestone {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .sov3-milestone__icon {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+  }
+
+  .sov3-milestone__icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .sov3-milestone__label {
+    font-size: 13px;
+  }
+
+  .sov3-milestone__start-btn {
+    padding: 7px 16px;
+    font-size: 12px;
+  }
+}
+
+/* ============================================
+   INSIGHTS SIDEBAR — Ambient Progress Panel
+   ============================================ */
+
+.sov3-insights {
+  position: fixed;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 200px;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(200, 170, 160, 0.15);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  cursor: pointer;
+  opacity: 0.55;
+  filter: saturate(0.5);
+  transition: opacity 0.35s ease, filter 0.35s ease, box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
+  box-shadow: 0 4px 20px rgba(100, 80, 60, 0.06);
+  z-index: 100;
+}
+
+.sov3-insights:hover {
+  opacity: 1;
+  filter: saturate(1);
+  box-shadow: 0 8px 32px rgba(100, 80, 60, 0.12);
+  border-color: rgba(232, 141, 125, 0.3);
+}
+
+.dark-mode .sov3-insights {
+  background: rgba(45, 45, 45, 0.92);
+  border-color: rgba(255, 255, 255, 0.06);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+}
+
+.dark-mode .sov3-insights:hover {
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-color: rgba(232, 141, 125, 0.25);
+}
+
+/* ── Insights header ── */
+.sov3-insights__header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  color: #e88d7d;
+}
+
+.dark-mode .sov3-insights__header {
+  border-bottom-color: rgba(255, 255, 255, 0.06);
+}
+
+.sov3-insights__title {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #999;
+  flex: 1;
+}
+
+.dark-mode .sov3-insights__title {
+  color: #888;
+}
+
+/* ── Strength chips ── */
+.sov3-insights__chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sov3-insights__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sov3-insights__chip--strong {
+  background: rgba(46, 213, 115, 0.1);
+  color: #1a7a44;
+  border: 1px solid rgba(46, 213, 115, 0.2);
+}
+
+.sov3-insights__chip--strong svg {
+  stroke: #2ed573;
+}
+
+.dark-mode .sov3-insights__chip--strong {
+  background: rgba(46, 213, 115, 0.12);
+  color: #2ed573;
+  border-color: rgba(46, 213, 115, 0.18);
+}
+
+.sov3-insights__chip--developing {
+  background: rgba(255, 193, 7, 0.1);
+  color: #9a7b00;
+  border: 1px solid rgba(255, 193, 7, 0.2);
+}
+
+.sov3-insights__chip--developing svg {
+  stroke: #ffc107;
+}
+
+.dark-mode .sov3-insights__chip--developing {
+  background: rgba(255, 193, 7, 0.1);
+  color: #ffc107;
+  border-color: rgba(255, 193, 7, 0.15);
+}
+
+.sov3-insights__chip--weak {
+  background: rgba(232, 141, 125, 0.1);
+  color: #c0543a;
+  border: 1px solid rgba(232, 141, 125, 0.2);
+}
+
+.sov3-insights__chip--weak svg {
+  stroke: #e88d7d;
+}
+
+.dark-mode .sov3-insights__chip--weak {
+  background: rgba(232, 141, 125, 0.1);
+  color: #e88d7d;
+  border-color: rgba(232, 141, 125, 0.15);
+}
+
+/* ── Topic progress bars ── */
+.sov3-insights__topics {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sov3-insights__topic {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sov3-insights__topic-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: #666;
+  width: 70px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.dark-mode .sov3-insights__topic-name {
+  color: #aaa;
+}
+
+.sov3-insights__topic-bar {
+  flex: 1;
+  height: 5px;
+  background: rgba(0, 0, 0, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.dark-mode .sov3-insights__topic-bar {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sov3-insights__topic-fill {
+  height: 100%;
+  border-radius: 3px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sov3-insights__topic-fill--strong {
+  background: linear-gradient(90deg, #2ed573, #26b85f);
+}
+
+.sov3-insights__topic-fill--developing {
+  background: linear-gradient(90deg, #ffc107, #ffca28);
+}
+
+.sov3-insights__topic-fill--weak {
+  background: linear-gradient(90deg, #e88d7d, #f4a896);
+}
+
+.sov3-insights__topic-pct {
+  font-size: 10px;
+  font-weight: 700;
+  width: 28px;
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.sov3-insights__topic-pct--strong { color: #1a7a44; }
+.sov3-insights__topic-pct--developing { color: #9a7b00; }
+.sov3-insights__topic-pct--weak { color: #c0543a; }
+
+.dark-mode .sov3-insights__topic-pct--strong { color: #2ed573; }
+.dark-mode .sov3-insights__topic-pct--developing { color: #ffc107; }
+.dark-mode .sov3-insights__topic-pct--weak { color: #e88d7d; }
+
+/* ── Insights footer ── */
+.sov3-insights__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 11px;
+  font-weight: 600;
+  color: #e88d7d;
+  transition: gap 0.2s ease;
+}
+
+.sov3-insights:hover .sov3-insights__footer {
+  gap: 6px;
+}
+
+.dark-mode .sov3-insights__footer {
+  border-top-color: rgba(255, 255, 255, 0.06);
+  color: #f4a896;
+}
+
+/* ── Insights responsive: hide on mobile/tablet ── */
+@media (max-width: 1100px) {
+  .sov3-insights {
+    display: none;
   }
 }
