@@ -251,55 +251,60 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
     }
 
-    // Read streaming response
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-
-    let buffer = '';
     const results = {
-      files: new Map(), // file_id -> file data
+      files: new Map(),
       totalWords: 0,
       completed: 0,
       total: files.length
     };
 
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) break;
-      
-      buffer += decoder.decode(value, { stream: true });
-      
-      // Process complete JSON lines
-      const lines = buffer.split('\n');
-      buffer = lines.pop(); // Keep incomplete line in buffer
-      
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        
-        try {
-          const update = JSON.parse(line);
-          
-          // Call progress callback
-          if (onProgress) {
-            onProgress(update);
-          }
-          
-          // Track completions
-          if (update.type === 'file_complete') {
-            results.files.set(update.file_id, update);
-            results.totalWords += update.word_count || 0;
-            results.completed += 1;
-          }
-          
-          // Handle errors
-          if (update.type === 'error') {
-            throw new Error(update.message);
-          }
-          
-        } catch (parseError) {
-          console.error('Failed to parse upload update:', line, parseError);
+    // Helper: process a single NDJSON line
+    const processLine = (line) => {
+      if (!line.trim()) return;
+      try {
+        const update = JSON.parse(line);
+        if (onProgress) onProgress(update);
+        if (update.type === 'file_complete') {
+          results.files.set(update.file_id, update);
+          results.totalWords += update.word_count || 0;
+          results.completed += 1;
         }
+        if (update.type === 'error') {
+          throw new Error(update.message);
+        }
+      } catch (parseError) {
+        // Re-throw upload errors, ignore JSON parse failures
+        if (parseError.message && !parseError.message.includes('JSON')) throw parseError;
+        console.error('Failed to parse upload update:', line, parseError);
+      }
+    };
+
+    // iOS Safari (especially < 16.4) may not support ReadableStream on response.body.
+    // Fall back to reading the full response text when streaming is unavailable.
+    if (response.body && typeof response.body.getReader === 'function') {
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop();
+
+        for (const line of lines) {
+          processLine(line);
+        }
+      }
+      // Process any remaining data in buffer
+      if (buffer.trim()) processLine(buffer);
+    } else {
+      // Fallback: read full response as text (no streaming progress, but it works)
+      const text = await response.text();
+      for (const line of text.split('\n')) {
+        processLine(line);
       }
     }
 

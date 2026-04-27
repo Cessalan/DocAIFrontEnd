@@ -792,6 +792,32 @@ const resources = {
         creatingPath: "Creating your personalized study path...",
         savingProgress: "Setting up your journey...",
         ready: "Ready to learn!",
+        // Rotating loading messages for study plan generation
+        loadingMessages: [
+          "Reading through your notes...",
+          "Mapping out the key concepts...",
+          "Building your personalized path...",
+          "Connecting the dots between topics...",
+          "Structuring your learning journey...",
+          "Identifying what matters most...",
+          "Tailoring the difficulty to you...",
+          "Almost there, fine-tuning your plan...",
+          "Organizing topics for maximum retention...",
+          "Crafting the perfect study order..."
+        ],
+        // Rotating loading messages for quiz generation inside study mode
+        quizLoadingMessages: [
+          "Cooking up some brain teasers...",
+          "Picking the trickiest concepts...",
+          "Writing questions that actually matter...",
+          "Calibrating difficulty to your level...",
+          "Mixing in a few curveballs...",
+          "Making sure these are NCLEX-worthy...",
+          "Choosing the best clinical scenarios...",
+          "Almost ready, sharpening the questions...",
+          "Selecting the most important topics...",
+          "Preparing your knowledge check..."
+        ],
         errorGenerating: "Failed to create study path. Please try again.",
         document: "document",
         documents: "documents",
@@ -1907,6 +1933,30 @@ const resources = {
         creatingPath: "Création de ton parcours d'étude personnalisé...",
         savingProgress: "Mise en place de ton parcours...",
         ready: "Prêt à apprendre!",
+        loadingMessages: [
+          "Lecture de tes notes en cours...",
+          "Repérage des concepts clés...",
+          "Construction de ton parcours personnalisé...",
+          "Connexion des sujets entre eux...",
+          "Structuration de ton apprentissage...",
+          "Identification de l'essentiel...",
+          "Ajustement de la difficulté pour toi...",
+          "Presque prêt, peaufinage du plan...",
+          "Organisation des sujets pour mieux retenir...",
+          "Création de l'ordre d'étude parfait..."
+        ],
+        quizLoadingMessages: [
+          "Préparation de questions corsées...",
+          "Sélection des concepts les plus importants...",
+          "Rédaction de questions qui comptent vraiment...",
+          "Calibrage de la difficulté à ton niveau...",
+          "Ajout de quelques pièges bien placés...",
+          "Vérification du niveau NCLEX...",
+          "Choix des meilleurs scénarios cliniques...",
+          "Presque prêt, affinage des questions...",
+          "Sélection des sujets prioritaires...",
+          "Préparation de ta vérification des connaissances..."
+        ],
         errorGenerating: "Échec de la création du parcours. Réessaie.",
         document: "document",
         documents: "documents",

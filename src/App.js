@@ -21,6 +21,7 @@ import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
 import OnboardingModal from "./Components/Onboarding/OnboardingModal";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
+import { getPendingFiles, clearPendingFiles } from "./utils/pendingUploadStore";
 
 function ChatLayout() {
   const { chatId: urlChatId } = useParams(); // Get chatId from URL
@@ -113,68 +114,26 @@ function ChatLayout() {
   // RESTORE PENDING UPLOAD AFTER LOGIN
   // ============================================
   // When user returns from login after trying to upload files,
-  // restore the files from sessionStorage and set them as pendingUploadFiles.
+  // restore the files from the in-memory store and set them as pendingUploadFiles.
   // ChatInterface will then pick them up and process them normally.
   // ============================================
   useEffect(() => {
-    // Only run if user is logged in
     if (!user) return;
 
-    // Check for pending upload in sessionStorage
-    const pendingUploadStateStr = sessionStorage.getItem('pendingUploadState');
-    const pendingUploadFilesStr = sessionStorage.getItem('pendingUploadFiles');
+    const { files, meta } = getPendingFiles();
+    if (!files || files.length === 0) return;
 
-    if (!pendingUploadStateStr || !pendingUploadFilesStr) return;
+    // Check if the session is still valid (less than 30 minutes old)
+    const isValid = meta && (Date.now() - meta.timestamp < 30 * 60 * 1000);
+    if (!isValid) {
+      clearPendingFiles();
+      return;
+    }
 
-    try {
-      const uploadState = JSON.parse(pendingUploadStateStr);
+    setPendingUploadFiles(files);
 
-      // Check if the session is still valid (less than 30 minutes old)
-      const isValid = Date.now() - uploadState.timestamp < 30 * 60 * 1000;
-
-      if (!isValid) {
-        console.log('⏰ Pending upload session expired');
-        sessionStorage.removeItem('pendingUploadState');
-        sessionStorage.removeItem('pendingUploadFiles');
-        return;
-      }
-
-      // Parse the base64 files array
-      const filesBase64 = JSON.parse(pendingUploadFilesStr);
-      const fileInfos = uploadState.files || [];
-
-      console.log(`🔄 Restoring ${fileInfos.length} pending file(s) after login`);
-
-      // Convert each base64 back to File object
-      const restoredFiles = filesBase64.map((base64Data, index) => {
-        const fileInfo = fileInfos[index] || {};
-        const byteString = atob(base64Data.split(',')[1]);
-        const mimeType = fileInfo.fileType || 'application/octet-stream';
-        const ab = new ArrayBuffer(byteString.length);
-        const ia = new Uint8Array(ab);
-        for (let i = 0; i < byteString.length; i++) {
-          ia[i] = byteString.charCodeAt(i);
-        }
-        const blob = new Blob([ab], { type: mimeType });
-        return new File([blob], fileInfo.fileName || `file_${index}`, { type: mimeType });
-      });
-
-      // Clear the session storage
-      sessionStorage.removeItem('pendingUploadState');
-      sessionStorage.removeItem('pendingUploadFiles');
-
-      // Set the pending files - ChatInterface will handle the upload
-      setPendingUploadFiles(restoredFiles);
-
-      // Check if we should go to study mode after upload
-      if (uploadState.goToStudyMode) {
-        setGoToStudyMode(true);
-      }
-
-    } catch (error) {
-      console.error('Failed to restore pending upload:', error);
-      sessionStorage.removeItem('pendingUploadState');
-      sessionStorage.removeItem('pendingUploadFiles');
+    if (meta.goToStudyMode) {
+      setGoToStudyMode(true);
     }
   }, [user]);
 

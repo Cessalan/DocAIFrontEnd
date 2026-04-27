@@ -41,6 +41,21 @@ const StartStudyModal = ({
 
   const [MascotComponent] = useState(() => MASCOTS[Math.floor(Math.random() * MASCOTS.length)]);
 
+  // Rotating loading messages
+  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
+  const loadingMessages = t('study.loadingMessages', { returnObjects: true });
+  const messagesArray = Array.isArray(loadingMessages) ? loadingMessages : [];
+
+  useEffect(() => {
+    if (phase !== 'loading' || messagesArray.length === 0) return;
+    // Start from a random index so it feels fresh each time
+    setLoadingMsgIndex(Math.floor(Math.random() * messagesArray.length));
+    const interval = setInterval(() => {
+      setLoadingMsgIndex(prev => (prev + 1) % messagesArray.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [phase, messagesArray.length]);
+
   // Reset on open
   useEffect(() => {
     if (isOpen) {
@@ -127,7 +142,11 @@ const StartStudyModal = ({
                 <div className="study-modal-loader-dot" />
                 <div className="study-modal-loader-dot" />
               </div>
-              <p className="study-modal-step">{t('study.analyzingDocs', 'Analyzing your documents...')}</p>
+              <p className="study-modal-step" key={loadingMsgIndex}>
+                {messagesArray.length > 0
+                  ? messagesArray[loadingMsgIndex]
+                  : t('study.analyzingDocs', 'Analyzing your documents...')}
+              </p>
             </div>
           </div>
         )}

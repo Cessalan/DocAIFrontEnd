@@ -27,7 +27,7 @@ const FileUploadModal = ({
     'text/markdown'
   ];
 
-  const acceptedExtensions = '.pdf,.ppt,.pptx,.doc,.docx,.txt,.md';
+  const acceptedExtensions = '.pdf,.ppt,.pptx,.doc,.docx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown';
 
   // Handle drag events
   const handleDragEnter = useCallback((e) => {
@@ -60,11 +60,13 @@ const FileUploadModal = ({
 
   // Handle file selection
   const handleFile = useCallback((file) => {
-    // Validate file type
-    const isValidType = acceptedTypes.includes(file.type) ||
-      /\.(pdf|ppt|pptx|doc|docx|txt|md)$/i.test(file.name);
+    // Validate file type — iOS/iCloud files often have empty file.type
+    const hasValidMime = file.type && acceptedTypes.includes(file.type);
+    const hasValidExt = /\.(pdf|ppt|pptx|doc|docx|txt|md)$/i.test(file.name);
+    // iOS Safari / iCloud: files can arrive with empty type AND no extension
+    const isIosUnknown = !file.type && !file.name.includes('.');
 
-    if (!isValidType) {
+    if (!hasValidMime && !hasValidExt && !isIosUnknown) {
       alert('Please upload a PDF, PowerPoint, Word document, or text file.');
       return;
     }

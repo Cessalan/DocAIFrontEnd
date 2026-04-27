@@ -8,6 +8,7 @@ import './AuthPage.css'
 
 // translation
 import { useTranslation } from 'react-i18next';
+import { hasPendingFiles } from '../../utils/pendingUploadStore';
 
 const Login = () => {
   // State for form inputs
@@ -142,8 +143,7 @@ const Login = () => {
       // navigate to /c - since user is now logged in, the ChatLayout
       // will render and the pending upload will be handled
       // ------------------------------------------
-      const pendingUploadState = sessionStorage.getItem('pendingUploadState');
-      if (pendingUploadState) {
+      if (hasPendingFiles()) {
         // Navigate to /c - the upload will be restored there
         navigate('/c', { replace: true });
         return;

@@ -2110,6 +2110,12 @@ body.dark-mode .study-lesson-btn-green:hover {
   font-size: 15px;
   color: #6b6b6b;
   margin: 0;
+  animation: studyMsgFadeIn 0.5s ease-out;
+}
+
+@keyframes studyMsgFadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .study-modal-error {
@@ -4891,6 +4897,7 @@ body.dark-mode .study-mode-focused .study-main-content {
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
+  animation: studyMsgFadeIn 0.5s ease-out;
 }
 
 .study-streaming-loading .study-loading-subtext {
@@ -9224,8 +9231,39 @@ body.dark-mode .celebration-continue-btn:hover {
 
 /* Locked card */
 .sov3-card--locked {
-  opacity: 0.55;
   cursor: default;
+  position: relative;
+}
+
+.sov3-card--locked .sov3-card__header {
+  pointer-events: none;
+}
+
+.sov3-card--locked .sov3-card__title-group {
+  opacity: 0.55;
+}
+
+.sov3-card__lock {
+  flex-shrink: 0;
+  color: #888;
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  background: rgba(140, 140, 140, 0.13);
+  border-radius: 50%;
+}
+
+.sov3-card__lock svg {
+  width: 22px;
+  height: 22px;
+}
+
+.dark-mode .sov3-card__lock {
+  color: #aaa;
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .sov3-card--dev {
@@ -9293,13 +9331,20 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .sov3-card__status-icon--locked {
-  background: rgba(184, 184, 184, 0.2);
-  color: #b8b8b8;
+  background: rgba(140, 140, 140, 0.15);
+  color: #888;
+  width: 32px;
+  height: 32px;
+}
+
+.sov3-card__status-icon--locked svg {
+  width: 16px;
+  height: 16px;
 }
 
 .dark-mode .sov3-card__status-icon--locked {
-  background: rgba(255, 255, 255, 0.08);
-  color: #888;
+  background: rgba(255, 255, 255, 0.12);
+  color: #aaa;
 }
 
 .sov3-card__status-icon--phase2 {
@@ -9668,6 +9713,25 @@ body.dark-mode .celebration-continue-btn:hover {
 /* Locked step cursor */
 .sov3-step--locked {
   cursor: default;
+  opacity: 0.6;
+}
+
+/* Lock badge on locked steps */
+.sov3-step__lock-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(184, 184, 184, 0.15);
+  color: #b8b8b8;
+  flex-shrink: 0;
+}
+
+.dark-mode .sov3-step__lock-badge {
+  background: rgba(255, 255, 255, 0.06);
+  color: #666;
 }
 
 /* ── Empty state ── */

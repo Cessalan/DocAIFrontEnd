@@ -68,6 +68,21 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   const [waitingForNextQuestion, setWaitingForNextQuestion] = useState(false);
   const startTimeRef = useRef(Date.now());
 
+  // Rotating quiz loading messages
+  const [quizMsgIndex, setQuizMsgIndex] = useState(0);
+  const quizLoadingMessages = t('study.quizLoadingMessages', { returnObjects: true });
+  const quizMsgArray = Array.isArray(quizLoadingMessages) ? quizLoadingMessages : [];
+  const isShowingQuizLoading = !viewOnly && ((isStreaming && totalQuestions === 0) || waitingForNextQuestion);
+
+  useEffect(() => {
+    if (!isShowingQuizLoading || quizMsgArray.length === 0) return;
+    setQuizMsgIndex(Math.floor(Math.random() * quizMsgArray.length));
+    const interval = setInterval(() => {
+      setQuizMsgIndex(prev => (prev + 1) % quizMsgArray.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [isShowingQuizLoading, quizMsgArray.length]);
+
   // Restore from saved progress OR initialize fresh queue
   // Also handle streaming: update queue as new questions arrive
   useEffect(() => {
@@ -628,8 +643,10 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         <div className="study-card-content">
           <div className="study-streaming-loading">
             <div className="study-loading-spinner" />
-            <p className="study-loading-text">
-              {t('study.generatingQuestions', 'Generating questions...')}
+            <p className="study-loading-text" key={quizMsgIndex}>
+              {quizMsgArray.length > 0
+                ? quizMsgArray[quizMsgIndex]
+                : t('study.generatingQuestions', 'Generating questions...')}
             </p>
           </div>
         </div>

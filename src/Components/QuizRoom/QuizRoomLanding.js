@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import BrainMascot from './BrainMascot';
 import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
+import { setPendingFiles } from '../../utils/pendingUploadStore';
 import './QuizRoomLanding.css';
 // Import the login prompt styles from DedicatedQuizPage
 import './DedicatedQuizPage.css';
@@ -319,54 +320,30 @@ const QuizRoomLanding = () => {
   // - After user logs in (with the pending files)
   // ============================================
   const processFileUpload = async (files) => {
-    // Ensure files is an array
     const fileArray = Array.isArray(files) ? files : [files];
     if (fileArray.length === 0) return;
-
-    // ============================================
-    // SIMPLE FLOW: Store files and navigate to /c
-    // ChatInterface will handle the actual upload
-    // ============================================
 
     setUploadPhase('processing');
 
     try {
-      // Convert files to base64 for sessionStorage
-      const filesBase64 = await Promise.all(
-        fileArray.map(file => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        })
-      );
-
-      // Store file metadata
-      // goToStudyMode flag tells ChatInterface to automatically start study mode after upload
-      const uploadState = {
+      const meta = {
         files: fileArray.map(f => ({
           fileName: f.name,
           fileType: f.type
         })),
         timestamp: Date.now(),
-        goToStudyMode: true // Automatically enter study mode after upload from landing page
+        goToStudyMode: true
       };
 
-      // Save to sessionStorage - ChatLayout will restore these
-      sessionStorage.setItem('pendingUploadState', JSON.stringify(uploadState));
-      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
+      // Store File objects in memory — avoids iOS sessionStorage 5MB limit
+      setPendingFiles(fileArray, meta);
 
-      console.log(`📦 Stored ${fileArray.length} file(s) in sessionStorage for ChatInterface`);
-
-      // Navigate to chat - ChatInterface will handle the upload
       setUploadPhase('idle');
       navigate('/c');
 
     } catch (error) {
       setUploadPhase('idle');
-      console.error('❌ Failed to prepare files:', error);
+      console.error('Failed to prepare files:', error);
       alert(t('landing.uploadError', 'Failed to process your files. Please try again.'));
     }
   };
@@ -378,36 +355,20 @@ const QuizRoomLanding = () => {
   // ChatLayout will restore these and pass to ChatInterface.
   // ============================================
 
-  // Helper to store pending files to sessionStorage
-  const storePendingFilesToSession = async (files) => {
+  // Store pending files in memory for restoration after login
+  const storePendingFilesForLogin = (files) => {
     try {
-      // Convert files to base64
-      const filesBase64 = await Promise.all(
-        files.map(file => {
-          return new Promise((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-        })
-      );
-
-      // Store file metadata
-      const uploadState = {
+      const meta = {
         files: files.map(f => ({
           fileName: f.name,
           fileType: f.type
         })),
         timestamp: Date.now()
       };
-
-      sessionStorage.setItem('pendingUploadState', JSON.stringify(uploadState));
-      sessionStorage.setItem('pendingUploadFiles', JSON.stringify(filesBase64));
-      console.log(`📦 Stored ${files.length} file(s) in sessionStorage for after login`);
+      setPendingFiles(files, meta);
       return true;
     } catch (error) {
-      console.error('Failed to store files to sessionStorage:', error);
+      console.error('Failed to store pending files:', error);
       return false;
     }
   };
@@ -416,7 +377,7 @@ const QuizRoomLanding = () => {
   const handleLoginFromPrompt = async () => {
     // Store files to sessionStorage so they persist through login
     if (pendingFiles.length > 0) {
-      await storePendingFilesToSession(pendingFiles);
+      storePendingFilesForLogin(pendingFiles);
     }
 
     setPendingFiles([]);
@@ -434,7 +395,7 @@ const QuizRoomLanding = () => {
   const handleSignupFromPrompt = async () => {
     // Store files to sessionStorage so they persist through signup
     if (pendingFiles.length > 0) {
-      await storePendingFilesToSession(pendingFiles);
+      storePendingFilesForLogin(pendingFiles);
     }
 
     setPendingFiles([]);
@@ -509,7 +470,7 @@ const QuizRoomLanding = () => {
       <input
         ref={fileInputRef}
         type="file"
-        accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.png,.jpg,.jpeg"
+        accept=".pdf,.ppt,.pptx,.doc,.docx,.txt,.md,.png,.jpg,.jpeg,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,text/plain,text/markdown,image/png,image/jpeg"
         onChange={handleFileSelected}
         multiple
         style={{ display: 'none' }}

@@ -271,7 +271,13 @@ const StudyPlanOverview = ({
         onClick={canClick ? (e) => { e.stopPropagation(); onNodeSelect(step); } : undefined}
       >
         <div className="sov3-step__icon">
-          {getNodeIcon(step.type, step.status)}
+          {isLocked && !isDev ? (
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
+            </svg>
+          ) : (
+            getNodeIcon(step.type, step.status)
+          )}
         </div>
         <div className="sov3-step__content">
           <span className="sov3-step__format">
@@ -298,7 +304,11 @@ const StudyPlanOverview = ({
             </button>
           )}
           {isLocked && !isDev && (
-            <span className="sov3-step__time">~{getNodeEstimate(step.type)} min</span>
+            <span className="sov3-step__lock-badge">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
+                <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
+              </svg>
+            </span>
           )}
         </div>
       </div>
@@ -393,6 +403,14 @@ const StudyPlanOverview = ({
             >
               {t('study.review', 'Review')}
             </button>
+          )}
+
+          {isLocked && !isDev && (
+            <div className="sov3-card__lock">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
+              </svg>
+            </div>
           )}
         </div>
 

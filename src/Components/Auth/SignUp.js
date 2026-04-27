@@ -3,6 +3,7 @@ import { Navigate, Link, useSearchParams, useLocation, useNavigate } from "react
 import { handleCreateUserWithEmailAndPassword, handleSignInWithGoogleAccount, handleSignInWithAppleAccount } from "../../Firebase/auth";
 import { useAuth } from "../../Contexts/AuthContext/AuthContext";
 import { auth } from "../../Firebase/config";
+import { hasPendingFiles } from '../../utils/pendingUploadStore';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 
@@ -88,8 +89,7 @@ const Signup = () => {
       // navigate to /c - since user is now logged in, the ChatLayout
       // will render and the pending upload will be handled
       // ------------------------------------------
-      const pendingUploadState = sessionStorage.getItem('pendingUploadState');
-      if (pendingUploadState) {
+      if (hasPendingFiles()) {
         // Navigate to /c - the upload will be restored there
         navigate('/c', { replace: true });
         return;

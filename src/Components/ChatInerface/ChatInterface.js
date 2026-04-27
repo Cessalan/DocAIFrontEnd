@@ -2222,7 +2222,18 @@ const ChatInterface = ({
   const SUPPORTED_EXTENSIONS = /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|txt|md)$/i;
 
   const isFileTypeSupported = (file) => {
-    return SUPPORTED_MIME_TYPES.includes(file.type) || SUPPORTED_EXTENSIONS.test(file.name);
+    // Check MIME type first (works on most desktop browsers)
+    if (file.type && SUPPORTED_MIME_TYPES.includes(file.type)) return true;
+
+    // Fallback to extension check (critical for iOS/iCloud where file.type is often empty)
+    if (SUPPORTED_EXTENSIONS.test(file.name)) return true;
+
+    // iOS Safari / iCloud: files can arrive with empty type AND no extension.
+    // Allow these through — the backend will reject truly unsupported files.
+    // This is safer than silently blocking valid documents.
+    if (!file.type && !file.name.includes('.')) return true;
+
+    return false;
   };
 
   const handleFileSelect = async (e) => {
@@ -2381,7 +2392,9 @@ const ChatInterface = ({
       ));
     }
 
-    e.target.value = null;
+    // Reset the input so the same file can be re-selected.
+    // iOS Safari requires '' (null is a no-op on WebKit).
+    if (e.target) e.target.value = '';
   };
 
   // ============================================
@@ -3435,16 +3448,12 @@ const ChatInterface = ({
     const blob = new Blob([text], { type: 'text/plain' });
     const file = new File([blob], 'pasted-notes.txt', { type: 'text/plain' });
 
-    // Create a DataTransfer to build a synthetic FileList
-    const dataTransfer = new DataTransfer();
-    dataTransfer.items.add(file);
-
-    // Set the file input and trigger the same upload flow
-    if (documentFileInputRef.current) {
-      documentFileInputRef.current.files = dataTransfer.files;
-      window._pendingStudyJourney = true;
-      documentFileInputRef.current.dispatchEvent(new Event('change', { bubbles: true }));
-    }
+    // Call handleFileSelect directly with a synthetic event.
+    // Avoids DataTransfer constructor which is unsupported on iOS Safari.
+    window._pendingStudyJourney = true;
+    handleFileSelect({
+      target: { files: [file], value: '' }
+    });
 
     // Close modal and reset
     setShowPasteNotesModal(false);
@@ -4397,6 +4406,7 @@ const ChatInterface = ({
             onChange={handleFileSelect}
             style={{ display: 'none' }}
             multiple
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/markdown"
           />
 
           {/* Input wrapper - vertical layout with buttons at bottom */}
