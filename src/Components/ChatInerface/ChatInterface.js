@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useLayoutEffect } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
 import { Navigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -332,6 +332,24 @@ const ChatInterface = ({
   const streamingContentRef = useRef('');
   const streamingMessageIdRef = useRef(null);
 
+  // Stable-callback refs: forwarding pattern for React.memo children
+  const chatMessagesRef = useRef(chatMessages);
+  chatMessagesRef.current = chatMessages;
+  const currentChatIDRef = useRef(currentChatID);
+  currentChatIDRef.current = currentChatID;
+  const userInputTextRef = useRef(userInputText);
+  userInputTextRef.current = userInputText;
+  const uploadedFilesListRef = useRef(uploadedFilesList);
+  uploadedFilesListRef.current = uploadedFilesList;
+  const currentLanguageRef = useRef(null);
+
+  // Ref-forwarding for callbacks passed to memoized children.
+  // Refs are initialized here (before the functions are defined),
+  // then .current is updated after each function definition.
+  const handleSendNewUserMessageRef = useRef(null);
+  const handleQuizAnswerSelectRef = useRef(null);
+  const handlePostDocumentUploadOptionRef = useRef(null);
+
   // ============================================
   // HELPER FUNCTIONS
   // ============================================
@@ -510,26 +528,29 @@ const ChatInterface = ({
   // Auto-scroll during streaming disabled - let user read at their own pace
   // The scroll-to-bottom button is available if they want to jump to latest content
 
+  // Cache textarea max height — only recalculate on window resize, not every keystroke
+  const textareaMaxHeightRef = useRef(Math.max(160, Math.floor(window.innerHeight * 0.55)));
+  useEffect(() => {
+    const onResize = () => {
+      textareaMaxHeightRef.current = Math.max(160, Math.floor(window.innerHeight * 0.55));
+    };
+    window.addEventListener('resize', onResize);
+    return () => window.removeEventListener('resize', onResize);
+  }, []);
+
   // Premium textarea auto-resize - ChatGPT/Gemini style
   useLayoutEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
 
-    // Reset height to 'auto' first to get the natural scrollHeight
     textarea.style.height = 'auto';
 
-    // Calculate scroll height for content and cap at ~55% viewport height
-    const maxHeight = Math.max(160, Math.floor(window.innerHeight * 0.55));
+    const maxHeight = textareaMaxHeightRef.current;
     const scrollHeight = textarea.scrollHeight;
-
-    // Ensure we don't shrink below a minimum height (e.g. 24px or 40px depending on CSS)
-    // But allow it to grow.
     const newHeight = Math.min(scrollHeight, maxHeight);
 
     textarea.style.maxHeight = `${maxHeight}px`;
     textarea.style.height = `${newHeight}px`;
-
-    // Show scrollbar only if content exceeds max height
     textarea.style.overflowY = scrollHeight > maxHeight ? 'auto' : 'hidden';
   }, [userInputText]);
 
@@ -537,18 +558,16 @@ const ChatInterface = ({
     setLoadingStates(prev => ({ ...prev, [key]: value }));
   }, []);
 
-  const isSystemBusy = () => {
-    return (
-      isAiTyping ||
-      isStreaming ||
-      isQuizGeneratingRef.current ||
-      loadingStates.quiz ||
-      loadingStates.summary ||
-      loadingStates.scenario ||
-      loadingStates.fileUpload ||
-      loadingStates.fileEmbedding
-    );
-  };
+  const isSystemBusy = useMemo(() => (
+    isAiTyping ||
+    isStreaming ||
+    isQuizGeneratingRef.current ||
+    loadingStates.quiz ||
+    loadingStates.summary ||
+    loadingStates.scenario ||
+    loadingStates.fileUpload ||
+    loadingStates.fileEmbedding
+  ), [isAiTyping, isStreaming, loadingStates]);
 
 
   const formatChatHistory = useCallback((messages) => {
@@ -830,6 +849,7 @@ const ChatInterface = ({
   const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language || 'en'; // Fallback to 'en' if language is not yet initialized
+  currentLanguageRef.current = currentLanguage;
 
   // ============================================
   // MESSAGE HANDLING
@@ -1704,9 +1724,9 @@ const ChatInterface = ({
     // Clear suggestions immediately
     setSuggestedPrompts([]);
 
-    // Auto-send the message
-    handleSendNewUserMessage(null, suggestion);
-  }, [handleSendNewUserMessage]);
+    // Auto-send the message (use ref to avoid dep on handleSendNewUserMessage)
+    handleSendNewUserMessageRef.current(null, suggestion);
+  }, []);
 
 
   // ✅ FIXED: Use ref instead of state for synchronous updates
@@ -2907,6 +2927,16 @@ const ChatInterface = ({
     }
   };
 
+  // Update stable-callback refs (declared earlier near other refs)
+  handleSendNewUserMessageRef.current = handleSendNewUserMessage;
+  handleQuizAnswerSelectRef.current = handleQuizAnswerSelect;
+  handlePostDocumentUploadOptionRef.current = handlePostDocumentUploadOption;
+
+  // Stable wrappers — identity never changes, always calls latest implementation
+  const stableHandleSendMessage = useCallback((...args) => handleSendNewUserMessageRef.current(...args), []);
+  const stableHandleQuizAnswerSelect = useCallback((...args) => handleQuizAnswerSelectRef.current(...args), []);
+  const stableHandlePostDocumentUploadOption = useCallback((...args) => handlePostDocumentUploadOptionRef.current(...args), []);
+
   // ============================================
   // POST-UPLOAD ACTION HANDLER
   // ============================================
@@ -2928,7 +2958,7 @@ const ChatInterface = ({
     devLog('🎯 Current chatId:', currentChatID);
 
     // Block action if system is busy (prevents triggering multiple actions simultaneously)
-    if (isSystemBusy()) {
+    if (isSystemBusy) {
       devLog('⚠️ System is busy, ignoring post-upload action');
       return;
     }
@@ -3141,6 +3171,10 @@ const ChatInterface = ({
     }
   };
 
+  // Stable ref for handlePreSelectedAction (avoids re-registering event listener every render)
+  const handlePreSelectedActionRef = useRef(handlePreSelectedAction);
+  handlePreSelectedActionRef.current = handlePreSelectedAction;
+
   // ============================================
   // QUICK START (ONBOARDING PIPELINE)
   // Listen for the custom event from OnboardingModal and trigger the appropriate Study Session
@@ -3149,35 +3183,33 @@ const ChatInterface = ({
     const handleQuickStart = (e) => {
       const { formData } = e.detail || {};
       if (!formData) return;
-      
+
       const { reviewFormat, userStage, studyGoal } = formData;
-      devLog('🚀 Quick Start Session triggered with format:', reviewFormat, 'Goal:', studyGoal);
-      
+      devLog('Quick Start Session triggered with format:', reviewFormat, 'Goal:', studyGoal);
+
       const wowConfig = getWowEffectConfig(studyGoal, reviewFormat);
       if (wowConfig) {
-        devLog('🎯 Triggering Quick Start action:', wowConfig.actionId);
-        
-        // Let's create a generic topic for the LLM based on their selected stage or goal
-        const topic = userStage === 'NCLEX Prep' 
-          ? 'NCLEX Preparation' 
+        devLog('Triggering Quick Start action:', wowConfig.actionId);
+
+        const topic = userStage === 'NCLEX Prep'
+          ? 'NCLEX Preparation'
           : 'Nursing fundamentals';
-          
+
         const dummyMessage = {
           id: `quickstart-${Date.now()}`,
           topics: [topic],
           filenames: []
         };
-        
-        // Timeout ensures interface is mounted/ready before sending
+
         setTimeout(() => {
-          handlePreSelectedAction(wowConfig.actionId, dummyMessage);
+          handlePreSelectedActionRef.current(wowConfig.actionId, dummyMessage);
         }, 500);
       }
     };
 
     window.addEventListener('onQuickStartSession', handleQuickStart);
     return () => window.removeEventListener('onQuickStartSession', handleQuickStart);
-  }, [handlePreSelectedAction]);
+  }, []);
 
 
   // --- Updated handleSummary function using streaming logic ---
@@ -3595,6 +3627,14 @@ const ChatInterface = ({
     };
     return labels[actionId] || actionId;
   };
+
+  // Pre-compute last user message ID (avoids O(n^2) in render loop)
+  const lastUserMessageId = useMemo(() => {
+    for (let i = chatMessages.length - 1; i >= 0; i--) {
+      if (chatMessages[i].role === 'user') return chatMessages[i].id;
+    }
+    return null;
+  }, [chatMessages]);
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -4028,7 +4068,7 @@ const ChatInterface = ({
                         filenames={message.filenames}
                         actions={message.actions}
                         showActions={message.showActions}
-                        disabled={isSystemBusy()}
+                        disabled={isSystemBusy}
                         onAction={(actionId) => handlePostUploadAction(actionId, message)}
                       />
                     </div>
@@ -4049,7 +4089,7 @@ const ChatInterface = ({
                         studyGoal={message.studyGoal}
                         actionId={message.actionId}
                         topics={message.topics}
-                        disabled={isSystemBusy()}
+                        disabled={isSystemBusy}
                         onAction={(actionId) => {
                           devLog('🎯 Wow card CTA clicked:', actionId);
                           handlePreSelectedAction(actionId, message);
@@ -4181,10 +4221,7 @@ const ChatInterface = ({
 
               // Regular messages - also render streaming messages with empty content (shows loading heart)
               if ((typeof message.content === 'string' && message.content.trim()) || message.isStreaming) {
-                // Check if this is the last user message
-                const isLastUserMessage = message.role === 'user' &&
-                  chatMessages.findIndex(m => m.id === message.id) ===
-                  chatMessages.map((m, i) => m.role === 'user' ? i : -1).filter(i => i !== -1).pop();
+                const isLastUserMessage = message.role === 'user' && message.id === lastUserMessageId;
 
                 return (
                   <div
@@ -4193,14 +4230,14 @@ const ChatInterface = ({
                   >
                     <ChatMessage
                       message={message}
-                      onOptionClick={handlePostDocumentUploadOption}
-                      onQuizAnswerSelect={handleQuizAnswerSelect}
+                      onOptionClick={stableHandlePostDocumentUploadOption}
+                      onQuizAnswerSelect={stableHandleQuizAnswerSelect}
                       uploadedFilesList={uploadedFilesList}
                       onQuizVisibilityChange={handleQuizVisibilityChange}
                       onQuizInteraction={handleQuizInteraction}
                       isActiveQuiz={message.id === activeQuizId}
                       onFeedbackSubmit={handleQuizFeedback}
-                      onSendMessage={handleSendNewUserMessage}
+                      onSendMessage={stableHandleSendMessage}
                       onDeleteMessage={handleDeleteMessage}
                       viewAllChatsMode={viewAllChatsMode}
                     />
@@ -4377,13 +4414,13 @@ const ChatInterface = ({
                 if (e.key === 'Enter' && !e.shiftKey) {
                   e.preventDefault();
                   // submit form when user presses enter
-                  if (!isSystemBusy()) {
+                  if (!isSystemBusy) {
                     e.currentTarget.form?.requestSubmit();
                   }
                 }
               }}
-              disabled={isSystemBusy()}
-              className={`message-textarea ${isSystemBusy() ? 'textarea-disabled' : ''}`}
+              disabled={isSystemBusy}
+              className={`message-textarea ${isSystemBusy ? 'textarea-disabled' : ''}`}
             />
 
             {/* Bottom row: file buttons on left, send button on right */}
@@ -4393,7 +4430,7 @@ const ChatInterface = ({
                   className="upload-button file-button"
                   onClick={openFileUploadDialog}
                   title={t('chat.addFile')}
-                  disabled={isSystemBusy()}>
+                  disabled={isSystemBusy}>
                   <SvgFileUpload />
                 </button>
 
@@ -4435,7 +4472,7 @@ const ChatInterface = ({
                   type="button"
                   className={`voice-input-button ${isRecording ? 'recording' : ''} ${isTranscribing ? 'transcribing' : ''}`}
                   onClick={toggleRecording}
-                  disabled={isSystemBusy() || isTranscribing}
+                  disabled={isSystemBusy || isTranscribing}
                   title={isRecording ? t('chat.stopRecording', 'Stop recording') : t('chat.voiceInput', 'Voice input')}
                 >
                   {isTranscribing ? (
@@ -4473,10 +4510,10 @@ const ChatInterface = ({
                 ) : (
                   // Send button when not streaming
                   <button type="submit"
-                    className={`send-button-icon ${isSystemBusy() ? 'send-button-busy' : ''}`}
-                    disabled={!userInputText.trim() || isSystemBusy()}
+                    className={`send-button-icon ${isSystemBusy ? 'send-button-busy' : ''}`}
+                    disabled={!userInputText.trim() || isSystemBusy}
                     title={t('chat.send')}>
-                    {isSystemBusy() ? (
+                    {isSystemBusy ? (
                       <div className="pulsing-dots">
                         <span></span>
                         <span></span>

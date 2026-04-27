@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { handleSignOut } from "../../Firebase/auth";
 import { db, auth } from "../../Firebase/config";
@@ -480,4 +480,4 @@ const getchatDate = (timestamp) => {
   );
 };
 
-export default SideBar;
+export default React.memo(SideBar);

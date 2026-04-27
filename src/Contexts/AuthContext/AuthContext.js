@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { auth } from '../../Firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
 
@@ -71,7 +71,7 @@ export function AuthProvider({ children }) {
     setIsLoading(false);
   }
 
-  const value = {
+  const value = useMemo(() => ({
     currentUser,
     isUserLoggedIn,
     isLoading,
@@ -79,7 +79,7 @@ export function AuthProvider({ children }) {
     isProfileComplete,
     setIsProfileComplete,
     setUserProfile
-  };
+  }), [currentUser, isUserLoggedIn, isLoading, userProfile, isProfileComplete]);
 
   return (
     <AuthContext.Provider value={value}>

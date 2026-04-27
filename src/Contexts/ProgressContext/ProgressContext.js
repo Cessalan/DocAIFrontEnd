@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState, useCallback } from 'react';
+import React, { useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { useAuth } from '../AuthContext/AuthContext';
 import {
   getUserProgress,
@@ -215,35 +215,33 @@ export function ProgressProvider({ children }) {
     setDashboardOpen(false);
   }, []);
 
-  // Computed values
-  const xpForNextLevel = getXPForNextLevel(progressData.currentLevel);
-  const xpForCurrentLevel = getXPForCurrentLevel(progressData.currentLevel);
-  const xpProgress = xpForNextLevel
-    ? progressData.totalXP - xpForCurrentLevel
-    : progressData.totalXP;
-  const xpNeeded = xpForNextLevel
-    ? xpForNextLevel - xpForCurrentLevel
-    : 0;
-
-  const serumPercentage = Math.min(
-    (progressData.dailyCorrectAnswers / DAILY_SERUM_GOAL) * 100,
-    100
-  );
-  const isSerumComplete = progressData.dailyCorrectAnswers >= DAILY_SERUM_GOAL;
+  // Computed values (memoized to avoid recalculation on unrelated re-renders)
+  const computedValues = useMemo(() => {
+    const xpForNextLevel = getXPForNextLevel(progressData.currentLevel);
+    const xpForCurrentLevel = getXPForCurrentLevel(progressData.currentLevel);
+    const xpProgress = xpForNextLevel
+      ? progressData.totalXP - xpForCurrentLevel
+      : progressData.totalXP;
+    const xpNeeded = xpForNextLevel
+      ? xpForNextLevel - xpForCurrentLevel
+      : 0;
+    const serumPercentage = Math.min(
+      (progressData.dailyCorrectAnswers / DAILY_SERUM_GOAL) * 100,
+      100
+    );
+    const isSerumComplete = progressData.dailyCorrectAnswers >= DAILY_SERUM_GOAL;
+    return { xpProgress, xpNeeded, xpForNextLevel, serumPercentage, isSerumComplete };
+  }, [progressData.currentLevel, progressData.totalXP, progressData.dailyCorrectAnswers]);
 
   // Clear animation after it plays
   const clearXpAnimation = useCallback(() => {
     setXpGainAnimation(null);
   }, []);
 
-  const value = {
+  const value = useMemo(() => ({
     // Data
     ...progressData,
-    xpProgress,
-    xpNeeded,
-    xpForNextLevel,
-    serumPercentage,
-    isSerumComplete,
+    ...computedValues,
     dailySerumGoal: DAILY_SERUM_GOAL,
     levelThresholds: LEVEL_THRESHOLDS,
 
@@ -258,7 +256,8 @@ export function ProgressProvider({ children }) {
     toggleDashboard,
     closeDashboard,
     clearXpAnimation,
-  };
+  }), [progressData, computedValues, isLoading, dashboardOpen, xpGainAnimation,
+       addCorrectAnswer, addIncorrectAnswer, toggleDashboard, closeDashboard, clearXpAnimation]);
 
   return (
     <ProgressContext.Provider value={value}>

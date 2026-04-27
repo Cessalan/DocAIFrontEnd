@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import ReactMarkDown from "react-markdown";
 import ChatQuizStream from "./ChatQuizStream";
 import ChatFlashcard from "./ChatFlashcard";
@@ -505,4 +505,4 @@ const ChatMessage = ({
   );
 };
 
-export default ChatMessage;
+export default React.memo(ChatMessage);

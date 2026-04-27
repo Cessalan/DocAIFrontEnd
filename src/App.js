@@ -82,8 +82,6 @@ function ChatLayout() {
   const authContext = useAuth();
   const isProfileComplete = authContext ? authContext.isProfileComplete : false;
 
-  console.log("ChatLayout render. isProfileComplete:", isProfileComplete);
-
   // Warm up FastAPI server when interface loads
   useEffect(() => {
     const warmUpServer = async () => {
@@ -204,8 +202,6 @@ function ChatLayout() {
   };
 
   const onSelectChat = (chatId) => {
-    console.log("Chat ID Selected From SideBar.js:" + chatId);
-
     setSelectedChatId(chatId);
 
     // Update URL to reflect the selected chat
@@ -355,7 +351,6 @@ function ChatLayout() {
 const isDev = process.env.NODE_ENV === 'development';
 
 function App() {
-  console.log('App rendering');
   return (
     <Routes>
       <Route path="/start" element={<QuizRoomLanding />} />
