@@ -280,6 +280,16 @@ function CaseStudyQuestion({
   // Memoize item IDs for SortableContext
   const itemIds = useMemo(() => items.map(item => item.id), [items]);
 
+  // Determine which tabs have content (vitalSigns/labResults are optional)
+  const availableTabs = useMemo(() => {
+    if (!quiz?.caseStudy) return [];
+    const tabs = [];
+    if (quiz.caseStudy.nursesNotes) tabs.push(TAB_KEYS.NURSES_NOTES);
+    if (quiz.caseStudy.vitalSigns && quiz.caseStudy.vitalSigns.trim() !== '') tabs.push(TAB_KEYS.VITAL_SIGNS);
+    if (quiz.caseStudy.labResults && quiz.caseStudy.labResults.trim() !== '') tabs.push(TAB_KEYS.LAB_RESULTS);
+    return tabs;
+  }, [quiz?.caseStudy]);
+
   // ----------------------------------------
   // Effects
   // ----------------------------------------
@@ -316,9 +326,9 @@ function CaseStudyQuestion({
       setShowFeedback(false);
       setScoreResult(null);
     }
-    // Reset to first tab
-    setActiveTab(TAB_KEYS.NURSES_NOTES);
-  }, [quizId, quiz?.options, previousAnswer, normalizedOptions]);
+    // Reset to first available tab
+    setActiveTab(availableTabs[0] || TAB_KEYS.NURSES_NOTES);
+  }, [quizId, quiz?.options, previousAnswer, normalizedOptions, availableTabs]);
 
   // ----------------------------------------
   // Handlers
@@ -464,32 +474,41 @@ function CaseStudyQuestion({
           </div>
         )}
 
-        {/* Case Study Tabs */}
-        {quiz.caseStudy && (
+        {/* Case Study Tabs — only render tabs that have content */}
+        {quiz.caseStudy && availableTabs.length > 0 && (
           <div className="case-study-tabs-container">
-            <div className="case-study-tabs">
-              <button
-                className={`case-study-tab ${activeTab === TAB_KEYS.NURSES_NOTES ? 'active' : ''}`}
-                onClick={() => setActiveTab(TAB_KEYS.NURSES_NOTES)}
-                type="button"
-              >
-                {t('caseStudy.nursesNotes', "Nurses' Notes")}
-              </button>
-              <button
-                className={`case-study-tab ${activeTab === TAB_KEYS.VITAL_SIGNS ? 'active' : ''}`}
-                onClick={() => setActiveTab(TAB_KEYS.VITAL_SIGNS)}
-                type="button"
-              >
-                {t('caseStudy.vitalSigns', 'Vital Signs')}
-              </button>
-              <button
-                className={`case-study-tab ${activeTab === TAB_KEYS.LAB_RESULTS ? 'active' : ''}`}
-                onClick={() => setActiveTab(TAB_KEYS.LAB_RESULTS)}
-                type="button"
-              >
-                {t('caseStudy.labResults', 'Laboratory Results')}
-              </button>
-            </div>
+            {/* Show tab bar only when there are 2+ tabs; single tab renders content directly */}
+            {availableTabs.length > 1 && (
+              <div className="case-study-tabs">
+                {availableTabs.includes(TAB_KEYS.NURSES_NOTES) && (
+                  <button
+                    className={`case-study-tab ${activeTab === TAB_KEYS.NURSES_NOTES ? 'active' : ''}`}
+                    onClick={() => setActiveTab(TAB_KEYS.NURSES_NOTES)}
+                    type="button"
+                  >
+                    {t('caseStudy.nursesNotes', "Nurses' Notes")}
+                  </button>
+                )}
+                {availableTabs.includes(TAB_KEYS.VITAL_SIGNS) && (
+                  <button
+                    className={`case-study-tab ${activeTab === TAB_KEYS.VITAL_SIGNS ? 'active' : ''}`}
+                    onClick={() => setActiveTab(TAB_KEYS.VITAL_SIGNS)}
+                    type="button"
+                  >
+                    {t('caseStudy.vitalSigns', 'Vital Signs')}
+                  </button>
+                )}
+                {availableTabs.includes(TAB_KEYS.LAB_RESULTS) && (
+                  <button
+                    className={`case-study-tab ${activeTab === TAB_KEYS.LAB_RESULTS ? 'active' : ''}`}
+                    onClick={() => setActiveTab(TAB_KEYS.LAB_RESULTS)}
+                    type="button"
+                  >
+                    {t('caseStudy.labResults', 'Laboratory Results')}
+                  </button>
+                )}
+              </div>
+            )}
 
             <div className="case-study-tab-content">
               {getTabContent(activeTab) ? (
