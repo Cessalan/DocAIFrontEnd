@@ -83,6 +83,55 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
     return () => clearInterval(interval);
   }, [isShowingQuizLoading, quizMsgArray.length]);
 
+  // Safety valve: exit waitingForNextQuestion in two cases:
+  //  1. Streaming ended (isStreaming became false) while we were waiting — the
+  //     container finalized the content, so no more questions are coming.
+  //  2. Still stuck after 15 seconds — the stream is likely dead.
+  //
+  // In both cases we need to properly trigger end-of-queue logic (review round
+  // or completion), not just hide the spinner.
+  useEffect(() => {
+    if (!waitingForNextQuestion) return;
+
+    const finalize = () => {
+      console.warn('⏱️ Exiting waitingForNextQuestion — finalizing quiz with available questions');
+      setWaitingForNextQuestion(false);
+
+      // Replicate end-of-queue logic from handleNextQuestion:
+      // Check if any questions were answered incorrectly → start review round
+      const incorrectQuestions = Object.entries(questionStatuses)
+        .filter(([_, status]) => status === 'incorrect')
+        .map(([idx]) => parseInt(idx));
+
+      if (incorrectQuestions.length > 0 && !isReviewRound) {
+        const frozenStatuses = { ...questionStatuses };
+        setFirstAttemptStatuses(frozenStatuses);
+        setReviewTransitionCount(incorrectQuestions.length);
+        setShowReviewTransition(true);
+        setIsReviewRound(true);
+        setQuestionQueue(incorrectQuestions);
+        setQueueIndex(0);
+        setSelectedIndex(null);
+        setShowFeedback(false);
+        setIsCorrect(false);
+        setShowFullRationale(false);
+      }
+      // If all correct, the allCorrect derived value will become true on
+      // re-render (since allQuestionsReceived is now true) and the
+      // completion celebration effect fires automatically.
+    };
+
+    // Case 1: streaming already ended — finalize immediately
+    if (!isStreaming) {
+      finalize();
+      return;
+    }
+
+    // Case 2: streaming still going — give it 15 more seconds then bail
+    const timeout = setTimeout(finalize, 15_000);
+    return () => clearTimeout(timeout);
+  }, [waitingForNextQuestion, isStreaming]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Restore from saved progress OR initialize fresh queue
   // Also handle streaming: update queue as new questions arrive
   useEffect(() => {

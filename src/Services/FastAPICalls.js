@@ -1032,13 +1032,29 @@ export const generate_study_item_stream = async (
     language: language
   });
 
+  // Abort the stream if no data arrives for 90 seconds.
+  // Quiz generation can be slow (12 questions via LLM), but any single chunk
+  // should arrive well within this window.  This prevents the UI from hanging
+  // indefinitely when the server drops the connection silently.
+  const STREAM_IDLE_TIMEOUT_MS = 90_000;
+  const controller = new AbortController();
+  let idleTimer = null;
+
+  const resetIdleTimer = () => {
+    if (idleTimer) clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => controller.abort(), STREAM_IDLE_TIMEOUT_MS);
+  };
+
   try {
     devLog(`🌊 Streaming study ${node_type}:`, node_label);
+
+    resetIdleTimer(); // start the clock
 
     const response = await fetch(`${FAST_API_BASE}/study/generate-item-stream`, {
       method: "POST",
       headers: header,
-      body: requestBody
+      body: requestBody,
+      signal: controller.signal
     });
 
     if (!response.ok) {
@@ -1049,25 +1065,77 @@ export const generate_study_item_stream = async (
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let result = null;
+    let buffer = ''; // Buffer to accumulate partial SSE chunks across TCP reads
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
 
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
+      // We received data — reset the idle timer
+      resetIdleTimer();
 
+      // Accumulate chunks — { stream: true } tells the decoder not to flush
+      // multi-byte characters that may be split across TCP boundaries
+      buffer += decoder.decode(value, { stream: true });
+
+      // SSE messages are delimited by double-newline (\n\n).
+      // Split on that boundary so we only process complete messages.
+      const messages = buffer.split('\n\n');
+
+      // The last element is either an incomplete message or '' — keep it in buffer
+      buffer = messages.pop() || '';
+
+      for (const message of messages) {
+        const lines = message.split('\n');
+
+        for (const line of lines) {
+          if (line.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(line.slice(6));
+
+              // Call progress callback if provided
+              if (onProgress && data.status !== 'complete' && data.status !== 'error') {
+                onProgress(data);
+              }
+
+              // Capture final result
+              if (data.status === 'complete') {
+                result = {
+                  type: data.type,
+                  content: data.content,
+                  hash: data.hash
+                };
+              }
+
+              // Handle errors
+              if (data.status === 'error') {
+                throw new Error(data.message || 'Streaming generation failed');
+              }
+            } catch (parseError) {
+              if (parseError.message && parseError.message.includes('Streaming generation failed')) {
+                throw parseError;
+              }
+              if (line.trim().length > 10) {
+                console.warn('Failed to parse SSE chunk:', line.substring(0, 100) + '...');
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // Process any remaining data left in the buffer after the stream closes
+    if (buffer.trim()) {
+      const lines = buffer.split('\n');
       for (const line of lines) {
         if (line.startsWith('data: ')) {
           try {
             const data = JSON.parse(line.slice(6));
 
-            // Call progress callback if provided
             if (onProgress && data.status !== 'complete' && data.status !== 'error') {
               onProgress(data);
             }
 
-            // Capture final result
             if (data.status === 'complete') {
               result = {
                 type: data.type,
@@ -1075,27 +1143,24 @@ export const generate_study_item_stream = async (
                 hash: data.hash
               };
             }
-
-            // Handle errors
-            if (data.status === 'error') {
-              throw new Error(data.message || 'Streaming generation failed');
-            }
-          } catch (parseError) {
-            // Ignore parse errors for incomplete chunks
-            if (parseError.message !== 'Streaming generation failed') {
-              console.warn('Failed to parse SSE chunk:', line);
-            } else {
-              throw parseError;
-            }
+          } catch (e) {
+            console.warn('Failed to parse final SSE buffer:', buffer.substring(0, 100) + '...');
           }
         }
       }
     }
 
+    if (idleTimer) clearTimeout(idleTimer);
     devLog(`✅ Study ${node_type} streamed successfully`);
     return result;
 
   } catch (error) {
+    if (idleTimer) clearTimeout(idleTimer);
+    // Provide a clearer message when the stream timed out
+    if (controller.signal.aborted) {
+      console.error(`⏱️ Study ${node_type} stream timed out after ${STREAM_IDLE_TIMEOUT_MS / 1000}s of inactivity`);
+      throw new Error(`Stream timed out — the server stopped responding. Please try again.`);
+    }
     console.error(`❌ Error streaming study ${node_type}:`, error);
     throw error;
   }

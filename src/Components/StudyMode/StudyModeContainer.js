@@ -87,6 +87,7 @@ const StudyModeContainer = ({
   const [savedProgress, setSavedProgress] = useState(null); // Flashcard/quiz progress
   const currentMessageIdRef = useRef(null); // Ref to track messageId for saving progress
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  const [contentError, setContentError] = useState(null); // Error message when content generation fails
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioMessage, setAudioMessage] = useState('');
   const [isGeneratingMindmap, setIsGeneratingMindmap] = useState(false);
@@ -210,6 +211,7 @@ const StudyModeContainer = ({
 
     setView('node');
     setIsLoadingContent(true);
+    setContentError(null);
     setCurrentContent(null);
     setSavedProgress(null);
     currentMessageIdRef.current = null; // Reset ref
@@ -353,6 +355,27 @@ const StudyModeContainer = ({
         handleStreamProgress
       );
 
+      // Guard against null result (e.g. stream closed without sending 'complete')
+      if (!result || !result.content) {
+        console.warn('⚠️ Stream ended without a complete result — finalizing with streamed content');
+        // Finalize whatever questions/cards arrived during streaming so the user
+        // can still interact with them instead of seeing an infinite spinner.
+        setCurrentContent(prev => {
+          if (!prev) return prev;
+          const { _isStreaming, _expectedTotal, ...rest } = prev;
+          // Check if any usable content arrived
+          const hasContent = (rest.questions?.length > 0) || (rest.cards?.length > 0) || rest.html;
+          if (!hasContent) {
+            // Nothing usable arrived — show error state so user can retry
+            setContentError(t('study.generationFailed', 'Something went wrong while generating your content. Please try again.'));
+            return null;
+          }
+          return rest;
+        });
+        setMascotState({ type: 'nurse', isExcited: false, isSurprised: false, lookDirection: 'down-center' });
+        return;
+      }
+
       // Skip saving in viewOnly mode
       if (!viewOnly) {
         // Save the content hash for anti-repeat
@@ -395,7 +418,26 @@ const StudyModeContainer = ({
 
     } catch (error) {
       console.error('❌ Error generating content:', error);
-      // Show error state
+
+      // Clear the _isStreaming flag so the quiz/flashcard is still usable
+      // with whatever items arrived before the error.  Without this the user
+      // would be stuck on an infinite "Generating questions…" spinner.
+      setCurrentContent(prev => {
+        if (!prev) {
+          // No content at all — show error state
+          setContentError(t('study.generationFailed', 'Something went wrong while generating your content. Please try again.'));
+          return null;
+        }
+        const { _isStreaming, _expectedTotal, ...rest } = prev;
+        const hasContent = (rest.questions?.length > 0) || (rest.cards?.length > 0) || rest.html;
+        if (!hasContent) {
+          // Nothing usable arrived — show error state
+          setContentError(t('study.generationFailed', 'Something went wrong while generating your content. Please try again.'));
+          return null;
+        }
+        return rest;
+      });
+
       setMascotState({
         type: 'nurse',
         isExcited: false,
@@ -405,7 +447,7 @@ const StudyModeContainer = ({
     } finally {
       setIsLoadingContent(false);
     }
-  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly]);
+  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t]);
 
   // Auto-launch the first node if requested
   const hasAutoStartedNodeRef = useRef(false);
@@ -1533,6 +1575,40 @@ const StudyModeContainer = ({
                 onContinue={handleContinue}
                 onExit={handleExitNode}
               />
+            ) : contentError ? (
+              <div className="study-step-card">
+                <div className="study-error-state">
+                  <div className="study-error-state__icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" width="48" height="48">
+                      <circle cx="12" cy="12" r="10" />
+                      <line x1="12" y1="8" x2="12" y2="12" />
+                      <line x1="12" y1="16" x2="12.01" y2="16" />
+                    </svg>
+                  </div>
+                  <p className="study-error-state__message">{contentError}</p>
+                  <div className="study-error-state__actions">
+                    <button
+                      className="study-error-state__retry"
+                      onClick={() => {
+                        setContentError(null);
+                        if (activeNode) handleStartNode(activeNode);
+                      }}
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                        <path d="M21 2v6h-6" />
+                        <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
+                      </svg>
+                      {t('study.tryAgain', 'Try Again')}
+                    </button>
+                    <button
+                      className="study-error-state__back"
+                      onClick={handleExitNode}
+                    >
+                      {t('study.backToOverview', 'Back to Overview')}
+                    </button>
+                  </div>
+                </div>
+              </div>
             ) : (
               <div className="study-step-card">
                 <div className="study-loading">
