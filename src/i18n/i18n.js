@@ -224,7 +224,13 @@ const resources = {
         expandSidebar: "Expand sidebar",
         usage: "Analytics",
         logout: "Logout",
-        studySession: "Study Session"
+        studySession: "Study Session",
+        rename: "Rename",
+        delete: "Delete",
+        deleteTitle: "Delete chat?",
+        deleteBody: "This will permanently delete all messages, uploaded files, and study data associated with this chat.",
+        deleteCancel: "Cancel",
+        deleteConfirm: "Delete"
       },
 
       // Sign Up
@@ -1405,7 +1411,13 @@ const resources = {
         expandSidebar: "Ouvrir le menu",
         usage: "Analytiques",
         logout: "Déconnexion",
-        studySession: "Session d'étude"
+        studySession: "Session d'étude",
+        rename: "Renommer",
+        delete: "Supprimer",
+        deleteTitle: "Supprimer le chat?",
+        deleteBody: "Cette action supprimera définitivement tous les messages, fichiers téléversés et données d'étude associés à ce chat.",
+        deleteCancel: "Annuler",
+        deleteConfirm: "Supprimer"
       },
 
       // Sign Up

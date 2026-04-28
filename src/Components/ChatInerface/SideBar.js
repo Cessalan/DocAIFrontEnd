@@ -15,7 +15,7 @@ import {
   getDoc
 } from "firebase/firestore";
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
-import { DeleteChat } from "../../Services/FireBaseServiceChats.js";
+import { DeleteChat, RenameChat } from "../../Services/FireBaseServiceChats.js";
 import DarkModeToggle from './DarkModeToggle';
 import FeedbackButton from './FeedbackButton';
 import FeedbackViewer from './FeedbackViewer';
@@ -85,6 +85,15 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
   
   const [chats, setChats] = useState([]);
   const [hoveredChatId, setHoveredChatId] = useState(null);
+
+  // 3-dot menu state
+  const [menuOpenChatId, setMenuOpenChatId] = useState(null);
+  const [renamingChatId, setRenamingChatId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [deleteModalChatId, setDeleteModalChatId] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const menuRef = useRef(null);
+  const renameInputRef = useRef(null);
 
   // translation
   const { t } = useTranslation();
@@ -206,23 +215,87 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
     }
   };
 
-  const handleDeleteChat = async (e, chatId) => {
-    e.stopPropagation(); // Prevent chat selection
-
-    if (!window.confirm("Supprimer ce chat? Cette action est irréversible.")) {
-      return;
-    }
-
+  const handleDeleteChat = async () => {
+    if (!deleteModalChatId) return;
+    setIsDeleting(true);
     try {
-      await DeleteChat(chatId);
-
-      // If deleted chat was active, clear selection
-      if (activeChatId === chatId) {
+      await DeleteChat(deleteModalChatId);
+      if (activeChatId === deleteModalChatId) {
         if (onChatSelected) onChatSelected(null);
       }
     } catch (error) {
-      alert("Échec de la suppression: " + error.message);
+      console.error("Delete failed:", error);
     }
+    setIsDeleting(false);
+    setDeleteModalChatId(null);
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      // Ignore clicks on the trigger button itself (toggle handler manages that)
+      if (e.target.closest('.chat-menu-trigger')) return;
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setMenuOpenChatId(null);
+      }
+    };
+    if (menuOpenChatId) {
+      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("touchstart", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("touchstart", handleClickOutside);
+    };
+  }, [menuOpenChatId]);
+
+  // Auto-focus rename input when entering rename mode
+  useEffect(() => {
+    if (renamingChatId && renameInputRef.current) {
+      renameInputRef.current.focus();
+      renameInputRef.current.select();
+    }
+  }, [renamingChatId]);
+
+  const handleMenuToggle = (e, chatId) => {
+    e.stopPropagation();
+    setMenuOpenChatId(prev => prev === chatId ? null : chatId);
+  };
+
+  const handleStartRename = (e, chat) => {
+    e.stopPropagation();
+    setMenuOpenChatId(null);
+    setRenamingChatId(chat.id);
+    setRenameValue(chat.title || "");
+  };
+
+  const handleConfirmRename = async (chatId) => {
+    const trimmed = renameValue.trim();
+    if (!trimmed || trimmed === chats.find(c => c.id === chatId)?.title) {
+      setRenamingChatId(null);
+      return;
+    }
+    try {
+      await RenameChat(chatId, trimmed);
+    } catch (error) {
+      console.error("Rename failed:", error);
+    }
+    setRenamingChatId(null);
+  };
+
+  const handleRenameKeyDown = (e, chatId) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleConfirmRename(chatId);
+    } else if (e.key === "Escape") {
+      setRenamingChatId(null);
+    }
+  };
+
+  const handleMenuDelete = (e, chatId) => {
+    e.stopPropagation();
+    setMenuOpenChatId(null);
+    setDeleteModalChatId(chatId);
   };
 
   const handleFeedbackSubmit = async (feedbackData) => {
@@ -319,48 +392,95 @@ const getchatDate = (timestamp) => {
          <div
               key={chat.id}
               className={`conversation-item ${activeChatId === chat.id ? "active" : ""} ${chat.isStudySession ? "study-session" : ""}`}
-              onClick={() => handleSelectChat(chat.id)}
+              onClick={() => { if (!renamingChatId) handleSelectChat(chat.id); }}
               onMouseEnter={() => setHoveredChatId(chat.id)}
               onMouseLeave={() => setHoveredChatId(null)}
               style={{ position: 'relative' }}
             >
-              {/* Study session icon */}
-              {chat.isStudySession && (
-                <div className="study-session-icon" title={t('side.studySession', 'Study Session')}>
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 3L2 9L12 15L22 9L12 3Z" fill="currentColor" opacity="0.9"/>
-                    <path d="M6 12V17C6 17 9 20 12 20C15 20 18 17 18 17V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
-                    <path d="M20 10V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                    <circle cx="20" cy="17.5" r="1.5" fill="currentColor"/>
+              {/* Top-right action row: badge/icon + 3-dot menu */}
+              <div className="chat-actions-row">
+                {/* Study session icon */}
+                {chat.isStudySession && (
+                  <div className="study-session-icon" title={t('side.studySession', 'Study Session')}>
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 3L2 9L12 15L22 9L12 3Z" fill="currentColor" opacity="0.9"/>
+                      <path d="M6 12V17C6 17 9 20 12 20C15 20 18 17 18 17V12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" fill="none"/>
+                      <path d="M20 10V16" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+                      <circle cx="20" cy="17.5" r="1.5" fill="currentColor"/>
+                    </svg>
+                  </div>
+                )}
+
+                {/* File count badge - only show for non-study sessions */}
+                {!chat.isStudySession && chatFileCounts[chat.id] > 0 && (
+                  <div className="file-count-badge">
+                    <span className="paperclip-icon">📎</span>
+                    <span className="file-count-number">{chatFileCounts[chat.id]}</span>
+                  </div>
+                )}
+
+                {/* 3-dot menu button */}
+                <button
+                  className={`chat-menu-trigger ${menuOpenChatId === chat.id ? 'active' : ''}`}
+                  onClick={(e) => handleMenuToggle(e, chat.id)}
+                  aria-label="Chat options"
+                >
+                  <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor">
+                    <circle cx="8" cy="3" r="1.5"/>
+                    <circle cx="8" cy="8" r="1.5"/>
+                    <circle cx="8" cy="13" r="1.5"/>
                   </svg>
+                </button>
+              </div>
+
+              {/* Dropdown menu */}
+              {menuOpenChatId === chat.id && (
+                <div className="chat-menu-dropdown" ref={menuRef}>
+                  <button
+                    className="chat-menu-item"
+                    onClick={(e) => handleStartRename(e, chat)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 3a2.85 2.85 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/>
+                    </svg>
+                    <span>{t('side.rename')}</span>
+                  </button>
+                  <div className="chat-menu-divider" />
+                  <button
+                    className="chat-menu-item delete"
+                    onClick={(e) => handleMenuDelete(e, chat.id)}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18"/>
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                    </svg>
+                    <span>{t('side.delete')}</span>
+                  </button>
                 </div>
               )}
 
-              {/* File count badge - only show for non-study sessions */}
-              {!chat.isStudySession && chatFileCounts[chat.id] > 0 && (
-                <div className="file-count-badge">
-                  <span className="paperclip-icon">📎</span>
-                  <span className="file-count-number">{chatFileCounts[chat.id]}</span>
-                </div>
-              )}
-              
-              {/* Delete button - appears on hover (DEV MODE ONLY) */}
-              {isDevelopment && hoveredChatId === chat.id && (
-                <button
-                  className="delete-chat-button"
-                  onClick={(e) => handleDeleteChat(e, chat.id)}
-                  title="Delete chat (messages, files, embeddings)"
-                >
-                  🗑️
-                </button>
-              )}
-              
               <div className="conversation-details">
-                {/* Header section - now stacked vertically */}
+                {/* Header section */}
                 <div className="conversation-header">
-                  <span className="conversation-name">{chat.title}</span>
-                  
-                  {/* Metadata row: date + user info (only show in dev mode when viewing all chats) */}
+                  {/* Inline rename input OR title */}
+                  {renamingChatId === chat.id ? (
+                    <input
+                      ref={renameInputRef}
+                      className="chat-rename-input"
+                      type="text"
+                      value={renameValue}
+                      onChange={(e) => setRenameValue(e.target.value)}
+                      onKeyDown={(e) => handleRenameKeyDown(e, chat.id)}
+                      onBlur={() => handleConfirmRename(chat.id)}
+                      onClick={(e) => e.stopPropagation()}
+                      maxLength={100}
+                    />
+                  ) : (
+                    <span className="conversation-name">{chat.title}</span>
+                  )}
+
+                  {/* Metadata row */}
                   <div className="conversation-metadata">
                     <span className="conversation-time">
                       {getchatDate(chat.updatedAt)}
@@ -390,7 +510,7 @@ const getchatDate = (timestamp) => {
                     )}
                   </div>
                 </div>
-                
+
                 {/* Last message preview */}
                 <div className="conversation-message">
                   {chat.lastMessage?.length > 40
@@ -475,6 +595,45 @@ const getchatDate = (timestamp) => {
       {/* Feedback Viewer Modal (Dev Mode Only) */}
       {showFeedbackViewer && (
         <FeedbackViewer onClose={() => setShowFeedbackViewer(false)} />
+      )}
+
+      {/* Delete confirmation modal */}
+      {deleteModalChatId && (
+        <div className="delete-modal-overlay" onClick={() => !isDeleting && setDeleteModalChatId(null)}>
+          <div className="delete-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="delete-modal-icon">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"/>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/>
+                <line x1="10" y1="11" x2="10" y2="17"/>
+                <line x1="14" y1="11" x2="14" y2="17"/>
+              </svg>
+            </div>
+            <h3 className="delete-modal-title">{t('side.deleteTitle')}</h3>
+            <p className="delete-modal-body">{t('side.deleteBody')}</p>
+            <div className="delete-modal-actions">
+              <button
+                className="delete-modal-btn cancel"
+                onClick={() => setDeleteModalChatId(null)}
+                disabled={isDeleting}
+              >
+                {t('side.deleteCancel')}
+              </button>
+              <button
+                className="delete-modal-btn confirm"
+                onClick={handleDeleteChat}
+                disabled={isDeleting}
+              >
+                {isDeleting ? (
+                  <span className="delete-spinner" />
+                ) : (
+                  t('side.deleteConfirm')
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

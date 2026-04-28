@@ -397,6 +397,18 @@ export const DeleteChat = async (chatId) => {
   }
 };
 
+export const RenameChat = async (chatId, newTitle) => {
+  try {
+    const chatRef = doc(db, "chats", chatId);
+    await updateDoc(chatRef, { title: newTitle });
+    devLog("✅ Chat renamed to:", newTitle);
+    return { success: true };
+  } catch (error) {
+    console.error("❌ Error renaming chat:", error);
+    throw error;
+  }
+};
+
 // Helper function to recursively delete a Storage folder
 async function deleteFolder(folderRef) {
   try {

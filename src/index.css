@@ -306,34 +306,267 @@ body.dark-mode .app-brand-name {
   color: var(--primary-coral-dark);
 }
 
-/* Add to your index.css or sidebar CSS file */
+/* ============================================
+   CHAT 3-DOT MENU - Premium contextual actions
+   ============================================ */
 
-.delete-chat-button {
-  position: absolute;
-  right: 8px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: rgba(255, 59, 48, 0.9);
+/* 3-dot trigger button — always visible */
+.chat-menu-trigger {
+  background: transparent;
   border: none;
   border-radius: 6px;
-  width: 32px;
-  height: 32px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  font-size: 16px;
-  transition: all 0.2s ease;
-  z-index: 10;
+  color: #bbb;
+  flex-shrink: 0;
+  transition: background 0.15s ease, color 0.15s ease;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
 }
 
-.delete-chat-button:hover {
-  background: rgba(255, 59, 48, 1);
-  transform: translateY(-50%) scale(1.1);
+.chat-menu-trigger:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: #555;
 }
 
-.delete-chat-button:active {
-  transform: translateY(-50%) scale(0.95);
+.chat-menu-trigger.active {
+  background: rgba(0, 0, 0, 0.08);
+  color: #333;
+}
+
+/* Dropdown menu */
+.chat-menu-dropdown {
+  position: absolute;
+  right: 4px;
+  top: 32px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, 0.1),
+    0 1px 4px rgba(0, 0, 0, 0.06);
+  z-index: 100;
+  min-width: 150px;
+  padding: 4px;
+  animation: chatMenuFadeIn 0.15s ease;
+  overflow: hidden;
+}
+
+@keyframes chatMenuFadeIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Menu items */
+.chat-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 9px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 7px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #333;
+  font-family: inherit;
+  transition: background 0.12s ease, color 0.12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chat-menu-item:hover {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.chat-menu-item:active {
+  background: rgba(0, 0, 0, 0.08);
+}
+
+/* Delete item - red on hover */
+.chat-menu-item.delete {
+  color: #333;
+}
+
+.chat-menu-item.delete:hover {
+  background: rgba(255, 59, 48, 0.08);
+  color: #e53935;
+}
+
+.chat-menu-item.delete:hover svg {
+  stroke: #e53935;
+}
+
+/* Menu divider */
+.chat-menu-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 3px 8px;
+}
+
+/* Inline rename input */
+.chat-rename-input {
+  width: 100%;
+  padding: 3px 6px;
+  border: 1.5px solid var(--primary-coral);
+  border-radius: 5px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #2d2d2d;
+  background: #fff;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.15);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.chat-rename-input:focus {
+  border-color: var(--primary-coral-hover);
+  box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.25);
+}
+
+/* ============================================
+   DELETE CONFIRMATION MODAL - Premium overlay
+   ============================================ */
+.delete-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: deleteOverlayIn 0.2s ease;
+  padding: 24px;
+}
+
+@keyframes deleteOverlayIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.delete-modal {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 28px 28px 22px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.15),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  animation: deleteModalIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  text-align: center;
+}
+
+@keyframes deleteModalIn {
+  from {
+    opacity: 0;
+    transform: scale(0.92) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.delete-modal-icon {
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 59, 48, 0.08);
+  border-radius: 50%;
+  color: #e53935;
+}
+
+.delete-modal-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 8px;
+  font-family: inherit;
+}
+
+.delete-modal-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: #666;
+  margin: 0 0 24px;
+}
+
+.delete-modal-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: flex-end;
+}
+
+.delete-modal-btn {
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.1s ease, opacity 0.15s ease;
+  border: none;
+  min-width: 90px;
+}
+
+.delete-modal-btn:active {
+  transform: scale(0.97);
+}
+
+.delete-modal-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.delete-modal-btn.cancel {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.delete-modal-btn.cancel:hover:not(:disabled) {
+  background: #e4e4e4;
+}
+
+.delete-modal-btn.confirm {
+  background: #e53935;
+  color: #fff;
+}
+
+.delete-modal-btn.confirm:hover:not(:disabled) {
+  background: #d32f2f;
+}
+
+/* Spinner inside delete button */
+.delete-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: deleteSpin 0.6s linear infinite;
+}
+
+@keyframes deleteSpin {
+  to { transform: rotate(360deg); }
 }
 
 /* ============================================
@@ -534,10 +767,18 @@ body.dark-mode .app-brand-name {
 /* ============================================
    FILE COUNT BADGE - Warm coral accent
    ============================================ */
-.file-count-badge {
+/* Top-right row: badge/icon + 3-dot menu side by side */
+.chat-actions-row {
   position: absolute;
-  top: 8px;
-  right: 8px;
+  top: 6px;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  z-index: 5;
+}
+
+.file-count-badge {
   display: flex;
   align-items: center;
   background: rgba(232, 141, 125, 0.12);
@@ -568,15 +809,13 @@ body.dark-mode .app-brand-name {
    STUDY SESSION ICON - Graduation cap
    ============================================ */
 .study-session-icon {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   width: 20px;
   height: 20px;
   color: var(--primary-coral);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .study-session-icon svg {
@@ -940,6 +1179,109 @@ body.dark-mode .conversation-item.study-session {
 
 body.dark-mode .conversation-item.study-session.active {
   border-left-color: #f4a896;
+}
+
+/* Dark mode - Chat 3-dot menu */
+body.dark-mode .chat-menu-trigger {
+  color: #555;
+}
+
+body.dark-mode .chat-menu-trigger:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #bbb;
+}
+
+body.dark-mode .chat-menu-trigger.active {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ccc;
+}
+
+body.dark-mode .chat-menu-dropdown {
+  background: var(--dark-bg-elevated);
+  border: 1px solid var(--dark-border);
+  box-shadow:
+    0 4px 20px rgba(0, 0, 0, 0.4),
+    0 1px 6px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .chat-menu-item {
+  color: #d0d0d0;
+}
+
+body.dark-mode .chat-menu-item:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .chat-menu-item:active {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .chat-menu-item.delete:hover {
+  background: rgba(255, 59, 48, 0.12);
+  color: #ff6b6b;
+}
+
+body.dark-mode .chat-menu-item.delete:hover svg {
+  stroke: #ff6b6b;
+}
+
+body.dark-mode .chat-menu-divider {
+  background: var(--dark-border);
+}
+
+body.dark-mode .chat-rename-input {
+  background: var(--dark-bg-tertiary);
+  border-color: var(--dark-accent);
+  color: #e5e5e5;
+  box-shadow: 0 0 0 3px rgba(184, 165, 212, 0.15);
+}
+
+body.dark-mode .chat-rename-input:focus {
+  border-color: var(--dark-accent-hover);
+  box-shadow: 0 0 0 3px rgba(184, 165, 212, 0.25);
+}
+
+/* Dark mode - Delete modal */
+body.dark-mode .delete-modal-overlay {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+body.dark-mode .delete-modal {
+  background: var(--dark-bg-elevated);
+  box-shadow:
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .delete-modal-icon {
+  background: rgba(255, 59, 48, 0.12);
+  color: #ff6b6b;
+}
+
+body.dark-mode .delete-modal-title {
+  color: #e5e5e5;
+}
+
+body.dark-mode .delete-modal-body {
+  color: #999;
+}
+
+body.dark-mode .delete-modal-btn.cancel {
+  background: var(--dark-bg-tertiary);
+  color: #ccc;
+}
+
+body.dark-mode .delete-modal-btn.cancel:hover:not(:disabled) {
+  background: #4a4a4a;
+}
+
+body.dark-mode .delete-modal-btn.confirm {
+  background: #e53935;
+  color: #fff;
+}
+
+body.dark-mode .delete-modal-btn.confirm:hover:not(:disabled) {
+  background: #d32f2f;
 }
 
 body.dark-mode .sidebar-footer {
