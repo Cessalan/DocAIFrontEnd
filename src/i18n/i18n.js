@@ -193,6 +193,19 @@ const resources = {
         }
       },
 
+      // Case Study / NGN Questions
+      caseStudy: {
+        badge: "Case Study",
+        nursesNotes: "Nurses' Notes",
+        vitalSigns: "Vital Signs",
+        labResults: "Laboratory Results",
+        noData: "No data available for this tab.",
+        dragHint: "Drag and drop to arrange in the correct order",
+        submitOrder: "Submit Order",
+        partialCredit: "Partial Credit",
+        correctOrder: "Correct Order:"
+      },
+
       // Quiz Sticky Progress Bar
       quizbarsticky: {
         answered: "questions answered",
@@ -1026,7 +1039,34 @@ const resources = {
         proveKnowledge: "Prove Your Knowledge",
         builtFromResults: "Built from your results",
         adaptiveFocus: "FOCUS",
-        sessionsAdded: "{{count}} sessions added to your path"
+        sessionsAdded: "{{count}} sessions added to your path",
+
+        // StudyPlanOverview — section cards, milestones, sidebar
+        done: "Done",
+        of: "of",
+        nodes: "nodes",
+        nodesDone: "nodes done",
+        review: "Review",
+        miniTest: "Mini-Test",
+        needsWork: "Needs work",
+        passed: "Passed",
+        yourProgress: "Your Progress",
+        viewAll: "View all",
+        buildingPersonalizedPlan: "Building your personalized review plan...",
+        tapToGenerateReview: "Tap to generate your review plan",
+        noNodesYet: "No study plan generated yet.",
+
+        // StudyMindmapCard
+        conceptMap: "Concept Map",
+        buildingConceptMap: "Building your concept map...",
+        allConceptsReviewed: "All concepts reviewed!",
+        back: "Back",
+        nodeProgress: "{{current}} / {{total}}",
+        nextConcept: "Next Concept →",
+        finishReview: "Finish Review →",
+
+        // StudyFlashcardCard extra
+        loadingCard: "Loading card..."
       },
 
       // NodeTransition — post-node decision screen
@@ -1332,6 +1372,19 @@ const resources = {
           recommended: "Recommandé",
           hint: "Pas sûr? Commence avec le Test de connaissances pour une révision de base, puis essaie Pratique NCLEX quand tu es prêt."
         }
+      },
+
+      // Case Study / NGN Questions
+      caseStudy: {
+        badge: "Étude de cas",
+        nursesNotes: "Notes infirmières",
+        vitalSigns: "Signes vitaux",
+        labResults: "Résultats de laboratoire",
+        noData: "Aucune donnée disponible pour cet onglet.",
+        dragHint: "Glissez et déposez pour organiser dans le bon ordre",
+        submitOrder: "Soumettre l'ordre",
+        partialCredit: "Crédit partiel",
+        correctOrder: "Ordre correct :"
       },
 
       // Quiz Sticky Progress Bar
@@ -2165,7 +2218,34 @@ const resources = {
         proveKnowledge: "Prouver tes connaissances",
         builtFromResults: "Construit à partir de tes résultats",
         adaptiveFocus: "FOCUS",
-        sessionsAdded: "{{count}} sessions ajoutées à ta route"
+        sessionsAdded: "{{count}} sessions ajoutées à ta route",
+
+        // StudyPlanOverview — cartes de section, jalons, barre latérale
+        done: "Terminé",
+        of: "sur",
+        nodes: "étapes",
+        nodesDone: "étapes complétées",
+        review: "Revoir",
+        miniTest: "Mini-Test",
+        needsWork: "À travailler",
+        passed: "Réussi",
+        yourProgress: "Ta progression",
+        viewAll: "Voir tout",
+        buildingPersonalizedPlan: "Création de ton plan de révision personnalisé...",
+        tapToGenerateReview: "Appuie pour générer ton plan de révision",
+        noNodesYet: "Aucun plan d'étude généré pour l'instant.",
+
+        // StudyMindmapCard
+        conceptMap: "Carte mentale",
+        buildingConceptMap: "Construction de ta carte mentale...",
+        allConceptsReviewed: "Tous les concepts ont été révisés !",
+        back: "Retour",
+        nodeProgress: "{{current}} / {{total}}",
+        nextConcept: "Concept suivant →",
+        finishReview: "Terminer la révision →",
+
+        // StudyFlashcardCard extra
+        loadingCard: "Chargement de la carte..."
       },
 
       // NodeTransition — écran de décision post-nœud
