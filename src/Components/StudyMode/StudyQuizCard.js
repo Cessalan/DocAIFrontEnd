@@ -32,6 +32,12 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   const [isCorrect, setIsCorrect] = useState(false);
   const [showFullRationale, setShowFullRationale] = useState(false);
 
+  // "I don't know" state
+  const [isDontKnow, setIsDontKnow] = useState(false);
+  const [dontKnowMessage, setDontKnowMessage] = useState('');
+  const [streamedText, setStreamedText] = useState('');
+  const [isStreamingMessage, setIsStreamingMessage] = useState(false);
+
   // Question queue (like flashcard queue)
   const [questionQueue, setQuestionQueue] = useState([]);
   const [queueIndex, setQueueIndex] = useState(() =>
@@ -115,6 +121,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         setShowFeedback(false);
         setIsCorrect(false);
         setShowFullRationale(false);
+        setIsDontKnow(false);
+        setIsStreamingMessage(false);
       }
       // If all correct, the allCorrect derived value will become true on
       // re-render (since allQuestionsReceived is now true) and the
@@ -290,6 +298,35 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
     }
   }, [allCorrect, totalQuestions]);
 
+  // Typewriter effect for "I don't know" encouragement message
+  const streamedTextRef = useRef('');
+  const typewriterTimeoutRef = useRef(null);
+  useEffect(() => {
+    if (!isStreamingMessage || !dontKnowMessage) return;
+
+    streamedTextRef.current = '';
+    setStreamedText('');
+    let charIndex = 0;
+
+    const typeNextChar = () => {
+      if (charIndex < dontKnowMessage.length) {
+        streamedTextRef.current += dontKnowMessage[charIndex];
+        setStreamedText(streamedTextRef.current);
+        charIndex++;
+        // Random jitter per character for natural feel
+        typewriterTimeoutRef.current = setTimeout(typeNextChar, 12 + Math.random() * 12);
+      } else {
+        setIsStreamingMessage(false);
+      }
+    };
+
+    typewriterTimeoutRef.current = setTimeout(typeNextChar, 80); // Brief initial delay
+
+    return () => {
+      if (typewriterTimeoutRef.current) clearTimeout(typewriterTimeoutRef.current);
+    };
+  }, [isStreamingMessage, dontKnowMessage]);
+
   // Handle milestone celebration continue
   const handleMilestoneContinue = () => {
     setShowMilestoneCelebration(false);
@@ -379,6 +416,24 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <line x1="5" y1="12" x2="19" y2="12" />
       <polyline points="12 5 19 12 12 19" />
+    </svg>
+  );
+
+  // Lightbulb icon for "I don't know" feedback
+  const LightbulbIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 18h6" />
+      <path d="M10 22h4" />
+      <path d="M12 2a7 7 0 0 0-4 12.7V17h8v-2.3A7 7 0 0 0 12 2z" />
+    </svg>
+  );
+
+  // Help circle icon for "I don't know" button
+  const HelpCircleIcon = () => (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3" />
+      <line x1="12" y1="17" x2="12.01" y2="17" />
     </svg>
   );
 
@@ -494,6 +549,50 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
     }
   };
 
+  const handleDontKnow = () => {
+    if (showFeedback) return;
+
+    // Pick a random encouraging message
+    const messages = t('study.dontKnowMessages', { returnObjects: true });
+    const msgArray = Array.isArray(messages) ? messages : [];
+    const randomMsg = msgArray.length > 0
+      ? msgArray[Math.floor(Math.random() * msgArray.length)]
+      : "That's okay! This one will come back for review.";
+
+    setSelectedIndex(null);
+    setIsCorrect(false);
+    setShowFeedback(true);
+    setIsDontKnow(true);
+    setDontKnowMessage(randomMsg);
+    setIsStreamingMessage(true);
+
+    playIncorrectSound();
+
+    // Update question status as incorrect
+    const newStatuses = {
+      ...questionStatuses,
+      [currentQueuePosition]: 'incorrect'
+    };
+    setQuestionStatuses(newStatuses);
+
+    // Notify parent — isCorrect: false so performance tracking penalizes
+    if (onAnswer) {
+      onAnswer({
+        selectedIndex: null,
+        isCorrect: false,
+        questionIndex: currentQueuePosition,
+        progress: {
+          questionStatuses: newStatuses,
+          firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+            ? firstAttemptStatuses
+            : newStatuses,
+          queueIndex: queueIndex,
+          isReviewRound: isReviewRound
+        }
+      });
+    }
+  };
+
   const handleNextQuestion = () => {
     const nextQueueIndex = queueIndex + 1;
 
@@ -508,6 +607,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         setShowFeedback(false);
         setIsCorrect(false);
         setShowFullRationale(false);
+        setIsDontKnow(false);
+        setIsStreamingMessage(false);
         return;
       }
 
@@ -536,6 +637,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         setShowFeedback(false);
         setIsCorrect(false);
         setShowFullRationale(false);
+        setIsDontKnow(false);
+        setIsStreamingMessage(false);
 
         // Save progress when entering review round
         if (onAnswer) {
@@ -560,6 +663,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
       setShowFeedback(false);
       setIsCorrect(false);
       setShowFullRationale(false);
+      setIsDontKnow(false);
+      setIsStreamingMessage(false);
 
       // Save progress after advancing
       if (onAnswer) {
@@ -790,10 +895,98 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
               ))}
             </div>
 
+            {/* "I don't know" button - below options, hidden after feedback */}
+            {!showFeedback && !viewOnly && (
+              <button className="study-quiz-idk-btn" onClick={handleDontKnow}>
+                <HelpCircleIcon />
+                {t('study.dontKnow', "I don't know")}
+              </button>
+            )}
+
             {/* Feedback */}
             {showFeedback && (() => {
               const shortRationale = getShortRationale(rationale);
               const hasMore = hasMoreRationale(rationale, shortRationale);
+
+              // "I don't know" gets its own amber feedback panel with typewriter effect
+              if (isDontKnow) {
+                return (
+                  <div className="study-quiz-feedback unsure">
+                    <div className="study-quiz-feedback-header">
+                      <div className="study-quiz-feedback-icon">
+                        <LightbulbIcon />
+                      </div>
+                      <span className="study-quiz-feedback-title idk-streaming">
+                        {streamedText}
+                        {isStreamingMessage && <span className="idk-cursor" />}
+                      </span>
+                    </div>
+
+                    {/* Reveal content after streaming completes */}
+                    {!isStreamingMessage && (
+                      <div className="idk-reveal-content">
+                        <p className="idk-review-note">
+                          {t('study.dontKnowReviewNote', 'This one will come back for review.')}
+                        </p>
+
+                        {/* Show correct answer */}
+                        <div className="study-quiz-correct-answer">
+                          <span className="correct-answer-label">{t('study.correctAnswer', 'Correct Answer:')}</span>
+                          <span className="correct-answer-text">
+                            {letters[correctIndex]}. {stripLetterPrefix(options[correctIndex])}
+                          </span>
+                        </div>
+
+                        {/* Short rationale */}
+                        {shortRationale && (
+                          <p className="study-quiz-feedback-short">
+                            {shortRationale}
+                          </p>
+                        )}
+
+                        {/* Expandable full rationale */}
+                        {hasMore && (
+                          <>
+                            <button
+                              className="study-quiz-learn-more-btn"
+                              onClick={() => setShowFullRationale(!showFullRationale)}
+                            >
+                              {showFullRationale ? (
+                                <>
+                                  <ChevronUpIcon />
+                                  {t('study.showLess', 'Show less')}
+                                </>
+                              ) : (
+                                <>
+                                  <ChevronDownIcon />
+                                  {t('study.learnMore', 'Learn more')}
+                                </>
+                              )}
+                            </button>
+
+                            {showFullRationale && (
+                              <div
+                                className="study-quiz-feedback-rationale"
+                                dangerouslySetInnerHTML={{ __html: rationale }}
+                              />
+                            )}
+                          </>
+                        )}
+
+                        {/* GOT IT button */}
+                        {(shouldShowContinueButton || needsReviewRound()) && (
+                          <button
+                            className="study-quiz-feedback-btn incorrect"
+                            onClick={handleNextQuestion}
+                          >
+                            {t('study.gotIt', 'GOT IT')}
+                          </button>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              }
 
               return (
                 <div className={`study-quiz-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>

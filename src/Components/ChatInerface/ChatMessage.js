@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect, useCallback } from 'react';
 import ReactMarkDown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ChatQuizStream from "./ChatQuizStream";
 import ChatFlashcard from "./ChatFlashcard";
 import FlashcardResults from "./FlashcardResults";
@@ -454,7 +455,7 @@ const ChatMessage = ({
               </div>
             ) : (
               <div className={`ai-message-wrapper ${message.isStreaming ? 'streaming' : 'complete'}`}>
-                <ReactMarkDown>{message.content}</ReactMarkDown>
+                <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
                 {message.isStreaming && (
                   <span className="streaming-cursor">▊</span>
                 )}

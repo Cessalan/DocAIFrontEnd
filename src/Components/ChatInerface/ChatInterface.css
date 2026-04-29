@@ -1112,6 +1112,181 @@ body.dark-mode .nursing-icon {
     font-size: 18px;
   }
 
+  /* ============================================
+     MARKDOWN RICH CONTENT — Tables, Code, etc.
+     Designed for dark-mode-first with CSS variables
+     ============================================ */
+
+  /* Tables */
+  .message-text table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 16px 0;
+    font-size: 14px;
+    border-radius: 10px;
+    overflow: hidden;
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+    background: var(--dark-bg-elevated, #262626);
+  }
+
+  .message-text thead {
+    background: var(--dark-bg-tertiary, #3d3d3d);
+  }
+
+  .message-text th {
+    padding: 11px 16px;
+    text-align: left;
+    font-weight: 600;
+    font-size: 13px;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--primary-purple, #e88d7d);
+    border-bottom: 1px solid var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  }
+
+  .message-text td {
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--dark-border, rgba(255, 255, 255, 0.06));
+    line-height: 1.55;
+    vertical-align: top;
+    color: #d1d5db;
+  }
+
+  .message-text tbody tr:last-child td {
+    border-bottom: none;
+  }
+
+  .message-text tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  .message-text tbody tr:hover {
+    background: rgba(232, 141, 125, 0.06);
+  }
+
+  /* Ordered lists */
+  .message-text ol {
+    padding-left: 24px;
+    margin: 12px 0;
+  }
+
+  .message-text ol > li {
+    margin-bottom: 8px;
+    line-height: 1.6;
+  }
+
+  /* Inline code */
+  .message-text code {
+    background: var(--dark-bg-tertiary, #3d3d3d);
+    padding: 2px 7px;
+    border-radius: 5px;
+    font-size: 0.88em;
+    font-family: 'Fira Code', 'Courier New', monospace;
+    color: var(--primary-purple-light, #f4a896);
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  }
+
+  /* Code blocks */
+  .message-text pre {
+    background: var(--dark-bg-primary, #1a1a1a);
+    color: #e5e7eb;
+    padding: 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.6;
+    border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  }
+
+  .message-text pre code {
+    background: none;
+    padding: 0;
+    border: none;
+    color: inherit;
+  }
+
+  /* Blockquotes */
+  .message-text blockquote {
+    border-left: 3px solid var(--primary-purple, #e88d7d);
+    margin: 14px 0;
+    padding: 10px 16px;
+    background: var(--dark-bg-elevated, #262626);
+    border-radius: 0 8px 8px 0;
+    color: #c9cdd3;
+  }
+
+  /* Headings in chat */
+  .message-text h1, .message-text h2, .message-text h3,
+  .message-text h4, .message-text h5, .message-text h6 {
+    margin-top: 18px;
+    margin-bottom: 8px;
+    font-weight: 600;
+    line-height: 1.3;
+    color: #f3f4f6;
+  }
+
+  .message-text h1 { font-size: 1.4em; }
+  .message-text h2 { font-size: 1.25em; }
+  .message-text h3 { font-size: 1.1em; }
+
+  /* Horizontal rules */
+  .message-text hr {
+    border: none;
+    border-top: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+    margin: 18px 0;
+  }
+
+  /* ── Light mode overrides (when not in dark-mode) ── */
+  body:not(.dark-mode) .message-text table {
+    background: #ffffff;
+    border-color: #e5e7eb;
+  }
+
+  body:not(.dark-mode) .message-text thead {
+    background: #f9fafb;
+  }
+
+  body:not(.dark-mode) .message-text th {
+    color: #6b7280;
+    border-bottom-color: #e5e7eb;
+  }
+
+  body:not(.dark-mode) .message-text td {
+    color: #374151;
+    border-bottom-color: #f3f4f6;
+  }
+
+  body:not(.dark-mode) .message-text tbody tr:nth-child(even) {
+    background: #f9fafb;
+  }
+
+  body:not(.dark-mode) .message-text tbody tr:hover {
+    background: #f3f4f6;
+  }
+
+  body:not(.dark-mode) .message-text code {
+    background: #f3f4f6;
+    color: #be4c3a;
+    border-color: #e5e7eb;
+  }
+
+  body:not(.dark-mode) .message-text blockquote {
+    background: #f9fafb;
+    color: #4b5563;
+  }
+
+  body:not(.dark-mode) .message-text h1,
+  body:not(.dark-mode) .message-text h2,
+  body:not(.dark-mode) .message-text h3 {
+    color: #111827;
+  }
+
+  body:not(.dark-mode) .message-text hr {
+    border-top-color: #e5e7eb;
+  }
+
   /* Smooth entry animation - refined */
   .ai-message-wrapper {
     animation: messageStreamIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);
@@ -3218,6 +3393,20 @@ body.dark-mode .nursing-icon {
       max-width: 100%;
     }
 
+    /* Scrollable tables on mobile */
+    .message-text table {
+      display: block;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      font-size: 13px;
+    }
+
+    .message-text th,
+    .message-text td {
+      padding: 8px 12px;
+      white-space: nowrap;
+    }
+
     .ai-message {
       padding-top: 16px;
       padding-bottom: 16px;
@@ -3360,6 +3549,7 @@ body.dark-mode .nursing-icon {
     color: #ffffff;
     font-weight: 600;
   }
+
 
   /* Chat Header */
   .chat-header {
