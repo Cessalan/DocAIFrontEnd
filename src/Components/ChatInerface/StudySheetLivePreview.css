@@ -534,7 +534,7 @@
    MOBILE RESPONSIVE
    ================================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .study-sheet-wrapper {
     margin: 8px;
     width: calc(100% - 16px);

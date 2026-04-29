@@ -172,14 +172,14 @@ const StudyCelebration = ({
         {/* Stats - only show on completion */}
         {type === 'complete' && (
           <div className={`celebration-stats ${showStats ? 'visible' : ''}`}>
-            {/* XP Card */}
-            <div className="stat-card xp-card">
+            {/* XP Card - commented out to reduce distraction */}
+            {/* <div className="stat-card xp-card">
               <span className="stat-label">{t('study.totalXP', 'TOTAL XP')}</span>
               <div className="stat-value">
                 <span className="stat-icon">⚡</span>
                 <span className="stat-number">{xpEarned}</span>
               </div>
-            </div>
+            </div> */}
 
             {/* Perfect Score Card - only if 100% */}
             {isPerfect && (
@@ -208,7 +208,7 @@ const StudyCelebration = ({
         {/* Continue button */}
         <button className="celebration-continue-btn" onClick={onContinue}>
           {type === 'complete'
-            ? t('study.claimXP', 'CLAIM XP')
+            ? t('study.continue', 'CONTINUE')
             : t('study.continue', 'CONTINUE')}
         </button>
       </div>

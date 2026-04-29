@@ -3722,7 +3722,7 @@ const ChatInterface = ({
               {currentChatTitle}
             </h2>
             {/* Progress Widget - Next to title */}
-            <CompactProgressWidget />
+            {/* <CompactProgressWidget /> */}
           </div>
         </div>
 

@@ -589,7 +589,7 @@ body:not(.dark-mode) .viral-message-input::placeholder {
 }
 
 /* Mobile Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .share-modal-content {
     padding: 20px;
     margin: 16px;

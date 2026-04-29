@@ -33,10 +33,10 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
     return Math.floor((Date.now() - startTimeRef.current) / 1000);
   };
 
-  // XP for lessons
-  // Review mode: flat 5 XP for completing review
-  // Normal mode: 5 XP per page read
-  const xpEarned = isReviewMode ? 5 : totalPages * 5;
+  // XP for lessons - commented out to reduce distraction
+  // // Review mode: flat 5 XP for completing review
+  // // Normal mode: 5 XP per page read
+  // const xpEarned = isReviewMode ? 5 : totalPages * 5;
 
   // Book icon for lesson
   const LessonIcon = () => (
@@ -132,7 +132,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
           <div className="study-card-content">
             <StudyCelebration
               type="complete"
-              xpEarned={xpEarned}
+              /* xpEarned={xpEarned} */
               timeSeconds={getTimeTaken()}
               isPerfect={true}
               inline={true}
@@ -219,7 +219,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
-            xpEarned={xpEarned}
+            /* xpEarned={xpEarned} */
             timeSeconds={getTimeTaken()}
             isPerfect={true}
             inline={true}

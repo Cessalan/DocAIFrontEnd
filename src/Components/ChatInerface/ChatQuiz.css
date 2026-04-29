@@ -740,25 +740,26 @@
    Progressive enhancement for smaller screens
    ============================================ */
 
-/* Tablet breakpoint */
-@media (max-width: 768px) {
+/* Tablet + mobile breakpoint */
+@media (max-width: 1024px) {
   .quiz-container {
     padding: 16px;
   }
-  
+
   .quiz-container > strong {
     font-size: 14px;
   }
-  
+
   .quiz-option {
     padding: 10px 12px;
     font-size: 13px;
+    min-height: 44px; /* touch-friendly */
   }
-  
+
   .quiz-feedback {
     padding: 12px;
   }
-  
+
   .quiz-feedback p:last-child {
     font-size: 12px;
   }
@@ -1102,7 +1103,7 @@
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .quiz-progress-bar:not(.active-quiz):hover::after {
     display: none;
   }

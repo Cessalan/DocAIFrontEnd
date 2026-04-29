@@ -192,10 +192,10 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
   // Check if all cards are mastered
   const allMastered = masteredCount === totalCards;
 
-  // Calculate XP earned
-  // Review mode: flat 5 XP for completing review
-  // Normal mode: 10 XP per mastered card
-  const xpEarned = isReviewMode ? 5 : masteredCount * 10;
+  // Calculate XP earned - commented out to reduce distraction
+  // // Review mode: flat 5 XP for completing review
+  // // Normal mode: 10 XP per mastered card
+  // const xpEarned = isReviewMode ? 5 : masteredCount * 10;
 
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual cards received
@@ -506,7 +506,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
-            xpEarned={xpEarned}
+            /* xpEarned={xpEarned} */
             timeSeconds={getTimeTaken()}
             isPerfect={isPerfect}
             inline={true}

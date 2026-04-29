@@ -21,7 +21,8 @@
       "WebFetch(domain:nursequizai.com)",
       "Bash(npx react-scripts build)",
       "Bash(find c:UsersBillionDesktopNQBackEndNQBackEnd2 -type f \\\\\\(-name *tts* -o -name *audio* -o -name *voice* -o -name *sound* \\\\\\) -not -path */node_modules/*)",
-      "Bash(docker run *)"
+      "Bash(docker run *)",
+      "Bash(npx react-scripts *)"
     ],
     "deny": [],
     "ask": [],

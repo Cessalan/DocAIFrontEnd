@@ -383,7 +383,7 @@ body:not(.dark-mode) .feedback-options button {
    RESPONSIVE
    ============================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .flashcard-nav {
     padding: 10px;
     gap: 10px;

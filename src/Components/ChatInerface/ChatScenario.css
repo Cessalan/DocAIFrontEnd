@@ -100,3 +100,45 @@
 .scenario-retry-button:hover {
   background-color: #d8c1f0;
 }
+
+/* ── Tablet ── */
+@media (max-width: 1024px) {
+  .option {
+    min-height: 44px; /* touch-friendly tap target */
+  }
+}
+
+/* ── Mobile ── */
+@media (max-width: 480px) {
+  .scenario-container {
+    padding: 14px;
+    border-radius: 12px;
+    margin-top: 12px;
+  }
+
+  .scenario-description p,
+  .scenario-question p {
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+
+  .option {
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+  }
+
+  .scenario-feedback {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  .scenario-feedback p {
+    font-size: 13px;
+  }
+
+  .scenario-retry-button {
+    padding: 8px 14px;
+    font-size: 14px;
+  }
+}

@@ -161,7 +161,7 @@
    MOBILE - Adjustments
    ============================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .suggestions-wrapper {
     padding: 6px 0;
     margin: 10px 0;
@@ -183,6 +183,7 @@
     padding: 10px 6px;
     font-size: 12px;
     gap: 8px;
+    min-height: 44px; /* touch-friendly */
   }
 
   .suggestion-icon-arrow {

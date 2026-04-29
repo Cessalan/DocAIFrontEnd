@@ -78,6 +78,14 @@
     radial-gradient(at 100% 0%, rgba(255, 243, 205, 0.1) 0px, transparent 50%);
 }
 
+/* Global box-sizing for all chat elements */
+.chat-container,
+.chat-container *,
+.chat-container *::before,
+.chat-container *::after {
+  box-sizing: border-box;
+}
+
 /* ============================================
    CHAT CONTAINER - WARM PAPER
    ============================================ */
@@ -576,8 +584,8 @@ body.dark-mode .nursing-icon {
     }
   }
 
-  /* Mobile adjustment */
-  @media (max-width: 768px) {
+  /* Tablet + mobile adjustment */
+  @media (max-width: 1024px) {
     .scroll-to-bottom-btn {
       bottom: 120px;
       left: 50%;
@@ -967,6 +975,9 @@ body.dark-mode .nursing-icon {
     /* Remove padding - let text breathe naturally */
     pointer-events: auto;
     max-width: 100%;
+    min-width: 0; /* Allow flex child to shrink below content size */
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
 
   .ai-message .message-content:hover {
@@ -3354,15 +3365,8 @@ body.dark-mode .nursing-icon {
     }
   }
 
-  /* Tablet: 60% width */
-  @media (min-width: 769px) and (max-width: 1024px) {
-    .study-sheet-panel {
-      width: 60%;
-    }
-  }
-
-  /* Mobile: Full Screen */
-  @media (max-width: 768px) {
+  /* Tablet + Mobile: Full Screen */
+  @media (max-width: 1024px) {
     .study-sheet-panel {
       width: 100vw;
       left: 0;
@@ -3373,27 +3377,28 @@ body.dark-mode .nursing-icon {
   /* ============================================
    RESPONSIVE - MOBILE
    ============================================ */
-  @media (max-width: 768px) {
+  /* ── Tablet + Mobile (≤1024px) ── */
+  @media (max-width: 1024px) {
     .chat-container {
       margin: 0;
       border-radius: 0;
       max-height: 100vh;
+      max-height: 100dvh;
     }
 
     .messages-container {
       padding: 0;
       padding-top: 20px;
       padding-bottom: 160px;
-      /* More space for mobile keyboards */
     }
 
     .message {
       padding: 16px 20px;
-      /* Reduced padding for mobile */
       max-width: 100%;
+      box-sizing: border-box;
     }
 
-    /* Scrollable tables on mobile */
+    /* Scrollable tables */
     .message-text table {
       display: block;
       overflow-x: auto;
@@ -3412,28 +3417,32 @@ body.dark-mode .nursing-icon {
       padding-bottom: 16px;
     }
 
+    .ai-message .message-content {
+      min-width: 0;
+      overflow-wrap: break-word;
+      word-break: break-word;
+    }
+
     .user-message {
       padding-top: 20px;
       padding-bottom: 24px;
     }
 
     .user-message .message-content {
-      max-width: 90%;
-      /* Slightly wider on mobile */
+      max-width: 85%;
     }
 
+    /* Input area — full width, no sidebar offset */
     .input-area {
       padding: 16px 16px 20px 16px;
-      /* Mobile-friendly padding */
       gap: 8px;
       max-width: 100%;
-      /* Reset to full width on mobile (no sidebar rail) */
       left: 0;
       right: 0;
       width: 100%;
     }
 
-    /* Override desktop sidebar adjustments on mobile */
+    /* Override desktop sidebar adjustments */
     .main-content.rail-shifted .input-area,
     .main-content.shifted .input-area {
       left: 0;
@@ -3459,8 +3468,7 @@ body.dark-mode .nursing-icon {
     }
 
     .message-textarea {
-      font-size: 16px;
-      /* Prevent zoom on iOS */
+      font-size: 16px; /* Prevent zoom on iOS */
     }
 
     .send-button-icon {
@@ -3486,11 +3494,19 @@ body.dark-mode .nursing-icon {
       height: 20px;
     }
 
-    /* Improve message text readability on mobile */
+    /* Chat header — account for hamburger button */
+    .chat-header {
+      padding: 10px 16px 10px 56px;
+    }
+
+    .chat-header-title {
+      font-size: 1.1rem;
+    }
+
+    /* Text readability */
     .message-text,
     .user-text {
       font-size: 15px;
-      /* Slightly smaller but still readable */
       line-height: 1.7;
     }
   }
@@ -4269,8 +4285,8 @@ body.dark-mode .voice-transcribing span {
   background: #b8a5d4;
 }
 
-/* Mobile adjustments */
-@media (max-width: 768px) {
+/* Tablet + mobile adjustments */
+@media (max-width: 1024px) {
   .voice-input-button {
     width: 40px;
     height: 40px;
@@ -4367,8 +4383,8 @@ body:not(.dark-mode) .file-error-toast-close:hover {
   color: rgba(0, 0, 0, 0.7);
 }
 
-/* Mobile toast */
-@media (max-width: 768px) {
+/* Tablet + mobile toast */
+@media (max-width: 1024px) {
   .file-error-toast {
     top: 10px;
     left: 10px;
@@ -4383,5 +4399,392 @@ body:not(.dark-mode) .file-error-toast-close:hover {
 
   .file-error-toast-message {
     font-size: 0.85rem;
+  }
+}
+
+/* ============================================
+   MOBILE / iPHONE RESPONSIVE FIXES
+   ============================================ */
+@media (max-width: 480px) {
+
+  /* ── Chat Header ─────────────────────────── */
+  .chat-header {
+    padding: 6px 10px 6px 48px; /* left padding clears the fixed hamburger button */
+  }
+
+  .chat-header-row {
+    gap: 8px;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+  }
+
+  .chat-header-title {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: calc(100vw - 80px);
+  }
+
+  /* ── Messages Container ─────────────────── */
+  .messages-container {
+    padding-top: 8px;
+    padding-bottom: 120px;
+  }
+
+  /* ── Message Bubbles ─────────────────────── */
+  .message {
+    padding: 8px 10px;
+    gap: 8px;
+    max-width: 100%;
+    overflow: hidden; /* prevent any child from blowing out */
+  }
+
+  /* AI message row: avatar + text */
+  .ai-message {
+    gap: 8px;
+    padding: 10px;
+    flex-direction: row;
+    overflow: hidden;
+  }
+
+  .ai-message .message-content {
+    flex: 1;
+    min-width: 0;           /* critical: allows flex child to shrink */
+    max-width: 100%;
+    overflow: hidden;        /* clip any overflowing children */
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  .ai-message .message-text {
+    font-size: 14px;
+    line-height: 1.65;
+    overflow-wrap: break-word;
+    word-break: break-word;
+  }
+
+  /* User message bubble */
+  .user-message {
+    padding: 10px;
+  }
+
+  .user-message .message-content {
+    max-width: 90%;
+    padding: 10px 14px;
+    border-radius: 16px;
+  }
+
+  .message-text,
+  .user-text {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  /* Avatar — smaller on mobile */
+  .message-avatar-container {
+    width: 22px;
+    height: 22px;
+    flex-shrink: 0;
+  }
+
+  .message-avatar-container .streaming-logo-svg,
+  .message-avatar-container .static-logo-svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  /* Prevent message hover lift on touch devices */
+  .message-content:hover {
+    transform: none;
+  }
+
+  /* ── Message Text Content Fixes ──────────── */
+  /* Tables — scroll horizontally */
+  .message-text table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+    max-width: 100%;
+  }
+
+  .message-text th,
+  .message-text td {
+    padding: 6px 8px;
+    white-space: nowrap;
+  }
+
+  /* Code blocks */
+  .message-text pre {
+    font-size: 12px;
+    padding: 10px;
+    border-radius: 10px;
+    overflow-x: auto;
+    max-width: 100%;
+  }
+
+  .message-text code {
+    font-size: 12px;
+    word-break: break-all;
+  }
+
+  /* Blockquote */
+  .message-text blockquote {
+    padding: 8px 12px;
+    margin: 8px 0;
+  }
+
+  /* Headings */
+  .message-text h1 { font-size: 1.15em; }
+  .message-text h2 { font-size: 1.05em; }
+  .message-text h3 { font-size: 1em; }
+
+  /* Lists — tighter indentation */
+  .message-text ul,
+  .message-text ol {
+    padding-left: 20px;
+    margin: 6px 0;
+  }
+
+  .message-text ul > li,
+  .message-text ol > li {
+    margin-bottom: 4px;
+  }
+
+  /* Nested bold */
+  .message-text strong {
+    overflow-wrap: break-word;
+  }
+
+  /* ── Input Area ──────────────────────────── */
+  .input-area {
+    padding: 6px 8px 10px;
+    gap: 0;
+    left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .input-wrapper-container {
+    padding: 8px 10px;
+    border-radius: 16px;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .message-textarea {
+    font-size: 16px; /* Prevent iOS zoom */
+    min-height: 32px;
+    padding: 4px 0;
+  }
+
+  .input-actions-bottom {
+    gap: 2px;
+  }
+
+  .input-actions-left-group {
+    gap: 2px;
+  }
+
+  .input-actions-right-group {
+    gap: 2px;
+  }
+
+  /* Upload + folder buttons */
+  .upload-button {
+    padding: 6px;
+    min-width: 34px;
+    min-height: 34px;
+    border-radius: 8px;
+  }
+
+  .upload-button svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Send button */
+  .send-button-icon {
+    min-width: 32px;
+    min-height: 32px;
+    padding: 6px;
+  }
+
+  .send-button-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Voice & other action buttons */
+  .voice-input-button {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+  }
+
+  .voice-input-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* ── Empty State — "Prepare for your exam" ─ */
+  .empty-chat-state {
+    padding: 16px 12px;
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  .empty-cta-card {
+    padding: 24px 20px;
+    max-width: 100%;
+    border-radius: 18px;
+  }
+
+  .empty-cta-icon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .empty-cta-title {
+    font-size: 17px;
+  }
+
+  .empty-cta-subtitle {
+    font-size: 13px;
+  }
+
+  .empty-cta-buttons-row {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+
+  .empty-cta-buttons-row .empty-cta-button {
+    min-width: unset;
+    width: 100%;
+  }
+
+  .empty-cta-button {
+    padding: 11px 20px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .empty-cta-note {
+    font-size: 11px;
+  }
+
+  /* Three-card empty actions — stack vertically */
+  .empty-chat-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .empty-chat-actions.two-cards {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
+
+  .empty-action-card {
+    flex-direction: row;
+    padding: 14px 16px;
+    gap: 12px;
+    text-align: left;
+  }
+
+  /* ── Pre-upload Action Buttons ────────────── */
+  .pre-upload-actions-container {
+    padding: 0 8px 6px;
+    bottom: 90px;
+    left: 0 !important;
+    width: 100% !important;
+  }
+
+  .pre-upload-buttons {
+    gap: 5px;
+    flex-wrap: wrap;
+  }
+
+  .pre-upload-btn {
+    padding: 6px 9px 6px 7px;
+    gap: 5px;
+    min-height: 32px;
+  }
+
+  .pre-upload-btn .action-icon-circle {
+    width: 22px;
+    height: 22px;
+    min-width: 22px;
+  }
+
+  .pre-upload-btn .action-icon-circle svg {
+    width: 12px;
+    height: 12px;
+  }
+
+  .pre-upload-btn .action-label {
+    font-size: 11px;
+  }
+
+  /* ── Scroll-to-bottom Button ─────────────── */
+  .scroll-to-bottom-btn {
+    bottom: 110px;
+    right: 10px;
+    width: 34px;
+    height: 34px;
+  }
+
+  /* ── Paste Notes Modal ───────────────────── */
+  .paste-notes-modal {
+    max-width: calc(100vw - 20px);
+    margin: 10px;
+  }
+
+  .paste-notes-textarea {
+    min-height: 160px;
+  }
+
+  .paste-notes-actions {
+    flex-direction: column;
+  }
+
+  /* ── Exam-linked Empty State ─────────────── */
+  .empty-chat-state.exam-linked {
+    gap: 10px;
+    padding: 12px 8px;
+  }
+
+  /* ── Flashcard Messages ──────────────────── */
+  .message:has(.flashcard-view-container),
+  .message-with-flashcards {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  /* ── Mindmap Messages ────────────────────── */
+  .message:has(.chat-mindmap),
+  .message:has(.mindmap-viewer) {
+    padding-left: 6px;
+    padding-right: 6px;
+  }
+
+  /* ── Sticky Quiz Progress ────────────────── */
+  .sticky-quiz-progress {
+    padding: 8px 10px;
+    gap: 4px;
+    top: 48px;
+  }
+
+  /* ── File Error Toast ────────────────────── */
+  .file-error-toast {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+  }
+
+  .file-error-toast-content {
+    padding: 10px 12px;
+    gap: 8px;
   }
 }

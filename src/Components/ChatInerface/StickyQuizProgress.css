@@ -358,9 +358,9 @@
    RESPONSIVE DESIGN
    ============================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .sticky-quiz-progress {
-    top: 50px; /* Smaller header on mobile */
+    top: 50px;
     padding: 10px 16px;
   }
   

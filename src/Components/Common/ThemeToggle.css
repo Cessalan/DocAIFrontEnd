@@ -61,7 +61,7 @@ body.dark-mode .theme-toggle-btn:hover {
 }
 
 /* Mobile responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .theme-toggle-btn {
     width: 32px;
     height: 32px;

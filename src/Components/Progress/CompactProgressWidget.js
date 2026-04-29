@@ -55,12 +55,12 @@ const CompactProgressWidget = () => {
 
   return (
     <div className={`compact-progress-widget ${showXpFloat ? 'xp-pulse' : ''}`} onClick={toggleDashboard}>
-      {/* +1 XP Floating Animation */}
-      {showXpFloat && (
+      {/* +1 XP Floating Animation - commented out to reduce distraction */}
+      {/* {showXpFloat && (
         <div className="xp-float-animation">
           +1 XP
         </div>
-      )}
+      )} */}
 
       {/* Level Badge */}
       <div className="level-badge">
@@ -81,13 +81,13 @@ const CompactProgressWidget = () => {
         <span className="serum-text">{dailyCorrectAnswers}/{dailySerumGoal}</span>
       </div>
 
-      {/* XP bar inline */}
-      <div className="widget-xp-row">
+      {/* XP bar inline - commented out to reduce distraction */}
+      {/* <div className="widget-xp-row">
         <div className="xp-bar-track">
           <div className="xp-bar-fill" style={{ width: `${xpPercentage}%` }}></div>
         </div>
         <span className="xp-text">{xpProgress}/{xpNeeded} {t('progress.xp')}</span>
-      </div>
+      </div> */}
 
       {/* Click indicator */}
       <div className="widget-expand-hint">

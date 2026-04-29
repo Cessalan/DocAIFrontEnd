@@ -561,8 +561,8 @@ body.dark-mode .feedback-popover-portal.placement-left::after {
     font-weight: 600;
 }
 
-/* Mobile Responsive */
-@media (max-width: 768px) {
+/* Tablet + Mobile Responsive */
+@media (max-width: 1024px) {
     .quiz-navigation.compact {
         flex-direction: row;
         min-width: 100%;
@@ -870,8 +870,8 @@ body.dark-mode .overflow-dots {
     color: #a78bfa;
 }
 
-/* Dark mode mobile horizontal scrollbar */
-@media (max-width: 768px) {
+/* Dark mode tablet + mobile horizontal scrollbar */
+@media (max-width: 1024px) {
     body.dark-mode .quiz-navigation.compact {
         scrollbar-color: rgba(139, 92, 246, 0.4) transparent;
     }

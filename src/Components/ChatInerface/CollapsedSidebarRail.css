@@ -102,8 +102,8 @@
   flex: 1;
 }
 
-/* Responsive - hide on mobile, use full sidebar toggle instead */
-@media (max-width: 768px) {
+/* Responsive - hide on tablet + mobile, use full sidebar toggle instead */
+@media (max-width: 1024px) {
   .collapsed-sidebar-rail {
     display: none;
   }

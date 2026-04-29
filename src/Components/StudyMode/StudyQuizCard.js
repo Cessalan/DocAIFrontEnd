@@ -264,10 +264,10 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   const allQuestionsReceived = !isStreaming || totalQuestions >= expectedTotal;
   const allCorrect = correctCount === totalQuestions && totalQuestions > 0 && allQuestionsReceived;
 
-  // Calculate XP earned
-  // Review mode: flat 5 XP for completing review
-  // Normal mode: 10 XP per correct answer on first try
-  const xpEarned = isReviewMode ? 5 : correctCount * 10;
+  // Calculate XP earned - commented out to reduce distraction
+  // // Review mode: flat 5 XP for completing review
+  // // Normal mode: 10 XP per correct answer on first try
+  // const xpEarned = isReviewMode ? 5 : correctCount * 10;
 
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual questions received
@@ -764,7 +764,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
-            xpEarned={xpEarned}
+            /* xpEarned={xpEarned} */
             timeSeconds={getTimeTaken()}
             isPerfect={isPerfect}
             inline={true}

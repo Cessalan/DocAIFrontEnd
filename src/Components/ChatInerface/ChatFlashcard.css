@@ -1236,7 +1236,8 @@ body.dark-mode .dev-feedback-value {
    RESPONSIVE DESIGN
    ============================================ */
 
-@media (max-width: 768px) {
+/* Tablet + mobile */
+@media (max-width: 1024px) {
   .flashcard-compact-wrapper {
     padding: 12px 14px;
     transform: rotate(0deg);
@@ -1296,6 +1297,61 @@ body.dark-mode .dev-feedback-value {
     height: 180px;
     min-height: 180px;
     max-height: 180px;
+  }
+}
+
+/* iPhone / small mobile */
+@media (max-width: 480px) {
+  .flashcard-compact-wrapper {
+    padding: 10px;
+    border-radius: 12px;
+  }
+
+  .flashcard-card {
+    height: 140px;
+    min-height: 140px;
+    max-height: 140px;
+    border-radius: 12px;
+  }
+
+  .flashcard-card-face {
+    padding: 10px 12px;
+  }
+
+  .flashcard-text {
+    font-size: 12px;
+  }
+
+  .flashcard-card-back .flashcard-text {
+    font-size: 11px;
+  }
+
+  .flashcard-review-btn {
+    padding: 7px 10px;
+    font-size: 13px;
+  }
+
+  .flashcard-nav-btn {
+    width: 32px;
+    height: 32px;
+  }
+
+  .flashcard-progress-text {
+    font-size: 12px;
+  }
+
+  .flashcard-modal-grid {
+    grid-template-columns: repeat(6, 1fr);
+  }
+
+  .flashcard-modal-main {
+    padding: 12px;
+  }
+
+  .flashcard-modal-main .flashcard-card {
+    height: 160px;
+    min-height: 160px;
+    max-height: 160px;
   }
 }
 

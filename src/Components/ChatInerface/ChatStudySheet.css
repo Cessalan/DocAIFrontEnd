@@ -389,7 +389,7 @@
    SAFE AREA INSETS (Notched devices)
    ============================================ */
 @supports (padding: max(0px)) {
-  @media (max-width: 768px) {
+  @media (max-width: 1024px) {
     .study-sheet-modal-content {
       padding-top: max(0px, env(safe-area-inset-top));
       padding-bottom: max(0px, env(safe-area-inset-bottom));

@@ -1515,10 +1515,11 @@ const StudyModeContainer = ({
               <p className="review-confirm-description">
                 {t('study.reviewNodeDescription', "You've already completed this lesson. Would you like to review it again?")}
               </p>
-              <div className="review-confirm-xp">
+              {/* XP badge - commented out to reduce distraction */}
+              {/* <div className="review-confirm-xp">
                 <span className="xp-badge">+5 XP</span>
                 <span className="xp-text">{t('study.earnXpReview', 'for reviewing')}</span>
-              </div>
+              </div> */}
               <div className="review-confirm-buttons">
                 <button className="review-confirm-cancel" onClick={handleCancelReview}>
                   {t('common.cancel', 'Cancel')}

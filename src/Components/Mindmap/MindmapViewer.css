@@ -903,7 +903,7 @@ body.dark-mode .react-flow__edge-textbg {
 }
 
 /* Responsive adjustments */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .mindmap-container {
     height: 400px;
   }
@@ -980,7 +980,7 @@ body.dark-mode .mindmap-loading-text {
   }
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .mindmap-modal-overlay {
     padding: 12px;
   }

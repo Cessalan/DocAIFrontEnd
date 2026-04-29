@@ -856,7 +856,7 @@ body.dark-mode .flashcard-hint {
    RESPONSIVE
    ============================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .feedback-viewer-modal {
     width: 98%;
     max-height: 95vh;

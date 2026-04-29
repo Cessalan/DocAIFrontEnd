@@ -89,8 +89,8 @@
   left: var(--rail-width);
 }
 
-/* Mobile - no sidebar offset */
-@media (max-width: 768px) {
+/* Tablet + mobile — no sidebar offset (sidebar is overlay) */
+@media (max-width: 1024px) {
   .study-mode-container.sidebar-open,
   .study-mode-container.sidebar-collapsed {
     left: 0;
@@ -3151,7 +3151,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 /* Responsive adjustments for focused mode */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .study-mode-focused .study-focused-layout {
     padding: 16px;
   }
@@ -3203,8 +3203,8 @@ body.dark-mode .study-mode-focused .study-main-content {
   left: var(--rail-width);
 }
 
-/* Mobile - no sidebar offset */
-@media (max-width: 768px) {
+/* Tablet + mobile — no sidebar offset (sidebar is overlay) */
+@media (max-width: 1024px) {
   .study-overview-container.sidebar-open,
   .study-overview-container.sidebar-collapsed {
     left: 0;
@@ -3766,7 +3766,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 /* Responsive */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .study-overview-container {
     padding: 16px;
   }
@@ -3817,7 +3817,7 @@ body.dark-mode .study-mode-focused .study-main-content {
     font-size: 18px;
   }
 
-  /* Hide some doodles on mobile */
+  /* Hide some doodles on tablet/mobile */
   .doodle-5, .doodle-6 {
     display: none;
   }
@@ -3858,8 +3858,8 @@ body.dark-mode .study-mode-focused .study-main-content {
   background: #fef7f4;
 }
 
-/* Mobile - less top padding since brand is hidden */
-@media (max-width: 768px) {
+/* Tablet + mobile - less top padding since brand is hidden */
+@media (max-width: 1024px) {
   .study-overview-header-v2 {
     padding: 24px 16px 16px 16px;
   }
@@ -6531,8 +6531,8 @@ body.dark-mode .celebration-continue-btn:hover {
   100% { transform: translateY(0) scale(1); }
 }
 
-/* Mobile mascot celebration */
-@media (max-width: 768px) {
+/* Tablet + mobile mascot celebration */
+@media (max-width: 1024px) {
   .study-mascot-side.mascot-celebrate {
     animation: mascotBounceMobile 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
@@ -6710,8 +6710,8 @@ body.dark-mode .celebration-continue-btn:hover {
   background: rgba(232, 141, 125, 0.25);
 }
 
-/* Mobile — stays above mascot, just smaller */
-@media (max-width: 768px) {
+/* Tablet + mobile — stays above mascot, just smaller */
+@media (max-width: 1024px) {
   .insight-pulse {
     font-size: 10px;
     padding: 5px 10px;
@@ -7012,8 +7012,8 @@ body.dark-mode .celebration-continue-btn:hover {
 .dark-mode .insights-modal__empty svg { color: #666; }
 .dark-mode .insights-modal__empty p   { color: #999; }
 
-/* ---- Mobile ---- */
-@media (max-width: 768px) {
+/* ---- Tablet + Mobile ---- */
+@media (max-width: 1024px) {
   .insights-modal {
     max-width: 100%;
     width: 96%;
@@ -9373,7 +9373,7 @@ body.dark-mode .celebration-continue-btn:hover {
   background: #2f2f2f;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .sov3-header {
     padding: 24px 16px 16px 16px;
   }
@@ -10009,8 +10009,8 @@ body.dark-mode .celebration-continue-btn:hover {
   color: #777;
 }
 
-/* ── Mobile responsive ── */
-@media (max-width: 768px) {
+/* ── Tablet + mobile responsive ── */
+@media (max-width: 1024px) {
   .sov3-card {
     padding: 14px 16px;
     border-radius: 14px;
@@ -10402,8 +10402,8 @@ body.dark-mode .celebration-continue-btn:hover {
   color: #666;
 }
 
-/* ── Milestone mobile ── */
-@media (max-width: 768px) {
+/* ── Milestone tablet + mobile ── */
+@media (max-width: 1024px) {
   .sov3-milestone {
     padding: 12px 14px;
     gap: 10px;
@@ -10669,5 +10669,260 @@ body.dark-mode .celebration-continue-btn:hover {
 @media (max-width: 1100px) {
   .sov3-insights {
     display: none;
+  }
+}
+
+/* ============================================
+   MOBILE / iPHONE RESPONSIVE FIXES
+   ============================================ */
+
+/* ── Study Plan Overview — iPhone ── */
+@media (max-width: 480px) {
+  .study-overview-container {
+    padding: 12px 10px;
+  }
+
+  .study-overview-container > * {
+    max-width: 100%;
+  }
+
+  /* Header */
+  .sov3-header {
+    padding: 16px 10px 12px;
+    width: 100%;
+    max-width: 100% !important;
+    margin-left: 0;
+  }
+
+  .study-overview-title {
+    font-size: 22px;
+  }
+
+  .study-overview-subtitle {
+    font-size: 13px;
+  }
+
+  .sov3-progress-bar {
+    max-width: 100%;
+  }
+
+  /* Section cards */
+  .sov3-card {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .sov3-card__header {
+    gap: 10px;
+  }
+
+  .sov3-card__title {
+    font-size: 16px;
+  }
+
+  .sov3-card__summary {
+    font-size: 12px;
+  }
+
+  /* Steps inside cards */
+  .sov3-step {
+    padding: 8px 6px;
+    gap: 10px;
+  }
+
+  .sov3-step__label {
+    font-size: 13px;
+  }
+
+  .sov3-step__format {
+    font-size: 10px;
+  }
+
+  .sov3-step__icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sov3-step__icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Milestone (exam) nodes */
+  .sov3-milestone__icon {
+    width: 44px;
+    height: 44px;
+  }
+
+  .sov3-milestone__label {
+    font-size: 13px;
+  }
+
+  .sov3-milestone__badge {
+    font-size: 10px;
+  }
+
+  /* Sections container */
+  .sov3-sections {
+    gap: 10px;
+    padding-bottom: 60px;
+  }
+
+  /* Background decorations — hide doodles on small screens, shrink orbs */
+  .sbg-doodle {
+    display: none !important;
+  }
+
+  .sbg-orb {
+    filter: blur(120px);
+    opacity: 0.5;
+  }
+
+  .sbg-orb--1 {
+    width: 250px;
+    height: 250px;
+  }
+
+  .sbg-orb--2 {
+    width: 220px;
+    height: 220px;
+  }
+
+  .sbg-orb--3 {
+    width: 160px;
+    height: 160px;
+  }
+
+  .sbg-orb--4 {
+    width: 180px;
+    height: 180px;
+  }
+
+  /* Study path nodes (v1/v2) */
+  .study-path-node {
+    width: 50px;
+    height: 70px;
+  }
+
+  .study-path-node-circle {
+    width: 50px;
+    height: 50px;
+  }
+
+  .study-path-node-inner {
+    width: 38px;
+    height: 38px;
+  }
+
+  .study-path-node-pulse {
+    width: 50px;
+    height: 50px;
+  }
+
+  .study-path-node-label {
+    width: 110px;
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
+  .study-path-node-label .node-title {
+    font-size: 12px;
+  }
+}
+
+/* ── Study Mode Container (focused view) — iPhone ── */
+@media (max-width: 480px) {
+  .study-mode-container {
+    padding: 0;
+  }
+
+  .study-mode-header {
+    padding: 10px 12px;
+  }
+
+  .study-unit-title {
+    font-size: 18px;
+  }
+
+  .study-focused-layout {
+    padding: 0 8px;
+  }
+
+  .study-step-card {
+    border-radius: 14px;
+    margin: 0 4px;
+  }
+
+  .study-card-header {
+    padding: 14px 14px 10px;
+  }
+
+  .study-card-content {
+    padding: 0 14px 14px;
+  }
+
+  .study-card-title {
+    font-size: 16px;
+  }
+
+  /* Quiz options */
+  .study-quiz-option {
+    padding: 10px 12px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .study-quiz-option-letter {
+    width: 28px;
+    height: 28px;
+    font-size: 13px;
+  }
+
+  .study-quiz-question {
+    font-size: 15px;
+  }
+
+  /* Feedback */
+  .study-quiz-feedback {
+    padding: 12px;
+    border-radius: 10px;
+  }
+
+  /* Continue button */
+  .study-continue-btn {
+    padding: 12px 24px;
+    font-size: 15px;
+  }
+
+  /* Celebration */
+  .celebration-message {
+    font-size: 22px;
+  }
+
+  .celebration-mascot {
+    transform: scale(0.85);
+  }
+
+  .celebration-stats {
+    gap: 8px;
+  }
+
+  .stat-card {
+    padding: 10px 12px;
+  }
+
+  /* Progress bar */
+  .study-progress-bar-wrapper {
+    padding: 0 14px;
+  }
+
+  /* Flashcard */
+  .study-flashcard-card-inner {
+    min-height: 180px;
+  }
+
+  /* Loading screen */
+  .study-loading-mascot {
+    transform: scale(0.8);
   }
 }

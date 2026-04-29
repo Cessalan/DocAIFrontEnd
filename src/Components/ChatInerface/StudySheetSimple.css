@@ -554,7 +554,7 @@ body.dark-mode .study-error {
    RESPONSIVE
    ================================================ */
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .study-sheet-simple-header {
     padding: 12px 0;
   }

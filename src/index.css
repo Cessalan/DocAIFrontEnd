@@ -156,8 +156,8 @@ body.dark-mode .app-brand-name {
   color: var(--dark-accent);
 }
 
-/* Hide on mobile */
-@media (max-width: 768px) {
+/* Hide on tablet + mobile */
+@media (max-width: 1024px) {
   .app-global-brand {
     display: none;
   }
@@ -928,16 +928,7 @@ body.dark-mode .app-brand-name {
   margin-left: 60px;
 }
 
-/* Prevent content jump on mobile */
-@media (max-width: 768px) {
-  .main-content.shifted {
-    margin-left: 0;
-  }
-
-  .main-content.rail-shifted {
-    margin-left: 0;
-  }
-}
+/* Content shift handled in tablet/mobile block below */
 
 /* ============================================
    SIDEBAR TOGGLE BUTTON - Warm notebook style
@@ -982,26 +973,46 @@ body.dark-mode .sidebar-toggle:hover {
 /* ============================================
    RESPONSIVE
    ============================================ */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
+  /* Tablet + mobile: sidebar is always an overlay, never shifts content */
   .main-content.shifted {
     margin-left: 0;
   }
-  
-  .sidebar.open {
-    width: calc(100% - 32px);
-    left: 16px;
+
+  .main-content.rail-shifted {
+    margin-left: 0;
   }
-  
+
+  /* Hide the collapsed rail on tablet — not enough room */
+  .collapsed-sidebar-rail {
+    display: none !important;
+  }
+
   .sidebar {
-    left: -100%;
-    width: calc(100% - 32px);
-    height: calc(100vh - 32px);
-    margin: 16px;
+    left: -340px;
+    width: 320px;
+    height: 100vh;
+    height: 100dvh;
+    margin: 0;
+    border-radius: 0;
   }
-  
+
+  .sidebar.open {
+    left: 0;
+    width: 320px;
+  }
+
   .new-chat-button {
     margin: 12px 16px;
     width: calc(100% - 32px);
+  }
+
+  /* Sidebar toggle — touch-friendly */
+  .sidebar-toggle {
+    top: 14px;
+    left: 14px;
+    width: 40px;
+    height: 40px;
   }
 }
 
@@ -1506,4 +1517,85 @@ body:not(.dark-mode) .login-prompt-file-indicator .file-name {
 
 body:not(.dark-mode) .login-prompt-reassurance {
   color: rgba(100, 80, 120, 0.6);
+}
+
+/* ============================================
+   MOBILE / iPHONE RESPONSIVE FIXES — SIDEBAR
+   ============================================ */
+@media (max-width: 480px) {
+  /* iPhone: sidebar goes full-screen */
+  .sidebar {
+    width: 100%;
+    left: -100%;
+    border-right: none;
+  }
+
+  .sidebar.open {
+    left: 0;
+    width: 100%;
+  }
+
+  /* Sidebar header — leave room for the × toggle at top-left */
+  .sidebar-header {
+    padding: 10px 12px 10px 48px;
+    min-height: 52px;
+  }
+
+  .sidebar-title {
+    font-size: 16px;
+  }
+
+  /* Sidebar toggle button */
+  .sidebar-toggle {
+    top: 12px;
+    left: 12px;
+    width: 36px;
+    height: 36px;
+    font-size: 22px;
+  }
+
+  /* Conversations list — smooth scrolling for iOS */
+  .conversations-list {
+    -webkit-overflow-scrolling: touch;
+    padding: 6px 8px;
+  }
+
+  /* Conversation items — touch-friendly sizing */
+  .conversation-item {
+    padding: 12px 12px;
+    min-height: 44px; /* iOS minimum tap target */
+  }
+
+  .conversation-item .conversation-title {
+    font-size: 14px;
+  }
+
+  .conversation-item .conversation-message {
+    font-size: 12px;
+  }
+
+  /* Chat actions on conversation item — larger touch targets */
+  .chat-actions button {
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  /* New chat button */
+  .new-chat-button {
+    margin: 10px 12px;
+    width: calc(100% - 24px);
+    padding: 12px 16px;
+    font-size: 14px;
+    min-height: 44px;
+  }
+
+  /* Sidebar footer */
+  .sidebar-footer {
+    padding: 8px 12px;
+  }
+
+  /* App global brand */
+  .app-global-brand {
+    display: none;
+  }
 }

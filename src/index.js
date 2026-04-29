@@ -6,7 +6,9 @@ import { AuthProvider } from './Contexts/AuthContext/AuthContext';
 import { ProgressProvider } from './Contexts/ProgressContext/ProgressContext';
 import './i18n/i18n'; // important for translation
 
-clarity.init('wjgn4x5pp6');
+if (process.env.NODE_ENV === 'production') {
+  clarity.init('wjgn4x5pp6');
+}
 
 const root = createRoot(document.getElementById('root'));
 

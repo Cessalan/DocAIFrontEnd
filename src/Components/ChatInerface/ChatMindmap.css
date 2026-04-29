@@ -260,8 +260,8 @@ body.dark-mode .mindmap-error-text {
   color: rgba(255, 255, 255, 0.7);
 }
 
-/* Responsive */
-@media (max-width: 768px) {
+/* Responsive - Tablet + mobile */
+@media (max-width: 1024px) {
   .chat-mindmap {
     max-width: 100%;
     border-radius: 16px;
