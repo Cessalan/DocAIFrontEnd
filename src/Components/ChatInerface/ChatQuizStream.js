@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useTranslation } from 'react-i18next';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
 import { getQuestionType } from '../../utils/quizScoring';
+import parseRationaleOptions from '../../utils/parseRationale';
 import SATAQuestion from './SATAQuestion';
 import CaseStudyQuestion from './CaseStudyQuestion';
 import './ChatQuizStream.css';
@@ -561,6 +562,43 @@ const ChatQuizStream = ({
     </svg>
   );
 
+  // Renders the expanded rationale: parses "<b>Option X is correct</b> because..."
+  // into per-option rows. Falls back to raw HTML if the format doesn't match.
+  const renderRationale = (rationale) => {
+    const parsed = parseRationaleOptions(rationale);
+
+    if (parsed.length === 0) {
+      return (
+        <div
+          className="cqs-feedback-rationale"
+          dangerouslySetInnerHTML={{ __html: rationale }}
+        />
+      );
+    }
+
+    return (
+      <div className="cqs-feedback-rationale structured">
+        {parsed.map((item, i) => (
+          <div key={i} className={`rationale-row ${item.status}`}>
+            <div className="rationale-row-marker">
+              {item.status === 'correct' ? <CheckIcon /> : <XIcon />}
+            </div>
+            <div className="rationale-row-body">
+              <div className="rationale-row-label">
+                <span className="rationale-row-letter">Option {item.letter}</span>
+                <span className="rationale-row-status">{item.status}</span>
+              </div>
+              <div
+                className="rationale-row-text"
+                dangerouslySetInnerHTML={{ __html: item.html }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const ChevronUpIcon = () => (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
       <polyline points="18 15 12 9 6 15" />
@@ -1051,12 +1089,7 @@ const ChatQuizStream = ({
                   )}
                 </button>
 
-                {showFullRationale && (
-                  <div
-                    className="cqs-feedback-rationale"
-                    dangerouslySetInnerHTML={{ __html: rationale }}
-                  />
-                )}
+                {showFullRationale && renderRationale(rationale)}
               </>
             )}
 

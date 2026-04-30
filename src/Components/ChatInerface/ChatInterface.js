@@ -29,6 +29,9 @@ import SvgFileUpload from '../Svg/SvgFileUpload';
 import SvgFileIcon from '../Svg/SvgFileIcon';
 import SvgImageIcon from '../Svg/SvgImageIcon';
 
+// Utils
+import htmlToMarkdown from './htmlToMarkdown';
+
 // Emoji Components
 import ReadingEmoji from './Emojis/ReadingEmoji.jsx';
 import GraduationEmoji from './Emojis/GraduationEmoji.js';
@@ -4419,6 +4422,26 @@ const ChatInterface = ({
               value={userInputText}
               onChange={(e) => {
                 setUserInputText(e.target.value);
+              }}
+              onPaste={(e) => {
+                const html = e.clipboardData?.getData('text/html');
+                if (!html) return; // Let browser handle plain-text paste.
+                const markdown = htmlToMarkdown(html);
+                if (!markdown) return;
+                e.preventDefault();
+                const ta = e.currentTarget;
+                const start = ta.selectionStart ?? userInputText.length;
+                const end = ta.selectionEnd ?? userInputText.length;
+                const next = userInputText.slice(0, start) + markdown + userInputText.slice(end);
+                setUserInputText(next);
+                // Restore caret to end of inserted text after React updates.
+                const caret = start + markdown.length;
+                requestAnimationFrame(() => {
+                  if (textareaRef.current) {
+                    textareaRef.current.selectionStart = caret;
+                    textareaRef.current.selectionEnd = caret;
+                  }
+                });
               }}
               onKeyDown={(e) => {
                 if (e.key === 'Enter' && !e.shiftKey) {

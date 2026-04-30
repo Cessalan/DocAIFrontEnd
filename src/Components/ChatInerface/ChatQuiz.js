@@ -9,6 +9,7 @@ import CaseStudyQuestion from './CaseStudyQuestion';
 import UnfoldingCaseStudy from './UnfoldingCaseStudy';
 import { useTranslation } from 'react-i18next';
 import { getQuestionType } from '../../utils/quizScoring';
+import useGlossary from '../Glossary/useGlossary';
 
 // Constants
 const OPTION_LETTERS = ['A', 'B', 'C', 'D', 'E', 'F'];
@@ -124,6 +125,9 @@ function ChatQuiz(props) {
   // Translation
   const { t, i18n } = useTranslation();
   const currentLanguage = i18n.language;
+
+  // Glossary popover for clickable medical terms in rationales
+  const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
 
   // Computed values
   const correctIndex = useMemo(() => {
@@ -641,7 +645,9 @@ function ChatQuiz(props) {
 
                 <div className="feedback-rationale-container">
                   <div
+                    ref={rationaleRef}
                     className="feedback-rationale-content"
+                    {...rationaleHandlers}
                     dangerouslySetInnerHTML={{ __html: sanitizeJustification(quiz.justification) }}
                   />
                 </div>
@@ -733,6 +739,7 @@ function ChatQuiz(props) {
     <>
       {renderQuizContent(false)}
       {renderModal()}
+      {glossaryPopover}
 
       {/* Dev Mode: Copy Quiz JSON */}
       {isDevelopment && (

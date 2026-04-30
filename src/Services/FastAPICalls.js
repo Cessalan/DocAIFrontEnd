@@ -378,6 +378,45 @@ export const generate_summary = async(chat_id, file_name, language) => {
   }
 }
 
+/**
+ * Rewrite an AI-generated message in a more natural, human style.
+ * Backend should call an LLM with a tuned system prompt that:
+ *  - varies sentence cadence (mix short + long)
+ *  - uses contractions and natural connectors
+ *  - avoids common AI-tell words
+ *  - preserves factual accuracy (especially for medical content)
+ *
+ * Endpoint contract: POST /chat/rewrite -> { text: string }  =>  { rewritten: string }
+ */
+export const rewrite_text = async (text, language = 'en') => {
+  if (!text || !text.trim()) {
+    throw new Error('rewrite_text: empty text');
+  }
+
+  const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
+  const requestBody = JSON.stringify({ text, language: normalizedLang });
+
+  devLog('Request sent to FastAPI /chat/rewrite');
+
+  const response = await fetch(`${FAST_API_BASE}/chat/rewrite`, {
+    method: 'POST',
+    headers: header,
+    body: requestBody
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Rewrite request failed with status ${response.status}: ${errorText}`);
+  }
+
+  const data = await response.json();
+  const rewritten = data?.rewritten ?? data?.text ?? '';
+  if (!rewritten || typeof rewritten !== 'string') {
+    throw new Error('Rewrite response missing "rewritten" field');
+  }
+  return rewritten;
+};
+
 // --- New dedicated streaming function for summary ---
 export const stream_summary = async(chat_id, file_name, language, onTokenReceived, onStreamEnd) => {
     // Construct the request body for the summary endpoint.
@@ -1421,4 +1460,24 @@ export const submit_study_answer = async (chat_id, node_id, answer, question) =>
     console.error("❌ Error submitting answer:", error);
     throw error;
   }
+};
+
+// ─────────────────────────────────────────────────────────────────────────
+// Glossary: NCLEX-tailored definition for a medical term tapped in a rationale.
+// Backend caches by normalized term, so repeated taps are effectively instant.
+// ─────────────────────────────────────────────────────────────────────────
+export const fetchGlossaryTerm = async (term) => {
+  if (!term || !term.trim()) return null;
+
+  const response = await fetch(`${FAST_API_BASE}/glossary`, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify({ term: term.trim() })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Glossary lookup failed: ${response.status}`);
+  }
+
+  return await response.json();
 };

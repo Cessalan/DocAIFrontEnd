@@ -41,6 +41,7 @@ import {
 } from '@dnd-kit/sortable';
 import { calculateOrderingScore } from '../../utils/quizScoring';
 import './CaseStudyQuestion.css';
+import useGlossary from '../Glossary/useGlossary';
 
 // ============================================
 // CONSTANTS
@@ -168,6 +169,9 @@ function CaseStudyQuestion({
   onOpenModal
 }) {
   const { t } = useTranslation();
+
+  // Glossary popover for clickable medical terms in rationales
+  const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
 
   // ----------------------------------------
   // State
@@ -626,7 +630,9 @@ function CaseStudyQuestion({
             {quiz.justification && (
               <div className="feedback-rationale-container">
                 <div
+                  ref={rationaleRef}
                   className="feedback-rationale-content"
+                  {...rationaleHandlers}
                   dangerouslySetInnerHTML={{ __html: quiz.justification }}
                 />
               </div>
@@ -648,6 +654,7 @@ function CaseStudyQuestion({
           </button>
         )}
       </div>
+      {glossaryPopover}
     </div>
   );
 }

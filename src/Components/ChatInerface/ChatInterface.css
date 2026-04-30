@@ -1298,6 +1298,493 @@ body.dark-mode .nursing-icon {
     border-top-color: #e5e7eb;
   }
 
+  /* Action row beneath AI messages — hosts Copy + Rewrite */
+  .message-actions-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 14px;
+    opacity: 0;
+    transition: opacity 0.18s ease;
+  }
+
+  .ai-message:hover .message-actions-row,
+  .message-actions-row:focus-within {
+    opacity: 1;
+  }
+
+  /* Touch devices: always visible since hover doesn't apply */
+  @media (hover: none) {
+    .message-actions-row {
+      opacity: 0.85;
+    }
+  }
+
+  /* Shared pill button styling for Copy + Rewrite */
+  .message-copy-button,
+  .message-rewrite-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 11px;
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid rgba(100, 80, 60, 0.12);
+    border-radius: 8px;
+    color: var(--text-secondary, #6b6b6b);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: inherit;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    transition: color var(--transition-fast),
+                background var(--transition-fast),
+                border-color var(--transition-fast),
+                box-shadow var(--transition-fast),
+                transform 0.1s ease;
+  }
+
+  .message-copy-button:hover {
+    background: #ffffff;
+    border-color: rgba(100, 80, 60, 0.2);
+    color: var(--text-primary, #3d3d3d);
+    box-shadow: var(--shadow-sm, 0 2px 8px rgba(100, 80, 60, 0.06));
+  }
+
+  .message-copy-button:active,
+  .message-rewrite-button:active {
+    transform: scale(0.97);
+  }
+
+  .message-copy-label {
+    font-size: 12px;
+    letter-spacing: 0.1px;
+  }
+
+  /* Rewrite button — coral accent for the AI action */
+  .message-rewrite-button {
+    color: var(--primary-coral-dark, #c46a5a);
+    border-color: rgba(232, 141, 125, 0.25);
+    background: rgba(248, 200, 196, 0.18);
+  }
+
+  .message-rewrite-button:hover:not(:disabled) {
+    background: rgba(248, 200, 196, 0.32);
+    border-color: rgba(232, 141, 125, 0.45);
+    color: var(--primary-coral-dark, #c46a5a);
+    box-shadow: 0 2px 10px rgba(232, 141, 125, 0.18);
+  }
+
+  .message-rewrite-button:disabled,
+  .message-rewrite-button.is-busy {
+    cursor: progress;
+    color: var(--primary-coral, #e88d7d);
+    background: rgba(248, 200, 196, 0.22);
+  }
+
+  .message-rewrite-button:disabled:not(.is-busy) {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* Spinner inside the Rewrite button */
+  .rewrite-spinner {
+    width: 12px;
+    height: 12px;
+    border: 1.6px solid rgba(232, 141, 125, 0.25);
+    border-top-color: var(--primary-coral, #e88d7d);
+    border-radius: 50%;
+    animation: rewriteSpin 0.7s linear infinite;
+  }
+
+  @keyframes rewriteSpin {
+    to { transform: rotate(360deg); }
+  }
+
+  /* Dark mode — Copy + Rewrite */
+  body.dark-mode .message-copy-button,
+  body.dark-mode .message-rewrite-button {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+    backdrop-filter: none;
+  }
+
+  body.dark-mode .message-copy-button:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.92);
+    box-shadow: none;
+  }
+
+  body.dark-mode .message-rewrite-button {
+    color: var(--dark-accent-light, #d4c8e8);
+    border-color: rgba(200, 180, 220, 0.25);
+    background: rgba(200, 180, 220, 0.08);
+  }
+
+  body.dark-mode .message-rewrite-button:hover:not(:disabled) {
+    background: rgba(200, 180, 220, 0.16);
+    border-color: rgba(200, 180, 220, 0.4);
+    color: #ffffff;
+    box-shadow: 0 2px 10px rgba(184, 165, 212, 0.18);
+  }
+
+  body.dark-mode .rewrite-spinner {
+    border-color: rgba(200, 180, 220, 0.2);
+    border-top-color: var(--dark-accent, #b8a5d4);
+  }
+
+  /* ----------------------------------------------------
+     Inline rewrite preview — sits below the AI message
+     ---------------------------------------------------- */
+  .rewrite-preview {
+    margin-top: 12px;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 254, 249, 0.95) 0%,
+      rgba(253, 248, 243, 0.98) 100%
+    );
+    border: 1px solid rgba(232, 141, 125, 0.22);
+    border-radius: 14px;
+    box-shadow:
+      0 1px 2px rgba(100, 80, 60, 0.04),
+      0 8px 24px rgba(232, 141, 125, 0.08);
+    overflow: hidden;
+    animation: rewritePreviewIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes rewritePreviewIn {
+    from {
+      opacity: 0;
+      transform: translateY(-4px);
+      max-height: 0;
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+      max-height: 1200px;
+    }
+  }
+
+  .rewrite-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background: rgba(232, 141, 125, 0.06);
+    border-bottom: 1px dashed rgba(232, 141, 125, 0.2);
+  }
+
+  .rewrite-preview-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.3px;
+    color: var(--primary-coral-dark, #c46a5a);
+    text-transform: uppercase;
+  }
+
+  .rewrite-preview-label svg {
+    color: var(--primary-coral, #e88d7d);
+  }
+
+  .rewrite-preview-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    background: transparent;
+    border: none;
+    border-radius: 6px;
+    color: rgba(100, 80, 60, 0.45);
+    cursor: pointer;
+    transition: background var(--transition-fast), color var(--transition-fast);
+  }
+
+  .rewrite-preview-close:hover {
+    background: rgba(232, 141, 125, 0.12);
+    color: var(--primary-coral-dark, #c46a5a);
+  }
+
+  .rewrite-preview-body {
+    padding: 14px 16px;
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--text-primary, #3d3d3d);
+  }
+
+  .rewrite-preview-body p {
+    margin: 0 0 10px;
+  }
+
+  .rewrite-preview-body p:last-child {
+    margin-bottom: 0;
+  }
+
+  .rewrite-preview-body ul,
+  .rewrite-preview-body ol {
+    margin: 6px 0 10px;
+    padding-left: 22px;
+  }
+
+  .rewrite-preview-body li {
+    margin: 2px 0;
+  }
+
+  .rewrite-preview-body strong {
+    font-weight: 600;
+    color: #2a2a2a;
+  }
+
+  .rewrite-preview-body code {
+    background: rgba(232, 141, 125, 0.1);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.92em;
+  }
+
+  .rewrite-preview-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 10px 14px 12px;
+    border-top: 1px solid rgba(232, 141, 125, 0.12);
+    background: rgba(255, 254, 249, 0.6);
+  }
+
+  .rewrite-preview-copy {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 14px;
+    background: var(--gradient-primary, linear-gradient(135deg, #e88d7d 0%, #f4a896 100%));
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: inherit;
+    letter-spacing: 0.2px;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(232, 141, 125, 0.25);
+    transition: transform 0.1s ease, box-shadow var(--transition-fast),
+                filter var(--transition-fast);
+  }
+
+  .rewrite-preview-copy:hover {
+    box-shadow: 0 3px 12px rgba(232, 141, 125, 0.32);
+    filter: brightness(1.03);
+  }
+
+  .rewrite-preview-copy:active {
+    transform: scale(0.97);
+  }
+
+  .rewrite-preview-copy.is-copied {
+    background: linear-gradient(135deg, #6cbf8a 0%, #8fd0a3 100%);
+    box-shadow: 0 2px 8px rgba(108, 191, 138, 0.3);
+  }
+
+  /* Soft inline error under the action row */
+  .rewrite-error {
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: rgba(229, 57, 53, 0.06);
+    border: 1px solid rgba(229, 57, 53, 0.18);
+    border-radius: 8px;
+    font-size: 12.5px;
+    color: #b94340;
+    animation: rewritePreviewIn 0.2s ease;
+  }
+
+  /* Dark mode — preview + error */
+  body.dark-mode .rewrite-preview {
+    background: var(--dark-bg-elevated, #262626);
+    border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+    box-shadow:
+      0 1px 2px rgba(0, 0, 0, 0.3),
+      0 8px 24px rgba(0, 0, 0, 0.35);
+  }
+
+  body.dark-mode .rewrite-preview-header {
+    background: rgba(200, 180, 220, 0.08);
+    border-bottom-color: rgba(200, 180, 220, 0.18);
+  }
+
+  body.dark-mode .rewrite-preview-label {
+    color: var(--dark-accent-light, #d4c8e8);
+  }
+
+  body.dark-mode .rewrite-preview-label svg {
+    color: var(--dark-accent, #b8a5d4);
+  }
+
+  body.dark-mode .rewrite-preview-close {
+    color: rgba(255, 255, 255, 0.45);
+  }
+
+  body.dark-mode .rewrite-preview-close:hover {
+    background: rgba(200, 180, 220, 0.12);
+    color: #ffffff;
+  }
+
+  body.dark-mode .rewrite-preview-body {
+    color: #e5e5e5;
+  }
+
+  body.dark-mode .rewrite-preview-body strong {
+    color: #ffffff;
+  }
+
+  body.dark-mode .rewrite-preview-body code {
+    background: rgba(200, 180, 220, 0.14);
+  }
+
+  body.dark-mode .rewrite-preview-footer {
+    background: rgba(255, 255, 255, 0.02);
+    border-top-color: rgba(255, 255, 255, 0.06);
+  }
+
+  body.dark-mode .rewrite-preview-copy {
+    background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+    color: #1a1a1a;
+    box-shadow: 0 2px 8px rgba(184, 165, 212, 0.3);
+  }
+
+  body.dark-mode .rewrite-preview-copy:hover {
+    box-shadow: 0 3px 12px rgba(184, 165, 212, 0.4);
+  }
+
+  body.dark-mode .rewrite-preview-copy.is-copied {
+    background: linear-gradient(135deg, #6cbf8a 0%, #8fd0a3 100%);
+    color: #ffffff;
+  }
+
+  body.dark-mode .rewrite-error {
+    background: rgba(255, 107, 107, 0.08);
+    border-color: rgba(255, 107, 107, 0.25);
+    color: #ff8a87;
+  }
+
+  /* User message markdown rendering — inherit message-text styles for
+     pasted formatting (lists, headings, code, etc.) without altering
+     the bubble layout. */
+  .user-text-markdown > p:first-child {
+    margin-top: 0;
+  }
+
+  .user-text-markdown > p:last-child {
+    margin-bottom: 0;
+  }
+
+  .user-text-markdown p {
+    margin: 0 0 8px 0;
+    white-space: pre-wrap;
+  }
+
+  .user-text-markdown p:last-child {
+    margin-bottom: 0;
+  }
+
+  .user-text-markdown strong {
+    font-weight: 600;
+  }
+
+  .user-text-markdown ul,
+  .user-text-markdown ol {
+    margin: 6px 0;
+    padding-left: 22px;
+  }
+
+  .user-text-markdown li {
+    margin: 2px 0;
+  }
+
+  .user-text-markdown a {
+    color: #2563eb;
+    text-decoration: underline;
+    word-break: break-word;
+  }
+
+  body.dark-mode .user-text-markdown a {
+    color: #60a5fa;
+  }
+
+  .user-text-markdown code {
+    background: rgba(0, 0, 0, 0.06);
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 0.92em;
+    font-family: 'SF Mono', Menlo, Consolas, monospace;
+  }
+
+  .user-text-markdown pre {
+    background: rgba(0, 0, 0, 0.05);
+    padding: 10px 12px;
+    border-radius: 8px;
+    overflow-x: auto;
+    margin: 8px 0;
+  }
+
+  .user-text-markdown pre code {
+    background: transparent;
+    padding: 0;
+  }
+
+  .user-text-markdown blockquote {
+    border-left: 3px solid rgba(0, 0, 0, 0.15);
+    padding-left: 10px;
+    margin: 6px 0;
+    color: rgba(0, 0, 0, 0.7);
+  }
+
+  .user-text-markdown h1,
+  .user-text-markdown h2,
+  .user-text-markdown h3,
+  .user-text-markdown h4,
+  .user-text-markdown h5,
+  .user-text-markdown h6 {
+    margin: 8px 0 4px;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+
+  .user-text-markdown h1 { font-size: 1.25em; }
+  .user-text-markdown h2 { font-size: 1.15em; }
+  .user-text-markdown h3 { font-size: 1.05em; }
+
+  .user-text-markdown table {
+    border-collapse: collapse;
+    margin: 8px 0;
+    font-size: 0.95em;
+  }
+
+  .user-text-markdown th,
+  .user-text-markdown td {
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    padding: 4px 8px;
+    text-align: left;
+  }
+
+  body.dark-mode .user-text-markdown code,
+  body.dark-mode .user-text-markdown pre {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  body.dark-mode .user-text-markdown blockquote {
+    border-left-color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.75);
+  }
+
+  body.dark-mode .user-text-markdown th,
+  body.dark-mode .user-text-markdown td {
+    border-color: rgba(255, 255, 255, 0.15);
+  }
+
   /* Smooth entry animation - refined */
   .ai-message-wrapper {
     animation: messageStreamIn 0.4s cubic-bezier(0.16, 1, 0.3, 1);

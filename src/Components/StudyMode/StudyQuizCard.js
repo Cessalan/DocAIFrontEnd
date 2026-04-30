@@ -3,6 +3,8 @@ import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
+import useGlossary from '../Glossary/useGlossary';
+import parseRationaleOptions from '../../utils/parseRationale';
 
 /**
  * StudyQuizCard - Multiple quiz questions in study mode (Duolingo-style)
@@ -18,6 +20,9 @@ import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilesto
  */
 const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onAnswer, onContinue, onExit }) => {
   const { t } = useTranslation();
+
+  // Glossary popover for clickable medical terms in rationales
+  const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
 
   // Handle both new format { questions: [...] } and legacy format { question, options, ... }
   const questions = content?.questions || [content];
@@ -400,6 +405,49 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
       <line x1="6" y1="6" x2="18" y2="18" />
     </svg>
   );
+
+  // Renders the expanded rationale: parses "<b>Option X is correct</b> because..."
+  // into per-option rows. Falls back to raw HTML if the format doesn't match.
+  const renderRationale = (rationale) => {
+    const parsed = parseRationaleOptions(rationale);
+
+    if (parsed.length === 0) {
+      return (
+        <div
+          ref={rationaleRef}
+          className="study-quiz-feedback-rationale"
+          {...rationaleHandlers}
+          dangerouslySetInnerHTML={{ __html: rationale }}
+        />
+      );
+    }
+
+    return (
+      <div
+        ref={rationaleRef}
+        className="study-quiz-feedback-rationale structured"
+        {...rationaleHandlers}
+      >
+        {parsed.map((item, i) => (
+          <div key={i} className={`rationale-row ${item.status}`}>
+            <div className="rationale-row-marker">
+              {item.status === 'correct' ? <CheckIcon /> : <XIcon />}
+            </div>
+            <div className="rationale-row-body">
+              <div className="rationale-row-label">
+                <span className="rationale-row-letter">Option {item.letter}</span>
+                <span className="rationale-row-status">{item.status}</span>
+              </div>
+              <div
+                className="rationale-row-text"
+                dangerouslySetInnerHTML={{ __html: item.html }}
+              />
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   // Refresh icon for review round
   const RefreshIcon = () => (
@@ -964,12 +1012,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                               )}
                             </button>
 
-                            {showFullRationale && (
-                              <div
-                                className="study-quiz-feedback-rationale"
-                                dangerouslySetInnerHTML={{ __html: rationale }}
-                              />
-                            )}
+                            {showFullRationale && renderRationale(rationale)}
                           </>
                         )}
 
@@ -1036,12 +1079,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                         )}
                       </button>
 
-                      {showFullRationale && (
-                        <div
-                          className="study-quiz-feedback-rationale"
-                          dangerouslySetInnerHTML={{ __html: rationale }}
-                        />
-                      )}
+                      {showFullRationale && renderRationale(rationale)}
                     </>
                   )}
 
@@ -1078,6 +1116,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
           )}
         </>
       )}
+      {glossaryPopover}
     </div>
   );
 };

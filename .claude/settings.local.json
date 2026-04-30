@@ -22,7 +22,13 @@
       "Bash(npx react-scripts build)",
       "Bash(find c:UsersBillionDesktopNQBackEndNQBackEnd2 -type f \\\\\\(-name *tts* -o -name *audio* -o -name *voice* -o -name *sound* \\\\\\) -not -path */node_modules/*)",
       "Bash(docker run *)",
-      "Bash(npx react-scripts *)"
+      "Bash(npx react-scripts *)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"const p=require\\('@babel/parser'\\);const fs=require\\('fs'\\);['src/Components/ChatInerface/ChatMessage.js','src/Components/ChatInerface/ChatInterface.js','src/Services/FastAPICalls.js','src/Components/ChatInerface/htmlToMarkdown.js'].forEach\\(f=>{p.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\);console.log\\(f,'OK'\\);}\\);\")",
+      "Skill(schedule)",
+      "Skill(schedule:*)",
+      "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"hyperkalemia\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")",
+      "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"tendonitis\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")"
     ],
     "deny": [],
     "ask": [],

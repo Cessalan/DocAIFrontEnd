@@ -46,7 +46,23 @@ const resources = {
         pasteNotesPlaceholder: "Paste or type your notes here...",
         startStudying: "Start studying",
         characters: "characters",
-        progressSaved: "progress saved"
+        progressSaved: "progress saved",
+        copy: "Copy",
+        copied: "Copied",
+        copyMessageAria: "Copy message",
+        copyTooltip: "Copy",
+        rewrite: "Rewrite",
+        rewriting: "Rewriting…",
+        rewriteAria: "Rewrite message",
+        rewritingAria: "Rewriting",
+        rewriteTooltip: "Rewrite in a more natural style",
+        rewritingTooltip: "Rewriting…",
+        rewritten: "Rewritten",
+        rewrittenAria: "Rewritten version",
+        copyRewrite: "Copy rewrite",
+        discardRewrite: "Discard",
+        discardRewriteAria: "Discard rewrite",
+        rewriteFailed: "Rewrite failed. Please try again."
       },
 
       // Common UI Elements
@@ -1264,7 +1280,23 @@ const resources = {
         pasteNotesPlaceholder: "Colle ou écris tes notes ici...",
         startStudying: "Commencer à étudier",
         characters: "caractères",
-        progressSaved: "progression sauvegardée"
+        progressSaved: "progression sauvegardée",
+        copy: "Copier",
+        copied: "Copié",
+        copyMessageAria: "Copier le message",
+        copyTooltip: "Copier",
+        rewrite: "Reformuler",
+        rewriting: "Reformulation…",
+        rewriteAria: "Reformuler le message",
+        rewritingAria: "Reformulation en cours",
+        rewriteTooltip: "Reformuler dans un style plus naturel",
+        rewritingTooltip: "Reformulation…",
+        rewritten: "Reformulé",
+        rewrittenAria: "Version reformulée",
+        copyRewrite: "Copier la reformulation",
+        discardRewrite: "Annuler",
+        discardRewriteAria: "Annuler la reformulation",
+        rewriteFailed: "La reformulation a échoué. Veuillez réessayer."
       },
 
       // Common UI Elements

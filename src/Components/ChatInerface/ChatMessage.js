@@ -16,6 +16,144 @@ import StaticLogo from "./StaticLogo";
 import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
 import { devLog } from '../../Services/devLogger';
+import { rewrite_text } from '../../Services/FastAPICalls';
+
+function CopyMessageButton({ text }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="message-copy-button"
+      aria-label={copied ? t('chat.copied') : t('chat.copyMessageAria')}
+      title={copied ? t('chat.copied') : t('chat.copyTooltip')}
+    >
+      {copied ? (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <polyline points="20 6 9 17 4 12" />
+        </svg>
+      ) : (
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </svg>
+      )}
+      <span className="message-copy-label">{copied ? t('chat.copied') : t('chat.copy')}</span>
+    </button>
+  );
+}
+
+function RewriteButton({ disabled, busy, onClick }) {
+  const { t } = useTranslation();
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled || busy}
+      className={`message-rewrite-button ${busy ? 'is-busy' : ''}`}
+      aria-label={busy ? t('chat.rewritingAria') : t('chat.rewriteAria')}
+      title={busy ? t('chat.rewritingTooltip') : t('chat.rewriteTooltip')}
+    >
+      {busy ? (
+        <span className="rewrite-spinner" aria-hidden="true" />
+      ) : (
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
+          {/* Sparkle / wand-style icon */}
+          <path d="M12 3l1.6 4.2L18 9l-4.4 1.8L12 15l-1.6-4.2L6 9l4.4-1.8z" />
+          <path d="M19 14l.7 1.8L21.5 16.5l-1.8.7L19 19l-.7-1.8L16.5 16.5l1.8-.7z" />
+        </svg>
+      )}
+      <span className="message-copy-label">{busy ? t('chat.rewriting') : t('chat.rewrite')}</span>
+    </button>
+  );
+}
+
+function RewritePreview({ text, onClose, onCopied }) {
+  const { t } = useTranslation();
+  const [copied, setCopied] = useState(false);
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+      if (onCopied) onCopied();
+    } catch (err) {
+      console.error('Copy failed:', err);
+    }
+  };
+
+  return (
+    <div className="rewrite-preview" role="region" aria-label={t('chat.rewrittenAria')}>
+      <div className="rewrite-preview-header">
+        <div className="rewrite-preview-label">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <path d="M12 3l1.6 4.2L18 9l-4.4 1.8L12 15l-1.6-4.2L6 9l4.4-1.8z" />
+            <path d="M19 14l.7 1.8L21.5 16.5l-1.8.7L19 19l-.7-1.8L16.5 16.5l1.8-.7z" />
+          </svg>
+          <span>{t('chat.rewritten')}</span>
+        </div>
+        <button
+          type="button"
+          className="rewrite-preview-close"
+          onClick={onClose}
+          aria-label={t('chat.discardRewriteAria')}
+          title={t('chat.discardRewrite')}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <line x1="18" y1="6" x2="6" y2="18" />
+            <line x1="6" y1="6" x2="18" y2="18" />
+          </svg>
+        </button>
+      </div>
+
+      <div className="rewrite-preview-body">
+        <ReactMarkDown remarkPlugins={[remarkGfm]}>{text}</ReactMarkDown>
+      </div>
+
+      <div className="rewrite-preview-footer">
+        <button
+          type="button"
+          onClick={handleCopy}
+          className={`rewrite-preview-copy ${copied ? 'is-copied' : ''}`}
+        >
+          {copied ? (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          ) : (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+              <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+            </svg>
+          )}
+          <span>{copied ? t('chat.copied') : t('chat.copyRewrite')}</span>
+        </button>
+      </div>
+    </div>
+  );
+}
 
 function DevCopyJsonButton({ quizData }) {
   const [copied, setCopied] = useState(false);
@@ -67,7 +205,7 @@ const ChatMessage = ({
   onDeleteMessage,
   viewAllChatsMode = false
 }) => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   // ============================================
   // ALL HOOKS MUST BE CALLED FIRST (before any returns)
@@ -80,6 +218,34 @@ const ChatMessage = ({
 
   // Hover state for delete button (dev mode only)
   const [isHovered, setIsHovered] = useState(false);
+
+  // Rewrite-message state (AI text messages only)
+  const [rewriteState, setRewriteState] = useState({
+    busy: false,
+    text: null,    // string when a rewrite is available
+    error: null    // string when last attempt failed
+  });
+
+  const handleRewrite = useCallback(async () => {
+    if (!message?.content) return;
+    setRewriteState({ busy: true, text: null, error: null });
+    try {
+      const lang = i18n?.language || 'en';
+      const rewritten = await rewrite_text(message.content, lang);
+      setRewriteState({ busy: false, text: rewritten, error: null });
+    } catch (err) {
+      console.error('Rewrite failed:', err);
+      setRewriteState({
+        busy: false,
+        text: null,
+        error: t('chat.rewriteFailed')
+      });
+    }
+  }, [message?.content, i18n?.language, t]);
+
+  const handleCloseRewrite = useCallback(() => {
+    setRewriteState({ busy: false, text: null, error: null });
+  }, []);
 
   // Check if in development mode
   const isDevelopment = process.env.NODE_ENV === 'development' ||
@@ -448,16 +614,34 @@ const ChatMessage = ({
 
         {/* Regular Text Message */}
         {!parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
-          <div className={isAI ? "message-text" : ""}>
+          <div className={isAI ? "message-text" : "user-text user-text-markdown"}>
             {isUser ? (
-              <div style={{ wordWrap: 'break-word' }}>
-                {message.content}
-              </div>
+              <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
             ) : (
               <div className={`ai-message-wrapper ${message.isStreaming ? 'streaming' : 'complete'}`}>
                 <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
                 {message.isStreaming && (
                   <span className="streaming-cursor">▊</span>
+                )}
+                {!message.isStreaming && message.content && (
+                  <div className="message-actions-row">
+                    <CopyMessageButton text={message.content} />
+                    <RewriteButton
+                      busy={rewriteState.busy}
+                      onClick={handleRewrite}
+                    />
+                  </div>
+                )}
+                {rewriteState.error && (
+                  <div className="rewrite-error" role="alert">
+                    {rewriteState.error}
+                  </div>
+                )}
+                {rewriteState.text && (
+                  <RewritePreview
+                    text={rewriteState.text}
+                    onClose={handleCloseRewrite}
+                  />
                 )}
               </div>
             )}

@@ -33,6 +33,7 @@ import {
   getSATAOptionFeedback
 } from '../../utils/quizScoring';
 import './SATAQuestion.css';
+import useGlossary from '../Glossary/useGlossary';
 
 // ============================================
 // CONSTANTS
@@ -182,6 +183,9 @@ function SATAQuestion({
   // Hooks & State
   // ----------------------------------------
   const { t } = useTranslation();
+
+  // Glossary popover for clickable medical terms in rationales
+  const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
 
   // Track which options are currently selected (by option text)
   const [selectedOptions, setSelectedOptions] = useState([]);
@@ -574,7 +578,9 @@ function SATAQuestion({
             {quiz.justification && (
               <div className="feedback-rationale-container">
                 <div
+                  ref={rationaleRef}
                   className="feedback-rationale-content"
+                  {...rationaleHandlers}
                   dangerouslySetInnerHTML={{ __html: sanitizeJustification(quiz.justification) }}
                 />
               </div>
@@ -596,6 +602,7 @@ function SATAQuestion({
           </button>
         )}
       </div>
+      {glossaryPopover}
     </div>
   );
 }
