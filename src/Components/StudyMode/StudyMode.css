@@ -2614,6 +2614,121 @@ body.dark-mode .study-lesson-btn-green:hover {
   to   { opacity: 1; transform: translateY(0); }
 }
 
+/* ============================================
+   PLAN PREVIEW — shown after plan_ready arrives
+   so the user sees their actual path while the
+   session save finishes in the background.
+   ============================================ */
+.study-modal-plan-preview {
+  align-items: stretch;
+  text-align: left;
+  gap: 14px;
+}
+
+.study-modal-plan-pitch {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: #6b6b6b;
+}
+
+.study-modal-plan-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.study-modal-plan-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid rgba(100, 100, 100, 0.12);
+  border-radius: 12px 14px 12px 13px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #3d3d3d;
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06);
+  opacity: 0;
+  transform: translateY(8px);
+  animation: studyPlanRowIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.study-modal-plan-item.is-first {
+  background: linear-gradient(135deg, #ffd6cc 0%, #ffe4d9 100%);
+  border-color: rgba(232, 141, 125, 0.6);
+  box-shadow: 3px 3px 0px rgba(232, 141, 125, 0.18);
+}
+
+.study-modal-plan-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.study-modal-plan-label {
+  flex: 1;
+  line-height: 1.35;
+}
+
+.study-modal-plan-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: #c0533f;
+  background: rgba(255, 255, 255, 0.7);
+  padding: 4px 8px;
+  border-radius: 999px;
+}
+
+.study-modal-plan-more {
+  padding: 6px 14px;
+  font-size: 12.5px;
+  color: #999;
+  font-style: italic;
+}
+
+.study-modal-plan-meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: #999;
+  text-align: center;
+}
+
+@keyframes studyPlanRowIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+body.dark-mode .study-modal-plan-pitch { color: #b0a8b8; }
+
+body.dark-mode .study-modal-plan-item {
+  background: #36323f;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #f0ebf5;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .study-modal-plan-item.is-first {
+  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
+  color: #1f1f1f;
+  border-color: rgba(232, 141, 125, 0.7);
+  box-shadow: 0 4px 14px rgba(232, 141, 125, 0.25);
+}
+
+body.dark-mode .study-modal-plan-badge {
+  color: #c0533f;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+body.dark-mode .study-modal-plan-more,
+body.dark-mode .study-modal-plan-meta {
+  color: #888;
+}
+
 .study-modal-error {
   display: flex;
   align-items: center;

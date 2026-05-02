@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
@@ -13,10 +13,10 @@ const MASCOTS = [BrainMascot, BookMascot, PillMascot, CoffeeCupMascot, MatchaCup
 
 /**
  * StartStudyModal — Orchestrates the full study launch flow:
- *   1. loading     → /study/plan + /study/diagnostic-quiz fire in parallel
- *   2. diagnostic  → 5 questions one-at-a-time, seeds studyPerformance
- *   3. baseline    → brief score flash (1.5s), createStudySession fires in bg
- *   4. done        → calls onStart(studyState)
+ *   1. loading       → /study/start streams; planPromise resolves on plan_ready
+ *   2. plan_preview  → user sees their actual path while createStudySession runs in bg
+ *   3. starting      → awaits createStudySession if user beats it
+ *   4. done          → calls onStart(studyState)
  */
 const StartStudyModal = ({
   isOpen,
@@ -32,8 +32,12 @@ const StartStudyModal = ({
   const { t } = useTranslation();
 
   // ── Phase machine ─────────────────────────────────────────
-  // 'idle' | 'loading' | 'done'
+  // 'idle' | 'loading' | 'plan_preview' | 'starting' | 'done'
   const [phase, setPhase] = useState('idle');
+
+  // Plan revealed to user while session save is in flight
+  const [pathResult, setPathResult] = useState(null);
+  const sessionPromiseRef = useRef(null);
 
   // Error
   const [error, setError] = useState(null);
@@ -62,37 +66,46 @@ const StartStudyModal = ({
       setPhase('idle');
       setError(null);
       setHasAutoStarted(false);
+      setPathResult(null);
+      sessionPromiseRef.current = null;
     }
   }, [isOpen]);
 
   // ── Main launcher ─────────────────────────────────────────
-  // Uses the combined /study/start SSE endpoint: the plan resolves first
-  // (so we can navigate immediately), and the first-node content keeps
-  // streaming in the background into the prefetch cache that
-  // StudyModeContainer reads when auto-starting node 1.
+  // /study/start emits plan_ready ~3-8s in. As soon as that lands, we flip to
+  // 'plan_preview' so the user can SEE their path instead of staring at a
+  // spinner. createStudySession runs in parallel — by the time the user taps
+  // "Let's go", it's usually done. The first node keeps streaming into the
+  // prefetch cache that StudyModeContainer reads when auto-starting node 1.
   const handleStartJourney = async () => {
     setPhase('loading');
     setError(null);
+    setPathResult(null);
+    sessionPromiseRef.current = null;
 
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
 
     try {
       const { planPromise } = start_study_journey(chatId, uploadIds, userPreferences, language);
-      const pathResult = await planPromise;
+      const path = await planPromise;
 
-      if (!pathResult?.nodes?.length) throw new Error('Failed to generate study path');
+      if (!path?.nodes?.length) throw new Error('Failed to generate study path');
 
-      // Skip diagnostic — the adaptive path handles personalization dynamically.
-      // We do NOT await first-node generation here — it streams into the prefetch
-      // cache while finishSession persists the session and the route transitions.
-      await finishSession(pathResult, uploadIds);
+      // Kick off session creation in the background. Stash the promise so the
+      // "Let's go" handler can await it — usually it's already resolved.
+      sessionPromiseRef.current = createStudySession(chatId, path, uploadIds);
+
+      setPathResult(path);
+      setPhase('plan_preview');
     } catch (err) {
       console.error('Error starting study journey via /study/start:', err);
       // Fallback to legacy two-call flow if the streaming endpoint fails for any reason.
       try {
-        const pathResult = await plan_study_path(chatId, uploadIds, userPreferences, language);
-        if (!pathResult?.nodes?.length) throw new Error('Failed to generate study path');
-        await finishSession(pathResult, uploadIds);
+        const path = await plan_study_path(chatId, uploadIds, userPreferences, language);
+        if (!path?.nodes?.length) throw new Error('Failed to generate study path');
+        sessionPromiseRef.current = createStudySession(chatId, path, uploadIds);
+        setPathResult(path);
+        setPhase('plan_preview');
       } catch (fallbackErr) {
         console.error('Error starting study journey (fallback):', fallbackErr);
         setError(fallbackErr.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
@@ -101,16 +114,19 @@ const StartStudyModal = ({
     }
   };
 
-  // ── Finish: create session + call onStart ─────────────────
-  const finishSession = async (pathResult, uploadIds) => {
+  // ── User confirms after seeing the plan ───────────────────
+  // Awaits createStudySession if the user beat it, then hands off to the parent.
+  const handleStartFromPreview = async () => {
+    if (!sessionPromiseRef.current) return;
+    setPhase('starting');
     try {
-      const studyState = await createStudySession(chatId, pathResult, uploadIds);
+      const studyState = await sessionPromiseRef.current;
       setPhase('done');
       if (onStart) onStart(studyState);
     } catch (err) {
       console.error('Error creating study session:', err);
       setError(err.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
-      setPhase('idle');
+      setPhase('plan_preview');
     }
   };
 
@@ -162,6 +178,34 @@ const StartStudyModal = ({
                   ? messagesArray[loadingMsgIndex]
                   : t('study.analyzingDocs', 'Analyzing your documents...')}
               </p>
+            </div>
+          </div>
+        )}
+
+        {/* ── PLAN PREVIEW ── shown the moment plan_ready arrives so the user
+             sees their actual path while createStudySession finishes saving */}
+        {phase === 'plan_preview' && pathResult && (
+          <PlanPreviewPane
+            pathResult={pathResult}
+            onStart={handleStartFromPreview}
+            t={t}
+          />
+        )}
+
+        {/* ── STARTING ── user tapped "Let's go" but session save hadn't
+             finished yet. Brief hand-off state. */}
+        {phase === 'starting' && (
+          <div className="study-modal-content">
+            <div className="study-modal-mascot">
+              <MascotComponent size={80} isActive={true} />
+            </div>
+            <h2 className="study-modal-title">{t('study.savingJourney', 'Saving your journey…')}</h2>
+            <div className="study-modal-progress">
+              <div className="study-modal-loader">
+                <div className="study-modal-loader-dot" />
+                <div className="study-modal-loader-dot" />
+                <div className="study-modal-loader-dot" />
+              </div>
             </div>
           </div>
         )}
@@ -259,6 +303,94 @@ const StartStudyModal = ({
         )}
 
       </div>
+    </div>
+  );
+};
+
+// ──────────────────────────────────────────────────────────────────────────
+// Plan preview — shown the moment /study/start emits plan_ready so the user
+// can read their actual path instead of staring at a spinner.
+//
+// Splits the path into "section_banner" pseudo-nodes (used as headers) and the
+// real learning nodes. Highlights the first real node and pitches it as the
+// next step ("We'll start with a quick quiz on X").
+// ──────────────────────────────────────────────────────────────────────────
+const NODE_TYPE_META = {
+  quiz:      { icon: '❓', actionEn: 'quiz on',          actionFr: 'quiz sur' },
+  flashcard: { icon: '🎴', actionEn: 'flashcard set on', actionFr: 'jeu de cartes sur' },
+  lesson:    { icon: '📖', actionEn: 'lesson on',        actionFr: 'leçon sur' },
+  audio:     { icon: '🎧', actionEn: 'audio lesson on',  actionFr: 'leçon audio sur' },
+  mindmap:   { icon: '🗺️', actionEn: 'mindmap of',       actionFr: 'carte mentale de' },
+  exam:      { icon: '📝', actionEn: 'practice exam on', actionFr: 'examen blanc sur' }
+};
+
+const PlanPreviewPane = ({ pathResult, onStart, t }) => {
+  const realNodes = (pathResult.nodes || []).filter(n => n.type !== 'section_banner');
+  const firstNode = realNodes[0];
+  const meta = (firstNode && NODE_TYPE_META[firstNode.type]) || NODE_TYPE_META.lesson;
+  const lang = (t('locale.code', 'en') || 'en').toLowerCase();
+  const action = lang.startsWith('fr') ? meta.actionFr : meta.actionEn;
+
+  const totalSteps = realNodes.length;
+  const minutes = pathResult.estimated_time_minutes;
+
+  return (
+    <div className="study-modal-content study-modal-plan-preview">
+      <h2 className="study-modal-title">
+        {t('study.planReadyTitle', 'Your path is ready')}
+      </h2>
+
+      {firstNode && (
+        <p className="study-modal-plan-pitch">
+          {t('study.planPitch', "We'll start with a quick {{action}} {{label}} — just to see where you're at.", {
+            action,
+            label: firstNode.label || ''
+          })}
+        </p>
+      )}
+
+      <ul className="study-modal-plan-list">
+        {realNodes.slice(0, 6).map((node, idx) => {
+          const m = NODE_TYPE_META[node.type] || NODE_TYPE_META.lesson;
+          const isFirst = idx === 0;
+          return (
+            <li
+              key={node.id || idx}
+              className={`study-modal-plan-item ${isFirst ? 'is-first' : ''}`}
+              style={{ animationDelay: `${idx * 70}ms` }}
+            >
+              <span className="study-modal-plan-icon" aria-hidden="true">{m.icon}</span>
+              <span className="study-modal-plan-label">{node.label || node.type}</span>
+              {isFirst && (
+                <span className="study-modal-plan-badge">
+                  {t('study.planFirstBadge', 'Start here')}
+                </span>
+              )}
+            </li>
+          );
+        })}
+        {realNodes.length > 6 && (
+          <li className="study-modal-plan-more">
+            +{realNodes.length - 6} {t('study.planMore', 'more steps')}
+          </li>
+        )}
+      </ul>
+
+      {minutes ? (
+        <p className="study-modal-plan-meta">
+          {t('study.planEstimate', '{{steps}} steps · about {{mins}} min total', {
+            steps: totalSteps,
+            mins: minutes
+          })}
+        </p>
+      ) : null}
+
+      <button className="study-modal-start" onClick={onStart}>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <polygon points="5 3 19 12 5 21 5 3" />
+        </svg>
+        {t('study.letsGo', "Let's go")}
+      </button>
     </div>
   );
 };

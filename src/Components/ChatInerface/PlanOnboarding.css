@@ -799,3 +799,39 @@ body.dark-mode .plan-onboarding__primary:hover:not(:disabled) {
   box-shadow: 0 12px 28px rgba(232, 141, 125, 0.32),
               0 4px 12px rgba(0, 0, 0, 0.4);
 }
+
+/* Primary CTA text — the button background stays a LIGHT coral gradient even
+   in dark mode, so we must pin the label/arrow to dark ink. Otherwise --po-text
+   (light in dark mode) turns the label invisible against the peach bg. */
+body.dark-mode .plan-onboarding__primary,
+body.dark-mode .plan-onboarding__primary--confirm {
+  color: #1f1f1f;
+}
+body.dark-mode .plan-onboarding__primary .plan-onboarding__arrow,
+body.dark-mode .plan-onboarding__primary .plan-onboarding__sparkle {
+  color: #c0533f;
+}
+
+/* Disabled CTA in dark mode — keep text legible (don't fade to invisible);
+   we communicate "not ready" via background desaturation, not opacity collapse. */
+body.dark-mode .plan-onboarding__primary:disabled {
+  opacity: 1;
+  background: #3a3540;
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(232, 226, 239, 0.55);
+  box-shadow: none;
+}
+body.dark-mode .plan-onboarding__primary:disabled .plan-onboarding__arrow,
+body.dark-mode .plan-onboarding__primary:disabled .plan-onboarding__sparkle {
+  color: rgba(232, 226, 239, 0.4);
+}
+
+/* Unselected chip / topic / prep-card — bump contrast: lighter surface tint
+   plus a clearer border so they read as tappable against the card. */
+body.dark-mode .plan-onboarding__chip,
+body.dark-mode .plan-onboarding__topic,
+body.dark-mode .plan-onboarding__prep-card {
+  background: #36323f;
+  border-color: rgba(255, 255, 255, 0.14);
+  color: #f0ebf5;
+}

@@ -65,8 +65,7 @@ import {
   stream_summary,
   generate_scenario,
   upload_files_with_progress,
-  speech_to_text,
-  start_study_journey
+  speech_to_text
 } from '../../Services/FastAPICalls.js';
 
 
@@ -671,10 +670,16 @@ const ChatInterface = ({
     setIsAiTyping(false);              // Clear typing indicator
     setStreamingStatus(null);          // Clear streaming status
 
-    // Clear chat type states IMMEDIATELY to prevent stale data showing
+    // Clear chat type states IMMEDIATELY to prevent stale data showing.
+    // Study mode is cleared here too so the brief window before getDoc resolves
+    // can't render StudyModeContainer with the previous chat's studyState — that
+    // race fired /study/generate-item-stream on every chat switch.
     setIsGameChat(false);
     setGameState(null);
     setCurrentExamData(null);
+    setIsStudyMode(false);
+    setStudyState(null);
+    setStudyAutoStart(false);
 
     // Get chat title and check if it's a game chat or exam chat
     latestRequestedChatIdRef.current = chatId; // Track the latest request
@@ -746,10 +751,19 @@ const ChatInterface = ({
     const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
 
     const unsubscribe = onSnapshot(messagesQuery, (snapshot) => {
-      const loadedMessages = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data()
-      }));
+      // AppendToChat uses addDoc, so Firestore auto-generates the document id
+      // and the message's logical id is stored as a `id` field that overrides
+      // doc.id via spread. If the same logical message gets saved twice (any
+      // retry, any double-call) we'd end up with two docs sharing the same
+      // logical id → two cards rendered. Collapse them by keeping the first.
+      const seen = new Set();
+      const loadedMessages = snapshot.docs
+        .map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((msg) => {
+          if (seen.has(msg.id)) return false;
+          seen.add(msg.id);
+          return true;
+        });
 
       // Preserve local-only messages that shouldn't be overwritten by Firebase
       setChatMessages(prev => {
@@ -2701,32 +2715,10 @@ const ChatInterface = ({
         uploadMessageIdRef.current = null;
         uploadInsightsAccumulatorRef.current = [];
 
-        // ════════════════════════════════════════════════════════════════════
-        // PRE-FIRE /study/start while the upload tail is still running.
-        //
-        // At this point all file_insights are populated on the backend, but the
-        // post_upload_message LLM call is still in flight (~1-3s). Kicking off
-        // /study/start now lets the plan-generation LLM call (~3-8s) overlap
-        // with that tail PLUS the modal open + autoStart effect — so by the
-        // time StartStudyModal calls start_study_journey, the in-flight Map
-        // already holds a (possibly resolved) plan promise.
-        //
-        // The result is consumed by StartStudyModal when it later calls
-        // start_study_journey for the same chatId.
-        // ════════════════════════════════════════════════════════════════════
-        if (window._pendingStudyJourney && chatId) {
-          devLog('🚀 Pre-firing /study/start during upload tail for chatId:', chatId);
-          try {
-            start_study_journey(
-              chatId,
-              [], // upload_ids: backend doesn't use these for /study/start
-              userProfile?.onboarding || {},
-              i18n?.language || 'en'
-            );
-          } catch (prefetchErr) {
-            console.warn('Failed to pre-fire /study/start (will fire on click instead):', prefetchErr);
-          }
-        }
+        // PlanOnboarding (Q3 prep select) is the source of truth for firing
+        // /study/start: it has the user's exam date, hardest topics, and prep
+        // status. Pre-firing here would only build a plan from generic prefs
+        // that PlanOnboarding immediately aborts and replaces.
 
         // NOTE: PostUploadActions will be added when 'post_upload_message' event fires from backend
         break;
@@ -2785,7 +2777,13 @@ const ChatInterface = ({
             timestamp: Date.now()
           };
 
-          setChatMessages(prev => [...prev, planOnboardMsg]);
+          // Idempotent add: if the Firestore listener already inserted this id
+          // (race: addDoc cache-write fires onSnapshot before our setState commits),
+          // skip the local append so we don't end up with two cards.
+          setChatMessages(prev => {
+            if (prev.some(m => m.id === planOnboardMsgId)) return prev;
+            return [...prev, planOnboardMsg];
+          });
           AppendToChat(chatId, planOnboardMsg)
             .catch(err => console.error('❌ Failed to save plan onboarding message:', err));
 
@@ -3776,8 +3774,10 @@ const ChatInterface = ({
     <div style={{ display: 'flex', height: '100vh' }}>
       <ProgressDashboard />
 
-      {/* Study Mode - Full screen overlay when active */}
-      {isStudyMode && studyState && (
+      {/* Study Mode - Full screen overlay when active.
+          studyState.chatId match ensures we never mount with a mismatched chat
+          (e.g. mid-switch, when studyState belongs to the previous chat). */}
+      {isStudyMode && studyState && studyState.chatId === currentChatID && (
         <StudyModeContainer
           key={currentChatID}
           chatId={currentChatID}
