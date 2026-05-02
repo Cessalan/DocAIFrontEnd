@@ -5,7 +5,7 @@ import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { plan_study_path } from '../../Services/FastAPICalls';
+import { plan_study_path, start_study_journey } from '../../Services/FastAPICalls';
 import { createStudySession } from '../../Services/StudySessionService';
 import './StudyMode.css';
 
@@ -66,6 +66,10 @@ const StartStudyModal = ({
   }, [isOpen]);
 
   // ── Main launcher ─────────────────────────────────────────
+  // Uses the combined /study/start SSE endpoint: the plan resolves first
+  // (so we can navigate immediately), and the first-node content keeps
+  // streaming in the background into the prefetch cache that
+  // StudyModeContainer reads when auto-starting node 1.
   const handleStartJourney = async () => {
     setPhase('loading');
     setError(null);
@@ -73,16 +77,27 @@ const StartStudyModal = ({
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
 
     try {
-      const pathResult = await plan_study_path(chatId, uploadIds, userPreferences, language);
+      const { planPromise } = start_study_journey(chatId, uploadIds, userPreferences, language);
+      const pathResult = await planPromise;
 
       if (!pathResult?.nodes?.length) throw new Error('Failed to generate study path');
 
-      // Skip diagnostic — the adaptive path handles personalization dynamically
+      // Skip diagnostic — the adaptive path handles personalization dynamically.
+      // We do NOT await first-node generation here — it streams into the prefetch
+      // cache while finishSession persists the session and the route transitions.
       await finishSession(pathResult, uploadIds);
     } catch (err) {
-      console.error('Error starting study journey:', err);
-      setError(err.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
-      setPhase('idle');
+      console.error('Error starting study journey via /study/start:', err);
+      // Fallback to legacy two-call flow if the streaming endpoint fails for any reason.
+      try {
+        const pathResult = await plan_study_path(chatId, uploadIds, userPreferences, language);
+        if (!pathResult?.nodes?.length) throw new Error('Failed to generate study path');
+        await finishSession(pathResult, uploadIds);
+      } catch (fallbackErr) {
+        console.error('Error starting study journey (fallback):', fallbackErr);
+        setError(fallbackErr.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
+        setPhase('idle');
+      }
     }
   };
 

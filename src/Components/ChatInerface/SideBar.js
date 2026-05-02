@@ -19,6 +19,7 @@ import { DeleteChat, RenameChat } from "../../Services/FireBaseServiceChats.js";
 import DarkModeToggle from './DarkModeToggle';
 import FeedbackButton from './FeedbackButton';
 import FeedbackViewer from './FeedbackViewer';
+import OnboardingViewer from './OnboardingViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
 import '../../index.css';
 
@@ -40,6 +41,7 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
   // Feedback viewer state (dev mode only)
   const [showFeedbackViewer, setShowFeedbackViewer] = useState(false);
+  const [showOnboardingViewer, setShowOnboardingViewer] = useState(false);
   const [exportingOnboarding, setExportingOnboarding] = useState(false);
 
   // Dev mode: Toggle between viewing all chats or only user's chats
@@ -563,6 +565,9 @@ const getchatDate = (timestamp) => {
             >
               {exportingOnboarding ? '⏳ Exporting...' : '📤 Export Onboarding (Dev)'}
             </div>
+            <div className="nav-item" onClick={() => setShowOnboardingViewer(true)}>
+              👁 View Onboarding (Dev)
+            </div>
             {/* Dev Mode: View Toggle */}
             <div className="chat-view-toggle-container">
               <button
@@ -595,6 +600,11 @@ const getchatDate = (timestamp) => {
       {/* Feedback Viewer Modal (Dev Mode Only) */}
       {showFeedbackViewer && (
         <FeedbackViewer onClose={() => setShowFeedbackViewer(false)} />
+      )}
+
+      {/* Onboarding Viewer Modal (Dev Mode Only) */}
+      {showOnboardingViewer && (
+        <OnboardingViewer onClose={() => setShowOnboardingViewer(false)} />
       )}
 
       {/* Delete confirmation modal */}

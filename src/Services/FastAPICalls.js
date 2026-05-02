@@ -779,6 +779,237 @@ export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}
   }
 };
 
+// ============================================================================
+// /study/start — combined plan + first-node prefetch
+// ============================================================================
+// Backend emits an SSE stream with these events:
+//   - plan_ready: { plan: {nodes, topics, total_nodes, estimated_time_minutes} }
+//   - first_node_ready: { node_id, type, content, hash }
+//   - first_node_skipped: { node_id, reason }
+//   - error: { message }
+//
+// start_study_journey() returns the plan promise as soon as plan_ready arrives,
+// while continuing to consume the stream in the background. The first node's
+// content lands in _studyPrefetchCache, where StudyModeContainer.handleStartNode
+// can pick it up — skipping a second round trip + LLM call.
+// ============================================================================
+
+const _studyPrefetchCache = new Map(); // key: `${chat_id}:${node_id}` → Promise<{ type, content, hash } | null>
+const PREFETCH_TTL_MS = 5 * 60 * 1000;
+
+// In-flight /study/start streams keyed by chat_id. Lets ChatInterface pre-fire
+// the journey at upload-`all_complete` time and have StartStudyModal pick up the
+// same promise instead of starting a duplicate request.
+const _inFlightStudyJourneys = new Map(); // chat_id → { planPromise, abort }
+const IN_FLIGHT_TTL_MS = 60 * 1000;
+
+/**
+ * Look up a prefetched first-node content promise. Returns undefined if there's
+ * no entry, otherwise a Promise that resolves to { type, content, hash } or null
+ * (null means the prefetch was skipped or failed — the caller should fall back
+ * to the regular streaming endpoint).
+ */
+export const get_prefetched_node_content = (chat_id, node_id) => {
+  return _studyPrefetchCache.get(`${chat_id}:${node_id}`);
+};
+
+/** Manually drop a prefetch entry once it has been consumed. */
+export const consume_prefetched_node_content = (chat_id, node_id) => {
+  _studyPrefetchCache.delete(`${chat_id}:${node_id}`);
+};
+
+/**
+ * Drop a cached in-flight /study/start so the next call refires fresh.
+ *
+ * The default `start_study_journey` cache holds a 60s TTL after settle; this
+ * helper is the escape hatch when callers need to invalidate eagerly — e.g.
+ * the PlanOnboarding flow when the user taps "Edit answers" or skips, since
+ * their next attempt should regenerate against the new preferences instead
+ * of receiving the previously-aborted promise.
+ */
+export const clear_in_flight_study_journey = (chat_id) => {
+  const entry = _inFlightStudyJourneys.get(chat_id);
+  if (!entry) return;
+  try { entry.abort && entry.abort(); } catch (e) { /* best-effort */ }
+  _inFlightStudyJourneys.delete(chat_id);
+  // Swallow rejection from the now-aborted promise so it doesn't surface
+  // as an unhandled rejection in the console.
+  if (entry.planPromise && typeof entry.planPromise.catch === 'function') {
+    entry.planPromise.catch(() => {});
+  }
+};
+
+/**
+ * Kick off the combined plan + first-node SSE stream.
+ *
+ * @param {string} chat_id
+ * @param {string[]} upload_ids
+ * @param {Object} user_preferences
+ * @param {string} language
+ * @returns {{ planPromise: Promise<Object>, abort: () => void }}
+ *   planPromise resolves with { nodes, topics, total_nodes, estimated_time_minutes }
+ *   as soon as the backend emits `plan_ready` — well before first-node generation
+ *   finishes. The first-node content lands in _studyPrefetchCache as a side effect.
+ */
+export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, language = 'en') => {
+  // Reuse an in-flight stream for the same chat_id. This lets us "pre-fire"
+  // the journey while the upload tail is still running and have StartStudyModal
+  // pick up the same plan promise when the user actually clicks Begin Journey.
+  const existing = _inFlightStudyJourneys.get(chat_id);
+  if (existing) {
+    devLog(`♻️ Reusing in-flight /study/start for ${chat_id}`);
+    return existing;
+  }
+
+  let resolvePlan, rejectPlan;
+  const planPromise = new Promise((res, rej) => { resolvePlan = res; rejectPlan = rej; });
+
+  const controller = new AbortController();
+  let firstNodeId = null;
+  let resolveFirstNode = null;
+  let firstNodeCacheKey = null;
+  let planResolved = false;
+
+  const requestBody = JSON.stringify({
+    chat_id,
+    upload_ids,
+    language,
+    userPreferences: user_preferences
+  });
+
+  const settleFirstNode = (value) => {
+    if (resolveFirstNode) {
+      resolveFirstNode(value);
+      resolveFirstNode = null;
+    }
+  };
+
+  const handleEvent = (data) => {
+    if (!data || !data.status) return;
+    switch (data.status) {
+      case 'plan_ready': {
+        const plan = data.plan || {};
+        firstNodeId = plan?.nodes?.[0]?.id || null;
+        if (firstNodeId) {
+          firstNodeCacheKey = `${chat_id}:${firstNodeId}`;
+          const firstNodePromise = new Promise(res => { resolveFirstNode = res; });
+          _studyPrefetchCache.set(firstNodeCacheKey, firstNodePromise);
+          // Auto-expire so a stale prefetch can't haunt a later session
+          setTimeout(() => {
+            if (_studyPrefetchCache.get(firstNodeCacheKey) === firstNodePromise) {
+              _studyPrefetchCache.delete(firstNodeCacheKey);
+            }
+          }, PREFETCH_TTL_MS);
+        }
+        planResolved = true;
+        resolvePlan(plan);
+        break;
+      }
+      case 'first_node_ready': {
+        settleFirstNode({ type: data.type, content: data.content, hash: data.hash });
+        break;
+      }
+      case 'first_node_skipped': {
+        settleFirstNode(null);
+        break;
+      }
+      case 'error': {
+        const err = new Error(data.message || 'Study start stream error');
+        if (!planResolved) rejectPlan(err);
+        settleFirstNode(null);
+        break;
+      }
+      // session_ready, plan_generating, first_node_generating, question_ready,
+      // flashcard_ready, complete: not used yet — could power richer progress UI later.
+      default:
+        break;
+    }
+  };
+
+  (async () => {
+    try {
+      devLog('🚀 Starting combined study journey stream...');
+      const response = await fetch(`${FAST_API_BASE}/study/start`, {
+        method: 'POST',
+        headers: header,
+        body: requestBody,
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`Study start failed: ${response.status} - ${errorText}`);
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += decoder.decode(value, { stream: true });
+
+        const messages = buffer.split('\n\n');
+        buffer = messages.pop() || '';
+
+        for (const message of messages) {
+          for (const line of message.split('\n')) {
+            if (!line.startsWith('data: ')) continue;
+            try {
+              handleEvent(JSON.parse(line.slice(6)));
+            } catch (parseErr) {
+              if (line.trim().length > 10) {
+                console.warn('Failed to parse /study/start SSE chunk:', line.substring(0, 100));
+              }
+            }
+          }
+        }
+      }
+
+      // Flush trailing buffer
+      if (buffer.trim()) {
+        for (const line of buffer.split('\n')) {
+          if (line.startsWith('data: ')) {
+            try {
+              handleEvent(JSON.parse(line.slice(6)));
+            } catch (e) { /* ignore */ }
+          }
+        }
+      }
+
+      // Stream closed — if anything is still pending, settle it so callers don't hang.
+      if (!planResolved) rejectPlan(new Error('Study start stream closed before plan was ready'));
+      settleFirstNode(null);
+    } catch (err) {
+      if (controller.signal.aborted) {
+        if (!planResolved) rejectPlan(new Error('Study start aborted'));
+        settleFirstNode(null);
+        return;
+      }
+      console.error('❌ /study/start stream failed:', err);
+      if (!planResolved) rejectPlan(err);
+      settleFirstNode(null);
+    }
+  })();
+
+  const handle = { planPromise, abort: () => controller.abort() };
+  _inFlightStudyJourneys.set(chat_id, handle);
+
+  // Drop the in-flight entry once the stream is done. Use planPromise as the
+  // signal — if the plan never resolved we still want to evict so a retry
+  // creates a fresh request. Keep it alive for IN_FLIGHT_TTL_MS after settle
+  // so a slightly-late StartStudyModal still hits the cache.
+  const evictLater = () => setTimeout(() => {
+    if (_inFlightStudyJourneys.get(chat_id) === handle) {
+      _inFlightStudyJourneys.delete(chat_id);
+    }
+  }, IN_FLIGHT_TTL_MS);
+  planPromise.then(evictLater, evictLater);
+
+  return handle;
+};
+
 /**
  * Generate 5 breadth-first diagnostic questions before the study plan is shown.
  * One question per major topic, easy→hard. Used to seed initial insight data.

@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(CI=true npx --no-install react-scripts build)",
+      "Bash(npx --no-install react-scripts build)",
+      "Bash(node -e \"require\\('./src/i18n/i18n.js'\\)\")",
+      "Bash(node --check src/Components/ChatInerface/PlanOnboarding.js)",
+      "Bash(node --check \"c:/Users/Billion/Desktop/ragfrontend/src/Components/ChatInerface/ChatInterface.js\")",
+      "Bash(node --input-type=module --check)"
+    ]
+  }
+}

@@ -1,0 +1,801 @@
+/* ==========================================================================
+   PlanOnboarding — 3-question gate before the study plan generates.
+
+   Design system: matches FirstUploadWowCard / PostUploadActions / QuizRoomLanding
+   - Sticky-note pastels (coral, pink, blue, yellow, purple, green)
+   - Warm grays for text (#3d3d3d / #6b6b6b)
+   - Organic asymmetric border-radius for hand-drawn feel
+   - Wobbly spring transitions
+   - 2D offset shadows (sticker / sticky-note style)
+   - Slight rotations on cards and chips
+   ========================================================================== */
+
+.plan-onboarding {
+  /* Sticky-note palette — same vars used by sibling chat components */
+  --sticky-blue:   #d4f0fc;
+  --sticky-pink:   #ffd6e0;
+  --sticky-green:  #d8f5d8;
+  --sticky-yellow: #fff8b8;
+  --sticky-purple: #e8dff5;
+  --sticky-coral:  linear-gradient(135deg, #ffd6cc 0%, #ffe4d9 100%);
+
+  --po-surface:       #ffffff;
+  --po-surface-soft:  #fef9f5;
+  --po-border:        rgba(100, 100, 100, 0.15);
+  --po-border-strong: rgba(232, 141, 125, 0.6);
+
+  --po-accent-coral:  #d97a6a;
+  --po-accent-purple: #8b6db5;
+  --po-accent-soft:   rgba(232, 141, 125, 0.4);
+
+  --po-text:          #3d3d3d;
+  --po-text-muted:    #6b6b6b;
+  --po-text-soft:     #9a9a9a;
+
+  --po-radius-lg:     18px 22px 18px 20px; /* organic */
+  --po-radius-md:     12px 14px 12px 13px;
+  --po-radius-sm:     10px 12px 10px 11px;
+
+  --po-shadow:        3px 3px 0px rgba(60, 60, 60, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --po-shadow-hover:  4px 4px 0px rgba(60, 60, 60, 0.1),  0 8px 20px rgba(0, 0, 0, 0.1);
+
+  --po-wobble:        cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --po-ease:          cubic-bezier(0.4, 0, 0.2, 1);
+
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 22px 22px 18px;
+  background: var(--po-surface);
+  border: 2px solid var(--po-border);
+  border-radius: var(--po-radius-lg);
+  box-shadow: var(--po-shadow);
+  color: var(--po-text);
+  transform: rotate(-0.3deg);
+  animation: po-card-in 0.5s var(--po-wobble);
+}
+
+/* ==========================================================================
+   Progress dots — top-right, warm coral
+   ========================================================================== */
+.plan-onboarding__progress {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: flex;
+  gap: 6px;
+}
+
+.plan-onboarding__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgba(232, 141, 125, 0.25);
+  transition: background 0.25s var(--po-ease), transform 0.25s var(--po-wobble);
+}
+
+.plan-onboarding__dot.is-filled {
+  background: var(--po-accent-coral);
+  transform: scale(1.2);
+}
+
+/* ==========================================================================
+   Pane (one per phase)
+   ========================================================================== */
+.plan-onboarding__pane {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  animation: po-pane-in 0.35s var(--po-ease);
+}
+
+.plan-onboarding__pane--hook   { text-align: left; }
+.plan-onboarding__pane--confirm { gap: 18px; }
+
+/* ==========================================================================
+   Headers, titles, eyebrow text
+   ========================================================================== */
+.plan-onboarding__eyebrow {
+  margin: 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  color: var(--po-accent-coral);
+}
+
+.plan-onboarding__title {
+  margin: 0;
+  font-size: 22px;
+  line-height: 1.32;
+  font-weight: 700;
+  letter-spacing: -0.3px;
+  color: var(--po-text);
+}
+
+.plan-onboarding__subtitle {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--po-text-muted);
+}
+
+.plan-onboarding__header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.plan-onboarding__question {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--po-text);
+  letter-spacing: -0.2px;
+}
+
+.plan-onboarding__sub {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--po-text-muted);
+}
+
+.plan-onboarding__back {
+  align-self: flex-start;
+  background: none;
+  border: none;
+  padding: 4px 8px 4px 0;
+  margin-bottom: 2px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--po-accent-coral);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s var(--po-ease), transform 0.2s var(--po-wobble);
+}
+
+.plan-onboarding__back:hover:not(:disabled) {
+  color: #c46451;
+  transform: translateX(-2px);
+}
+
+/* ==========================================================================
+   Q1: exam-date chips (sticky-note pills)
+   ========================================================================== */
+.plan-onboarding__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+.plan-onboarding__chip {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid var(--po-border);
+  border-radius: var(--po-radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--po-text);
+  cursor: pointer;
+  transition: all 0.3s var(--po-wobble);
+  min-height: 40px;
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.plan-onboarding__chips .plan-onboarding__chip:nth-child(1) { transform: rotate(-0.5deg); }
+.plan-onboarding__chips .plan-onboarding__chip:nth-child(2) { transform: rotate(0.5deg); }
+.plan-onboarding__chips .plan-onboarding__chip:nth-child(3) { transform: rotate(-0.3deg); }
+.plan-onboarding__chips .plan-onboarding__chip:nth-child(4) { transform: rotate(0.4deg); }
+.plan-onboarding__chips .plan-onboarding__chip:nth-child(5) { transform: rotate(-0.2deg); }
+
+.plan-onboarding__chip:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(0deg) scale(1.03);
+  border-color: var(--po-border-strong);
+  box-shadow: 3px 3px 0px rgba(60, 60, 60, 0.08), 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.plan-onboarding__chip.is-selected {
+  background: var(--sticky-coral);
+  border-color: var(--po-border-strong);
+  color: var(--po-text);
+}
+
+.plan-onboarding__chip--date {
+  position: relative;
+  cursor: pointer;
+}
+
+.plan-onboarding__chip--date input[type="date"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+  border: none;
+  padding: 0;
+}
+
+.plan-onboarding__helper {
+  margin: 4px 0 0;
+  min-height: 18px;
+  font-size: 13px;
+  color: var(--po-accent-coral);
+  font-weight: 600;
+  transition: opacity 0.2s var(--po-ease);
+}
+
+/* ==========================================================================
+   Q2: hardest-topic chips (sticky-note pills, multi-select)
+   ========================================================================== */
+.plan-onboarding__topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+.plan-onboarding__topic {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 14px;
+  background: #ffffff;
+  border: 1.5px solid var(--po-border);
+  border-radius: var(--po-radius-sm);
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--po-text);
+  cursor: pointer;
+  transition: all 0.3s var(--po-wobble);
+  min-height: 42px;
+  text-align: left;
+  line-height: 1.3;
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.plan-onboarding__topics .plan-onboarding__topic:nth-child(odd)  { transform: rotate(-0.4deg); }
+.plan-onboarding__topics .plan-onboarding__topic:nth-child(even) { transform: rotate(0.4deg); }
+
+.plan-onboarding__topic:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(0deg) scale(1.03);
+  border-color: rgba(168, 105, 196, 0.5);
+  box-shadow: 3px 3px 0px rgba(60, 60, 60, 0.08), 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+.plan-onboarding__topic.is-selected {
+  background: var(--sticky-purple);
+  border-color: rgba(168, 105, 196, 0.6);
+  color: #5b3a7a;
+}
+
+.plan-onboarding__counter {
+  margin: 2px 0 0;
+  min-height: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--po-accent-purple);
+  letter-spacing: 0.3px;
+}
+
+.plan-onboarding__empty {
+  padding: 12px 14px;
+  margin: 0;
+  font-size: 13px;
+  color: var(--po-text-muted);
+  background: var(--sticky-yellow);
+  border: 1.5px dashed rgba(217, 119, 6, 0.4);
+  border-radius: var(--po-radius-sm);
+}
+
+/* ==========================================================================
+   Q3: prep-status cards (4 sticky cards)
+   ========================================================================== */
+.plan-onboarding__prep {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  padding: 4px 0 2px;
+}
+
+.plan-onboarding__prep-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  background: #ffffff;
+  border: 1.5px solid var(--po-border);
+  border-radius: var(--po-radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--po-text);
+  cursor: pointer;
+  transition: all 0.3s var(--po-wobble);
+  text-align: left;
+  min-height: 56px;
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06), 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(1) { transform: rotate(-0.4deg); }
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(2) { transform: rotate(0.5deg); }
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(3) { transform: rotate(-0.3deg); }
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(4) { transform: rotate(0.4deg); }
+
+.plan-onboarding__prep-card:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(0deg) scale(1.02);
+  border-color: var(--po-border-strong);
+  box-shadow: 3px 3px 0px rgba(60, 60, 60, 0.08), 0 6px 14px rgba(0, 0, 0, 0.08);
+}
+
+/* Each prep card gets a different sticky-note tint when selected */
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(1).is-selected {
+  background: var(--sticky-blue);
+  border-color: rgba(65, 105, 225, 0.5);
+}
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(2).is-selected {
+  background: var(--sticky-green);
+  border-color: rgba(34, 139, 34, 0.45);
+}
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(3).is-selected {
+  background: var(--sticky-yellow);
+  border-color: rgba(217, 119, 6, 0.5);
+}
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(4).is-selected {
+  background: var(--sticky-pink);
+  border-color: rgba(219, 39, 119, 0.5);
+}
+
+.plan-onboarding__prep-icon {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px 10px 9px 8px;
+  background: rgba(232, 141, 125, 0.12);
+  color: var(--po-accent-coral);
+  transition: transform 0.35s var(--po-wobble), background 0.25s var(--po-ease);
+}
+
+.plan-onboarding__prep-card:hover .plan-onboarding__prep-icon {
+  transform: rotate(-10deg) scale(1.08);
+}
+
+/* Per-card icon tints: match the selected sticky-note color family. */
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(1) .plan-onboarding__prep-icon {
+  background: rgba(65, 105, 225, 0.14);
+  color: #4169e1;
+}
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(2) .plan-onboarding__prep-icon {
+  background: rgba(34, 139, 34, 0.16);
+  color: #2e8b57;
+}
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(3) .plan-onboarding__prep-icon {
+  background: rgba(217, 119, 6, 0.18);
+  color: #c97a06;
+}
+.plan-onboarding__prep .plan-onboarding__prep-card:nth-child(4) .plan-onboarding__prep-icon {
+  background: rgba(219, 39, 119, 0.16);
+  color: #db2777;
+}
+
+.plan-onboarding__prep-label { flex: 1; }
+
+@media (min-width: 640px) {
+  .plan-onboarding__prep {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+}
+
+/* ==========================================================================
+   Confirmation summary (sticky-note style)
+   ========================================================================== */
+.plan-onboarding__summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 0;
+  padding: 14px 18px;
+  list-style: none;
+  background: var(--sticky-yellow);
+  border: 1.5px solid rgba(217, 119, 6, 0.3);
+  border-radius: var(--po-radius-md);
+  transform: rotate(-0.5deg);
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.07), 0 4px 10px rgba(0, 0, 0, 0.05);
+}
+
+.plan-onboarding__summary-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--po-text);
+  border-bottom: 1px dashed rgba(217, 119, 6, 0.25);
+  animation: po-row-in 0.4s var(--po-ease) backwards;
+}
+
+.plan-onboarding__summary-row:last-child { border-bottom: none; }
+
+.plan-onboarding__summary-row:nth-child(1) { animation-delay: 0.05s; }
+.plan-onboarding__summary-row:nth-child(2) { animation-delay: 0.15s; }
+.plan-onboarding__summary-row:nth-child(3) { animation-delay: 0.25s; }
+
+.plan-onboarding__summary-icon {
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px 10px 9px 8px;
+  background: rgba(255, 255, 255, 0.55);
+  color: #c97a06;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(217, 119, 6, 0.2);
+}
+
+.plan-onboarding__summary-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+/* ==========================================================================
+   CTAs — coral sticky-note primary
+   ========================================================================== */
+.plan-onboarding__cta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.plan-onboarding__primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 22px;
+  background: var(--sticky-coral);
+  color: var(--po-text);
+  border: 2px solid var(--po-accent-soft);
+  border-radius: var(--po-radius-md);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.1px;
+  cursor: pointer;
+  min-height: 52px;
+  box-shadow: 3px 3px 0px rgba(60, 60, 60, 0.1), 0 6px 16px rgba(0, 0, 0, 0.08);
+  transition: all 0.35s var(--po-wobble);
+  width: 100%;
+  transform: rotate(-0.3deg);
+}
+
+.plan-onboarding__primary:hover:not(:disabled) {
+  transform: translateY(-3px) rotate(0deg) scale(1.02);
+  background: linear-gradient(135deg, #ffcabf 0%, #ffd9cc 100%);
+  border-color: var(--po-accent-coral);
+  box-shadow: 4px 4px 0px rgba(60, 60, 60, 0.12), 0 10px 22px rgba(0, 0, 0, 0.12);
+}
+
+.plan-onboarding__primary:active:not(:disabled) {
+  transform: translateY(-1px) scale(0.98);
+  box-shadow: 1px 1px 0px rgba(60, 60, 60, 0.08), 0 3px 6px rgba(0, 0, 0, 0.05);
+}
+
+.plan-onboarding__primary:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: rotate(-0.3deg);
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06);
+}
+
+.plan-onboarding__primary--confirm {
+  background: linear-gradient(135deg, #ffcabf 0%, #ffd9cc 100%);
+  border-color: var(--po-accent-coral);
+}
+
+.plan-onboarding__arrow,
+.plan-onboarding__sparkle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  color: var(--po-accent-coral);
+  transition: transform 0.3s var(--po-wobble);
+}
+
+.plan-onboarding__primary:hover:not(:disabled) .plan-onboarding__arrow {
+  transform: translateX(4px);
+}
+
+.plan-onboarding__primary:hover:not(:disabled) .plan-onboarding__sparkle {
+  transform: scale(1.25) rotate(15deg);
+}
+
+.plan-onboarding__edit {
+  align-self: center;
+  background: none;
+  border: none;
+  padding: 8px 14px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--po-accent-purple);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: color 0.2s var(--po-ease), transform 0.2s var(--po-wobble);
+}
+
+.plan-onboarding__edit:hover:not(:disabled) {
+  color: #5b3a7a;
+  transform: translateX(-2px);
+}
+
+/* ==========================================================================
+   Footer (continue + skip layout for q-states)
+   ========================================================================== */
+.plan-onboarding__footer {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.plan-onboarding__skip {
+  align-self: center;
+  background: none;
+  border: none;
+  padding: 6px 12px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--po-text-soft);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: color 0.2s var(--po-ease);
+  text-decoration: underline;
+  text-decoration-color: rgba(154, 154, 154, 0.4);
+  text-underline-offset: 3px;
+}
+
+.plan-onboarding__skip:hover:not(:disabled) {
+  color: var(--po-text-muted);
+  text-decoration-color: rgba(107, 107, 107, 0.6);
+}
+
+.plan-onboarding__skip:disabled,
+.plan-onboarding__primary:disabled,
+.plan-onboarding__chip:disabled,
+.plan-onboarding__topic:disabled,
+.plan-onboarding__prep-card:disabled,
+.plan-onboarding__back:disabled,
+.plan-onboarding__edit:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+/* ==========================================================================
+   Focus states — visible coral outline for keyboard nav
+   ========================================================================== */
+.plan-onboarding button:focus-visible,
+.plan-onboarding label:focus-within {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.5),
+              3px 3px 0px rgba(60, 60, 60, 0.08);
+}
+
+.plan-onboarding__chip:focus-visible,
+.plan-onboarding__topic:focus-visible,
+.plan-onboarding__prep-card:focus-visible {
+  border-color: var(--po-accent-coral);
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+@keyframes po-card-in {
+  0%   { opacity: 0; transform: translateY(14px) scale(0.95) rotate(-0.3deg); }
+  60%  { transform: translateY(-3px) scale(1.02) rotate(0deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(-0.3deg); }
+}
+
+@keyframes po-pane-in {
+  from { opacity: 0; transform: translateX(8px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes po-row-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-onboarding,
+  .plan-onboarding__pane,
+  .plan-onboarding__summary-row {
+    animation: none !important;
+  }
+  .plan-onboarding *,
+  .plan-onboarding *::before,
+  .plan-onboarding *::after {
+    transition-duration: 0.01ms !important;
+  }
+  .plan-onboarding,
+  .plan-onboarding__primary,
+  .plan-onboarding__summary,
+  .plan-onboarding__chip,
+  .plan-onboarding__topic,
+  .plan-onboarding__prep-card {
+    transform: none !important;
+  }
+}
+
+/* ==========================================================================
+   Responsive — small phones
+   ========================================================================== */
+@media (max-width: 480px) {
+  .plan-onboarding {
+    padding: 20px 18px 16px;
+    border-radius: 16px 18px 16px 17px;
+  }
+  .plan-onboarding__title    { font-size: 19px; }
+  .plan-onboarding__question { font-size: 17px; }
+  .plan-onboarding__chip     { font-size: 13px; padding: 9px 13px; }
+  .plan-onboarding__topic    { font-size: 13px; padding: 9px 12px; }
+  .plan-onboarding__primary  { font-size: 14.5px; min-height: 48px; padding: 12px 18px; }
+}
+
+/* ==========================================================================
+   Dark mode — a true dark card, not a white card pasted onto a dark page.
+
+   Approach:
+   - Card surface flips to a dark slate with a faint warm tint (matches the
+     chat-area dark background rather than fighting it).
+   - Text colors flip to light.
+   - Unselected chips / topics / prep cards become dark surfaces too, so the
+     card reads as one cohesive dark object.
+   - Selected states KEEP the bright coral / pastel fills — those are the
+     "this is the choice you made" signal and they pop wonderfully on dark.
+   - The coral primary CTA stays — high contrast against dark, no change needed.
+   - Sticky-note offset shadows soften (large dark shadows look like halos);
+     we use a deeper, more diffuse shadow instead.
+   ========================================================================== */
+body.dark-mode .plan-onboarding {
+  --po-surface:       #22202a;       /* dark slate w/ slight purple tint */
+  --po-surface-soft:  #2b2834;
+  --po-border:        rgba(255, 255, 255, 0.08);
+  --po-border-strong: rgba(232, 141, 125, 0.55);
+
+  --po-text:          #e8e2ef;
+  --po-text-muted:    #a89fb0;
+  --po-text-soft:     #7a7280;
+
+  --po-shadow:        0 8px 24px rgba(0, 0, 0, 0.45);
+  --po-shadow-hover:  0 12px 32px rgba(0, 0, 0, 0.55);
+
+  border-color: var(--po-border);
+}
+
+/* Drop the sticky-note offset shadows on the card itself — they read as
+   halos against pure dark. Diffuse drop-shadow only. */
+body.dark-mode .plan-onboarding {
+  box-shadow: var(--po-shadow);
+}
+
+/* Title / question / hook headline use the lightest text */
+body.dark-mode .plan-onboarding__title,
+body.dark-mode .plan-onboarding__question {
+  color: var(--po-text);
+}
+
+body.dark-mode .plan-onboarding__subtitle,
+body.dark-mode .plan-onboarding__sub {
+  color: var(--po-text-muted);
+}
+
+/* Chips, topics, prep cards — unselected: dark surface, light text */
+body.dark-mode .plan-onboarding__chip,
+body.dark-mode .plan-onboarding__topic,
+body.dark-mode .plan-onboarding__prep-card {
+  background: var(--po-surface-soft);
+  color: var(--po-text);
+  border-color: var(--po-border);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
+}
+
+body.dark-mode .plan-onboarding__chip:hover:not(:disabled),
+body.dark-mode .plan-onboarding__topic:hover:not(:disabled),
+body.dark-mode .plan-onboarding__prep-card:hover:not(:disabled) {
+  background: #322e3d;
+  border-color: rgba(232, 141, 125, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Selected states: keep the bright pastel/coral fills with dark text on top.
+   The visual energy of color-on-dark IS the affordance here. */
+body.dark-mode .plan-onboarding__chip.is-selected {
+  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
+  color: #1f1f1f;
+  border-color: rgba(232, 141, 125, 0.7);
+}
+
+body.dark-mode .plan-onboarding__topic.is-selected {
+  background: #d9c8eb;
+  color: #1f1f1f;
+  border-color: rgba(139, 109, 181, 0.7);
+}
+
+body.dark-mode .plan-onboarding__prep .plan-onboarding__prep-card:nth-child(1).is-selected {
+  background: #b8e4f7;
+  color: #1f1f1f;
+  border-color: rgba(100, 149, 237, 0.7);
+}
+body.dark-mode .plan-onboarding__prep .plan-onboarding__prep-card:nth-child(2).is-selected {
+  background: #c5ecc5;
+  color: #1f1f1f;
+  border-color: rgba(5, 150, 105, 0.7);
+}
+body.dark-mode .plan-onboarding__prep .plan-onboarding__prep-card:nth-child(3).is-selected {
+  background: #ffefa6;
+  color: #1f1f1f;
+  border-color: rgba(217, 119, 6, 0.7);
+}
+body.dark-mode .plan-onboarding__prep .plan-onboarding__prep-card:nth-child(4).is-selected {
+  background: #ffc5d3;
+  color: #1f1f1f;
+  border-color: rgba(219, 39, 119, 0.7);
+}
+
+/* Empty state pill (when no topics extracted yet) */
+body.dark-mode .plan-onboarding__empty {
+  background: var(--po-surface-soft);
+  color: var(--po-text-muted);
+  border-color: var(--po-border);
+}
+
+/* Summary box on confirmation — was a yellow sticky on light;
+   in dark it becomes a deeper card with a subtle coral accent border. */
+body.dark-mode .plan-onboarding__summary {
+  background: var(--po-surface-soft);
+  border-color: rgba(232, 141, 125, 0.35);
+  color: var(--po-text);
+}
+
+body.dark-mode .plan-onboarding__summary-row {
+  border-bottom-color: var(--po-border);
+  color: var(--po-text);
+}
+
+/* Skip link / back / edit — slightly muted in dark so they don't compete
+   with the primary CTA. */
+body.dark-mode .plan-onboarding__skip {
+  color: var(--po-text-soft);
+  text-decoration-color: rgba(168, 159, 176, 0.4);
+}
+body.dark-mode .plan-onboarding__skip:hover:not(:disabled) {
+  color: var(--po-text-muted);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+body.dark-mode .plan-onboarding__back:hover:not(:disabled),
+body.dark-mode .plan-onboarding__edit:hover:not(:disabled) {
+  color: #f5c4b8;
+  background: rgba(255, 255, 255, 0.04);
+}
+
+/* Primary CTA hover — slightly stronger lift on dark to pop more */
+body.dark-mode .plan-onboarding__primary:hover:not(:disabled) {
+  box-shadow: 0 12px 28px rgba(232, 141, 125, 0.32),
+              0 4px 12px rgba(0, 0, 0, 0.4);
+}

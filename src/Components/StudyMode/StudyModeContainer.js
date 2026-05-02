@@ -14,7 +14,7 @@ import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import ExamConfigModal from './ExamConfigModal';
-import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam } from '../../Services/FastAPICalls';
+import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam, get_prefetched_node_content, consume_prefetched_node_content } from '../../Services/FastAPICalls';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
@@ -288,6 +288,53 @@ const StudyModeContainer = ({
           return; // Exit early - no need to generate
         } else {
           console.log('⚠️ messageId exists but content not found, will regenerate');
+        }
+      }
+
+      // ========================================
+      // PREFETCH CACHE CHECK
+      // /study/start populates this cache when the user kicks off the journey,
+      // so the first node's content is ready (or in flight) by the time we get
+      // here. Skip the second /study/generate-item-stream round trip entirely.
+      // Falls through to streaming if the prefetch was skipped or failed.
+      // ========================================
+      if (!viewOnly) {
+        const prefetched = get_prefetched_node_content(chatId, node.id);
+        if (prefetched) {
+          // Consume up front so a re-render doesn't double-process the same content.
+          consume_prefetched_node_content(chatId, node.id);
+          try {
+            const result = await prefetched;
+            if (result?.content) {
+              console.log(`✅ Using prefetched content for node ${node.id}`);
+              setCurrentContent(result.content);
+
+              // Persist hash + content to Firestore. Await so currentMessageIdRef
+              // is guaranteed set before the user can record progress (matches
+              // the streaming branch's contract).
+              if (result.hash) {
+                await addAskedHash(chatId, result.hash);
+                setAskedHashes(prev => [...prev, result.hash]);
+              }
+              const messageId = await saveNodeContent(chatId, node.id, result.content, node.type);
+              await updateNodeStatus(chatId, node.id, { messageId });
+              setNodes(prev => prev.map(n => n.id === node.id ? { ...n, messageId } : n));
+              currentMessageIdRef.current = messageId;
+
+              setMascotState({
+                type: 'nurse',
+                isExcited: false,
+                isSurprised: false,
+                lookDirection: 'down-center'
+              });
+              setIsLoadingContent(false);
+              return;
+            }
+            // Resolved with null (skipped/failed) — fall through to streaming.
+            console.log(`ℹ️ Prefetch for node ${node.id} returned no content; falling back to streaming.`);
+          } catch (err) {
+            console.warn('Prefetched content rejected; falling back to streaming:', err);
+          }
         }
       }
 

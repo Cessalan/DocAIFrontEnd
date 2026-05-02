@@ -28,7 +28,8 @@
       "Skill(schedule)",
       "Skill(schedule:*)",
       "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"hyperkalemia\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")",
-      "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"tendonitis\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")"
+      "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"tendonitis\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")",
+      "Bash(node --check src/Services/FastAPICalls.js)"
     ],
     "deny": [],
     "ask": [],

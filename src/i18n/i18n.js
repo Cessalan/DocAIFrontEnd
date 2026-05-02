@@ -298,6 +298,64 @@ const resources = {
         nclexQuizPrompt: "Generate an NCLEX-style quiz about {{topics}}. Use multiple choice questions (MCQ format) with clinical scenarios testing judgment. Do not use case study format."
       },
 
+      // Plan Onboarding (3-question gate before study plan generation,
+      // shown only on first upload for exam-prep students)
+      planOnboarding: {
+        eyebrow: "Personalized plan",
+        hookHeadline_one: "I've read your file on {{topics}}.",
+        hookHeadline_other: "I've read your {{count}} files on {{topics}}.",
+        hookFallbackTopic: "your study material",
+        hookSubtitle: "Give me 30 seconds and I'll build you a plan that actually fits your situation.",
+        start: "Let's go",
+        skip: "Show me everything instead",
+        back: "Back",
+        continue: "Continue",
+        // Q1 helper line — special-cased for "today"; otherwise uses count plural
+        daysHelperToday: "Today — let's prioritize",
+        daysHelper_one: "1 day from today — tight, but doable",
+        daysHelper_other: "{{count}} days from today",
+        // Confirmation summary date label
+        examToday: "Exam today",
+        examInDays_one: "Exam in 1 day",
+        examInDays_other: "Exam in {{count}} days",
+        q1: {
+          title: "When's the exam?",
+          subtitle: "I'll size the plan to fit.",
+          options: {
+            today: "Today",
+            tomorrow: "Tomorrow",
+            this_week: "This week",
+            next_week: "Next week",
+            two_plus_weeks: "2+ weeks"
+          },
+          pickDate: "Pick a date"
+        },
+        q2: {
+          title: "Which feels hardest right now?",
+          subtitle: "Pick up to 2 — I'll lead the plan there.",
+          counter_one: "{{count}}/2 selected",
+          counter_other: "{{count}}/2 selected",
+          noTopics: "No topics extracted yet — skip and we'll figure it out together."
+        },
+        q3: {
+          title: "And where are you in your prep?"
+        },
+        prepOptions: {
+          not_started: "Haven't started yet",
+          just_started: "Just getting started",
+          making_progress: "Making progress",
+          cramming: "Cramming"
+        },
+        confirm: {
+          title: "Here's what I'll build for you.",
+          summaryAria: "Plan summary",
+          focusPrefix: "Focus:",
+          topicJoiner: ", ",
+          cta: "Build my plan",
+          edit: "Edit answers"
+        }
+      },
+
       // Mindmap Modal
       mindmap: {
         downloadPdf: "PDF",
@@ -605,28 +663,30 @@ const resources = {
         featureMindMap: "Concept Maps",
         featureAudio: "Audio",
         featureStudySheet: "Study Sheet",
-        // Hero section
-        sloganLine1: "Too much to study. Not enough time.",
-        sloganLine2Prefix: "We fix that — by turning your notes into ",
+        // Hero section — v3 conversion-focused copy
+        // The typewriter now cycles QUESTION TYPES (the v3 promise) instead of output formats.
+        // Key names (quiz/flashcards/etc.) are legacy; values reflect the new content.
+        sloganLine1: "You know the material. The questions trap you.",
+        sloganLine2Prefix: "We rebuild your notes into ",
         sloganLine2Suffix: ".",
         typewriter: {
-          quiz: "quizzes",
-          flashcards: "flashcards",
-          mindmaps: "concept maps",
-          audio: "audio",
-          studysheet: "study sheets",
-          success: "success 🏆"
+          quiz: "SATA questions.",
+          flashcards: "prioritization.",
+          mindmaps: "clinical scenarios.",
+          audio: "exam-format practice.",
+          studysheet: "what your prof asks.",
+          success: "exam-day wins."
         },
-        subtitle: "Spend less time studying, more time understanding.",
+        subtitle: "Upload your notes. First quiz in under 2 minutes.",
         // Auth buttons
         login: "Log in",
         signup: "Sign up",
         logout: "Log out",
         // Social proof badges
         badge1: "Made with nurses",
-        badge2: "Trusted across North America",
+        badge2: "Used by 1,000+ nursing students",
         // Footer
-        footerText: "Built for Nursing exams and NCLEX",
+        footerText: "Built for nursing students. Med-Surg, Pharm, Patho — not just NCLEX.",
         // Product showcase section
         showcaseTitle: "See How It Works",
         showcaseSubtitle: "From notes to knowledge in minutes",
@@ -1532,6 +1592,62 @@ const resources = {
         nclexQuizPrompt: "Génère un quiz de style NCLEX sur {{topics}}. Utilise des questions à choix multiples (format QCM) avec des scénarios cliniques testant le jugement. Ne pas utiliser le format étude de cas."
       },
 
+      // Plan Onboarding (3-question gate before study plan generation,
+      // shown only on first upload for exam-prep students)
+      planOnboarding: {
+        eyebrow: "Plan personnalisé",
+        hookHeadline_one: "J'ai lu ton fichier sur {{topics}}.",
+        hookHeadline_other: "J'ai lu tes {{count}} fichiers sur {{topics}}.",
+        hookFallbackTopic: "ton matériel d'étude",
+        hookSubtitle: "Donne-moi 30 secondes et je te construis un plan qui colle à ta situation.",
+        start: "C'est parti",
+        skip: "Voir toutes les options",
+        back: "Retour",
+        continue: "Continuer",
+        daysHelperToday: "Aujourd'hui — on priorise",
+        daysHelper_one: "Dans 1 jour — serré mais faisable",
+        daysHelper_other: "Dans {{count}} jours",
+        examToday: "Examen aujourd'hui",
+        examInDays_one: "Examen dans 1 jour",
+        examInDays_other: "Examen dans {{count}} jours",
+        q1: {
+          title: "C'est quand l'examen ?",
+          subtitle: "Je dimensionne le plan en conséquence.",
+          options: {
+            today: "Aujourd'hui",
+            tomorrow: "Demain",
+            this_week: "Cette semaine",
+            next_week: "La semaine prochaine",
+            two_plus_weeks: "2+ semaines"
+          },
+          pickDate: "Choisir une date"
+        },
+        q2: {
+          title: "Lequel te semble le plus difficile ?",
+          subtitle: "Choisis-en jusqu'à 2 — je vais y concentrer le plan.",
+          counter_one: "{{count}}/2 sélectionné",
+          counter_other: "{{count}}/2 sélectionnés",
+          noTopics: "Aucun sujet extrait pour l'instant — passe et on s'en occupe ensemble."
+        },
+        q3: {
+          title: "Et où en es-tu dans ta préparation ?"
+        },
+        prepOptions: {
+          not_started: "Pas encore commencé",
+          just_started: "Je viens de commencer",
+          making_progress: "Je progresse",
+          cramming: "Je bûche"
+        },
+        confirm: {
+          title: "Voici ce que je vais construire pour toi.",
+          summaryAria: "Résumé du plan",
+          focusPrefix: "Focus :",
+          topicJoiner: ", ",
+          cta: "Construis mon plan",
+          edit: "Modifier mes réponses"
+        }
+      },
+
       // Mindmap Modal
       mindmap: {
         downloadPdf: "PDF",
@@ -1839,28 +1955,28 @@ const resources = {
         featureMindMap: "Schéma conceptuel",
         featureAudio: "Audio",
         featureStudySheet: "Fiche d'étude",
-        // Hero section
-        sloganLine1: "Trop de matière à étudier. Pas assez de temps.",
-        sloganLine2Prefix: "On règle ça — en transformant tes notes en ",
+        // Hero section — v3 conversion-focused copy (FR mirror)
+        sloganLine1: "Tu connais la matière. Ce sont les questions qui te piègent.",
+        sloganLine2Prefix: "On reconstruit tes notes en ",
         sloganLine2Suffix: ".",
         typewriter: {
-          quiz: "quiz",
-          flashcards: "flashcards",
-          mindmaps: "schémas conceptuels",
-          audio: "audio",
-          studysheet: "fiches d'étude",
-          success: "succès 🏆"
+          quiz: "questions « toutes les réponses ».",
+          flashcards: "questions de priorisation.",
+          mindmaps: "mises en situation cliniques.",
+          audio: "format exact de ton examen.",
+          studysheet: "ce que ton prof demande.",
+          success: "réussite à l'examen."
         },
-        subtitle: "Étudie moins longtemps, comprends mieux.",
+        subtitle: "Téléverse tes notes. Premier quiz en moins de 2 minutes.",
         // Auth buttons
         login: "Connexion",
         signup: "S'inscrire",
         logout: "Déconnexion",
         // Social proof badges
         badge1: "Créé avec des infirmières",
-        badge2: "Utilisé partout en Amérique du Nord",
+        badge2: "Utilisé par 1 000+ étudiants en soins infirmiers",
         // Footer
-        footerText: "Conçu pour les examens en soins infirmiers et le NCLEX",
+        footerText: "Conçu pour les étudiants en soins infirmiers. Med-Surg, pharmaco, patho — pas seulement le NCLEX.",
         // Product showcase section
         showcaseTitle: "Comment ça fonctionne",
         showcaseSubtitle: "Des notes aux connaissances en quelques minutes",

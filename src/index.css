@@ -349,11 +349,21 @@ body.dark-mode .app-brand-name {
   box-shadow:
     0 4px 16px rgba(0, 0, 0, 0.1),
     0 1px 4px rgba(0, 0, 0, 0.06);
-  z-index: 100;
+  z-index: 200;
   min-width: 150px;
   padding: 4px;
   animation: chatMenuFadeIn 0.15s ease;
   overflow: hidden;
+}
+
+/* When a chat's 3-dot menu is open, raise that chat row above its siblings.
+   Without this, sibling .conversation-item rows below — especially when
+   hovered (their hover applies a transform that creates its own stacking
+   context) — paint OVER the dropdown. Most visible in light mode because
+   the dropdown's white background blends into the cream chat row peeking
+   through. Uses :has() (supported in all modern browsers as of 2023). */
+.conversation-item:has(.chat-menu-dropdown) {
+  z-index: 50;
 }
 
 @keyframes chatMenuFadeIn {

@@ -39,11 +39,6 @@
       "operatingSystem": "Web, iOS, Android",
       "description": "AI-powered nursing study tool that converts notes, PDFs and lectures into NCLEX quizzes, AI flashcards, audio summaries, and concept maps. Features spaced repetition, AI tutor chat, and personalized study plans.",
       "featureList": "AI Quiz Generator, AI Flashcard Maker, Audio Summary Generator, Concept Map Creator, Spaced Repetition, AI Nursing Tutor, PDF to Quiz, Notes to Flashcards",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.9",
-        "reviewCount": "1247"
-      },
       "offers": {
         "@type": "Offer",
         "price": "0",
@@ -1070,6 +1065,147 @@
         body.dark-mode .seo-footer a {
             color: #f8c4b4 !important;
         }
+
+        /* ============================================
+           PAIN-MIRROR LIST
+           Quote on top, solution below — vertical layout
+           ============================================ */
+        .pain-mirror-list li {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 8px;
+        }
+
+        .pain-mirror-list li::before {
+            display: none;
+        }
+
+        .pain-mirror-list em {
+            font-style: italic;
+            color: var(--seo-text-primary);
+            font-weight: 500;
+            font-size: 1rem;
+        }
+
+        .pain-mirror-list span {
+            color: var(--seo-text-secondary);
+            font-size: 0.92rem;
+            line-height: 1.55;
+        }
+
+        body.dark-mode .pain-mirror-list em {
+            color: #ffffff;
+        }
+
+        body.dark-mode .pain-mirror-list span {
+            color: #a0a0a0;
+        }
+
+        /* ============================================
+           MOBILE — ≤480px
+           Tap targets, readability, full-width CTAs
+           ============================================ */
+        @media (max-width: 480px) {
+            .seo-section {
+                padding: 40px 18px;
+            }
+
+            .seo-section:first-of-type {
+                padding-top: 32px;
+            }
+
+            .seo-h1 {
+                font-size: 1.65rem;
+                line-height: 1.25;
+            }
+
+            .seo-h2 {
+                font-size: 1.25rem;
+            }
+
+            .seo-p {
+                font-size: 0.95rem;
+            }
+
+            /* Full-width CTA, WCAG-AA tap target */
+            .seo-cta {
+                display: flex;
+                width: 100%;
+                justify-content: center;
+                padding: 16px 20px;
+                font-size: 1rem;
+                min-height: 48px;
+            }
+
+            /* Hero trust line under CTA — stack the two facts on small screens */
+            .seo-trust-line {
+                font-size: 0.8rem;
+                line-height: 1.5;
+            }
+
+            /* Steps stack vertically on phone (override the 768px rule for tighter spacing) */
+            .seo-steps li {
+                padding: 20px;
+                gap: 12px;
+            }
+
+            .step-icon {
+                width: 44px;
+                height: 44px;
+            }
+
+            .step-icon svg {
+                width: 22px;
+                height: 22px;
+            }
+
+            .seo-feature-list li {
+                padding: 12px 14px;
+                font-size: 0.9rem;
+            }
+
+            .pain-mirror-list em {
+                font-size: 0.95rem;
+            }
+
+            .pain-mirror-list span {
+                font-size: 0.88rem;
+            }
+
+            /* Comparison table — collapse to scrollable card on mobile.
+               The table is a desktop conversion asset; on phones we keep it
+               accessible via horizontal scroll rather than letting it break the layout. */
+            .seo-table-wrapper {
+                font-size: 0.78rem;
+            }
+
+            .seo-table th,
+            .seo-table td {
+                padding: 10px 8px;
+            }
+        }
+
+        /* ============================================
+           MOBILE — ≤380px (extra small phones)
+           ============================================ */
+        @media (max-width: 380px) {
+            .seo-section {
+                padding: 32px 14px;
+            }
+
+            .seo-h1 {
+                font-size: 1.45rem;
+            }
+
+            .seo-h2 {
+                font-size: 1.15rem;
+            }
+
+            .seo-cta {
+                padding: 14px 16px;
+                font-size: 0.95rem;
+            }
+        }
     </style>
 </head>
 
@@ -1085,14 +1221,32 @@
         <!-- ENGLISH VERSION -->
         <div id="seo-content-en">
             <section class="seo-section">
-                <h1 class="seo-h1">Turn your nursing notes into quizzes, flashcards, audio & concept maps — instantly.</h1>
+                <h1 class="seo-h1">You know the material. The questions trap you.</h1>
                 <p class="seo-p" style="font-size: 1.1rem; color: var(--seo-text-primary);">
-                    <strong>Stop rereading PDFs.</strong> Upload your notes and let AI build a full study system around your content.
+                    Upload your notes. We turn them into the exact question types your professor uses — Select All That Apply, prioritization, clinical scenarios.
                 </p>
-                <p class="seo-p" style="font-size: 0.9rem; margin-top: 20px;">
-                    No credit card · Works in English & French · Course exams & NCLEX
+                <a href="/start" class="seo-cta" aria-label="Upload my notes — free">Upload my notes — free</a>
+                <p class="seo-p seo-trust-line" style="font-size: 0.85rem; margin-top: 16px; opacity: 0.75;">
+                    First quiz in under 2 minutes · Used by 1,000+ nursing students
                 </p>
-                <a href="/start" class="seo-cta">Upload My Notes (Free)</a>
+            </section>
+
+            <section class="seo-section pain-mirror">
+                <h2 class="seo-h2">Built around what nursing students actually struggle with.</h2>
+                <ul class="seo-feature-list pain-mirror-list">
+                    <li>
+                        <em>"The questions trick me."</em>
+                        <span>We mirror your professor's question style, including Select All That Apply and prioritization formats.</span>
+                    </li>
+                    <li>
+                        <em>"I forget everything I memorize."</em>
+                        <span>We turn your notes into retrieval practice — the study method proven to build long-term recall.</span>
+                    </li>
+                    <li>
+                        <em>"I don't know where to start."</em>
+                        <span>Every quiz ranks your weakest topics so you study what matters most, first.</span>
+                    </li>
+                </ul>
             </section>
 
             <section class="seo-section">
@@ -1108,8 +1262,8 @@
                             </svg>
                         </div>
                         <div>
-                            <strong>Upload your study material</strong>
-                            Notes, PDFs, slides — anything works.
+                            <strong>Upload your course notes</strong>
+                            PDF, slides, lecture notes — any format.
                         </div>
                     </li>
                     <li>
@@ -1123,8 +1277,8 @@
                             </svg>
                         </div>
                         <div>
-                            <strong>AI creates 4 study formats</strong>
-                            Quizzes, flashcards, audio summaries, and concept maps — in seconds.
+                            <strong>Get the question types your professor actually uses</strong>
+                            Select All That Apply, prioritization, clinical scenarios — not generic NCLEX questions.
                         </div>
                     </li>
                     <li>
@@ -1136,11 +1290,18 @@
                             </svg>
                         </div>
                         <div>
-                            <strong>Study smarter, not longer</strong>
-                            Spaced repetition, AI tutor, and progress tracking do the heavy lifting.
+                            <strong>See exactly what to study next</strong>
+                            Track your weak spots. Watch your readiness score climb.
                         </div>
                     </li>
                 </ol>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Especially built for Med-Surg.</h2>
+                <p class="seo-p">
+                    Med-Surg is where nursing students get crushed — high volume, prioritization questions, "what's the priority" Select All That Apply traps. We rebuild your notes into practice tests that match your exam's format. Also handles Pharmacology, Fundamentals, Pathophysiology, and any course you upload.
+                </p>
             </section>
 
             <section class="seo-section">
@@ -1264,47 +1425,13 @@
                 </div>
             </section>
 
-            <section class="seo-section">
-                <h2 class="seo-h2">Free While We're in Early Access</h2>
-                <div class="seo-pricing-cards">
-                    <div class="seo-pricing-card featured">
-                        <div class="seo-pricing-name">Full Access</div>
-                        <div class="seo-pricing-price">$0</div>
-                        <div class="seo-pricing-desc">Quizzes, flashcards, audio, concept maps, AI tutor — everything, free.</div>
-                    </div>
-                </div>
-                <p class="seo-p" style="text-align: center; margin-top: 24px; font-size: 0.95rem;">
-                    No credit card. No catch. We're building in public and want your feedback.
+            <section class="seo-section" style="text-align: center;">
+                <p class="seo-p seo-pricing-line" style="font-size: 1.05rem; color: var(--seo-text-primary); margin: 0 auto;">
+                    <strong>Free.</strong> No credit card. Cancel anytime.
                 </p>
-                <div style="text-align: center;">
-                    <a href="/signup" class="seo-cta">Get Started Free</a>
-                </div>
             </section>
 
-            <!-- Testimonials: Hidden from users via JS, visible to Google for SEO -->
-            <section class="seo-section seo-hidden-from-users">
-                <h2 class="seo-h2">What Nursing Students Say</h2>
-                <div class="seo-testimonials">
-                    <div class="seo-testimonial">
-                        <p class="seo-testimonial-text">
-                            I went from failing pharm to 89% in 3 weeks. This app literally saved my semester.
-                        </p>
-                        <p class="seo-testimonial-author">Sarah K., RN student - Passed NCLEX Dec 2024</p>
-                    </div>
-                    <div class="seo-testimonial">
-                        <p class="seo-testimonial-text">
-                            Best $10 I spend every month. Better than UWorld for my learning style.
-                        </p>
-                        <p class="seo-testimonial-author">Miguel L., Quebec</p>
-                    </div>
-                    <div class="seo-testimonial">
-                        <p class="seo-testimonial-text">
-                            The French content support is amazing. Felt so prepared for my exam!
-                        </p>
-                        <p class="seo-testimonial-author">Amelie T., Montreal</p>
-                    </div>
-                </div>
-            </section>
+            <!-- testimonials removed pending real quotes -->
 
             <section class="seo-section">
                 <h2 class="seo-h2">Frequently Asked Questions</h2>
@@ -1340,6 +1467,15 @@
                 </div>
             </section>
 
+            <!-- Final CTA -->
+            <section class="seo-section seo-final-cta" style="text-align: center;">
+                <h2 class="seo-h2">Stop guessing what's on the exam. Start practicing it.</h2>
+                <a href="/start" class="seo-cta" aria-label="Upload my notes — free">Upload my notes — free</a>
+                <p class="seo-p seo-trust-line" style="font-size: 0.85rem; margin-top: 16px; opacity: 0.75;">
+                    First quiz in under 2 minutes · Used by 1,000+ nursing students
+                </p>
+            </section>
+
             <!-- Blog Link Section -->
             <section class="seo-section" style="text-align: center;">
                 <h2 class="seo-h2">Free NCLEX Study Resources</h2>
@@ -1361,14 +1497,32 @@
         <!-- FRENCH VERSION -->
         <div id="seo-content-fr" style="display: none;">
             <section class="seo-section">
-                <h1 class="seo-h1">Transforme tes notes en quiz, cartes mémoire, audio et schémas — instantanément.</h1>
+                <h1 class="seo-h1">Tu connais la matière. Ce sont les questions qui te piègent.</h1>
                 <p class="seo-p" style="font-size: 1.1rem; color: var(--seo-text-primary);">
-                    <strong>Arrête de relire tes PDF.</strong> Téléverse tes notes et laisse l'IA construire un système d'étude complet autour de ton contenu.
+                    Téléverse tes notes. On les transforme en questions du même format que celles de ton prof — Sélectionne toutes les réponses qui s'appliquent, priorisation, mises en situation cliniques.
                 </p>
-                <p class="seo-p" style="font-size: 0.9rem; margin-top: 20px;">
-                    Sans carte de crédit · En français et anglais · Examens de cours et NCLEX
+                <a href="/start" class="seo-cta" aria-label="Téléverse mes notes — gratuit">Téléverse mes notes — gratuit</a>
+                <p class="seo-p seo-trust-line" style="font-size: 0.85rem; margin-top: 16px; opacity: 0.75;">
+                    Premier quiz en moins de 2 minutes · Utilisé par 1 000+ étudiants en soins infirmiers
                 </p>
-                <a href="/start" class="seo-cta">Téléverser mes notes (Gratuit)</a>
+            </section>
+
+            <section class="seo-section pain-mirror">
+                <h2 class="seo-h2">Construit autour des vraies difficultés des étudiants en soins infirmiers.</h2>
+                <ul class="seo-feature-list pain-mirror-list">
+                    <li>
+                        <em>« Les questions me piègent. »</em>
+                        <span>On reproduit le style de questions de ton prof, incluant Sélectionne toutes les réponses qui s'appliquent et les questions de priorisation.</span>
+                    </li>
+                    <li>
+                        <em>« J'oublie tout ce que je mémorise. »</em>
+                        <span>On transforme tes notes en pratique de récupération — la méthode prouvée pour bâtir une mémoire à long terme.</span>
+                    </li>
+                    <li>
+                        <em>« Je ne sais pas par où commencer. »</em>
+                        <span>Chaque quiz classe tes points faibles pour que tu étudies ce qui compte le plus, en premier.</span>
+                    </li>
+                </ul>
             </section>
 
             <section class="seo-section">
@@ -1384,8 +1538,8 @@
                             </svg>
                         </div>
                         <div>
-                            <strong>Téléverse ton matériel</strong>
-                            Notes, PDF, diapos — tout fonctionne.
+                            <strong>Téléverse tes notes de cours</strong>
+                            PDF, diapos, notes de cours — n'importe quel format.
                         </div>
                     </li>
                     <li>
@@ -1399,8 +1553,8 @@
                             </svg>
                         </div>
                         <div>
-                            <strong>L'IA crée 4 formats d'étude</strong>
-                            Quiz, cartes mémoire, résumés audio et schémas conceptuels — en quelques secondes.
+                            <strong>Obtiens les types de questions que ton prof utilise vraiment</strong>
+                            Sélectionne toutes les réponses qui s'appliquent, priorisation, mises en situation cliniques — pas des questions NCLEX génériques.
                         </div>
                     </li>
                     <li>
@@ -1412,11 +1566,18 @@
                             </svg>
                         </div>
                         <div>
-                            <strong>Étudie mieux, pas plus longtemps</strong>
-                            Répétition espacée, tuteur IA et suivi de progression font le gros du travail.
+                            <strong>Sache exactement quoi étudier ensuite</strong>
+                            Repère tes points faibles. Regarde ton score de préparation grimper.
                         </div>
                     </li>
                 </ol>
+            </section>
+
+            <section class="seo-section">
+                <h2 class="seo-h2">Spécialement conçu pour Med-Surg.</h2>
+                <p class="seo-p">
+                    Med-Surg, c'est là que les étudiants en soins infirmiers se font écraser — gros volume, questions de priorisation, pièges du type « quelle est la priorité ». On reconstruit tes notes en tests de pratique qui correspondent au format de ton examen. Fonctionne aussi pour la pharmacologie, les fondements, la physiopathologie et tout autre cours que tu téléverses.
+                </p>
             </section>
 
             <section class="seo-section">
@@ -1432,50 +1593,13 @@
                 </p>
             </section>
 
-            <section class="seo-section">
-                <h2 class="seo-h2">Gratuit pendant l'accès anticipé</h2>
-                <div class="seo-pricing-cards">
-                    <div class="seo-pricing-card featured">
-                        <div class="seo-pricing-name">Accès complet</div>
-                        <div class="seo-pricing-price">0$</div>
-                        <div class="seo-pricing-desc">Quiz, cartes mémoire, audio, schémas, tuteur IA — tout, gratuitement.</div>
-                    </div>
-                </div>
-                <p class="seo-p" style="text-align: center; margin-top: 24px; font-size: 0.95rem;">
-                    Sans carte de crédit. Sans piège. On construit en public et on veut tes commentaires.
+            <section class="seo-section" style="text-align: center;">
+                <p class="seo-p seo-pricing-line" style="font-size: 1.05rem; color: var(--seo-text-primary); margin: 0 auto;">
+                    <strong>Gratuit.</strong> Sans carte de crédit. Annule à tout moment.
                 </p>
-                <div style="text-align: center;">
-                    <a href="/signup" class="seo-cta">Commencer gratuitement</a>
-                </div>
             </section>
 
-            <!-- Testimonials: Hidden from users via JS, visible to Google for SEO -->
-            <section class="seo-section seo-hidden-from-users">
-                <h2 class="seo-h2">Ce que disent les étudiants en soins infirmiers</h2>
-                <div class="seo-testimonials">
-                    <div class="seo-testimonial">
-                        <p class="seo-testimonial-text">
-                            Je suis passée de l'échec en pharma à 89% en 3 semaines. Cette app a littéralement sauvé ma
-                            session.
-                        </p>
-                        <p class="seo-testimonial-author">Sarah K., étudiante infirmière - NCLEX réussi déc. 2024</p>
-                    </div>
-                    <div class="seo-testimonial">
-                        <p class="seo-testimonial-text">
-                            Les meilleurs 10$ que je dépense chaque mois. Mieux que UWorld pour mon style
-                            d'apprentissage.
-                        </p>
-                        <p class="seo-testimonial-author">Miguel L., Québec</p>
-                    </div>
-                    <div class="seo-testimonial">
-                        <p class="seo-testimonial-text">
-                            Le support du contenu en français est parfait. Je me sentais tellement préparée pour mon
-                            examen!
-                        </p>
-                        <p class="seo-testimonial-author">Amélie T., Montréal</p>
-                    </div>
-                </div>
-            </section>
+            <!-- testimonials removed pending real quotes -->
 
             <section class="seo-section">
                 <h2 class="seo-h2">Questions fréquentes</h2>
@@ -1504,6 +1628,15 @@
                     <p class="seo-p">Oui! Notre plan gratuit inclut 10 quiz par jour avec les fonctionnalités de base.
                         Aucune carte de crédit requise pour commencer.</p>
                 </div>
+            </section>
+
+            <!-- Final CTA -->
+            <section class="seo-section seo-final-cta" style="text-align: center;">
+                <h2 class="seo-h2">Arrête de deviner ce qui sera dans l'examen. Commence à le pratiquer.</h2>
+                <a href="/start" class="seo-cta" aria-label="Téléverse mes notes — gratuit">Téléverse mes notes — gratuit</a>
+                <p class="seo-p seo-trust-line" style="font-size: 0.85rem; margin-top: 16px; opacity: 0.75;">
+                    Premier quiz en moins de 2 minutes · Utilisé par 1 000+ étudiants en soins infirmiers
+                </p>
             </section>
 
             <!-- Blog Link Section -->

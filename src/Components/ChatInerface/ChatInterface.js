@@ -22,6 +22,7 @@ import ChatMessage from './ChatMessage';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
 import FirstUploadWowCard from './FirstUploadWowCard';
+import PlanOnboarding from './PlanOnboarding';
 import QuizModeSelector from './QuizModeSelector';
 
 // SVG Components
@@ -64,7 +65,8 @@ import {
   stream_summary,
   generate_scenario,
   upload_files_with_progress,
-  speech_to_text
+  speech_to_text,
+  start_study_journey
 } from '../../Services/FastAPICalls.js';
 
 
@@ -250,6 +252,10 @@ const ChatInterface = ({
   const [studyAutoStart, setStudyAutoStart] = useState(false);
   const [pendingStudyDocs, setPendingStudyDocs] = useState([]);
   const [pendingStudyTopics, setPendingStudyTopics] = useState([]);
+  // Set when PlanOnboarding confirms — its 3 questions augment the base
+  // userProfile.onboarding so /study/start fires with examDate / hardestTopics
+  // / prepStatus baked in. Falls back to userProfile.onboarding when null.
+  const [pendingStudyUserPreferences, setPendingStudyUserPreferences] = useState(null);
 
   // Pre-upload action selection (when user picks action before uploading)
   const [pendingStudyAction, setPendingStudyAction] = useState(null);
@@ -758,6 +764,7 @@ const ChatInterface = ({
             (msg.type === 'upload_loading' && msg.isLoading === true) ||
             (msg.isStreaming === true) ||
             (msg.type === 'post_upload_actions' && notInFirebase) ||
+            (msg.type === 'plan_onboarding' && notInFirebase) ||
             ((msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap') && notInFirebase);
 
           if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap')) {
@@ -2694,6 +2701,33 @@ const ChatInterface = ({
         uploadMessageIdRef.current = null;
         uploadInsightsAccumulatorRef.current = [];
 
+        // ════════════════════════════════════════════════════════════════════
+        // PRE-FIRE /study/start while the upload tail is still running.
+        //
+        // At this point all file_insights are populated on the backend, but the
+        // post_upload_message LLM call is still in flight (~1-3s). Kicking off
+        // /study/start now lets the plan-generation LLM call (~3-8s) overlap
+        // with that tail PLUS the modal open + autoStart effect — so by the
+        // time StartStudyModal calls start_study_journey, the in-flight Map
+        // already holds a (possibly resolved) plan promise.
+        //
+        // The result is consumed by StartStudyModal when it later calls
+        // start_study_journey for the same chatId.
+        // ════════════════════════════════════════════════════════════════════
+        if (window._pendingStudyJourney && chatId) {
+          devLog('🚀 Pre-firing /study/start during upload tail for chatId:', chatId);
+          try {
+            start_study_journey(
+              chatId,
+              [], // upload_ids: backend doesn't use these for /study/start
+              userProfile?.onboarding || {},
+              i18n?.language || 'en'
+            );
+          } catch (prefetchErr) {
+            console.warn('Failed to pre-fire /study/start (will fire on click instead):', prefetchErr);
+          }
+        }
+
         // NOTE: PostUploadActions will be added when 'post_upload_message' event fires from backend
         break;
 
@@ -2720,15 +2754,42 @@ const ChatInterface = ({
         if (window._pendingStudyJourney) {
           devLog('📚 Study Journey mode - skipping post-upload actions, going directly to study mode');
           window._pendingStudyJourney = false;
-          const docsForStudy = (update.filenames || []).map((filename, idx) => ({
-            id: `doc-${idx}`,
-            name: filename,
-            filename: filename
-          }));
-          setPendingStudyDocs(docsForStudy);
-          setPendingStudyTopics(update.topics || []);
-          setShowStartStudyModal(true);
-          break; // Skip creating post-upload message - saves tokens and goes straight to study
+
+          // ============================================
+          // PLAN ONBOARDING — gates EVERY study-plan upload.
+          // Renders the 3-question card BEFORE the study plan generates.
+          // Confirm → opens StartStudyModal with merged userPreferences.
+          // Skip    → swaps to the standard PostUploadActions menu.
+          // ============================================
+          devLog('🎯 Study Plan upload — showing PlanOnboarding');
+
+          if (currentUser?.uid && !userProfile?.hasCompletedFirstUpload) {
+            markFirstUploadComplete(currentUser.uid)
+              .then(() => {
+                setUserProfile(prev => ({ ...prev, hasCompletedFirstUpload: true }));
+                devLog('✅ First upload marked complete');
+              })
+              .catch(err => console.error('❌ Failed to mark first upload:', err));
+          }
+
+          const planOnboardMsgId = `plan-onboarding-${Date.now()}`;
+          const planOnboardMsg = {
+            id: planOnboardMsgId,
+            role: 'assistant',
+            type: 'plan_onboarding',
+            content: update.message,
+            topics: update.topics || [],
+            filenames: update.filenames || [],
+            fileCount: update.file_count || (update.filenames || []).length || 0,
+            actions: update.actions || [],
+            timestamp: Date.now()
+          };
+
+          setChatMessages(prev => [...prev, planOnboardMsg]);
+          AppendToChat(chatId, planOnboardMsg)
+            .catch(err => console.error('❌ Failed to save plan onboarding message:', err));
+
+          break;
         }
 
         // Check if user pre-selected a study action before uploading
@@ -2783,6 +2844,7 @@ const ChatInterface = ({
         if (userProfile && !userProfile.hasCompletedFirstUpload) {
           const { studyGoal, reviewFormat } = userProfile.onboarding || {};
           devLog('🔍 Onboarding values:', { studyGoal, reviewFormat });
+
           const wowConfig = getWowEffectConfig(studyGoal, reviewFormat);
           devLog('🔍 Wow config result:', wowConfig);
 
@@ -3190,6 +3252,68 @@ const ChatInterface = ({
   // Stable ref for handlePreSelectedAction (avoids re-registering event listener every render)
   const handlePreSelectedActionRef = useRef(handlePreSelectedAction);
   handlePreSelectedActionRef.current = handlePreSelectedAction;
+
+  // ============================================
+  // PLAN ONBOARDING — confirm + skip handlers
+  // ============================================
+  // Both handlers swap the `plan_onboarding` chat message in-place to a
+  // `post_upload_actions` message. That keeps the chat history coherent: when
+  // the user comes back later, they see the same action menu a Skipped /
+  // non-exam user would have gotten. The difference is only what fires next:
+  //   - confirm: also opens StartStudyModal with the merged userPreferences
+  //   - skip:    nothing — they pick from the menu themselves
+  //
+  // Both also clear the in-flight /study/start cache via the PlanOnboarding
+  // component itself (it calls clear_in_flight_study_journey before invoking
+  // these callbacks for the skip case; for confirm, the cached promise is
+  // intentionally kept so StartStudyModal consumes it).
+
+  const swapPlanOnboardingForActions = (planOnboardingMsg) => {
+    const actionsMsg = {
+      id: planOnboardingMsg.id, // reuse id so we update in place rather than appending
+      role: 'assistant',
+      type: 'post_upload_actions',
+      content: planOnboardingMsg.content,
+      topics: planOnboardingMsg.topics || [],
+      filenames: planOnboardingMsg.filenames || [],
+      actions: planOnboardingMsg.actions || [],
+      showActions: true,
+      timestamp: planOnboardingMsg.timestamp || Date.now()
+    };
+    setChatMessages(prev => prev.map(m => (m.id === planOnboardingMsg.id ? actionsMsg : m)));
+    // Persist the new shape so the next session reload sees the menu, not the
+    // stale onboarding card. AppendToChat upserts on id, matching how
+    // post_upload_actions are saved elsewhere.
+    AppendToChat(currentChatID, actionsMsg)
+      .catch(err => console.error('❌ Failed to persist post-upload actions after plan onboarding:', err));
+  };
+
+  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences) => {
+    if (!planOnboardingMsg) return;
+    devLog('✅ PlanOnboarding confirm — opening StartStudyModal with merged prefs');
+
+    // Swap the card to the action menu first so the chat history stays coherent
+    // even if the user backs out of the modal.
+    swapPlanOnboardingForActions(planOnboardingMsg);
+
+    // Open StartStudyModal in autoStart mode. It'll call start_study_journey
+    // which, on cache hit, returns the plan promise we pre-fired on Q3.
+    const docsForStudy = (planOnboardingMsg.filenames || []).map((filename, idx) => ({
+      id: `doc-${idx}`,
+      name: filename,
+      filename: filename
+    }));
+    setPendingStudyDocs(docsForStudy);
+    setPendingStudyTopics(planOnboardingMsg.topics || []);
+    setPendingStudyUserPreferences(userPreferences || userProfile?.onboarding || {});
+    setShowStartStudyModal(true);
+  };
+
+  const handlePlanOnboardingSkip = (planOnboardingMsg) => {
+    if (!planOnboardingMsg) return;
+    devLog('↪️ PlanOnboarding skip — falling back to action menu');
+    swapPlanOnboardingForActions(planOnboardingMsg);
+  };
 
   // ============================================
   // QUICK START (ONBOARDING PIPELINE)
@@ -3915,6 +4039,7 @@ const ChatInterface = ({
             setShowStartStudyModal(false);
             setPendingStudyDocs([]);
             setPendingStudyTopics([]);
+            setPendingStudyUserPreferences(null);
           }}
           onStart={(newStudyState) => {
             devLog('📚 Study session started:', newStudyState);
@@ -3924,13 +4049,14 @@ const ChatInterface = ({
             setShowStartStudyModal(false);
             setPendingStudyDocs([]);
             setPendingStudyTopics([]);
+            setPendingStudyUserPreferences(null);
           }}
           chatId={currentChatID}
           uploadedDocs={pendingStudyDocs}
           topics={pendingStudyTopics}
           language={i18n?.language || 'en'}
           autoStart={true}
-          userPreferences={userProfile?.onboarding || {}}
+          userPreferences={pendingStudyUserPreferences || userProfile?.onboarding || {}}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
@@ -4022,7 +4148,7 @@ const ChatInterface = ({
                 // This avoids showing redundant info after the friendly action message appears
                 if (!message.isLoading) {
                   const hasPostUploadMessage = chatMessages.some(
-                    msg => msg.type === 'post_upload_actions' || msg.type === 'first_upload_wow'
+                    msg => msg.type === 'post_upload_actions' || msg.type === 'first_upload_wow' || msg.type === 'plan_onboarding'
                   );
                   if (hasPostUploadMessage) {
                     return null; // Hide the completed loading box
@@ -4106,6 +4232,35 @@ const ChatInterface = ({
                           devLog('🎯 Wow card CTA clicked:', actionId);
                           handlePreSelectedAction(actionId, message);
                         }}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // PLAN ONBOARDING (exam-prep first uploads only)
+              // 3-question gate: exam date, hardest topics, prep status.
+              // Confirm  -> opens StartStudyModal with merged userPreferences
+              //             and replaces this card with a PostUploadActions
+              //             menu so it remains in the chat history.
+              // Skip     -> swaps this card in-place to a PostUploadActions
+              //             menu — same final state as a Skipped non-exam user.
+              // ============================================
+              if (message.type === 'plan_onboarding') {
+                return (
+                  <div key={message.id} className="message ai-message">
+                    <div className="message-content">
+                      <PlanOnboarding
+                        topics={message.topics || []}
+                        filenames={message.filenames || []}
+                        fileCount={message.fileCount || (message.filenames || []).length || 0}
+                        language={(i18n?.language || 'en').split('-')[0]}
+                        chatId={currentChatID}
+                        userOnboarding={userProfile?.onboarding || {}}
+                        disabled={isSystemBusy}
+                        onConfirm={({ userPreferences }) => handlePlanOnboardingConfirm(message, userPreferences)}
+                        onSkip={() => handlePlanOnboardingSkip(message)}
                       />
                     </div>
                   </div>
