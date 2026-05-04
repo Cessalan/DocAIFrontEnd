@@ -3252,19 +3252,15 @@ const ChatInterface = ({
   handlePreSelectedActionRef.current = handlePreSelectedAction;
 
   // ============================================
-  // PLAN ONBOARDING — confirm + skip handlers
+  // PLAN ONBOARDING — confirm handler
   // ============================================
-  // Both handlers swap the `plan_onboarding` chat message in-place to a
-  // `post_upload_actions` message. That keeps the chat history coherent: when
-  // the user comes back later, they see the same action menu a Skipped /
-  // non-exam user would have gotten. The difference is only what fires next:
-  //   - confirm: also opens StartStudyModal with the merged userPreferences
-  //   - skip:    nothing — they pick from the menu themselves
+  // Swaps the `plan_onboarding` chat message in-place to a `post_upload_actions`
+  // message and opens StartStudyModal with the merged userPreferences. Keeping
+  // the chat history coherent matters: when the user comes back later they see
+  // the action menu rather than a stale onboarding card.
   //
-  // Both also clear the in-flight /study/start cache via the PlanOnboarding
-  // component itself (it calls clear_in_flight_study_journey before invoking
-  // these callbacks for the skip case; for confirm, the cached promise is
-  // intentionally kept so StartStudyModal consumes it).
+  // The in-flight /study/start cache is intentionally kept here (pre-fired on
+  // Q3) so StartStudyModal can consume the resolved promise on autoStart.
 
   const swapPlanOnboardingForActions = (planOnboardingMsg) => {
     const actionsMsg = {
@@ -3305,12 +3301,6 @@ const ChatInterface = ({
     setPendingStudyTopics(planOnboardingMsg.topics || []);
     setPendingStudyUserPreferences(userPreferences || userProfile?.onboarding || {});
     setShowStartStudyModal(true);
-  };
-
-  const handlePlanOnboardingSkip = (planOnboardingMsg) => {
-    if (!planOnboardingMsg) return;
-    devLog('↪️ PlanOnboarding skip — falling back to action menu');
-    swapPlanOnboardingForActions(planOnboardingMsg);
   };
 
   // ============================================
@@ -4260,7 +4250,6 @@ const ChatInterface = ({
                         userOnboarding={userProfile?.onboarding || {}}
                         disabled={isSystemBusy}
                         onConfirm={({ userPreferences }) => handlePlanOnboardingConfirm(message, userPreferences)}
-                        onSkip={() => handlePlanOnboardingSkip(message)}
                       />
                     </div>
                   </div>

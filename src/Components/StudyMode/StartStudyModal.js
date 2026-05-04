@@ -1,12 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { plan_study_path, start_study_journey } from '../../Services/FastAPICalls';
+import { plan_study_path, start_study_journey, clear_in_flight_study_journey } from '../../Services/FastAPICalls';
 import { createStudySession } from '../../Services/StudySessionService';
+import { formatNodeType, getStepTopicLabel } from './planFormatting';
+import { getStudyNodeIcon } from './planNodeIcon';
 import './StudyMode.css';
 
 const MASCOTS = [BrainMascot, BookMascot, PillMascot, CoffeeCupMascot, MatchaCupMascot];
@@ -37,7 +39,6 @@ const StartStudyModal = ({
 
   // Plan revealed to user while session save is in flight
   const [pathResult, setPathResult] = useState(null);
-  const sessionPromiseRef = useRef(null);
 
   // Error
   const [error, setError] = useState(null);
@@ -67,21 +68,24 @@ const StartStudyModal = ({
       setError(null);
       setHasAutoStarted(false);
       setPathResult(null);
-      sessionPromiseRef.current = null;
     }
   }, [isOpen]);
 
   // ── Main launcher ─────────────────────────────────────────
-  // /study/start emits plan_ready ~3-8s in. As soon as that lands, we flip to
+  // /study/start emits plan_ready ~3-8s in. As soon as that lands we flip to
   // 'plan_preview' so the user can SEE their path instead of staring at a
-  // spinner. createStudySession runs in parallel — by the time the user taps
-  // "Let's go", it's usually done. The first node keeps streaming into the
-  // prefetch cache that StudyModeContainer reads when auto-starting node 1.
+  // spinner. The first node keeps streaming into the prefetch cache that
+  // StudyModeContainer reads when auto-starting node 1.
+  //
+  // NOTE: createStudySession is NOT called here. It's deferred to
+  // handleStartFromPreview ("Let's go") because the Firestore write sets
+  // isStudySession:true on the chat, which auto-traps the user into study
+  // mode on next visit (see ChatInterface.js:713). If the user closes the
+  // modal during plan_preview, no Firestore mutation should have happened.
   const handleStartJourney = async () => {
     setPhase('loading');
     setError(null);
     setPathResult(null);
-    sessionPromiseRef.current = null;
 
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
 
@@ -91,10 +95,6 @@ const StartStudyModal = ({
 
       if (!path?.nodes?.length) throw new Error('Failed to generate study path');
 
-      // Kick off session creation in the background. Stash the promise so the
-      // "Let's go" handler can await it — usually it's already resolved.
-      sessionPromiseRef.current = createStudySession(chatId, path, uploadIds);
-
       setPathResult(path);
       setPhase('plan_preview');
     } catch (err) {
@@ -103,7 +103,6 @@ const StartStudyModal = ({
       try {
         const path = await plan_study_path(chatId, uploadIds, userPreferences, language);
         if (!path?.nodes?.length) throw new Error('Failed to generate study path');
-        sessionPromiseRef.current = createStudySession(chatId, path, uploadIds);
         setPathResult(path);
         setPhase('plan_preview');
       } catch (fallbackErr) {
@@ -115,12 +114,15 @@ const StartStudyModal = ({
   };
 
   // ── User confirms after seeing the plan ───────────────────
-  // Awaits createStudySession if the user beat it, then hands off to the parent.
+  // This is the commit point. createStudySession runs here — first time the
+  // chat is mutated to a study session. Adds ~200-500ms to "Let's go" but
+  // keeps the preview phase side-effect-free so a close is always recoverable.
   const handleStartFromPreview = async () => {
-    if (!sessionPromiseRef.current) return;
+    if (!pathResult) return;
     setPhase('starting');
     try {
-      const studyState = await sessionPromiseRef.current;
+      const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
+      const studyState = await createStudySession(chatId, pathResult, uploadIds);
       setPhase('done');
       if (onStart) onStart(studyState);
     } catch (err) {
@@ -129,6 +131,30 @@ const StartStudyModal = ({
       setPhase('plan_preview');
     }
   };
+
+  // ── Safe close ────────────────────────────────────────────
+  // Tears down any in-flight /study/start SSE stream so the backend doesn't
+  // keep generating + sending events after the user has bailed. Safe to call
+  // at any phase: clear_in_flight_study_journey is a no-op when there's no
+  // active stream. No Firestore cleanup needed here because createStudySession
+  // is deferred to "Let's go" — see handleStartJourney comment above.
+  const safeClose = () => {
+    if (chatId) clear_in_flight_study_journey(chatId);
+    if (onClose) onClose();
+  };
+
+  // Escape key dismisses in dismissable phases. Skipped for 'starting'/'done'
+  // (commit point passed) and the brief 'idle' window before autoStart fires.
+  useEffect(() => {
+    if (!isOpen) return;
+    if (phase === 'starting' || phase === 'done') return;
+    const onKey = (e) => {
+      if (e.key === 'Escape') safeClose();
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, phase]);
 
   // Auto-start
   useEffect(() => {
@@ -147,12 +173,18 @@ const StartStudyModal = ({
 
   // ── Render ────────────────────────────────────────────────
   return (
-    <div className="study-modal-overlay" onClick={phase === 'idle' ? onClose : undefined}>
+    <div className="study-modal-overlay" onClick={phase === 'idle' ? safeClose : undefined}>
       <div className="study-modal" onClick={e => e.stopPropagation()}>
 
-        {/* Close — only when idle */}
-        {phase === 'idle' && (
-          <button className="study-modal-close" onClick={onClose}>
+        {/* Close — available while idle, generating, or previewing the plan.
+            Hidden during 'starting'/'done' since createStudySession is mid-flight
+            and a close there would be ambiguous (commit or abandon?). */}
+        {(phase === 'idle' || phase === 'loading' || phase === 'plan_preview') && (
+          <button
+            className="study-modal-close"
+            onClick={safeClose}
+            aria-label={t('study.closeAria', 'Close')}
+          >
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <line x1="18" y1="6" x2="6" y2="18" />
               <line x1="6" y1="6" x2="18" y2="18" />
@@ -315,13 +347,17 @@ const StartStudyModal = ({
 // real learning nodes. Highlights the first real node and pitches it as the
 // next step ("We'll start with a quick quiz on X").
 // ──────────────────────────────────────────────────────────────────────────
+// EN action verbs are bare ("quiz on") because the EN planPitch supplies "a
+// quick" before them. FR action verbs include the gendered article ("un quiz
+// sur" / "une leçon sur") because the FR planPitch drops the article — French
+// nouns are gendered and "un petit leçon" would be ungrammatical.
 const NODE_TYPE_META = {
-  quiz:      { icon: '❓', actionEn: 'quiz on',          actionFr: 'quiz sur' },
-  flashcard: { icon: '🎴', actionEn: 'flashcard set on', actionFr: 'jeu de cartes sur' },
-  lesson:    { icon: '📖', actionEn: 'lesson on',        actionFr: 'leçon sur' },
-  audio:     { icon: '🎧', actionEn: 'audio lesson on',  actionFr: 'leçon audio sur' },
-  mindmap:   { icon: '🗺️', actionEn: 'mindmap of',       actionFr: 'carte mentale de' },
-  exam:      { icon: '📝', actionEn: 'practice exam on', actionFr: 'examen blanc sur' }
+  quiz:      { icon: '❓', actionEn: 'quiz on',          actionFr: 'un quiz sur' },
+  flashcard: { icon: '🎴', actionEn: 'flashcard set on', actionFr: 'un jeu de cartes sur' },
+  lesson:    { icon: '📖', actionEn: 'lesson on',        actionFr: 'une leçon sur' },
+  audio:     { icon: '🎧', actionEn: 'audio lesson on',  actionFr: 'une leçon audio sur' },
+  mindmap:   { icon: '🗺️', actionEn: 'mindmap of',       actionFr: 'une carte mentale de' },
+  exam:      { icon: '📝', actionEn: 'practice exam on', actionFr: 'un examen blanc sur' }
 };
 
 const PlanPreviewPane = ({ pathResult, onStart, t }) => {
@@ -344,23 +380,36 @@ const PlanPreviewPane = ({ pathResult, onStart, t }) => {
         <p className="study-modal-plan-pitch">
           {t('study.planPitch', "We'll start with a quick {{action}} {{label}} — just to see where you're at.", {
             action,
-            label: firstNode.label || ''
+            label: getStepTopicLabel(firstNode.label)
           })}
         </p>
       )}
 
       <ul className="study-modal-plan-list">
         {realNodes.slice(0, 6).map((node, idx) => {
-          const m = NODE_TYPE_META[node.type] || NODE_TYPE_META.lesson;
           const isFirst = idx === 0;
+          // Render the same way the destination StudyPlanOverview does — same
+          // SVG icon, type tag on top in coral, clean topic label below — so
+          // the user sees the same rows here that will appear on the study
+          // page after Let's go.
           return (
             <li
               key={node.id || idx}
               className={`study-modal-plan-item ${isFirst ? 'is-first' : ''}`}
+              data-type={node.type}
               style={{ animationDelay: `${idx * 70}ms` }}
             >
-              <span className="study-modal-plan-icon" aria-hidden="true">{m.icon}</span>
-              <span className="study-modal-plan-label">{node.label || node.type}</span>
+              <span className="study-modal-plan-icon" aria-hidden="true">
+                {getStudyNodeIcon(node.type)}
+              </span>
+              <span className="study-modal-plan-content">
+                <span className="study-modal-plan-type">
+                  {formatNodeType(node.type, t)}
+                </span>
+                <span className="study-modal-plan-label">
+                  {getStepTopicLabel(node.label) || node.type}
+                </span>
+              </span>
               {isFirst && (
                 <span className="study-modal-plan-badge">
                   {t('study.planFirstBadge', 'Start here')}

@@ -2632,61 +2632,147 @@ body.dark-mode .study-lesson-btn-green:hover {
   color: #6b6b6b;
 }
 
+/* Plan preview — a vertical "path" of steps. Intentionally NOT styled as
+   buttons (no borders, no per-row backgrounds, no hover) since the items are
+   read-only previews. A dotted connector rail behind the icons reads as a
+   timeline so it feels like a path without faking interactivity. */
 .study-modal-plan-list {
   list-style: none;
   margin: 4px 0 0;
   padding: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 2px;
+}
+
+/* Connector rail behind the icon column. Pinned to the icon center so dots
+   stitch into one continuous path. */
+.study-modal-plan-list::before {
+  content: '';
+  position: absolute;
+  left: 14px;
+  top: 18px;
+  bottom: 18px;
+  width: 2px;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(232, 141, 125, 0.32) 0 4px,
+    transparent 4px 8px
+  );
+  border-radius: 2px;
+  pointer-events: none;
 }
 
 .study-modal-plan-item {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 10px 14px;
-  background: #ffffff;
-  border: 1.5px solid rgba(100, 100, 100, 0.12);
-  border-radius: 12px 14px 12px 13px;
+  gap: 14px;
+  padding: 6px 4px 6px 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: #3d3d3d;
-  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.06);
+  cursor: default;
   opacity: 0;
-  transform: translateY(8px);
-  animation: studyPlanRowIn 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-}
-
-.study-modal-plan-item.is-first {
-  background: linear-gradient(135deg, #ffd6cc 0%, #ffe4d9 100%);
-  border-color: rgba(232, 141, 125, 0.6);
-  box-shadow: 3px 3px 0px rgba(232, 141, 125, 0.18);
+  transform: translateY(6px);
+  animation: studyPlanRowIn 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 .study-modal-plan-icon {
-  font-size: 18px;
-  line-height: 1;
+  position: relative;
+  z-index: 1;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #fef9f5;
+  border: 1.5px solid rgba(100, 100, 100, 0.18);
+  border-radius: 50%;
+  color: #8a8a8a;
+}
+
+.study-modal-plan-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Per-type tints — match the visual language used on the destination
+   StudyPlanOverview page so each node glyph reads the same in both views. */
+.study-modal-plan-item[data-type="quiz"] .study-modal-plan-icon       { color: #c0533f; background: rgba(232, 141, 125, 0.12); }
+.study-modal-plan-item[data-type="lesson"] .study-modal-plan-icon     { color: #4169e1; background: rgba(65, 105, 225, 0.10); }
+.study-modal-plan-item[data-type="audio"] .study-modal-plan-icon      { color: #2e8b57; background: rgba(34, 139, 34, 0.10); }
+.study-modal-plan-item[data-type="flashcard"] .study-modal-plan-icon  { color: #c97a06; background: rgba(217, 119, 6, 0.10); }
+.study-modal-plan-item[data-type="mindmap"] .study-modal-plan-icon    { color: #8b6db5; background: rgba(139, 109, 181, 0.10); }
+.study-modal-plan-item[data-type="exam"] .study-modal-plan-icon       { color: #db2777; background: rgba(219, 39, 119, 0.10); }
+.study-modal-plan-item[data-type="review"] .study-modal-plan-icon     { color: #2e8b57; background: rgba(46, 213, 115, 0.10); }
+
+.study-modal-plan-item.is-first .study-modal-plan-label {
+  font-weight: 700;
+  color: #2a2a2a;
+}
+
+/* First-step halo overrides the per-type tint. Filled coral background +
+   white icon (mirrors the destination StudyPlanOverview's "active" step)
+   so the glyph stays legible on both light and dark backgrounds. The light
+   coral wash earlier rendered coral-on-coral and the icon disappeared. */
+.study-modal-plan-item.is-first .study-modal-plan-icon,
+.study-modal-plan-item.is-first[data-type] .study-modal-plan-icon {
+  background: linear-gradient(135deg, #e88d7d 0%, #d67a6a 100%);
+  border-color: #d97a6a;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(232, 141, 125, 0.18),
+              0 2px 8px rgba(232, 141, 125, 0.35);
+}
+
+.study-modal-plan-item.is-first .study-modal-plan-icon svg {
+  fill: #ffffff;
+}
+
+/* Two-line content cell: small coral type tag stacked over the topic name.
+   Mirrors the row layout used on the destination StudyPlanOverview page so
+   the preview reads as the same plan, not a different rendering of it. */
+.study-modal-plan-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.study-modal-plan-type {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.7px;
+  text-transform: uppercase;
+  color: #c0533f;
+  line-height: 1.1;
 }
 
 .study-modal-plan-label {
-  flex: 1;
+  font-size: 14px;
   line-height: 1.35;
+  color: #3d3d3d;
 }
 
 .study-modal-plan-badge {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.7px;
   text-transform: uppercase;
   color: #c0533f;
-  background: rgba(255, 255, 255, 0.7);
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 0;
+  background: transparent;
+  border-radius: 0;
+  white-space: nowrap;
 }
 
 .study-modal-plan-more {
-  padding: 6px 14px;
+  padding: 6px 0 0 44px;
   font-size: 12.5px;
   color: #999;
   font-style: italic;
@@ -2705,23 +2791,57 @@ body.dark-mode .study-lesson-btn-green:hover {
 
 body.dark-mode .study-modal-plan-pitch { color: #b0a8b8; }
 
-body.dark-mode .study-modal-plan-item {
-  background: #36323f;
-  border-color: rgba(255, 255, 255, 0.12);
-  color: #f0ebf5;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+body.dark-mode .study-modal-plan-list::before {
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(232, 141, 125, 0.4) 0 4px,
+    transparent 4px 8px
+  );
 }
 
-body.dark-mode .study-modal-plan-item.is-first {
-  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
-  color: #1f1f1f;
-  border-color: rgba(232, 141, 125, 0.7);
-  box-shadow: 0 4px 14px rgba(232, 141, 125, 0.25);
+body.dark-mode .study-modal-plan-item {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: #d8d2df;
 }
+
+body.dark-mode .study-modal-plan-label {
+  color: #d8d2df;
+}
+
+body.dark-mode .study-modal-plan-item.is-first .study-modal-plan-label {
+  color: #f5ecf5;
+}
+
+body.dark-mode .study-modal-plan-type {
+  color: #f5c4b8;
+}
+
+body.dark-mode .study-modal-plan-icon {
+  background: #2b2834;
+  border-color: rgba(255, 255, 255, 0.18);
+  color: #a89fb0;
+}
+
+/* Dark-mode per-type tints — same hues as light, slightly stronger backgrounds
+   so the colored fill reads against the dark card. */
+body.dark-mode .study-modal-plan-item[data-type="quiz"] .study-modal-plan-icon       { color: #f5c4b8; background: rgba(232, 141, 125, 0.18); }
+body.dark-mode .study-modal-plan-item[data-type="lesson"] .study-modal-plan-icon     { color: #b8d0ff; background: rgba(100, 149, 237, 0.18); }
+body.dark-mode .study-modal-plan-item[data-type="audio"] .study-modal-plan-icon      { color: #b6e2c0; background: rgba(46, 213, 115, 0.18); }
+body.dark-mode .study-modal-plan-item[data-type="flashcard"] .study-modal-plan-icon  { color: #ffd584; background: rgba(217, 119, 6, 0.20); }
+body.dark-mode .study-modal-plan-item[data-type="mindmap"] .study-modal-plan-icon    { color: #d9c8eb; background: rgba(139, 109, 181, 0.22); }
+body.dark-mode .study-modal-plan-item[data-type="exam"] .study-modal-plan-icon       { color: #ffc5d3; background: rgba(219, 39, 119, 0.18); }
+body.dark-mode .study-modal-plan-item[data-type="review"] .study-modal-plan-icon     { color: #b6e2c0; background: rgba(46, 213, 115, 0.18); }
+
+/* No dark-mode override for the first-step icon — the light-mode rule above
+   already uses a darker coral fill with a white glyph, which reads cleanly
+   against both light and dark cards. Reintroducing a light coral gradient
+   here would push the icon back into invisibility. */
 
 body.dark-mode .study-modal-plan-badge {
-  color: #c0533f;
-  background: rgba(255, 255, 255, 0.85);
+  color: #f5c4b8;
+  background: transparent;
 }
 
 body.dark-mode .study-modal-plan-more,

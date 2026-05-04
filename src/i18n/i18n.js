@@ -307,7 +307,6 @@ const resources = {
         hookFallbackTopic: "your study material",
         hookSubtitle: "Give me 30 seconds and I'll build you a plan that actually fits your situation.",
         start: "Let's go",
-        skip: "Show me everything instead",
         back: "Back",
         continue: "Continue",
         // Q1 helper line — special-cased for "today"; otherwise uses count plural
@@ -335,7 +334,7 @@ const resources = {
           subtitle: "Pick up to 2 — I'll lead the plan there.",
           counter_one: "{{count}}/2 selected",
           counter_other: "{{count}}/2 selected",
-          noTopics: "No topics extracted yet — skip and we'll figure it out together."
+          noTopics: "No topics extracted yet — continue and we'll figure it out together."
         },
         q3: {
           title: "And where are you in your prep?"
@@ -925,6 +924,15 @@ const resources = {
         featureAudio: "Audio lessons",
         generating: "Creating...",
         beginJourney: "Begin Journey",
+
+        // StartStudyModal — plan preview pane (after onboarding confirm)
+        planReadyTitle: "Your path is ready",
+        planPitch: "We'll start with a quick {{action}} {{label}} — just to see where you're at.",
+        planFirstBadge: "Start here",
+        planEstimate: "{{steps}} steps · about {{mins}} min total",
+        planMore: "more steps",
+        letsGo: "Let's go",
+        closeAria: "Close",
 
         // StudyPlanOverview
         yourStudyPlan: "Your Study Plan",
@@ -1601,7 +1609,6 @@ const resources = {
         hookFallbackTopic: "ton matériel d'étude",
         hookSubtitle: "Donne-moi 30 secondes et je te construis un plan qui colle à ta situation.",
         start: "C'est parti",
-        skip: "Voir toutes les options",
         back: "Retour",
         continue: "Continuer",
         daysHelperToday: "Aujourd'hui — on priorise",
@@ -1627,7 +1634,7 @@ const resources = {
           subtitle: "Choisis-en jusqu'à 2 — je vais y concentrer le plan.",
           counter_one: "{{count}}/2 sélectionné",
           counter_other: "{{count}}/2 sélectionnés",
-          noTopics: "Aucun sujet extrait pour l'instant — passe et on s'en occupe ensemble."
+          noTopics: "Aucun sujet extrait pour l'instant — continue et on s'en occupe ensemble."
         },
         q3: {
           title: "Et où en es-tu dans ta préparation ?"
@@ -2213,6 +2220,19 @@ const resources = {
         featureAudio: "Leçons audio",
         generating: "Création...",
         beginJourney: "Commencer",
+
+        // StartStudyModal — plan preview pane (after onboarding confirm)
+        planReadyTitle: "Ton parcours est prêt",
+        // {{action}} is gendered/articled per node type (see NODE_TYPE_META.actionFr
+        // in StartStudyModal.js) — e.g. "un quiz sur" / "une leçon sur" — so the
+        // sentence reads naturally regardless of the first-node type. Don't add
+        // "un petit" here; it would clash with feminine actions like "leçon".
+        planPitch: "On commence par {{action}} {{label}} — juste pour voir où tu en es.",
+        planFirstBadge: "Commence ici",
+        planEstimate: "{{steps}} étapes · environ {{mins}} min au total",
+        planMore: "étapes de plus",
+        letsGo: "C'est parti",
+        closeAria: "Fermer",
 
         // StudyPlanOverview
         yourStudyPlan: "Ton plan d'étude",

@@ -14,6 +14,7 @@ import {
   BooksIcon,
   SparkleIcon
 } from './PlanOnboardingIcons';
+import PlanDatePicker from './PlanDatePicker';
 import './PlanOnboarding.css';
 
 /**
@@ -59,8 +60,7 @@ const PlanOnboarding = ({
   chatId,
   userOnboarding = {},
   disabled = false,
-  onConfirm,
-  onSkip
+  onConfirm
 }) => {
   const { t } = useTranslation();
 
@@ -71,6 +71,8 @@ const PlanOnboarding = ({
   const [hardestTopics, setHardestTopics] = useState([]);
   const [prepStatus, setPrepStatus] = useState(null);
   const planHandleRef = useRef(null);
+  const dateAnchorRef = useRef(null);
+  const [showDatePicker, setShowDatePicker] = useState(false);
   // Set in handleConfirm so the unmount cleanup below knows we're handing the
   // in-flight plan off to StartStudyModal rather than abandoning it. Without
   // this guard, swapping the chat message type on confirm unmounts us, the
@@ -138,9 +140,25 @@ const PlanOnboarding = ({
     setCustomDate(value);
     if (value) {
       setExamKey('custom');
+      setShowDatePicker(false);
       setTimeout(() => setPhase(p => (p === 'q1' ? 'q2' : p)), 220);
     }
   };
+
+  const toggleDatePicker = () => {
+    if (disabled) return;
+    setShowDatePicker(s => !s);
+  };
+
+  // Pre-compute a friendly label for the chosen date so the chip doesn't show
+  // the raw YYYY-MM-DD string. Falls back to the i18n "Pick a date" copy.
+  const customDateLabel = useMemo(() => {
+    if (!customDate) return null;
+    const d = new Date(`${customDate}T00:00:00`);
+    if (Number.isNaN(d.getTime())) return null;
+    const locale = (language || 'en').toLowerCase().startsWith('fr') ? 'fr-FR' : 'en-US';
+    return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
+  }, [customDate, language]);
 
   const handleTopicToggle = (topic) => {
     setHardestTopics(prev => {
@@ -152,7 +170,9 @@ const PlanOnboarding = ({
   };
 
   const handleQ2Continue = () => {
-    if (hardestTopics.length === 0) return;
+    // When no topics were extracted from the upload, there's nothing to pick;
+    // let the user advance without a selection rather than trapping them.
+    if (topics.length > 0 && hardestTopics.length === 0) return;
     setPhase('q3');
   };
 
@@ -184,17 +204,14 @@ const PlanOnboarding = ({
 
   const handleConfirm = () => {
     if (disabled) return;
-    if (!examKey || hardestTopics.length === 0 || !prepStatus) return;
+    // hardestTopics may be empty when no topics were extracted from the upload —
+    // that's allowed (matches handleQ2Continue's empty-topics escape hatch).
+    if (!examKey || !prepStatus) return;
+    if (topics.length > 0 && hardestTopics.length === 0) return;
     confirmedRef.current = true;
     onConfirm && onConfirm({
       userPreferences: buildUserPreferences()
     });
-  };
-
-  const handleSkip = () => {
-    if (chatId) clear_in_flight_study_journey(chatId);
-    planHandleRef.current = null;
-    onSkip && onSkip();
   };
 
   const handleBack = () => {
@@ -274,15 +291,6 @@ const PlanOnboarding = ({
               <span className="plan-onboarding__arrow" aria-hidden="true">→</span>
             </button>
           </div>
-
-          <button
-            type="button"
-            className="plan-onboarding__skip"
-            onClick={handleSkip}
-            disabled={disabled}
-          >
-            {t('planOnboarding.skip')}
-          </button>
         </section>
       )}
 
@@ -310,31 +318,34 @@ const PlanOnboarding = ({
               </button>
             ))}
 
-            <label className={`plan-onboarding__chip plan-onboarding__chip--date ${examKey === 'custom' ? 'is-selected' : ''}`}>
-              <span>{t('planOnboarding.q1.pickDate')}</span>
-              <input
-                type="date"
+            <button
+              ref={dateAnchorRef}
+              type="button"
+              className={`plan-onboarding__chip plan-onboarding__chip--date ${examKey === 'custom' ? 'is-selected' : ''}`}
+              onClick={toggleDatePicker}
+              disabled={disabled}
+              aria-haspopup="dialog"
+              aria-expanded={showDatePicker}
+              aria-label={t('planOnboarding.q1.pickDate')}
+            >
+              <span className="plan-onboarding__chip-icon" aria-hidden="true">
+                <CalendarIcon width="15" height="15" />
+              </span>
+              <span>{customDateLabel || t('planOnboarding.q1.pickDate')}</span>
+            </button>
+            {showDatePicker && (
+              <PlanDatePicker
                 value={customDate}
-                onChange={e => handleCustomDate(e.target.value)}
-                min={new Date().toISOString().split('T')[0]}
-                disabled={disabled}
-                aria-label={t('planOnboarding.q1.pickDate')}
+                onChange={handleCustomDate}
+                minDate={new Date()}
+                onClose={() => setShowDatePicker(false)}
+                anchorRef={dateAnchorRef}
+                language={language}
               />
-            </label>
+            )}
           </div>
 
           <p className="plan-onboarding__helper" aria-live="polite">{dayHelper}</p>
-
-          <div className="plan-onboarding__footer">
-            <button
-              type="button"
-              className="plan-onboarding__skip"
-              onClick={handleSkip}
-              disabled={disabled}
-            >
-              {t('planOnboarding.skip')}
-            </button>
-          </div>
         </section>
       )}
 
@@ -383,18 +394,10 @@ const PlanOnboarding = ({
               type="button"
               className="plan-onboarding__primary"
               onClick={handleQ2Continue}
-              disabled={disabled || hardestTopics.length === 0}
+              disabled={disabled || (topics.length > 0 && hardestTopics.length === 0)}
             >
               <span>{t('planOnboarding.continue')}</span>
               <span className="plan-onboarding__arrow" aria-hidden="true">→</span>
-            </button>
-            <button
-              type="button"
-              className="plan-onboarding__skip"
-              onClick={handleSkip}
-              disabled={disabled}
-            >
-              {t('planOnboarding.skip')}
             </button>
           </div>
         </section>
@@ -436,17 +439,6 @@ const PlanOnboarding = ({
                 </span>
               </button>
             ))}
-          </div>
-
-          <div className="plan-onboarding__footer">
-            <button
-              type="button"
-              className="plan-onboarding__skip"
-              onClick={handleSkip}
-              disabled={disabled}
-            >
-              {t('planOnboarding.skip')}
-            </button>
           </div>
         </section>
       )}
@@ -503,15 +495,6 @@ const PlanOnboarding = ({
               ← {t('planOnboarding.confirm.edit')}
             </button>
           </div>
-
-          <button
-            type="button"
-            className="plan-onboarding__skip"
-            onClick={handleSkip}
-            disabled={disabled}
-          >
-            {t('planOnboarding.skip')}
-          </button>
         </section>
       )}
     </div>
