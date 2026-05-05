@@ -1,20 +1,13 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
-import { createUserProfile, getWowEffectConfig } from '../../Services/UserService';
+import { createUserProfile } from '../../Services/UserService';
 import './Onboarding.css';
 
-/**
- * OnboardingModal - Captures user intent and guides them to their first action
- *
- * @param {function} onFilesSelected - Callback when user uploads files from onboarding
- *   Called with (files: File[], actionType: string) where actionType is 'studyjourney', 'flashcards', etc.
- */
-const OnboardingModal = ({ onFilesSelected }) => {
+const OnboardingModal = () => {
     const { t } = useTranslation();
     const { currentUser, setIsProfileComplete, setUserProfile } = useAuth();
     const [step, setStep] = useState(1);
-    const fileInputRef = useRef(null);
 
     // Development mode detection
     const isDevelopment = process.env.NODE_ENV === 'development';
@@ -76,28 +69,6 @@ const OnboardingModal = ({ onFilesSelected }) => {
     const handleStartLearning = () => {
         setIsProfileComplete(true);
         window.dispatchEvent(new CustomEvent('onQuickStartSession', { detail: formData }));
-    };
-
-    // Handle file selection from the upload button
-    const handleFileChange = (e) => {
-        const files = Array.from(e.target.files || []);
-        if (files.length === 0) return;
-
-        const wowConfig = getWowEffectConfig(formData.studyGoal, formData.reviewFormat);
-        const actionType = wowConfig?.actionId || 'studyjourney';
-
-        // Pass files and action type to parent
-        if (onFilesSelected) {
-            onFilesSelected(files, actionType);
-        }
-
-        // Close onboarding
-        setIsProfileComplete(true);
-    };
-
-    // Trigger file input click
-    const handleUploadClick = () => {
-        fileInputRef.current?.click();
     };
 
     // Dev mode: Skip onboarding entirely
@@ -275,23 +246,6 @@ const OnboardingModal = ({ onFilesSelected }) => {
                                     {t('onboarding.successButtons.startSession')}
                                 </button>
                                 
-                                {/* Hidden file input (kept for compatibility if needed elsewhere, though unused here mostly) */}
-                                <input
-                                    type="file"
-                                    ref={fileInputRef}
-                                    onChange={handleFileChange}
-                                    accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg,.ppt,.pptx"
-                                    multiple
-                                    style={{ display: 'none' }}
-                                />
-
-                                {/* Secondary: Upload Notes directly */}
-                                <button
-                                    className="onboarding-skip-link"
-                                    onClick={handleUploadClick}
-                                >
-                                    {t('onboarding.successButtons.uploadNotes')}
-                                </button>
                             </div>
                         )}
 

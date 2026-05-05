@@ -633,6 +633,7 @@ function CaseStudyQuestion({
                   ref={rationaleRef}
                   className="feedback-rationale-content"
                   {...rationaleHandlers}
+                  data-selectable="true"
                   dangerouslySetInnerHTML={{ __html: quiz.justification }}
                 />
               </div>

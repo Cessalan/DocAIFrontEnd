@@ -72,7 +72,21 @@ const resources = {
         cancel: "Cancel",
         submit: "Submit",
         search: "Search",
-        welcome: "Welcome"
+        welcome: "Welcome",
+        close: "Close"
+      },
+
+      // Selection action bar + explain popover
+      selection: {
+        toolbar: "Selection actions",
+        copy: "Copy",
+        copied: "Copied",
+        explain: "Explain",
+        explainTitle: "Explanation",
+        keyPoints: "Key points",
+        explainAria: "Explanation of selection",
+        explainError: "Couldn't load that one. Try again in a moment.",
+        explainEmpty: "No clinical explanation for that selection."
       },
 
       // Content/Landing
@@ -563,8 +577,7 @@ const resources = {
           default: "Your profile is set up. Ready to generate a custom {{reviewFormat}} session for a {{userStage}} student?"
         },
         successButtons: {
-          startSession: "Start My First Session",
-          uploadNotes: "Or upload my class notes instead"
+          startSession: "Start My First Session"
         }
       },
 
@@ -1374,7 +1387,21 @@ const resources = {
         cancel: "Annuler",
         submit: "Soumettre",
         search: "Rechercher",
-        welcome: "Bienvenue"
+        welcome: "Bienvenue",
+        close: "Fermer"
+      },
+
+      // Barre d'actions de sélection + popover d'explication
+      selection: {
+        toolbar: "Actions de sélection",
+        copy: "Copier",
+        copied: "Copié",
+        explain: "Expliquer",
+        explainTitle: "Explication",
+        keyPoints: "Points clés",
+        explainAria: "Explication de la sélection",
+        explainError: "Impossible de charger pour le moment. Réessaie.",
+        explainEmpty: "Aucune explication clinique pour cette sélection."
       },
 
       // Content/Landing
@@ -1863,8 +1890,7 @@ const resources = {
           default: "Votre profil est configuré. Prêt à générer une session **{{reviewFormat}}** personnalisée pour un étudiant en **{{userStage}}** ?"
         },
         successButtons: {
-          startSession: "Commencer ma première session",
-          uploadNotes: "Ou téléversez mes notes de cours à la place"
+          startSession: "Commencer ma première session"
         }
       },
 

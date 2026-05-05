@@ -417,6 +417,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
           ref={rationaleRef}
           className="study-quiz-feedback-rationale"
           {...rationaleHandlers}
+          data-selectable="true"
           dangerouslySetInnerHTML={{ __html: rationale }}
         />
       );
@@ -427,6 +428,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         ref={rationaleRef}
         className="study-quiz-feedback-rationale structured"
         {...rationaleHandlers}
+        data-selectable="true"
       >
         {parsed.map((item, i) => (
           <div key={i} className={`rationale-row ${item.status}`}>
@@ -907,7 +909,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
             </div>
           )}
 
-          <div className="study-card-content">
+          <div className="study-card-content" data-selectable="true">
             {/* Question text */}
             <p className="study-quiz-question">{question || 'Loading question...'}</p>
 

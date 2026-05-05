@@ -1712,3 +1712,26 @@ export const fetchGlossaryTerm = async (term) => {
 
   return await response.json();
 };
+
+// ─────────────────────────────────────────────────────────────────────────
+// Explain: free-form explanation for arbitrary text the user selected in
+// the app (chat / quiz / rationale / flashcard). Sibling of /glossary;
+// /glossary is for single medical terms, this one handles phrases & sentences.
+// ─────────────────────────────────────────────────────────────────────────
+export const fetchExplain = async (text, context = "chat") => {
+  if (!text || !text.trim()) return null;
+
+  const browserLang = (navigator.language || 'en').split('-')[0].toLowerCase();
+
+  const response = await fetch(`${FAST_API_BASE}/explain`, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify({ text: text.trim(), context, language: browserLang })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Explain failed: ${response.status}`);
+  }
+
+  return await response.json();
+};

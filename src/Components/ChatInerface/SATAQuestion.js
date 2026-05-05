@@ -581,6 +581,7 @@ function SATAQuestion({
                   ref={rationaleRef}
                   className="feedback-rationale-content"
                   {...rationaleHandlers}
+                  data-selectable="true"
                   dangerouslySetInnerHTML={{ __html: sanitizeJustification(quiz.justification) }}
                 />
               </div>

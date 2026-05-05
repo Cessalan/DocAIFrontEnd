@@ -20,6 +20,7 @@ import './index.css';
 import { auth } from "./Firebase/config";
 import { warm_up_FASTAPI } from "./Services/FastAPICalls";
 import OnboardingModal from "./Components/Onboarding/OnboardingModal";
+import SelectionProvider from "./Components/Selection/useTextSelection";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
 import { getPendingFiles, clearPendingFiles } from "./utils/pendingUploadStore";
 
@@ -208,23 +209,6 @@ function ChatLayout() {
     setPendingUploadFiles([]);
   };
 
-  // Handle files selected from onboarding modal
-  // This sets up the files to be uploaded and triggers study mode
-  const handleOnboardingFilesSelected = (files, actionType) => {
-    console.log('📚 Onboarding files selected:', files.length, 'files, action:', actionType);
-
-    // Set the pending files for ChatInterface to pick up
-    setPendingUploadFiles(files);
-
-    // If the action is studyjourney, trigger study mode
-    if (actionType === 'studyjourney') {
-      setGoToStudyMode(true);
-    }
-
-    // Navigate to a new chat (no chatId means new chat)
-    navigate('/c');
-  };
-
   return (
     <div className="app-wrapper">
       {/* Global NurseQuizAI branding - positioned next to sidebar */}
@@ -274,6 +258,10 @@ function ChatLayout() {
         </div>
       )}
 
+      {sidebarOpen && (
+        <div className="sidebar-backdrop" onClick={onCloseSidebar} aria-hidden="true" />
+      )}
+
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} style={isDev && impersonatedUid ? { paddingTop: 32 } : {}}>
         <SideBar
           user={user}
@@ -287,21 +275,27 @@ function ChatLayout() {
         />
       </div>
 
-      <div className={`main-content ${sidebarOpen ? 'shifted' : 'rail-shifted'}`} style={isDev && impersonatedUid ? { paddingTop: 32 } : {}}>
-        <ChatInterface
-          chatId={selectedChatId}
-          onChatSelected={onSelectChat}
-          onCloseSidebar={onCloseSidebar}
-          viewAllChatsMode={viewAllChatsMode}
-          pendingUploadFiles={pendingUploadFiles}
-          onPendingUploadProcessed={clearPendingUpload}
-          sidebarOpen={sidebarOpen}
-          goToStudyMode={goToStudyMode}
-          onStudyModeTriggered={() => setGoToStudyMode(false)}
-        />
+      <div
+        className={`main-content ${sidebarOpen ? 'shifted' : 'rail-shifted'}`}
+        style={isDev && impersonatedUid ? { paddingTop: 32 } : {}}
+        onClickCapture={sidebarOpen ? onCloseSidebar : undefined}
+      >
+        <SelectionProvider>
+          <ChatInterface
+            chatId={selectedChatId}
+            onChatSelected={onSelectChat}
+            onCloseSidebar={onCloseSidebar}
+            viewAllChatsMode={viewAllChatsMode}
+            pendingUploadFiles={pendingUploadFiles}
+            onPendingUploadProcessed={clearPendingUpload}
+            sidebarOpen={sidebarOpen}
+            goToStudyMode={goToStudyMode}
+            onStudyModeTriggered={() => setGoToStudyMode(false)}
+          />
+        </SelectionProvider>
       </div>
 
-      {!isProfileComplete && <OnboardingModal onFilesSelected={handleOnboardingFilesSelected} />}
+      {!isProfileComplete && <OnboardingModal />}
     </div>
   );
 }

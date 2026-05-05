@@ -320,7 +320,7 @@ function ChatFlashcard(props) {
         <div className="flashcard-card-face flashcard-card-front">
           <div className="flashcard-content">
             <div className="flashcard-label">{t('flashcard.question', 'Question')}</div>
-            <div className="flashcard-text">{flashcard.front}</div>
+            <div className="flashcard-text" data-selectable="true">{flashcard.front}</div>
             {flashcard.hint && !isFlipped && (
               <div className="flashcard-hint">
                 {showHint ? (
@@ -356,7 +356,7 @@ function ChatFlashcard(props) {
         <div className="flashcard-card-face flashcard-card-back">
           <div className="flashcard-content">
             <div className="flashcard-label">{t('flashcard.answer', 'Answer')}</div>
-            <div className="flashcard-text flashcard-text-formatted">
+            <div className="flashcard-text flashcard-text-formatted" data-selectable="true">
               {formatFlashcardText(flashcard.back)}
             </div>
           </div>

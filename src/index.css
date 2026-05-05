@@ -164,6 +164,23 @@ body.dark-mode .app-brand-name {
 }
 
 /* ============================================
+   SIDEBAR BACKDROP - tap to close on tablet/mobile
+   ============================================ */
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(40, 28, 20, 0.25);
+    z-index: 999;
+  }
+}
+
+/* ============================================
    SIDEBAR - WARM NOTEBOOK STYLE
    ============================================ */
 .sidebar {

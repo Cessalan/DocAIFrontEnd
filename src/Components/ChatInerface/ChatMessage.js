@@ -477,7 +477,7 @@ const ChatMessage = ({
       )}
 
       {/* Content */}
-      <div className="message-content">
+      <div className="message-content" data-selectable="true">
         {/* Delete Button (Dev Mode + View All Chats Only) */}
         {isDevelopment && viewAllChatsMode && isHovered && onDeleteMessage && !message.isStreaming && (
           <button

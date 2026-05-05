@@ -603,6 +603,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
                 <div className="study-flashcard-face study-flashcard-front">
                   <div
                     className="study-flashcard-text"
+                    data-selectable="true"
                     dangerouslySetInnerHTML={{ __html: parseFlashcardText(front) || 'Loading...' }}
                   />
                   <span className="study-flashcard-hint">
@@ -615,6 +616,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
                 <div className="study-flashcard-face study-flashcard-back">
                   <div
                     className="study-flashcard-text"
+                    data-selectable="true"
                     dangerouslySetInnerHTML={{ __html: parseFlashcardText(back) || t('study.loading', 'Loading...') }}
                   />
                   <span className="study-flashcard-hint">

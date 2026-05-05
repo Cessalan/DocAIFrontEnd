@@ -743,7 +743,7 @@ const ChatQuizStream = ({
         </div>
 
         {/* Question content */}
-        <div className="cqs-question-wrapper">
+        <div className="cqs-question-wrapper" data-selectable="true">
           {/* Question number badge */}
           <div className="cqs-question-number">
             {t('quiz.questionNumber', 'Question')} {postReviewIndex + 1} {t('quiz.of', 'of')} {totalQuestions}
@@ -989,7 +989,7 @@ const ChatQuizStream = ({
       {progressHeader}
 
       {/* Question content with animation wrapper */}
-      <div key={questionKey} className="cqs-question-wrapper cqs-question-enter">
+      <div key={questionKey} className="cqs-question-wrapper cqs-question-enter" data-selectable="true">
         {/* Question number badge */}
         <div className="cqs-question-number">
           {t('quiz.questionNumber', 'Question')} {queueIndex + 1}

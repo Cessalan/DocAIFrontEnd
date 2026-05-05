@@ -1,0 +1,177 @@
+/* ============================================================
+   Free-text selection — JS-painted highlight + action bar.
+   Used wherever an ancestor has data-selectable="true".
+   ============================================================ */
+
+/* The painted highlight that replaces the native selection. Marker-pen
+   look — strong amber wash with a coral edge so the words pop on cream
+   paper backgrounds without recoloring the text itself. */
+mark.nq-selection {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 220, 140, 0.85) 0%,
+    rgba(255, 196, 120, 0.85) 100%
+  );
+  color: inherit;
+  font-weight: 700;
+  border-radius: 4px;
+  padding: 1px 2px;
+  margin: 0 -1px;
+  box-shadow:
+    0 0 0 1.5px rgba(232, 141, 125, 0.35) inset,
+    0 1px 2px rgba(196, 106, 90, 0.18);
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body.dark-mode mark.nq-selection {
+  background: linear-gradient(
+    180deg,
+    rgba(220, 200, 245, 0.45) 0%,
+    rgba(184, 165, 212, 0.55) 100%
+  );
+  color: #fff;
+  box-shadow:
+    0 0 0 1.5px rgba(184, 165, 212, 0.6) inset,
+    0 1px 2px rgba(0, 0, 0, 0.35);
+}
+
+/* Tint the native selection so the moment between drag-end and JS-paint
+   doesn't flash a different color. */
+[data-selectable="true"] ::selection {
+  background: rgba(232, 141, 125, 0.28);
+}
+body.dark-mode [data-selectable="true"] ::selection {
+  background: rgba(184, 165, 212, 0.28);
+}
+
+/* Selectable surfaces: ensure selection is allowed and suppress the iOS
+   long-press callout (Copy / Look Up / Share) — our bar replaces it. */
+[data-selectable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: none;
+}
+
+/* ── Floating action bar ────────────────────────────────────── */
+.nq-selection-bar-root {
+  position: fixed;
+  inset: 0;
+  z-index: 99000;
+  pointer-events: none;
+}
+
+.nq-selection-bar {
+  position: absolute;
+  pointer-events: auto;
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  background: var(--bg-paper);
+  border: 1px solid rgba(232, 141, 125, 0.25);
+  border-radius: 999px;
+  box-shadow:
+    0 10px 30px rgba(100, 80, 60, 0.18),
+    0 2px 6px rgba(100, 80, 60, 0.08);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+  overflow: hidden;
+  transform-origin: var(--nq-bar-origin-x, 50%) var(--nq-bar-origin-y, 100%);
+  animation: nq-bar-in 0.14s cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+
+.nq-selection-bar-btn {
+  appearance: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+  transition: background 0.15s ease, color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nq-selection-bar-btn + .nq-selection-bar-btn {
+  border-left: 1px solid rgba(232, 141, 125, 0.18);
+}
+
+.nq-selection-bar-btn:hover {
+  background: rgba(232, 141, 125, 0.10);
+  color: var(--primary-coral-dark);
+}
+
+.nq-selection-bar-btn:active {
+  background: rgba(232, 141, 125, 0.18);
+}
+
+.nq-selection-bar-btn svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.nq-selection-bar-btn.is-success {
+  color: var(--primary-coral-dark);
+}
+
+@keyframes nq-bar-in {
+  0%   { opacity: 0; transform: scale(0.92) translateY(2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* Dark mode */
+body.dark-mode .nq-selection-bar {
+  background: var(--dark-bg-elevated);
+  border-color: var(--dark-border-accent);
+  box-shadow:
+    0 10px 30px rgba(0, 0, 0, 0.5),
+    0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+body.dark-mode .nq-selection-bar-btn {
+  color: #e8e6e3;
+}
+
+body.dark-mode .nq-selection-bar-btn:hover {
+  background: rgba(184, 165, 212, 0.16);
+  color: var(--dark-accent-light);
+}
+
+body.dark-mode .nq-selection-bar-btn + .nq-selection-bar-btn {
+  border-left-color: rgba(184, 165, 212, 0.22);
+}
+
+body.dark-mode .nq-selection-bar-btn.is-success {
+  color: var(--dark-accent-light);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nq-selection-bar { animation: none !important; }
+  mark.nq-selection { transition: none !important; }
+}
+
+/* ── Explain popover key-points list ─────────────────────────────── */
+.nq-explain-points {
+  margin: 0;
+  padding-left: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.nq-explain-points li {
+  margin: 0;
+  padding: 0;
+  color: var(--text-primary);
+  line-height: 1.5;
+}
+
+body.dark-mode .nq-explain-points li {
+  color: #e8e6e3;
+}
