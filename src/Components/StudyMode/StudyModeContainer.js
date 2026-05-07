@@ -90,6 +90,11 @@ const StudyModeContainer = ({
   const [contentError, setContentError] = useState(null); // Error message when content generation fails
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioMessage, setAudioMessage] = useState('');
+  // True when the user advanced past an audio node via the Skip button on
+  // the intro screen instead of actually listening. Used by the post-node
+  // transition screen to show "You skipped the audio" instead of the
+  // default "You listened to…" copy. Cleared on every new node start.
+  const [audioWasSkipped, setAudioWasSkipped] = useState(false);
   const [isGeneratingMindmap, setIsGeneratingMindmap] = useState(false);
   const [mindmapMessage, setMindmapMessage] = useState('');
   const [askedHashes, setAskedHashes] = useState([]);
@@ -217,6 +222,15 @@ const StudyModeContainer = ({
     currentMessageIdRef.current = null; // Reset ref
     setActiveNode(node);
     setActiveNodeId(node.id);
+    // Defensive reset: if a previous audio node's generation was somehow
+    // left in flight (rare, e.g. user navigated mid-fetch), this prevents
+    // the new audio node from being misread as "currently generating" and
+    // skipping past its Listen/Skip intro screen.
+    setIsGeneratingAudio(false);
+    setAudioMessage('');
+    // Clear the skipped flag so a previous audio's "skipped" status doesn't
+    // bleed into the new node's transition screen.
+    setAudioWasSkipped(false);
 
     // Track if this is a review of completed content (for 5 XP instead of full XP)
     setIsReviewingNode(node.isReview === true);
@@ -855,9 +869,16 @@ const StudyModeContainer = ({
     }
   }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases]);
 
-  // Handle continue to next node — shows transition screen instead of advancing immediately
-  const handleContinue = useCallback(async () => {
-    console.log('➡️ Node completed, showing transition screen');
+  // Handle continue to next node — shows transition screen instead of
+  // advancing immediately. The optional `info` object lets cards report
+  // metadata about HOW the node was completed (e.g. audio was skipped vs
+  // actually listened to) so the transition screen can adjust its copy.
+  const handleContinue = useCallback(async (info) => {
+    console.log('➡️ Node completed, showing transition screen', info);
+
+    // Stash node-completion metadata so NodeTransition can reflect it.
+    // For audio: { skipped: true } when the user tapped Skip on the intro.
+    setAudioWasSkipped(!!(info && info.skipped));
 
     if (viewOnly) {
       // Dev mode: skip transition, advance directly
@@ -1459,6 +1480,7 @@ const StudyModeContainer = ({
           quizProgress={latestQuizProgressRef.current}
           flashcardProgress={latestFlashcardProgressRef.current}
           mindmapProgress={latestMindmapProgressRef.current}
+          audioSkipped={audioWasSkipped}
           nextNode={getNextPlannedNode()}
           performanceData={insightsData}
           onContinue={handleTransitionContinue}

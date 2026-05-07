@@ -319,8 +319,6 @@ const resources = {
         hookHeadline_one: "I've read your file on {{topics}}.",
         hookHeadline_other: "I've read your {{count}} files on {{topics}}.",
         hookFallbackTopic: "your study material",
-        hookSubtitle: "Give me 30 seconds and I'll build you a plan that actually fits your situation.",
-        start: "Let's go",
         back: "Back",
         continue: "Continue",
         // Q1 helper line — special-cased for "today"; otherwise uses count plural
@@ -949,6 +947,8 @@ const resources = {
 
         // StudyPlanOverview
         yourStudyPlan: "Your Study Plan",
+        muteSounds: "Mute sounds",
+        unmuteSounds: "Unmute sounds",
         comingSoon: "Coming soon!",
         start: "START",
 
@@ -1014,6 +1014,9 @@ const resources = {
         correctAnswer: "Correct Answer:",
         learnMore: "Learn more",
         showLess: "Show less",
+        loadingRationale: "Loading…",
+        rationaleError: "Couldn't load the explanation. Try again?",
+        retry: "Retry",
         continue: "CONTINUE",
         gotIt: "GOT IT",
         reviewing: "Reviewing {{count}} question",
@@ -1035,6 +1038,10 @@ const resources = {
 
         // StudyAudioCard
         listenLearn: "Listen & Learn",
+        audioIntroPrompt: "Want to hear this lesson, or skip ahead?",
+        audioIntroListen: "Listen",
+        audioIntroSkip: "Skip",
+        audioIntroDuration: "~{{duration}} min listen",
         creatingAudioLesson: "Creating your audio lesson...",
         generatingAudioProgress: "Generating audio... {{progress}}%",
         convertingToSpeech: "Converting to speech...",
@@ -1231,6 +1238,7 @@ const resources = {
         // Diagnosis — lesson, audio, mindmap
         lessonDone: "You covered {{topic}}.",
         audioDone: "You listened to {{topic}}.",
+        audioSkipped: "You skipped the audio for {{topic}}.",
         mindmapDone: "You explored {{visited}} of {{total}} concepts in {{topic}}.",
         mindmapDoneSimple: "You explored the concept map for {{topic}}.",
 
@@ -1634,8 +1642,6 @@ const resources = {
         hookHeadline_one: "J'ai lu ton fichier sur {{topics}}.",
         hookHeadline_other: "J'ai lu tes {{count}} fichiers sur {{topics}}.",
         hookFallbackTopic: "ton matériel d'étude",
-        hookSubtitle: "Donne-moi 30 secondes et je te construis un plan qui colle à ta situation.",
-        start: "C'est parti",
         back: "Retour",
         continue: "Continuer",
         daysHelperToday: "Aujourd'hui — on priorise",
@@ -2262,6 +2268,8 @@ const resources = {
 
         // StudyPlanOverview
         yourStudyPlan: "Ton plan d'étude",
+        muteSounds: "Couper le son",
+        unmuteSounds: "Activer le son",
         comingSoon: "Bientôt disponible!",
         start: "COMMENCER",
 
@@ -2327,6 +2335,9 @@ const resources = {
         correctAnswer: "Bonne réponse:",
         learnMore: "En savoir plus",
         showLess: "Réduire",
+        loadingRationale: "Chargement…",
+        rationaleError: "Impossible de charger l'explication. Réessayer ?",
+        retry: "Réessayer",
         continue: "CONTINUER",
         gotIt: "COMPRIS",
         reviewing: "Révision de {{count}} question",
@@ -2348,6 +2359,10 @@ const resources = {
 
         // StudyAudioCard
         listenLearn: "Écoute et apprends",
+        audioIntroPrompt: "Tu veux écouter cette leçon ou passer à la suite ?",
+        audioIntroListen: "Écouter",
+        audioIntroSkip: "Passer",
+        audioIntroDuration: "~{{duration}} min d'écoute",
         creatingAudioLesson: "Création de ta leçon audio...",
         generatingAudioProgress: "Génération audio... {{progress}}%",
         convertingToSpeech: "Conversion en parole...",
@@ -2544,6 +2559,7 @@ const resources = {
         // Diagnostic — leçon, audio, carte mentale
         lessonDone: "Tu as couvert {{topic}}.",
         audioDone: "Tu as écouté {{topic}}.",
+        audioSkipped: "Tu as passé l'audio sur {{topic}}.",
         mindmapDone: "Tu as exploré {{visited}} sur {{total}} concepts de {{topic}}.",
         mindmapDoneSimple: "Tu as exploré la carte mentale de {{topic}}.",
 

@@ -141,7 +141,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
           </div>
         ) : (
           <>
-            <div className="study-card-content study-lesson-page-content">
+            <div className="study-card-content study-lesson-page-content" data-selectable="true">
               {/* Page title */}
               <h3 className="study-lesson-page-title">{page.title}</h3>
 
@@ -228,7 +228,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
         </div>
       ) : (
         <>
-          <div className="study-card-content">
+          <div className="study-card-content" data-selectable="true">
             {/* Main lesson body */}
             <div
               className="study-lesson-body"

@@ -3,37 +3,93 @@
    Used wherever an ancestor has data-selectable="true".
    ============================================================ */
 
-/* The painted highlight that replaces the native selection. Marker-pen
-   look — strong amber wash with a coral edge so the words pop on cream
-   paper backgrounds without recoloring the text itself. */
+/* ── NurseQuizAI marker highlight ───────────────────────────────
+   The painted highlight that replaces the native browser selection.
+   Designed to feel like a coral marker on warm paper — uniquely
+   on-brand instead of the generic OS blue/amber wash:
+
+     • Coral gradient (matches --primary-coral elsewhere in the app)
+     • SVG fractal-noise layer blended over the gradient for a
+       subtle paper-grain texture, so the highlight never looks
+       like flat plastic.
+     • Left-to-right "stroke sweep" on first paint — the gradient
+       and noise both grow from 0% to 100% width, giving the
+       impression of a pen being drawn across the words.
+
+   Two background-image layers stacked: noise on top (for blending)
+   and the coral gradient below. Both share the same animated
+   background-size so they paint together. */
 mark.nq-selection {
-  background: linear-gradient(
-    180deg,
-    rgba(255, 220, 140, 0.85) 0%,
-    rgba(255, 196, 120, 0.85) 100%
-  );
+  /* Default `display: inline` so the mark flows naturally across lines.
+     The "pop" effect is delivered via a box-shadow halo pulse — that
+     paints outside the layout box, so surrounding text never reflows. */
+  position: relative;
   color: inherit;
   font-weight: 700;
   border-radius: 4px;
   padding: 1px 2px;
   margin: 0 -1px;
+  /* Single clean coral gradient, no noise overlay. The earlier two-layer
+     stack with `overlay` blend produced transient warm/yellow pixels
+     mid-sweep that read as cheap on a paper background. A single solid
+     gradient paints uniformly at every animation step. */
+  background-image: linear-gradient(180deg, rgba(255, 168, 145, 0.95) 0%, rgba(232, 141, 125, 0.95) 100%);
+  background-size: 0% 100%;
+  background-position: 0 0;
+  background-repeat: no-repeat;
   box-shadow:
-    0 0 0 1.5px rgba(232, 141, 125, 0.35) inset,
+    0 0 0 1px rgba(196, 106, 90, 0.35) inset,
     0 1px 2px rgba(196, 106, 90, 0.18);
+  /* Two animations run together on first paint:
+     - sweep: paints the coral wash from left to right.
+     - pop: a soft halo expansion that settles back to the resting ring. */
+  animation:
+    nq-marker-sweep 0.42s cubic-bezier(0.22, 0.61, 0.36, 1) both,
+    nq-marker-pop 0.55s cubic-bezier(0.22, 1, 0.36, 1) both;
   -webkit-user-select: none;
   user-select: none;
 }
 
+/* Dark-mode highlight — same single-gradient approach as light mode, just
+   shifted to a deeper sienna-burgundy coral so white text stays readable
+   against it. Keeps the brand identity intact. */
 body.dark-mode mark.nq-selection {
-  background: linear-gradient(
-    180deg,
-    rgba(220, 200, 245, 0.45) 0%,
-    rgba(184, 165, 212, 0.55) 100%
-  );
-  color: #fff;
+  background-image: linear-gradient(180deg, rgba(168, 72, 58, 0.98) 0%, rgba(125, 53, 40, 0.98) 100%);
+  color: #ffffff;
+  /* Soft warm-white inset ring lifts the highlight off the dark page; deep
+     drop shadow gives it weight. */
   box-shadow:
-    0 0 0 1.5px rgba(184, 165, 212, 0.6) inset,
-    0 1px 2px rgba(0, 0, 0, 0.35);
+    0 0 0 1px rgba(255, 200, 185, 0.30) inset,
+    0 2px 10px rgba(0, 0, 0, 0.55);
+}
+
+@keyframes nq-marker-sweep {
+  from { background-size: 0% 100%; }
+  to   { background-size: 100% 100%; }
+}
+
+/* Halo pulse — a soft coral ring expands outward at the peak then
+   settles back to the resting inset shadow. Zero color shift on the
+   text itself (no brightness/saturation filter), so the highlight
+   never flashes pale or yellow mid-animation. The shadow paints
+   outside the layout box, so surrounding words never reflow. */
+@keyframes nq-marker-pop {
+  0% {
+    box-shadow:
+      0 0 0 1px rgba(196, 106, 90, 0.35) inset,
+      0 1px 2px rgba(196, 106, 90, 0.18);
+  }
+  55% {
+    box-shadow:
+      0 0 0 1px rgba(196, 106, 90, 0.5) inset,
+      0 0 0 4px rgba(232, 141, 125, 0.30),
+      0 6px 16px rgba(196, 106, 90, 0.32);
+  }
+  100% {
+    box-shadow:
+      0 0 0 1px rgba(196, 106, 90, 0.35) inset,
+      0 1px 2px rgba(196, 106, 90, 0.18);
+  }
 }
 
 /* Tint the native selection so the moment between drag-end and JS-paint
@@ -153,7 +209,14 @@ body.dark-mode .nq-selection-bar-btn.is-success {
 
 @media (prefers-reduced-motion: reduce) {
   .nq-selection-bar { animation: none !important; }
-  mark.nq-selection { transition: none !important; }
+  /* Drop both the sweep and the halo-pulse animation — keep the coral
+     wash visible by setting the final background size so the highlight
+     settles into its resting state immediately. */
+  mark.nq-selection {
+    animation: none !important;
+    transition: none !important;
+    background-size: 100% 100% !important;
+  }
 }
 
 /* ── Explain popover key-points list ─────────────────────────────── */

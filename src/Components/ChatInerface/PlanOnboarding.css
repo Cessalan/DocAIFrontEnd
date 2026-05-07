@@ -92,8 +92,26 @@
   animation: po-pane-in 0.35s var(--po-ease);
 }
 
-.plan-onboarding__pane--hook   { text-align: left; }
 .plan-onboarding__pane--confirm { gap: 18px; }
+
+/* Inline personalized intro at the top of Q1. Sits above the question header
+   as a contextual strip — readable but visually subordinate to the question
+   so the user's eye lands on the chips, not the headline. */
+.plan-onboarding__hook {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 2px;
+}
+
+.plan-onboarding__hook-headline {
+  margin: 0;
+  font-size: 16px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: var(--po-text);
+  letter-spacing: -0.1px;
+}
 
 /* ==========================================================================
    Headers, titles, eyebrow text
@@ -105,22 +123,6 @@
   letter-spacing: 0.8px;
   text-transform: uppercase;
   color: var(--po-accent-coral);
-}
-
-.plan-onboarding__title {
-  margin: 0;
-  font-size: 22px;
-  line-height: 1.32;
-  font-weight: 700;
-  letter-spacing: -0.3px;
-  color: var(--po-text);
-}
-
-.plan-onboarding__subtitle {
-  margin: 0;
-  font-size: 14.5px;
-  line-height: 1.55;
-  color: var(--po-text-muted);
 }
 
 .plan-onboarding__header {
@@ -877,7 +879,7 @@ body.dark-mode .plan-datepicker__day.is-selected:hover {
     padding: 20px 18px 16px;
     border-radius: 16px 18px 16px 17px;
   }
-  .plan-onboarding__title    { font-size: 19px; }
+  .plan-onboarding__hook-headline { font-size: 14.5px; }
   .plan-onboarding__question { font-size: 17px; }
   .plan-onboarding__chip     { font-size: 13px; padding: 9px 13px; }
   .plan-onboarding__topic    { font-size: 13px; padding: 9px 12px; }
@@ -921,13 +923,12 @@ body.dark-mode .plan-onboarding {
   box-shadow: var(--po-shadow);
 }
 
-/* Title / question / hook headline use the lightest text */
-body.dark-mode .plan-onboarding__title,
-body.dark-mode .plan-onboarding__question {
+/* Question + hook headline pick up the lightest text in dark mode */
+body.dark-mode .plan-onboarding__question,
+body.dark-mode .plan-onboarding__hook-headline {
   color: var(--po-text);
 }
 
-body.dark-mode .plan-onboarding__subtitle,
 body.dark-mode .plan-onboarding__sub {
   color: var(--po-text-muted);
 }

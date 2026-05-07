@@ -29,6 +29,10 @@ const StudyAudioCard = ({
 
   const { topic, intent, suggestedDuration, audioBase64, firebaseUrl } = content || {};
 
+  // Check if audio is already cached (from a previous visit). If so, we
+  // skip the intro entirely and go straight to the player.
+  const hasCachedAudio = !!(audioBase64 || firebaseUrl);
+
   // Check if audio is ready
   useEffect(() => {
     if (audioBase64 || firebaseUrl) {
@@ -52,25 +56,11 @@ const StudyAudioCard = ({
     </svg>
   );
 
-  // Track if we've already attempted generation to prevent infinite retries
+  // Tracks whether the user has explicitly chosen to listen. Generation is
+  // gated on this flag so users who want to skip the audio (e.g. they're
+  // listening to music, or just don't care for audio) never trigger the
+  // expensive backend TTS pipeline. Token cost stays at zero for skippers.
   const [hasAttempted, setHasAttempted] = useState(false);
-
-  // Auto-trigger audio generation if not ready (only once)
-  useEffect(() => {
-    // Check content directly (not audioReady state) to avoid React batching race where
-    // audioReady is still false on first render even though firebaseUrl is already in content
-    const hasAudio = !!(audioBase64 || firebaseUrl);
-    if (!hasAudio && !isGenerating && !hasAttempted && !isGeneratingRef.current && onGenerateAudio && topic) {
-      console.log('🎵 StudyAudioCard: Triggering audio generation for:', topic);
-      setHasAttempted(true);
-      isGeneratingRef.current = true;
-      onGenerateAudio({
-        topic,
-        intent: intent || 'teach',
-        duration: suggestedDuration || 2
-      });
-    }
-  }, [audioBase64, firebaseUrl, isGenerating, hasAttempted, onGenerateAudio, topic, intent, suggestedDuration]);
 
   // Reset ref when audio is ready or on unmount
   useEffect(() => {
@@ -82,11 +72,46 @@ const StudyAudioCard = ({
     };
   }, [audioReady]);
 
+  // User clicked "Listen" — kick off backend audio generation. Same payload
+  // shape as the previous auto-trigger.
+  const handleListen = () => {
+    if (isGeneratingRef.current || isGenerating || !onGenerateAudio || !topic) return;
+    setHasAttempted(true);
+    isGeneratingRef.current = true;
+    onGenerateAudio({
+      topic,
+      intent: intent || 'teach',
+      duration: suggestedDuration || 2
+    });
+  };
+
+  // User clicked "Skip" — advance to the next study node without ever
+  // calling the backend. We pass `{ skipped: true }` to onContinue so the
+  // parent's transition screen shows "You skipped…" instead of the default
+  // "You listened to…" copy. This is the entire point of the intro screen.
+  const handleSkip = () => {
+    if (onContinue) onContinue({ skipped: true });
+  };
+
   // Mark as listened when audio ends and auto-advance
   const handleAudioEnd = () => {
     setHasListened(true);
     if (onContinue) onContinue();
   };
+
+  // Format the suggested duration as a friendly "~Xmin" hint when present.
+  const durationLabel = (() => {
+    if (!suggestedDuration) return null;
+    const rounded = Math.max(1, Math.round(suggestedDuration));
+    return t('study.audioIntroDuration', '~{{duration}} min listen', { duration: rounded });
+  })();
+
+  // Decide whether to show the intro choice screen. Three conditions all
+  // need to hold: no cached audio, no generation in flight, and the user
+  // hasn't already clicked Listen this session. If they HAVE clicked
+  // Listen but generation failed, the existing failure-with-retry state
+  // takes over instead.
+  const showIntro = !hasCachedAudio && !isGenerating && !hasAttempted;
 
   return (
     <div className="study-step-card">
@@ -107,8 +132,44 @@ const StudyAudioCard = ({
 
       <div className="study-card-content">
         <div className="study-audio-wrapper">
-          {/* Show generating state or player */}
-          {isGenerating ? (
+          {/* Intro screen — shown BEFORE we ever hit the backend. Lets the
+              user choose to listen (kicks off generation) or skip (advances
+              to the next node with zero token cost). Once a choice is made
+              we don't show this again for the same node. */}
+          {showIntro ? (
+            <div className="study-audio-intro">
+              <div className="study-audio-intro-icon">
+                <AudioIcon />
+              </div>
+              <h3 className="study-audio-intro-title">{topic}</h3>
+              {durationLabel && (
+                <p className="study-audio-intro-duration">{durationLabel}</p>
+              )}
+              <p className="study-audio-intro-prompt">
+                {t('study.audioIntroPrompt', 'Want to hear this lesson, or skip ahead?')}
+              </p>
+              <div className="study-audio-intro-actions">
+                <button
+                  type="button"
+                  className="study-audio-listen-btn"
+                  onClick={handleListen}
+                >
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" width="18" height="18" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3" fill="currentColor" />
+                  </svg>
+                  {t('study.audioIntroListen', 'Listen')}
+                </button>
+                <button
+                  type="button"
+                  className="study-audio-skip-btn"
+                  onClick={handleSkip}
+                >
+                  {t('study.audioIntroSkip', 'Skip')}
+                  <ArrowRightIcon />
+                </button>
+              </div>
+            </div>
+          ) : isGenerating ? (
             <div className="study-audio-generating">
               <div className="study-audio-loading-bars">
                 <div className="study-audio-loading-bar" />

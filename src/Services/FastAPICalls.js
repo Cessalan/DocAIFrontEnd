@@ -1718,6 +1718,43 @@ export const fetchGlossaryTerm = async (term) => {
 // the app (chat / quiz / rationale / flashcard). Sibling of /glossary;
 // /glossary is for single medical terms, this one handles phrases & sentences.
 // ─────────────────────────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────
+// Quiz rationale: generates the per-option "Option X is correct/incorrect"
+// HTML on demand when a user clicks "Learn more" on a quiz question.
+//
+// New quiz generations no longer ship the full per-option rationale inline —
+// only a one-sentence `correctBlurb` is shipped with each question. This
+// endpoint produces the same HTML shape (`<b>Option X is correct</b>
+// because… <br><br><b>Option Y is incorrect</b> because…`) that the existing
+// renderRationale() parsers in ChatQuizStream / StudyQuizCard already split
+// into per-option rows. Backend is cached by SHA-1 of the question payload,
+// so a question only ever costs one LLM call across all users.
+// ─────────────────────────────────────────────────────────────────────────
+export const fetchQuizRationale = async (question, options, correctIndex) => {
+  if (!question || !question.trim()) return null;
+  if (!Array.isArray(options) || options.length < 2) return null;
+  if (typeof correctIndex !== 'number' || correctIndex < 0 || correctIndex >= options.length) return null;
+
+  const browserLang = (navigator.language || 'en').split('-')[0].toLowerCase();
+
+  const response = await fetch(`${FAST_API_BASE}/quiz_rationale`, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify({
+      question: question.trim(),
+      options,
+      correct_index: correctIndex,
+      language: browserLang
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Quiz rationale fetch failed: ${response.status}`);
+  }
+
+  return await response.json();
+};
+
 export const fetchExplain = async (text, context = "chat") => {
   if (!text || !text.trim()) return null;
 

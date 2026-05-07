@@ -21,6 +21,7 @@ const NodeTransition = ({
   quizProgress,      // { questionStatuses: { 0: 'correct', 1: 'incorrect', ... } }
   flashcardProgress, // { cardStatuses: { 0: 'got_it', 1: 'need_review', ... } }
   mindmapProgress,   // { visitedNodeIds: [], totalNodes: N }
+  audioSkipped,      // True when the user tapped Skip on the audio intro
   nextNode,          // The originally planned next node (for preview)
   performanceData,   // Current studyPerformance snapshot
   onContinue,        // () => advance to next planned node
@@ -264,6 +265,16 @@ const NodeTransition = ({
     }
 
     if (result.type === 'audio') {
+      // The user can complete an audio node two ways: actually listen to it
+      // or skip the intro entirely. Different copy for each — claiming the
+      // user "listened" when they tapped Skip would feel dishonest and
+      // misleading, especially in study insights.
+      if (audioSkipped) {
+        return t('transition.audioSkipped', {
+          topic: result.topic,
+          defaultValue: `You skipped the audio for ${result.topic}.`
+        });
+      }
       return t('transition.audioDone', {
         topic: result.topic,
         defaultValue: `You listened to ${result.topic}.`
@@ -286,7 +297,7 @@ const NodeTransition = ({
     }
 
     return '';
-  }, [result, t]);
+  }, [result, audioSkipped, t]);
 
   // ── Build suggestion message ────────────────────────────────────────
   const suggestion = useMemo(() => {
@@ -476,20 +487,35 @@ const NodeTransition = ({
               </svg>
             </button>
           )}
-          {/* Completion check */}
-          <div className="node-transition__check-row">
-            <div className="node-transition__check">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12" />
-              </svg>
-            </div>
-            <div className="node-transition__check-text">
-              <p className="node-transition__diagnosis">{diagnosis}</p>
-              {suggestion && (
-                <p className="node-transition__suggestion">{suggestion}</p>
-              )}
-            </div>
-          </div>
+          {/* Completion indicator — green check for normal completions, a
+              coral skip-forward arrow when the user opted out (e.g. tapped
+              Skip on the audio intro) so the icon matches the diagnosis
+              copy below it. */}
+          {(() => {
+            const wasSkipped = result.type === 'audio' && audioSkipped;
+            return (
+              <div className="node-transition__check-row">
+                <div className={`node-transition__check${wasSkipped ? ' node-transition__check--skipped' : ''}`}>
+                  {wasSkipped ? (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polygon points="6 19 14 12 6 5 6 19" fill="currentColor" />
+                      <line x1="18" y1="6" x2="18" y2="18" />
+                    </svg>
+                  ) : (
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <polyline points="20 6 9 17 4 12" />
+                    </svg>
+                  )}
+                </div>
+                <div className="node-transition__check-text">
+                  <p className="node-transition__diagnosis">{diagnosis}</p>
+                  {suggestion && (
+                    <p className="node-transition__suggestion">{suggestion}</p>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Continue */}
           <button

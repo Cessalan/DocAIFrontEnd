@@ -265,13 +265,43 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   text-align: left;
   width: 100%;
+  /* Scale grows from the left edge so the option doesn't drift into the
+     center column or overlap its neighbour on either side. */
+  transform-origin: left center;
 }
 
+/* Clean hover — relies on `.cqs-option-enter` using `backwards` fill so
+   the entry animation doesn't lock transform after it completes. With
+   that lock gone, the existing `transition: all` on `.cqs-option` can
+   smoothly animate the slide + shadow + border-color in one sweep,
+   matching the StudyQuizCard hover feel. */
 .cqs-option:hover:not(.disabled) {
   border-color: var(--cqs-coral);
   background: rgba(232, 141, 125, 0.05);
   transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.15);
+  box-shadow: 0 8px 20px rgba(232, 141, 125, 0.22);
+  z-index: 1;
+}
+
+/* Letter circle picks up the coral fill on hover — no scaling, just
+   color, so the change reads as confident rather than bouncy. */
+.cqs-option:hover:not(.disabled) .cqs-option-letter {
+  background: var(--cqs-coral);
+  color: #fff;
+  box-shadow: 0 3px 10px rgba(232, 141, 125, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cqs-option,
+  .cqs-option-letter {
+    transition: none !important;
+  }
+  .cqs-option:hover:not(.disabled) {
+    transform: none !important;
+  }
+  .cqs-option:hover:not(.disabled) .cqs-option-letter {
+    transform: none !important;
+  }
 }
 
 .cqs-option.selected {
@@ -356,6 +386,17 @@
   font-size: 16px;
   color: var(--cqs-text-primary);
   line-height: 1.4;
+  /* Animate the weight bump on hover; we deliberately don't shift the
+     text color — staying with the primary text color preserves contrast
+     against the white card background and keeps the words easier to
+     read than a coral tint would. */
+  transition: font-weight var(--cqs-transition-smooth);
+}
+
+/* Hover emphasis on the text — just a one-step weight bump. No size
+   change (no reflow), no color shift (no contrast loss). */
+.cqs-option:hover:not(.disabled) .cqs-option-text {
+  font-weight: 600;
 }
 
 /* -----------------------------------------
@@ -508,6 +549,181 @@
 .cqs-learn-more-btn:hover {
   background: rgba(255, 255, 255, 0.85);
   transform: translateY(-1px);
+}
+
+/* Loading state — disable interaction, dim slightly, show spinner. */
+.cqs-learn-more-btn.is-loading,
+.cqs-learn-more-btn:disabled {
+  cursor: progress;
+  opacity: 0.85;
+  transform: none;
+}
+
+.cqs-learn-more-btn.is-loading:hover {
+  background: rgba(255, 255, 255, 0.55);
+  transform: none;
+}
+
+.cqs-learn-more-spinner {
+  width: 12px;
+  height: 12px;
+  border: 1.8px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: cqs-spinner-rot 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes cqs-spinner-rot {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* Smooth height-animated container for the rationale area. The
+   grid-template-rows: 0fr → 1fr trick animates to natural content height
+   without a JS measurement step. The inner div clips overflow during the
+   transition; we also fade the content in so a snap-from-skeleton-to-text
+   feels intentional rather than abrupt. */
+.cqs-rationale-collapse {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.34s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.cqs-rationale-collapse.expanded {
+  grid-template-rows: 1fr;
+}
+
+.cqs-rationale-collapse-inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.cqs-rationale-collapse.expanded > .cqs-rationale-collapse-inner > * {
+  animation: cqs-rationale-fade-in 0.32s ease-out 0.05s both;
+}
+
+@keyframes cqs-rationale-fade-in {
+  from { opacity: 0; transform: translateY(2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Skeleton — mirrors the structured rationale layout (4 option rows, each
+   with a marker disc and 3 lines of text). Sits inside the same animated
+   container so it appears the moment the user clicks Learn more. */
+.cqs-rationale-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 16px auto 0;
+  max-width: 600px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.75);
+  border-radius: 12px;
+}
+
+.cqs-rationale-skel-row {
+  display: flex;
+  gap: 12px;
+  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.7);
+  border-radius: 10px;
+  align-items: flex-start;
+}
+
+.cqs-rationale-skel-marker {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: linear-gradient(
+    90deg,
+    rgba(232, 141, 125, 0.18) 0%,
+    rgba(232, 141, 125, 0.32) 50%,
+    rgba(232, 141, 125, 0.18) 100%
+  );
+  background-size: 200% 100%;
+  animation: cqs-rationale-shimmer 1.2s ease-in-out infinite;
+}
+
+.cqs-rationale-skel-body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cqs-rationale-skel-line {
+  height: 9px;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    rgba(232, 141, 125, 0.12) 0%,
+    rgba(232, 141, 125, 0.26) 50%,
+    rgba(232, 141, 125, 0.12) 100%
+  );
+  background-size: 200% 100%;
+  animation: cqs-rationale-shimmer 1.2s ease-in-out infinite;
+}
+
+.cqs-skel-w-30 { width: 30%; }
+.cqs-skel-w-70 { width: 70%; }
+.cqs-skel-w-90 { width: 90%; }
+
+@keyframes cqs-rationale-shimmer {
+  0%   { background-position: 200% 50%; }
+  100% { background-position: -200% 50%; }
+}
+
+/* Error state — short message + retry button, same vibe as the rationale card. */
+.cqs-rationale-error {
+  margin: 16px auto 0;
+  max-width: 600px;
+  padding: 14px 18px;
+  background: rgba(255, 255, 255, 0.85);
+  border-radius: 12px;
+  border-left: 3px solid #dc2626;
+  text-align: left;
+  color: #6b1f1f;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.cqs-rationale-error p {
+  margin: 0;
+}
+
+.cqs-rationale-retry-btn {
+  align-self: flex-start;
+  background: #dc2626;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.18s;
+}
+
+.cqs-rationale-retry-btn:hover {
+  background: #b91c1c;
+  transform: translateY(-1px);
+}
+
+/* Reduced motion — drop animations, keep colors. */
+@media (prefers-reduced-motion: reduce) {
+  .cqs-rationale-collapse,
+  .cqs-rationale-collapse.expanded > .cqs-rationale-collapse-inner > *,
+  .cqs-rationale-skel-marker,
+  .cqs-rationale-skel-line,
+  .cqs-learn-more-spinner {
+    animation: none !important;
+    transition: none !important;
+  }
 }
 
 /* Full rationale */
@@ -982,8 +1198,15 @@ body.dark-mode .cqs-skeleton-option-letter {
 
 /* Option staggered entrance animation */
 .cqs-option-enter {
-  animation: optionEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-  opacity: 0;
+  /* `backwards` fill mode (instead of `forwards`) is the key here. With
+     `forwards`, the keyframe's final values (`opacity: 1; transform:
+     translateX(0)`) stay locked AFTER the animation ends — and CSS animation
+     locks have higher precedence than :hover transforms, which broke the
+     hover scale/slide. With `backwards`, the 0% keyframe state only applies
+     BEFORE the animation runs (during animation-delay). After the animation
+     completes the element returns to its natural CSS values, which means
+     hover transforms can take over without a fight. */
+  animation: optionEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
 @keyframes optionEnter {

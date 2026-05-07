@@ -296,7 +296,7 @@ const StudyExamCard = ({
 
       {/* ── MCQ Renderer ── */}
       {(questionType === 'mcq' || !questionType) && currentQuestion && (
-        <div className="exam-mcq">
+        <div className="exam-mcq" data-selectable="true">
           <p className="exam-mcq__question">{currentQuestion.question}</p>
           <div className="study-quiz-options">
             {(currentQuestion.options || []).map((opt, i) => {

@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
 import { getQuestionType } from '../../utils/quizScoring';
 import parseRationaleOptions from '../../utils/parseRationale';
+import { fetchQuizRationale } from '../../Services/FastAPICalls';
 import SATAQuestion from './SATAQuestion';
 import CaseStudyQuestion from './CaseStudyQuestion';
 import './ChatQuizStream.css';
@@ -21,6 +22,12 @@ const ChatQuizStream = ({
   expectedTotal = 10,
   generatingCurrent = 0,
   onAnswerSelect,
+  // Called when the user clicks Learn more and we successfully fetch the
+  // full per-option rationale for a question. Receives (questionIndex, html)
+  // so the parent can persist it back onto the saved chat message — that way
+  // a reload doesn't re-pay the LLM call. Optional; if absent, the rationale
+  // is still cached client-side for the rest of the session.
+  onRationaleFetched,
   onComplete,
   onFeedbackSubmit,
   feedbackData
@@ -156,7 +163,16 @@ const ChatQuizStream = ({
       return {
         ...q,
         correctIndex,
-        rationale: q.justification || '',
+        // The full per-option rationale HTML. New generations don't ship
+        // this inline anymore — it's fetched on demand when the user clicks
+        // Learn more (see handleLearnMore). Old saved quizzes still carry
+        // their `justification` here, so we expand them instantly without
+        // a network call.
+        rationale: q.rationale || q.justification || '',
+        // One-sentence summary of why the correct answer is correct. Shipped
+        // with every new question so the immediate "Correct/Incorrect"
+        // feedback feels reasoned without paying for a full rationale.
+        correctBlurb: q.correctBlurb || q.correct_blurb || '',
         // Preserve userSelection if already answered
         userSelection: q.userSelection
       };
@@ -169,7 +185,20 @@ const ChatQuizStream = ({
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [showFullRationale, setShowFullRationale] = useState(false);
+
+  // Per-question rationale state. Keyed by question index inside the
+  // `questions` array (NOT by queue position, so re-shuffles don't lose it).
+  // Each entry: { html, loading, error }.
+  //   html       — the per-option rationale HTML once fetched (or seeded
+  //                from a legacy saved question that already had it).
+  //   loading    — request in flight; bar button shows a spinner.
+  //   error      — last fetch failed; user can tap the button to retry.
+  // The set of currently-EXPANDED questions is tracked separately in
+  // expandedRationales so opening one question doesn't disturb others
+  // (matters for review mode where the user can navigate between answered
+  // questions and might want a previous expansion to stay open).
+  const [questionRationales, setQuestionRationales] = useState({});
+  const [expandedRationales, setExpandedRationales] = useState(() => new Set());
 
   // Question queue management
   const [queueIndex, setQueueIndex] = useState(0);
@@ -291,7 +320,7 @@ const ChatQuizStream = ({
   // This ensures the first question shows IMMEDIATELY when it arrives
   const currentQueuePosition = questionQueue.length > 0 ? (questionQueue[queueIndex] ?? 0) : queueIndex;
   const currentQuestion = questions[currentQueuePosition] || {};
-  const { question, options = [], correctIndex, rationale, topic } = currentQuestion;
+  const { question, options = [], correctIndex, rationale, correctBlurb, topic } = currentQuestion;
 
   // Progress calculations
   const correctCount = Object.values(questionStatuses).filter(s => s === 'correct').length;
@@ -323,13 +352,73 @@ const ChatQuizStream = ({
     }
   }, [allCorrect, totalQuestions, showCompletionCelebration, isPostReviewMode]);
 
-  // Reset question state helper
+  // Reset question state helper. Per-question rationale state is intentionally
+  // NOT cleared here — fetched HTML stays cached across navigation so the
+  // review round (and any back-tracking) doesn't re-pay LLM cost.
   const resetQuestionState = useCallback(() => {
     setSelectedIndex(null);
     setShowFeedback(false);
     setIsCorrect(false);
-    setShowFullRationale(false);
   }, []);
+
+  // Handle the "Learn more" button click. Three branches:
+  //  1. Already expanded → collapse (no fetch).
+  //  2. Not expanded, rationale available (cached or legacy) → expand instantly.
+  //  3. Not expanded, no rationale yet → expand container immediately AND kick
+  //     off a fetch. The container shows a skeleton until the response lands.
+  //     Expanding before the fetch resolves is what makes this feel snappy —
+  //     the user gets visual confirmation that something's happening.
+  const handleLearnMore = useCallback(async (qIndex) => {
+    if (qIndex < 0 || qIndex >= questions.length) return;
+
+    // Branch 1: collapse if already open.
+    if (expandedRationales.has(qIndex)) {
+      setExpandedRationales(prev => {
+        const next = new Set(prev);
+        next.delete(qIndex);
+        return next;
+      });
+      return;
+    }
+
+    const q = questions[qIndex];
+    const cached = questionRationales[qIndex];
+    const haveHtml = (cached && cached.html) || (q && q.rationale);
+
+    // Branch 2 & 3 share the optimistic expand.
+    setExpandedRationales(prev => new Set(prev).add(qIndex));
+
+    if (haveHtml) return;  // Branch 2 — no fetch needed.
+
+    // Branch 3 — fetch.
+    setQuestionRationales(prev => ({
+      ...prev,
+      [qIndex]: { html: '', loading: true, error: false }
+    }));
+
+    try {
+      const result = await fetchQuizRationale(q.question, q.options, q.correctIndex);
+      const html = (result && result.rationale_html) || '';
+
+      setQuestionRationales(prev => ({
+        ...prev,
+        [qIndex]: { html, loading: false, error: !html }
+      }));
+
+      // Notify parent so the chat message in Firestore can be updated. We
+      // pass the question's stable text alongside the index so the parent
+      // can match it against its own quiz array even if order shifts.
+      if (html && typeof onRationaleFetched === 'function') {
+        onRationaleFetched(qIndex, html, q.question);
+      }
+    } catch (err) {
+      console.error('Quiz rationale fetch failed', err);
+      setQuestionRationales(prev => ({
+        ...prev,
+        [qIndex]: { html: '', loading: false, error: true }
+      }));
+    }
+  }, [questions, questionRationales, expandedRationales, onRationaleFetched]);
 
   // Track previous queue position to detect navigation
   const prevQueuePositionRef = useRef(currentQueuePosition);
@@ -343,13 +432,13 @@ const ChatQuizStream = ({
     }
     prevQueuePositionRef.current = currentQueuePosition;
 
-    // In review round, questions should be answerable again - reset state for each question
+    // In review round, questions should be answerable again - reset state for each question.
+    // We don't touch the rationale-cache (questionRationales) — keep fetched HTML around.
     if (isReviewRound) {
       // Reset to allow re-answering
       setSelectedIndex(null);
       setShowFeedback(false);
       setIsCorrect(false);
-      setShowFullRationale(false);
       return;
     }
 
@@ -360,7 +449,6 @@ const ChatQuizStream = ({
       setSelectedIndex(userSel.selectedIndex ?? userSel.selectedOptionIndex ?? null);
       setIsCorrect(userSel.isCorrect);
       setShowFeedback(true);
-      setShowFullRationale(false);
     }
     // If no userSelection, the question is unanswered - state should already be clean from resetQuestionState
   }, [currentQueuePosition, isReviewRound, questions]);
@@ -887,9 +975,26 @@ const ChatQuizStream = ({
     );
   }
 
-  // Render quiz question
-  const shortRationale = getShortRationale(rationale);
-  const hasMore = hasMoreRationale(rationale, shortRationale);
+  // Render quiz question.
+  //
+  // shortRationale: the one-line "why" shown next to the verdict. We prefer
+  // the new `correctBlurb` field shipped with every question post-rollout,
+  // and fall back to the old client-side parser for legacy saved quizzes
+  // that still carry a full justification HTML blob.
+  const shortRationale = correctBlurb || getShortRationale(rationale);
+
+  // Per-question rationale state for the currently displayed question.
+  const cachedRationale = questionRationales[currentQueuePosition];
+  const effectiveRationaleHtml = (cachedRationale && cachedRationale.html) || rationale || '';
+  const isRationaleExpanded = expandedRationales.has(currentQueuePosition);
+  const isRationaleLoading = cachedRationale ? cachedRationale.loading : false;
+  const hasRationaleError = cachedRationale ? cachedRationale.error && !cachedRationale.html : false;
+
+  // hasMore: do we have anything to show / fetch behind the Learn-more button?
+  // After answering, we ALWAYS offer it — either the rationale exists already
+  // or we can fetch it on demand. We only hide the button when the question
+  // is malformed (no question text or no valid correct index).
+  const hasMore = !!(question && correctIndex >= 0 && correctIndex < (options?.length || 0));
 
   // Detect the question type for the current question
   const currentQuestionType = getQuestionType(currentQuestion);
@@ -1069,14 +1174,25 @@ const ChatQuizStream = ({
               <p className="cqs-feedback-short">{shortRationale}</p>
             )}
 
-            {/* Learn more button */}
+            {/* Learn more — defers full per-option rationale to an on-demand
+                fetch. When the user opens it for the first time and we don't
+                already have HTML cached, we expand the container immediately
+                with a skeleton (instant feedback) and swap the real content
+                in when the request resolves. */}
             {hasMore && (
               <>
                 <button
-                  className="cqs-learn-more-btn"
-                  onClick={() => setShowFullRationale(!showFullRationale)}
+                  className={`cqs-learn-more-btn${isRationaleLoading ? ' is-loading' : ''}`}
+                  onClick={() => handleLearnMore(currentQueuePosition)}
+                  disabled={isRationaleLoading}
+                  aria-expanded={isRationaleExpanded}
                 >
-                  {showFullRationale ? (
+                  {isRationaleLoading ? (
+                    <>
+                      <span className="cqs-learn-more-spinner" aria-hidden="true" />
+                      {t('study.loadingRationale', 'Loading…')}
+                    </>
+                  ) : isRationaleExpanded ? (
                     <>
                       <ChevronUpIcon />
                       {t('study.showLess', 'Show less')}
@@ -1089,7 +1205,56 @@ const ChatQuizStream = ({
                   )}
                 </button>
 
-                {showFullRationale && renderRationale(rationale)}
+                {/* Smooth height-animated container. The grid-template-rows
+                    0fr → 1fr trick lets us animate to natural content height
+                    without a JS measurement pass. The inner div needs
+                    overflow:hidden to clip during the transition. */}
+                <div className={`cqs-rationale-collapse${isRationaleExpanded ? ' expanded' : ''}`}>
+                  <div className="cqs-rationale-collapse-inner">
+                    {isRationaleLoading ? (
+                      <div className="cqs-rationale-skeleton" aria-hidden="true">
+                        {[0, 1, 2, 3].map(i => (
+                          <div key={i} className="cqs-rationale-skel-row">
+                            <div className="cqs-rationale-skel-marker" />
+                            <div className="cqs-rationale-skel-body">
+                              <div className="cqs-rationale-skel-line cqs-skel-w-30" />
+                              <div className="cqs-rationale-skel-line cqs-skel-w-90" />
+                              <div className="cqs-rationale-skel-line cqs-skel-w-70" />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : hasRationaleError ? (
+                      <div className="cqs-rationale-error">
+                        <p>{t('study.rationaleError', "Couldn't load the explanation. Try again?")}</p>
+                        <button
+                          type="button"
+                          className="cqs-rationale-retry-btn"
+                          onClick={() => {
+                            // Clear error then re-trigger fetch via Learn-more flow
+                            setQuestionRationales(prev => {
+                              const next = { ...prev };
+                              delete next[currentQueuePosition];
+                              return next;
+                            });
+                            // Collapse first so handleLearnMore re-opens with a fetch
+                            setExpandedRationales(prev => {
+                              const next = new Set(prev);
+                              next.delete(currentQueuePosition);
+                              return next;
+                            });
+                            // Defer to next tick so state has settled
+                            setTimeout(() => handleLearnMore(currentQueuePosition), 0);
+                          }}
+                        >
+                          {t('study.retry', 'Retry')}
+                        </button>
+                      </div>
+                    ) : effectiveRationaleHtml ? (
+                      renderRationale(effectiveRationaleHtml)
+                    ) : null}
+                  </div>
+                </div>
               </>
             )}
 

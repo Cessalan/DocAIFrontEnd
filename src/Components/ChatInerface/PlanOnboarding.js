@@ -20,7 +20,11 @@ import './PlanOnboarding.css';
 /**
  * PlanOnboarding — 3-question gate before the study plan generates.
  *
- * Flow: hook -> q1 (exam date) -> q2 (hardest topics) -> q3 (prep status) -> confirm
+ * Flow: q1 (exam date) -> q2 (hardest topics) -> q3 (prep status) -> confirm
+ *
+ * The personalized "I've read your file on …" hook lives at the top of Q1
+ * rather than as its own gate screen, so the user lands directly on the first
+ * question instead of clicking through a decorative intro.
  *
  * On Q3 selection we pre-fire `start_study_journey` so the plan generates in the
  * background while the user reviews the confirmation summary. By the time they
@@ -65,7 +69,7 @@ const PlanOnboarding = ({
   const { t } = useTranslation();
 
   // ── State ────────────────────────────────────────────────────────────
-  const [phase, setPhase] = useState('hook');
+  const [phase, setPhase] = useState('q1');
   const [examKey, setExamKey] = useState(null);
   const [customDate, setCustomDate] = useState('');
   const [hardestTopics, setHardestTopics] = useState([]);
@@ -127,8 +131,6 @@ const PlanOnboarding = ({
   }), [userOnboarding, examDateInfo, examKey, hardestTopics, prepStatus]);
 
   // ── Handlers ─────────────────────────────────────────────────────────
-  const handleStart = () => setPhase('q1');
-
   const handleExamChip = (key) => {
     setExamKey(key);
     setCustomDate('');
@@ -266,36 +268,22 @@ const PlanOnboarding = ({
   // ── Render ───────────────────────────────────────────────────────────
   return (
     <div className="plan-onboarding" data-phase={phase}>
-      {phase !== 'hook' && (
-        <div className="plan-onboarding__progress" aria-hidden="true">
-          <span className={`plan-onboarding__dot ${phase !== 'hook' ? 'is-filled' : ''}`} />
-          <span className={`plan-onboarding__dot ${['q2','q3','confirm'].includes(phase) ? 'is-filled' : ''}`} />
-          <span className={`plan-onboarding__dot ${['q3','confirm'].includes(phase) ? 'is-filled' : ''}`} />
-        </div>
-      )}
-
-      {phase === 'hook' && (
-        <section className="plan-onboarding__pane plan-onboarding__pane--hook" aria-labelledby="po-hook-title">
-          <p className="plan-onboarding__eyebrow">{t('planOnboarding.eyebrow')}</p>
-          <h2 className="plan-onboarding__title" id="po-hook-title">{hookHeadline}</h2>
-          <p className="plan-onboarding__subtitle">{t('planOnboarding.hookSubtitle')}</p>
-
-          <div className="plan-onboarding__cta-row">
-            <button
-              type="button"
-              className="plan-onboarding__primary"
-              onClick={handleStart}
-              disabled={disabled}
-            >
-              <span>{t('planOnboarding.start')}</span>
-              <span className="plan-onboarding__arrow" aria-hidden="true">→</span>
-            </button>
-          </div>
-        </section>
-      )}
+      <div className="plan-onboarding__progress" aria-hidden="true">
+        <span className="plan-onboarding__dot is-filled" />
+        <span className={`plan-onboarding__dot ${['q2','q3','confirm'].includes(phase) ? 'is-filled' : ''}`} />
+        <span className={`plan-onboarding__dot ${['q3','confirm'].includes(phase) ? 'is-filled' : ''}`} />
+      </div>
 
       {phase === 'q1' && (
         <section className="plan-onboarding__pane" aria-labelledby="po-q1-title">
+          {/* Personalized hook lives inline at the top of Q1 — used to be its
+              own gate screen ("Let's go" → Q1) but that extra step had users
+              tapping through without reading or bouncing entirely. Folding it
+              in here keeps the warmth without the redundant click. */}
+          <div className="plan-onboarding__hook">
+            <p className="plan-onboarding__eyebrow">{t('planOnboarding.eyebrow')}</p>
+            <p className="plan-onboarding__hook-headline">{hookHeadline}</p>
+          </div>
           <header className="plan-onboarding__header">
             <h3 className="plan-onboarding__question" id="po-q1-title">
               {t('planOnboarding.q1.title')}

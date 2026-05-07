@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
 import useGlossary from '../Glossary/useGlossary';
 import parseRationaleOptions from '../../utils/parseRationale';
+import { fetchQuizRationale } from '../../Services/FastAPICalls';
 
 /**
  * StudyQuizCard - Multiple quiz questions in study mode (Duolingo-style)
@@ -18,7 +19,7 @@ import parseRationaleOptions from '../../utils/parseRationale';
  * @param {Function} onContinue - Callback when user completes all questions
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onAnswer, onContinue, onExit }) => {
+const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit }) => {
   const { t } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -35,7 +36,14 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
-  const [showFullRationale, setShowFullRationale] = useState(false);
+
+  // Per-question rationale state — keyed by question index, NOT queue position,
+  // so a later re-shuffle doesn't lose previously-fetched HTML. Each entry:
+  // { html, loading, error }. Tracking expanded vs cached separately means a
+  // user can collapse one question, navigate away, come back, and the
+  // expanded/collapsed state per question stays sticky.
+  const [questionRationales, setQuestionRationales] = useState({});
+  const [expandedRationales, setExpandedRationales] = useState(() => new Set());
 
   // "I don't know" state
   const [isDontKnow, setIsDontKnow] = useState(false);
@@ -125,7 +133,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         setSelectedIndex(null);
         setShowFeedback(false);
         setIsCorrect(false);
-        setShowFullRationale(false);
+        /* per-question rationale state cleared elsewhere */
         setIsDontKnow(false);
         setIsStreamingMessage(false);
       }
@@ -210,7 +218,14 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   // Current question from queue
   const currentQueuePosition = questionQueue[queueIndex];
   const currentQuestion = questions[currentQueuePosition] || {};
-  const { question, options = [], correctIndex: rawCorrectIndex, rationale } = currentQuestion;
+  // Pull both the legacy full-rationale HTML and the new one-sentence blurb.
+  // - rationale: only present on legacy saved questions or after a Learn-more
+  //   fetch; new generations leave this empty.
+  // - correctBlurb: shipped with every new question; renders as the immediate
+  //   one-line "why" under the verdict.
+  const { question, options = [], correctIndex: rawCorrectIndex } = currentQuestion;
+  const rationale = currentQuestion.rationale || currentQuestion.justification || '';
+  const correctBlurb = currentQuestion.correctBlurb || currentQuestion.correct_blurb || '';
 
   // Normalize correctIndex - convert to number if string
   const correctIndex = (() => {
@@ -246,6 +261,82 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
     currentQueuePosition,
     queueIndex
   });
+
+  // ── Learn-more handler ──────────────────────────────────────────────
+  // Fetches the per-option rationale on demand. Three branches:
+  //   1. Already expanded → collapse, no fetch.
+  //   2. Not expanded but rationale already cached (or seeded from a legacy
+  //      saved question) → expand instantly.
+  //   3. Not expanded and no rationale yet → expand the container immediately
+  //      with a skeleton so the click feels instant, then kick off the fetch.
+  const handleLearnMore = useCallback(async (qIndex) => {
+    if (qIndex < 0 || qIndex >= questions.length) return;
+
+    if (expandedRationales.has(qIndex)) {
+      setExpandedRationales(prev => {
+        const next = new Set(prev);
+        next.delete(qIndex);
+        return next;
+      });
+      return;
+    }
+
+    const q = questions[qIndex];
+    const cached = questionRationales[qIndex];
+    const seededHtml = q.rationale || q.justification || '';
+    const haveHtml = (cached && cached.html) || seededHtml;
+
+    setExpandedRationales(prev => new Set(prev).add(qIndex));
+
+    if (haveHtml) return;  // Branch 2.
+
+    // Branch 3 — fetch.
+    setQuestionRationales(prev => ({
+      ...prev,
+      [qIndex]: { html: '', loading: true, error: false }
+    }));
+
+    try {
+      const result = await fetchQuizRationale(q.question, q.options, q.correctIndex);
+      const html = (result && result.rationale_html) || '';
+      setQuestionRationales(prev => ({
+        ...prev,
+        [qIndex]: { html, loading: false, error: !html }
+      }));
+      if (html && typeof onRationaleFetched === 'function') {
+        onRationaleFetched(qIndex, html, q.question);
+      }
+    } catch (err) {
+      console.error('Quiz rationale fetch failed', err);
+      setQuestionRationales(prev => ({
+        ...prev,
+        [qIndex]: { html: '', loading: false, error: true }
+      }));
+    }
+  }, [questions, questionRationales, expandedRationales, onRationaleFetched]);
+
+  // Per-question rationale state for the currently displayed question.
+  const cachedRationale = questionRationales[currentQueuePosition];
+  const effectiveRationaleHtml = (cachedRationale && cachedRationale.html) || rationale || '';
+  const isRationaleExpanded = expandedRationales.has(currentQueuePosition);
+  const isRationaleLoading = cachedRationale ? cachedRationale.loading : false;
+  const hasRationaleError = cachedRationale ? (cachedRationale.error && !cachedRationale.html) : false;
+
+  // Reset cache helper for the retry button — clears state + collapses, then
+  // schedules a re-fetch via handleLearnMore on the next tick.
+  const retryRationale = useCallback((qIndex) => {
+    setQuestionRationales(prev => {
+      const next = { ...prev };
+      delete next[qIndex];
+      return next;
+    });
+    setExpandedRationales(prev => {
+      const next = new Set(prev);
+      next.delete(qIndex);
+      return next;
+    });
+    setTimeout(() => handleLearnMore(qIndex), 0);
+  }, [handleLearnMore]);
 
   // Calculate progress - count correct answers BEFORE current question
   // This ensures progress only updates when clicking "Next", not when answering
@@ -656,7 +747,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         setSelectedIndex(null);
         setShowFeedback(false);
         setIsCorrect(false);
-        setShowFullRationale(false);
+        /* per-question rationale state cleared elsewhere */
         setIsDontKnow(false);
         setIsStreamingMessage(false);
         return;
@@ -686,7 +777,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         setSelectedIndex(null);
         setShowFeedback(false);
         setIsCorrect(false);
-        setShowFullRationale(false);
+        /* per-question rationale state cleared elsewhere */
         setIsDontKnow(false);
         setIsStreamingMessage(false);
 
@@ -712,7 +803,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
       setSelectedIndex(null);
       setShowFeedback(false);
       setIsCorrect(false);
-      setShowFullRationale(false);
+      /* per-question rationale state cleared elsewhere */
       setIsDontKnow(false);
       setIsStreamingMessage(false);
 
@@ -874,7 +965,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                     setQueueIndex(queueIndex - 1);
                     setSelectedIndex(null);
                     setShowFeedback(false);
-                    setShowFullRationale(false);
+                    /* per-question rationale state cleared elsewhere */
                   }
                 }}
                 disabled={queueIndex === 0}
@@ -895,7 +986,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                     setQueueIndex(queueIndex + 1);
                     setSelectedIndex(null);
                     setShowFeedback(false);
-                    setShowFullRationale(false);
+                    /* per-question rationale state cleared elsewhere */
                   }
                 }}
                 disabled={queueIndex >= totalQuestions - 1}
@@ -955,8 +1046,14 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
 
             {/* Feedback */}
             {showFeedback && (() => {
-              const shortRationale = getShortRationale(rationale);
-              const hasMore = hasMoreRationale(rationale, shortRationale);
+              // Prefer the new one-sentence blurb shipped inline. Fall back to
+              // the legacy parser for old saved quizzes that still have a full
+              // justification HTML blob.
+              const shortRationale = correctBlurb || getShortRationale(rationale);
+              // After answering, we always offer Learn-more — either the
+              // rationale exists already or we can fetch it on demand. Hide
+              // only when the question is malformed.
+              const hasMore = !!(question && correctIndex >= 0 && correctIndex < (options?.length || 0));
 
               // "I don't know" gets its own amber feedback panel with typewriter effect
               if (isDontKnow) {
@@ -994,14 +1091,23 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                           </p>
                         )}
 
-                        {/* Expandable full rationale */}
+                        {/* Expandable full rationale — fetched on demand. The
+                            container expands instantly with a skeleton, real
+                            content fades in once the request resolves. */}
                         {hasMore && (
                           <>
                             <button
-                              className="study-quiz-learn-more-btn"
-                              onClick={() => setShowFullRationale(!showFullRationale)}
+                              className={`study-quiz-learn-more-btn${isRationaleLoading ? ' is-loading' : ''}`}
+                              onClick={() => handleLearnMore(currentQueuePosition)}
+                              disabled={isRationaleLoading}
+                              aria-expanded={isRationaleExpanded}
                             >
-                              {showFullRationale ? (
+                              {isRationaleLoading ? (
+                                <>
+                                  <span className="study-quiz-learn-more-spinner" aria-hidden="true" />
+                                  {t('study.loadingRationale', 'Loading…')}
+                                </>
+                              ) : isRationaleExpanded ? (
                                 <>
                                   <ChevronUpIcon />
                                   {t('study.showLess', 'Show less')}
@@ -1014,7 +1120,37 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                               )}
                             </button>
 
-                            {showFullRationale && renderRationale(rationale)}
+                            <div className={`study-quiz-rationale-collapse${isRationaleExpanded ? ' expanded' : ''}`}>
+                              <div className="study-quiz-rationale-collapse-inner">
+                                {isRationaleLoading ? (
+                                  <div className="study-quiz-rationale-skeleton" aria-hidden="true">
+                                    {[0, 1, 2, 3].map(i => (
+                                      <div key={i} className="study-quiz-rationale-skel-row">
+                                        <div className="study-quiz-rationale-skel-marker" />
+                                        <div className="study-quiz-rationale-skel-body">
+                                          <div className="study-quiz-rationale-skel-line w-30" />
+                                          <div className="study-quiz-rationale-skel-line w-90" />
+                                          <div className="study-quiz-rationale-skel-line w-70" />
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : hasRationaleError ? (
+                                  <div className="study-quiz-rationale-error">
+                                    <p>{t('study.rationaleError', "Couldn't load the explanation. Try again?")}</p>
+                                    <button
+                                      type="button"
+                                      className="study-quiz-rationale-retry-btn"
+                                      onClick={() => retryRationale(currentQueuePosition)}
+                                    >
+                                      {t('study.retry', 'Retry')}
+                                    </button>
+                                  </div>
+                                ) : effectiveRationaleHtml ? (
+                                  renderRationale(effectiveRationaleHtml)
+                                ) : null}
+                              </div>
+                            </div>
                           </>
                         )}
 
@@ -1061,14 +1197,21 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                     </p>
                   )}
 
-                  {/* Expandable full rationale */}
+                  {/* Expandable full rationale — fetched on demand. */}
                   {hasMore && (
                     <>
                       <button
-                        className="study-quiz-learn-more-btn"
-                        onClick={() => setShowFullRationale(!showFullRationale)}
+                        className={`study-quiz-learn-more-btn${isRationaleLoading ? ' is-loading' : ''}`}
+                        onClick={() => handleLearnMore(currentQueuePosition)}
+                        disabled={isRationaleLoading}
+                        aria-expanded={isRationaleExpanded}
                       >
-                        {showFullRationale ? (
+                        {isRationaleLoading ? (
+                          <>
+                            <span className="study-quiz-learn-more-spinner" aria-hidden="true" />
+                            {t('study.loadingRationale', 'Loading…')}
+                          </>
+                        ) : isRationaleExpanded ? (
                           <>
                             <ChevronUpIcon />
                             {t('study.showLess', 'Show less')}
@@ -1081,7 +1224,37 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
                         )}
                       </button>
 
-                      {showFullRationale && renderRationale(rationale)}
+                      <div className={`study-quiz-rationale-collapse${isRationaleExpanded ? ' expanded' : ''}`}>
+                        <div className="study-quiz-rationale-collapse-inner">
+                          {isRationaleLoading ? (
+                            <div className="study-quiz-rationale-skeleton" aria-hidden="true">
+                              {[0, 1, 2, 3].map(i => (
+                                <div key={i} className="study-quiz-rationale-skel-row">
+                                  <div className="study-quiz-rationale-skel-marker" />
+                                  <div className="study-quiz-rationale-skel-body">
+                                    <div className="study-quiz-rationale-skel-line w-30" />
+                                    <div className="study-quiz-rationale-skel-line w-90" />
+                                    <div className="study-quiz-rationale-skel-line w-70" />
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : hasRationaleError ? (
+                            <div className="study-quiz-rationale-error">
+                              <p>{t('study.rationaleError', "Couldn't load the explanation. Try again?")}</p>
+                              <button
+                                type="button"
+                                className="study-quiz-rationale-retry-btn"
+                                onClick={() => retryRationale(currentQueuePosition)}
+                              >
+                                {t('study.retry', 'Retry')}
+                              </button>
+                            </div>
+                          ) : effectiveRationaleHtml ? (
+                            renderRationale(effectiveRationaleHtml)
+                          ) : null}
+                        </div>
+                      </div>
                     </>
                   )}
 

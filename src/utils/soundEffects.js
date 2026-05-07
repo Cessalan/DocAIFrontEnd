@@ -4,6 +4,8 @@
  * Features: Convolution reverb, filtering, compression, rich harmonics
  */
 
+import { useCallback, useEffect, useState } from 'react';
+
 // Import audio files
 import correctAnswerSound from '../assets/correctanswer.wav';
 import finishedSound from '../assets/finished.mp3';
@@ -12,6 +14,48 @@ import finishedSound from '../assets/finished.mp3';
 let audioContext = null;
 // Convolution reverb impulse response (cached)
 let reverbBuffer = null;
+
+// ── Mute state ──────────────────────────────────────────────────────
+// Single global mute flag persisted to localStorage so a user's choice
+// (e.g. they're listening to music) survives reloads. Each play* function
+// bails immediately when this is true. The pub-sub here lets the toggle
+// button stay in sync across mounts without prop drilling.
+const SOUND_MUTED_KEY = 'nq_quiz_sound_muted_v1';
+
+let _isMuted = (() => {
+  try { return localStorage.getItem(SOUND_MUTED_KEY) === '1'; } catch (_) { return false; }
+})();
+const _muteListeners = new Set();
+
+export const isSoundMuted = () => _isMuted;
+
+export const setSoundMuted = (muted) => {
+  const next = !!muted;
+  if (next === _isMuted) return;
+  _isMuted = next;
+  try { localStorage.setItem(SOUND_MUTED_KEY, next ? '1' : '0'); } catch (_) { /* ignore quota */ }
+  _muteListeners.forEach(fn => {
+    try { fn(next); } catch (_) { /* swallow listener errors */ }
+  });
+};
+
+export const toggleSoundMuted = () => setSoundMuted(!_isMuted);
+
+const subscribeSoundMuted = (fn) => {
+  _muteListeners.add(fn);
+  return () => _muteListeners.delete(fn);
+};
+
+/**
+ * React hook returning [muted, toggle]. Re-renders any consumer when the
+ * mute state changes anywhere in the app.
+ */
+export const useSoundMuted = () => {
+  const [muted, setMuted] = useState(isSoundMuted());
+  useEffect(() => subscribeSoundMuted(setMuted), []);
+  const toggle = useCallback(() => toggleSoundMuted(), []);
+  return [muted, toggle];
+};
 
 /**
  * Get or create the audio context
@@ -146,6 +190,7 @@ let celebrationAudio = null;
  * Play a "correct/success" sound - Uses the custom audio file
  */
 export const playCorrectSound = () => {
+  if (_isMuted) return;
   try {
     // Create audio element if not cached, or reset if exists
     if (!correctAudio) {
@@ -168,6 +213,7 @@ export const playCorrectSound = () => {
  * Soft descending tone with warmth
  */
 export const playIncorrectSound = () => {
+  if (_isMuted) return;
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
@@ -226,6 +272,7 @@ export const playIncorrectSound = () => {
  * Played when user completes a quiz, flashcard set, or lesson
  */
 export const playCelebrationSound = () => {
+  if (_isMuted) return;
   try {
     // Create audio element if not cached, or reset if exists
     if (!celebrationAudio) {
@@ -247,6 +294,7 @@ export const playCelebrationSound = () => {
  * Play a "flip" sound - Satisfying card flip click
  */
 export const playFlipSound = () => {
+  if (_isMuted) return;
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
@@ -301,6 +349,7 @@ export const playFlipSound = () => {
  * Play a "milestone" sound - Encouraging achievement chime
  */
 export const playMilestoneSound = () => {
+  if (_isMuted) return;
   try {
     const ctx = getAudioContext();
     const now = ctx.currentTime;
