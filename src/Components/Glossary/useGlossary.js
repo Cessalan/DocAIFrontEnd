@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import GlossaryPopover from './GlossaryPopover';
 import { fetchGlossaryTerm } from '../../Services/FastAPICalls';
 import './Glossary.css';
-
-const HINT_SESSION_KEY = 'nq_glossary_hint_shown_v1';
-const HINT_AUTO_DISMISS_MS = 6000;
 
 /**
  * Treats a <strong> as an option-header (NOT a clickable medical term) when
@@ -86,8 +82,6 @@ export default function useGlossary() {
   const activeElRef = useRef(null);
   const containerRef = useRef(null);
   const requestIdRef = useRef(0);
-  const hintShownThisMountRef = useRef(false);
-  const [hint, setHint] = useState(null);
 
   const clearActiveTermClass = useCallback(() => {
     if (activeElRef.current) {
@@ -102,18 +96,11 @@ export default function useGlossary() {
     clearActiveTermClass();
   }, [clearActiveTermClass]);
 
-  const dismissHint = useCallback(() => {
-    setHint(null);
-    try { sessionStorage.setItem(HINT_SESSION_KEY, '1'); } catch (_) { /* ignore */ }
-  }, []);
-
   const handleTermClick = useCallback(async (el) => {
     if (!el) return;
     const text = (el.textContent || '').trim();
     if (!text) return;
     if (!el.classList.contains('glossary-term') && isOptionHeader(text)) return;
-
-    dismissHint();
 
     clearActiveTermClass();
     el.classList.add('glossary-term-active');
@@ -142,7 +129,7 @@ export default function useGlossary() {
       setError(true);
       setLoading(false);
     }
-  }, [clearActiveTermClass, dismissHint]);
+  }, [clearActiveTermClass]);
 
   const onRationaleClick = useCallback((e) => {
     const el = e.target.closest('strong');
@@ -160,25 +147,7 @@ export default function useGlossary() {
   // class in sync with whatever content is currently rendered.
   useLayoutEffect(() => {
     if (!containerRef.current) return;
-    const terms = tagTerms(containerRef.current);
-
-    if (hintShownThisMountRef.current) return;
-    let alreadyShown = false;
-    try { alreadyShown = sessionStorage.getItem(HINT_SESSION_KEY) === '1'; } catch (_) { /* ignore */ }
-    if (alreadyShown || terms.length === 0) return;
-    hintShownThisMountRef.current = true;
-
-    requestAnimationFrame(() => {
-      if (!containerRef.current) return;
-      const firstTerm = terms[0];
-      const r = firstTerm.getBoundingClientRect();
-      if (r.width === 0 && r.height === 0) return;
-      setHint({ top: r.top - 36, left: Math.max(8, r.left - 8) });
-      setTimeout(() => {
-        try { sessionStorage.setItem(HINT_SESSION_KEY, '1'); } catch (_) { /* ignore */ }
-        setHint(null);
-      }, HINT_AUTO_DISMISS_MS);
-    });
+    tagTerms(containerRef.current);
   });
 
   // Document-level capture-phase fallback. Some component trees may stop
@@ -210,35 +179,16 @@ export default function useGlossary() {
     'data-glossary': 'true',
   };
 
-  const hintNode = hint
-    ? createPortal(
-        (
-          <div
-            className="glossary-hint"
-            style={{ top: `${hint.top}px`, left: `${hint.left}px` }}
-            role="status"
-          >
-            <span className="glossary-hint-icon" aria-hidden="true">👆</span>
-            Tap medical terms for a quick definition
-          </div>
-        ),
-        document.body
-      )
-    : null;
-
   const popover = (
-    <>
-      {hintNode}
-      <GlossaryPopover
-        open={open}
-        term={term}
-        anchorRect={anchorRect}
-        data={data}
-        error={error}
-        loading={loading}
-        onClose={handleClose}
-      />
-    </>
+    <GlossaryPopover
+      open={open}
+      term={term}
+      anchorRect={anchorRect}
+      data={data}
+      error={error}
+      loading={loading}
+      onClose={handleClose}
+    />
   );
 
   return {

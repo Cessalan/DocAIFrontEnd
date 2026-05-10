@@ -10280,6 +10280,488 @@ body.dark-mode .celebration-continue-btn:hover {
   }
 }
 
+/* Premium close button — borderless, gentle hover only.
+   Override the chunky bordered version inherited from v1. */
+.node-transition__card--v2 .node-transition__exit {
+  border: none;
+  background: transparent;
+  color: #b8b8b8;
+  width: 32px;
+  height: 32px;
+  top: 14px;
+  right: 14px;
+}
+.node-transition__card--v2 .node-transition__exit:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #4a4a4a;
+}
+.dark-mode .node-transition__card--v2 .node-transition__exit {
+  color: #6a6a6a;
+}
+.dark-mode .node-transition__card--v2 .node-transition__exit:hover {
+  background: rgba(255, 255, 255, 0.06);
+  color: #c4c4c4;
+}
+
+/* ============================================
+   NodeTransition v2 — premium, minimalist,
+   peaceful-progress checkpoint screen.
+   Restrained accents, hairline structure,
+   generous whitespace. No celebration energy.
+   ============================================ */
+
+/* Roomy card with soft shadow + larger radius for a calm feel.
+   Padding tuned so the bucket-mastered variant fits 375px without
+   scrolling, with breathing room on desktop. */
+.node-transition__card--v2 {
+  gap: 22px;
+  padding: 36px 32px 22px;
+  border-radius: 22px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 12px 32px rgba(0, 0, 0, 0.06);
+  max-width: 460px;
+}
+
+/* ── Identity block ────────────────────────────── */
+
+.nt2-identity {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Hairline ring check — calm, signals progress without shouting.
+   Uses currentColor for the icon stroke so dark/light tints stay coherent. */
+.nt2-identity__check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1.5px solid currentColor;
+  color: #58CC02;
+  margin-bottom: 2px;
+}
+
+.nt2-identity__check svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2.4;
+}
+
+/* Bucket-tinted ring color (no fills, just stroke + icon) */
+.nt2-identity__check--mastered { color: #4ea03a; }
+.nt2-identity__check--solid    { color: #6ea7af; }
+.nt2-identity__check--gaps     { color: #b89678; }
+.nt2-identity__check--tough    { color: var(--study-coral-dark, #c46a5a); }
+
+.nt2-identity__header {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #0d0d0d;
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.nt2-identity__line {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: #6c6c6c;
+  margin: 0;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Score line ────────────────────────────────── */
+/* Clean sans, restrained coral on the number. No handwritten font here —
+   the warmth comes from color, not a script face that fights the type. */
+.nt2-score-line {
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13.5px;
+  color: #8a8a8a;
+  line-height: 1.5;
+  font-weight: 400;
+}
+
+.nt2-score-line__score {
+  color: var(--study-coral-dark, #c46a5a);
+  font-weight: 600;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0;
+}
+
+.nt2-score-line__of {
+  font-weight: 400;
+  opacity: 0.85;
+  margin: 0 1px;
+}
+
+.nt2-score-line__sep {
+  color: #d2d2d2;
+  font-weight: 300;
+}
+
+.nt2-score-line__delta {
+  color: #4ea03a;
+  font-weight: 500;
+}
+
+.nt2-score-line__tail {
+  color: #8a8a8a;
+}
+
+.nt2-score-line__tail--quiet {
+  color: #b0b0b0;
+  font-style: normal;
+}
+
+/* ── Section dividers — hairline, almost invisible ── */
+.nt2-divider {
+  height: 1px;
+  background: rgba(0, 0, 0, 0.06);
+  margin: 0;
+}
+
+/* ── Recap (retention anchor) ──────────────────── */
+.nt2-recap {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nt2-recap__label {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0d0d0d;
+  letter-spacing: -0.005em;
+}
+
+.nt2-recap__detail {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  color: #7a7a7a;
+  line-height: 1.55;
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.nt2-recap__bolt {
+  font-size: 12px;
+  flex-shrink: 0;
+  opacity: 0.75;
+  filter: saturate(0.6);
+}
+
+/* ── Next-step block ───────────────────────────── */
+.nt2-step-label {
+  margin: 0 0 2px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: #a0a0a0;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+}
+
+/* Premium primary CTA — solid coral pill, white text, system sans.
+   Override the inherited .node-transition__btn handwritten styling
+   so this button feels modern and confident, not crafty. */
+.nt2-primary.node-transition__btn--choice {
+  background: var(--study-coral, #e88d7d);
+  color: #ffffff;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 22px;
+  flex-direction: column;
+  gap: 3px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 1px 2px rgba(196, 106, 90, 0.18),
+    0 8px 20px -8px rgba(196, 106, 90, 0.45);
+  transition: transform 0.18s ease, box-shadow 0.18s ease, background 0.18s ease;
+}
+
+.nt2-primary.node-transition__btn--choice:hover {
+  background: var(--study-coral-dark, #c46a5a);
+  transform: translateY(-1px);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.18) inset,
+    0 2px 4px rgba(196, 106, 90, 0.22),
+    0 14px 28px -10px rgba(196, 106, 90, 0.5);
+}
+
+.nt2-primary.node-transition__btn--choice:active {
+  transform: translateY(0);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 1px 2px rgba(196, 106, 90, 0.18);
+}
+
+.nt2-primary .node-transition__btn-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 14.5px;
+  font-weight: 600;
+  letter-spacing: -0.005em;
+  color: #ffffff;
+}
+
+.nt2-primary .node-transition__btn-preview {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 11.5px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.78);
+  letter-spacing: 0;
+  opacity: 1;
+}
+
+/* ── Coach link — hairline, restrained ─────────── */
+.nt2-coach.node-transition__coach-row {
+  margin-top: 2px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  border-radius: 10px;
+  padding: 11px 14px;
+  transition: border-color 0.18s ease, background 0.18s ease;
+}
+
+.nt2-coach.node-transition__coach-row:hover {
+  background: rgba(0, 0, 0, 0.015);
+  border-color: rgba(0, 0, 0, 0.16);
+  border-style: solid;
+}
+
+.nt2-coach .node-transition__coach-label {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  color: #7a7a7a;
+}
+
+.nt2-coach .node-transition__coach-icon { color: #b8b8b8; }
+.nt2-coach .node-transition__coach-chevron { color: #c8c8c8; }
+.nt2-coach.node-transition__coach-row:hover .node-transition__coach-label { color: #2a2a2a; }
+.nt2-coach.node-transition__coach-row:hover .node-transition__coach-icon { color: #6a6a6a; }
+.nt2-coach.node-transition__coach-row:hover .node-transition__coach-chevron { color: #6a6a6a; }
+
+/* ── Done for today (frictionless exit) ────────── */
+.nt2-done {
+  align-self: center;
+  background: none;
+  border: none;
+  color: #a8a8a8;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 12.5px;
+  font-weight: 400;
+  letter-spacing: -0.002em;
+  cursor: pointer;
+  padding: 8px 14px;
+  margin-top: 4px;
+  transition: color 0.2s;
+}
+
+.nt2-done:hover {
+  color: #4a4a4a;
+  text-decoration: none;
+}
+
+/* ── Dark mode — premium warm grays, no harsh whites ── */
+.dark-mode .node-transition__card--v2 {
+  background: #1f1f20;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.03) inset,
+    0 24px 60px -20px rgba(0, 0, 0, 0.5);
+}
+.dark-mode .nt2-identity__header { color: #f2f2f2; }
+.dark-mode .nt2-identity__line   { color: #969696; }
+.dark-mode .nt2-score-line       { color: #7a7a7a; }
+.dark-mode .nt2-score-line__score {
+  color: var(--study-coral-light, #f4a896);
+}
+.dark-mode .nt2-score-line__sep  { color: #444; }
+.dark-mode .nt2-score-line__delta { color: #7ed493; }
+.dark-mode .nt2-score-line__tail { color: #8c8c8c; }
+.dark-mode .nt2-score-line__tail--quiet { color: #5e5e5e; }
+.dark-mode .nt2-divider          { background: rgba(255, 255, 255, 0.06); }
+.dark-mode .nt2-recap__label     { color: #f0f0f0; }
+.dark-mode .nt2-recap__detail    { color: #969696; }
+.dark-mode .nt2-step-label       { color: #6a6a6a; }
+.dark-mode .nt2-done             { color: #6a6a6a; }
+.dark-mode .nt2-done:hover       { color: #c4c4c4; }
+
+.dark-mode .nt2-coach.node-transition__coach-row {
+  border-color: rgba(255, 255, 255, 0.08);
+  background: transparent;
+}
+.dark-mode .nt2-coach.node-transition__coach-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+.dark-mode .nt2-coach .node-transition__coach-label { color: #969696; }
+.dark-mode .nt2-coach .node-transition__coach-icon { color: #5a5a5a; }
+.dark-mode .nt2-coach .node-transition__coach-chevron { color: #5a5a5a; }
+.dark-mode .nt2-coach.node-transition__coach-row:hover .node-transition__coach-label { color: #e2e2e2; }
+.dark-mode .nt2-coach.node-transition__coach-row:hover .node-transition__coach-icon { color: #969696; }
+.dark-mode .nt2-coach.node-transition__coach-row:hover .node-transition__coach-chevron { color: #969696; }
+
+/* Ring-style check tints (slightly muted in dark mode) */
+.dark-mode .nt2-identity__check--mastered { color: #6fd087; }
+.dark-mode .nt2-identity__check--solid    { color: #7eb0b8; }
+.dark-mode .nt2-identity__check--gaps     { color: #c2a684; }
+.dark-mode .nt2-identity__check--tough    { color: var(--study-coral-light, #f4a896); }
+
+/* ── Mobile (≤420px) ───────────────────────────── */
+@media (max-width: 420px) {
+  .node-transition__card--v2 {
+    padding: 28px 22px 18px;
+    gap: 18px;
+    border-radius: 18px;
+  }
+  .nt2-identity__header  { font-size: 19px; letter-spacing: -0.018em; }
+  .nt2-identity__line    { font-size: 13.5px; }
+  .nt2-score-line        { font-size: 13px; }
+  .nt2-score-line__score { font-size: 13.5px; }
+  .nt2-recap__detail     { font-size: 13px; }
+  .nt2-primary.node-transition__btn--choice { padding: 13px 20px; }
+  .nt2-primary .node-transition__btn-label { font-size: 14px; }
+}
+
+/* ============================================
+   Farewell card — calm send-off after the user
+   taps "Save progress & return tomorrow".
+   Centered, more whitespace, single close action.
+   ============================================ */
+
+.node-transition__card--v2.nt2-farewell {
+  text-align: center;
+  align-items: center;
+  gap: 14px;
+  padding: 44px 32px 24px;
+  animation: nt2FarewellIn 0.36s cubic-bezier(0.22, 0.61, 0.36, 1) both;
+}
+
+@keyframes nt2FarewellIn {
+  from { opacity: 0; transform: translateY(8px) scale(0.985); }
+  to   { opacity: 1; transform: translateY(0)   scale(1); }
+}
+
+.nt2-farewell__check {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(78, 160, 58, 0.10);
+  color: #4ea03a;
+  margin-bottom: 4px;
+}
+
+.nt2-farewell__check svg {
+  width: 22px;
+  height: 22px;
+}
+
+.nt2-farewell__title {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 22px;
+  font-weight: 600;
+  color: #0d0d0d;
+  margin: 0;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+.nt2-farewell__body {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 14.5px;
+  font-weight: 400;
+  color: #6c6c6c;
+  margin: 0;
+  line-height: 1.6;
+  max-width: 36ch;
+  letter-spacing: -0.005em;
+}
+
+.nt2-farewell__footer {
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: var(--study-coral-dark, #c46a5a);
+  margin: 8px 0 0;
+  letter-spacing: -0.005em;
+}
+
+.nt2-farewell__close {
+  margin-top: 8px;
+  background: transparent;
+  border: 1px solid rgba(0, 0, 0, 0.10);
+  border-radius: 10px;
+  padding: 10px 28px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #4a4a4a;
+  cursor: pointer;
+  transition: border-color 0.18s ease, background 0.18s ease, color 0.18s ease;
+}
+
+.nt2-farewell__close:hover {
+  background: rgba(0, 0, 0, 0.025);
+  border-color: rgba(0, 0, 0, 0.18);
+  color: #0d0d0d;
+}
+
+/* Dark mode */
+.dark-mode .nt2-farewell__check {
+  background: rgba(111, 208, 135, 0.12);
+  color: #6fd087;
+}
+.dark-mode .nt2-farewell__title  { color: #f2f2f2; }
+.dark-mode .nt2-farewell__body   { color: #969696; }
+.dark-mode .nt2-farewell__footer { color: var(--study-coral-light, #f4a896); }
+.dark-mode .nt2-farewell__close {
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #c4c4c4;
+}
+.dark-mode .nt2-farewell__close:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #f2f2f2;
+}
+
+/* Mobile */
+@media (max-width: 420px) {
+  .node-transition__card--v2.nt2-farewell {
+    padding: 36px 22px 20px;
+    gap: 12px;
+  }
+  .nt2-farewell__title  { font-size: 19px; }
+  .nt2-farewell__body   { font-size: 13.5px; max-width: 32ch; }
+  .nt2-farewell__footer { font-size: 13px; }
+}
+
 
 /* ============================================
    STUDY OVERVIEW V3 — Section Cards Layout
@@ -10476,26 +10958,973 @@ body.dark-mode .celebration-continue-btn:hover {
   border-style: dashed;
 }
 
-/* Phase 2 card */
-.sov3-card--phase2 {
+/* ──────────────────────────────────────────────────────────
+   Readiness Countdown — banner at the top of the readiness
+   card. Shows live time-to-exam to drive test-day urgency.
+   Tier classes (--far / --soon / --close / --imminent / --past)
+   modulate color and presence. Lives inside .sov3-readiness
+   so it inherits the card's warm palette.
+   ────────────────────────────────────────────────────────── */
+.sov3-countdown {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  background: linear-gradient(
+    135deg,
+    rgba(232, 141, 125, 0.12) 0%,
+    rgba(232, 141, 125, 0.06) 100%
+  );
+  border: 1px solid rgba(232, 141, 125, 0.25);
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+/* Subtle inner highlight at the top edge, like a glassy card */
+.sov3-countdown::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(255, 255, 255, 0) 40%
+  );
+  mix-blend-mode: overlay;
+  opacity: 0.6;
+}
+
+.dark-mode .sov3-countdown {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 141, 125, 0.18) 0%,
+    rgba(232, 141, 125, 0.08) 100%
+  );
+  border-color: rgba(232, 141, 125, 0.32);
+}
+
+.dark-mode .sov3-countdown::before {
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(255, 255, 255, 0) 40%
+  );
+}
+
+/* Calendar glyph chip on the left */
+.sov3-countdown__icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9px;
+  background: rgba(232, 141, 125, 0.18);
+  color: var(--study-coral, #e88d7d);
+  box-shadow: inset 0 0 0 1px rgba(232, 141, 125, 0.18);
+}
+
+.dark-mode .sov3-countdown__icon {
+  background: rgba(232, 141, 125, 0.22);
+  color: #f4b4a8;
+}
+
+/* Middle column: eyebrow + primary number row */
+.sov3-countdown__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sov3-countdown__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--study-coral, #e88d7d);
+  opacity: 0.9;
+}
+
+.sov3-countdown__primary {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-wrap: wrap;
+  line-height: 1;
+}
+
+/* Single-phrase render used by the --past tier instead of the
+   number+unit row. Sized between the eyebrow and the big number
+   so a sentence ("5 days ago") still feels like meaningful info
+   without pretending to be a metric. */
+.sov3-countdown__phrase {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+
+.dark-mode .sov3-countdown__phrase {
+  color: #e8ddd6;
+}
+
+.sov3-countdown__number {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+}
+
+.dark-mode .sov3-countdown__number {
+  color: #f4ece6;
+}
+
+.sov3-countdown__unit {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: -0.005em;
+}
+
+.dark-mode .sov3-countdown__unit {
+  color: #c8bfb9;
+}
+
+.sov3-countdown__detail {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #8a7e76);
+  margin-left: 4px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(232, 141, 125, 0.22);
+}
+
+.dark-mode .sov3-countdown__detail {
+  color: rgba(244, 180, 168, 0.78);
+  border-left-color: rgba(244, 180, 168, 0.22);
+}
+
+/* Right-side date chip — soft pill so it doesn't compete */
+.sov3-countdown__date {
+  flex-shrink: 0;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-secondary);
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(232, 141, 125, 0.18);
+}
+
+.dark-mode .sov3-countdown__date {
+  color: #d4cac3;
+  background: rgba(0, 0, 0, 0.18);
+  border-color: rgba(244, 180, 168, 0.18);
+}
+
+/* Tier: far (>= 7 days) — calm, default presentation */
+.sov3-countdown--far {
+  /* uses base styles */
+}
+
+/* Tier: soon (3-6 days) — slightly warmer */
+.sov3-countdown--soon {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 141, 125, 0.16) 0%,
+    rgba(232, 141, 125, 0.08) 100%
+  );
+}
+
+/* Tier: close (1-2 days) — more saturated coral */
+.sov3-countdown--close {
+  background: linear-gradient(
+    135deg,
+    rgba(232, 141, 125, 0.22) 0%,
+    rgba(232, 141, 125, 0.12) 100%
+  );
+  border-color: rgba(232, 141, 125, 0.4);
+}
+
+.sov3-countdown--close .sov3-countdown__number {
+  color: #c2503e;
+}
+
+.dark-mode .sov3-countdown--close .sov3-countdown__number {
+  color: #ffb4a3;
+}
+
+/* Tier: imminent (<24h) — bright urgent red, pulse glow */
+.sov3-countdown--imminent {
+  background: linear-gradient(
+    135deg,
+    rgba(239, 88, 68, 0.18) 0%,
+    rgba(232, 141, 125, 0.12) 100%
+  );
+  border-color: rgba(239, 88, 68, 0.45);
+  box-shadow: 0 0 0 1px rgba(239, 88, 68, 0.15),
+              0 4px 18px rgba(239, 88, 68, 0.18);
+}
+
+.sov3-countdown--imminent .sov3-countdown__icon {
+  background: rgba(239, 88, 68, 0.22);
+  color: #ef5844;
+}
+
+.dark-mode .sov3-countdown--imminent .sov3-countdown__icon {
+  background: rgba(239, 88, 68, 0.26);
+  color: #ff8674;
+}
+
+.sov3-countdown--imminent .sov3-countdown__eyebrow {
+  color: #ef5844;
+  opacity: 1;
+}
+
+.dark-mode .sov3-countdown--imminent .sov3-countdown__eyebrow {
+  color: #ff8674;
+}
+
+.sov3-countdown--imminent .sov3-countdown__number {
+  color: #c93a26;
+}
+
+.dark-mode .sov3-countdown--imminent .sov3-countdown__number {
+  color: #ffb4a3;
+}
+
+/* Pulse glow for imminent tier — sits absolutely over the card
+   border, drawing the eye without overpowering the readiness
+   data underneath. Pure CSS, no JS animation needed. */
+.sov3-countdown__pulse {
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  pointer-events: none;
+  border: 2px solid rgba(239, 88, 68, 0.5);
+  opacity: 0;
+  animation: sov3-countdown-pulse 1.8s ease-out infinite;
+}
+
+@keyframes sov3-countdown-pulse {
+  0% { opacity: 0.6; transform: scale(1); }
+  60% { opacity: 0; transform: scale(1.025); }
+  100% { opacity: 0; transform: scale(1.025); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sov3-countdown__pulse {
+    animation: none;
+    opacity: 0.4;
+  }
+}
+
+/* Tier: past — muted, drained of urgency */
+.sov3-countdown--past {
+  background: rgba(120, 110, 105, 0.08);
+  border-color: rgba(120, 110, 105, 0.18);
+}
+
+.sov3-countdown--past .sov3-countdown__icon {
+  background: rgba(120, 110, 105, 0.18);
+  color: #8a7e76;
+}
+
+.sov3-countdown--past .sov3-countdown__eyebrow,
+.sov3-countdown--past .sov3-countdown__number,
+.sov3-countdown--past .sov3-countdown__unit,
+.sov3-countdown--past .sov3-countdown__detail,
+.sov3-countdown--past .sov3-countdown__phrase {
+  color: #8a7e76;
+}
+
+.dark-mode .sov3-countdown--past {
+  background: rgba(120, 110, 105, 0.14);
+  border-color: rgba(120, 110, 105, 0.22);
+}
+
+.dark-mode .sov3-countdown--past .sov3-countdown__eyebrow,
+.dark-mode .sov3-countdown--past .sov3-countdown__number,
+.dark-mode .sov3-countdown--past .sov3-countdown__unit,
+.dark-mode .sov3-countdown--past .sov3-countdown__detail,
+.dark-mode .sov3-countdown--past .sov3-countdown__phrase {
+  color: #a8a09a;
+}
+
+/* Mobile — collapse the right-side date chip below the main row
+   so the countdown still reads cleanly on narrow screens. */
+@media (max-width: 540px) {
+  .sov3-countdown {
+    flex-wrap: wrap;
+    padding: 9px 12px;
+  }
+
+  .sov3-countdown__date {
+    margin-left: auto;
+    font-size: 10.5px;
+  }
+
+  .sov3-countdown__number {
+    font-size: 20px;
+  }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Readiness Snapshot — Phase 2 entry card
+   Replaces the old "tap to generate" placeholder. Surfaces
+   overall confidence, weakest topics, and a clear promise
+   so anxious students see what they'll get before tapping.
+   ────────────────────────────────────────────────────────── */
+.sov3-readiness {
+  background: linear-gradient(135deg, rgba(255, 251, 248, 0.96) 0%, rgba(255, 240, 232, 0.88) 100%);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 20px;
+  border: 1.5px solid rgba(232, 141, 125, 0.28);
+  box-shadow: 0 6px 28px rgba(232, 141, 125, 0.12), 0 2px 6px rgba(100, 80, 60, 0.06);
+  padding: 22px 24px 20px;
+  margin: 0 0 16px;
   cursor: pointer;
-  border-style: dashed;
-  border-color: rgba(232, 141, 125, 0.3);
-  background: rgba(232, 141, 125, 0.04);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  outline: none;
 }
 
-.sov3-card--phase2:hover {
+.sov3-readiness:hover {
   border-color: rgba(232, 141, 125, 0.5);
-  background: rgba(232, 141, 125, 0.08);
+  box-shadow: 0 6px 24px rgba(232, 141, 125, 0.16), 0 2px 6px rgba(100, 80, 60, 0.08);
+  transform: translateY(-1px);
 }
 
-.sov3-card--generating {
+/* Mid-session variant: less saturated, signals "in progress" not "ready" */
+.sov3-readiness--mid-session {
+  background: linear-gradient(135deg, rgba(255, 252, 250, 0.92) 0%, rgba(252, 245, 240, 0.82) 100%);
+  border-style: dashed;
+  border-color: rgba(232, 141, 125, 0.22);
+  box-shadow: 0 2px 12px rgba(100, 80, 60, 0.05);
+}
+
+.sov3-readiness--mid-session:hover {
+  border-color: rgba(232, 141, 125, 0.4);
+  box-shadow: 0 4px 18px rgba(232, 141, 125, 0.1), 0 1px 4px rgba(100, 80, 60, 0.06);
+}
+
+.dark-mode .sov3-readiness--mid-session {
+  background: linear-gradient(135deg, rgba(55, 48, 46, 0.65) 0%, rgba(60, 48, 45, 0.55) 100%);
+  border-color: rgba(232, 141, 125, 0.18);
+}
+
+.sov3-readiness:focus-visible {
+  border-color: var(--study-coral);
+  box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.25);
+}
+
+.sov3-readiness--generating {
   cursor: wait;
-  opacity: 0.8;
 }
 
-.dark-mode .sov3-card--phase2 {
-  background: rgba(232, 141, 125, 0.06);
+.sov3-readiness--generating:hover {
+  transform: none;
+}
+
+.dark-mode .sov3-readiness {
+  background: linear-gradient(135deg, rgba(60, 50, 48, 0.7) 0%, rgba(70, 50, 46, 0.6) 100%);
+  border-color: rgba(232, 141, 125, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+/* ── Header row: title group + score badge ── */
+.sov3-readiness__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.sov3-readiness__title-group {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sov3-readiness__eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--study-coral);
+  opacity: 0.85;
+}
+
+.sov3-readiness__title {
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.25;
+  letter-spacing: -0.015em;
+}
+
+.dark-mode .sov3-readiness__title {
+  color: #f0e8e4;
+}
+
+.sov3-readiness__subtitle {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 2px 0 0;
+  line-height: 1.4;
+}
+
+.dark-mode .sov3-readiness__subtitle {
+  color: #b8b0ac;
+}
+
+/* Transparency caption: shows the sample size behind the score */
+.sov3-readiness__data-source {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 6px 0 0;
+  font-style: italic;
+  letter-spacing: 0.01em;
+}
+
+.dark-mode .sov3-readiness__data-source {
+  color: #8a8278;
+}
+
+/* ──────────────────────────────────────────────────────────
+   Radial readiness ring — replaces the old rectangular badge.
+   Built from two SVG circles: a track (background) and an
+   arc whose stroke-dashoffset shrinks as the score rises.
+   The number lives in the middle, color matches the level.
+   ────────────────────────────────────────────────────────── */
+.sov3-readiness__ring {
+  flex-shrink: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sov3-readiness__ring-svg {
+  display: block;
+  position: absolute;
+  inset: 0;
+  transform-origin: center;
+}
+
+.sov3-readiness__ring-track {
+  stroke: rgba(60, 50, 45, 0.08);
+}
+
+.dark-mode .sov3-readiness__ring-track {
+  stroke: rgba(255, 255, 255, 0.08);
+}
+
+.sov3-readiness__ring-arc {
+  stroke: var(--study-coral);
+  filter: drop-shadow(0 1px 4px rgba(232, 141, 125, 0.3));
+  transition: stroke-dashoffset 0.7s cubic-bezier(0.4, 0, 0.2, 1),
+              stroke 0.3s ease;
+}
+
+.sov3-readiness__ring--strong .sov3-readiness__ring-arc {
+  stroke: #2ed573;
+  filter: drop-shadow(0 1px 4px rgba(46, 213, 115, 0.3));
+}
+
+.sov3-readiness__ring--developing .sov3-readiness__ring-arc {
+  stroke: #ffc107;
+  filter: drop-shadow(0 1px 4px rgba(255, 193, 7, 0.32));
+}
+
+.sov3-readiness__ring--weak .sov3-readiness__ring-arc {
+  stroke: #e88d7d;
+  filter: drop-shadow(0 1px 4px rgba(232, 141, 125, 0.32));
+}
+
+/* ──────────────────────────────────────────────────────────
+   Starter ring — shown before any quiz data exists.
+   Speaks the same visual language as the populated state
+   (same track, same big-bold center, same "confidence" tag)
+   but the number is replaced with an em dash so a brand-new
+   student doesn't see what looks like a failing 0%.
+   No animations, no dashed lines, no extra chrome — the
+   premium feel comes from restraint, not embellishment.
+   ────────────────────────────────────────────────────────── */
+.sov3-readiness__ring-pct--starter {
+  /* Em dash sits visually higher than digits inside the same
+     box; nudge down to align with where "83" baselines would
+     land and tighten letter-spacing so the dash doesn't read
+     as overly wide at this font weight. */
+  color: var(--text-secondary);
+  opacity: 0.55;
+  letter-spacing: -0.04em;
+  transform: translateY(2px);
+}
+
+.dark-mode .sov3-readiness__ring-pct--starter {
+  color: #c8bfb9;
+  opacity: 0.6;
+}
+
+.sov3-readiness__ring-content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+  user-select: none;
+}
+
+.sov3-readiness__ring-pct {
+  font-size: 28px;
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.sov3-readiness__ring--strong .sov3-readiness__ring-pct {
+  color: #1a7a44;
+}
+
+.sov3-readiness__ring--developing .sov3-readiness__ring-pct {
+  color: #9a7b00;
+}
+
+.sov3-readiness__ring--weak .sov3-readiness__ring-pct {
+  color: #c0543a;
+}
+
+.dark-mode .sov3-readiness__ring--strong .sov3-readiness__ring-pct {
+  color: #2ed573;
+}
+
+.dark-mode .sov3-readiness__ring--developing .sov3-readiness__ring-pct {
+  color: #ffc107;
+}
+
+.dark-mode .sov3-readiness__ring--weak .sov3-readiness__ring-pct {
+  color: #e88d7d;
+}
+
+.sov3-readiness__ring-pct-sign {
+  font-size: 16px;
+  font-weight: 700;
+  margin-left: 1px;
+  opacity: 0.75;
+}
+
+.sov3-readiness__ring-tag {
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  opacity: 0.85;
+}
+
+.dark-mode .sov3-readiness__ring-tag {
+  color: #9a8d86;
+}
+
+/* ── Weak-topic gaps list ── */
+.sov3-readiness__gaps {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sov3-readiness__gaps-label {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-secondary);
+  letter-spacing: 0.02em;
+}
+
+.dark-mode .sov3-readiness__gaps-label {
+  color: #a8a09c;
+}
+
+.sov3-readiness__gaps-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.sov3-readiness__gap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.5);
+  border: 1px solid rgba(0, 0, 0, 0.04);
+  font-size: 13px;
+}
+
+.dark-mode .sov3-readiness__gap {
+  background: rgba(0, 0, 0, 0.15);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.sov3-readiness__gap-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.sov3-readiness__gap--weak .sov3-readiness__gap-dot {
+  background: #e88d7d;
+  box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.18);
+}
+
+.sov3-readiness__gap--developing .sov3-readiness__gap-dot {
+  background: #ffc107;
+  box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.18);
+}
+
+.sov3-readiness__gap-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dark-mode .sov3-readiness__gap-name {
+  color: #e8dfdb;
+}
+
+.sov3-readiness__gap-pct {
+  flex-shrink: 0;
+  font-weight: 700;
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sov3-readiness__gap--weak .sov3-readiness__gap-pct {
+  color: #c0543a;
+}
+
+.dark-mode .sov3-readiness__gap--weak .sov3-readiness__gap-pct {
+  color: #e88d7d;
+}
+
+.sov3-readiness__gap--developing .sov3-readiness__gap-pct {
+  color: #9a7b00;
+}
+
+.dark-mode .sov3-readiness__gap--developing .sov3-readiness__gap-pct {
+  color: #ffc107;
+}
+
+/* Untested topic: muted, dashed border, italic "Not measured" tag.
+   Visually different from a low-score gap so students can tell
+   "I haven't tested this" from "I tested this and did badly." */
+.sov3-readiness__gap--untested {
+  background: rgba(120, 110, 105, 0.06);
+  border: 1px dashed rgba(120, 110, 105, 0.28);
+}
+
+.dark-mode .sov3-readiness__gap--untested {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+.sov3-readiness__gap--untested .sov3-readiness__gap-dot {
+  background: #999;
+  box-shadow: 0 0 0 3px rgba(150, 145, 140, 0.18);
+}
+
+.sov3-readiness__gap--untested .sov3-readiness__gap-name {
+  color: var(--text-secondary);
+}
+
+.dark-mode .sov3-readiness__gap--untested .sov3-readiness__gap-name {
+  color: #b8b0ac;
+}
+
+.sov3-readiness__gap--untested .sov3-readiness__gap-pct {
+  color: var(--text-muted);
+  font-style: italic;
+  font-weight: 600;
+  font-size: 11px;
+  letter-spacing: 0.01em;
+}
+
+.dark-mode .sov3-readiness__gap--untested .sov3-readiness__gap-pct {
+  color: #8a8278;
+}
+
+/* ── "X topics locked in" reassurance line ── */
+.sov3-readiness__locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  padding: 4px 10px 4px 8px;
+  border-radius: 10px;
+  background: rgba(46, 213, 115, 0.1);
+  color: #1a7a44;
+  border: 1px solid rgba(46, 213, 115, 0.18);
+  font-size: 11.5px;
+  font-weight: 600;
+}
+
+.dark-mode .sov3-readiness__locked {
+  background: rgba(46, 213, 115, 0.12);
+  color: #2ed573;
+  border-color: rgba(46, 213, 115, 0.18);
+}
+
+/* ── CTA row ── */
+.sov3-readiness__cta-row {
+  display: flex;
+  margin-top: 2px;
+}
+
+.sov3-readiness__cta {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 12px 18px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--study-coral) 0%, var(--study-coral-dark) 100%);
+  border: none;
+  color: white;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: -0.005em;
+  cursor: pointer;
+  transition: all 0.18s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 2px 8px rgba(232, 141, 125, 0.3);
+}
+
+.sov3-readiness__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(232, 141, 125, 0.4);
+  background: linear-gradient(135deg, var(--study-coral-hover) 0%, var(--study-coral-dark) 100%);
+}
+
+.sov3-readiness__cta:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(232, 141, 125, 0.3);
+}
+
+/* Soft variant: outlined, lower-pressure CTA used mid-session.
+   The mid-session card is informational ("here's where you are")
+   so the button shouldn't scream "do this now" the way the
+   Phase 2 commit button does. */
+.sov3-readiness__cta--soft {
+  background: rgba(232, 141, 125, 0.08);
+  color: var(--study-coral-dark);
+  border: 1.5px solid rgba(232, 141, 125, 0.4);
+  box-shadow: none;
+}
+
+.sov3-readiness__cta--soft:hover {
+  background: rgba(232, 141, 125, 0.14);
+  border-color: rgba(232, 141, 125, 0.55);
+  box-shadow: 0 2px 8px rgba(232, 141, 125, 0.15);
+}
+
+.sov3-readiness__cta--soft .sov3-readiness__cta-meta {
+  background: rgba(232, 141, 125, 0.18);
+  color: var(--study-coral-dark);
+}
+
+.dark-mode .sov3-readiness__cta--soft {
+  background: rgba(232, 141, 125, 0.12);
+  color: var(--study-coral-light);
+  border-color: rgba(232, 141, 125, 0.35);
+}
+
+.dark-mode .sov3-readiness__cta--soft:hover {
+  background: rgba(232, 141, 125, 0.18);
+  border-color: rgba(232, 141, 125, 0.5);
+}
+
+.dark-mode .sov3-readiness__cta--soft .sov3-readiness__cta-meta {
+  background: rgba(232, 141, 125, 0.22);
+  color: var(--study-coral-light);
+}
+
+.sov3-readiness__cta-meta {
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.18);
+}
+
+/* ── Generating state: narrated steps ── */
+.sov3-readiness__generating {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.sov3-readiness__gen-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.sov3-readiness__gen-spinner {
+  width: 22px !important;
+  height: 22px !important;
+  border-width: 2.5px !important;
+  margin: 0 !important;
+  flex-shrink: 0;
+}
+
+.sov3-readiness__steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sov3-readiness__step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: color 0.3s ease;
+}
+
+.sov3-readiness__step--done {
+  color: #1a7a44;
+}
+
+.dark-mode .sov3-readiness__step--done {
+  color: #2ed573;
+}
+
+.sov3-readiness__step--active {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.dark-mode .sov3-readiness__step--active {
+  color: #f0e8e4;
+}
+
+.sov3-readiness__step-icon {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sov3-readiness__step--done .sov3-readiness__step-icon {
+  background: rgba(46, 213, 115, 0.18);
+  color: #1a7a44;
+  border-radius: 50%;
+}
+
+.dark-mode .sov3-readiness__step--done .sov3-readiness__step-icon {
+  color: #2ed573;
+}
+
+.sov3-readiness__step-pulse {
+  width: 8px;
+  height: 8px;
+  background: var(--study-coral);
+  border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(232, 141, 125, 0.6);
+  animation: sov3ReadinessStepPulse 1.4s ease-out infinite;
+}
+
+@keyframes sov3ReadinessStepPulse {
+  0% { box-shadow: 0 0 0 0 rgba(232, 141, 125, 0.55); }
+  70% { box-shadow: 0 0 0 8px rgba(232, 141, 125, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(232, 141, 125, 0); }
+}
+
+.sov3-readiness__step-dot {
+  width: 6px;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.18);
+  border-radius: 50%;
+}
+
+.dark-mode .sov3-readiness__step-dot {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sov3-readiness__step-text {
+  flex: 1;
+}
+
+/* ── Mobile tweaks ── */
+@media (max-width: 600px) {
+  .sov3-readiness {
+    padding: 16px 16px 14px;
+    gap: 12px;
+  }
+  .sov3-readiness__head {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    gap: 12px;
+  }
+  /* Center the ring above the copy on mobile */
+  .sov3-readiness__ring {
+    align-self: center;
+    width: 88px !important;
+    height: 88px !important;
+  }
+  .sov3-readiness__ring-svg {
+    width: 88px !important;
+    height: 88px !important;
+  }
+  .sov3-readiness__ring-pct {
+    font-size: 24px;
+  }
+  .sov3-readiness__ring-pct-sign {
+    font-size: 14px;
+  }
+  .sov3-readiness__title-group {
+    text-align: center;
+  }
+  .sov3-readiness__cta {
+    flex-wrap: wrap;
+    padding: 11px 14px;
+    font-size: 13px;
+  }
 }
 
 /* ── Card Header ── */

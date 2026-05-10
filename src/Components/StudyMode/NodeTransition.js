@@ -1,6 +1,12 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import './StudyMode.css';
+
+// Truncate long topic names per spec (40 chars + ellipsis)
+const truncateTopic = (s, max = 40) => {
+  if (!s) return '';
+  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+};
 
 /**
  * NodeTransition — The post-node decision moment.
@@ -24,6 +30,8 @@ const NodeTransition = ({
   audioSkipped,      // True when the user tapped Skip on the audio intro
   nextNode,          // The originally planned next node (for preview)
   performanceData,   // Current studyPerformance snapshot
+  examDate,          // Exam date (Date | null) — gates the readiness delta line
+  readinessDelta,    // Number | null — % closer to ready since this node started
   onContinue,        // () => advance to next planned node
   onPracticeMore,    // (remediationNode) => insert & go to remediation node
   onCustomRequest,   // (userText) => open custom request flow
@@ -33,10 +41,15 @@ const NodeTransition = ({
   customEcho,        // { message: "I'll create...", node: {...} } from backend
   onConfirmCustom,   // () => confirm the echoed custom node
   onCancelCustom,    // () => cancel the custom request
+  onAnalytics,       // (event, payload) => fire analytics (no-op safe)
 }) => {
   const { t } = useTranslation();
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState('');
+  // Farewell card shown after the user taps "Save progress & return tomorrow".
+  // The exit is deferred until they close this card so the message has time
+  // to land before we navigate away.
+  const [showFarewell, setShowFarewell] = useState(false);
 
   // ── Compute result data from the completed node ─────────────────────
   const result = useMemo(() => {
@@ -158,6 +171,69 @@ const NodeTransition = ({
       topic: node.label
     };
   }, [node, content, quizProgress, flashcardProgress, mindmapProgress]);
+
+  // ── Identity bucket for scored results (drives header + copy) ───────
+  // 100 = mastered · 70-99 = solid · 40-69 = gaps · <40 = tough
+  // Banned: "Quiz Complete", "you crushed it", "great job", percentile copy.
+  // Low scorers get no readiness delta and no judgmental list.
+  const bucket = useMemo(() => {
+    if (!result?.scored) return null;
+    if (result.scorePercent >= 100) return 'mastered';
+    if (result.scorePercent >= 70) return 'solid';
+    if (result.scorePercent >= 40) return 'gaps';
+    return 'tough';
+  }, [result]);
+
+  // Show readiness delta only if exam date is set, delta is positive,
+  // and the user did well enough that the boost feels earned (not patronizing).
+  const showReadinessDelta = !!examDate
+    && typeof readinessDelta === 'number'
+    && readinessDelta > 0
+    && (bucket === 'mastered' || bucket === 'solid');
+
+  // Identity-based copy — header, identity line, score-line tail
+  const identity = useMemo(() => {
+    if (!result?.scored || !bucket) return null;
+
+    const topic = truncateTopic(result.topic);
+    const total = result.total;
+    const got   = result.type === 'flashcard' ? result.mastered : result.correct;
+    const miss  = result.type === 'flashcard' ? result.needReview : result.incorrect;
+
+    // Header — varies by bucket only
+    const header = bucket === 'mastered' ? t('transition.headerMastered', 'Knowledge locked in')
+                 : bucket === 'solid'    ? t('transition.headerSolid', 'Solid session')
+                 : bucket === 'gaps'     ? t('transition.headerGaps', 'Working the hard stuff')
+                 :                          t('transition.headerTough', 'Tough one — you showed up');
+
+    // Identity line — varies by bucket × content type
+    let line;
+    if (bucket === 'mastered') {
+      line = result.type === 'flashcard'
+        ? t('transition.identityMasteredFc', { topic, defaultValue: "You're building mastery on {{topic}}." })
+        : t('transition.identityMastered', { topic, defaultValue: "You're building mastery on {{topic}}." });
+    } else if (bucket === 'solid') {
+      line = result.type === 'flashcard'
+        ? t('transition.identitySolidFc', { topic, defaultValue: "You're sharpening your recall on {{topic}}." })
+        : t('transition.identitySolid', { topic, defaultValue: "You're sharpening your reasoning on {{topic}}." });
+    } else if (bucket === 'gaps') {
+      line = t('transition.identityGaps', { topic, defaultValue: "You're closing gaps on {{topic}}." });
+    } else {
+      line = t('transition.identityTough', { defaultValue: "You're tackling the part most students avoid." });
+    }
+
+    // Score-line tail — extra context after "{n} of {total}."
+    let tail = '';
+    if (bucket === 'solid' && miss > 0) {
+      tail = t('transition.tailSolid', { count: miss, defaultValue: '{{count}} to firm up.' });
+    } else if (bucket === 'gaps') {
+      tail = t('transition.tailGaps', { count: miss, defaultValue: '{{count}} concepts to revisit.' });
+    } else if (bucket === 'tough') {
+      tail = t('transition.tailTough', { topic, defaultValue: '{{topic}} is worth another pass.' });
+    }
+
+    return { header, line, total, got, tail };
+  }, [result, bucket, t]);
 
   // ── Build diagnosis message ─────────────────────────────────────────
   const diagnosis = useMemo(() => {
@@ -351,16 +427,14 @@ const NodeTransition = ({
     return labels[remediationType] || '';
   }, [remediationType, result, t]);
 
-  // ── Determine "Practice More" visual weight ────────────────────────
-  // High scores (>85%) → visually lighter. Lower scores → equal weight.
-  const practiceWeight = result?.scored
-    ? (result.scorePercent > 85 ? 'subtle' : 'equal')
-    : 'subtle';
-
   // ── Example chips for custom input ──────────────────────────────────
+  // "Practice more" lives here as a chip (instead of a top-level button)
+  // for scored types — keeps the screen calm with one primary CTA while
+  // preserving full user control under "tell the coach".
   const exampleChips = useMemo(() => {
     const chips = [];
     if (result?.type === 'quiz' || result?.type === 'flashcard' || result?.type === 'exam') {
+      chips.push(t('transition.chipPracticeMore', 'Practice more'));
       chips.push(t('transition.chipHarder', 'Make it harder'));
       chips.push(t('transition.chipFlashcards', 'Just flashcards'));
       chips.push(t('transition.chipExplain', 'Explain what I missed'));
@@ -377,6 +451,21 @@ const NodeTransition = ({
     chips.push(t('transition.chipSkipAhead', 'Skip ahead'));
     return chips;
   }, [result, t]);
+
+  // ── Analytics: fire shown event once per mount with score bucket ───
+  useEffect(() => {
+    if (!onAnalytics || !result) return;
+    onAnalytics('end_of_session_screen_shown', {
+      score_bucket: bucket,
+      scored: !!result.scored,
+      score_percent: result.scorePercent ?? null,
+      has_exam_date: !!examDate,
+      next_step_exists: !!nextNode,
+      node_type: result.type,
+    });
+    // Intentionally fire only once when the screen first renders for a node.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── Handle "Practice More" ──────────────────────────────────────────
   const handlePracticeMore = () => {
@@ -424,6 +513,14 @@ const NodeTransition = ({
   };
 
   const handleChipClick = (chip) => {
+    // Practice more chip routes directly to the local remediation builder
+    // so we keep the same fast path the old top-level button had.
+    const practiceMoreLabel = t('transition.chipPracticeMore', 'Practice more');
+    if (chip === practiceMoreLabel) {
+      onAnalytics?.('practice_more_chip_clicked', { score_bucket: bucket });
+      handlePracticeMore();
+      return;
+    }
     setCustomText(chip);
     setShowCustomInput(true);
   };
@@ -589,153 +686,170 @@ const NodeTransition = ({
   }
 
   // ════════════════════════════════════════════════════════════════════
-  // SCORED VARIANT (quiz, flashcard — full diagnosis + 3 options)
+  // SCORED VARIANT — identity-based, single primary CTA, recap seed.
+  // Designed to feel like a checkpoint, not a finale: keeps high-momentum
+  // users moving while making stopping frictionless and planting a
+  // curiosity seed for return.
   // ════════════════════════════════════════════════════════════════════
+
+  // Primary CTA — falls back to a remediation drill when no next node exists
+  const hasNextStep = !!nextNode;
+  const primaryLabel = hasNextStep
+    ? t('transition.keepGoing', 'Keep going →')
+    : t('transition.morePractice', 'More questions on this topic');
+  const primarySublabel = hasNextStep
+    ? `${truncateTopic(nextNode.label, 36)} · ~${getEstimate(nextNode.type)} min`
+    : `${t('study.nodeType.quiz', 'Quiz')} · ~${getEstimate('quiz')} min`;
+  const handlePrimary = () => {
+    onAnalytics?.('keep_going_clicked', {
+      score_bucket: bucket,
+      next_step_exists: hasNextStep,
+    });
+    if (hasNextStep) onContinue();
+    else handlePracticeMore();
+  };
+
+  const handleDoneForToday = () => {
+    onAnalytics?.('done_for_today_clicked', { score_bucket: bucket });
+    setShowFarewell(true);
+  };
+
+  const handleFarewellClose = () => {
+    onAnalytics?.('farewell_dismissed', { score_bucket: bucket });
+    if (onExit) onExit();
+  };
+
+  const handleClose = () => {
+    onAnalytics?.('close_x_clicked', { score_bucket: bucket });
+    if (onExit) onExit();
+  };
+
+  // ── Farewell card — shown after "Save progress & return tomorrow" ───
+  // A calm goodbye that lets the message land before we exit. The X and
+  // the Close button both fully exit; there is no commitment flow.
+  if (showFarewell) {
+    return (
+      <div className="node-transition node-transition--scored">
+        <div className="node-transition__card node-transition__card--v2 nt2-farewell">
+          <button
+            className="node-transition__exit"
+            onClick={handleFarewellClose}
+            title={t('transition.exit', 'Exit session')}
+            aria-label={t('transition.farewellClose', 'Close')}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          <div className="nt2-farewell__check" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+
+          <h2 className="nt2-farewell__title">
+            {t('transition.farewellTitle', 'Progress saved.')}
+          </h2>
+
+          <p className="nt2-farewell__body">
+            {t('transition.farewellBody1', "Your brain is now deciding what stays and what fades.")}
+          </p>
+          <p className="nt2-farewell__body">
+            {t('transition.farewellBody2', "Tomorrow's 4-minute recall will reinforce the concepts that matter most.")}
+          </p>
+
+          <p className="nt2-farewell__footer">
+            {t('transition.farewellFooter', 'Your streak continues tomorrow.')}
+          </p>
+
+          <button className="nt2-farewell__close" onClick={handleFarewellClose}>
+            {t('transition.farewellClose', 'Close')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="node-transition node-transition--scored">
-      <div className="node-transition__card">
+      <div className="node-transition__card node-transition__card--v2">
         {onExit && (
-          <button className="node-transition__exit" onClick={onExit} title={t('transition.exit', 'Exit session')}>
+          <button className="node-transition__exit" onClick={handleClose} title={t('transition.exit', 'Exit session')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
         )}
-        {/* ── Compact header ── */}
-        <div className="node-transition__header">
-          <div className="node-transition__score-ring" data-score={
-            result.scorePercent >= 90 ? 'high' :
-            result.scorePercent >= 70 ? 'neutral' : 'low'
-          }>
-            <span className="node-transition__score-num">{result.scorePercent}</span>
-            <span className="node-transition__score-pct">%</span>
-          </div>
-          <div className="node-transition__header-text">
-            <h2 className="node-transition__title">
-              {result.type === 'exam'
-                ? t('transition.examDone', 'Exam Complete')
-                : result.type === 'quiz'
-                ? t('transition.quizDone', 'Quiz Complete')
-                : t('transition.flashcardDone', 'Flashcards Complete')}
-            </h2>
-            <p className="node-transition__topic">{result.topic}</p>
-          </div>
-        </div>
 
-        {/* ── Score bar ── */}
-        <div className="node-transition__bar-section">
-          <div className="node-transition__bar-row">
-            <span className="node-transition__bar-label">
-              {result.type === 'quiz' || result.type === 'exam'
-                ? t('transition.correct', 'Correct')
-                : t('transition.mastered', 'Mastered')}
+        {/* ── Identity header: small check + bucket-specific heading ── */}
+        <div className="nt2-identity">
+          <div className={`nt2-identity__check nt2-identity__check--${bucket}`} aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </div>
+          <h2 className="nt2-identity__header">{identity?.header}</h2>
+          <p className="nt2-identity__line" title={result.topic}>{identity?.line}</p>
+
+          {/* Score line — handwritten coral only on the score number */}
+          <p className="nt2-score-line">
+            <span className="nt2-score-line__score">
+              {identity?.got} <span className="nt2-score-line__of">{t('transition.scoreOf', 'of')}</span> {identity?.total}
             </span>
-            <span className="node-transition__bar-value">
-              {result.type === 'quiz' || result.type === 'exam' ? result.correct : result.mastered}/{result.total}
-            </span>
-          </div>
-          <div className="node-transition__bar-track">
-            <div
-              className="node-transition__bar-fill"
-              data-score={
-                result.scorePercent >= 90 ? 'high' :
-                result.scorePercent >= 70 ? 'neutral' : 'low'
-              }
-              style={{ width: `${Math.max(result.scorePercent, 3)}%` }}
-            />
-          </div>
-        </div>
-
-        {/* ── Diagnosis — hero of the screen ── */}
-        <p className="node-transition__diagnosis node-transition__diagnosis--hero">{diagnosis}</p>
-
-        {/* ── Missed concepts (collapsed, max 3) ── */}
-        {(result.type === 'quiz' || result.type === 'exam') && result.missedQuestions?.length > 0 && (
-          <div className="node-transition__missed">
-            <p className="node-transition__missed-label">
-              {t('transition.toReview', 'To review:')}
-            </p>
-            <ul className="node-transition__missed-list">
-              {result.missedQuestions.slice(0, 3).map((q, i) => (
-                <li key={i} className="node-transition__missed-item">{q}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-        {result.type === 'flashcard' && result.reviewCards?.length > 0 && (
-          <div className="node-transition__missed">
-            <p className="node-transition__missed-label">
-              {t('transition.cardsToReview', 'Cards that needed another look:')}
-            </p>
-            <ul className="node-transition__missed-list">
-              {result.reviewCards.slice(0, 3).map((c, i) => (
-                <li key={i} className="node-transition__missed-item">{c}</li>
-              ))}
-            </ul>
-          </div>
-        )}
-
-        {/* ── Suggestion ── */}
-        {suggestion && (
-          <p className="node-transition__suggestion">{suggestion}</p>
-        )}
-
-        {/* ── The Three Options — equal weight, no pre-deciding ── */}
-        <div className="node-transition__actions">
-          {/* Option 1: Drill the gaps (remediation — responsive to what just happened) */}
-          <button
-            className="node-transition__btn node-transition__btn--choice"
-            onClick={handlePracticeMore}
-            disabled={isLoadingPractice}
-          >
-            {isLoadingPractice ? (
-              <>
-                <div className="node-transition__spinner" />
-                <span className="node-transition__btn-label">
-                  {t('transition.building', 'Building your practice...')}
-                </span>
-              </>
+            <span className="nt2-score-line__sep">·</span>
+            {showReadinessDelta ? (
+              <span className="nt2-score-line__delta">↑ {readinessDelta}% {t('transition.closerToReady', 'closer to ready')}</span>
+            ) : identity?.tail ? (
+              <span className="nt2-score-line__tail">{identity.tail}</span>
             ) : (
-              <>
-                <span className="node-transition__btn-label">
-                  {result.incorrect > 0 || result.needReview > 0
-                    ? t('transition.drillGaps', {
-                        count: result.incorrect || result.needReview,
-                        defaultValue: `Review ${result.incorrect || result.needReview} missed concept${(result.incorrect || result.needReview) === 1 ? '' : 's'}`
-                      })
-                    : t('transition.practiceMore', 'Practice more')}
-                </span>
-                <span className="node-transition__btn-preview">
-                  {t(`study.nodeType.${remediationType}`, remediationType)} · ~{getEstimate(remediationType)} min
-                </span>
-              </>
-            )}
-          </button>
-
-          {/* Option 2: Move on to next planned node */}
-          <button
-            className="node-transition__btn node-transition__btn--choice"
-            onClick={onContinue}
-          >
-            <span className="node-transition__btn-label">
-              {nextNode
-                ? t('transition.moveOn', {
-                    topic: nextNode.label,
-                    defaultValue: `Move on to ${nextNode.label}`
-                  })
-                : t('transition.continue', 'Continue')}
-            </span>
-            {nextNode && (
-              <span className="node-transition__btn-preview">
-                {t(`study.nodeType.${nextNode.type}`, nextNode.type)} · ~{getEstimate(nextNode.type)} min
+              <span className="nt2-score-line__tail nt2-score-line__tail--quiet">
+                {t('transition.tailKeepBuilding', 'Keep building.')}
               </span>
             )}
-          </button>
+          </p>
         </div>
 
-        {/* Option 3: Tell the coach — real tappable row, not gray text */}
+        <div className="nt2-divider" />
+
+        {/* ── Tomorrow recap seed — the retention anchor ── */}
+        <div className="nt2-recap">
+          <p className="nt2-recap__label">
+            {t('transition.recapReady', 'Your next recap is ready:')}
+          </p>
+          <p className="nt2-recap__detail">
+            <span className="nt2-recap__bolt" aria-hidden="true">⚡</span>
+            {t('transition.recapDetail', '4 min on what you just learned, before you forget it.')}
+          </p>
+        </div>
+
+        <div className="nt2-divider" />
+
+        {/* ── Your next step — single primary CTA ── */}
+        <p className="nt2-step-label">{t('transition.nextStepIs', 'Your next step is:')}</p>
         <button
-          className="node-transition__coach-row"
+          className="node-transition__btn node-transition__btn--choice nt2-primary"
+          onClick={handlePrimary}
+          disabled={isLoadingPractice}
+        >
+          {isLoadingPractice ? (
+            <>
+              <div className="node-transition__spinner" />
+              <span className="node-transition__btn-label">
+                {t('transition.building', 'Building your practice...')}
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="node-transition__btn-label">{primaryLabel}</span>
+              <span className="node-transition__btn-preview">{primarySublabel}</span>
+            </>
+          )}
+        </button>
+
+        {/* ── Coach link (with chips) — full user control preserved ── */}
+        <button
+          className="node-transition__coach-row nt2-coach"
           onClick={() => setShowCustomInput(!showCustomInput)}
         >
           <svg className="node-transition__coach-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
@@ -757,6 +871,7 @@ const NodeTransition = ({
                   key={i}
                   className="node-transition__chip"
                   onClick={() => handleChipClick(chip)}
+                  disabled={isLoadingPractice}
                 >
                   {chip}
                 </button>
@@ -789,6 +904,11 @@ const NodeTransition = ({
             </div>
           </div>
         )}
+
+        {/* ── Frictionless exit — small gray text link ── */}
+        <button className="nt2-done" onClick={handleDoneForToday}>
+          {t('transition.doneForToday', 'Done for today')}
+        </button>
       </div>
     </div>
   );

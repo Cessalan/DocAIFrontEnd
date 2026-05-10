@@ -15,6 +15,7 @@ import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import ExamConfigModal from './ExamConfigModal';
 import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam, get_prefetched_node_content, consume_prefetched_node_content } from '../../Services/FastAPICalls';
+import { devLog } from '../../Services/devLogger';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
@@ -35,6 +36,37 @@ import './StudyMode.css';
 
 // Dev mode flag - only true in development builds
 const isDev = process.env.NODE_ENV === 'development';
+
+// Coverage-aware readiness pct — mean across all topics, untested = 0.
+// Mirrors the snapshot logic in StudyPlanOverview so the delta we show
+// on the transition screen stays consistent with the readiness card.
+const meanReadinessPct = (perf) => {
+  const topics = perf?.topics ? Object.values(perf.topics) : [];
+  if (topics.length === 0) return null;
+  let sum = 0;
+  for (const t of topics) {
+    const qTotal = t?.questionsTotal || 0;
+    const qCorrect = t?.questionsCorrect || 0;
+    const fTotal = t?.flashcardsTotal || 0;
+    const fMastered = t?.flashcardsMastered || 0;
+    const parts = [];
+    if (qTotal > 0) parts.push(qCorrect / qTotal);
+    if (fTotal > 0) parts.push(fMastered / fTotal);
+    if (parts.length === 0) sum += 0; // untested topics count as 0
+    else sum += parts.reduce((a, b) => a + b, 0) / parts.length;
+  }
+  return (sum / topics.length) * 100;
+};
+
+const computeReadinessDelta = (before, after) => {
+  if (!before || !after) return null;
+  const b = meanReadinessPct(before);
+  const a = meanReadinessPct(after);
+  if (b == null || a == null) return null;
+  // Round so we don't show "↑ 0.4% closer to ready" — that reads as fake
+  // gamified noise. Caller hides the line entirely when delta <= 0.
+  return Math.round(a - b);
+};
 
 // Mascots that can be randomly selected (excluding NurseQuiz and Brain which have special states)
 const SIDE_MASCOTS = [
@@ -65,6 +97,7 @@ const SIDE_MASCOTS = [
 const StudyModeContainer = ({
   chatId,
   studyState,
+  examDate = null, // Hydrated from chat doc; drives the readiness countdown
   sidebarOpen = true,
   onCloseSidebar,
   onExit,
@@ -123,10 +156,14 @@ const StudyModeContainer = ({
 
   // Quiz mastery summary (shown after every quiz instead of immediately advancing)
   const [quizSummaryData, setQuizSummaryData] = useState(null);
-  // Performance snapshot captured when a quiz node starts (to calculate improvement)
+  // Performance snapshot captured when a scored node starts (to calculate
+  // readiness delta on the post-node transition screen)
   const preNodeSnapshotRef = useRef(null);
   // Latest quiz progress from handleAnswer (to get final score at completion)
   const latestQuizProgressRef = useRef(null);
+  // Readiness delta (% closer to ready) for the transition screen.
+  // Hidden when null/<=0 or when no exam date is set.
+  const [readinessDelta, setReadinessDelta] = useState(null);
 
   // Flashcard adaptive feedback
   const [consecutiveGotIt, setConsecutiveGotIt] = useState(0);
@@ -241,8 +278,9 @@ const StudyModeContainer = ({
     setAdaptiveFeedback(null);
     latestQuizProgressRef.current = null;
 
-    // Snapshot current performance before quiz starts (for improvement calculation)
-    if (node.type === 'quiz') {
+    // Snapshot current performance before any scored node (quiz/flashcard/exam)
+    // so the post-node transition screen can show a readiness delta.
+    if (node.type === 'quiz' || node.type === 'flashcard' || node.type === 'exam') {
       getStudyPerformance(chatId).then(data => {
         preNodeSnapshotRef.current = data;
       }).catch(() => { preNodeSnapshotRef.current = null; });
@@ -886,13 +924,32 @@ const StudyModeContainer = ({
       return;
     }
 
-    // Show the transition screen for ALL node types
     // Reset transition-related state
     setIsLoadingPractice(false);
     setIsLoadingCustom(false);
     setCustomEcho(null);
+    setReadinessDelta(null);
     setView('transition');
-  }, [viewOnly, handleAdvanceNode]);
+
+    // Compute readiness delta from pre/post snapshots so the transition
+    // screen can show "↑ X% closer to ready" when an exam date is set.
+    // Fire-and-forget — the screen renders immediately and the line
+    // appears once the post-snapshot resolves.
+    if (preNodeSnapshotRef.current && examDate) {
+      getStudyPerformance(chatId).then(after => {
+        const delta = computeReadinessDelta(preNodeSnapshotRef.current, after);
+        setReadinessDelta(delta);
+      }).catch(() => setReadinessDelta(null));
+    }
+  }, [viewOnly, handleAdvanceNode, chatId, examDate]);
+
+  // Lightweight analytics sink — currently logs in dev. Wire this to
+  // a real provider (PostHog, Amplitude, GA) later without touching
+  // NodeTransition.
+  const handleTransitionAnalytics = useCallback((event, payload) => {
+    devLog('📈 transition analytics', event, payload);
+    // TODO: forward to real analytics when provider is added
+  }, []);
 
   // ── Transition screen: user chose "Move on" ────────────────────────
   // Advances to next node AND immediately launches it (no overview stop)
@@ -1483,10 +1540,13 @@ const StudyModeContainer = ({
           audioSkipped={audioWasSkipped}
           nextNode={getNextPlannedNode()}
           performanceData={insightsData}
+          examDate={examDate}
+          readinessDelta={readinessDelta}
           onContinue={handleTransitionContinue}
           onPracticeMore={handleTransitionPractice}
           onCustomRequest={handleTransitionCustomRequest}
           onExit={handleExitStudy}
+          onAnalytics={handleTransitionAnalytics}
           isLoadingPractice={isLoadingPractice}
           isLoadingCustom={isLoadingCustom}
           customEcho={customEcho}
@@ -1539,6 +1599,7 @@ const StudyModeContainer = ({
         )}
         <StudyPlanOverview
           studyState={currentStudyState}
+          examDate={examDate}
           onNodeSelect={handleNodeSelect}
           onRetakeExam={handleRetakeExam}
           onExit={handleExitStudy}

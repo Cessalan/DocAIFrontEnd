@@ -13,6 +13,7 @@ import {
   orderBy,
   onSnapshot,
   addDoc,
+  updateDoc,
   serverTimestamp,
   where
 } from "firebase/firestore";
@@ -150,7 +151,7 @@ const ChatInterface = ({
   const [chatMessages, setChatMessages] = useState([]);
   const [isGameChat, setIsGameChat] = useState(false);
   const [gameState, setGameState] = useState(null);
-  const [currentExamData, setCurrentExamData] = useState(null); // { examId, examName, examDate }
+  const [currentExamData, setCurrentExamData] = useState(null); // { examId, examName, examDate, hardestTopics }
   const [isChatDataLoaded, setIsChatDataLoaded] = useState(!chatId); // True if no chatId (new chat) or after chat doc is fetched
   const [userInputText, setUserInputText] = useState('');
   const [uploadedFilesList, setUploadedFilesList] = useState([]);
@@ -698,12 +699,23 @@ const ChatInterface = ({
         devLog('🎮 Chat type check:', { chatId, type: chatData.type, isGame, gameState: chatData.gameState });
         setIsGameChat(isGame);
         setGameState(chatData.gameState || null);
-        // Check if this chat is linked to an exam
-        if (chatData.examId) {
+        // Hydrate exam metadata. Two paths feed into this:
+        //   - ExamPrepModal (file-upload) writes examId + examName + examDate
+        //   - PlanOnboarding writes examDate + hardestTopics (no examId)
+        // We surface either so the readiness-card countdown lights up in
+        // both flows. The chat-landing exam-context card is gated on
+        // examName separately (so the PlanOnboarding case doesn't render
+        // an empty header). hardestTopics is included so a chat reload
+        // can re-prefill the focus prompt without re-asking.
+        const hydratedHardestTopics = Array.isArray(chatData.hardestTopics)
+          ? chatData.hardestTopics.filter(Boolean)
+          : [];
+        if (chatData.examId || chatData.examDate || hydratedHardestTopics.length > 0) {
           setCurrentExamData({
-            examId: chatData.examId,
-            examName: chatData.examName,
-            examDate: chatData.examDate
+            examId: chatData.examId || null,
+            examName: chatData.examName || null,
+            examDate: chatData.examDate || null,
+            hardestTopics: hydratedHardestTopics
           });
         } else {
           setCurrentExamData(null);
@@ -3286,6 +3298,56 @@ const ChatInterface = ({
     if (!planOnboardingMsg) return;
     devLog('✅ PlanOnboarding confirm — opening StartStudyModal with merged prefs');
 
+    // Persist the user's exam-prep answers (test date + hardest topics)
+    // onto the chat document so downstream UI — readiness countdown,
+    // chat-landing exam context, future restorations — can pick them up
+    // without re-asking. Without this, these answers only flowed to the
+    // plan-generation API call and were lost as soon as the user
+    // refreshed.
+    const examDateRaw = userPreferences?.examDate;
+    const examDateValue = examDateRaw
+      ? (examDateRaw instanceof Date ? examDateRaw : new Date(examDateRaw))
+      : null;
+    const hardestTopics = Array.isArray(userPreferences?.hardestTopics)
+      ? userPreferences.hardestTopics.filter(Boolean)
+      : [];
+
+    if (currentChatID) {
+      const chatUpdates = { updatedAt: serverTimestamp() };
+      if (examDateValue && !Number.isNaN(examDateValue.getTime())) {
+        chatUpdates.examDate = examDateValue;
+      }
+      if (hardestTopics.length > 0) {
+        chatUpdates.hardestTopics = hardestTopics;
+      }
+      // Skip the write if there's nothing new to save (only updatedAt).
+      if (Object.keys(chatUpdates).length > 1) {
+        updateDoc(doc(db, "chats", currentChatID), chatUpdates).catch((err) => {
+          console.error('Failed to persist exam-prep prefs to chat doc:', err);
+        });
+      }
+    }
+
+    // Surface the exam date + hardest topics to the rest of the UI
+    // immediately so the readiness countdown and downstream consumers
+    // (e.g. the focused-review CTA) light up without waiting for a
+    // chat reload.
+    const hasFreshExamData =
+      (examDateValue && !Number.isNaN(examDateValue.getTime())) ||
+      hardestTopics.length > 0;
+    if (hasFreshExamData) {
+      setCurrentExamData(prev => ({
+        examId: prev?.examId || null,
+        examName: prev?.examName || null,
+        examDate:
+          examDateValue && !Number.isNaN(examDateValue.getTime())
+            ? examDateValue
+            : prev?.examDate || null,
+        hardestTopics:
+          hardestTopics.length > 0 ? hardestTopics : prev?.hardestTopics || [],
+      }));
+    }
+
     // Swap the card to the action menu first so the chat history stays coherent
     // even if the user backs out of the modal.
     swapPlanOnboardingForActions(planOnboardingMsg);
@@ -3772,6 +3834,7 @@ const ChatInterface = ({
           key={currentChatID}
           chatId={currentChatID}
           studyState={studyState}
+          examDate={currentExamData?.examDate || null}
           sidebarOpen={sidebarOpen}
           onCloseSidebar={onCloseSidebar}
           viewOnly={viewAllChatsMode} // Dev mode: view without triggering reviews
@@ -3858,8 +3921,10 @@ const ChatInterface = ({
         )}
 
 
-        {/* Empty State - Exam-linked chat: show upload only with exam context */}
-        {!hasMessages && isChatDataLoaded && !isGameChat && currentExamData && (
+        {/* Empty State - Exam-linked chat: show upload only with exam context.
+            Gated on examName so chats that captured only an examDate via
+            PlanOnboarding (no exam entity) don't render an empty title. */}
+        {!hasMessages && isChatDataLoaded && !isGameChat && currentExamData?.examName && (
           <div className="empty-chat-state exam-linked">
             <div className="exam-context-header">
               <h3 className="exam-context-title">{currentExamData.examName}</h3>
@@ -3892,8 +3957,11 @@ const ChatInterface = ({
           </div>
         )}
 
-        {/* Empty State - Regular chat: single focused CTA */}
-        {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData && (
+        {/* Empty State - Regular chat: single focused CTA.
+            Treats "examDate only" chats (PlanOnboarding-style) as regular
+            chats here — they don't have an exam entity to feature in the
+            landing card. The countdown still surfaces inside StudyMode. */}
+        {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData?.examName && (
           <div className="empty-chat-state">
             <div className="empty-chat-single-cta">
               {/* Main upload CTA - defaults to Study Journey */}

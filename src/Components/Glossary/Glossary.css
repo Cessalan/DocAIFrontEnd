@@ -359,60 +359,11 @@ body.dark-mode .glossary-skel-row {
   background-size: 200% 100%;
 }
 
-/* ── First-time discoverability hint ─────────────────────────── */
-.glossary-hint {
-  position: fixed;
-  z-index: 98000;
-  pointer-events: none;
-  background: var(--primary-coral-dark);
-  color: white;
-  font-family: 'Outfit', sans-serif;
-  font-size: 12.5px;
-  font-weight: 600;
-  padding: 7px 12px;
-  border-radius: 10px;
-  box-shadow: 0 6px 20px rgba(196, 106, 90, 0.32);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  white-space: nowrap;
-  animation: gp-hint-bob 1.6s ease-in-out infinite, gp-hint-in 0.32s ease-out both;
-}
-
-.glossary-hint::before {
-  content: '';
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  background: var(--primary-coral-dark);
-  transform: rotate(45deg);
-  bottom: -4px;
-  left: 18px;
-}
-
-.glossary-hint-icon {
-  display: inline-block;
-  font-size: 14px;
-  line-height: 1;
-  transform: translateY(-1px);
-}
-
-@keyframes gp-hint-in {
-  from { opacity: 0; transform: translateY(6px) scale(0.92); }
-  to   { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-@keyframes gp-hint-bob {
-  0%, 100% { transform: translateY(0); }
-  50%      { transform: translateY(-3px); }
-}
-
 /* ── Reduced-motion: drop animations, keep transitions snappy ─ */
 @media (prefers-reduced-motion: reduce) {
   .glossary-popover,
   .glossary-sheet,
   .glossary-popover-root.is-sheet .glossary-popover-backdrop,
-  .glossary-hint,
   .glossary-skel-row {
     animation: none !important;
   }

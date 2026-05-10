@@ -6,7 +6,13 @@
       "Bash(node -e \"require\\('./src/i18n/i18n.js'\\)\")",
       "Bash(node --check src/Components/ChatInerface/PlanOnboarding.js)",
       "Bash(node --check \"c:/Users/Billion/Desktop/ragfrontend/src/Components/ChatInerface/ChatInterface.js\")",
-      "Bash(node --input-type=module --check)"
+      "Bash(node --input-type=module --check)",
+      "Bash(node -e \"const parser = require\\('@babel/parser'\\); const fs = require\\('fs'\\); for \\(const f of ['src/Components/StudyMode/StudyPlanOverview.js', 'src/Components/StudyMode/StudyModeContainer.js', 'src/Components/ChatInerface/ChatInterface.js']\\) { const code = fs.readFileSync\\(f, 'utf8'\\); try { parser.parse\\(code, { sourceType: 'module', plugins: ['jsx'] }\\); console.log\\('OK:', f\\); } catch \\(e\\) { console.error\\('FAIL', f, ':', e.message\\); process.exit\\(1\\); } }\")",
+      "Bash(node -e \"const parser = require\\('@babel/parser'\\); const fs = require\\('fs'\\); for \\(const f of ['src/Components/ChatInerface/ChatInterface.js']\\) { const code = fs.readFileSync\\(f, 'utf8'\\); try { parser.parse\\(code, { sourceType: 'module', plugins: ['jsx'] }\\); console.log\\('OK:', f\\); } catch \\(e\\) { console.error\\('FAIL', f, ':', e.message\\); process.exit\\(1\\); } }\")",
+      "Bash(node -e \"const parser = require\\('@babel/parser'\\); const fs = require\\('fs'\\); for \\(const f of ['src/Components/StudyMode/StudyPlanOverview.js', 'src/Components/StudyMode/StudyModeContainer.js', 'src/Components/ChatInerface/ChatInterface.js', 'src/i18n/i18n.js']\\) { const code = fs.readFileSync\\(f, 'utf8'\\); try { parser.parse\\(code, { sourceType: 'module', plugins: ['jsx'] }\\); console.log\\('OK:', f\\); } catch \\(e\\) { console.error\\('FAIL', f, ':', e.message\\); process.exit\\(1\\); } }\")",
+      "Bash(node -e ' *)",
+      "Bash(PORT=3055 BROWSER=none CI=true npm run build)",
+      "Bash(PORT=3055 BROWSER=none npm run build)"
     ]
   }
 }

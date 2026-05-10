@@ -822,7 +822,26 @@ const resources = {
         days: "{{days}}d",
         past: "{{days}}d ago",
         now: "Now!",
-        today: "Today"
+        today: "Today",
+        // Readiness-card countdown banner
+        eyebrowUntil: "Exam in",
+        eyebrowToday: "Test day",
+        eyebrowPast: "Exam passed",
+        unitDays_one: "day",
+        unitDays_other: "days",
+        unitHours_one: "hour",
+        unitHours_other: "hours",
+        unitMinutes_one: "minute",
+        unitMinutes_other: "minutes",
+        unitSeconds_one: "second",
+        unitSeconds_other: "seconds",
+        almostThere: "Almost there",
+        // Past-exam phrasing — single localized sentence so EN ("5 days ago")
+        // and FR ("il y a 5 jours") both read naturally
+        daysAgo_one: "1 day ago",
+        daysAgo_other: "{{count}} days ago",
+        earlierToday: "Earlier today",
+        aria: "Time until exam"
       },
 
       // Audio Generation
@@ -1197,6 +1216,44 @@ const resources = {
         tapToGenerateReview: "Tap to generate your review plan",
         noNodesYet: "No study plan generated yet.",
 
+        // Readiness Snapshot — Phase 2 entry card
+        testReadiness: "Test readiness",
+        confidence: "confidence",
+        gapsToClose: "Gaps to close before test day",
+        lockedIn_one: "{{count}} topic locked in",
+        lockedIn_other: "{{count}} topics locked in",
+        estimateMin: "~{{min}} min",
+        buildFocusedReview: "Build my focused review",
+        buildPracticeRound: "Build my practice round",
+        buildingFocusedReview: "Building your focused review",
+        readinessNoData: "Let's lock in what you've learned",
+        readinessNoDataSub: "A short mixed practice round to consolidate everything",
+        readinessAllStrong: "You're solid across the board",
+        readinessAllStrongSub: "A few mixed-format quizzes to keep it sharp",
+        readinessMixed: "Strong start. Let's close these gaps.",
+        readinessBuildUp: "Let's build your foundation before test day",
+        readinessGapsSub: "We'll target the spots most likely to surprise you on test day",
+        narrationReview: "Reviewing your results",
+        narrationAnalyze: "Mapping accuracy by topic",
+        narrationFinding: "Picking the spots that matter most",
+        narrationBuilding: "Building your targeted nodes",
+        readinessSoFar: "Readiness so far",
+        keepGoingCta: "Keep going",
+        nodesUntilReview_one: "{{count}} more node",
+        nodesUntilReview_other: "{{count}} more nodes",
+        basedOnQuestions_one: "Based on {{count}} answered question",
+        basedOnQuestions_other: "Based on {{count}} answered questions",
+        readinessUntested_one: "{{count}} topic not measured yet",
+        readinessUntested_other: "{{count}} topics not measured yet",
+        readinessUntestedSub: "Your confidence will sharpen as you cover more",
+        readinessJustStarted: "Your test readiness starts here",
+        readinessFirstQuiz: "Take your first quiz to start measuring how ready you are",
+        // Starter ring (no quiz data yet) — replaces the harsh "0% confidence"
+        letsBegin: "Let's begin",
+        readyToBegin: "Ready to begin",
+        gapsAndUntested: "Topics to cover before test day",
+        notMeasuredYet: "Not measured",
+
         // StudyMindmapCard
         conceptMap: "Concept Map",
         buildingConceptMap: "Building your concept map...",
@@ -1276,13 +1333,58 @@ const resources = {
         soundsGood: "Sounds good",
         customError: "Something went wrong. Try again or continue to the next step.",
 
-        // Example chips
+        // Example chips — "Practice more" lives here as a chip, not a top-level button
+        chipPracticeMore: "Practice more",
         chipHarder: "Make it harder",
         chipFlashcards: "Just flashcards",
         chipExplain: "Explain what I missed",
         chipQuizMe: "Quiz me on this",
         chipGoDeeper: "Go deeper",
-        chipSkipAhead: "Skip ahead"
+        chipSkipAhead: "Skip ahead",
+
+        // ── End-of-session redesign (D1 retention) ──
+        // Identity-based headers by score bucket
+        headerMastered: "Knowledge locked in",
+        headerSolid: "Solid session",
+        headerGaps: "Working the hard stuff",
+        headerTough: "Tough one — you showed up",
+
+        // Identity sentences — reinforce growth, not winning
+        identityMastered: "You're building mastery on {{topic}}.",
+        identityMasteredFc: "You're building mastery on {{topic}}.",
+        identitySolid: "You're sharpening your reasoning on {{topic}}.",
+        identitySolidFc: "You're sharpening your recall on {{topic}}.",
+        identityGaps: "You're closing gaps on {{topic}}.",
+        identityTough: "You're tackling the part most students avoid.",
+
+        // Score line — extra context after "{n} of {total}."
+        scoreOf: "of",
+        tailSolid: "{{count}} to firm up.",
+        tailGaps_one: "{{count}} concept to revisit.",
+        tailGaps_other: "{{count}} concepts to revisit.",
+        tailTough: "{{topic}} is worth another pass.",
+        tailKeepBuilding: "Keep building.",
+        closerToReady: "closer to ready",
+
+        // Recap (retention anchor) — REQUIRED on every session
+        recapReady: "Your next recap is ready:",
+        recapDetail: "4 min on what you just learned, before you forget it.",
+
+        // Next-step CTA
+        nextStepIs: "Your next step is:",
+        keepGoing: "Keep going →",
+        morePractice: "More questions on this topic",
+
+        // Frictionless exit
+        doneForToday: "Save progress & return tomorrow",
+
+        // Farewell card — shown after the user taps the exit link.
+        // Calm send-off, no commitment ask, no scheduling.
+        farewellTitle: "Progress saved.",
+        farewellBody1: "Your brain is now deciding what stays and what fades.",
+        farewellBody2: "Tomorrow's 4-minute recall will reinforce the concepts that matter most.",
+        farewellFooter: "Your streak continues tomorrow.",
+        farewellClose: "Close"
       },
 
       // Exam — mini-test at end of each section
@@ -2141,7 +2243,26 @@ const resources = {
         days: "{{days}}j",
         past: "il y a {{days}}j",
         now: "Maintenant!",
-        today: "Aujourd'hui"
+        today: "Aujourd'hui",
+        // Readiness-card countdown banner
+        eyebrowUntil: "Examen dans",
+        eyebrowToday: "Jour J",
+        eyebrowPast: "Examen passé",
+        unitDays_one: "jour",
+        unitDays_other: "jours",
+        unitHours_one: "heure",
+        unitHours_other: "heures",
+        unitMinutes_one: "minute",
+        unitMinutes_other: "minutes",
+        unitSeconds_one: "seconde",
+        unitSeconds_other: "secondes",
+        almostThere: "On y est presque",
+        // Past-exam phrasing — single localized sentence so EN ("5 days ago")
+        // and FR ("il y a 5 jours") both read naturally
+        daysAgo_one: "il y a 1 jour",
+        daysAgo_other: "il y a {{count}} jours",
+        earlierToday: "Plus tôt aujourd'hui",
+        aria: "Temps avant l'examen"
       },
 
       // Audio Generation
@@ -2518,6 +2639,44 @@ const resources = {
         tapToGenerateReview: "Appuie pour générer ton plan de révision",
         noNodesYet: "Aucun plan d'étude généré pour l'instant.",
 
+        // Readiness Snapshot — carte d'entrée de la Phase 2
+        testReadiness: "Préparation à l'examen",
+        confidence: "confiance",
+        gapsToClose: "Lacunes à combler avant le jour J",
+        lockedIn_one: "{{count}} sujet maîtrisé",
+        lockedIn_other: "{{count}} sujets maîtrisés",
+        estimateMin: "~{{min}} min",
+        buildFocusedReview: "Crée ma révision ciblée",
+        buildPracticeRound: "Crée ma série de pratique",
+        buildingFocusedReview: "Création de ta révision ciblée",
+        readinessNoData: "Consolidons ce que tu as appris",
+        readinessNoDataSub: "Une courte série mixte pour tout consolider",
+        readinessAllStrong: "Tu es solide sur toute la ligne",
+        readinessAllStrongSub: "Quelques quiz mixtes pour garder le cap",
+        readinessMixed: "Bon départ. Comblons ces lacunes.",
+        readinessBuildUp: "Bâtissons ta base avant le jour J",
+        readinessGapsSub: "On vise les zones les plus susceptibles de te surprendre le jour de l'examen",
+        narrationReview: "Analyse de tes résultats",
+        narrationAnalyze: "Cartographie de ta précision par sujet",
+        narrationFinding: "Sélection des zones les plus importantes",
+        narrationBuilding: "Construction de tes étapes ciblées",
+        readinessSoFar: "Préparation jusqu'ici",
+        keepGoingCta: "Continue",
+        nodesUntilReview_one: "{{count}} étape de plus",
+        nodesUntilReview_other: "{{count}} étapes de plus",
+        basedOnQuestions_one: "Basé sur {{count}} question répondue",
+        basedOnQuestions_other: "Basé sur {{count}} questions répondues",
+        readinessUntested_one: "{{count}} sujet pas encore évalué",
+        readinessUntested_other: "{{count}} sujets pas encore évalués",
+        readinessUntestedSub: "Ta confiance se précisera à mesure que tu progresses",
+        readinessJustStarted: "Ta préparation à l'examen commence ici",
+        readinessFirstQuiz: "Fais ton premier quiz pour commencer à mesurer ta préparation",
+        // Starter ring (no quiz data yet) — replaces the harsh "0% confidence"
+        letsBegin: "On commence",
+        readyToBegin: "Prêt à commencer",
+        gapsAndUntested: "Sujets à couvrir avant le jour J",
+        notMeasuredYet: "Non évalué",
+
         // StudyMindmapCard
         conceptMap: "Carte mentale",
         buildingConceptMap: "Construction de ta carte mentale...",
@@ -2597,13 +2756,58 @@ const resources = {
         soundsGood: "Ça me va",
         customError: "Quelque chose s'est mal passé. Réessaie ou continue à la prochaine étape.",
 
-        // Puces d'exemples
+        // Puces d'exemples — « Pratiquer encore » est ici comme puce, pas comme bouton principal
+        chipPracticeMore: "Pratiquer encore",
         chipHarder: "Rends-le plus difficile",
         chipFlashcards: "Juste des flashcards",
         chipExplain: "Explique ce que j'ai raté",
         chipQuizMe: "Teste-moi là-dessus",
         chipGoDeeper: "Approfondis",
-        chipSkipAhead: "Passer au suivant"
+        chipSkipAhead: "Passer au suivant",
+
+        // ── Refonte de fin de session (rétention J+1) ──
+        // En-têtes basés sur l'identité, par tranche de score
+        headerMastered: "Acquis bien ancré",
+        headerSolid: "Belle session",
+        headerGaps: "Tu travailles le plus exigeant",
+        headerTough: "Difficile — bravo d'être venue",
+
+        // Phrases d'identité — renforcer la progression, pas la victoire
+        identityMastered: "Tu bâtis ta maîtrise sur {{topic}}.",
+        identityMasteredFc: "Tu bâtis ta maîtrise sur {{topic}}.",
+        identitySolid: "Tu affines ton raisonnement sur {{topic}}.",
+        identitySolidFc: "Tu affines ta mémorisation sur {{topic}}.",
+        identityGaps: "Tu combles tes lacunes sur {{topic}}.",
+        identityTough: "Tu t'attaques à la partie que la plupart évitent.",
+
+        // Ligne de score — contexte supplémentaire après « {n} sur {total}. »
+        scoreOf: "sur",
+        tailSolid: "{{count}} à consolider.",
+        tailGaps_one: "{{count}} concept à revoir.",
+        tailGaps_other: "{{count}} concepts à revoir.",
+        tailTough: "{{topic}} mérite un second passage.",
+        tailKeepBuilding: "Continue à construire.",
+        closerToReady: "plus prête",
+
+        // Récap (ancre de rétention) — REQUIS à chaque session
+        recapReady: "Ton prochain récap est prêt :",
+        recapDetail: "4 min sur ce que tu viens d'apprendre, avant de l'oublier.",
+
+        // CTA prochaine étape
+        nextStepIs: "Ta prochaine étape :",
+        keepGoing: "Continuer →",
+        morePractice: "Plus de questions sur ce sujet",
+
+        // Sortie sans friction
+        doneForToday: "Sauvegarder et revenir demain",
+
+        // Carte d'au revoir — affichée après le clic sur le lien de sortie.
+        // Message apaisant, sans engagement ni planification.
+        farewellTitle: "Progression sauvegardée.",
+        farewellBody1: "Ton cerveau décide en ce moment ce qui reste et ce qui s'efface.",
+        farewellBody2: "Le rappel de 4 minutes de demain renforcera les concepts qui comptent le plus.",
+        farewellFooter: "Ta série continue demain.",
+        farewellClose: "Fermer"
       },
 
       // Examen — mini-test à la fin de chaque section
