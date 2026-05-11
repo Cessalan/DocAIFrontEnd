@@ -102,6 +102,9 @@ import ExamPrepModal from './ExamPrepModal';
 // Common Components
 import ExamCountdown from '../Common/ExamCountdown';
 
+// Welcome-back toast (tab-return acknowledgement)
+import WelcomeBackToast from './WelcomeBackToast';
+
 // Mindmap
 import ChatMindmap from './ChatMindmap';
 
@@ -213,6 +216,75 @@ const ChatInterface = ({
 
   // File error toast state
   const [fileErrorToast, setFileErrorToast] = useState(null);
+
+  // Welcome-back toast (shown when user returns after 30+ seconds away).
+  // Inlined here (rather than a separate hook file) so it's bundled with
+  // ChatInterface — no new top-level directory for the dev-server watcher
+  // to miss. Uses both visibilitychange (tab switches, mobile background)
+  // and blur/focus (Alt+Tab to another app).
+  // `welcomeBack` — null when no toast, or `{ message, accent }` while the
+  // toast is open. `accent` is the substring (the topic) the toast styles
+  // as a coral/lavender highlight inside the warm sentence.
+  const [welcomeBack, setWelcomeBack] = useState(null);
+  const tabHiddenAtRef = useRef(null);
+  const WELCOME_BACK_THRESHOLD_MS = 30000;
+
+  useEffect(() => {
+    const markAway = () => {
+      if (tabHiddenAtRef.current != null) return;
+      tabHiddenAtRef.current = Date.now();
+    };
+
+    const markBack = () => {
+      if (tabHiddenAtRef.current == null) return;
+      const elapsed = Date.now() - tabHiddenAtRef.current;
+      tabHiddenAtRef.current = null;
+      if (elapsed < WELCOME_BACK_THRESHOLD_MS) return;
+
+      // Warm, topic-anchored, no numbers — frames effort instead of score.
+      // The `accent` substring is what the toast styles in coral/lavender.
+      const studySubject = isStudyModeRef.current && studyStateRef.current?.path
+        ? ((studyStateRef.current.path.topics && studyStateRef.current.path.topics[0])
+            || (currentChatTitleRef.current && currentChatTitleRef.current.trim())
+            || null)
+        : null;
+      const examSubject = currentExamDataRef.current?.examName || null;
+      const chatSubject = (currentChatTitleRef.current && currentChatTitleRef.current.trim()) || null;
+
+      let message;
+      let accent = null;
+      if (studySubject) {
+        message = `Welcome back — you were working through ${studySubject}, you're doing great.`;
+        accent = studySubject;
+      } else if (examSubject) {
+        message = `Welcome back — you were prepping for ${examSubject}, you've got this.`;
+        accent = examSubject;
+      } else if (chatSubject) {
+        message = `Welcome back — picking up where you left off on ${chatSubject}, you're doing great.`;
+        accent = chatSubject;
+      } else {
+        message = "Welcome back — glad to see you again.";
+      }
+
+      setWelcomeBack({ message, accent });
+    };
+
+    const onVisibility = () => {
+      if (document.hidden) markAway();
+      else markBack();
+    };
+    const onBlur = () => markAway();
+    const onFocus = () => markBack();
+
+    document.addEventListener('visibilitychange', onVisibility);
+    window.addEventListener('blur', onBlur);
+    window.addEventListener('focus', onFocus);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibility);
+      window.removeEventListener('blur', onBlur);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps -- refs read inside handlers stay fresh
 
   // Auto-dismiss file error toast after 5 seconds
   useEffect(() => {
@@ -358,6 +430,18 @@ const ChatInterface = ({
   const handleSendNewUserMessageRef = useRef(null);
   const handleQuizAnswerSelectRef = useRef(null);
   const handlePostDocumentUploadOptionRef = useRef(null);
+
+  // Keep refs in sync with the latest values the visibility handler reads.
+  // Using refs avoids re-binding the document-level listeners on every state
+  // change while still letting the handler see current values at trigger time.
+  const isStudyModeRef = useRef(isStudyMode);
+  const studyStateRef = useRef(studyState);
+  const currentExamDataRef = useRef(currentExamData);
+  const currentChatTitleRef = useRef(currentChatTitle);
+  isStudyModeRef.current = isStudyMode;
+  studyStateRef.current = studyState;
+  currentExamDataRef.current = currentExamData;
+  currentChatTitleRef.current = currentChatTitle;
 
   // ============================================
   // HELPER FUNCTIONS
@@ -3825,6 +3909,17 @@ const ChatInterface = ({
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
       <ProgressDashboard />
+
+      {/* Welcome-back Toast — shows when user returns after 30s+ away.
+          Rendered at top level so it's visible in both regular chat and study mode. */}
+      {welcomeBack && (
+        <WelcomeBackToast
+          message={welcomeBack.message}
+          accent={welcomeBack.accent}
+          belowStudyHeader={isStudyMode}
+          onDismiss={() => setWelcomeBack(null)}
+        />
+      )}
 
       {/* Study Mode - Full screen overlay when active.
           studyState.chatId match ensures we never mount with a mismatched chat
