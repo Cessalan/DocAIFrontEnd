@@ -32,7 +32,7 @@ const ChatQuizStream = ({
   onFeedbackSubmit,
   feedbackData
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Convert backend format to internal format
   // Backend: { question, options, answer, justification, topic, userSelection?, correctIndex? }
@@ -397,7 +397,12 @@ const ChatQuizStream = ({
     }));
 
     try {
-      const result = await fetchQuizRationale(q.question, q.options, q.correctIndex);
+      const result = await fetchQuizRationale(
+        q.question,
+        q.options,
+        q.correctIndex,
+        i18n?.language
+      );
       const html = (result && result.rationale_html) || '';
 
       setQuestionRationales(prev => ({
@@ -418,7 +423,7 @@ const ChatQuizStream = ({
         [qIndex]: { html: '', loading: false, error: true }
       }));
     }
-  }, [questions, questionRationales, expandedRationales, onRationaleFetched]);
+  }, [questions, questionRationales, expandedRationales, onRationaleFetched, i18n?.language]);
 
   // Track previous queue position to detect navigation
   const prevQueuePositionRef = useRef(currentQueuePosition);

@@ -20,7 +20,7 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
  * @param {Function} onExit - Callback to exit/close the card
  */
 const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
   const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
@@ -297,7 +297,12 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
     }));
 
     try {
-      const result = await fetchQuizRationale(q.question, q.options, q.correctIndex);
+      const result = await fetchQuizRationale(
+        q.question,
+        q.options,
+        q.correctIndex,
+        i18n?.language
+      );
       const html = (result && result.rationale_html) || '';
       setQuestionRationales(prev => ({
         ...prev,
@@ -313,7 +318,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         [qIndex]: { html: '', loading: false, error: true }
       }));
     }
-  }, [questions, questionRationales, expandedRationales, onRationaleFetched]);
+  }, [questions, questionRationales, expandedRationales, onRationaleFetched, i18n?.language]);
 
   // Per-question rationale state for the currently displayed question.
   const cachedRationale = questionRationales[currentQueuePosition];

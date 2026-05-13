@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect, useCallback } from 'react';
+import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react';
 import ReactMarkDown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatQuizStream from "./ChatQuizStream";
@@ -203,6 +203,7 @@ const ChatMessage = ({
   onSendMessage,
   onFeedbackSubmit,
   onDeleteMessage,
+  onEditMessage,
   viewAllChatsMode = false
 }) => {
   const { i18n, t } = useTranslation();
@@ -218,6 +219,42 @@ const ChatMessage = ({
 
   // Hover state for delete button (dev mode only)
   const [isHovered, setIsHovered] = useState(false);
+
+  // Inline edit state (user messages only)
+  const [isEditing, setIsEditing] = useState(false);
+  const [editText, setEditText] = useState('');
+  const editTextareaRef = useRef(null);
+
+  useEffect(() => {
+    if (isEditing && editTextareaRef.current) {
+      const el = editTextareaRef.current;
+      el.focus();
+      el.setSelectionRange(el.value.length, el.value.length);
+      el.style.height = 'auto';
+      el.style.height = el.scrollHeight + 'px';
+    }
+  }, [isEditing]);
+
+  const startEditing = useCallback(() => {
+    setEditText(message?.content || '');
+    setIsEditing(true);
+  }, [message?.content]);
+
+  const cancelEditing = useCallback(() => {
+    setIsEditing(false);
+    setEditText('');
+  }, []);
+
+  const submitEdit = useCallback(() => {
+    const trimmed = editText.trim();
+    if (!trimmed || trimmed === message?.content) {
+      cancelEditing();
+      return;
+    }
+    if (onEditMessage) onEditMessage(message.id, trimmed);
+    setIsEditing(false);
+    setEditText('');
+  }, [editText, message?.content, message?.id, onEditMessage, cancelEditing]);
 
   // Rewrite-message state (AI text messages only)
   const [rewriteState, setRewriteState] = useState({
@@ -614,9 +651,47 @@ const ChatMessage = ({
 
         {/* Regular Text Message */}
         {!parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
-          <div className={isAI ? "message-text" : "user-text user-text-markdown"}>
+          <div className={isAI ? "message-text" : isEditing ? "message-edit-mode" : "user-text user-text-markdown"}>
             {isUser ? (
-              <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
+              isEditing ? (
+                <div className="message-edit-container">
+                  <textarea
+                    ref={editTextareaRef}
+                    className="message-edit-textarea"
+                    value={editText}
+                    placeholder={t('chat.editPlaceholder')}
+                    aria-label={t('chat.editMessage')}
+                    onChange={e => {
+                      setEditText(e.target.value);
+                      e.target.style.height = 'auto';
+                      e.target.style.height = e.target.scrollHeight + 'px';
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); submitEdit(); }
+                      if (e.key === 'Escape') cancelEditing();
+                    }}
+                  />
+                  <div className="message-edit-actions">
+                    <button
+                      type="button"
+                      className="message-edit-cancel"
+                      onClick={cancelEditing}
+                    >
+                      {t('chat.editCancel')}
+                    </button>
+                    <button
+                      type="button"
+                      className="message-edit-save"
+                      onClick={submitEdit}
+                      disabled={!editText.trim()}
+                    >
+                      {t('chat.editSave')}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
+              )
             ) : (
               <div className={`ai-message-wrapper ${message.isStreaming ? 'streaming' : 'complete'}`}>
                 <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
@@ -645,6 +720,24 @@ const ChatMessage = ({
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* Edit button — shown on hover for user messages that are not streaming */}
+        {isUser && !message.isStreaming && onEditMessage && !isEditing && (
+          <div className="user-message-action-row">
+            <button
+              type="button"
+              className="message-edit-btn"
+              onClick={startEditing}
+              title={t('chat.editMessage')}
+              aria-label={t('chat.editMessage')}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M12 20h9" />
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+              </svg>
+            </button>
           </div>
         )}
 

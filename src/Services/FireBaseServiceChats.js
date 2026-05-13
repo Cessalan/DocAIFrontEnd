@@ -824,4 +824,51 @@ export const SaveOrUpdateMessage = async (chatId, messageObject) => {
   }
 };
 
+/**
+ * Update only the textual content of a message, preserving its original
+ * timestamp so it stays in place after an edit. Locates the Firestore doc
+ * via the message's logical `id` field (since AppendToChat uses addDoc and
+ * the doc ID is auto-generated separate from the logical id).
+ */
+export const UpdateMessageContent = async (chatId, messageId, newContent) => {
+  if (!chatId || !messageId) {
+    throw new Error("chatId and messageId are required");
+  }
+  try {
+    const messagesRef = collection(db, "chats", chatId, "messages");
+    let targetRef = null;
+
+    // Try direct access first (when the logical id IS the doc id)
+    try {
+      const directRef = doc(db, "chats", chatId, "messages", messageId);
+      const directSnap = await getDoc(directRef);
+      if (directSnap.exists()) targetRef = directRef;
+    } catch (_) { /* fall through to query */ }
+
+    // Otherwise, query for the doc whose `id` field equals messageId
+    if (!targetRef) {
+      const q = query(messagesRef, where("id", "==", messageId));
+      const snap = await getDocs(q);
+      if (snap.empty) {
+        throw new Error(`Message not found: ${messageId}`);
+      }
+      targetRef = snap.docs[0].ref;
+    }
+
+    await updateDoc(targetRef, {
+      content: newContent,
+      editedAt: serverTimestamp()
+      // intentionally not touching `timestamp` — preserves chronological order
+    });
+
+    // Bump the parent chat's updatedAt so the sidebar reflects the activity
+    await updateDoc(doc(db, "chats", chatId), { updatedAt: serverTimestamp() });
+
+    return { success: true };
+  } catch (error) {
+    console.error("UpdateMessageContent failed:", error);
+    throw error;
+  }
+};
+
 export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };

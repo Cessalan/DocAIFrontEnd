@@ -55,7 +55,8 @@ import {
   UpdateFlashcardReview,
   SaveQuizFeedback,
   DeleteMessage,
-  SaveOrUpdateMessage
+  SaveOrUpdateMessage,
+  UpdateMessageContent
 } from '../../Services/FireBaseServiceChats.js';
 
 import { loadFilesForChat, saveAudioToStorage } from '../../Services/FireBaseFiles.js';
@@ -394,6 +395,9 @@ const ChatInterface = ({
   const latestRequestedChatIdRef = useRef(null);
   // Track pre-selected study action (ref for async callback access)
   const pendingStudyActionRef = useRef(null);
+  // Track messages deleted locally (after edit) so the snapshot listener
+  // doesn't re-introduce them before Firestore propagates the deletion
+  const recentlyDeletedIdsRef = useRef(new Set());
 
   // Track if user is at bottom of chat
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -430,6 +434,7 @@ const ChatInterface = ({
   const handleSendNewUserMessageRef = useRef(null);
   const handleQuizAnswerSelectRef = useRef(null);
   const handlePostDocumentUploadOptionRef = useRef(null);
+  const handleEditMessageRef = useRef(null);
 
   // Keep refs in sync with the latest values the visibility handler reads.
   // Using refs avoids re-binding the document-level listeners on every state
@@ -843,6 +848,11 @@ const ChatInterface = ({
       return;
     }
 
+    // Reset the locally-deleted set when switching chats — its purpose
+    // is to hide pending-deletion messages from the snapshot listener
+    // until Firestore propagates the delete, scoped per chat.
+    recentlyDeletedIdsRef.current = new Set();
+
     const messagesRef = collection(db, "chats", currentChatID, "messages");
     const messagesQuery = query(messagesRef, orderBy("timestamp", "asc"));
 
@@ -857,6 +867,9 @@ const ChatInterface = ({
         .map((doc) => ({ id: doc.id, ...doc.data() }))
         .filter((msg) => {
           if (seen.has(msg.id)) return false;
+          // Skip messages that the user just edited-out — Firestore may
+          // not have propagated the deletion yet, but the UI is committed.
+          if (recentlyDeletedIdsRef.current.has(msg.id)) return false;
           seen.add(msg.id);
           return true;
         });
@@ -976,7 +989,7 @@ const ChatInterface = ({
   // ============================================
 
   const handleSendNewUserMessage = async (e = null, customPrompt = null, options = {}) => {
-    const { hideUserMessage = false } = options;
+    const { hideUserMessage = false, historyOverride = null, skipFirebaseSave = false } = options;
 
     // Check if e is actually an event object (has preventDefault method)
     if (e && typeof e.preventDefault === 'function') {
@@ -1030,10 +1043,13 @@ const ChatInterface = ({
       }
     }, 100);
 
-    // Save to Firebase (non-blocking for UI)
-    const updatedChatId = await AppendToChat(currentChatID, newUserMessage);
-    if (updatedChatId && updatedChatId !== currentChatID) {
-      setChatId(updatedChatId);
+    // Save to Firebase (non-blocking for UI) — skipped when re-generating after an edit
+    let updatedChatId = null;
+    if (!skipFirebaseSave) {
+      updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+      if (updatedChatId && updatedChatId !== currentChatID) {
+        setChatId(updatedChatId);
+      }
     }
 
     let fullResponse = "";
@@ -1045,7 +1061,7 @@ const ChatInterface = ({
       await ask_llm_websocket(
         currentLanguage,
         messageToSend,
-        formatChatHistory(chatMessages),
+        formatChatHistory(historyOverride || chatMessages),
         formatFilesForAPI(uploadedFilesList),
         updatedChatId || currentChatID,
 
@@ -3108,6 +3124,7 @@ const ChatInterface = ({
   const stableHandleSendMessage = useCallback((...args) => handleSendNewUserMessageRef.current(...args), []);
   const stableHandleQuizAnswerSelect = useCallback((...args) => handleQuizAnswerSelectRef.current(...args), []);
   const stableHandlePostDocumentUploadOption = useCallback((...args) => handlePostDocumentUploadOptionRef.current(...args), []);
+  const stableHandleEditMessage = useCallback((...args) => handleEditMessageRef.current(...args), []);
 
   // ============================================
   // POST-UPLOAD ACTION HANDLER
@@ -3695,6 +3712,62 @@ const ChatInterface = ({
       alert("Failed to delete message: " + error.message);
     }
   }, [currentChatID]);
+
+  // ============================================
+  // MESSAGE EDIT HANDLING
+  // Trims history to the edited message, deletes subsequent messages from
+  // Firebase, updates the edited message, then re-runs the AI response.
+  // ============================================
+  const handleEditMessage = async (messageId, newContent) => {
+    if (isStreaming || isAiTyping) return;
+
+    const msgIndex = chatMessages.findIndex(m => m.id === messageId);
+    if (msgIndex === -1) return;
+
+    const editedMessage = { ...chatMessages[msgIndex], content: newContent };
+    const trimmedMessages = [
+      ...chatMessages.slice(0, msgIndex),
+      editedMessage
+    ];
+
+    // Optimistic UI: show trimmed history with updated content immediately
+    setChatMessages(trimmedMessages);
+
+    // Delete all messages that came after the edited one from Firebase.
+    // We also stage their IDs in recentlyDeletedIdsRef so that the Firestore
+    // snapshot listener won't re-introduce them before the delete propagates.
+    const messagesAfter = chatMessages.slice(msgIndex + 1);
+    messagesAfter.forEach(m => {
+      if (!m.id) return;
+      // Always block these IDs from coming back via the snapshot listener
+      recentlyDeletedIdsRef.current.add(m.id);
+      // Only persisted messages need a Firestore delete call
+      const isLocalOnly = m.isStreaming ||
+        m.id.startsWith('streaming-') ||
+        m.id.startsWith('empathetic-') ||
+        m.id.startsWith('quiz-');
+      if (!isLocalOnly) {
+        DeleteMessage(currentChatID, m.id).catch(err =>
+          devLog('Failed to delete message after edit:', err)
+        );
+      }
+    });
+
+    // Persist the updated content — preserves the original timestamp so the
+    // message stays at its original position in chat history
+    UpdateMessageContent(currentChatID, messageId, newContent)
+      .catch(err => devLog('Failed to persist edited message:', err));
+
+    // Re-generate the AI response using the trimmed history
+    await handleSendNewUserMessage(null, newContent, {
+      hideUserMessage: true,
+      skipFirebaseSave: true,
+      historyOverride: trimmedMessages
+    });
+  };
+
+  // Keep ref in sync — must be after the function definition (const TDZ)
+  handleEditMessageRef.current = handleEditMessage;
 
   const hasMessages = chatMessages.length > 0;
   devLog('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
@@ -4558,6 +4631,7 @@ const ChatInterface = ({
                       onFeedbackSubmit={handleQuizFeedback}
                       onSendMessage={stableHandleSendMessage}
                       onDeleteMessage={handleDeleteMessage}
+                      onEditMessage={stableHandleEditMessage}
                       viewAllChatsMode={viewAllChatsMode}
                     />
                   </div>

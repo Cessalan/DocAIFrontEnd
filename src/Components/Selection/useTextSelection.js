@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import SelectionActionBar from './SelectionActionBar';
 import SelectionExplainPopover from './SelectionExplainPopover';
 import { fetchExplain } from '../../Services/FastAPICalls';
@@ -87,6 +88,7 @@ function unwrapMarks(marks) {
 }
 
 export default function SelectionProvider({ children }) {
+  const { i18n } = useTranslation();
   const [active, setActive] = useState(null);
   const [explain, setExplain] = useState(null);
   const marksRef = useRef([]);
@@ -132,7 +134,7 @@ export default function SelectionProvider({ children }) {
     setExplain({ snippet: text, anchorRect, loading: true, error: false, data: null });
 
     try {
-      const data = await fetchExplain(text, context);
+      const data = await fetchExplain(text, context, i18n?.language);
       if (reqId !== explainReqIdRef.current) return;
       setExplain({ snippet: text, anchorRect, loading: false, error: false, data });
     } catch (err) {
@@ -140,7 +142,7 @@ export default function SelectionProvider({ children }) {
       console.error('Explain failed', err);
       setExplain({ snippet: text, anchorRect, loading: false, error: true, data: null });
     }
-  }, [active]);
+  }, [active, i18n?.language]);
 
   // Capture commit on pointerup. Reading the selection synchronously is fast
   // enough — the browser has already committed it before our handler fires —

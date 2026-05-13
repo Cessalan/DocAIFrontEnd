@@ -1730,12 +1730,16 @@ export const fetchGlossaryTerm = async (term) => {
 // into per-option rows. Backend is cached by SHA-1 of the question payload,
 // so a question only ever costs one LLM call across all users.
 // ─────────────────────────────────────────────────────────────────────────
-export const fetchQuizRationale = async (question, options, correctIndex) => {
+// `language` should be the user's *app* language (i18n.language), not the
+// browser locale — the two diverge when a user switches the in-app language.
+// We fall back to navigator.language only if nothing was passed, so old
+// callers keep working but new ones must thread the app language through.
+export const fetchQuizRationale = async (question, options, correctIndex, language = null) => {
   if (!question || !question.trim()) return null;
   if (!Array.isArray(options) || options.length < 2) return null;
   if (typeof correctIndex !== 'number' || correctIndex < 0 || correctIndex >= options.length) return null;
 
-  const browserLang = (navigator.language || 'en').split('-')[0].toLowerCase();
+  const lang = (language || navigator.language || 'en').split('-')[0].toLowerCase();
 
   const response = await fetch(`${FAST_API_BASE}/quiz_rationale`, {
     method: "POST",
@@ -1744,7 +1748,7 @@ export const fetchQuizRationale = async (question, options, correctIndex) => {
       question: question.trim(),
       options,
       correct_index: correctIndex,
-      language: browserLang
+      language: lang
     })
   });
 
@@ -1755,15 +1759,15 @@ export const fetchQuizRationale = async (question, options, correctIndex) => {
   return await response.json();
 };
 
-export const fetchExplain = async (text, context = "chat") => {
+export const fetchExplain = async (text, context = "chat", language = null) => {
   if (!text || !text.trim()) return null;
 
-  const browserLang = (navigator.language || 'en').split('-')[0].toLowerCase();
+  const lang = (language || navigator.language || 'en').split('-')[0].toLowerCase();
 
   const response = await fetch(`${FAST_API_BASE}/explain`, {
     method: "POST",
     headers: header,
-    body: JSON.stringify({ text: text.trim(), context, language: browserLang })
+    body: JSON.stringify({ text: text.trim(), context, language: lang })
   });
 
   if (!response.ok) {

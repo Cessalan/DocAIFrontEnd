@@ -62,7 +62,12 @@ const resources = {
         copyRewrite: "Copy rewrite",
         discardRewrite: "Discard",
         discardRewriteAria: "Discard rewrite",
-        rewriteFailed: "Rewrite failed. Please try again."
+        rewriteFailed: "Rewrite failed. Please try again.",
+        edit: "Edit",
+        editMessage: "Edit message",
+        editCancel: "Cancel",
+        editSave: "Save",
+        editPlaceholder: "Edit your message…"
       },
 
       // Common UI Elements
@@ -1524,7 +1529,12 @@ const resources = {
         copyRewrite: "Copier la reformulation",
         discardRewrite: "Annuler",
         discardRewriteAria: "Annuler la reformulation",
-        rewriteFailed: "La reformulation a échoué. Veuillez réessayer."
+        rewriteFailed: "La reformulation a échoué. Veuillez réessayer.",
+        edit: "Modifier",
+        editMessage: "Modifier le message",
+        editCancel: "Annuler",
+        editSave: "Enregistrer",
+        editPlaceholder: "Modifier votre message…"
       },
 
       // Common UI Elements
