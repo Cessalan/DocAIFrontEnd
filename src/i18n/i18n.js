@@ -1267,6 +1267,43 @@ const resources = {
         loadingCard: "Loading card..."
       },
 
+      // WarmUrgencyDashboard — empathic exam dashboard
+      warmUrgency: {
+        yourExam: "Your exam",
+        yourStudyJourney: "Your study journey",
+        ofTotal: "of",
+        journeyHeadline_one: "You've tackled {{count}} question so far",
+        journeyHeadline_other: "You've tackled {{count}} questions so far",
+        journeyNoTopics: "A few questions in — keep going.",
+        journeyAllLocked: "You've locked in all {{total}} topics — you're ready.",
+        journeyOneMore: "You've locked in {{completed}} of {{total}} topics — one more session gets you there.",
+        journeySome: "You've locked in {{completed}} of {{total}} topics — plenty of time to cover the rest.",
+        nudgeUrgent: "One focused session on {{topic}} could lock it in before tomorrow.",
+        nudgeUrgentGeneric: "A short focused session today could lock things in before tomorrow.",
+        nudgeModerate: "You've got time — a 20-min focus session today keeps your momentum going.",
+        nudgeCalm: "No rush — steady practice beats cramming every time.",
+        ctaUrgentTitle: "Quick review: 10 key questions",
+        ctaUrgentSub: "~15 min · focused on {{topic}}",
+        ctaUrgentSubGeneric: "~15 min · keep it sharp",
+        ctaModerateTitle: "Focus session: {{topic}}",
+        ctaModerateTitleGeneric: "Focus session",
+        ctaModerateSub: "~20 min · build on what you already know",
+        ctaCalmTitle: "Continue studying",
+        ctaCalmSub: "Pick up where you left off",
+        lockedInBadge: "Locked in",
+        readyToExplore: "Ready to explore",
+        // Completed-plan variants — shown when every node is done
+        completeAllLocked: "You've made it through your plan and locked in all {{total}} topics — you're ready.",
+        completePartial: "You've made it through your plan — {{completed}} of {{total}} fully locked in. A practice round will fold in the rest.",
+        nudgeCompleteAllLocked: "Plan's done and topics are locked in — a practice round keeps it sharp.",
+        nudgeCompletePartial: "You've made it through the plan — one practice round can solidify everything.",
+        ctaCompletePractice: "Build my practice round",
+        ctaCompleteFocused: "Build my focused review",
+        ctaCompleteSub: "~{{min}} min · pull it all together",
+        ctaCompleteSubGeneric: "Pull it all together",
+        couldUseRefresh: "One more pass"
+      },
+
       // NodeTransition — post-node decision screen
       transition: {
         // Exit
@@ -2688,6 +2725,43 @@ const resources = {
 
         // StudyFlashcardCard extra
         loadingCard: "Chargement de la carte..."
+      },
+
+      // WarmUrgencyDashboard — tableau de bord empathique
+      warmUrgency: {
+        yourExam: "Ton examen",
+        yourStudyJourney: "Ton parcours d'étude",
+        ofTotal: "sur",
+        journeyHeadline_one: "Tu as répondu à {{count}} question jusqu'ici",
+        journeyHeadline_other: "Tu as répondu à {{count}} questions jusqu'ici",
+        journeyNoTopics: "Quelques questions à ton actif — continue.",
+        journeyAllLocked: "Tu as maîtrisé les {{total}} sujets — tu es prêt·e.",
+        journeyOneMore: "Tu as maîtrisé {{completed}} des {{total}} sujets — une dernière session et c'est dans la poche.",
+        journeySome: "Tu as maîtrisé {{completed}} des {{total}} sujets — tu as le temps de couvrir le reste.",
+        nudgeUrgent: "Une session ciblée sur {{topic}} pourrait suffire avant demain.",
+        nudgeUrgentGeneric: "Une courte session ciblée aujourd'hui pourrait tout solidifier avant demain.",
+        nudgeModerate: "Tu as le temps — une session de 20 minutes aujourd'hui garde ton élan.",
+        nudgeCalm: "Pas de pression — la pratique régulière vaut mieux que le bachotage.",
+        ctaUrgentTitle: "Révision rapide : 10 questions clés",
+        ctaUrgentSub: "~15 min · ciblé sur {{topic}}",
+        ctaUrgentSubGeneric: "~15 min · pour rester affûté·e",
+        ctaModerateTitle: "Session ciblée : {{topic}}",
+        ctaModerateTitleGeneric: "Session ciblée",
+        ctaModerateSub: "~20 min · pour consolider tes acquis",
+        ctaCalmTitle: "Continuer l'étude",
+        ctaCalmSub: "Reprends là où tu t'étais arrêté·e",
+        lockedInBadge: "Maîtrisé",
+        readyToExplore: "À explorer",
+        // Variantes "plan terminé" — affichées quand toutes les étapes sont faites
+        completeAllLocked: "Tu as terminé ton plan et maîtrisé les {{total}} sujets — tu es prêt·e.",
+        completePartial: "Tu as terminé ton plan — {{completed}} sur {{total}} entièrement maîtrisés. Une série de pratique consolidera le reste.",
+        nudgeCompleteAllLocked: "Plan terminé et sujets maîtrisés — une série de pratique pour rester affûté·e.",
+        nudgeCompletePartial: "Tu as terminé le plan — une série de pratique peut tout consolider.",
+        ctaCompletePractice: "Crée ma série de pratique",
+        ctaCompleteFocused: "Crée ma révision ciblée",
+        ctaCompleteSub: "~{{min}} min · pour tout rassembler",
+        ctaCompleteSubGeneric: "Pour tout rassembler",
+        couldUseRefresh: "Une passe de plus"
       },
 
       // NodeTransition — écran de décision post-nœud

@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { formatNodeType, getStepTopicLabel } from './planFormatting';
 import { getStudyNodeIcon } from './planNodeIcon';
+import WarmUrgencyDashboard from './WarmUrgencyDashboard';
 import './StudyMode.css';
 
 /* ──────────────────────────────────────────────────────────
@@ -386,183 +387,6 @@ const buildReadinessSnapshot = (scoredTopics) => {
   };
 };
 
-/* ──────────────────────────────────────────────────────────
-   Helper: coerce an exam date from any of the shapes we
-   might receive (Firestore Timestamp, JS Date, ISO string,
-   millis number) into a JS Date — or null if invalid.
-   ────────────────────────────────────────────────────────── */
-const coerceExamDate = (raw) => {
-  if (!raw) return null;
-  let d = null;
-  if (raw && typeof raw.toDate === 'function') d = raw.toDate();
-  else if (raw instanceof Date) d = raw;
-  else if (typeof raw === 'number') d = new Date(raw);
-  else if (typeof raw === 'string') d = new Date(raw);
-  return d && !Number.isNaN(d.getTime()) ? d : null;
-};
-
-/* ──────────────────────────────────────────────────────────
-   Helper: live time-left breakdown for the countdown banner.
-   Keeps days/hours/minutes/seconds in sync with the wall
-   clock so the urgency tier flips automatically when a far
-   exam slides into the < 24h window.
-   ────────────────────────────────────────────────────────── */
-const computeTimeLeft = (date) => {
-  if (!date) return null;
-  const now = Date.now();
-  const diff = date.getTime() - now;
-  const isPast = diff < 0;
-  const abs = Math.abs(diff);
-  return {
-    isPast,
-    diffMs: diff,
-    days: Math.floor(abs / 86400000),
-    hours: Math.floor((abs % 86400000) / 3600000),
-    minutes: Math.floor((abs % 3600000) / 60000),
-    seconds: Math.floor((abs % 60000) / 1000),
-  };
-};
-
-/* ──────────────────────────────────────────────────────────
-   ReadinessCountdown — premium banner that sits at the top
-   of the readiness card and drives test-day urgency.
-   Tier scales styling from calm (>7d) to urgent (<24h).
-   ────────────────────────────────────────────────────────── */
-const ReadinessCountdown = ({ examDate, language = 'en' }) => {
-  const { t } = useTranslation();
-  const date = useMemo(() => coerceExamDate(examDate), [examDate]);
-
-  // Tick every second when exam is within 24h (so the seconds
-  // visibly count down); every 30s otherwise to keep perf cheap.
-  // We re-read Date.now() inside computeTimeLeft on every render
-  // and only use this state to force re-renders on a cadence.
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    if (!date) return undefined;
-    const remaining = date.getTime() - Date.now();
-    if (remaining <= 0) return undefined; // already past — no need to tick
-    const cadence = remaining < 86400000 ? 1000 : 30000;
-    const id = setInterval(() => setTick(n => n + 1), cadence);
-    return () => clearInterval(id);
-  }, [date]);
-
-  if (!date) return null;
-  const tl = computeTimeLeft(date);
-  if (!tl) return null;
-
-  // Stale cutoff: once an exam is more than 14 days behind us,
-  // the banner stops carrying useful signal and just clutters
-  // the readiness card. The chat doc still has the date if a
-  // future flow wants to offer "set a new exam date".
-  const STALE_PAST_DAYS = 14;
-  if (tl.isPast && tl.days > STALE_PAST_DAYS) return null;
-
-  // Urgency tier governs color, copy, and pulse animation
-  const tier = tl.isPast
-    ? 'past'
-    : tl.days >= 7
-      ? 'far'
-      : tl.days >= 3
-        ? 'soon'
-        : tl.days >= 1
-          ? 'close'
-          : 'imminent';
-
-  const locale = (language || 'en').toLowerCase().startsWith('fr') ? 'fr-FR' : 'en-US';
-  const formattedDate = date.toLocaleDateString(locale, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  });
-
-  // Past exams use a single localized phrase ("5 days ago" /
-  // "il y a 5 jours") instead of the big-number-plus-unit
-  // layout. That layout assumes a forward count to render
-  // cleanly; "5 days · Exam day has passed" reads as two
-  // disconnected facts. Today-but-already-done collapses to
-  // "Earlier today" since `tl.days === 0`.
-  const pastPhrase = tl.isPast
-    ? (tl.days === 0
-        ? t('countdown.earlierToday', 'Earlier today')
-        : t('countdown.daysAgo', { count: tl.days, defaultValue: '{{count}} days ago' }))
-    : null;
-
-  // Primary line: big number + unit. Choose the tightest
-  // unit that still feels stable (no "23h 59m" jittering when
-  // a "1d" reading would do — shown alongside as detail).
-  let primaryNumber = tl.days;
-  let primaryUnit = t('countdown.unitDays', { count: tl.days, defaultValue: 'days' });
-  let detail = '';
-
-  if (!tl.isPast) {
-    if (tier === 'imminent' && tl.days === 0) {
-      if (tl.hours >= 1) {
-        primaryNumber = tl.hours;
-        primaryUnit = t('countdown.unitHours', { count: tl.hours, defaultValue: 'hours' });
-        detail = `${tl.minutes}m ${String(tl.seconds).padStart(2, '0')}s`;
-      } else if (tl.minutes >= 1) {
-        primaryNumber = tl.minutes;
-        primaryUnit = t('countdown.unitMinutes', { count: tl.minutes, defaultValue: 'minutes' });
-        detail = `${String(tl.seconds).padStart(2, '0')}s`;
-      } else {
-        primaryNumber = tl.seconds;
-        primaryUnit = t('countdown.unitSeconds', { count: tl.seconds, defaultValue: 'seconds' });
-        detail = t('countdown.almostThere', 'Almost there');
-      }
-    } else {
-      // 1+ days: show days + a soft "Xh Ym" detail line
-      detail = `${tl.hours}h ${String(tl.minutes).padStart(2, '0')}m`;
-    }
-  }
-
-  const eyebrow = tl.isPast
-    ? t('countdown.eyebrowPast', 'Exam passed')
-    : tier === 'imminent'
-      ? t('countdown.eyebrowToday', 'Test day')
-      : t('countdown.eyebrowUntil', 'Exam in');
-
-  return (
-    <div
-      className={`sov3-countdown sov3-countdown--${tier}`}
-      role="status"
-      aria-live="polite"
-      aria-label={t('countdown.aria', 'Time until exam')}
-    >
-      <div className="sov3-countdown__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-          <rect x="3" y="4" width="18" height="18" rx="3" />
-          <line x1="16" y1="2" x2="16" y2="6" />
-          <line x1="8" y1="2" x2="8" y2="6" />
-          <line x1="3" y1="10" x2="21" y2="10" />
-          <circle cx="12" cy="16" r="2.2" fill="currentColor" stroke="none" />
-        </svg>
-      </div>
-
-      <div className="sov3-countdown__main">
-        <span className="sov3-countdown__eyebrow">{eyebrow}</span>
-        {tl.isPast ? (
-          <span className="sov3-countdown__phrase">{pastPhrase}</span>
-        ) : (
-          <div className="sov3-countdown__primary">
-            <span className="sov3-countdown__number">{primaryNumber}</span>
-            <span className="sov3-countdown__unit">{primaryUnit}</span>
-            {detail && (
-              <span className="sov3-countdown__detail">{detail}</span>
-            )}
-          </div>
-        )}
-      </div>
-
-      <div className="sov3-countdown__date" aria-hidden="true">
-        {formattedDate}
-      </div>
-
-      {tier === 'imminent' && !tl.isPast && (
-        <span className="sov3-countdown__pulse" aria-hidden="true" />
-      )}
-    </div>
-  );
-};
 
 /* ──────────────────────────────────────────────────────────
    Narration stages shown while Phase 2 generates. We stream
@@ -1061,49 +885,18 @@ const StudyPlanOverview = ({
         )}
       </div>
 
-      {/* ── Readiness Hero (radial ring + summary)
-          Sits between the header and the section cards so the
-          score is visible without scrolling. Same data as before;
-          rectangular score badge swapped for a radial progress
-          ring (`.sov3-readiness__ring`). */}
+      {/* ── Warm Urgency Dashboard
+          Empathic replacement for the old countdown+confidence layout.
+          Effort-framed, no deficit language, tone driven by examDate.
+          During Phase 2 generation we still render the original
+          `.sov3-readiness__generating` block — that animation is
+          intentional and part of the build flow.
+          ────────────────────────────────────────────── */}
       {!hasPhase2Nodes && (() => {
           const snap = buildReadinessSnapshot(scoredTopics);
-          // Show the card whenever we have a curriculum to talk about
-          // (even at 0 questions answered — that's the urgency moment).
           if (!snap.hasData) return null;
 
-          const nodesRemaining = Math.max(0, totalNodes - completedCount);
           const isMidSession = !phase1AllDone;
-          const noDataYet = snap.totalQuestions === 0;
-
-          const headlineText = noDataYet
-            ? t('study.readinessJustStarted', 'Your test readiness starts here')
-            : snap.tone === 'untested'
-              ? t('study.readinessUntested', '{{count}} topic not measured yet', { count: snap.untestedCount })
-              : snap.tone === 'allStrong'
-                ? t('study.readinessAllStrong', "You're solid across the board")
-                : snap.tone === 'mixed'
-                  ? t('study.readinessMixed', "Strong start. Let's close these gaps.")
-                  : t('study.readinessBuildUp', "Let's build your foundation before test day");
-
-          const subtitleText = noDataYet
-            ? t('study.readinessFirstQuiz', 'Take your first quiz to start measuring how ready you are')
-            : snap.tone === 'untested'
-              ? t('study.readinessUntestedSub', 'Your confidence will sharpen as you cover more')
-              : snap.tone === 'allStrong'
-                ? t('study.readinessAllStrongSub', 'A few mixed-format quizzes to keep it sharp')
-                : t('study.readinessGapsSub', "We'll target the spots most likely to surprise you on test day");
-
-          // CTA morphs based on whether Phase 1 is done
-          const ctaText = isMidSession
-            ? t('study.keepGoingCta', 'Keep going')
-            : (snap.tone === 'allStrong'
-                ? t('study.buildPracticeRound', 'Build my practice round')
-                : t('study.buildFocusedReview', 'Build my focused review'));
-
-          const ctaMeta = isMidSession
-            ? t('study.nodesUntilReview', '{{count}} more node', { count: nodesRemaining })
-            : t('study.estimateMin', '~{{min}} min', { min: snap.estMin });
 
           const handleCtaClick = (e) => {
             e.stopPropagation();
@@ -1117,190 +910,31 @@ const StudyPlanOverview = ({
             }
           };
 
-          return (
-            <div
-              className={[
-                'sov3-readiness',
-                isGeneratingPhase2 ? 'sov3-readiness--generating' : '',
-                isMidSession ? 'sov3-readiness--mid-session' : '',
-                snap.overallLevel ? `sov3-readiness--${snap.overallLevel}` : '',
-              ].filter(Boolean).join(' ')}
-              role="button"
-              tabIndex={isGeneratingPhase2 ? -1 : 0}
-              onClick={!isGeneratingPhase2 ? handleCtaClick : undefined}
-              onKeyDown={(e) => {
-                if (!isGeneratingPhase2 && (e.key === 'Enter' || e.key === ' ')) {
-                  e.preventDefault();
-                  handleCtaClick(e);
-                }
-              }}
-            >
-              {!isGeneratingPhase2 ? (
-                <>
-                  {/* Countdown banner — only renders when an exam
-                      date is on the chat doc. Sits at the top of
-                      the readiness card to drive test-day urgency
-                      before the score conversation. */}
-                  {examDate && (
-                    <ReadinessCountdown
-                      examDate={examDate}
-                      language={language}
-                    />
-                  )}
-                  <div className="sov3-readiness__head">
-                    <div className="sov3-readiness__title-group">
-                      <span className="sov3-readiness__eyebrow">
-                        {isMidSession
-                          ? t('study.readinessSoFar', 'Readiness so far')
-                          : t('study.testReadiness', 'Test readiness')}
-                      </span>
-                      <h3 className="sov3-readiness__title">{headlineText}</h3>
-                      <p className="sov3-readiness__subtitle">{subtitleText}</p>
-                      {!noDataYet && (
-                        <p className="sov3-readiness__data-source">
-                          {t('study.basedOnQuestions', 'Based on {{count}} answered question', { count: snap.totalQuestions })}
-                        </p>
-                      )}
-                    </div>
-                    {snap.overallPct != null && (() => {
-                      // Radial readiness ring. SVG with two circles —
-                      // background track + colored progress arc — using
-                      // stroke-dasharray/offset for the arc length.
-                      // When `noDataYet` (no questions answered), we hold
-                      // the same shape and typography but show an em dash
-                      // in place of the number — speaks the same visual
-                      // language as the populated state, just without
-                      // baking in a "0%" failing grade.
-                      const ringSize = 104;
-                      const stroke = 9;
-                      const ringRadius = (ringSize - stroke) / 2;
-                      const ringCircumference = 2 * Math.PI * ringRadius;
-                      const safePct = Math.max(0, Math.min(100, snap.overallPct));
-                      const ringOffset = ringCircumference * (1 - safePct / 100);
-                      const ringLevel = noDataYet ? 'starter' : snap.overallLevel;
-                      return (
-                        <div
-                          className={`sov3-readiness__ring sov3-readiness__ring--${ringLevel}`}
-                          style={{ width: ringSize, height: ringSize }}
-                          aria-label={
-                            noDataYet
-                              ? t('study.readyToBegin', 'Ready to begin')
-                              : t('study.confidence', 'confidence') + ` ${snap.overallPct}%`
-                          }
-                        >
-                          <svg
-                            className="sov3-readiness__ring-svg"
-                            viewBox={`0 0 ${ringSize} ${ringSize}`}
-                            width={ringSize}
-                            height={ringSize}
-                          >
-                            <circle
-                              className="sov3-readiness__ring-track"
-                              cx={ringSize / 2}
-                              cy={ringSize / 2}
-                              r={ringRadius}
-                              strokeWidth={stroke}
-                              fill="none"
-                            />
-                            {/* Skip the colored progress arc in starter mode —
-                                a zero-length arc looks like a tiny coral dot
-                                at the top of the ring, which reads as broken. */}
-                            {!noDataYet && (
-                              <circle
-                                className="sov3-readiness__ring-arc"
-                                cx={ringSize / 2}
-                                cy={ringSize / 2}
-                                r={ringRadius}
-                                strokeWidth={stroke}
-                                fill="none"
-                                strokeLinecap="round"
-                                strokeDasharray={ringCircumference}
-                                strokeDashoffset={ringOffset}
-                                transform={`rotate(-90 ${ringSize / 2} ${ringSize / 2})`}
-                              />
-                            )}
-                          </svg>
-                          <div className="sov3-readiness__ring-content">
-                            {noDataYet ? (
-                              <span className="sov3-readiness__ring-pct sov3-readiness__ring-pct--starter" aria-hidden="true">
-                                {/* Em dash — same big-bold treatment as the
-                                    score, just without a number to render. */}
-                                —
-                              </span>
-                            ) : (
-                              <span className="sov3-readiness__ring-pct">{snap.overallPct}<span className="sov3-readiness__ring-pct-sign">%</span></span>
-                            )}
-                            <span className="sov3-readiness__ring-tag">
-                              {t('study.confidence', 'confidence')}
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    })()}
-                  </div>
+          // Build the binary topics list — every curriculum topic is either
+          // "locked in" (strong + measured) or "ready to explore" (anything
+          // else, including untested). No "weak" / "not measured" labels
+          // surface to the user.
+          const topicsList = scoredTopics.map((topic) => ({
+            name: topic.name,
+            status: (!topic.untested && topic.level === 'strong') ? 'locked_in' : 'ready'
+          }));
+          // Stable order: locked-in first, then ready-to-explore in their
+          // original sort order (which already surfaces highest-priority first).
+          topicsList.sort((a, b) => {
+            if (a.status === b.status) return 0;
+            return a.status === 'locked_in' ? -1 : 1;
+          });
 
-                  {snap.weak.length > 0 && (
-                    <div className="sov3-readiness__gaps">
-                      <div className="sov3-readiness__gaps-label">
-                        {snap.tone === 'untested'
-                          ? t('study.gapsAndUntested', 'Topics to cover before test day')
-                          : t('study.gapsToClose', 'Gaps to close before test day')}
-                      </div>
-                      <div className="sov3-readiness__gaps-list">
-                        {snap.weak.map(topic => (
-                          <div
-                            key={topic.name}
-                            className={[
-                              'sov3-readiness__gap',
-                              `sov3-readiness__gap--${topic.level}`,
-                              topic.untested ? 'sov3-readiness__gap--untested' : '',
-                            ].filter(Boolean).join(' ')}
-                            title={topic.name}
-                          >
-                            <span className="sov3-readiness__gap-dot" aria-hidden="true" />
-                            <span className="sov3-readiness__gap-name">{topic.name}</span>
-                            <span className="sov3-readiness__gap-pct">
-                              {topic.untested
-                                ? t('study.notMeasuredYet', 'Not measured')
-                                : `${topic.pct}%`}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
+          // Next-up topic = the most-prioritized "ready" entry.
+          // snap.weak[] is already sorted untested-first then by lowest pct,
+          // so its first element is the natural next focus.
+          const nextTopicName = snap.weak[0]?.name || null;
 
-                  {snap.strongCount > 0 && (
-                    <div className="sov3-readiness__locked">
-                      <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" width="13" height="13">
-                        <polyline points="3 8.5 6.5 12 13 4.5" />
-                      </svg>
-                      <span>
-                        {t('study.lockedIn', '{{count}} topic locked in', { count: snap.strongCount })}
-                      </span>
-                    </div>
-                  )}
-
-                  <div className="sov3-readiness__cta-row">
-                    <button
-                      type="button"
-                      className={[
-                        'sov3-readiness__cta',
-                        isMidSession ? 'sov3-readiness__cta--soft' : '',
-                      ].filter(Boolean).join(' ')}
-                      onClick={handleCtaClick}
-                    >
-                      <span className="sov3-readiness__cta-text">{ctaText}</span>
-                      {(isMidSession ? nodesRemaining > 0 : true) && (
-                        <span className="sov3-readiness__cta-meta">{ctaMeta}</span>
-                      )}
-                      <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14">
-                        <path d="M3 7h8M8 4l3 3-3 3" />
-                      </svg>
-                    </button>
-                  </div>
-                </>
-              ) : (
+          if (isGeneratingPhase2) {
+            // Keep the original generating animation — it's part of the
+            // "building your review" UX, not the dashboard surface.
+            return (
+              <div className="sov3-readiness sov3-readiness--generating">
                 <div className="sov3-readiness__generating">
                   <div className="sov3-readiness__gen-head">
                     <div className="study-loading-spinner sov3-readiness__gen-spinner" />
@@ -1340,10 +974,26 @@ const StudyPlanOverview = ({
                     })}
                   </ul>
                 </div>
-              )}
-            </div>
+              </div>
+            );
+          }
+
+          return (
+            <WarmUrgencyDashboard
+              examDate={examDate}
+              questionsAnswered={snap.totalQuestions}
+              topicsCompleted={snap.strongCount}
+              topicsTotal={snap.topicsTotal}
+              nextTopicName={nextTopicName}
+              topicsList={topicsList}
+              studyComplete={phase1AllDone}
+              estimatedMinutes={snap.estMin}
+              onCtaClick={handleCtaClick}
+              language={language}
+            />
           );
         })()}
+
 
       {/* ── Section Cards + Milestones (interleaved) ── */}
       <div className="sov3-sections">
