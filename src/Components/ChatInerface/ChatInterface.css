@@ -4426,6 +4426,39 @@ body.dark-mode .nursing-icon {
     color: #ffffff;
   }
 
+  /* Dev-only export button in chat header */
+  .chat-export-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #6b7280;
+    background: transparent;
+    border: 1px dashed #d1d5db;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+
+  .chat-export-btn:hover {
+    color: var(--primary-purple);
+    border-color: var(--primary-purple);
+    background: rgba(124, 58, 237, 0.06);
+  }
+
+  body.dark-mode .chat-export-btn {
+    color: #9ca3af;
+    border-color: #374151;
+  }
+
+  body.dark-mode .chat-export-btn:hover {
+    color: #e5e7eb;
+    border-color: #6b7280;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
   /* Input Area - Dark */
   body.dark-mode .input-area {
     background: transparent;

@@ -3,13 +3,22 @@
    Matching QuizRoomLanding colorful style
    ============================================ */
 
-/* CSS Variables - Sticky Note Palette */
+/* CSS Variables — App coral + lavender palette (matches StudyFlashcardCard) */
 .flashcard-compact-container {
-  --sticky-pink: #ffd6e0;
-  --sticky-pink-light: #fff0f3;
-  --sticky-pink-dark: #ffc5d3;
-  --accent-pink: #db2777;
-  --accent-pink-light: rgba(255, 105, 180, 0.25);
+  --fc-coral: #e88d7d;
+  --fc-coral-dark: #c46a5a;
+  --fc-coral-soft: rgba(232, 141, 125, 0.15);
+  --fc-coral-border: rgba(232, 141, 125, 0.25);
+
+  --fc-lavender: #8b5cf6;
+  --fc-lavender-dark: #7c3aed;
+  --fc-lavender-border: rgba(139, 92, 246, 0.2);
+
+  /* Backward-compat aliases so existing rules keep working */
+  --accent-pink: var(--fc-coral-dark);
+  --sticky-pink: #ffe8e4;
+  --sticky-pink-light: #fff5f2;
+  --sticky-pink-dark: #ffd6d0;
 
   --text-primary: #3d3d3d;
   --text-secondary: #6b6b6b;
@@ -134,19 +143,20 @@
     0 4px 12px rgba(0, 0, 0, 0.06);
 }
 
-/* Topic Badge */
+/* Topic Badge — soft coral pill */
 .flashcard-topic-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.6);
-  color: var(--accent-pink);
-  padding: 4px 10px;
-  border-radius: 6px 8px 7px 6px;
-  font-size: 11px;
+  background: var(--fc-coral-soft);
+  color: var(--fc-coral-dark);
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 13px;
   font-weight: 600;
-  margin-bottom: 10px;
-  border: none;
+  margin-bottom: 12px;
+  border: 1px solid var(--fc-coral-border);
   transition: all 0.2s ease;
 }
 
@@ -163,29 +173,31 @@
 }
 
 .flashcard-compact-progress-track {
-  height: 3px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 3px;
+  height: 6px;
+  background: rgba(232, 141, 125, 0.12);
+  border-radius: 999px;
   overflow: hidden;
   margin-bottom: 6px;
 }
 
 .flashcard-compact-progress-fill {
   height: 100%;
-  background: var(--accent-pink);
-  border-radius: 4px;
-  transition: width 0.3s ease;
+  background: linear-gradient(90deg, var(--fc-coral) 0%, var(--fc-coral-dark) 100%);
+  border-radius: 999px;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 0 8px rgba(232, 141, 125, 0.35);
 }
 
 .flashcard-compact-progress-text {
-  font-size: 12px;
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 13px;
   color: var(--text-secondary);
   text-align: center;
   font-weight: 500;
 }
 
 .flashcard-mastered-count {
-  color: var(--accent-pink);
+  color: var(--fc-coral-dark);
   font-weight: 600;
 }
 
@@ -193,18 +205,28 @@
    THE CARD - Clean Simple Design
    ============================================ */
 
+/* Premium 3D flip card — mirrors StudyFlashcardCard look but sized
+   for in-chat display. preserve-3d on the parent gives the proper
+   depth illusion; faces use backface-visibility: hidden so the back
+   isn't visible from the front. */
 .flashcard-card {
   position: relative;
   width: 100%;
   max-width: 100%;
-  height: 180px;
-  min-height: 180px;
-  max-height: 180px;
-  perspective: 2000px;
+  height: 280px;
+  min-height: 280px;
+  perspective: 1200px;
+  -webkit-perspective: 1200px;
   cursor: pointer;
   margin: 0 auto 12px auto;
-  overflow: hidden;
   flex-shrink: 0;
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flashcard-card.flipped {
+  transform: rotateY(180deg);
 }
 
 .flashcard-card-face {
@@ -215,19 +237,18 @@
   height: 100%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transition: transform 0.6s ease;
-  border-radius: 10px;
-  padding: 14px 16px;
+  border-radius: 20px;
+  padding: 22px 24px 36px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
+  justify-content: center;
   align-items: center;
   overflow-x: hidden;
   overflow-y: auto;
   box-sizing: border-box;
-  /* Custom scrollbar for content */
+  text-align: center;
   scrollbar-width: thin;
-  scrollbar-color: rgba(219, 39, 119, 0.3) transparent;
+  scrollbar-color: rgba(232, 141, 125, 0.3) transparent;
 }
 
 .flashcard-card-face::-webkit-scrollbar {
@@ -239,37 +260,35 @@
 }
 
 .flashcard-card-face::-webkit-scrollbar-thumb {
-  background: rgba(219, 39, 119, 0.3);
+  background: rgba(232, 141, 125, 0.3);
   border-radius: 4px;
 }
 
 .flashcard-card-face::-webkit-scrollbar-thumb:hover {
-  background: rgba(219, 39, 119, 0.5);
+  background: rgba(232, 141, 125, 0.55);
 }
 
-/* Front - White card on pink background */
+/* Front — Warm coral/peach gradient (matches StudyFlashcardCard) */
 .flashcard-card-front {
-  background: rgba(255, 255, 255, 0.85);
-  border: 1px dashed rgba(219, 39, 119, 0.25);
+  background: linear-gradient(145deg, #fff5f2 0%, #ffe8e4 50%, #ffd6d0 100%);
+  border: 2px solid var(--fc-coral-border);
   color: var(--text-primary);
-  transform: rotateY(0deg);
+  box-shadow:
+    0 6px 24px rgba(232, 141, 125, 0.15),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
-/* Back - Slightly different white */
+/* Back — Soft lavender gradient */
 .flashcard-card-back {
-  background: rgba(255, 255, 255, 0.9);
-  border: 1px dashed rgba(219, 39, 119, 0.25);
+  background: linear-gradient(145deg, #f5f0ff 0%, #ede7f6 50%, #e1d5f0 100%);
+  border: 2px solid var(--fc-lavender-border);
   color: var(--text-primary);
   transform: rotateY(180deg);
-}
-
-/* Flip States - Clean */
-.flashcard-card.flipped .flashcard-card-front {
-  transform: rotateY(-180deg);
-}
-
-.flashcard-card.flipped .flashcard-card-back {
-  transform: rotateY(0deg);
+  box-shadow:
+    0 6px 24px rgba(139, 92, 246, 0.12),
+    0 2px 6px rgba(0, 0, 0, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.8);
 }
 
 /* Card Content */
@@ -291,43 +310,49 @@
 }
 
 .flashcard-label {
-  font-size: 9px;
+  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 1.2px;
-  color: var(--accent-pink);
-  margin-bottom: 6px;
-  font-weight: 600;
+  letter-spacing: 1.4px;
+  color: var(--fc-coral-dark);
+  margin-bottom: 10px;
+  font-weight: 700;
   flex-shrink: 0;
 }
 
+.flashcard-card-back .flashcard-label {
+  color: var(--fc-lavender-dark);
+}
+
 .flashcard-text {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.45;
-  color: var(--text-primary);
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.55;
+  color: #3d3d3d;
   max-width: 100%;
   word-wrap: break-word;
+  text-align: center;
+  padding: 0 4px;
 }
 
 .flashcard-card-back .flashcard-text {
-  font-size: 12px;
-  line-height: 1.5;
-  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.65;
+  font-weight: 500;
   width: 100%;
+  text-align: left;
 }
 
-/* Bold text in answers */
+/* Bold inside the back answer — purple accent matches StudyFlashcardCard */
 .flashcard-card-back .flashcard-text strong,
 .flashcard-card-back .flashcard-text b {
-  color: var(--accent-pink);
-  font-weight: 600;
+  color: var(--fc-lavender-dark);
+  font-weight: 700;
 }
 
 .flashcard-text-formatted strong {
-  color: var(--accent-pink);
-  background: rgba(219, 39, 119, 0.08);
-  padding: 1px 4px;
-  border-radius: 3px;
+  color: var(--fc-lavender-dark);
+  font-weight: 700;
 }
 
 /* Hint Button */
@@ -382,20 +407,26 @@
   color: var(--text-secondary);
 }
 
-/* Flip Instruction */
+/* Flip Instruction — pinned to the bottom of each face */
 .flashcard-flip-instruction {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 11px;
-  color: var(--text-secondary);
-  opacity: 0.7;
-  margin-top: 12px;
+  gap: 5px;
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.35);
+  white-space: nowrap;
+  pointer-events: none;
 }
 
 .flashcard-flip-instruction svg {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
+  opacity: 0.55;
 }
 
 /* ============================================
@@ -403,57 +434,77 @@
    ============================================ */
 
 .flashcard-review-section {
-  margin-top: 8px;
+  margin-top: 14px;
+  animation: fcFadeInUp 0.3s ease-out;
+}
+
+@keyframes fcFadeInUp {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 .flashcard-review-prompt {
   text-align: center;
-  font-size: 11px;
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 14px;
   font-weight: 500;
   color: var(--text-secondary);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .flashcard-review-buttons {
   display: flex;
-  gap: 8px;
+  gap: 12px;
   justify-content: center;
+  flex-wrap: wrap;
 }
 
 .flashcard-review-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
   border: none;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 999px;
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s var(--transition-wobbly);
-  background: rgba(255, 255, 255, 0.7);
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
-.flashcard-review-again {
-  color: #dc2626;
-}
-
-.flashcard-review-again:hover {
-  background: rgba(220, 38, 38, 0.15);
-  transform: translateY(-2px) scale(1.02);
-}
-
+/* "Know it" — green gradient (matches StudyFlashcardCard .got-it) */
 .flashcard-review-good {
-  color: #059669;
+  background: linear-gradient(135deg, #d4edda 0%, #b8e0c0 100%);
+  color: #1e7e34;
+  box-shadow: 0 3px 12px rgba(40, 167, 69, 0.2);
 }
 
 .flashcard-review-good:hover {
-  background: rgba(5, 150, 105, 0.15);
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 5px 16px rgba(40, 167, 69, 0.3);
+}
+
+/* "Again" — yellow/amber gradient (matches StudyFlashcardCard .review) */
+.flashcard-review-again {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffe69c 100%);
+  color: #856404;
+  box-shadow: 0 3px 12px rgba(255, 193, 7, 0.2);
+}
+
+.flashcard-review-again:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 16px rgba(255, 193, 7, 0.3);
+}
+
+.flashcard-review-btn:active {
+  transform: translateY(0) scale(0.97);
 }
 
 .review-btn-icon {
-  font-size: 16px;
+  font-size: 18px;
 }
 
 /* Reviewed Feedback */
@@ -469,18 +520,28 @@
   margin-top: 10px;
 }
 
+.flashcard-reviewed-feedback {
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 14px;
+  border-radius: 999px;
+  padding: 8px 16px;
+  animation: fcFadeInUp 0.3s ease-out;
+}
+
 .flashcard-reviewed-feedback.positive {
-  background: rgba(5, 150, 105, 0.15);
-  color: #059669;
+  background: linear-gradient(135deg, rgba(212, 237, 218, 0.7) 0%, rgba(184, 224, 192, 0.7) 100%);
+  color: #1e7e34;
+  border: 1px solid rgba(30, 126, 52, 0.15);
 }
 
 .flashcard-reviewed-feedback.negative {
-  background: rgba(220, 38, 38, 0.15);
-  color: #dc2626;
+  background: linear-gradient(135deg, rgba(255, 243, 205, 0.7) 0%, rgba(255, 230, 156, 0.7) 100%);
+  color: #856404;
+  border: 1px solid rgba(133, 100, 4, 0.15);
 }
 
 .feedback-icon {
-  font-size: 14px;
+  font-size: 15px;
 }
 
 /* ============================================
@@ -489,41 +550,53 @@
 
 .flashcard-compact-navigation {
   display: flex;
-  gap: 8px;
+  gap: 10px;
   justify-content: center;
-  margin-top: 8px;
+  margin-top: 12px;
 }
 
 .flashcard-nav-btn {
-  padding: 8px 14px;
+  padding: 10px 22px;
   border: none;
-  border-radius: 8px;
-  font-size: 12px;
+  border-radius: 999px;
+  font-family: var(--font-handwritten, 'Patrick Hand', cursive);
+  font-size: 15px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s var(--transition-wobbly);
+  transition: all 0.2s ease;
 }
 
 .flashcard-skip-btn {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 254, 249, 0.85);
   color: var(--text-secondary);
+  border: 1px solid var(--fc-coral-border);
 }
 
 .flashcard-skip-btn:hover {
-  background: rgba(255, 255, 255, 0.9);
+  background: #ffffff;
+  color: var(--text-primary);
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(232, 141, 125, 0.18);
+}
+
+.flashcard-skip-btn:active {
+  transform: translateY(0) scale(0.97);
 }
 
 .flashcard-next-btn {
-  background: var(--accent-pink);
-  color: white;
-  box-shadow: 0 2px 6px rgba(219, 39, 119, 0.3);
+  background: var(--fc-coral);
+  color: #ffffff;
+  box-shadow: 0 3px 12px rgba(232, 141, 125, 0.32);
 }
 
 .flashcard-next-btn:hover {
-  background: #be185d;
+  background: var(--fc-coral-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(219, 39, 119, 0.4);
+  box-shadow: 0 6px 18px rgba(232, 141, 125, 0.42);
+}
+
+.flashcard-next-btn:active {
+  transform: translateY(0) scale(0.97);
 }
 
 /* ============================================
@@ -1357,6 +1430,7 @@ body.dark-mode .dev-feedback-value {
 
 /* Accessibility */
 @media (prefers-reduced-motion: reduce) {
+  .flashcard-card,
   .flashcard-card-face,
   .flashcard-review-btn,
   .flashcard-nav-btn,
@@ -1366,5 +1440,144 @@ body.dark-mode .dev-feedback-value {
 
   .flashcard-compact-wrapper {
     transform: none;
+  }
+}
+
+/* ============================================
+   DARK MODE — matches StudyFlashcardCard
+   Deep warm-brown front, deep purple back.
+   ============================================ */
+
+body.dark-mode .flashcard-card-front {
+  background: linear-gradient(145deg, #4a3535 0%, #3d2a2a 100%);
+  border-color: rgba(232, 141, 125, 0.3);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .flashcard-card-back {
+  background: linear-gradient(145deg, #3d3550 0%, #2f2840 100%);
+  border-color: rgba(184, 165, 212, 0.3);
+  box-shadow:
+    0 6px 24px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+body.dark-mode .flashcard-text {
+  color: #f0f0f0;
+}
+
+body.dark-mode .flashcard-card-back .flashcard-text strong,
+body.dark-mode .flashcard-card-back .flashcard-text b,
+body.dark-mode .flashcard-text-formatted strong {
+  color: #c4b3ee;
+}
+
+body.dark-mode .flashcard-label {
+  color: #f4a896;
+}
+
+body.dark-mode .flashcard-card-back .flashcard-label {
+  color: #c4b3ee;
+}
+
+body.dark-mode .flashcard-flip-instruction {
+  color: rgba(255, 255, 255, 0.32);
+}
+
+body.dark-mode .flashcard-topic-badge {
+  background: rgba(232, 141, 125, 0.12);
+  color: #f4a896;
+  border-color: rgba(232, 141, 125, 0.28);
+}
+
+body.dark-mode .flashcard-compact-progress-track {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .flashcard-compact-progress-text {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .flashcard-mastered-count {
+  color: #f4a896;
+}
+
+body.dark-mode .flashcard-review-good {
+  background: linear-gradient(135deg, #234428 0%, #1a3320 100%);
+  color: #90d498;
+  box-shadow: 0 3px 12px rgba(40, 167, 69, 0.25);
+}
+
+body.dark-mode .flashcard-review-again {
+  background: linear-gradient(135deg, #4a3a1a 0%, #3d3015 100%);
+  color: #ffd966;
+  box-shadow: 0 3px 12px rgba(255, 193, 7, 0.25);
+}
+
+body.dark-mode .flashcard-reviewed-feedback.positive {
+  background: linear-gradient(135deg, rgba(35, 68, 40, 0.55) 0%, rgba(26, 51, 32, 0.55) 100%);
+  color: #90d498;
+  border-color: rgba(144, 212, 152, 0.18);
+}
+
+body.dark-mode .flashcard-reviewed-feedback.negative {
+  background: linear-gradient(135deg, rgba(74, 58, 26, 0.55) 0%, rgba(61, 48, 21, 0.55) 100%);
+  color: #ffd966;
+  border-color: rgba(255, 217, 102, 0.18);
+}
+
+body.dark-mode .flashcard-skip-btn {
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 255, 255, 0.65);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .flashcard-skip-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+body.dark-mode .flashcard-next-btn {
+  background: var(--fc-coral);
+  color: #1a1a1a;
+  box-shadow: 0 3px 12px rgba(232, 141, 125, 0.3);
+}
+
+body.dark-mode .flashcard-next-btn:hover {
+  background: var(--fc-coral-dark);
+  color: #ffffff;
+}
+
+body.dark-mode .flashcard-review-prompt {
+  color: rgba(255, 255, 255, 0.65);
+}
+
+/* ============================================
+   RESPONSIVE — keep card readable on small viewports
+   ============================================ */
+@media (max-width: 600px) {
+  .flashcard-card {
+    height: 240px;
+    min-height: 240px;
+  }
+
+  .flashcard-card-face {
+    padding: 18px 18px 32px;
+  }
+
+  .flashcard-text {
+    font-size: 19px;
+  }
+
+  .flashcard-card-back .flashcard-text {
+    font-size: 16px;
+  }
+
+  .flashcard-review-btn {
+    padding: 10px 18px;
+    font-size: 15px;
   }
 }

@@ -3910,6 +3910,40 @@ const ChatInterface = ({
     }
   };
 
+  // Dev-only: export the current conversation as JSON so it can be
+  // pasted into Claude later for analysis.
+  const handleExportConversation = () => {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      app: 'NurseQuizAI',
+      env: process.env.NODE_ENV,
+      userId: auth.currentUser?.uid || null,
+      userEmail: auth.currentUser?.email || null,
+      chat: {
+        id: currentChatID,
+        title: currentChatTitle,
+        examData: currentExamData || null,
+      },
+      messageCount: chatMessages.length,
+      messages: chatMessages,
+    };
+
+    const json = JSON.stringify(payload, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const safeTitle = (currentChatTitle || 'conversation')
+      .replace(/[^a-z0-9-_]+/gi, '_')
+      .slice(0, 60);
+    const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `convo_${safeTitle}_${currentChatID || 'nochat'}_${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   // ============================================
   // PRE-UPLOAD ACTION HELPERS
   // Icons and labels for the pre-upload study option buttons
@@ -4069,6 +4103,31 @@ const ChatInterface = ({
             <h2 className="chat-header-title" onClick={() => setIsFilesModalVisible(true)}>
               {currentChatTitle}
             </h2>
+            {process.env.NODE_ENV === 'development' && currentChatID && (
+              <button
+                type="button"
+                className="chat-export-btn"
+                title="DEV: Export conversation as JSON"
+                onClick={handleExportConversation}
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="14"
+                  height="14"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+                <span>Export JSON</span>
+              </button>
+            )}
             {/* Progress Widget - Next to title */}
             {/* <CompactProgressWidget /> */}
           </div>
