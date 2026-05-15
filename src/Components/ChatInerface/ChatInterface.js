@@ -109,6 +109,9 @@ import WelcomeBackToast from './WelcomeBackToast';
 // Mindmap
 import ChatMindmap from './ChatMindmap';
 
+// Web sources panel (rendered when a quiz is grounded in web-search results)
+import WebSourcesPanel from './WebSourcesPanel';
+
 // Study Mode
 import StartStudyModal from '../StudyMode/StartStudyModal';
 import StudyModeContainer from '../StudyMode/StudyModeContainer';
@@ -1055,6 +1058,7 @@ const ChatInterface = ({
     let fullResponse = "";
     let empatheticMessageId = null; // Track empathetic message bubble
     let quizMessageId = null; // Track quiz bubble
+    let webSourcesMessageId = null; // Track web-sources panel bubble (school-specific exam research)
 
     try {
       // Use WebSocket with all your current logic
@@ -1067,6 +1071,112 @@ const ChatInterface = ({
 
         // Status callback - handles all your current status updates
         (statusUpdate) => {
+
+          // ═══════════════════════════════════════════════════════════
+          // WEB RESEARCH PHASE (school-specific exam grounding)
+          // ───────────────────────────────────────────────────────────
+          // Three events from the backend, in order:
+          //   web_research_started -> show searching skeleton
+          //   web_sources_found    -> populate with exam_summary + citations
+          //   web_research_failed  -> show honest fallback message
+          // We use one bubble for the whole lifecycle, identified by
+          // webSourcesMessageId, so it animates in place from skeleton
+          // -> filled panel without a layout jump.
+          // ═══════════════════════════════════════════════════════════
+          if (statusUpdate.status === "web_research_started") {
+            devLog("🌐 web_research_started", statusUpdate);
+            webSourcesMessageId = `web-sources-${Date.now()}`;
+            setChatMessages(prev => {
+              // Drop the generic placeholder if present so the panel
+              // shows up immediately as the next bubble.
+              const filtered = prev.filter(msg => msg.id !== streamingMessageId);
+              return [...filtered, {
+                id: webSourcesMessageId,
+                role: 'assistant',
+                type: 'web_sources',
+                webSourcesStatus: 'searching',
+                webSourcesSchool: statusUpdate.school || null,
+                webSourcesExamBoard: statusUpdate.exam_board || null,
+                webSourcesCitations: [],
+                isStreaming: true,
+                timestamp: new Date(),
+              }];
+            });
+            return;
+          }
+
+          if (statusUpdate.status === "web_sources_found") {
+            devLog("🌐 web_sources_found", statusUpdate);
+            setChatMessages(prev => {
+              const existing = prev.find(msg => msg.id === webSourcesMessageId);
+              const filled = {
+                id: webSourcesMessageId || `web-sources-${Date.now()}`,
+                role: 'assistant',
+                type: 'web_sources',
+                webSourcesStatus: 'found',
+                webSourcesSchool: statusUpdate.school || null,
+                webSourcesExamBoard: statusUpdate.exam_board || null,
+                webSourcesSummary: statusUpdate.exam_summary || '',
+                webSourcesCitations: statusUpdate.citations || [],
+                webSourcesFoundRealPapers: !!statusUpdate.found_real_papers,
+                webSourcesHonestyNote: statusUpdate.honesty_note || null,
+                webSourcesCached: !!statusUpdate.cached,
+                isStreaming: false,
+                timestamp: new Date(),
+              };
+              if (existing) {
+                return prev.map(msg => (msg.id === webSourcesMessageId ? filled : msg));
+              }
+              // Edge case: web_sources_found arrived without a prior
+              // web_research_started (e.g. cache hit emitted both in
+              // quick succession and the started event was dropped).
+              if (!webSourcesMessageId) webSourcesMessageId = filled.id;
+              return [...prev, filled];
+            });
+
+            // Persist the filled panel to Firebase so it's there on reload.
+            const persistMsg = {
+              id: webSourcesMessageId,
+              role: 'assistant',
+              type: 'web_sources',
+              webSourcesStatus: 'found',
+              webSourcesSchool: statusUpdate.school || null,
+              webSourcesExamBoard: statusUpdate.exam_board || null,
+              webSourcesSummary: statusUpdate.exam_summary || '',
+              webSourcesCitations: statusUpdate.citations || [],
+              webSourcesFoundRealPapers: !!statusUpdate.found_real_papers,
+              webSourcesHonestyNote: statusUpdate.honesty_note || null,
+              webSourcesCached: !!statusUpdate.cached,
+              timestamp: new Date(),
+              isStreaming: false,
+            };
+            try { AppendToChat(updatedChatId || currentChatID, persistMsg); } catch (e) { devLog("persist web_sources failed", e); }
+            return;
+          }
+
+          if (statusUpdate.status === "web_research_failed") {
+            devLog("🌐 web_research_failed", statusUpdate);
+            const fallback = {
+              id: webSourcesMessageId || `web-sources-${Date.now()}`,
+              role: 'assistant',
+              type: 'web_sources',
+              webSourcesStatus: 'no_results',
+              webSourcesSchool: statusUpdate.school || null,
+              webSourcesExamBoard: statusUpdate.exam_board || null,
+              webSourcesFallbackMessage: statusUpdate.message || null,
+              isStreaming: false,
+              timestamp: new Date(),
+            };
+            setChatMessages(prev => {
+              const existing = prev.find(msg => msg.id === webSourcesMessageId);
+              if (existing) {
+                return prev.map(msg => (msg.id === webSourcesMessageId ? fallback : msg));
+              }
+              if (!webSourcesMessageId) webSourcesMessageId = fallback.id;
+              return [...prev, fallback];
+            });
+            return;
+          }
 
           // Empathetic message start
           if (statusUpdate.status === "empathetic_message_start") {
@@ -4664,6 +4774,29 @@ const ChatInterface = ({
                         mindmapData={message.mindmapData}
                         isLoading={message.isStreaming}
                         topic={message.content}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
+              // WEB SOURCES PANEL (school-specific exam research)
+              // ============================================
+              if (message.type === 'web_sources') {
+                return (
+                  <div key={message.id} className="message ai-message web-sources-message">
+                    <div className="message-content">
+                      <WebSourcesPanel
+                        status={message.webSourcesStatus || 'found'}
+                        school={message.webSourcesSchool}
+                        examBoard={message.webSourcesExamBoard}
+                        examSummary={message.webSourcesSummary}
+                        citations={message.webSourcesCitations || []}
+                        foundRealPapers={message.webSourcesFoundRealPapers}
+                        honestyNote={message.webSourcesHonestyNote}
+                        cached={message.webSourcesCached}
+                        fallbackMessage={message.webSourcesFallbackMessage}
                       />
                     </div>
                   </div>
