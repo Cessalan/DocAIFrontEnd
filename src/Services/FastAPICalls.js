@@ -695,6 +695,98 @@ export const generate_study_guide_section = async (sectionTitle, topic, chatId, 
 };
 
 /**
+ * ============================================================================
+ * CLASS RECORDING — chunked Whisper transcription pipeline
+ * ============================================================================
+ */
+
+/**
+ * Create a new recording session on the backend.
+ * @returns {Promise<{recording_id: string}>}
+ */
+export const recording_start = async ({ userId, topic = '', chatId = null, language = 'en' }) => {
+  const response = await fetch(`${FAST_API_BASE}/recordings/start`, {
+    method: 'POST',
+    headers: header,
+    body: JSON.stringify({
+      user_id: userId,
+      topic,
+      chat_id: chatId,
+      language,
+    }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Failed to start recording: ${response.status} - ${errorText}`);
+  }
+  return response.json();
+};
+
+/**
+ * Upload a single audio chunk for transcription. Must be ≤25MB.
+ * @param {string} recordingId
+ * @param {Blob} audioBlob - webm/opus chunk
+ * @param {number} chunkIndex
+ * @param {number} durationMs
+ * @returns {Promise<{success, chunk_index, text, total_chunks, accumulated_duration_ms}>}
+ */
+export const recording_upload_chunk = async (recordingId, audioBlob, chunkIndex, durationMs) => {
+  const form = new FormData();
+  const filename = `chunk_${chunkIndex}.webm`;
+  form.append('audio', audioBlob, filename);
+  form.append('chunk_index', String(chunkIndex));
+  form.append('duration_ms', String(Math.round(durationMs || 0)));
+
+  const response = await fetch(`${FAST_API_BASE}/recordings/${recordingId}/chunk`, {
+    method: 'POST',
+    body: form,
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Chunk upload failed: ${response.status} - ${errorText}`);
+  }
+  return response.json();
+};
+
+/**
+ * Stitch chunks, optionally auto-generate a title, attach to a (new) chat.
+ * @param {string} recordingId
+ * @param {Object} opts
+ * @param {string} [opts.topic] - User-supplied title. If empty, backend auto-generates one.
+ * @param {"save"|"chat"|"study"} [opts.action="chat"]
+ * @param {string} [opts.language]
+ * @returns {Promise<{recording_id, chat_id, transcript_preview, transcript_storage_path, duration_ms, total_chunks, action}>}
+ */
+export const recording_finalize = async (recordingId, { topic = null, action = 'chat', language = null } = {}) => {
+  const response = await fetch(`${FAST_API_BASE}/recordings/${recordingId}/finalize`, {
+    method: 'POST',
+    headers: header,
+    body: JSON.stringify({ topic, action, language }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Finalize failed: ${response.status} - ${errorText}`);
+  }
+  return response.json();
+};
+
+/**
+ * Cancel a recording session and (optionally) delete uploaded chunks.
+ */
+export const recording_cancel = async (recordingId, { deleteChunks = true } = {}) => {
+  const response = await fetch(`${FAST_API_BASE}/recordings/${recordingId}/cancel`, {
+    method: 'POST',
+    headers: header,
+    body: JSON.stringify({ delete_chunks: deleteChunks }),
+  });
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new Error(`Cancel failed: ${response.status} - ${errorText}`);
+  }
+  return response.json();
+};
+
+/**
  * Speech-to-Text using OpenAI Whisper
  * @param {Blob} audioBlob - Audio blob from MediaRecorder
  * @returns {Promise<{success: boolean, text: string}>}

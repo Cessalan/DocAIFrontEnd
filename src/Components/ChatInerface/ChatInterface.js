@@ -23,6 +23,7 @@ import ChatMessage from './ChatMessage';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
 import FirstUploadWowCard from './FirstUploadWowCard';
+import FileViewerModal from './FileViewerModal';
 import PlanOnboarding from './PlanOnboarding';
 import QuizModeSelector from './QuizModeSelector';
 
@@ -210,6 +211,7 @@ const ChatInterface = ({
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [streamingStatus, setStreamingStatus] = useState(null);
   const [isFilesModalVisible, setIsFilesModalVisible] = useState(false);
+  const [viewerFile, setViewerFile] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false); // Track if actively streaming
 
   // Upload insights state
@@ -5157,46 +5159,53 @@ const ChatInterface = ({
                     <p className="no-files">{t('chat.noFiles')}</p>
                   ) : (
                     <ul className="files-list">
-                      {uploadedFilesList.map(file => (
-                        <li key={file.id} className="file-item">
-                          <div className="file-info">
-                            <div className="file-icon">
-                              {file.isImage ? <SvgImageIcon /> : <SvgFileIcon />}
-                            </div>
-                            <div className="file-details">
-                              <div className="file-name">{file.name}</div>
-                              <div className="file-meta">
-                                <span className="file-size">{file.size}</span>
-                                <span className="file-date">{formatDate(file.uploadedAt)}</span>
+                      {uploadedFilesList.map(file => {
+                        const openable = !!file.downloadURL;
+                        const handleOpen = () => {
+                          if (openable) {
+                            setViewerFile(file);
+                            setIsFilesModalVisible(false);
+                          }
+                        };
+                        return (
+                          <li
+                            key={file.id || file.path || file.name}
+                            className={`file-item ${openable ? 'file-item-openable' : ''}`}
+                            onClick={handleOpen}
+                            onKeyDown={(e) => {
+                              if (openable && (e.key === 'Enter' || e.key === ' ')) {
+                                e.preventDefault();
+                                handleOpen();
+                              }
+                            }}
+                            role={openable ? 'button' : undefined}
+                            tabIndex={openable ? 0 : undefined}
+                            title={openable ? t('chat.openFile', 'Open file') : undefined}
+                          >
+                            <div className="file-info">
+                              <div className="file-icon">
+                                {file.isImage ? <SvgImageIcon /> : <SvgFileIcon />}
                               </div>
+                              <div className="file-details">
+                                <div className="file-name">{file.name}</div>
+                                <div className="file-meta">
+                                  <span className="file-size">{file.size}</span>
+                                  <span className="file-date">{formatDate(file.uploadedAt)}</span>
+                                </div>
+                              </div>
+                              {openable && (
+                                <div className="file-open-icon" aria-hidden="true">
+                                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                    <polyline points="15 3 21 3 21 9" />
+                                    <line x1="10" y1="14" x2="21" y2="3" />
+                                  </svg>
+                                </div>
+                              )}
                             </div>
-                          </div>
-
-                          <div className="file-actions">
-                            {/* <button
-                            className="file-action-btn"
-                            onClick={() => handlePostDocumentUploadOption("Résumé", file.name)}
-                            title={t('file.summarize')}
-                          >
-                            📝 {t('file.summary')}
-                          </button>
-                          <button
-                            className="file-action-btn"
-                            onClick={() => handlePostDocumentUploadOption("Quiz", file.name)}
-                            title={t('file.generateQuiz')}
-                          >
-                            🧠 Quiz
-                          </button> */}
-                            {/* <button
-                            className="file-action-btn"
-                            onClick={() => handlePostDocumentUploadOption("Mise en situation", file.name)}
-                            title={t('file.createScenario')}
-                          >
-                            🎭 {t('file.scenario')}
-                          </button> */}
-                          </div>
-                        </li>
-                      ))}
+                          </li>
+                        );
+                      })}
                     </ul>
                   )}
                 </div>
@@ -5204,6 +5213,13 @@ const ChatInterface = ({
             </div>
           )
         }
+
+        {viewerFile && (
+          <FileViewerModal
+            file={viewerFile}
+            onClose={() => setViewerFile(null)}
+          />
+        )}
       </div >
     </div >
   );

@@ -4011,6 +4011,38 @@ body.dark-mode .nursing-icon {
     border-color: rgba(173, 125, 195, 0.4);
   }
 
+  .file-item-openable {
+    cursor: pointer;
+  }
+
+  .file-item-openable:focus-visible {
+    outline: 2px solid rgba(173, 125, 195, 0.6);
+    outline-offset: 2px;
+  }
+
+  .file-open-icon {
+    margin-left: auto;
+    color: var(--text-muted, #999);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    flex-shrink: 0;
+  }
+
+  .file-item-openable:hover .file-open-icon {
+    color: var(--primary-coral, #e88d7d);
+    background: rgba(232, 141, 125, 0.1);
+  }
+
+  body.dark-mode .file-item-openable:hover .file-open-icon {
+    color: var(--dark-accent, #b8a5d4);
+    background: rgba(184, 165, 212, 0.12);
+  }
+
   .file-info {
     display: flex;
     align-items: center;

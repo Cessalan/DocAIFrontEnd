@@ -21,6 +21,8 @@ import FeedbackButton from './FeedbackButton';
 import FeedbackViewer from './FeedbackViewer';
 import OnboardingViewer from './OnboardingViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
+import RecordClassButton from '../RecordClass/RecordClassButton';
+import '../RecordClass/RecordClass.css';
 import '../../index.css';
 
 // translation
@@ -387,7 +389,9 @@ const getchatDate = (timestamp) => {
 
       <button className="new-chat-button" onClick={handleNewChat}>
         + {t('side.newChat')}
-      </button>  
+      </button>
+
+      <RecordClassButton />
 
       <div className="conversations-list">
         {chats.map((chat) => (

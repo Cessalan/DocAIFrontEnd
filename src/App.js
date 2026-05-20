@@ -23,6 +23,10 @@ import OnboardingModal from "./Components/Onboarding/OnboardingModal";
 import SelectionProvider from "./Components/Selection/useTextSelection";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
 import { getPendingFiles, clearPendingFiles } from "./utils/pendingUploadStore";
+import { RecordClassProvider } from "./Components/RecordClass/RecordClassContext";
+import RecordClassOverlay from "./Components/RecordClass/RecordClassOverlay";
+import RecordClassMinimizedPill from "./Components/RecordClass/RecordClassMinimizedPill";
+import "./Components/RecordClass/RecordClass.css";
 
 function ChatLayout() {
   const { chatId: urlChatId } = useParams(); // Get chatId from URL
@@ -210,7 +214,10 @@ function ChatLayout() {
   };
 
   return (
+    <RecordClassProvider>
     <div className="app-wrapper">
+      <RecordClassOverlay />
+      <RecordClassMinimizedPill />
       {/* Global NurseQuizAI branding - positioned next to sidebar */}
       <div className={`app-global-brand ${sidebarOpen ? 'sidebar-open' : 'sidebar-closed'}`}>
         <HeartLogo className="app-brand-logo" />
@@ -297,6 +304,7 @@ function ChatLayout() {
 
       {!isProfileComplete && <OnboardingModal />}
     </div>
+    </RecordClassProvider>
   );
 }
 
