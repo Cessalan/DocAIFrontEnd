@@ -757,11 +757,11 @@ export const recording_upload_chunk = async (recordingId, audioBlob, chunkIndex,
  * @param {string} [opts.language]
  * @returns {Promise<{recording_id, chat_id, transcript_preview, transcript_storage_path, duration_ms, total_chunks, action}>}
  */
-export const recording_finalize = async (recordingId, { topic = null, action = 'chat', language = null } = {}) => {
+export const recording_finalize = async (recordingId, { topic = null, action = 'chat', language = null, events = null } = {}) => {
   const response = await fetch(`${FAST_API_BASE}/recordings/${recordingId}/finalize`, {
     method: 'POST',
     headers: header,
-    body: JSON.stringify({ topic, action, language }),
+    body: JSON.stringify({ topic, action, language, events }),
   });
   if (!response.ok) {
     const errorText = await response.text();

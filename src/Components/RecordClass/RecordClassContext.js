@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { auth } from '../../Firebase/config';
 import {
   recording_start,
@@ -33,8 +33,24 @@ const TX_STATUS = {
   ERROR: 'error',
 };
 
+// Match the current URL against the chat route `/c/:chatId`. Returns null if
+// the user isn't on a chat page (e.g. landing). Used so recordings started from
+// inside a chat attach to that chat instead of spawning a new one.
+const extractChatIdFromPath = (pathname) => {
+  if (!pathname) return null;
+  const match = pathname.match(/^\/c\/([^/?#]+)/);
+  return match ? match[1] : null;
+};
+
+export const RECORDING_FILES_REFRESH_EVENT = 'nq:recording-files-refresh';
+// Fired whenever the recording overlay opens or closes. App.js listens
+// so it can collapse the sidebar while the user is in the recording flow
+// and restore it when they exit. Detail: { open: boolean }.
+export const RECORDING_OVERLAY_STATE_EVENT = 'nq:recording-overlay-state';
+
 export const RecordClassProvider = ({ children }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [status, setStatus] = useState(STATUS.IDLE);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
@@ -53,9 +69,43 @@ export const RecordClassProvider = ({ children }) => {
   const [resultTitle, setResultTitle] = useState('');
   const [resultPreview, setResultPreview] = useState('');
 
+  // New additions: topic, events and live key points
+  const [topic, setTopic] = useState('');
+  const [events, setEvents] = useState([]);
+  const [liveKeyPoints, setLiveKeyPoints] = useState([]);
+
+  // When the overlay is opened from inside an existing chat, we attach the
+  // recording to that chat instead of creating a new one. Tracked as state so
+  // the IdleScreen can hide the topic input (we already have a chat title).
+  const [attachToChatId, setAttachToChatId] = useState(null);
+
+  // Audio capture source:
+  //  - 'mic'    → standard microphone (echo cancellation on, ideal for live
+  //              in-person lectures)
+  //  - 'device' → getDisplayMedia captures tab/system audio directly (for
+  //              recorded videos, Zoom playback, podcasts playing on the
+  //              user's own device — echo cancellation would otherwise
+  //              filter that audio away).
+  const [audioSource, setAudioSource] = useState('mic');
+
+  const recordingIdRef = useRef(null);
+  const topicRef = useRef('');
+  const eventsRef = useRef([]);
+  const attachToChatIdRef = useRef(null);
+  // Holds the latest stopRecording function so the getDisplayMedia
+  // track-end listener (registered inside startRecording, before
+  // stopRecording is in scope) can call it without stale-closure issues.
+  const stopRecordingRef = useRef(null);
+  const mimeTypeRef = useRef('');
+  const isStoppingRef = useRef(false);
+  const isPausedRef = useRef(false);
+  const chunkTimeoutRef = useRef(null);
+  const currentChunkIndexRef = useRef(0);
+  const currentChunkChunksRef = useRef([]);
+  const chunkStartTimeRef = useRef(0);
+
   const mediaRecorderRef = useRef(null);
   const mediaStreamRef = useRef(null);
-  const chunksRef = useRef([]);
   const startTimeRef = useRef(0);
   const accumulatedMsRef = useRef(0);
   const tickIntervalRef = useRef(null);
@@ -63,6 +113,31 @@ export const RecordClassProvider = ({ children }) => {
   const analyserRef = useRef(null);
   const rafRef = useRef(null);
   const finalDurationMsRef = useRef(0);
+
+  // Sync refs with state
+  useEffect(() => {
+    recordingIdRef.current = recordingId;
+  }, [recordingId]);
+
+  useEffect(() => {
+    topicRef.current = topic;
+  }, [topic]);
+
+  useEffect(() => {
+    eventsRef.current = events;
+  }, [events]);
+
+  useEffect(() => {
+    attachToChatIdRef.current = attachToChatId;
+  }, [attachToChatId]);
+
+  // Broadcast overlay open/closed so App can collapse + restore the sidebar
+  // for an immersive recording experience.
+  useEffect(() => {
+    window.dispatchEvent(new CustomEvent(RECORDING_OVERLAY_STATE_EVENT, {
+      detail: { open: isOverlayOpen },
+    }));
+  }, [isOverlayOpen]);
 
   const cleanupAudioAnalysis = useCallback(() => {
     if (rafRef.current) {
@@ -118,10 +193,18 @@ export const RecordClassProvider = ({ children }) => {
     }
   }, []);
 
-  const openOverlay = useCallback(() => {
+  const openOverlay = useCallback((opts = {}) => {
+    // If the caller didn't explicitly pass a chatId, infer one from the URL —
+    // /c/:chatId means "record into this chat", anywhere else (landing, etc.)
+    // means "start a new chat". The sidebar button passes no args.
+    const chatId = opts.chatId !== undefined
+      ? (opts.chatId || null)
+      : extractChatIdFromPath(location.pathname);
+    setAttachToChatId(chatId);
+    attachToChatIdRef.current = chatId;
     setIsOverlayOpen(true);
     setIsMinimized(false);
-  }, []);
+  }, [location.pathname]);
 
   const minimize = useCallback(() => {
     setIsMinimized(true);
@@ -140,8 +223,11 @@ export const RecordClassProvider = ({ children }) => {
       mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       mediaStreamRef.current = null;
     }
+    if (chunkTimeoutRef.current) {
+      clearTimeout(chunkTimeoutRef.current);
+      chunkTimeoutRef.current = null;
+    }
     mediaRecorderRef.current = null;
-    chunksRef.current = [];
     accumulatedMsRef.current = 0;
     finalDurationMsRef.current = 0;
     setAudioBlob(null);
@@ -158,83 +244,153 @@ export const RecordClassProvider = ({ children }) => {
     setResultChatId(null);
     setResultTitle('');
     setResultPreview('');
+    setTopic('');
+    setEvents([]);
+    setLiveKeyPoints([]);
+    setAttachToChatId(null);
+    attachToChatIdRef.current = null;
+    isStoppingRef.current = false;
+    isPausedRef.current = false;
+    currentChunkIndexRef.current = 0;
+    currentChunkChunksRef.current = [];
   }, [cleanupAudioAnalysis, stopTimer]);
 
-  const processRecording = useCallback(async (blob) => {
-    const user = auth.currentUser;
-    if (!user) {
-      setTxError('You must be signed in to transcribe a recording.');
-      setTxStatus(TX_STATUS.ERROR);
-      return;
-    }
-    if (!blob || blob.size === 0) {
-      setTxError('Recording is empty.');
-      setTxStatus(TX_STATUS.ERROR);
-      return;
-    }
-    // Whisper hard limit per chunk
-    if (blob.size > 25 * 1024 * 1024) {
-      setTxError('Recording exceeds 25 MB. Long-lecture chunking is coming soon.');
-      setTxStatus(TX_STATUS.ERROR);
-      return;
-    }
-
+  const uploadChunk = useCallback(async (blob, index, durationMs) => {
+    if (!recordingIdRef.current) return;
     try {
-      setTxError(null);
-
-      setTxStatus(TX_STATUS.UPLOADING);
-      const { recording_id } = await recording_start({
-        userId: user.uid,
-        language: (navigator.language || 'en').split('-')[0],
-      });
-      setRecordingId(recording_id);
-
-      setTxStatus(TX_STATUS.TRANSCRIBING);
-      await recording_upload_chunk(recording_id, blob, 0, finalDurationMsRef.current || 0);
-
-      setTxStatus(TX_STATUS.FINALIZING);
-      const result = await recording_finalize(recording_id, { action: 'chat' });
-
-      setResultChatId(result.chat_id || null);
-      setResultPreview(result.transcript_preview || '');
-      setResultTitle(result.title || '');
-      setTxStatus(TX_STATUS.READY);
+      const res = await recording_upload_chunk(recordingIdRef.current, blob, index, durationMs);
+      if (res && res.key_points && Array.isArray(res.key_points)) {
+        setLiveKeyPoints((prev) => [...prev, ...res.key_points]);
+      }
     } catch (err) {
-      console.error('Transcription failed:', err);
-      setTxError(err?.message || 'Transcription failed. Please try again.');
-      setTxStatus(TX_STATUS.ERROR);
+      console.error(`Chunk ${index} upload failed:`, err);
     }
   }, []);
 
-  const openResultChat = useCallback(() => {
-    if (!resultChatId) return;
-    navigate(`/c/${resultChatId}`);
-    reset();
-  }, [navigate, reset, resultChatId]);
+  const startChunk = useCallback((index) => {
+    if (isStoppingRef.current) return;
 
-  const discardResult = useCallback(async () => {
-    const id = recordingId;
-    reset();
-    if (id) {
-      try {
-        await recording_cancel(id, { deleteChunks: true });
-      } catch (e) {
-        console.warn('Cancel failed:', e);
+    currentChunkIndexRef.current = index;
+    currentChunkChunksRef.current = [];
+    chunkStartTimeRef.current = Date.now();
+
+    const recorder = new MediaRecorder(
+      mediaStreamRef.current,
+      mimeTypeRef.current ? { mimeType: mimeTypeRef.current } : undefined
+    );
+    mediaRecorderRef.current = recorder;
+
+    recorder.ondataavailable = (e) => {
+      if (e.data && e.data.size > 0) {
+        currentChunkChunksRef.current.push(e.data);
+        setBytesRecorded((prev) => prev + e.data.size);
       }
-    }
-  }, [recordingId, reset]);
+    };
 
-  const startRecording = useCallback(async () => {
+    recorder.onstop = async () => {
+      const blob = new Blob(currentChunkChunksRef.current, {
+        type: mimeTypeRef.current || 'audio/webm',
+      });
+
+      let uploadPromise = Promise.resolve();
+      if (blob.size > 0 && recordingIdRef.current) {
+        const chunkIdx = index;
+        const duration = Date.now() - chunkStartTimeRef.current;
+        uploadPromise = uploadChunk(blob, chunkIdx, duration);
+      }
+
+      if (isStoppingRef.current) {
+        setTxStatus(TX_STATUS.TRANSCRIBING);
+        try {
+          await uploadPromise;
+
+          setTxStatus(TX_STATUS.FINALIZING);
+          const result = await recording_finalize(recordingIdRef.current, {
+            topic: topicRef.current,
+            action: 'chat',
+            events: eventsRef.current,
+          });
+
+          setResultChatId(result.chat_id || null);
+          setResultPreview(result.transcript_preview || '');
+          setResultTitle(result.title || '');
+          setTxStatus(TX_STATUS.READY);
+          if (result.chat_id) {
+            window.dispatchEvent(new CustomEvent(RECORDING_FILES_REFRESH_EVENT, {
+              detail: { chatId: result.chat_id }
+            }));
+          }
+        } catch (err) {
+          console.error('Finalization/Upload failed:', err);
+          setTxError(err?.message || 'Finalization failed.');
+          setTxStatus(TX_STATUS.ERROR);
+        }
+      } else if (!isPausedRef.current) {
+        // Start next chunk
+        startChunk(index + 1);
+      }
+    };
+
+    recorder.start(1000);
+
+    // Rotate chunk every 30 seconds
+    chunkTimeoutRef.current = setTimeout(() => {
+      if (recorder.state === 'recording') {
+        recorder.stop();
+      }
+    }, 30000);
+  }, [uploadChunk]);
+
+  const startRecording = useCallback(async (selectedTopic) => {
     setError(null);
     setStatus(STATUS.REQUESTING);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        audio: {
-          channelCount: 1,
-          echoCancellation: true,
-          noiseSuppression: true,
-        },
-      });
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('You must be signed in to record a class.');
+      }
+
+      let stream;
+      if (audioSource === 'device') {
+        // Capture tab / system audio directly via the screen-share API.
+        // We don't actually want the video tracks — we strip them right
+        // after the user picks a source. This produces clean lossless
+        // audio from videos / Zoom / podcasts playing on the device,
+        // which echo cancellation on the mic would otherwise strip out.
+        if (!navigator.mediaDevices?.getDisplayMedia) {
+          throw new Error('Your browser doesn\'t support recording device audio. Try Chrome or Edge.');
+        }
+        const displayStream = await navigator.mediaDevices.getDisplayMedia({
+          video: true,
+          audio: true,
+        });
+        const audioTracks = displayStream.getAudioTracks();
+        if (!audioTracks.length) {
+          displayStream.getTracks().forEach((t) => t.stop());
+          throw new Error('No audio was shared. Re-try and tick "Share tab audio" in the picker.');
+        }
+        // Drop the video tracks immediately — we only want audio.
+        displayStream.getVideoTracks().forEach((t) => t.stop());
+        stream = new MediaStream(audioTracks);
+
+        // If the user clicks "Stop sharing" in the browser's screen-share
+        // bar while recording, treat it as a clean stop so we still
+        // finalize whatever's been captured up to that moment.
+        audioTracks.forEach((track) => {
+          track.addEventListener('ended', () => {
+            if (isStoppingRef.current) return;
+            stopRecordingRef.current?.();
+          });
+        });
+      } else {
+        stream = await navigator.mediaDevices.getUserMedia({
+          audio: {
+            channelCount: 1,
+            echoCancellation: true,
+            noiseSuppression: true,
+          },
+        });
+      }
       mediaStreamRef.current = stream;
 
       const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
@@ -242,34 +398,33 @@ export const RecordClassProvider = ({ children }) => {
         : MediaRecorder.isTypeSupported('audio/webm')
         ? 'audio/webm'
         : '';
+      mimeTypeRef.current = mimeType;
 
-      const recorder = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
-      mediaRecorderRef.current = recorder;
-      chunksRef.current = [];
+      const finalTopic = selectedTopic || 'Lecture Recording';
+      setTopic(finalTopic);
+      topicRef.current = finalTopic;
 
-      recorder.ondataavailable = (e) => {
-        if (e.data && e.data.size > 0) {
-          chunksRef.current.push(e.data);
-          setBytesRecorded((prev) => prev + e.data.size);
-        }
-      };
+      // Start the recording session on the backend
+      const { recording_id } = await recording_start({
+        userId: user.uid,
+        topic: finalTopic,
+        chatId: attachToChatIdRef.current,
+        language: (navigator.language || 'en').split('-')[0],
+      });
 
-      recorder.onstop = () => {
-        const blob = new Blob(chunksRef.current, { type: mimeType || 'audio/webm' });
-        setAudioBlob(blob);
-        setStatus(STATUS.REVIEWING);
-        stopTimer();
-        cleanupAudioAnalysis();
-        if (mediaStreamRef.current) {
-          mediaStreamRef.current.getTracks().forEach((t) => t.stop());
-          mediaStreamRef.current = null;
-        }
-        // Kick off transcription immediately
-        processRecording(blob);
-      };
+      setRecordingId(recording_id);
+      recordingIdRef.current = recording_id;
 
-      recorder.start(1000);
+      // Reset refs & state
+      isStoppingRef.current = false;
+      isPausedRef.current = false;
+      setLiveKeyPoints([]);
+      setEvents([]);
+      eventsRef.current = [];
+
+      startChunk(0);
       setupAudioAnalysis(stream);
+
       accumulatedMsRef.current = 0;
       finalDurationMsRef.current = 0;
       setElapsedMs(0);
@@ -277,19 +432,31 @@ export const RecordClassProvider = ({ children }) => {
       setStatus(STATUS.RECORDING);
       startTimer();
     } catch (err) {
-      console.error('Mic access failed:', err);
-      setError(
-        err?.name === 'NotAllowedError'
-          ? 'Microphone permission denied. Enable mic access in your browser settings.'
-          : 'Could not access microphone.'
-      );
+      console.error('Recording start failed:', err);
+      let msg;
+      if (err?.name === 'NotAllowedError') {
+        msg = audioSource === 'device'
+          ? 'You cancelled the share prompt. Pick a tab or your whole screen and tick "Share tab audio" to record.'
+          : 'Microphone permission denied. Enable mic access in your browser settings.';
+      } else {
+        msg = err?.message || 'Could not start recording.';
+      }
+      setError(msg);
       setStatus(STATUS.IDLE);
     }
-  }, [cleanupAudioAnalysis, processRecording, setupAudioAnalysis, startTimer, stopTimer]);
+  }, [startChunk, setupAudioAnalysis, startTimer, audioSource]);
 
   const pauseRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state !== 'recording') return;
+
+    // Clear chunk timeout
+    if (chunkTimeoutRef.current) {
+      clearTimeout(chunkTimeoutRef.current);
+      chunkTimeoutRef.current = null;
+    }
+
+    isPausedRef.current = true;
     recorder.pause();
     accumulatedMsRef.current += Date.now() - startTimeRef.current;
     stopTimer();
@@ -299,28 +466,141 @@ export const RecordClassProvider = ({ children }) => {
   const resumeRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
     if (!recorder || recorder.state !== 'paused') return;
+
+    isPausedRef.current = false;
     recorder.resume();
     startTimer();
     setStatus(STATUS.RECORDING);
+
+    // Resume chunk window with a fresh timeout
+    chunkStartTimeRef.current = Date.now();
+    chunkTimeoutRef.current = setTimeout(() => {
+      if (recorder.state === 'recording') {
+        recorder.stop();
+      }
+    }, 30000);
   }, [startTimer]);
 
   const stopRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
     if (!recorder) return;
-    // Capture final duration BEFORE stopping (timer dies after stop)
+
     const finalMs =
-      recorder.state === 'paused'
+      isPausedRef.current
         ? accumulatedMsRef.current
         : accumulatedMsRef.current + (Date.now() - startTimeRef.current);
     finalDurationMsRef.current = finalMs;
     setElapsedMs(finalMs);
 
+    if (chunkTimeoutRef.current) {
+      clearTimeout(chunkTimeoutRef.current);
+      chunkTimeoutRef.current = null;
+    }
+
+    isStoppingRef.current = true;
+    setStatus(STATUS.REVIEWING);
+    stopTimer();
+    cleanupAudioAnalysis();
+
     if (recorder.state !== 'inactive') {
       recorder.stop();
+    } else {
+      (async () => {
+        setTxStatus(TX_STATUS.FINALIZING);
+        try {
+          const result = await recording_finalize(recordingIdRef.current, {
+            topic: topicRef.current,
+            action: 'chat',
+            events: eventsRef.current,
+          });
+          setResultChatId(result.chat_id || null);
+          setResultPreview(result.transcript_preview || '');
+          setResultTitle(result.title || '');
+          setTxStatus(TX_STATUS.READY);
+          if (result.chat_id) {
+            window.dispatchEvent(new CustomEvent(RECORDING_FILES_REFRESH_EVENT, {
+              detail: { chatId: result.chat_id }
+            }));
+          }
+        } catch (err) {
+          console.error('Finalization failed:', err);
+          setTxError(err?.message || 'Finalization failed.');
+          setTxStatus(TX_STATUS.ERROR);
+        }
+      })();
     }
+
+    if (mediaStreamRef.current) {
+      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current = null;
+    }
+
     setIsOverlayOpen(true);
     setIsMinimized(false);
-  }, []);
+  }, [cleanupAudioAnalysis, stopTimer]);
+
+  // Expose stopRecording through a ref so listeners attached inside
+  // startRecording (where stopRecording isn't yet in scope) can call it
+  // without stale closures.
+  useEffect(() => {
+    stopRecordingRef.current = stopRecording;
+  }, [stopRecording]);
+
+  const openResultChat = useCallback(() => {
+    if (!resultChatId) return;
+    // When we attached to an existing chat, the user is already viewing it —
+    // just dismiss the overlay so the (already-refreshed) file list shows.
+    if (attachToChatIdRef.current && attachToChatIdRef.current === resultChatId) {
+      reset();
+      return;
+    }
+    navigate(`/c/${resultChatId}`);
+    reset();
+  }, [navigate, reset, resultChatId]);
+
+  const discardResult = useCallback(async () => {
+    const id = recordingId;
+    // Capture the attached chat id BEFORE reset() clears it — needed so we
+    // can refresh that chat's file list once the backend has finished
+    // tearing down the transcript + vectors.
+    const refreshChatId = attachToChatIdRef.current;
+    reset();
+    if (id) {
+      try {
+        await recording_cancel(id, { deleteChunks: true });
+        if (refreshChatId) {
+          window.dispatchEvent(new CustomEvent(RECORDING_FILES_REFRESH_EVENT, {
+            detail: { chatId: refreshChatId }
+          }));
+        }
+      } catch (e) {
+        console.warn('Cancel failed:', e);
+      }
+    }
+  }, [recordingId, reset]);
+
+  const formatTime = (ms) => {
+    const totalSecs = Math.floor(ms / 1000);
+    const hrs = Math.floor(totalSecs / 3600);
+    const mins = Math.floor((totalSecs % 3600) / 60);
+    const secs = totalSecs % 60;
+    const pad = (num) => String(num).padStart(2, '0');
+    return `${hrs > 0 ? hrs + ':' : ''}${pad(mins)}:${pad(secs)}`;
+  };
+
+  const addEvent = useCallback((type) => {
+    const timestamp_ms = elapsedMs;
+    const newEvent = { timestamp_ms, type };
+    setEvents((prev) => [...prev, newEvent]);
+    eventsRef.current = [...eventsRef.current, newEvent];
+
+    const timeStr = formatTime(timestamp_ms);
+    const note = type === 'important'
+      ? `⭐ Marked important concept at ${timeStr}`
+      : `🚩 Flagged confusion at ${timeStr}`;
+
+    setLiveKeyPoints((prev) => [...prev, { text: note, isEvent: true, type }]);
+  }, [elapsedMs]);
 
   useEffect(() => {
     return () => {
@@ -329,9 +609,11 @@ export const RecordClassProvider = ({ children }) => {
       if (mediaStreamRef.current) {
         mediaStreamRef.current.getTracks().forEach((t) => t.stop());
       }
+      if (chunkTimeoutRef.current) {
+        clearTimeout(chunkTimeoutRef.current);
+      }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [cleanupAudioAnalysis, stopTimer]);
 
   useEffect(() => {
     const onBeforeUnload = (e) => {
@@ -361,6 +643,12 @@ export const RecordClassProvider = ({ children }) => {
     resultTitle,
     resultPreview,
     error,
+    topic,
+    events,
+    liveKeyPoints,
+    attachToChatId,
+    audioSource,
+    setAudioSource,
     openOverlay,
     minimize,
     expand,
@@ -369,9 +657,10 @@ export const RecordClassProvider = ({ children }) => {
     pauseRecording,
     resumeRecording,
     stopRecording,
-    processRecording,
     openResultChat,
     discardResult,
+    addEvent,
+    setTopic,
   };
 
   return <RecordClassContext.Provider value={value}>{children}</RecordClassContext.Provider>;

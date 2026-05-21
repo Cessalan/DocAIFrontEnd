@@ -2336,8 +2336,10 @@ body.dark-mode .nursing-icon {
      ============================================ */
   .empty-chat-single-cta {
     display: flex;
+    flex-direction: column;
     justify-content: center;
     align-items: center;
+    gap: 20px;
     width: 100%;
   }
 
@@ -2345,11 +2347,11 @@ body.dark-mode .nursing-icon {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 16px;
-    padding: 40px 48px;
+    gap: 10px;
+    padding: 22px 32px 24px;
     background: linear-gradient(135deg, #fff5f2 0%, #ffe8e4 100%);
     border: 2px solid rgba(232, 141, 125, 0.3);
-    border-radius: 24px;
+    border-radius: 20px;
     cursor: pointer;
     transition: all 0.3s ease;
     text-align: center;
@@ -2380,8 +2382,8 @@ body.dark-mode .nursing-icon {
   }
 
   .empty-cta-icon {
-    width: 72px;
-    height: 72px;
+    width: 56px;
+    height: 56px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -2393,14 +2395,14 @@ body.dark-mode .nursing-icon {
   }
 
   .empty-cta-title {
-    font-size: 20px;
+    font-size: 18px;
     font-weight: 700;
     color: var(--primary-coral-dark);
     margin: 0;
   }
 
   .empty-cta-subtitle {
-    font-size: 14px;
+    font-size: 13px;
     color: #777;
     margin: 0;
     line-height: 1.4;
@@ -2410,17 +2412,17 @@ body.dark-mode .nursing-icon {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 12px 24px;
+    padding: 10px 20px;
     background: linear-gradient(135deg, var(--primary-coral) 0%, var(--primary-coral-dark) 100%);
     color: white;
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 600;
     border: none;
     border-radius: 12px;
     cursor: pointer;
     transition: all 0.25s ease;
     box-shadow: 0 4px 12px rgba(232, 141, 125, 0.3);
-    margin-top: 8px;
+    margin-top: 4px;
   }
 
   .empty-cta-button:hover {
@@ -2501,6 +2503,91 @@ body.dark-mode .nursing-icon {
     justify-content: center;
   }
 
+  /* Compact variant used after the user expands the exam-prep multi-step.
+     Both buttons sit side-by-side inside the narrow 320px card. */
+  .empty-cta-buttons-row--compact {
+    width: 100%;
+    flex-wrap: nowrap;
+    gap: 8px;
+  }
+
+  .empty-cta-buttons-row--compact .empty-cta-button {
+    min-width: 0;
+    padding: 9px 14px;
+    font-size: 13px;
+    gap: 6px;
+  }
+
+  .empty-cta-buttons-row--compact .empty-cta-button svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* One-line tagline shown under the icon when the card is in its lean
+     collapsed state. Gives just enough context for the CTA without
+     bloating the card. */
+  .empty-cta-tagline {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.4;
+    color: #8a6f68;
+    font-weight: 500;
+    text-align: center;
+    max-width: 240px;
+  }
+
+  .empty-cta-tagline--record {
+    color: #6a7d59;
+  }
+
+  body.dark-mode .empty-cta-tagline {
+    color: #c9b4ad;
+  }
+
+  body.dark-mode .empty-cta-tagline--record {
+    color: #a8b896;
+  }
+
+  /* Small label that appears above the Upload/Paste choice once the user
+     has expanded the multi-step. Gives context for what the two buttons
+     mean now that the card title was removed. */
+  .empty-cta-prompt {
+    margin: 0;
+    font-size: 13px;
+    color: var(--primary-coral-dark, #c46a5a);
+    font-weight: 600;
+  }
+
+  .empty-cta-back {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    cursor: pointer;
+    padding: 4px 8px;
+    margin-top: -2px;
+    border-radius: 6px;
+    transition: color 0.2s ease, background 0.2s ease;
+  }
+
+  .empty-cta-back:hover {
+    color: #555;
+    background: rgba(0, 0, 0, 0.04);
+  }
+
+  body.dark-mode .empty-cta-prompt {
+    color: #e5b8af;
+  }
+
+  body.dark-mode .empty-cta-back {
+    color: #999;
+  }
+
+  body.dark-mode .empty-cta-back:hover {
+    color: #ddd;
+    background: rgba(255, 255, 255, 0.06);
+  }
+
   .empty-cta-button.paste-notes-btn {
     background: linear-gradient(135deg, #8b7db8 0%, #6b5b95 100%);
     box-shadow: 0 4px 12px rgba(107, 91, 149, 0.3);
@@ -2519,6 +2606,80 @@ body.dark-mode .nursing-icon {
   body.dark-mode .empty-cta-button.paste-notes-btn:hover {
     background: linear-gradient(135deg, #7a6da8 0%, #6b5b95 100%);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Record-class CTA — warm sage so it sits between coral (upload) and
+     purple (paste) without competing with either. */
+  .empty-cta-button.record-class-btn {
+    background: linear-gradient(135deg, #93a87f 0%, #748a64 100%);
+    box-shadow: 0 4px 12px rgba(116, 138, 100, 0.3);
+  }
+
+  .empty-cta-button.record-class-btn:hover {
+    background: linear-gradient(135deg, #84996f 0%, #647855 100%);
+    box-shadow: 0 6px 16px rgba(116, 138, 100, 0.4);
+  }
+
+  body.dark-mode .empty-cta-button.record-class-btn {
+    background: linear-gradient(135deg, #748a64 0%, #5b6e4f 100%);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+
+  body.dark-mode .empty-cta-button.record-class-btn:hover {
+    background: linear-gradient(135deg, #84996f 0%, #748a64 100%);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+  }
+
+  /* Secondary card (live-class recording) — same shape as primary but with
+     a sage palette and slightly muted to signal "alternative path". */
+  .empty-cta-card.empty-cta-card--record {
+    background: linear-gradient(135deg, #f4f7ef 0%, #e6ede0 100%);
+    border-color: rgba(116, 138, 100, 0.28);
+    box-shadow: 0 4px 20px rgba(116, 138, 100, 0.1);
+    padding: 16px 28px 18px;
+    gap: 6px;
+  }
+
+  .empty-cta-card.empty-cta-card--record:hover {
+    background: linear-gradient(135deg, #edf2e8 0%, #dde7d4 100%);
+    border-color: rgba(116, 138, 100, 0.42);
+    box-shadow: 0 12px 28px rgba(116, 138, 100, 0.18);
+  }
+
+  /* Hide the yellow "tape" highlight on the secondary card — that flourish
+     belongs to the primary card only. */
+  .empty-cta-card.empty-cta-card--record::before {
+    display: none;
+  }
+
+  .empty-cta-icon.empty-cta-icon--record {
+    width: 38px;
+    height: 38px;
+    color: #748a64;
+  }
+
+  .empty-cta-title.empty-cta-title--sm {
+    font-size: 15px;
+    color: #4d5d3f;
+  }
+
+  body.dark-mode .empty-cta-card.empty-cta-card--record {
+    background: linear-gradient(135deg, #353a30 0%, #2b302a 100%);
+    border-color: rgba(116, 138, 100, 0.32);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+  }
+
+  body.dark-mode .empty-cta-card.empty-cta-card--record:hover {
+    background: linear-gradient(135deg, #3d4338 0%, #333932 100%);
+    border-color: rgba(116, 138, 100, 0.5);
+  }
+
+  body.dark-mode .empty-cta-title.empty-cta-title--sm {
+    color: #b8c9a8;
+  }
+
+  body.dark-mode .empty-cta-icon.empty-cta-icon--record {
+    color: #93a87f;
   }
 
   /* Exam upload buttons row */
@@ -3667,6 +3828,120 @@ body.dark-mode .nursing-icon {
 
   .upload-button:hover:not(:disabled) svg {
     transform: scale(1.1);
+  }
+
+  /* Record-class button uses the same sage palette as the secondary
+     "Record a class" empty-state card, so users learn the two are the
+     same action. */
+  .upload-button.record-class-inline {
+    color: #748a64;
+    border-color: rgba(116, 138, 100, 0.28);
+  }
+
+  .upload-button.record-class-inline:hover:not(:disabled) {
+    color: #5b6e4f;
+    border-color: rgba(116, 138, 100, 0.5);
+  }
+
+  body.dark-mode .upload-button.record-class-inline {
+    color: #93a87f;
+    border-color: rgba(116, 138, 100, 0.32);
+  }
+
+  body.dark-mode .upload-button.record-class-inline:hover:not(:disabled) {
+    color: #b8c9a8;
+  }
+
+  /* ─────────────────────────────────────────────────────────────────────
+     Premium tooltip for input-row buttons. Uses [data-tooltip] instead of
+     the native title= attribute so we can style + animate it. Tooltip
+     appears ABOVE the button (the row sits at the bottom of the viewport).
+     ───────────────────────────────────────────────────────────────────── */
+  .upload-button[data-tooltip],
+  .voice-input-button[data-tooltip] {
+    position: relative;
+  }
+
+  .upload-button[data-tooltip]:hover:not(:disabled)::after,
+  .voice-input-button[data-tooltip]:hover:not(:disabled)::after {
+    content: attr(data-tooltip);
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 10px);
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #3d3a38 0%, #2d2b29 100%);
+    color: white;
+    padding: 7px 12px;
+    border-radius: 8px 10px 8px 6px;
+    font-size: 12.5px;
+    font-family: var(--font-handwritten, 'Kalam', cursive);
+    font-weight: 500;
+    letter-spacing: 0.2px;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    border: 1px solid rgba(232, 141, 125, 0.25);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.18), 0 1px 3px rgba(0, 0, 0, 0.12);
+    animation: inputTooltipFadeIn 0.18s ease 0.35s forwards;
+  }
+
+  /* Little tail under the bubble, points down to the button */
+  .upload-button[data-tooltip]:hover:not(:disabled)::before,
+  .voice-input-button[data-tooltip]:hover:not(:disabled)::before {
+    content: '';
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 4px);
+    width: 8px;
+    height: 8px;
+    background: #2d2b29;
+    border-right: 1px solid rgba(232, 141, 125, 0.25);
+    border-bottom: 1px solid rgba(232, 141, 125, 0.25);
+    transform: translateX(-50%) rotate(45deg);
+    opacity: 0;
+    z-index: 999;
+    pointer-events: none;
+    animation: inputTooltipFadeIn 0.18s ease 0.35s forwards;
+  }
+
+  @keyframes inputTooltipFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+  }
+
+  /* The arrow needs to keep its rotation while animating opacity */
+  .upload-button[data-tooltip]:hover:not(:disabled)::before,
+  .voice-input-button[data-tooltip]:hover:not(:disabled)::before {
+    animation-name: inputTooltipArrowFadeIn;
+  }
+
+  @keyframes inputTooltipArrowFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-50%) rotate(45deg) translate(0, -4px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(-50%) rotate(45deg);
+    }
+  }
+
+  body.dark-mode .upload-button[data-tooltip]:hover:not(:disabled)::after,
+  body.dark-mode .voice-input-button[data-tooltip]:hover:not(:disabled)::after {
+    background: linear-gradient(135deg, #4a4744 0%, #3a3835 100%);
+    border-color: rgba(232, 141, 125, 0.32);
+  }
+  body.dark-mode .upload-button[data-tooltip]:hover:not(:disabled)::before,
+  body.dark-mode .voice-input-button[data-tooltip]:hover:not(:disabled)::before {
+    background: #3a3835;
+    border-color: rgba(232, 141, 125, 0.32);
   }
 
   /* Send button - clean lavender style */

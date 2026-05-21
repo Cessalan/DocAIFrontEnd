@@ -289,6 +289,162 @@ body.dark-mode {
   margin: 12px 0 0;
 }
 
+/* Used for platform-specific caveats (e.g. macOS desktop-audio note). */
+.rc-hint.rc-hint--warning {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.18);
+  border-radius: 8px;
+  color: #a86256;
+  max-width: 360px;
+  line-height: 1.45;
+}
+
+body.dark-mode .rc-hint.rc-hint--warning {
+  background: rgba(232, 141, 125, 0.12);
+  border-color: rgba(232, 141, 125, 0.24);
+  color: #e0a59a;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Compatibility card for the Virtual class option.
+   Premium two-section layout with sage/red soft-color zones, pill-style
+   section headers, and clean typography.
+   ───────────────────────────────────────────────────────────────────── */
+.rc-compat {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1px;
+  margin: 8px 0 20px;
+  background: rgba(0, 0, 0, 0.08);
+  border-radius: 14px;
+  overflow: hidden;
+  max-width: 420px;
+  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.rc-compat__section {
+  padding: 12px 14px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.rc-compat__section--yes {
+  background: linear-gradient(180deg, #f1f7ec 0%, #e8f1e2 100%);
+}
+
+.rc-compat__section--no {
+  background: linear-gradient(180deg, #faf1f0 0%, #f5e7e5 100%);
+}
+
+.rc-compat__header {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.rc-compat__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rc-compat__section--yes .rc-compat__dot {
+  background: #6da06f;
+  box-shadow: 0 0 0 3px rgba(109, 160, 111, 0.18);
+}
+
+.rc-compat__section--no .rc-compat__dot {
+  background: #c87770;
+  box-shadow: 0 0 0 3px rgba(200, 119, 112, 0.18);
+}
+
+.rc-compat__label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.rc-compat__section--yes .rc-compat__label {
+  color: #5a8a5c;
+}
+
+.rc-compat__section--no .rc-compat__label {
+  color: #b06861;
+}
+
+.rc-compat__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.rc-compat__list li {
+  font-size: 12.5px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: #3d3d3d;
+}
+
+.rc-compat__sub {
+  font-weight: 400;
+  color: #777;
+  font-size: 11.5px;
+}
+
+.rc-compat__section--no .rc-compat__list li {
+  color: #6a5854;
+}
+
+/* Stack on narrow viewports — the overlay is already compact. */
+@media (max-width: 520px) {
+  .rc-compat {
+    grid-template-columns: 1fr;
+  }
+}
+
+body.dark-mode .rc-compat {
+  background: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+body.dark-mode .rc-compat__section--yes {
+  background: linear-gradient(180deg, rgba(109, 160, 111, 0.13) 0%, rgba(109, 160, 111, 0.07) 100%);
+}
+
+body.dark-mode .rc-compat__section--no {
+  background: linear-gradient(180deg, rgba(200, 119, 112, 0.13) 0%, rgba(200, 119, 112, 0.07) 100%);
+}
+
+body.dark-mode .rc-compat__list li {
+  color: #d8d8d8;
+}
+
+body.dark-mode .rc-compat__sub {
+  color: #999;
+}
+
+body.dark-mode .rc-compat__section--no .rc-compat__list li {
+  color: #c7b3ae;
+}
+
+body.dark-mode .rc-compat__section--yes .rc-compat__label {
+  color: #9bc098;
+}
+
+body.dark-mode .rc-compat__section--no .rc-compat__label {
+  color: #d9a39c;
+}
+
 /* ============================================
    RECORDING SCREEN
    ============================================ */
@@ -387,6 +543,65 @@ body.dark-mode {
   padding: 12px 16px;
   text-align: center;
   font-weight: 500;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   Audio source picker (segmented control: Microphone | This device)
+   ───────────────────────────────────────────────────────────────────── */
+.rc-source-picker {
+  display: inline-flex;
+  padding: 4px;
+  background: var(--rc-surface-muted, rgba(0, 0, 0, 0.04));
+  border-radius: 12px;
+  gap: 2px;
+  margin: 4px 0 8px;
+}
+
+.rc-source-option {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  color: var(--rc-text-muted, #777);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.rc-source-option:hover:not(.is-selected) {
+  color: var(--rc-text, #333);
+  background: rgba(0, 0, 0, 0.03);
+}
+
+.rc-source-option.is-selected {
+  background: var(--rc-surface, #fff);
+  color: var(--rc-text, #1a1a1a);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
+}
+
+.rc-source-option svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+body.dark-mode .rc-source-picker {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+body.dark-mode .rc-source-option.is-selected {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+body.dark-mode .rc-source-option:hover:not(.is-selected) {
+  color: #ddd;
+  background: rgba(255, 255, 255, 0.04);
 }
 
 /* Controls */
@@ -794,4 +1009,134 @@ body.dark-mode {
     bottom: 16px;
     right: 16px;
   }
+}
+
+/* ============================================
+   LIVE KEY POINTS & HIGHLIGHTS
+   ============================================ */
+.rc-divider {
+  width: 100%;
+  border: 0;
+  height: 1px;
+  background: var(--rc-border-strong);
+  margin: 16px 0;
+}
+
+.rc-live-keypoints-container {
+  width: 100%;
+  max-width: 380px;
+  background: var(--rc-accent-soft);
+  border-radius: var(--rc-radius-sm);
+  padding: 16px;
+  margin-bottom: 16px;
+  text-align: left;
+  border: 1px solid var(--rc-border);
+}
+
+.rc-live-keypoints-title {
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: var(--rc-text-secondary);
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+  border-bottom: 1px solid var(--rc-border-strong);
+  padding-bottom: 4px;
+}
+
+.rc-live-keypoints-list {
+  max-height: 140px;
+  overflow-y: auto;
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rc-live-keypoint-item {
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--rc-text);
+  padding-left: 14px;
+  position: relative;
+}
+
+.rc-live-keypoint-item::before {
+  content: "•";
+  position: absolute;
+  left: 0;
+  color: var(--rc-accent);
+  font-weight: bold;
+}
+
+.rc-live-keypoint-item.is-event::before {
+  content: none;
+}
+
+.rc-live-keypoint-item.is-event {
+  padding-left: 0;
+  font-weight: 500;
+  font-style: italic;
+}
+
+.rc-live-keypoint-item.is-important {
+  color: #d97706; /* Amber */
+}
+
+.rc-live-keypoint-item.is-confusion {
+  color: #dc2626; /* Red */
+}
+
+.rc-placeholder-text {
+  font-size: 13px;
+  color: var(--rc-text-muted);
+  font-style: italic;
+}
+
+.rc-mark-btns {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 16px;
+}
+
+.rc-mark-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid var(--rc-border-strong);
+  border-radius: var(--rc-radius-xs);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  background: var(--rc-surface);
+  color: var(--rc-text);
+  transition: all 0.15s ease;
+}
+
+.rc-mark-btn:hover {
+  transform: translateY(-1px);
+}
+
+.rc-mark-btn:active {
+  transform: scale(0.97);
+}
+
+.rc-mark-btn--important:hover {
+  background: rgba(217, 119, 6, 0.08);
+  border-color: #d97706;
+  color: #d97706;
+}
+
+.rc-mark-btn--confusion:hover {
+  background: rgba(220, 38, 38, 0.08);
+  border-color: #dc2626;
+  color: #dc2626;
 }

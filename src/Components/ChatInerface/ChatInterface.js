@@ -116,6 +116,10 @@ import WebSourcesPanel from './WebSourcesPanel';
 // Study Mode
 import StartStudyModal from '../StudyMode/StartStudyModal';
 import StudyModeContainer from '../StudyMode/StudyModeContainer';
+
+// Class recording — opens the overlay attached to the current chat so the
+// transcript embeds into this chat's vectorstore instead of creating a new one.
+import { useRecordClass, RECORDING_FILES_REFRESH_EVENT } from '../RecordClass/RecordClassContext';
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
 import { markFirstUploadComplete, getWowEffectConfig } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
@@ -141,6 +145,10 @@ const ChatInterface = ({
 
   // Progress tracking context
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
+
+  // Class recording overlay
+  const { openOverlay: openRecordOverlay, status: recordStatus, STATUS: RECORD_STATUS, expand: expandRecordOverlay } = useRecordClass();
+  const isRecordingActive = recordStatus === RECORD_STATUS.RECORDING || recordStatus === RECORD_STATUS.PAUSED;
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
@@ -211,6 +219,9 @@ const ChatInterface = ({
   const [isAiTyping, setIsAiTyping] = useState(false);
   const [streamingStatus, setStreamingStatus] = useState(null);
   const [isFilesModalVisible, setIsFilesModalVisible] = useState(false);
+  // Empty-state exam-prep card: collapsed by default (single CTA), expands
+  // to reveal the side-by-side Upload/Paste choice when the user taps it.
+  const [examPrepExpanded, setExamPrepExpanded] = useState(false);
   const [viewerFile, setViewerFile] = useState(null);
   const [isStreaming, setIsStreaming] = useState(false); // Track if actively streaming
 
@@ -982,6 +993,13 @@ const ChatInterface = ({
     };
 
     fetchFiles();
+
+    // Refetch when a class recording finalizes into this chat.
+    const onRecordingFilesRefresh = (e) => {
+      if (e.detail?.chatId === currentChatID) fetchFiles();
+    };
+    window.addEventListener(RECORDING_FILES_REFRESH_EVENT, onRecordingFilesRefresh);
+    return () => window.removeEventListener(RECORDING_FILES_REFRESH_EVENT, onRecordingFilesRefresh);
   }, [currentChatID]);
 
   const { t, i18n } = useTranslation();
@@ -4318,39 +4336,99 @@ const ChatInterface = ({
                     <circle cx="10" cy="38" r="1.5" fill="#fbbf24"/>
                   </svg>
                 </div>
-                <h2 className="empty-cta-title">{t('chat.studyPlanStartsHere', 'Your study plan starts here')}</h2>
-                <p className="empty-cta-subtitle">
-                  {t('chat.uploadOrPaste', "Upload or paste your notes. We'll take care of the rest.")}
+                {!examPrepExpanded && (
+                  <p className="empty-cta-tagline">
+                    {t('chat.prepareTagline', 'A personalized study plan built from your notes')}
+                  </p>
+                )}
+                {!examPrepExpanded ? (
+                  <button
+                    className="empty-cta-button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExamPrepExpanded(true);
+                    }}
+                  >
+                    {t('chat.prepareForExam', 'Prepare for exam')}
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" style={{ marginLeft: 2 }}>
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </button>
+                ) : (
+                  <>
+                    <p className="empty-cta-prompt">
+                      {t('chat.howToAddNotes', 'How would you like to add your notes?')}
+                    </p>
+                    <div className="empty-cta-buttons-row empty-cta-buttons-row--compact">
+                      <button className="empty-cta-button empty-cta-button--compact" onClick={(e) => {
+                        e.stopPropagation();
+                        documentFileInputRef.current?.click();
+                        window._pendingStudyJourney = true;
+                      }}>
+                        <svg viewBox="0 0 24 24"
+                             fill="none"
+                             stroke="currentColor"
+                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                          <polyline points="17 8 12 3 7 8" />
+                          <line x1="12" y1="3" x2="12" y2="15" />
+                        </svg>
+                        {t('chat.uploadNotes', 'Upload notes')}
+                      </button>
+                      <button className="empty-cta-button empty-cta-button--compact paste-notes-btn" onClick={(e) => {
+                        e.stopPropagation();
+                        setShowPasteNotesModal(true);
+                      }}>
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                        </svg>
+                        {t('chat.pasteNotes', 'Paste notes')}
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      className="empty-cta-back"
+                      onClick={(e) => { e.stopPropagation(); setExamPrepExpanded(false); }}
+                    >
+                      ← {t('chat.back', 'Back')}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Secondary path: live-class recording. Stacked below the
+                  primary upload card so students sitting in a lecture right
+                  now have an obvious entry point. */}
+              <div className="empty-cta-card empty-cta-card--record">
+                <div className="empty-cta-icon empty-cta-icon--record">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="40" height="40" aria-hidden="true">
+                    <circle cx="8" cy="7" r="3" />
+                    <path d="M2 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
+                    <path d="M15 9a3 3 0 0 1 0 4" />
+                    <path d="M17.5 7a6.5 6.5 0 0 1 0 8" />
+                  </svg>
+                </div>
+                <p className="empty-cta-tagline empty-cta-tagline--record">
+                  {t('chat.recordTagline', 'Sitting in a lecture? Transcribe it live.')}
                 </p>
                 <div className="empty-cta-buttons-row">
-                  <button className="empty-cta-button" onClick={(e) => {
+                  <button className="empty-cta-button record-class-btn" onClick={(e) => {
                     e.stopPropagation();
-                    documentFileInputRef.current?.click();
-                    window._pendingStudyJourney = true;
-                  }}>
-                    <svg viewBox="0 0 24 24"
-                         fill="none"
-                         stroke="currentColor"
-                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                      <polyline points="17 8 12 3 7 8" />
-                      <line x1="12" y1="3" x2="12" y2="15" />
-                    </svg>
-                    {t('chat.uploadMyNotes', 'Upload my notes')}
-                  </button>
-                  <button className="empty-cta-button paste-notes-btn" onClick={(e) => {
-                    e.stopPropagation();
-                    setShowPasteNotesModal(true);
+                    openRecordOverlay({ chatId: currentChatID || null });
                   }}>
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="20" height="20">
-                      <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                      <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                      <circle cx="12" cy="12" r="9" />
+                      <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
                     </svg>
-                    {t('chat.pasteMyNotes', 'Paste my notes')}
+                    {t('chat.recordClassCta', 'Record a class')}
                   </button>
                 </div>
-                <span className="empty-cta-note">{t('chat.progressSaved', 'progress saved')}</span>
               </div>
             </div>
           </div>
@@ -5037,15 +5115,44 @@ const ChatInterface = ({
                 <button type="button"
                   className="upload-button file-button"
                   onClick={openFileUploadDialog}
-                  title={t('chat.addFile')}
+                  data-tooltip="Attach study material — PDFs, slides, photos"
                   disabled={isSystemBusy}>
                   <SvgFileUpload />
                 </button>
 
+                {currentChatID && (
+                  <button
+                    type="button"
+                    className={`upload-button record-class-inline ${isRecordingActive ? 'is-active' : ''}`}
+                    onClick={() => {
+                      if (isRecordingActive) {
+                        expandRecordOverlay();
+                      } else {
+                        openRecordOverlay({ chatId: currentChatID });
+                      }
+                    }}
+                    data-tooltip={isRecordingActive ? 'Recording in progress — click to expand' : 'Record a lecture and add it to this chat'}
+                    disabled={isSystemBusy && !isRecordingActive}
+                  >
+                    {isRecordingActive ? (
+                      <span className="record-class-inline__pulse" aria-hidden="true" />
+                    ) : (
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                        <circle cx="8" cy="7" r="3" />
+                        <path d="M2 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
+                        <path d="M15 9a3 3 0 0 1 0 4" />
+                        <path d="M17.5 7a6.5 6.5 0 0 1 0 8" />
+                      </svg>
+                    )}
+                  </button>
+                )}
+
                 <button type="button"
                   className="upload-button photo-button"
                   onClick={() => setIsFilesModalVisible(true)}
-                  title={t('chat.filesInMemory')}
+                  data-tooltip={uploadedFilesList.length === 0
+                    ? 'No files yet — your uploads will appear here'
+                    : `${uploadedFilesList.length} file${uploadedFilesList.length === 1 ? '' : 's'} in this chat — open library`}
                   style={{ position: 'relative' }}>
                   📁
                   {uploadedFilesList.length > 0 && (
@@ -5081,7 +5188,7 @@ const ChatInterface = ({
                   className={`voice-input-button ${isRecording ? 'recording' : ''} ${isTranscribing ? 'transcribing' : ''}`}
                   onClick={toggleRecording}
                   disabled={isSystemBusy || isTranscribing}
-                  title={isRecording ? t('chat.stopRecording', 'Stop recording') : t('chat.voiceInput', 'Voice input')}
+                  data-tooltip={isRecording ? 'Stop and transcribe' : isTranscribing ? 'Transcribing…' : 'Dictate your message instead of typing'}
                 >
                   {isTranscribing ? (
                     <div className="voice-transcribing">

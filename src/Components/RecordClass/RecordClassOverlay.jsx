@@ -42,32 +42,138 @@ const Waveform = ({ level, active }) => {
   );
 };
 
-const IdleScreen = ({ onStart, error }) => (
-  <div className="rc-screen rc-screen--idle">
-    <div className="rc-mic-circle">
-      <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="9" y="2" width="6" height="12" rx="3" />
-        <path d="M5 10a7 7 0 0 0 14 0" />
-        <line x1="12" y1="19" x2="12" y2="22" />
-      </svg>
+const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSource }) => {
+  const [topic, setTopic] = React.useState('');
+  const isAttachingToChat = Boolean(attachToChatId);
+  const isDevice = audioSource === 'device';
+  // macOS doesn't expose system audio via getDisplayMedia (browser/OS
+  // limitation), so capturing audio from desktop apps like the Zoom
+  // client won't work — only tab audio. We warn Mac users explicitly.
+  const isMac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent || '');
+
+  const handleStart = () => {
+    onStart(topic.trim());
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleStart();
+    }
+  };
+
+  return (
+    <div className="rc-screen rc-screen--idle">
+      <div className="rc-mic-circle">
+        {/* Audio waveform — unique to this overlay so it doesn't repeat the
+            chat input's mic (voice-input) or the empty-state card's person
+            icon. Reads as "live audio capture" at a glance. */}
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <line x1="4" y1="11" x2="4" y2="13" />
+          <line x1="8" y1="9" x2="8" y2="15" />
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="16" y1="8" x2="16" y2="16" />
+          <line x1="20" y1="10.5" x2="20" y2="13.5" />
+        </svg>
+      </div>
+      <h2 className="rc-title">
+        {isAttachingToChat ? 'Record another class' : 'Record a class'}
+      </h2>
+
+      {!isAttachingToChat && (
+        <input
+          type="text"
+          placeholder="Topic (e.g. Pharmacology 201)"
+          value={topic}
+          onChange={(e) => setTopic(e.target.value)}
+          onKeyDown={handleKeyDown}
+          className="rc-topic-input rc-topic-input--large"
+        />
+      )}
+
+      {/* Class type picker. "In-person" uses the mic; "Virtual" pulls
+          audio straight from the tab/window the user picks (Zoom, a
+          recorded lecture, a podcast, etc.). */}
+      <div className="rc-source-picker" role="radiogroup" aria-label="Class type">
+        <button
+          type="button"
+          role="radio"
+          aria-checked={!isDevice}
+          className={`rc-source-option ${!isDevice ? 'is-selected' : ''}`}
+          onClick={() => setAudioSource('mic')}
+        >
+          {/* Two people — represents a room with classmates */}
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <circle cx="9" cy="8" r="3" />
+            <path d="M2 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
+            <circle cx="17" cy="8" r="2.5" />
+            <path d="M15 15h1.5a4 4 0 0 1 3.5 5.5" />
+          </svg>
+          <span>In-person class</span>
+        </button>
+        <button
+          type="button"
+          role="radio"
+          aria-checked={isDevice}
+          className={`rc-source-option ${isDevice ? 'is-selected' : ''}`}
+          onClick={() => setAudioSource('device')}
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <rect x="2" y="4" width="20" height="13" rx="2" />
+            <line x1="8" y1="21" x2="16" y2="21" />
+            <line x1="12" y1="17" x2="12" y2="21" />
+          </svg>
+          <span>Virtual class</span>
+        </button>
+      </div>
+
+      <p className="rc-subtitle">
+        {isDevice
+          ? "Capture audio from another tab on this device."
+          : isAttachingToChat
+            ? "Your lecture will become notes you can ask questions about — right here in this chat."
+            : "Your lecture will become notes you can ask questions about, in a brand new chat."}
+      </p>
+
+      {isDevice && (
+        <div className="rc-compat" aria-label="Where Virtual class works">
+          <section className="rc-compat__section rc-compat__section--yes">
+            <header className="rc-compat__header">
+              <span className="rc-compat__dot" aria-hidden="true" />
+              <span className="rc-compat__label">Works with</span>
+            </header>
+            <ul className="rc-compat__list">
+              <li>Browser tabs <span className="rc-compat__sub">— Zoom web, YouTube, recorded lectures</span></li>
+              <li>Windows <span className="rc-compat__sub">— any app via Chrome or Edge</span></li>
+            </ul>
+          </section>
+          <section className="rc-compat__section rc-compat__section--no">
+            <header className="rc-compat__header">
+              <span className="rc-compat__dot" aria-hidden="true" />
+              <span className="rc-compat__label">Won&apos;t work with</span>
+            </header>
+            <ul className="rc-compat__list">
+              <li>Mac desktop apps <span className="rc-compat__sub">— use the browser version</span></li>
+              <li>Safari, Firefox <span className="rc-compat__sub">— limited support</span></li>
+            </ul>
+          </section>
+        </div>
+      )}
+
+      {error && <div className="rc-error">{error}</div>}
+      <button className="rc-btn rc-btn--primary rc-btn--lg" onClick={handleStart}>
+        Start recording
+      </button>
+      <p className="rc-hint">
+        {isDevice
+          ? 'Tip: in the share prompt, pick a tab and tick "Share tab audio".'
+          : 'Tip: keep this tab open for the full lecture.'}
+      </p>
     </div>
-    <h2 className="rc-title">Record a class</h2>
-    <p className="rc-subtitle">
-      We&apos;ll transcribe your lecture and open a chat where you can ask questions about it.
-    </p>
-    <div className="rc-disclosure">
-      <span className="rc-disclosure__dot" />
-      Audio is sent to OpenAI Whisper for transcription, then deleted.
-    </div>
-    {error && <div className="rc-error">{error}</div>}
-    <button className="rc-btn rc-btn--primary rc-btn--lg" onClick={onStart}>
-      Start recording
-    </button>
-    <p className="rc-hint">Tip: keep this tab open for the full lecture.</p>
-  </div>
-);
+  );
+};
 
 const RecordingScreen = ({
+  topic,
   elapsedMs,
   bytesRecorded,
   audioLevel,
@@ -76,56 +182,124 @@ const RecordingScreen = ({
   onResume,
   onStop,
   onMinimize,
-}) => (
-  <div className="rc-screen rc-screen--recording">
-    <div className="rc-status-row">
-      <span className={`rc-rec-dot ${isPaused ? 'is-paused' : ''}`} />
-      <span className="rc-status-label">
-        {isPaused ? 'Paused' : 'Recording'}
-      </span>
-    </div>
+  liveKeyPoints,
+  onFlagConfusion,
+  onMarkImportant,
+}) => {
+  const scrollRef = React.useRef(null);
 
-    <div className="rc-timer">{formatTime(elapsedMs)}</div>
+  React.useEffect(() => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    }
+  }, [liveKeyPoints]);
 
-    <Waveform level={audioLevel} active={!isPaused} />
+  return (
+    <div className="rc-screen rc-screen--recording">
+      <div className="rc-status-row">
+        <span className={`rc-rec-dot ${isPaused ? 'is-paused' : ''}`} />
+        <span className="rc-status-label">
+          Recording · {topic || 'Lecture'}
+        </span>
+      </div>
 
-    <div className="rc-controls">
-      {isPaused ? (
-        <button className="rc-btn rc-btn--secondary" onClick={onResume}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M8 5v14l11-7z" />
-          </svg>
-          Resume
+      <div className="rc-timer">{formatTime(elapsedMs)}</div>
+
+      <Waveform level={audioLevel} active={!isPaused} />
+
+      <hr className="rc-divider" />
+
+      <div className="rc-live-keypoints-container">
+        <div className="rc-live-keypoints-title">Live key points</div>
+        <div className="rc-live-keypoints-list" ref={scrollRef}>
+          {liveKeyPoints.length === 0 ? (
+            <div className="rc-placeholder-text">Listening for key points...</div>
+          ) : (
+            liveKeyPoints.map((item, idx) => {
+              if (typeof item === 'object' && item.isEvent) {
+                const isImportant = item.type === 'important';
+                return (
+                  <div
+                    key={idx}
+                    className={`rc-live-keypoint-item is-event ${
+                      isImportant ? 'is-important' : 'is-confusion'
+                    }`}
+                  >
+                    {item.text}
+                  </div>
+                );
+              }
+              return (
+                <div key={idx} className="rc-live-keypoint-item">
+                  {item}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+
+      <div className="rc-mark-btns">
+        <button
+          type="button"
+          className="rc-mark-btn rc-mark-btn--confusion"
+          onClick={onFlagConfusion}
+          disabled={isPaused}
+          title="Flag confusion at this moment"
+        >
+          🚩 Flag confusion
         </button>
-      ) : (
-        <button className="rc-btn rc-btn--secondary" onClick={onPause}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <rect x="6" y="5" width="4" height="14" rx="1" />
-            <rect x="14" y="5" width="4" height="14" rx="1" />
-          </svg>
-          Pause
+        <button
+          type="button"
+          className="rc-mark-btn rc-mark-btn--important"
+          onClick={onMarkImportant}
+          disabled={isPaused}
+          title="Mark this moment as important"
+        >
+          ⭐ Important
         </button>
-      )}
-      <button className="rc-btn rc-btn--primary" onClick={onStop}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <rect x="5" y="5" width="14" height="14" rx="2" />
-        </svg>
-        Stop &amp; transcribe
-      </button>
-    </div>
+      </div>
 
-    <div className="rc-meta-row">
-      <span>{formatBytes(bytesRecorded)} recorded</span>
-      <span className="rc-meta-sep">·</span>
-      <button className="rc-link" onClick={onMinimize}>Minimize</button>
+      <hr className="rc-divider" />
+
+      <div className="rc-controls">
+        {isPaused ? (
+          <button className="rc-btn rc-btn--secondary" onClick={onResume}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+            Resume
+          </button>
+        ) : (
+          <button className="rc-btn rc-btn--secondary" onClick={onPause}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <rect x="6" y="5" width="4" height="14" rx="1" />
+              <rect x="14" y="5" width="4" height="14" rx="1" />
+            </svg>
+            Pause
+          </button>
+        )}
+        <button className="rc-btn rc-btn--primary" onClick={onStop}>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <rect x="5" y="5" width="14" height="14" rx="2" />
+          </svg>
+          Finish recording
+        </button>
+      </div>
+
+      <div className="rc-meta-row">
+        <span>{formatBytes(bytesRecorded)} recorded</span>
+        <span className="rc-meta-sep">·</span>
+        <button className="rc-link" onClick={onMinimize}>Minimize</button>
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 const TX_LABELS = {
-  uploading: 'Uploading audio…',
-  transcribing: 'Transcribing with Whisper…',
-  finalizing: 'Generating title…',
+  uploading: 'Saving your lecture…',
+  transcribing: 'Turning it into a transcript…',
+  finalizing: 'Almost done…',
 };
 
 const ReviewScreen = ({
@@ -139,6 +313,7 @@ const ReviewScreen = ({
   onOpenChat,
   onDiscard,
   onRetry,
+  attachedToExistingChat,
 }) => {
   const isReady = txStatus === TX_STATUS.READY;
   const isError = txStatus === TX_STATUS.ERROR;
@@ -162,8 +337,8 @@ const ReviewScreen = ({
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </div>
-          <h2 className="rc-title rc-title--sm">Transcription failed</h2>
-          <div className="rc-error">{txError || 'Something went wrong.'}</div>
+          <h2 className="rc-title rc-title--sm">Couldn&apos;t finish your recording</h2>
+          <div className="rc-error">{txError || 'Something went wrong. Please try again.'}</div>
         </>
       )}
 
@@ -191,11 +366,13 @@ const ReviewScreen = ({
 
       {isReady && (
         <button className="rc-btn rc-btn--primary rc-btn--lg rc-btn--block" onClick={onOpenChat}>
-          Open chat
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
-            <line x1="5" y1="12" x2="19" y2="12" />
-            <polyline points="12 5 19 12 12 19" />
-          </svg>
+          {attachedToExistingChat ? 'Done' : 'Open chat'}
+          {!attachedToExistingChat && (
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
+              <line x1="5" y1="12" x2="19" y2="12" />
+              <polyline points="12 5 19 12 12 19" />
+            </svg>
+          )}
         </button>
       )}
 
@@ -230,6 +407,8 @@ const RecordClassOverlay = () => {
     resultTitle,
     resultPreview,
     error,
+    topic,
+    liveKeyPoints,
     minimize,
     reset,
     startRecording,
@@ -238,7 +417,11 @@ const RecordClassOverlay = () => {
     stopRecording,
     openResultChat,
     discardResult,
+    addEvent,
     processRecording,
+    attachToChatId,
+    audioSource,
+    setAudioSource,
   } = useRecordClass();
 
   if (!isOverlayOpen) return null;
@@ -254,7 +437,6 @@ const RecordClassOverlay = () => {
       const confirmed = window.confirm('Close without opening the chat? Your transcript is saved.');
       if (confirmed) reset();
     } else if (isReviewing) {
-      // Transcription in flight — discourage closing
       const confirmed = window.confirm('Transcription is in progress. Cancel anyway?');
       if (confirmed) discardResult();
     } else {
@@ -291,11 +473,18 @@ const RecordClassOverlay = () => {
         </button>
 
         {(status === STATUS.IDLE || status === STATUS.REQUESTING) && (
-          <IdleScreen onStart={startRecording} error={error} />
+          <IdleScreen
+            onStart={startRecording}
+            error={error}
+            attachToChatId={attachToChatId}
+            audioSource={audioSource}
+            setAudioSource={setAudioSource}
+          />
         )}
 
         {isRecordingOrPaused && (
           <RecordingScreen
+            topic={topic}
             elapsedMs={elapsedMs}
             bytesRecorded={bytesRecorded}
             audioLevel={audioLevel}
@@ -304,6 +493,9 @@ const RecordClassOverlay = () => {
             onResume={resumeRecording}
             onStop={stopRecording}
             onMinimize={minimize}
+            liveKeyPoints={liveKeyPoints}
+            onFlagConfusion={() => addEvent('confusion')}
+            onMarkImportant={() => addEvent('important')}
           />
         )}
 
@@ -319,6 +511,7 @@ const RecordClassOverlay = () => {
             onOpenChat={openResultChat}
             onDiscard={discardResult}
             onRetry={handleRetry}
+            attachedToExistingChat={Boolean(attachToChatId)}
           />
         )}
       </div>

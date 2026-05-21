@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Routes, Route, useParams, useNavigate } from "react-router-dom";
 
 import ChatInterface from "./Components/ChatInerface/ChatInterface";
@@ -23,7 +23,7 @@ import OnboardingModal from "./Components/Onboarding/OnboardingModal";
 import SelectionProvider from "./Components/Selection/useTextSelection";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
 import { getPendingFiles, clearPendingFiles } from "./utils/pendingUploadStore";
-import { RecordClassProvider } from "./Components/RecordClass/RecordClassContext";
+import { RecordClassProvider, RECORDING_OVERLAY_STATE_EVENT } from "./Components/RecordClass/RecordClassContext";
 import RecordClassOverlay from "./Components/RecordClass/RecordClassOverlay";
 import RecordClassMinimizedPill from "./Components/RecordClass/RecordClassMinimizedPill";
 import "./Components/RecordClass/RecordClass.css";
@@ -39,6 +39,9 @@ function ChatLayout() {
   const user = auth.currentUser;
 
   const [sidebarOpen, setSidebarOpen] = useState(window.innerWidth > 768);
+  // Remember the sidebar's pre-overlay state so we can restore it when
+  // the recording overlay closes.
+  const sidebarBeforeRecordRef = useRef(null);
   const [selectedChatId, setSelectedChatId] = useState(urlChatId || null);
   const [viewAllChatsMode, setViewAllChatsMode] = useState(false);
 
@@ -83,6 +86,30 @@ function ChatLayout() {
 
     return () => observer.disconnect();
   }, []);
+
+  // Collapse the sidebar while the recording overlay is open, then restore
+  // it to whatever it was when the user closes the overlay. Gives the
+  // recording flow an immersive feel without permanently losing nav state.
+  useEffect(() => {
+    const onOverlayState = (e) => {
+      const open = e.detail?.open;
+      if (open) {
+        // Only snapshot if this is the first overlay-open event in a run —
+        // a re-fire while already open shouldn't clobber the original state.
+        if (sidebarBeforeRecordRef.current === null) {
+          sidebarBeforeRecordRef.current = sidebarOpen;
+        }
+        if (sidebarOpen) setSidebarOpen(false);
+      } else {
+        if (sidebarBeforeRecordRef.current !== null) {
+          setSidebarOpen(sidebarBeforeRecordRef.current);
+          sidebarBeforeRecordRef.current = null;
+        }
+      }
+    };
+    window.addEventListener(RECORDING_OVERLAY_STATE_EVENT, onOverlayState);
+    return () => window.removeEventListener(RECORDING_OVERLAY_STATE_EVENT, onOverlayState);
+  }, [sidebarOpen]);
 
   // Destructure isProfileComplete from useAuth
   const authContext = useAuth();
