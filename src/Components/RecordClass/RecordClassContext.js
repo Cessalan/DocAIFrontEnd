@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useRef, useCallback, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { auth } from '../../Firebase/config';
 import {
   recording_start,
@@ -51,6 +52,7 @@ export const RECORDING_OVERLAY_STATE_EVENT = 'nq:recording-overlay-state';
 export const RecordClassProvider = ({ children }) => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { t } = useTranslation();
 
   const [status, setStatus] = useState(STATUS.IDLE);
   const [isOverlayOpen, setIsOverlayOpen] = useState(false);
@@ -220,7 +222,7 @@ export const RecordClassProvider = ({ children }) => {
     stopTimer();
     cleanupAudioAnalysis();
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
     if (chunkTimeoutRef.current) {
@@ -322,7 +324,7 @@ export const RecordClassProvider = ({ children }) => {
           }
         } catch (err) {
           console.error('Finalization/Upload failed:', err);
-          setTxError(err?.message || 'Finalization failed.');
+          setTxError(err?.message || t('chat.recordErrorFinalize'));
           setTxStatus(TX_STATUS.ERROR);
         }
       } else if (!isPausedRef.current) {
@@ -347,7 +349,7 @@ export const RecordClassProvider = ({ children }) => {
     try {
       const user = auth.currentUser;
       if (!user) {
-        throw new Error('You must be signed in to record a class.');
+        throw new Error(t('chat.recordErrorSignIn'));
       }
 
       let stream;
@@ -358,7 +360,7 @@ export const RecordClassProvider = ({ children }) => {
         // audio from videos / Zoom / podcasts playing on the device,
         // which echo cancellation on the mic would otherwise strip out.
         if (!navigator.mediaDevices?.getDisplayMedia) {
-          throw new Error('Your browser doesn\'t support recording device audio. Try Chrome or Edge.');
+          throw new Error(t('chat.recordErrorUnsupported'));
         }
         const displayStream = await navigator.mediaDevices.getDisplayMedia({
           video: true,
@@ -366,11 +368,11 @@ export const RecordClassProvider = ({ children }) => {
         });
         const audioTracks = displayStream.getAudioTracks();
         if (!audioTracks.length) {
-          displayStream.getTracks().forEach((t) => t.stop());
-          throw new Error('No audio was shared. Re-try and tick "Share tab audio" in the picker.');
+          displayStream.getTracks().forEach((track) => track.stop());
+          throw new Error(t('chat.recordErrorNoAudio'));
         }
         // Drop the video tracks immediately — we only want audio.
-        displayStream.getVideoTracks().forEach((t) => t.stop());
+        displayStream.getVideoTracks().forEach((track) => track.stop());
         stream = new MediaStream(audioTracks);
 
         // If the user clicks "Stop sharing" in the browser's screen-share
@@ -436,15 +438,15 @@ export const RecordClassProvider = ({ children }) => {
       let msg;
       if (err?.name === 'NotAllowedError') {
         msg = audioSource === 'device'
-          ? 'You cancelled the share prompt. Pick a tab or your whole screen and tick "Share tab audio" to record.'
-          : 'Microphone permission denied. Enable mic access in your browser settings.';
+          ? t('chat.recordErrorShareCancelled')
+          : t('chat.recordErrorMicDenied');
       } else {
-        msg = err?.message || 'Could not start recording.';
+        msg = err?.message || t('chat.recordErrorStart');
       }
       setError(msg);
       setStatus(STATUS.IDLE);
     }
-  }, [startChunk, setupAudioAnalysis, startTimer, audioSource]);
+  }, [startChunk, setupAudioAnalysis, startTimer, audioSource, t]);
 
   const pauseRecording = useCallback(() => {
     const recorder = mediaRecorderRef.current;
@@ -524,14 +526,14 @@ export const RecordClassProvider = ({ children }) => {
           }
         } catch (err) {
           console.error('Finalization failed:', err);
-          setTxError(err?.message || 'Finalization failed.');
+          setTxError(err?.message || t('chat.recordErrorFinalize'));
           setTxStatus(TX_STATUS.ERROR);
         }
       })();
     }
 
     if (mediaStreamRef.current) {
-      mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+      mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       mediaStreamRef.current = null;
     }
 
@@ -596,18 +598,18 @@ export const RecordClassProvider = ({ children }) => {
 
     const timeStr = formatTime(timestamp_ms);
     const note = type === 'important'
-      ? `⭐ Marked important concept at ${timeStr}`
-      : `🚩 Flagged confusion at ${timeStr}`;
+      ? t('chat.recordEventImportant', { time: timeStr })
+      : t('chat.recordEventConfusion', { time: timeStr });
 
     setLiveKeyPoints((prev) => [...prev, { text: note, isEvent: true, type }]);
-  }, [elapsedMs]);
+  }, [elapsedMs, t]);
 
   useEffect(() => {
     return () => {
       stopTimer();
       cleanupAudioAnalysis();
       if (mediaStreamRef.current) {
-        mediaStreamRef.current.getTracks().forEach((t) => t.stop());
+        mediaStreamRef.current.getTracks().forEach((track) => track.stop());
       }
       if (chunkTimeoutRef.current) {
         clearTimeout(chunkTimeoutRef.current);

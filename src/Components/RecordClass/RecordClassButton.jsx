@@ -1,7 +1,9 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRecordClass } from './RecordClassContext';
 
 const RecordClassButton = () => {
+  const { t } = useTranslation();
   const { status, STATUS, openOverlay, expand, elapsedMs } = useRecordClass();
 
   const isActive = status === STATUS.RECORDING || status === STATUS.PAUSED;
@@ -26,21 +28,22 @@ const RecordClassButton = () => {
       type="button"
       className={`record-class-btn ${isActive ? 'is-active' : ''}`}
       onClick={handleClick}
-      title={isActive ? 'Recording in progress' : 'Record a class'}
+      title={isActive ? t('chat.recordBtnActiveTitle') : t('chat.recordBtnIdleTitle')}
     >
       <span className="record-class-btn__icon" aria-hidden="true">
         {isActive ? (
           <span className="record-class-btn__pulse" />
         ) : (
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="9" y="2" width="6" height="12" rx="3" />
-            <path d="M5 10a7 7 0 0 0 14 0" />
-            <line x1="12" y1="19" x2="12" y2="22" />
+            <circle cx="8" cy="7" r="3" />
+            <path d="M2 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
+            <path d="M15 9a3 3 0 0 1 0 4" />
+            <path d="M17.5 7a6.5 6.5 0 0 1 0 8" />
           </svg>
         )}
       </span>
       <span className="record-class-btn__label">
-        {isActive ? 'Recording' : 'Record a class'}
+        {isActive ? t('chat.recordBtnActive') : t('chat.recordBtnIdle')}
       </span>
       {isActive && (
         <span className="record-class-btn__time">{formatTime(elapsedMs)}</span>

@@ -7,7 +7,6 @@ import {
   query,
   where,
   orderBy,
-  getDocs,
   addDoc,
   serverTimestamp,
   onSnapshot,
@@ -18,7 +17,6 @@ import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat, RenameChat } from "../../Services/FireBaseServiceChats.js";
 import DarkModeToggle from './DarkModeToggle';
 import FeedbackButton from './FeedbackButton';
-import FeedbackViewer from './FeedbackViewer';
 import OnboardingViewer from './OnboardingViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
 import RecordClassButton from '../RecordClass/RecordClassButton';
@@ -41,10 +39,8 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
     return saved === 'true';
   });
 
-  // Feedback viewer state (dev mode only)
-  const [showFeedbackViewer, setShowFeedbackViewer] = useState(false);
+  // Onboarding viewer state (dev mode only)
   const [showOnboardingViewer, setShowOnboardingViewer] = useState(false);
-  const [exportingOnboarding, setExportingOnboarding] = useState(false);
 
   // Dev mode: Toggle between viewing all chats or only user's chats
   const [viewAllChats, setViewAllChats] = useState(() => {
@@ -312,44 +308,7 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
     }
   };
 
-  // Export all users' onboarding data to JSON (dev mode only)
-  const handleExportOnboarding = async () => {
-    setExportingOnboarding(true);
-    try {
-      const usersRef = collection(db, "users");
-      const snapshot = await getDocs(usersRef);
-
-      const onboardingData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        // Only extract onboarding data, exclude email and displayName
-        return {
-          odtOfUSer: doc.id,
-          onboarding: data.onboarding || null
-        };
-      }).filter(item => item.onboarding !== null); // Only include users with onboarding data
-
-      // Create and download JSON file
-      const jsonString = JSON.stringify(onboardingData, null, 2);
-      const blob = new Blob([jsonString], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `onboarding-data-${new Date().toISOString().split('T')[0]}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-
-      console.log(`✅ Exported onboarding data for ${onboardingData.length} users`);
-    } catch (error) {
-      console.error("❌ Error exporting onboarding data:", error);
-      alert("Failed to export onboarding data: " + error.message);
-    } finally {
-      setExportingOnboarding(false);
-    }
-  };
-
-  // Assume 'chat' is a document retrieved from Firestore, 
+  // Assume 'chat' is a document retrieved from Firestore,
 // and 'updatedAt' is a Firebase Timestamp field.
 
 const getchatDate = (timestamp) => {
@@ -387,11 +346,12 @@ const getchatDate = (timestamp) => {
         <div className="sidebar-title">{t('side.chats')}</div>
       </div>
 
-      <button className="new-chat-button" onClick={handleNewChat}>
-        + {t('side.newChat')}
-      </button>
-
-      <RecordClassButton />
+      <div className="sidebar-actions-row">
+        <button className="new-chat-button" onClick={handleNewChat}>
+          + {t('side.newChat')}
+        </button>
+        <RecordClassButton />
+      </div>
 
       <div className="conversations-list">
         {chats.map((chat) => (
@@ -550,29 +510,9 @@ const getchatDate = (timestamp) => {
             <span style={{ fontSize: '11px', fontWeight: 400, opacity: 0.8 }}>Click to exit</span>
           </div>
         )}
-        <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />
-        <FeedbackButton
-          userId={user?.uid}
-          userEmail={user?.email}
-          activeChatId={activeChatId}
-          onFeedbackSubmit={handleFeedbackSubmit}
-        />
-        {isDevelopment && (
-          <>
-            <div className="nav-item" onClick={() => setShowFeedbackViewer(true)}>
-              🔍 View Feedbacks (Dev)
-            </div>
-            <div
-              className="nav-item"
-              onClick={handleExportOnboarding}
-              style={{ opacity: exportingOnboarding ? 0.6 : 1 }}
-            >
-              {exportingOnboarding ? '⏳ Exporting...' : '📤 Export Onboarding (Dev)'}
-            </div>
-            <div className="nav-item" onClick={() => setShowOnboardingViewer(true)}>
-              👁 View Onboarding (Dev)
-            </div>
-            {/* Dev Mode: View Toggle */}
+        <div className="sidebar-footer-toggles">
+          <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />
+          {isDevelopment && (
             <div className="chat-view-toggle-container">
               <button
                 className="chat-view-toggle"
@@ -589,7 +529,18 @@ const getchatDate = (timestamp) => {
                 </span>
               </button>
             </div>
-          </>
+          )}
+        </div>
+        <FeedbackButton
+          userId={user?.uid}
+          userEmail={user?.email}
+          activeChatId={activeChatId}
+          onFeedbackSubmit={handleFeedbackSubmit}
+        />
+        {isDevelopment && (
+          <div className="nav-item" onClick={() => setShowOnboardingViewer(true)}>
+            👁 View Onboarding (Dev)
+          </div>
         )}
         <div className="nav-item logout-item" onClick={handleSignOut}>
           {t('side.logout')}
@@ -600,11 +551,6 @@ const getchatDate = (timestamp) => {
           </svg>
         </div>
       </div>
-
-      {/* Feedback Viewer Modal (Dev Mode Only) */}
-      {showFeedbackViewer && (
-        <FeedbackViewer onClose={() => setShowFeedbackViewer(false)} />
-      )}
 
       {/* Onboarding Viewer Modal (Dev Mode Only) */}
       {showOnboardingViewer && (

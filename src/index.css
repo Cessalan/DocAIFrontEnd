@@ -232,11 +232,40 @@ body.dark-mode .app-brand-name {
   flex: 1;
 }
 
+/* Compact row that holds Dark Mode toggle + All Chats toggle side-by-side in the sidebar footer */
+.sidebar-footer-toggles {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.sidebar-footer-toggles .dark-mode-toggle-container {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-footer-toggles .dark-mode-toggle,
+.sidebar-footer-toggles .chat-view-toggle {
+  padding: 8px 10px;
+  gap: 8px;
+}
+
+.sidebar-footer-toggles .toggle-label {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Chat View Toggle - warm style */
 .chat-view-toggle-container {
   padding: 0;
   border: none;
   margin: 0;
+  flex: 1;
+  min-width: 0;
 }
 
 .chat-view-toggle {
@@ -599,6 +628,38 @@ body.dark-mode .app-brand-name {
 /* ============================================
    NEW CHAT BUTTON - Clean lavender style
    ============================================ */
+/* Row that holds the New Chat + Record Class buttons side-by-side */
+.sidebar-actions-row {
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  padding: 8px 12px;
+}
+
+.sidebar-actions-row .new-chat-button {
+  flex: 1;
+  margin: 0;
+  width: auto;
+  padding: 8px 12px;
+  font-size: 14px;
+}
+
+.sidebar-actions-row .record-class-btn {
+  flex: 0 0 auto;
+  width: auto;
+  margin: 0;
+  padding: 8px 10px;
+  gap: 0;
+}
+
+.sidebar-actions-row .record-class-btn__label {
+  display: none;
+}
+
+.sidebar-actions-row .record-class-btn.is-active .record-class-btn__time {
+  display: none;
+}
+
 .new-chat-button {
   background: #e8dff5;
   color: #2d2d2d;
@@ -1614,6 +1675,25 @@ body:not(.dark-mode) .login-prompt-reassurance {
     padding: 12px 16px;
     font-size: 14px;
     min-height: 44px;
+  }
+
+  .sidebar-actions-row {
+    padding: 6px 10px;
+    gap: 6px;
+  }
+
+  .sidebar-actions-row .new-chat-button {
+    margin: 0;
+    width: auto;
+    padding: 10px 12px;
+    min-height: 40px;
+  }
+
+  .sidebar-actions-row .record-class-btn {
+    margin: 0;
+    width: auto;
+    padding: 10px;
+    min-height: 40px;
   }
 
   /* Sidebar footer */

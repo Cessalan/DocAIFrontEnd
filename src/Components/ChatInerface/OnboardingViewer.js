@@ -8,6 +8,7 @@ const OnboardingViewer = ({ onClose }) => {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('withText'); // withText, all
   const [search, setSearch] = useState('');
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     const loadUsers = async () => {
@@ -39,6 +40,36 @@ const OnboardingViewer = ({ onClose }) => {
     navigator.clipboard?.writeText(text || '');
   };
 
+  const handleExport = () => {
+    setExporting(true);
+    try {
+      const onboardingData = users
+        .filter(u => u.onboarding)
+        .map(u => ({
+          odtOfUSer: u.uid,
+          onboarding: u.onboarding
+        }));
+
+      const jsonString = JSON.stringify(onboardingData, null, 2);
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `onboarding-data-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      console.log(`Exported onboarding data for ${onboardingData.length} users`);
+    } catch (error) {
+      console.error('Error exporting onboarding data:', error);
+      alert('Failed to export onboarding data: ' + error.message);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   const filtered = users.filter(u => {
     if (filter === 'withText' && !u.onboarding?.userExpectation?.trim()) return false;
     if (search) {
@@ -64,7 +95,17 @@ const OnboardingViewer = ({ onClose }) => {
       <div className="onboarding-viewer-modal" onClick={(e) => e.stopPropagation()}>
         <div className="onboarding-viewer-header">
           <h2>Onboarding Data ({filtered.length}{filter === 'withText' ? ` / ${withTextCount} with text` : ` / ${users.length} total`})</h2>
-          <button className="onboarding-viewer-close" onClick={onClose}>×</button>
+          <div className="onboarding-viewer-header-actions">
+            <button
+              className="onboarding-viewer-export"
+              onClick={handleExport}
+              disabled={exporting || loading || users.length === 0}
+              title="Export onboarding data as JSON"
+            >
+              {exporting ? 'Exporting...' : 'Export JSON'}
+            </button>
+            <button className="onboarding-viewer-close" onClick={onClose}>×</button>
+          </div>
         </div>
 
         <div className="onboarding-viewer-filters">

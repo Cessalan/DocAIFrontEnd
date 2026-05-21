@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useRecordClass } from './RecordClassContext';
 
 const formatTime = (ms) => {
@@ -43,6 +44,7 @@ const Waveform = ({ level, active }) => {
 };
 
 const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSource }) => {
+  const { t } = useTranslation();
   const [topic, setTopic] = React.useState('');
   const isAttachingToChat = Boolean(attachToChatId);
   const isDevice = audioSource === 'device';
@@ -76,13 +78,13 @@ const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSourc
         </svg>
       </div>
       <h2 className="rc-title">
-        {isAttachingToChat ? 'Record another class' : 'Record a class'}
+        {isAttachingToChat ? t('chat.recordTitleAttached') : t('chat.recordTitle')}
       </h2>
 
       {!isAttachingToChat && (
         <input
           type="text"
-          placeholder="Topic (e.g. Pharmacology 201)"
+          placeholder={t('chat.recordTopicPlaceholder')}
           value={topic}
           onChange={(e) => setTopic(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -93,7 +95,7 @@ const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSourc
       {/* Class type picker. "In-person" uses the mic; "Virtual" pulls
           audio straight from the tab/window the user picks (Zoom, a
           recorded lecture, a podcast, etc.). */}
-      <div className="rc-source-picker" role="radiogroup" aria-label="Class type">
+      <div className="rc-source-picker" role="radiogroup" aria-label={t('chat.recordClassTypeInPerson')}>
         <button
           type="button"
           role="radio"
@@ -108,7 +110,7 @@ const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSourc
             <circle cx="17" cy="8" r="2.5" />
             <path d="M15 15h1.5a4 4 0 0 1 3.5 5.5" />
           </svg>
-          <span>In-person class</span>
+          <span>{t('chat.recordClassTypeInPerson')}</span>
         </button>
         <button
           type="button"
@@ -122,38 +124,38 @@ const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSourc
             <line x1="8" y1="21" x2="16" y2="21" />
             <line x1="12" y1="17" x2="12" y2="21" />
           </svg>
-          <span>Virtual class</span>
+          <span>{t('chat.recordClassTypeVirtual')}</span>
         </button>
       </div>
 
       <p className="rc-subtitle">
         {isDevice
-          ? "Capture audio from another tab on this device."
+          ? t('chat.recordSubtitleVirtual')
           : isAttachingToChat
-            ? "Your lecture will become notes you can ask questions about — right here in this chat."
-            : "Your lecture will become notes you can ask questions about, in a brand new chat."}
+            ? t('chat.recordSubtitleAttached')
+            : t('chat.recordSubtitleNewChat')}
       </p>
 
       {isDevice && (
-        <div className="rc-compat" aria-label="Where Virtual class works">
+        <div className="rc-compat" aria-label={t('chat.recordCompatWorks')}>
           <section className="rc-compat__section rc-compat__section--yes">
             <header className="rc-compat__header">
               <span className="rc-compat__dot" aria-hidden="true" />
-              <span className="rc-compat__label">Works with</span>
+              <span className="rc-compat__label">{t('chat.recordCompatWorks')}</span>
             </header>
             <ul className="rc-compat__list">
-              <li>Browser tabs <span className="rc-compat__sub">— Zoom web, YouTube, recorded lectures</span></li>
-              <li>Windows <span className="rc-compat__sub">— any app via Chrome or Edge</span></li>
+              <li>{t('chat.recordCompatTabs')} <span className="rc-compat__sub">{t('chat.recordCompatTabsDetail')}</span></li>
+              <li>{t('chat.recordCompatWindows')} <span className="rc-compat__sub">{t('chat.recordCompatWindowsDetail')}</span></li>
             </ul>
           </section>
           <section className="rc-compat__section rc-compat__section--no">
             <header className="rc-compat__header">
               <span className="rc-compat__dot" aria-hidden="true" />
-              <span className="rc-compat__label">Won&apos;t work with</span>
+              <span className="rc-compat__label">{t('chat.recordCompatWontWork')}</span>
             </header>
             <ul className="rc-compat__list">
-              <li>Mac desktop apps <span className="rc-compat__sub">— use the browser version</span></li>
-              <li>Safari, Firefox <span className="rc-compat__sub">— limited support</span></li>
+              <li>{t('chat.recordCompatMacApps')} <span className="rc-compat__sub">{t('chat.recordCompatMacAppsDetail')}</span></li>
+              <li>{t('chat.recordCompatBrowsers')} <span className="rc-compat__sub">{t('chat.recordCompatBrowsersDetail')}</span></li>
             </ul>
           </section>
         </div>
@@ -161,12 +163,10 @@ const IdleScreen = ({ onStart, error, attachToChatId, audioSource, setAudioSourc
 
       {error && <div className="rc-error">{error}</div>}
       <button className="rc-btn rc-btn--primary rc-btn--lg" onClick={handleStart}>
-        Start recording
+        {t('chat.recordStart')}
       </button>
       <p className="rc-hint">
-        {isDevice
-          ? 'Tip: in the share prompt, pick a tab and tick "Share tab audio".'
-          : 'Tip: keep this tab open for the full lecture.'}
+        {isDevice ? t('chat.recordHintDevice') : t('chat.recordHintMic')}
       </p>
     </div>
   );
@@ -186,6 +186,7 @@ const RecordingScreen = ({
   onFlagConfusion,
   onMarkImportant,
 }) => {
+  const { t } = useTranslation();
   const scrollRef = React.useRef(null);
 
   React.useEffect(() => {
@@ -199,7 +200,7 @@ const RecordingScreen = ({
       <div className="rc-status-row">
         <span className={`rc-rec-dot ${isPaused ? 'is-paused' : ''}`} />
         <span className="rc-status-label">
-          Recording · {topic || 'Lecture'}
+          {t('chat.recordingLabel')} · {topic || t('chat.recordLectureDefault')}
         </span>
       </div>
 
@@ -210,10 +211,10 @@ const RecordingScreen = ({
       <hr className="rc-divider" />
 
       <div className="rc-live-keypoints-container">
-        <div className="rc-live-keypoints-title">Live key points</div>
+        <div className="rc-live-keypoints-title">{t('chat.recordLiveKeyPoints')}</div>
         <div className="rc-live-keypoints-list" ref={scrollRef}>
           {liveKeyPoints.length === 0 ? (
-            <div className="rc-placeholder-text">Listening for key points...</div>
+            <div className="rc-placeholder-text">{t('chat.recordListeningPlaceholder')}</div>
           ) : (
             liveKeyPoints.map((item, idx) => {
               if (typeof item === 'object' && item.isEvent) {
@@ -245,18 +246,18 @@ const RecordingScreen = ({
           className="rc-mark-btn rc-mark-btn--confusion"
           onClick={onFlagConfusion}
           disabled={isPaused}
-          title="Flag confusion at this moment"
+          title={t('chat.recordFlagConfusionTitle')}
         >
-          🚩 Flag confusion
+          {t('chat.recordFlagConfusion')}
         </button>
         <button
           type="button"
           className="rc-mark-btn rc-mark-btn--important"
           onClick={onMarkImportant}
           disabled={isPaused}
-          title="Mark this moment as important"
+          title={t('chat.recordImportantTitle')}
         >
-          ⭐ Important
+          {t('chat.recordImportant')}
         </button>
       </div>
 
@@ -268,7 +269,7 @@ const RecordingScreen = ({
             <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
               <path d="M8 5v14l11-7z" />
             </svg>
-            Resume
+            {t('chat.recordResume')}
           </button>
         ) : (
           <button className="rc-btn rc-btn--secondary" onClick={onPause}>
@@ -276,30 +277,32 @@ const RecordingScreen = ({
               <rect x="6" y="5" width="4" height="14" rx="1" />
               <rect x="14" y="5" width="4" height="14" rx="1" />
             </svg>
-            Pause
+            {t('chat.recordPause')}
           </button>
         )}
         <button className="rc-btn rc-btn--primary" onClick={onStop}>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <rect x="5" y="5" width="14" height="14" rx="2" />
           </svg>
-          Finish recording
+          {t('chat.recordFinish')}
         </button>
       </div>
 
       <div className="rc-meta-row">
-        <span>{formatBytes(bytesRecorded)} recorded</span>
+        <span>{t('chat.recordRecorded', { size: formatBytes(bytesRecorded) })}</span>
         <span className="rc-meta-sep">·</span>
-        <button className="rc-link" onClick={onMinimize}>Minimize</button>
+        <button className="rc-link" onClick={onMinimize}>{t('chat.recordMinimize')}</button>
       </div>
     </div>
   );
 };
 
-const TX_LABELS = {
-  uploading: 'Saving your lecture…',
-  transcribing: 'Turning it into a transcript…',
-  finalizing: 'Almost done…',
+// Map a TxStatus to its i18n key. The actual translated string is resolved
+// inside the component (so we react to language switches).
+const TX_LABEL_KEYS = {
+  uploading: 'chat.recordTxSaving',
+  transcribing: 'chat.recordTxTranscribing',
+  finalizing: 'chat.recordTxFinalizing',
 };
 
 const ReviewScreen = ({
@@ -315,6 +318,7 @@ const ReviewScreen = ({
   onRetry,
   attachedToExistingChat,
 }) => {
+  const { t } = useTranslation();
   const isReady = txStatus === TX_STATUS.READY;
   const isError = txStatus === TX_STATUS.ERROR;
   const isWorking = !isReady && !isError;
@@ -324,7 +328,7 @@ const ReviewScreen = ({
       {isWorking && (
         <div className="rc-working">
           <div className="rc-shimmer-text" key={txStatus}>
-            {TX_LABELS[txStatus] || 'Processing…'}
+            {TX_LABEL_KEYS[txStatus] ? t(TX_LABEL_KEYS[txStatus]) : t('chat.recordTxProcessing')}
           </div>
         </div>
       )}
@@ -337,8 +341,8 @@ const ReviewScreen = ({
               <line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </div>
-          <h2 className="rc-title rc-title--sm">Couldn&apos;t finish your recording</h2>
-          <div className="rc-error">{txError || 'Something went wrong. Please try again.'}</div>
+          <h2 className="rc-title rc-title--sm">{t('chat.recordErrorTitle')}</h2>
+          <div className="rc-error">{txError || t('chat.recordErrorGeneric')}</div>
         </>
       )}
 
@@ -349,7 +353,7 @@ const ReviewScreen = ({
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <div className="rc-result-title">{resultTitle || 'Recorded lecture'}</div>
+          <div className="rc-result-title">{resultTitle || t('chat.recordedLectureDefault')}</div>
           {resultPreview && (
             <div className="rc-transcript-preview">
               &ldquo;{resultPreview}&rdquo;
@@ -366,7 +370,7 @@ const ReviewScreen = ({
 
       {isReady && (
         <button className="rc-btn rc-btn--primary rc-btn--lg rc-btn--block" onClick={onOpenChat}>
-          {attachedToExistingChat ? 'Done' : 'Open chat'}
+          {attachedToExistingChat ? t('chat.recordDone') : t('chat.recordOpenChat')}
           {!attachedToExistingChat && (
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginLeft: 6 }}>
               <line x1="5" y1="12" x2="19" y2="12" />
@@ -378,14 +382,14 @@ const ReviewScreen = ({
 
       {isError && (
         <div className="rc-controls">
-          <button className="rc-btn rc-btn--secondary" onClick={onDiscard}>Discard</button>
-          <button className="rc-btn rc-btn--primary" onClick={onRetry}>Retry</button>
+          <button className="rc-btn rc-btn--secondary" onClick={onDiscard}>{t('chat.recordDiscardBtn')}</button>
+          <button className="rc-btn rc-btn--primary" onClick={onRetry}>{t('chat.recordRetry')}</button>
         </div>
       )}
 
       {isReady && (
         <button className="rc-link rc-link--danger" onClick={onDiscard}>
-          Discard recording
+          {t('chat.recordDiscardLink')}
         </button>
       )}
     </div>
@@ -423,6 +427,7 @@ const RecordClassOverlay = () => {
     audioSource,
     setAudioSource,
   } = useRecordClass();
+  const { t } = useTranslation();
 
   if (!isOverlayOpen) return null;
 
@@ -434,10 +439,10 @@ const RecordClassOverlay = () => {
     if (isRecordingOrPaused) {
       minimize();
     } else if (isReviewing && isReadyOrError) {
-      const confirmed = window.confirm('Close without opening the chat? Your transcript is saved.');
+      const confirmed = window.confirm(t('chat.recordConfirmCloseReady'));
       if (confirmed) reset();
     } else if (isReviewing) {
-      const confirmed = window.confirm('Transcription is in progress. Cancel anyway?');
+      const confirmed = window.confirm(t('chat.recordConfirmCancelInProgress'));
       if (confirmed) discardResult();
     } else {
       reset();
@@ -449,13 +454,13 @@ const RecordClassOverlay = () => {
   };
 
   return (
-    <div className="rc-overlay" role="dialog" aria-modal="true" aria-label="Record a class">
+    <div className="rc-overlay" role="dialog" aria-modal="true" aria-label={t('chat.recordTitle')}>
       <div className="rc-overlay__backdrop" onClick={handleClose} />
       <div className="rc-overlay__panel">
         <button
           className="rc-close"
           onClick={handleClose}
-          aria-label={isRecordingOrPaused ? 'Minimize' : 'Close'}
+          aria-label={isRecordingOrPaused ? t('chat.recordMinimizeLabel') : t('chat.recordCloseLabel')}
         >
           {isRecordingOrPaused ? (
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

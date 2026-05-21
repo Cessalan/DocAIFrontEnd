@@ -5115,7 +5115,7 @@ const ChatInterface = ({
                 <button type="button"
                   className="upload-button file-button"
                   onClick={openFileUploadDialog}
-                  data-tooltip="Attach study material — PDFs, slides, photos"
+                  data-tooltip={t('chat.tooltipAttachFile')}
                   disabled={isSystemBusy}>
                   <SvgFileUpload />
                 </button>
@@ -5131,7 +5131,7 @@ const ChatInterface = ({
                         openRecordOverlay({ chatId: currentChatID });
                       }
                     }}
-                    data-tooltip={isRecordingActive ? 'Recording in progress — click to expand' : 'Record a lecture and add it to this chat'}
+                    data-tooltip={isRecordingActive ? t('chat.tooltipRecordActive') : t('chat.tooltipRecordIdle')}
                     disabled={isSystemBusy && !isRecordingActive}
                   >
                     {isRecordingActive ? (
@@ -5151,8 +5151,8 @@ const ChatInterface = ({
                   className="upload-button photo-button"
                   onClick={() => setIsFilesModalVisible(true)}
                   data-tooltip={uploadedFilesList.length === 0
-                    ? 'No files yet — your uploads will appear here'
-                    : `${uploadedFilesList.length} file${uploadedFilesList.length === 1 ? '' : 's'} in this chat — open library`}
+                    ? t('chat.tooltipFilesEmpty')
+                    : t('chat.tooltipFilesCount', { count: uploadedFilesList.length })}
                   style={{ position: 'relative' }}>
                   📁
                   {uploadedFilesList.length > 0 && (
@@ -5188,7 +5188,7 @@ const ChatInterface = ({
                   className={`voice-input-button ${isRecording ? 'recording' : ''} ${isTranscribing ? 'transcribing' : ''}`}
                   onClick={toggleRecording}
                   disabled={isSystemBusy || isTranscribing}
-                  data-tooltip={isRecording ? 'Stop and transcribe' : isTranscribing ? 'Transcribing…' : 'Dictate your message instead of typing'}
+                  data-tooltip={isRecording ? t('chat.tooltipVoiceStop') : isTranscribing ? t('chat.tooltipVoiceTranscribing') : t('chat.tooltipVoiceDictate')}
                 >
                   {isTranscribing ? (
                     <div className="voice-transcribing">

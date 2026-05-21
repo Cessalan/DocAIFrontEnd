@@ -70,8 +70,8 @@ body.dark-mode {
 }
 
 .record-class-btn:hover {
-  background: var(--rc-accent-soft);
-  border-color: var(--rc-accent-soft-2);
+  background: rgba(116, 138, 100, 0.1);
+  border-color: rgba(116, 138, 100, 0.32);
   color: var(--rc-text);
 }
 
@@ -79,6 +79,8 @@ body.dark-mode {
   transform: scale(0.99);
 }
 
+/* Sage palette — same green as the empty-state card icon and the in-chat
+   record button, so all three "Record a class" surfaces match. */
 .record-class-btn__icon {
   display: inline-flex;
   align-items: center;
@@ -86,14 +88,14 @@ body.dark-mode {
   width: 22px;
   height: 22px;
   border-radius: 50%;
-  background: var(--rc-accent-soft);
-  color: var(--rc-accent);
+  background: rgba(116, 138, 100, 0.14);
+  color: #748a64;
   flex-shrink: 0;
   transition: all 0.18s ease;
 }
 
 .record-class-btn:hover .record-class-btn__icon {
-  background: var(--rc-accent);
+  background: #748a64;
   color: #fff;
 }
 
