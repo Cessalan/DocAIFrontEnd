@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
+import { generationUnits } from '../../Services/UsageService';
 import StudyModeHeader from './StudyModeHeader';
 import StudyLoadingScreen from './StudyLoadingScreen';
 import StudyStepCard from './StudyStepCard';
@@ -108,6 +110,10 @@ const StudyModeContainer = ({
   const { t, i18n } = useTranslation();
   const language = (i18n.language || 'en').split('-')[0].toLowerCase();
   const { userProfile } = useAuth() || {};
+
+  // Usage throttle (monetization gate): block + show upgrade modal when the
+  // hourly generation bucket is empty; charge one unit per new node generated.
+  const { requireQuota, consume: consumeGeneration } = useUsageLimit();
 
   // View state: 'node' (showing content) | 'overview' (showing plan)
   const [view, setView] = useState('overview');
@@ -246,6 +252,14 @@ const StudyModeContainer = ({
       return;
     }
 
+    // Usage throttle: only a brand-new node (no messageId) actually generates
+    // and therefore costs a unit. Cached re-visits load saved content for free
+    // and aren't gated. Dev viewOnly mode is exempt. Block before any loading
+    // UI so a throttled start is a clean no-op (modal opens via requireQuota).
+    if (!node.messageId && !viewOnly && !requireQuota()) {
+      return;
+    }
+
     // Close sidebar when user starts interacting with content
     if (onCloseSidebar) {
       onCloseSidebar();
@@ -372,6 +386,7 @@ const StudyModeContainer = ({
               await updateNodeStatus(chatId, node.id, { messageId });
               setNodes(prev => prev.map(n => n.id === node.id ? { ...n, messageId } : n));
               currentMessageIdRef.current = messageId;
+              consumeGeneration(generationUnits(result.content)); // charge per question/card (prefetch path)
 
               setMascotState({
                 type: 'nurse',
@@ -500,6 +515,7 @@ const StudyModeContainer = ({
         ));
 
         currentMessageIdRef.current = messageId;
+        consumeGeneration(generationUnits(result.content)); // charge per question/card (streaming path)
       } else {
         console.log('👁️ Dev viewOnly mode - skipping save operations');
       }
@@ -546,7 +562,7 @@ const StudyModeContainer = ({
     } finally {
       setIsLoadingContent(false);
     }
-  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t]);
+  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t, requireQuota, consumeGeneration]);
 
   // Auto-launch the first node if requested
   const hasAutoStartedNodeRef = useRef(false);

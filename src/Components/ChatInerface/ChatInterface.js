@@ -45,6 +45,7 @@ import ThinkingEmoji from './Emojis/ThinkingEmoji.js';
 
 // Contexts
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 
 // Services
 import { formatDate, formatFileSize } from '../../Services/Formatting.js';
@@ -121,7 +122,7 @@ import StudyModeContainer from '../StudyMode/StudyModeContainer';
 // transcript embeds into this chat's vectorstore instead of creating a new one.
 import { useRecordClass, RECORDING_FILES_REFRESH_EVENT } from '../RecordClass/RecordClassContext';
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
-import { markFirstUploadComplete, getWowEffectConfig } from '../../Services/UserService';
+import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
 
 /**
@@ -145,6 +146,12 @@ const ChatInterface = ({
 
   // Progress tracking context
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
+
+  // Usage throttle (monetization gate). requireQuota() blocks + opens the
+  // upgrade modal when the hourly bucket is empty; consume() charges one unit
+  // when a generation actually completes. isPro / openUpgrade also gate the
+  // free "one upload per chat" limit.
+  const { requireQuota, consume: consumeGeneration, isPro, openUpgrade } = useUsageLimit();
 
   // Class recording overlay
   const { openOverlay: openRecordOverlay, status: recordStatus, STATUS: RECORD_STATUS, expand: expandRecordOverlay } = useRecordClass();
@@ -822,6 +829,18 @@ const ChatInterface = ({
             examDate: chatData.examDate || null,
             hardestTopics: hydratedHardestTopics
           });
+
+          // Lift the exam date onto the user profile so the (globally rendered)
+          // upgrade modal can show exam-countdown urgency. Best-effort, write
+          // only when it actually changed to avoid redundant updates.
+          if (chatData.examDate && currentUser?.uid &&
+              userProfile?.onboarding?.examDate !== chatData.examDate) {
+            updateUserProfile(currentUser.uid, { 'onboarding.examDate': chatData.examDate })
+              .then(() => setUserProfile?.(prev => prev
+                ? { ...prev, onboarding: { ...(prev.onboarding || {}), examDate: chatData.examDate } }
+                : prev))
+              .catch(() => { /* non-critical */ });
+          }
         } else {
           setCurrentExamData(null);
         }
@@ -1024,6 +1043,11 @@ const ChatInterface = ({
 
     const messageToSend = customPrompt ?? userInputText;
     if (messageToSend.trim() === '') return;
+
+    // Usage throttle: block + show upgrade modal when the hourly generation
+    // bucket is empty. Checked before any UI/loading state changes so a blocked
+    // send is a clean no-op. (Charged on generation-complete events below.)
+    if (!requireQuota()) return;
 
     // IMMEDIATELY show loading state - don't wait for connection
     setUserInputText('');
@@ -1386,6 +1410,8 @@ const ChatInterface = ({
 
             handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId);
             setStreamingStatus(null);
+            // Charge per question: a 3-question quiz costs 3, a 20-question quiz costs 20.
+            consumeGeneration(statusUpdate.quiz_data?.length || 1);
             return;
           }
 
@@ -1450,6 +1476,8 @@ const ChatInterface = ({
 
             handleFlashcardComplete(statusUpdate.flashcard_data, streamingMessageId, updatedChatId);
             setStreamingStatus(null);
+            // Charge per card generated.
+            consumeGeneration(statusUpdate.flashcard_data?.length || 1);
             return;
           }
 
@@ -1496,6 +1524,7 @@ const ChatInterface = ({
             // Single state update + Firebase save in handler (avoid duplicate setChatMessages calls)
             handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId);
             setStreamingStatus(null);
+            consumeGeneration(1); // mindmap charges a flat 1 (not question-based)
             return;
           }
 
@@ -2527,6 +2556,14 @@ const ChatInterface = ({
 
     // Continue with only supported files
     const files = supportedFiles;
+
+    // Free plan: one upload per chat. If this chat already has a file, block
+    // the second upload and pitch Pro instead.
+    if (!isPro && uploadedFilesListRef.current.length > 0) {
+      openUpgrade();
+      if (e.target) e.target.value = '';
+      return;
+    }
 
     const user = auth.currentUser;
     if (!user) {
@@ -3901,7 +3938,14 @@ const ChatInterface = ({
 
   const hasMessages = chatMessages.length > 0;
   devLog('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
-  const openFileUploadDialog = () => documentFileInputRef.current?.click();
+  const openFileUploadDialog = () => {
+    // Free plan: one upload per chat — pitch Pro instead of opening the picker.
+    if (!isPro && uploadedFilesListRef.current.length > 0) {
+      openUpgrade();
+      return;
+    }
+    documentFileInputRef.current?.click();
+  };
 
   // Handle pasted notes submission - converts text to a file and triggers the upload flow
   const handlePasteNotesSubmit = () => {

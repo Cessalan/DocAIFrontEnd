@@ -4,6 +4,7 @@ import clarity from '@microsoft/clarity';
 import App from './App';
 import { AuthProvider } from './Contexts/AuthContext/AuthContext';
 import { ProgressProvider } from './Contexts/ProgressContext/ProgressContext';
+import { UsageProvider } from './Contexts/UsageContext/UsageContext';
 import './i18n/i18n'; // important for translation
 
 if (process.env.NODE_ENV === 'production') {
@@ -15,9 +16,11 @@ const root = createRoot(document.getElementById('root'));
 root.render(
   <BrowserRouter>
     <AuthProvider>
-      <ProgressProvider>
-        <App/>
-      </ProgressProvider>
+      <UsageProvider>
+        <ProgressProvider>
+          <App/>
+        </ProgressProvider>
+      </UsageProvider>
     </AuthProvider>
   </BrowserRouter>
 );

@@ -6,6 +6,59 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 const resources = {
   en: {
     translation: {
+      // Upgrade / monetization modal
+      upgrade: {
+        title: "Study without limits",
+        titleNclex: "Pass your NCLEX without limits",
+        titleCourse: "Ace your course exam",
+        body: "Master every topic, find your weak spots faster, and walk into your exam ready — with unlimited practice.",
+        bodyBlocked: "You've hit your {{limit}} questions this hour. Keep your momentum going — practice as much as you need to be ready.",
+        bodyExam: "Your exam is {{when}} — don't let an hourly limit slow your final push. Practice unlimited.",
+        bodyBlockedExam: "You've hit your {{limit}} questions this hour — and your exam is {{when}}. Don't lose momentum: go unlimited.",
+        examToday: "today",
+        examTomorrow: "tomorrow",
+        examInDays: "in {{days}} days",
+        nextBatch: "Or wait — next batch in",
+        bestValue: "Best value",
+        annual: "Annual",
+        monthly: "Monthly",
+        yr: "yr",
+        mo: "mo",
+        perMonthSave: "${{perMonth}}/mo · save {{savePct}}%",
+        billedMonthly: "Billed monthly",
+        wait: "I'll wait",
+        notNow: "Not now",
+        cmp: {
+          free: "Free",
+          pro: "Pro",
+          practice: "Practice every topic",
+          perHour: "{{limit}}/hr",
+          unlimited: "Unlimited",
+          uploads: "Upload your notes",
+          onePerChat: "1 per chat",
+          weakSpots: "Find your weak spots",
+          hourlyCap: "Hourly limit",
+          anytime: "Anytime",
+          momentum: "Keep your momentum",
+          pausesAt: "Pauses at {{limit}}",
+          neverBreaks: "Never breaks",
+          readyFaster: "Get exam-ready faster",
+          slower: "Slowed by waits",
+          fullSpeed: "Full speed"
+        }
+      },
+      usageBadge: {
+        title: "Questions left this hour",
+        blockedTitle: "Out of questions — resets soon, or upgrade to skip the wait",
+        resetsIn: "Resets in {{time}}",
+        remaining: "{{remaining}}/{{limit}} questions"
+      },
+      usagePanel: {
+        tooltip: "Questions used this hour",
+        upgradeTitle: "Upgrade to Pro",
+        upgrade: "Upgrade",
+        proUnlimited: "Pro · Unlimited"
+      },
       // Chat Interface
       chat: {
         title: "NurseQuiz",
@@ -1556,6 +1609,59 @@ const resources = {
 
   fr: {
     translation: {
+      // Upgrade / monetization modal
+      upgrade: {
+        title: "Étudie sans limites",
+        titleNclex: "Réussis ton NCLEX sans limites",
+        titleCourse: "Cartonne à ton examen",
+        body: "Maîtrise chaque sujet, repère tes points faibles plus vite et arrive prêt(e) à ton examen — avec une pratique illimitée.",
+        bodyBlocked: "Tu as atteint tes {{limit}} questions de l'heure. Garde ton élan — pratique autant que nécessaire pour être prêt(e).",
+        bodyExam: "Ton examen est {{when}} — ne laisse pas une limite horaire freiner ta dernière ligne droite. Pratique sans limite.",
+        bodyBlockedExam: "Tu as atteint tes {{limit}} questions de l'heure — et ton examen est {{when}}. Ne perds pas ton élan : passe en illimité.",
+        examToday: "aujourd'hui",
+        examTomorrow: "demain",
+        examInDays: "dans {{days}} jours",
+        nextBatch: "Ou attends — prochaine série dans",
+        bestValue: "Meilleure offre",
+        annual: "Annuel",
+        monthly: "Mensuel",
+        yr: "an",
+        mo: "mois",
+        perMonthSave: "{{perMonth}} $/mois · économise {{savePct}} %",
+        billedMonthly: "Facturé mensuellement",
+        wait: "J'attends",
+        notNow: "Plus tard",
+        cmp: {
+          free: "Gratuit",
+          pro: "Pro",
+          practice: "Pratique chaque sujet",
+          perHour: "{{limit}}/h",
+          unlimited: "Illimité",
+          uploads: "Téléverse tes notes",
+          onePerChat: "1 par chat",
+          weakSpots: "Repère tes points faibles",
+          hourlyCap: "Limite horaire",
+          anytime: "À tout moment",
+          momentum: "Garde ton élan",
+          pausesAt: "Pause à {{limit}}",
+          neverBreaks: "Jamais interrompu",
+          readyFaster: "Sois prêt(e) plus vite",
+          slower: "Ralenti par les attentes",
+          fullSpeed: "Plein régime"
+        }
+      },
+      usageBadge: {
+        title: "Questions restantes cette heure",
+        blockedTitle: "Plus de questions — réinitialisation bientôt, ou passe en Pro pour éviter l'attente",
+        resetsIn: "Réinitialisation dans {{time}}",
+        remaining: "{{remaining}}/{{limit}} questions"
+      },
+      usagePanel: {
+        tooltip: "Questions utilisées cette heure",
+        upgradeTitle: "Passer à Pro",
+        upgrade: "Devenir Pro",
+        proUnlimited: "Pro · Illimité"
+      },
       // Chat Interface
       chat: {
         title: "NurseQuiz",

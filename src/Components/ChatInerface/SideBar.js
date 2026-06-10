@@ -20,6 +20,7 @@ import FeedbackButton from './FeedbackButton';
 import OnboardingViewer from './OnboardingViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
 import RecordClassButton from '../RecordClass/RecordClassButton';
+import UsagePanel from '../Common/UsagePanel';
 import '../RecordClass/RecordClass.css';
 import '../../index.css';
 
@@ -489,6 +490,7 @@ const getchatDate = (timestamp) => {
       </div>
 
       <div className="sidebar-footer">
+        <UsagePanel />
         {isDevelopment && impersonatedUid && (
           <div
             onClick={onStopImpersonating}

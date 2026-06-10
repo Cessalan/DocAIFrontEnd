@@ -1,0 +1,161 @@
+/**
+ * UsageService.js
+ * Frontend usage throttle for AI generations (monetization gate).
+ *
+ * Model: a rolling 60-minute window. Free users get FREE_LIMIT *questions*
+ * per window; when the window has elapsed the bucket refills automatically.
+ * Pro users (usage.tier === 'pro') are unlimited.
+ *
+ * The unit is QUESTIONS (items), not whole generations — so a 3-question quiz
+ * costs 3 and a 20-question quiz costs 20, scaling with how much is generated.
+ * A quiz charges its question count, a flashcard set its card count; mindmaps,
+ * lessons, summaries, scenarios and audio charge a flat 1. Plain conversational
+ * text replies don't count. Use `generationUnits()` to derive the amount from a
+ * generated payload, then pass it to `consumeGeneration(uid, amount)`.
+ *
+ * ⚠️ This is a CLIENT-SIDE gate only — it is bypassable (devtools / direct
+ * API calls). It exists to start monetizing fast and to drive the upgrade
+ * nudge. Real enforcement must live in NQBackEnd2 (reject over-quota
+ * generation requests server-side). Keep the field shape below in sync with
+ * whatever the backend ends up reading.
+ *
+ * Firestore shape: users/{uid}.usage = {
+ *   tier: 'free' | 'pro',
+ *   windowStart: number (ms epoch),   // start of the current rolling window
+ *   count: number                     // generations consumed in this window
+ * }
+ */
+
+import { db } from '../Firebase/config';
+import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
+import { devLog } from './devLogger';
+
+// Tunable knobs — change these two constants to retune the throttle.
+export const FREE_LIMIT = 30;                 // questions (items) per window for free tier
+export const WINDOW_MS = 60 * 60 * 1000;      // rolling window length (1 hour)
+
+/**
+ * Derive how many units (questions/cards) a generated payload should charge.
+ * Quiz → question count, flashcard set → card count; anything else (mindmap,
+ * lesson, summary, scenario, audio) charges a flat 1. Accepts either the array
+ * itself (e.g. quiz_data) or the content object ({ questions } / { cards }).
+ *
+ * @param {Array|Object|undefined} payload
+ * @returns {number} units to charge (>= 1)
+ */
+export const generationUnits = (payload) => {
+  if (Array.isArray(payload)) return Math.max(1, payload.length);
+  if (payload && typeof payload === 'object') {
+    const n = payload.questions?.length || payload.cards?.length || payload.flashcards?.length;
+    if (n) return Math.max(1, n);
+  }
+  return 1;
+};
+
+/**
+ * Normalize a raw usage object against the current time, applying the
+ * rolling-window reset. Pure function — does not write to Firestore.
+ *
+ * @param {Object|undefined} raw - usage sub-object from the user doc
+ * @param {number} now - Date.now()
+ * @returns {{ tier: string, windowStart: number, count: number }}
+ */
+const normalizeUsage = (raw, now) => {
+  const tier = raw?.tier === 'pro' ? 'pro' : 'free';
+  let windowStart = typeof raw?.windowStart === 'number' ? raw.windowStart : 0;
+  let count = typeof raw?.count === 'number' ? raw.count : 0;
+
+  // Window expired (or never started) → fresh empty bucket.
+  if (!windowStart || now - windowStart >= WINDOW_MS) {
+    windowStart = now;
+    count = 0;
+  }
+
+  return { tier, windowStart, count };
+};
+
+/**
+ * Derive the public quota view from a normalized usage object.
+ *
+ * @param {{ tier: string, windowStart: number, count: number }} usage
+ * @param {number} now - Date.now()
+ */
+export const deriveQuota = (usage, now = Date.now()) => {
+  const norm = normalizeUsage(usage, now);
+  const isPro = norm.tier === 'pro';
+  const limit = FREE_LIMIT;
+  const remaining = isPro ? Infinity : Math.max(0, limit - norm.count);
+  const canGenerate = isPro || remaining > 0;
+  // Time until the bucket refills (only meaningful when blocked / free).
+  const msUntilReset = isPro ? 0 : Math.max(0, norm.windowStart + WINDOW_MS - now);
+
+  return { tier: norm.tier, isPro, limit, used: norm.count, windowStart: norm.windowStart, remaining, canGenerate, msUntilReset };
+};
+
+/**
+ * Read the user's current quota view (with rolling reset applied in-memory).
+ * Does NOT mutate Firestore — read-only.
+ *
+ * @param {string} uid
+ * @returns {Promise<ReturnType<typeof deriveQuota>>}
+ */
+export const getQuota = async (uid) => {
+  if (!uid) return deriveQuota({ tier: 'free', windowStart: 0, count: 0 });
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    const usage = snap.exists() ? snap.data().usage : undefined;
+    return deriveQuota(usage);
+  } catch (error) {
+    console.error('Error reading usage quota:', error);
+    // Fail open — never lock a paying/working user out due to a read error.
+    return deriveQuota({ tier: 'pro', windowStart: 0, count: 0 });
+  }
+};
+
+/**
+ * Atomically consume `amount` units (questions/cards) against the rolling
+ * window. Resets the window first if it has elapsed. Pro users are never
+ * charged. The full amount is added even if it pushes count past the limit
+ * (the generation already completed) — the gate prevents *starting* when
+ * already at/over the cap, so this is the intended over-shoot generosity.
+ *
+ * Returns the post-consume quota view, plus `allowed` indicating whether the
+ * user had any budget when charged.
+ *
+ * @param {string} uid
+ * @param {number} amount - units to charge (defaults to 1)
+ * @returns {Promise<ReturnType<typeof deriveQuota> & { allowed: boolean }>}
+ */
+export const consumeGeneration = async (uid, amount = 1) => {
+  const now = Date.now();
+  const charge = Math.max(1, Math.floor(amount) || 1);
+  if (!uid) return { ...deriveQuota({ tier: 'free', windowStart: now, count: FREE_LIMIT }), allowed: false };
+
+  try {
+    const userRef = doc(db, 'users', uid);
+    const result = await runTransaction(db, async (tx) => {
+      const snap = await tx.get(userRef);
+      const raw = snap.exists() ? snap.data().usage : undefined;
+      const norm = normalizeUsage(raw, now);
+
+      if (norm.tier === 'pro') {
+        // Pro: keep the window fresh but never increment a cap.
+        return { usage: norm, allowed: true };
+      }
+
+      const allowed = norm.count < FREE_LIMIT;
+      const nextCount = norm.count + charge;
+      const nextUsage = { tier: 'free', windowStart: norm.windowStart, count: nextCount };
+
+      tx.set(userRef, { usage: nextUsage, updatedAt: serverTimestamp() }, { merge: true });
+      return { usage: nextUsage, allowed };
+    });
+
+    devLog('🪙 Consumed', charge, 'units:', result.usage.count, '/', FREE_LIMIT, 'allowed:', result.allowed);
+    return { ...deriveQuota(result.usage, now), allowed: result.allowed };
+  } catch (error) {
+    console.error('Error consuming generation:', error);
+    // Fail open so a transient Firestore error never blocks a user mid-flow.
+    return { ...deriveQuota({ tier: 'pro', windowStart: now, count: 0 }, now), allowed: true };
+  }
+};
