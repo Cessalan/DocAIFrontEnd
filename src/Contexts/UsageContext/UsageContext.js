@@ -64,6 +64,16 @@ export function UsageProvider({ children }) {
 
   useEffect(() => { refresh(); }, [refresh]);
 
+  // Re-check tier when the tab regains focus — catches the return trip from
+  // Stripe (checkout or billing portal) so an upgrade/cancel shows without a
+  // hard reload. (The webhook may lag the redirect by a few seconds; the next
+  // focus/refresh picks it up.)
+  useEffect(() => {
+    const onFocus = () => refresh();
+    window.addEventListener('focus', onFocus);
+    return () => window.removeEventListener('focus', onFocus);
+  }, [refresh]);
+
   // Live quota view derived against the current tick.
   const quota = useMemo(() => deriveQuota(usage, now), [usage, now]);
 
@@ -120,6 +130,7 @@ export function UsageProvider({ children }) {
       )}
       <UpgradeModal
         isOpen={showUpgrade}
+        isPro={quota.isPro}
         onClose={() => setShowUpgrade(false)}
         limit={quota.limit}
         remaining={quota.remaining}

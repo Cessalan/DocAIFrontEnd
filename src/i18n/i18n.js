@@ -28,6 +28,12 @@ const resources = {
         billedMonthly: "Billed monthly",
         wait: "I'll wait",
         notNow: "Not now",
+        proTitle: "You're on Pro",
+        proBody: "Unlimited practice, uploads, and weak-spot reviews — you have it all. Manage your plan, update payment details, or cancel anytime.",
+        manage: "Manage subscription",
+        manageSub: "Change plan, update card, or cancel",
+        portalOpening: "Opening…",
+        close: "Close",
         cmp: {
           free: "Free",
           pro: "Pro",
@@ -57,7 +63,9 @@ const resources = {
         tooltip: "Questions used this hour",
         upgradeTitle: "Upgrade to Pro",
         upgrade: "Upgrade",
-        proUnlimited: "Pro · Unlimited"
+        proUnlimited: "Pro · Unlimited",
+        manage: "Manage",
+        manageTitle: "Manage or cancel your subscription"
       },
       // Chat Interface
       chat: {
@@ -1631,6 +1639,12 @@ const resources = {
         billedMonthly: "Facturé mensuellement",
         wait: "J'attends",
         notNow: "Plus tard",
+        proTitle: "Tu es en Pro",
+        proBody: "Pratique, téléversements et révisions illimités — tu as tout. Gère ton forfait, mets à jour ton paiement ou annule à tout moment.",
+        manage: "Gérer l'abonnement",
+        manageSub: "Changer de forfait, mettre à jour la carte ou annuler",
+        portalOpening: "Ouverture…",
+        close: "Fermer",
         cmp: {
           free: "Gratuit",
           pro: "Pro",
@@ -1660,7 +1674,9 @@ const resources = {
         tooltip: "Questions utilisées cette heure",
         upgradeTitle: "Passer à Pro",
         upgrade: "Devenir Pro",
-        proUnlimited: "Pro · Illimité"
+        proUnlimited: "Pro · Illimité",
+        manage: "Gérer",
+        manageTitle: "Gérer ou annuler ton abonnement"
       },
       // Chat Interface
       chat: {

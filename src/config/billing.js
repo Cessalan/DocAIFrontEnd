@@ -12,6 +12,9 @@
  * amount; the processor charges its own configured price.
  */
 
+import { auth } from '../Firebase/config';
+import { API_BASE_URL } from '../Services/config';
+
 export const PLANS = [
   {
     id: 'annual',
@@ -90,4 +93,44 @@ export const startCheckout = async (planId, user = {}) => {
   );
   // eslint-disable-next-line no-alert
   alert('Payments are being set up — hang tight! This button isn\'t connected yet.');
+};
+
+/**
+ * Open the Stripe Customer Billing Portal, where a Pro user can cancel or
+ * change their subscription. The backend verifies the Firebase ID token and
+ * looks up the user's Stripe customer — the client never names a customer.
+ * Cancellation flows back through the webhook, which sets tier to 'free'.
+ *
+ * @returns {Promise<boolean>} true if we redirected to the portal
+ */
+export const openBillingPortal = async () => {
+  const user = auth.currentUser;
+  if (!user) {
+    console.error('[billing] No signed-in user for billing portal');
+    return false;
+  }
+  try {
+    const token = await user.getIdToken();
+    const res = await fetch(`${API_BASE_URL}/billing/create-portal-session`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) {
+      const detail = await res.json().catch(() => ({}));
+      console.error('[billing] Portal session failed:', res.status, detail);
+      // eslint-disable-next-line no-alert
+      alert(res.status === 404
+        ? 'We couldn\'t find a subscription on this account. If you just upgraded, give it a minute — otherwise contact support.'
+        : 'Couldn\'t open subscription management right now. Please try again in a moment.');
+      return false;
+    }
+    const { url } = await res.json();
+    window.location.assign(url);
+    return true;
+  } catch (err) {
+    console.error('[billing] Portal session error:', err);
+    // eslint-disable-next-line no-alert
+    alert('Couldn\'t open subscription management right now. Please try again in a moment.');
+    return false;
+  }
 };

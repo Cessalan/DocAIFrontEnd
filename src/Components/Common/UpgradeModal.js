@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PLANS, startCheckout } from '../../config/billing';
+import { PLANS, startCheckout, openBillingPortal } from '../../config/billing';
 import { daysUntilExam } from './upgradeCopy';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './UpgradeModal.css';
@@ -21,6 +21,7 @@ import './UpgradeModal.css';
  * @param {{ uid?: string, email?: string }} [user]
  * @param {string} [studyGoal]   - onboarding goal: 'NCLEX Prep' | 'Course Exam' | 'General Review'
  * @param {string} [examDate]    - ISO exam date, for urgency copy (optional)
+ * @param {boolean} [isPro]      - already subscribed: show manage/cancel instead of the pitch
  */
 const formatCountdown = (ms) => {
   const total = Math.max(0, Math.ceil(ms / 1000));
@@ -29,14 +30,70 @@ const formatCountdown = (ms) => {
   return `${m}:${String(s).padStart(2, '0')}`;
 };
 
-const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUntilReset = 0, user = {}, studyGoal = null, examDate = null }) => {
+const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUntilReset = 0, user = {}, studyGoal = null, examDate = null, isPro = false }) => {
   const { t } = useTranslation();
+  const [portalLoading, setPortalLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const handleOverlayClick = (e) => {
     if (e.target === e.currentTarget) onClose();
   };
+
+  const handleManageSubscription = async () => {
+    setPortalLoading(true);
+    const redirected = await openBillingPortal();
+    if (!redirected) setPortalLoading(false);
+  };
+
+  // ── Already Pro: manage/cancel instead of the upgrade pitch ───────────────
+  // Stripe's hosted Billing Portal handles cancellation; the webhook then
+  // flips the tier back to free.
+  if (isPro) {
+    return (
+      <div className="upgrade-overlay" onClick={handleOverlayClick}>
+        <div className="upgrade-modal" role="dialog" aria-modal="true">
+          <button className="upgrade-close" onClick={onClose} aria-label="Close">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
+
+          <div className="upgrade-icon" aria-hidden="true">
+            <NurseQuizMascot size={84} isExcited lookDirection="center" />
+          </div>
+
+          <h2 className="upgrade-title">{t('upgrade.proTitle', "You're on Pro")}</h2>
+
+          <p className="upgrade-body">
+            {t('upgrade.proBody', 'Unlimited practice, uploads, and weak-spot reviews — you have it all. Manage your plan, update payment details, or cancel anytime.')}
+          </p>
+
+          <div className="upgrade-plans">
+            <button
+              className="upgrade-plan is-recommended"
+              onClick={handleManageSubscription}
+              disabled={portalLoading}
+            >
+              <span className="upgrade-plan-name">
+                {portalLoading
+                  ? t('upgrade.portalOpening', 'Opening…')
+                  : t('upgrade.manage', 'Manage subscription')}
+              </span>
+              <span className="upgrade-plan-sub">
+                {t('upgrade.manageSub', 'Change plan, update card, or cancel')}
+              </span>
+            </button>
+          </div>
+
+          <button className="upgrade-wait" onClick={onClose}>
+            {t('upgrade.close', 'Close')}
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   // "Blocked" = actually out of questions — only then show the wait/countdown.
   // Opening the modal proactively (badge tap with budget left) shows the plain

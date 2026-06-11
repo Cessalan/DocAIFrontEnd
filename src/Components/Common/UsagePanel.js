@@ -30,10 +30,19 @@ const UsagePanel = () => {
   const { isPro, limit, used, remaining, msUntilReset, openUpgrade } = useUsageLimit();
 
   if (isPro) {
+    // Clicking opens the modal in its Pro state: manage / cancel subscription
+    // via the Stripe Billing Portal.
     return (
       <div className="usage-panel is-pro">
         <CrownIcon />
         <span className="usage-panel-pro-text">{t('usagePanel.proUnlimited', 'Pro · Unlimited')}</span>
+        <button
+          className="usage-panel-manage"
+          onClick={openUpgrade}
+          title={t('usagePanel.manageTitle', 'Manage or cancel your subscription')}
+        >
+          {t('usagePanel.manage', 'Manage')}
+        </button>
       </div>
     );
   }
