@@ -225,59 +225,88 @@ export const embed_docs = async (documents,chatId) => {
  * @param {Function} onProgress - Callback for progress updates (update) => {}
  * @returns {Promise<Object>} Final results with all file metadata
  */
-export const upload_files_with_progress = async (files, chatId, onProgress,language) => {
-  try {
-    // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
-    const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
-    devLog('📤 Upload language:', language, '-> normalized:', normalizedLang);
+// Upload reliability timeouts:
+// - FIRST_BYTE: covers request-body transfer (large PDFs on slow mobile) + server prep
+// - STALL: the backend heartbeats every ~10s, so 45s of silence = dead connection
+// - OVERALL: hard cap so the UI can never spin forever
+const UPLOAD_FIRST_BYTE_TIMEOUT_MS = 120000;
+const UPLOAD_STALL_TIMEOUT_MS = 45000;
+const UPLOAD_OVERALL_TIMEOUT_MS = 300000;
 
-    // Prepare FormData
-    const formData = new FormData();
-    files.forEach(file => {
-      formData.append('files', file); // 'files' plural matches backend
-    });
-    formData.append('chat_id', chatId);
-    formData.append('user_id', auth.currentUser?.uid || 'anonymous');
-    formData.append('language', normalizedLang)
+export const upload_files_with_progress = async (files, chatId, onProgress,language) => {
+  // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
+  const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
+  devLog('📤 Upload language:', language, '-> normalized:', normalizedLang);
+
+  // Prepare FormData
+  const formData = new FormData();
+  files.forEach(file => {
+    formData.append('files', file); // 'files' plural matches backend
+  });
+  formData.append('chat_id', chatId);
+  formData.append('user_id', auth.currentUser?.uid || 'anonymous');
+  formData.append('language', normalizedLang)
+
+  // Abort the request when the server goes silent (Safari/proxy drops,
+  // backend crash mid-stream) so the UI gets a real error instead of
+  // showing "uploading" forever.
+  const controller = new AbortController();
+  let stallTimer = null;
+  const armStallTimer = (ms) => {
+    clearTimeout(stallTimer);
+    stallTimer = setTimeout(() => controller.abort(), ms);
+  };
+  const overallTimer = setTimeout(() => controller.abort(), UPLOAD_OVERALL_TIMEOUT_MS);
+
+  const results = {
+    files: new Map(),
+    totalWords: 0,
+    completed: 0,
+    total: files.length,
+    allComplete: false
+  };
+
+  // Helper: process a single NDJSON line
+  const processLine = (line) => {
+    if (!line.trim()) return;
+    let update;
+    try {
+      update = JSON.parse(line);
+    } catch (parseError) {
+      console.error('Failed to parse upload update:', line, parseError);
+      return;
+    }
+    if (update.type === 'heartbeat') return; // keep-alive only, not a UI event
+    if (onProgress) onProgress(update);
+    if (update.type === 'error') {
+      const batchError = new Error(update.message || 'Upload failed');
+      batchError.code = update.code; // e.g. 'capacity' when OpenAI is over quota
+      throw batchError;
+    }
+    if (update.type === 'file_complete') {
+      results.files.set(update.file_id, update);
+      results.totalWords += update.word_count || 0;
+      results.completed += 1;
+    }
+    if (update.type === 'all_complete') {
+      results.allComplete = true;
+    }
+  };
+
+  try {
+    armStallTimer(UPLOAD_FIRST_BYTE_TIMEOUT_MS);
 
     // Send request
     const response = await fetch(`${FAST_API_BASE}/chat/upload-files`, {
       method: 'POST',
-      body: formData
+      body: formData,
+      signal: controller.signal
     });
 
     if (!response.ok) {
       const errorText = await response.text();
       throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
     }
-
-    const results = {
-      files: new Map(),
-      totalWords: 0,
-      completed: 0,
-      total: files.length
-    };
-
-    // Helper: process a single NDJSON line
-    const processLine = (line) => {
-      if (!line.trim()) return;
-      try {
-        const update = JSON.parse(line);
-        if (onProgress) onProgress(update);
-        if (update.type === 'file_complete') {
-          results.files.set(update.file_id, update);
-          results.totalWords += update.word_count || 0;
-          results.completed += 1;
-        }
-        if (update.type === 'error') {
-          throw new Error(update.message);
-        }
-      } catch (parseError) {
-        // Re-throw upload errors, ignore JSON parse failures
-        if (parseError.message && !parseError.message.includes('JSON')) throw parseError;
-        console.error('Failed to parse upload update:', line, parseError);
-      }
-    };
 
     // iOS Safari (especially < 16.4) may not support ReadableStream on response.body.
     // Fall back to reading the full response text when streaming is unavailable.
@@ -286,9 +315,11 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       const decoder = new TextDecoder();
       let buffer = '';
 
+      armStallTimer(UPLOAD_STALL_TIMEOUT_MS);
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
+        armStallTimer(UPLOAD_STALL_TIMEOUT_MS);
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -308,11 +339,23 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       }
     }
 
+    // A stream that ended without all_complete means the server died mid-way
+    // (deploy, crash, proxy timeout). Surface it instead of pretending success.
+    if (!results.allComplete) {
+      throw new Error('Upload connection lost before completion');
+    }
+
     return results;
 
   } catch (error) {
+    if (error.name === 'AbortError') {
+      throw new Error('Upload timed out - the connection went silent');
+    }
     console.error('Upload error in FastAPICalls:', error);
     throw error;
+  } finally {
+    clearTimeout(stallTimer);
+    clearTimeout(overallTimer);
   }
 };
 export const generate_title = async(message, language = 'en') => {

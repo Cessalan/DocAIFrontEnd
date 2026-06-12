@@ -2682,6 +2682,20 @@ const ChatInterface = ({
       console.error('Upload error:', error);
       setLoadingState('fileUpload', false);
       setLoadingState('fileEmbedding', false);
+      setIsUploadAnalyzing(false);
+
+      // Flip the upload loading box into a visible error state so a failed,
+      // timed-out, or dropped upload can never leave the spinner running forever.
+      const failedMsgId = uploadMessageIdRef.current;
+      if (failedMsgId) {
+        setChatMessages(prev => prev.map(msg =>
+          msg.id === failedMsgId && msg.type === 'upload_loading'
+            ? { ...msg, isLoading: false, error: true, errorCode: error.code }
+            : msg
+        ));
+      }
+      uploadMessageIdRef.current = null;
+      uploadInsightsAccumulatorRef.current = [];
 
       // Mark all uploading files as error
       setChatMessages(prev => prev.map(msg =>
@@ -3005,6 +3019,18 @@ const ChatInterface = ({
       case 'error':
         console.error('❌ Batch error:', update.message);
         setIsUploadAnalyzing(false);
+
+        // Show the failure in the loading box instead of leaving it spinning.
+        // (upload_files_with_progress also throws after this, but flipping here
+        // keeps the UI correct even if the throw is swallowed upstream.)
+        const errorMsgId = uploadMessageIdRef.current;
+        if (errorMsgId) {
+          setChatMessages(prev => prev.map(msg =>
+            msg.id === errorMsgId && msg.type === 'upload_loading'
+              ? { ...msg, isLoading: false, error: true, errorCode: update.code }
+              : msg
+          ));
+        }
         break;
 
       // ============================================
@@ -4665,7 +4691,8 @@ const ChatInterface = ({
               if (message.type === 'upload_loading') {
                 // Hide completed LoadingMessageBox if PostUploadActions or FirstUploadWowCard exists
                 // This avoids showing redundant info after the friendly action message appears
-                if (!message.isLoading) {
+                // (never hide an errored box — the user must see the failure)
+                if (!message.isLoading && !message.error) {
                   const hasPostUploadMessage = chatMessages.some(
                     msg => msg.type === 'post_upload_actions' || msg.type === 'first_upload_wow' || msg.type === 'plan_onboarding'
                   );
@@ -4677,6 +4704,8 @@ const ChatInterface = ({
                   <LoadingMessageBox
                     key={message.id}
                     isLoading={message.isLoading}
+                    error={message.error}
+                    errorCode={message.errorCode}
                     insights={message.insights || []}
                     summary={message.summary}
                     fileCount={message.fileCount}

@@ -19,10 +19,12 @@ import { useTranslation } from 'react-i18next';
  * @param {Array} filenames - Array of uploaded filenames
  * @param {string} language - User's language ('en' or 'fr')
  */
-const LoadingMessageBox = ({ 
-  isLoading = false, 
-  insights = [], 
-  summary = null, 
+const LoadingMessageBox = ({
+  isLoading = false,
+  error = false,
+  errorCode = null,
+  insights = [],
+  summary = null,
   fileCount = 0,
   filenames = [],
   language = 'en'
@@ -51,6 +53,12 @@ const LoadingMessageBox = ({
   // Determine Loading State Text
   // ========================================
   const getStatusText = () => {
+    if (error) {
+      return errorCode === 'capacity'
+        ? t('loading.uploadOverloaded')
+        : t('loading.uploadFailed');
+    }
+
     if (!isLoading) {
       return t('loading.complete');
     }
@@ -68,13 +76,15 @@ const LoadingMessageBox = ({
   // Render Component
   // ========================================
   return (
-    <div className={`loading-message-box ${isLoading ? 'loading' : 'complete-with-insights'}`}>
-      
+    <div className={`loading-message-box ${error ? 'upload-error' : isLoading ? 'loading' : 'complete-with-insights'}`}>
+
       {/* ========================================
           HEADER: Loading Icon + Status Text
           ======================================== */}
       <div className="loading-header">
-        {isLoading ? (
+        {error ? (
+          <span className="complete-icon">⚠️</span>
+        ) : isLoading ? (
           <div className="loading-icon-container">
             <StethoscopeScanningDocIcon />
           </div>
@@ -86,12 +96,23 @@ const LoadingMessageBox = ({
           <span className="loading-text-shimmer"></span>
         </span>
       </div>
-      
+
+      {/* ========================================
+          ERROR STATE: retry hint, no stats/insights
+          ======================================== */}
+      {error && (
+        <div className="upload-error-hint">
+          {errorCode === 'capacity'
+            ? t('loading.uploadOverloadedHint')
+            : t('loading.uploadFailedHint')}
+        </div>
+      )}
+
       {/* ========================================
           PROGRESS STATS: Files, Topics, Concepts
           Always visible once we have data
           ======================================== */}
-      {filesProcessed > 0 && (
+      {!error && filesProcessed > 0 && (
         <div className="progress-stats">
           
           {/* Files Processed Counter */}
@@ -138,7 +159,7 @@ const LoadingMessageBox = ({
           While loading: Show last 2 files (streaming effect)
           When complete: Show ALL files
           ======================================== */}
-      {insights.length > 0 && (
+      {!error && insights.length > 0 && (
         <div className="latest-insights">
           {insights.map((insight, index) => (
             <div key={`insight-${index}-${insight.filename}`} className="insight-preview fade-in">
@@ -163,7 +184,7 @@ const LoadingMessageBox = ({
           SUMMARY PREVIEW: Final 1-2 sentence summary
           Always visible when summary exists
           ======================================== */}
-      {summary && (
+      {!error && summary && (
         <div className="summary-preview">
           {summary}
         </div>

@@ -30,7 +30,10 @@
       "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"hyperkalemia\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")",
       "Bash(curl -s -m 3 -X POST http://127.0.0.1:8000/glossary -H \"Content-Type: application/json\" -d \"{\\\\\"term\\\\\":\\\\\"tendonitis\\\\\"}\" -w \"\\\\n[HTTP %{http_code}]\\\\n\")",
       "Bash(node --check src/Services/FastAPICalls.js)",
-      "Bash(venv/Scripts/python.exe -c ' *)"
+      "Bash(venv/Scripts/python.exe -c ' *)",
+      "PowerShell(if \\($?\\) { \"COMPILE OK\" })",
+      "PowerShell(if \\($?\\) { \"PY OK\" })",
+      "PowerShell(node -e \"const p=require\\('./node_modules/@babel/parser'\\); const fs=require\\('fs'\\); ['src/Services/FastAPICalls.js','src/Components/ChatInerface/ChatInterface.js','src/Components/ChatInerface/LoadingMessageBox.js','src/i18n/i18n.js'].forEach\\(f=>{ p.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK', f\\); }\\);\")"
     ],
     "deny": [],
     "ask": [],
