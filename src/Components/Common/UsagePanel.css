@@ -56,6 +56,30 @@
 
 .usage-crown { width: 12px; height: 12px; flex-shrink: 0; }
 
+/* Dev-only override pill (never rendered in production builds) */
+.usage-panel-dev {
+  flex-shrink: 0;
+  padding: 3px 7px;
+  border: 1px dashed rgba(0, 0, 0, 0.25);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--text-muted, #999);
+  background: transparent;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.usage-panel-dev.is-active {
+  color: var(--primary-coral-dark, #c46a5a);
+  border-color: var(--primary-coral, #e88d7d);
+}
+body.dark-mode .usage-panel-dev { color: #aaa; border-color: rgba(255, 255, 255, 0.25); }
+body.dark-mode .usage-panel-dev.is-active {
+  color: var(--dark-accent-light, #d4c8e8);
+  border-color: var(--dark-accent, #b8a5d4);
+}
+
 /* Pro variant — single tight row */
 .usage-panel.is-pro { gap: 6px; }
 .usage-panel.is-pro .usage-crown { width: 13px; height: 13px; color: var(--primary-coral, #e88d7d); }

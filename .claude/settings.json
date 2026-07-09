@@ -16,7 +16,8 @@
       "PowerShell(\\(Get-Item \"c:\\\\Users\\\\Billion\\\\Desktop\\\\ragfrontend\\\\src\\\\Components\\\\ChatInerface\\\\ChatInterface.js\"\\).Length)",
       "PowerShell(Get-WmiObject Win32_LogicalDisk -Filter \"DeviceID='C:'\" | ForEach-Object { \"Free: \" + [math]::Round\\($_.FreeSpace/1GB, 2\\) + \" GB\" })",
       "Skill(claude-api)",
-      "Skill(claude-api:*)"
+      "Skill(claude-api:*)",
+      "Bash(echo \"exit: $?\")"
     ]
   }
 }

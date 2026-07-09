@@ -8560,6 +8560,52 @@ body.dark-mode .celebration-continue-btn:hover {
   margin: 4px 0 0;
 }
 
+/* Grace note — exam needs more questions than the free quota has left,
+   but we generate the full test anyway and say so. */
+.exam-config__grace {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: rgba(232, 141, 125, 0.1);
+  border: 1px solid rgba(232, 141, 125, 0.35);
+  border-radius: 12px;
+}
+
+.dark-mode .exam-config__grace {
+  background: rgba(232, 141, 125, 0.12);
+  border-color: rgba(232, 141, 125, 0.3);
+}
+
+.exam-config__grace-icon {
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+.exam-config__grace-text {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #7a4a40;
+}
+
+.dark-mode .exam-config__grace-text { color: #f0b5a9; }
+
+.exam-config__grace-upgrade {
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 12px;
+  color: #c46a5a;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.dark-mode .exam-config__grace-upgrade { color: #e88d7d; }
+
 /* Timer toggle */
 .exam-config__toggle-section {
   display: flex;

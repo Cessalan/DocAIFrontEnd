@@ -33,7 +33,9 @@
       "Bash(venv/Scripts/python.exe -c ' *)",
       "PowerShell(if \\($?\\) { \"COMPILE OK\" })",
       "PowerShell(if \\($?\\) { \"PY OK\" })",
-      "PowerShell(node -e \"const p=require\\('./node_modules/@babel/parser'\\); const fs=require\\('fs'\\); ['src/Services/FastAPICalls.js','src/Components/ChatInerface/ChatInterface.js','src/Components/ChatInerface/LoadingMessageBox.js','src/i18n/i18n.js'].forEach\\(f=>{ p.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK', f\\); }\\);\")"
+      "PowerShell(node -e \"const p=require\\('./node_modules/@babel/parser'\\); const fs=require\\('fs'\\); ['src/Services/FastAPICalls.js','src/Components/ChatInerface/ChatInterface.js','src/Components/ChatInerface/LoadingMessageBox.js','src/i18n/i18n.js'].forEach\\(f=>{ p.parse\\(fs.readFileSync\\(f,'utf8'\\),{sourceType:'module',plugins:['jsx']}\\); console.log\\('OK', f\\); }\\);\")",
+      "PowerShell(npx eslint src/Components/StudyMode/ExamConfigModal.js src/Components/StudyMode/StudyModeContainer.js src/i18n/i18n.js --no-eslintrc --parser-options=ecmaVersion:2022,sourceType:module,ecmaFeatures:{jsx:true} 2>$null; echo \"exit: $LASTEXITCODE\")",
+      "PowerShell(npx eslint --no-eslintrc --parser-options=ecmaVersion:2022,sourceType:module --parser-options=ecmaFeatures:{jsx:true} src/Components/StudyMode/ExamConfigModal.js)"
     ],
     "deny": [],
     "ask": [],

@@ -2,14 +2,15 @@ import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { PLANS, startCheckout, openBillingPortal } from '../../config/billing';
 import { daysUntilExam } from './upgradeCopy';
+import { formatCountdown } from '../../Services/UsageService';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './UpgradeModal.css';
 
 /**
  * UpgradeModal
- * Shown when a free user has exhausted their hourly question budget, or when
- * they tap the usage badge. Communicates the wait ("next batch in MM:SS") and
- * offers the two Pro plans.
+ * Shown when a free user has exhausted their question budget for the current
+ * 3-hour window, or when they tap the usage badge. Communicates the wait
+ * ("next batch in H:MM:SS") and offers the two Pro plans.
  *
  * Checkout is delegated to `startCheckout(planId, user)` in config/billing.js.
  *
@@ -23,12 +24,6 @@ import './UpgradeModal.css';
  * @param {string} [examDate]    - ISO exam date, for urgency copy (optional)
  * @param {boolean} [isPro]      - already subscribed: show manage/cancel instead of the pitch
  */
-const formatCountdown = (ms) => {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-};
 
 const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUntilReset = 0, user = {}, studyGoal = null, examDate = null, isPro = false }) => {
   const { t } = useTranslation();
@@ -118,11 +113,11 @@ const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUnt
   let subtitle;
   if (blocked) {
     subtitle = examSoon
-      ? t('upgrade.bodyBlockedExam', "You've hit your {{limit}} questions this hour — and your exam is {{when}}. Don't lose momentum: go unlimited.", { limit, when: whenLabel })
-      : t('upgrade.bodyBlocked', "You've hit your {{limit}} questions this hour. Keep your momentum going — practice as much as you need to be ready.", { limit });
+      ? t('upgrade.bodyBlockedExam', "You've used your {{limit}} questions for this 3-hour window — and your exam is {{when}}. Don't lose momentum: go unlimited.", { limit, when: whenLabel })
+      : t('upgrade.bodyBlocked', "You've used your {{limit}} questions for this 3-hour window. Keep your momentum going — practice as much as you need to be ready.", { limit });
   } else {
     subtitle = examSoon
-      ? t('upgrade.bodyExam', "Your exam is {{when}} — don't let an hourly limit slow your final push. Practice unlimited.", { when: whenLabel })
+      ? t('upgrade.bodyExam', "Your exam is {{when}} — don't let a question limit slow your final push. Practice unlimited.", { when: whenLabel })
       : t('upgrade.body', 'Master every topic, find your weak spots faster, and walk into your exam ready — with unlimited practice.');
   }
 
@@ -163,7 +158,7 @@ const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUnt
 
           <div className="upgrade-compare-row">
             <span className="upgrade-compare-feature">{t('upgrade.cmp.practice', 'Practice every topic')}</span>
-            <span className="upgrade-compare-free">{t('upgrade.cmp.perHour', '{{limit}}/hr', { limit })}</span>
+            <span className="upgrade-compare-free">{t('upgrade.cmp.perHour', '{{limit}} / 3 hrs', { limit })}</span>
             <span className="upgrade-compare-pro">{t('upgrade.cmp.unlimited', 'Unlimited')}</span>
           </div>
 
@@ -175,7 +170,7 @@ const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUnt
 
           <div className="upgrade-compare-row">
             <span className="upgrade-compare-feature">{t('upgrade.cmp.weakSpots', 'Find your weak spots')}</span>
-            <span className="upgrade-compare-free">{t('upgrade.cmp.hourlyCap', 'Hourly limit')}</span>
+            <span className="upgrade-compare-free">{t('upgrade.cmp.hourlyCap', '3-hour limit')}</span>
             <span className="upgrade-compare-pro">{t('upgrade.cmp.anytime', 'Anytime')}</span>
           </div>
 

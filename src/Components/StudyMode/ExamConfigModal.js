@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import './StudyMode.css';
 
 /**
@@ -20,6 +21,7 @@ const ExamConfigModal = ({
   isLoading,     // Whether exam is being generated
 }) => {
   const { t } = useTranslation();
+  const { isPro, remaining, openUpgrade } = useUsageLimit();
 
   // Question types — all on by default
   const [questionTypes, setQuestionTypes] = useState({
@@ -90,6 +92,12 @@ const ExamConfigModal = ({
   if (!isOpen) return null;
 
   const selectedCount = Object.values(questionTypes).filter(Boolean).length;
+
+  // Grace case: she still has free questions, but fewer than this exam needs.
+  // We generate the full exam anyway (the gate only blocks at zero) — this
+  // banner makes the generosity visible instead of silently overshooting.
+  const willOvershoot =
+    !isPro && Number.isFinite(remaining) && remaining > 0 && questionCount > remaining;
 
   return (
     <div className="exam-config-overlay" onClick={!isLoading ? onClose : undefined}>
@@ -203,6 +211,29 @@ const ExamConfigModal = ({
                   minutes: Math.round(questionCount * 1.5)
                 })}
               </p>
+
+              {willOvershoot && (
+                <div className="exam-config__grace" role="status">
+                  <span className="exam-config__grace-icon" aria-hidden="true">💙</span>
+                  <div>
+                    <p className="exam-config__grace-text">
+                      {t('exam.graceNote', {
+                        remaining,
+                        count: questionCount,
+                        defaultValue:
+                          'You have {{remaining}} free questions left right now and this mini-test needs {{count}}. We’ll build the full test anyway — your success comes first.'
+                      })}
+                    </p>
+                    <button
+                      type="button"
+                      className="exam-config__grace-upgrade"
+                      onClick={openUpgrade}
+                    >
+                      {t('exam.graceUpgrade', 'Free questions refill every 3 hours · Go unlimited with Pro')}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Timer Toggle */}

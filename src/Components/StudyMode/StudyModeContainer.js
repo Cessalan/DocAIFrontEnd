@@ -112,7 +112,7 @@ const StudyModeContainer = ({
   const { userProfile } = useAuth() || {};
 
   // Usage throttle (monetization gate): block + show upgrade modal when the
-  // hourly generation bucket is empty; charge one unit per new node generated.
+  // 3-hour generation bucket is empty; charge one unit per new node generated.
   const { requireQuota, consume: consumeGeneration } = useUsageLimit();
 
   // View state: 'node' (showing content) | 'overview' (showing plan)
@@ -247,6 +247,13 @@ const StudyModeContainer = ({
 
     // ── Exam nodes: show config modal instead of generating immediately ──
     if (node.type === 'exam' && !node.messageId) {
+      // Usage throttle: block only when the free bucket is completely empty.
+      // Any remaining quota lets the exam through — the charge in
+      // handleExamStart may overshoot the cap on purpose (we'd rather let her
+      // finish a full mini-test than cut it short; the modal explains this).
+      if (!viewOnly && !requireQuota()) {
+        return;
+      }
       setPendingExamNode(node);
       setShowExamConfig(true);
       return;
@@ -1199,6 +1206,11 @@ const StudyModeContainer = ({
         throw new Error('No exam questions generated');
       }
 
+      // Charge per question. May push the count past FREE_LIMIT — intended
+      // grace: the gate at the exam node only blocks at zero remaining, so a
+      // student with any budget left gets her full exam (see UsageService).
+      consumeGeneration(generationUnits(result));
+
       // Merge examConfig (timer settings) into the content
       const examContent = {
         ...result,
@@ -1245,7 +1257,7 @@ const StudyModeContainer = ({
     }
 
     setPendingExamNode(null);
-  }, [chatId, pendingExamNode, language, onCloseSidebar]);
+  }, [chatId, pendingExamNode, language, onCloseSidebar, consumeGeneration]);
 
   // Handle retake exam — insert a fresh exam node after the completed one and launch it
   const handleRetakeExam = useCallback(async (examNode) => {

@@ -1,11 +1,12 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { formatCountdown } from '../../Services/UsageService';
 import './UsageBadge.css';
 
 /**
  * UsageBadge
  * Small always-visible pill showing how many AI generations remain in the
- * current hourly window. Hidden for Pro (unlimited) users. Rendered globally
+ * current 3-hour window. Hidden for Pro (unlimited) users. Rendered globally
  * by UsageProvider so it appears on every screen (chat + study) without
  * threading props through the big container components.
  *
@@ -15,12 +16,6 @@ import './UsageBadge.css';
  * @param {number} msUntilReset
  * @param {() => void} [onClick]  - e.g. open the upgrade modal
  */
-const formatCountdown = (ms) => {
-  const total = Math.max(0, Math.ceil(ms / 1000));
-  const m = Math.floor(total / 60);
-  const s = total % 60;
-  return `${m}:${String(s).padStart(2, '0')}`;
-};
 
 const UsageBadge = ({ isPro, remaining, limit, msUntilReset, onClick }) => {
   const { t } = useTranslation();
@@ -37,7 +32,7 @@ const UsageBadge = ({ isPro, remaining, limit, msUntilReset, onClick }) => {
       onClick={onClick}
       title={blocked
         ? t('usageBadge.blockedTitle', 'Out of questions — resets soon, or upgrade to skip the wait')
-        : t('usageBadge.title', 'Questions left this hour')}
+        : t('usageBadge.title', 'Questions left — refills every 3 hours')}
     >
       <span className="usage-badge-dot" aria-hidden="true">⚡</span>
       {blocked ? (

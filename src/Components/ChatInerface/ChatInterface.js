@@ -148,7 +148,7 @@ const ChatInterface = ({
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
 
   // Usage throttle (monetization gate). requireQuota() blocks + opens the
-  // upgrade modal when the hourly bucket is empty; consume() charges one unit
+  // upgrade modal when the 3-hour bucket is empty; consume() charges one unit
   // when a generation actually completes. isPro / openUpgrade also gate the
   // free "one upload per chat" limit.
   const { requireQuota, consume: consumeGeneration, isPro, openUpgrade } = useUsageLimit();

@@ -2,7 +2,7 @@
  * UsageService.js
  * Frontend usage throttle for AI generations (monetization gate).
  *
- * Model: a rolling 60-minute window. Free users get FREE_LIMIT *questions*
+ * Model: a rolling 3-hour window. Free users get FREE_LIMIT *questions*
  * per window; when the window has elapsed the bucket refills automatically.
  * Pro users (usage.tier === 'pro') are unlimited.
  *
@@ -32,7 +32,64 @@ import { devLog } from './devLogger';
 
 // Tunable knobs — change these two constants to retune the throttle.
 export const FREE_LIMIT = 30;                 // questions (items) per window for free tier
-export const WINDOW_MS = 60 * 60 * 1000;      // rolling window length (1 hour)
+export const WINDOW_MS = 3 * 60 * 60 * 1000;  // rolling window length (3 hours)
+
+/**
+ * Dev-only limit override, so the throttle can be exercised without burning
+ * through 30 real generations. In a development build, set it from the
+ * browser console and reload:
+ *
+ *   localStorage.nqDevFreeLimit = 3     // pretend the free cap is 3
+ *   delete localStorage.nqDevFreeLimit  // back to the real FREE_LIMIT
+ *
+ * Ignored entirely in production builds.
+ */
+const DEV_LIMIT_KEY = 'nqDevFreeLimit';
+
+/** Current dev override, or null when unset / not a dev build. */
+export const getDevFreeLimitOverride = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  try {
+    const n = parseInt(window.localStorage.getItem(DEV_LIMIT_KEY), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    // Storage unavailable (SSR/tests) — behave as if unset.
+    return null;
+  }
+};
+
+/** Set (n > 0) or clear (anything else) the dev override. Dev builds only. */
+export const setDevFreeLimitOverride = (n) => {
+  if (process.env.NODE_ENV !== 'development') return;
+  try {
+    if (Number.isFinite(n) && n > 0) {
+      window.localStorage.setItem(DEV_LIMIT_KEY, String(Math.floor(n)));
+    } else {
+      window.localStorage.removeItem(DEV_LIMIT_KEY);
+    }
+  } catch {
+    // Storage unavailable — nothing to do.
+  }
+};
+
+export const getFreeLimit = () => getDevFreeLimitOverride() ?? FREE_LIMIT;
+
+/**
+ * Format a reset countdown for display. Hour-aware since the window is 3
+ * hours: "2:14:09" when an hour or more remains, "14:09" below that.
+ * Shared by UsageBadge, UsagePanel and UpgradeModal.
+ *
+ * @param {number} ms - milliseconds until the bucket refills
+ * @returns {string}
+ */
+export const formatCountdown = (ms) => {
+  const total = Math.max(0, Math.ceil(ms / 1000));
+  const h = Math.floor(total / 3600);
+  const m = Math.floor((total % 3600) / 60);
+  const s = total % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+};
 
 /**
  * Derive how many units (questions/cards) a generated payload should charge.
@@ -83,7 +140,7 @@ const normalizeUsage = (raw, now) => {
 export const deriveQuota = (usage, now = Date.now()) => {
   const norm = normalizeUsage(usage, now);
   const isPro = norm.tier === 'pro';
-  const limit = FREE_LIMIT;
+  const limit = getFreeLimit();
   const remaining = isPro ? Infinity : Math.max(0, limit - norm.count);
   const canGenerate = isPro || remaining > 0;
   // Time until the bucket refills (only meaningful when blocked / free).
@@ -129,7 +186,7 @@ export const getQuota = async (uid) => {
 export const consumeGeneration = async (uid, amount = 1) => {
   const now = Date.now();
   const charge = Math.max(1, Math.floor(amount) || 1);
-  if (!uid) return { ...deriveQuota({ tier: 'free', windowStart: now, count: FREE_LIMIT }), allowed: false };
+  if (!uid) return { ...deriveQuota({ tier: 'free', windowStart: now, count: getFreeLimit() }), allowed: false };
 
   try {
     const userRef = doc(db, 'users', uid);
@@ -143,7 +200,7 @@ export const consumeGeneration = async (uid, amount = 1) => {
         return { usage: norm, allowed: true };
       }
 
-      const allowed = norm.count < FREE_LIMIT;
+      const allowed = norm.count < getFreeLimit();
       const nextCount = norm.count + charge;
       const nextUsage = { tier: 'free', windowStart: norm.windowStart, count: nextCount };
 
@@ -151,7 +208,7 @@ export const consumeGeneration = async (uid, amount = 1) => {
       return { usage: nextUsage, allowed };
     });
 
-    devLog('🪙 Consumed', charge, 'units:', result.usage.count, '/', FREE_LIMIT, 'allowed:', result.allowed);
+    devLog('🪙 Consumed', charge, 'units:', result.usage.count, '/', getFreeLimit(), 'allowed:', result.allowed);
     return { ...deriveQuota(result.usage, now), allowed: result.allowed };
   } catch (error) {
     console.error('Error consuming generation:', error);
