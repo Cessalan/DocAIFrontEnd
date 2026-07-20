@@ -11,7 +11,9 @@ import {
   serverTimestamp,
   onSnapshot,
   doc,
-  getDoc
+  getDoc,
+  getDocs,
+  limit
 } from "firebase/firestore";
 import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat, RenameChat } from "../../Services/FireBaseServiceChats.js";
@@ -42,6 +44,45 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
   // Onboarding viewer state (dev mode only)
   const [showOnboardingViewer, setShowOnboardingViewer] = useState(false);
+
+  // Dev mode: impersonate any user by UID or email
+  const [viewAsInput, setViewAsInput] = useState("");
+  const [viewAsError, setViewAsError] = useState(null);
+
+  const handleViewAsSubmit = async (e) => {
+    e.preventDefault();
+    const input = viewAsInput.trim();
+    if (!input) return;
+    setViewAsError(null);
+
+    let uid = input;
+    if (input.includes("@")) {
+      // Resolve email -> uid via the userEmail field on chat docs
+      try {
+        const chatsRef = collection(db, "chats");
+        let snap = await getDocs(query(chatsRef, where("userEmail", "==", input), limit(1)));
+        if (snap.empty && input !== input.toLowerCase()) {
+          snap = await getDocs(query(chatsRef, where("userEmail", "==", input.toLowerCase()), limit(1)));
+        }
+        if (snap.empty) {
+          setViewAsError("No chats found for that email");
+          return;
+        }
+        uid = snap.docs[0].data().userId;
+        if (!uid) {
+          setViewAsError("Chat found but it has no userId");
+          return;
+        }
+      } catch (err) {
+        console.error("View-as email lookup failed:", err);
+        setViewAsError("Email lookup failed");
+        return;
+      }
+    }
+
+    if (onImpersonateUser) onImpersonateUser(uid);
+    setViewAsInput("");
+  };
 
   // Dev mode: Toggle between viewing all chats or only user's chats
   const [viewAllChats, setViewAllChats] = useState(() => {
@@ -86,6 +127,10 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
   
   const [chats, setChats] = useState([]);
   const [hoveredChatId, setHoveredChatId] = useState(null);
+
+  // Dev mode: filter the "All Chats" list down to one user's chats
+  const [userIdFilterInput, setUserIdFilterInput] = useState("");
+  const [userIdFilter, setUserIdFilter] = useState(null);
 
   // 3-dot menu state
   const [menuOpenChatId, setMenuOpenChatId] = useState(null);
@@ -154,12 +199,14 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
     // Build query based on view mode:
     // 1. Impersonating a user → show only that user's chats
-    // 2. Dev "view all" mode → show every chat
+    // 2. Dev "view all" mode → every chat, or one user's if a userId filter is set
     // 3. Normal mode → show only the signed-in user's chats
     const chatQuery = isDevelopment && impersonatedUid
       ? query(chatsRef, where("userId", "==", impersonatedUid), orderBy("updatedAt", "desc"))
       : isDevelopment && viewAllChats
-      ? query(chatsRef, orderBy("updatedAt", "desc"))
+      ? (userIdFilter
+          ? query(chatsRef, where("userId", "==", userIdFilter), orderBy("updatedAt", "desc"))
+          : query(chatsRef, orderBy("updatedAt", "desc")))
       : query(chatsRef, where("userId", "==", user.uid), orderBy("updatedAt", "desc"));
 
     const unsubscribe = onSnapshot(chatQuery, async (snapshot) => {
@@ -181,7 +228,7 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
       // Clear the loaded tracking when dependencies change
       loadedFileCountsRef.current.clear();
     };
-  }, [user, viewAllChats, isDevelopment, impersonatedUid]); // Re-run when impersonation or view mode changes
+  }, [user, viewAllChats, isDevelopment, impersonatedUid, userIdFilter]); // Re-run when impersonation, view mode, or user filter changes
   
 
   const handleNewChat = async () => {
@@ -354,6 +401,61 @@ const getchatDate = (timestamp) => {
         <RecordClassButton />
       </div>
 
+      {isDevelopment && viewAllChats && !impersonatedUid && (
+        <div style={{ padding: '0 12px 8px' }}>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              setUserIdFilter(userIdFilterInput.trim() || null);
+            }}
+            style={{ display: 'flex', gap: 4, alignItems: 'center' }}
+          >
+            <input
+              type="text"
+              value={userIdFilterInput}
+              onChange={(e) => setUserIdFilterInput(e.target.value)}
+              placeholder="Filter by user ID…"
+              spellCheck={false}
+              style={{
+                flex: 1,
+                minWidth: 0,
+                boxSizing: 'border-box',
+                background: 'rgba(255,107,53,0.08)',
+                border: '1px solid rgba(255,107,53,0.4)',
+                borderRadius: 6,
+                padding: '5px 8px',
+                fontSize: '12px',
+                color: 'inherit',
+                outline: 'none'
+              }}
+              title="Dev only: press Enter to show only this user's chats"
+            />
+            {userIdFilter && (
+              <button
+                type="button"
+                onClick={() => { setUserIdFilter(null); setUserIdFilterInput(""); }}
+                title="Clear user filter"
+                style={{
+                  background: 'rgba(255,107,53,0.15)',
+                  border: '1px solid rgba(255,107,53,0.4)',
+                  borderRadius: 6,
+                  padding: '4px 8px',
+                  fontSize: '12px',
+                  color: '#ff6b35',
+                  cursor: 'pointer'
+                }}
+              >
+                ✕
+              </button>
+            )}
+          </form>
+          {userIdFilter && (
+            <div style={{ fontSize: '11px', color: '#ff6b35', marginTop: 3 }}>
+              Showing chats of {userIdFilter.slice(0, 14)}… ({chats.length})
+            </div>
+          )}
+        </div>
+      )}
       <div className="conversations-list">
         {chats.map((chat) => (
          <div
@@ -511,6 +613,34 @@ const getchatDate = (timestamp) => {
             👁 Viewing as {impersonatedUid.slice(0, 10)}…<br />
             <span style={{ fontSize: '11px', fontWeight: 400, opacity: 0.8 }}>Click to exit</span>
           </div>
+        )}
+        {isDevelopment && !impersonatedUid && (
+          <form onSubmit={handleViewAsSubmit} style={{ marginBottom: 8 }}>
+            <input
+              type="text"
+              value={viewAsInput}
+              onChange={(e) => { setViewAsInput(e.target.value); setViewAsError(null); }}
+              placeholder="👁 View as: UID or email…"
+              spellCheck={false}
+              style={{
+                width: '100%',
+                boxSizing: 'border-box',
+                background: 'rgba(255,107,53,0.08)',
+                border: '1px solid rgba(255,107,53,0.4)',
+                borderRadius: 6,
+                padding: '6px 10px',
+                fontSize: '12px',
+                color: 'inherit',
+                outline: 'none'
+              }}
+              title="Dev only: press Enter to view the app as this user"
+            />
+            {viewAsError && (
+              <div style={{ fontSize: '11px', color: '#ff6b35', marginTop: 3 }}>
+                {viewAsError}
+              </div>
+            )}
+          </form>
         )}
         <div className="sidebar-footer-toggles">
           <DarkModeToggle isDark={isDarkMode} onToggle={handleDarkModeToggle} />

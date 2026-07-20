@@ -1054,6 +1054,9 @@ const ChatInterface = ({
     setIsAiTyping(true);
     setStreamingStatus(null);
     setIsStreaming(true);
+    // Fresh send = fresh completion state. If a previous stream errored (or a
+    // quiz/audio flow set this), a stale true would skip saving THIS response.
+    isQuizGeneratingRef.current = false;
 
     // Add user message (unless hidden for automated prompts)
     const newUserMessage = {
@@ -1115,6 +1118,37 @@ const ChatInterface = ({
 
         // Status callback - handles all your current status updates
         (statusUpdate) => {
+
+          // ═══════════════════════════════════════════════════════════
+          // STREAM ERROR — finalize instead of hanging.
+          // Before this handler existed, a backend error left the typing
+          // indicator on forever and the placeholder was later saved as an
+          // EMPTY assistant message ("why are you not responding?").
+          // Now: stop the stream state, turn the placeholder into an error
+          // bubble with a Retry button, and never persist it to Firebase.
+          // ═══════════════════════════════════════════════════════════
+          if (statusUpdate.status === "error") {
+            console.error("❌ Stream error from backend:", statusUpdate.message);
+            cleanupStreamingThrottle();
+            isQuizGeneratingRef.current = true; // stream_complete may still follow — skip empty-save path
+            setStreamingStatus(null);
+            setIsStreaming(false);
+            setIsAiTyping(false);
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.id === streamingMessageId
+                  ? {
+                      ...msg,
+                      content: streamingContentRef.current || '',
+                      error: true,
+                      retryText: messageToSend,
+                      isStreaming: false
+                    }
+                  : msg
+              )
+            );
+            return;
+          }
 
           // ═══════════════════════════════════════════════════════════
           // WEB RESEARCH PHASE (school-specific exam grounding)
@@ -1823,6 +1857,22 @@ const ChatInterface = ({
             return;
           }
 
+          // Empty response = the stream died silently. Never persist an
+          // empty assistant message (they used to litter chats and poison
+          // context); show an error bubble with Retry instead.
+          if (!fullResponse || fullResponse.trim() === '') {
+            console.error("❌ Stream completed with empty content — showing retry instead of saving");
+            setChatMessages(prev =>
+              prev.map(msg =>
+                msg.id === streamingMessageId
+                  ? { ...msg, content: '', error: true, retryText: messageToSend, isStreaming: false }
+                  : msg
+              )
+            );
+            setIsAiTyping(false);
+            return;
+          }
+
           // Build final message with complete content
           const finalMessage = {
             id: streamingMessageId,
@@ -1859,8 +1909,9 @@ const ChatInterface = ({
           msg.id === streamingMessageId
             ? {
               ...msg,
-              content: "Une erreur de connexion est survenue. Veuillez réessayer.",
+              content: '',
               error: true,
+              retryText: messageToSend,
               isStreaming: false
             }
             : msg
@@ -2512,9 +2563,16 @@ const ChatInterface = ({
     'application/vnd.ms-excel',
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     'text/plain',
-    'text/markdown'
+    'text/markdown',
+    // Images — backend extracts text via OCR (OCRImageLoader in main.py)
+    'image/jpeg',
+    'image/png',
+    'image/bmp',
+    'image/tiff',
+    'image/webp',
+    'image/heic'
   ];
-  const SUPPORTED_EXTENSIONS = /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|txt|md)$/i;
+  const SUPPORTED_EXTENSIONS = /\.(pdf|doc|docx|ppt|pptx|xls|xlsx|txt|md|jpg|jpeg|png|bmp|tiff|webp|heic)$/i;
 
   const isFileTypeSupported = (file) => {
     // Check MIME type first (works on most desktop browsers)
@@ -3315,6 +3373,18 @@ const ChatInterface = ({
 
   // Stable wrappers — identity never changes, always calls latest implementation
   const stableHandleSendMessage = useCallback((...args) => handleSendNewUserMessageRef.current(...args), []);
+
+  // Retry a failed assistant response: drop the error bubble and re-send the
+  // original prompt. hideUserMessage + skipFirebaseSave because the user's
+  // message is already in the UI and in Firestore.
+  const handleRetryMessage = useCallback((message) => {
+    if (!message?.retryText) return;
+    setChatMessages(prev => prev.filter(m => m.id !== message.id));
+    handleSendNewUserMessageRef.current(null, message.retryText, {
+      hideUserMessage: true,
+      skipFirebaseSave: true
+    });
+  }, []);
   const stableHandleQuizAnswerSelect = useCallback((...args) => handleQuizAnswerSelectRef.current(...args), []);
   const stableHandlePostDocumentUploadOption = useCallback((...args) => handlePostDocumentUploadOptionRef.current(...args), []);
   const stableHandleEditMessage = useCallback((...args) => handleEditMessageRef.current(...args), []);
@@ -4975,6 +5045,7 @@ const ChatInterface = ({
                       isActiveQuiz={message.id === activeQuizId}
                       onFeedbackSubmit={handleQuizFeedback}
                       onSendMessage={stableHandleSendMessage}
+                      onRetryMessage={handleRetryMessage}
                       onDeleteMessage={handleDeleteMessage}
                       onEditMessage={stableHandleEditMessage}
                       viewAllChatsMode={viewAllChatsMode}
@@ -5135,7 +5206,7 @@ const ChatInterface = ({
             onChange={handleFileSelect}
             style={{ display: 'none' }}
             multiple
-            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/markdown"
+            accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.jpg,.jpeg,.png,.bmp,.tiff,.webp,.heic,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/markdown,image/*"
           />
 
           {/* Input wrapper - vertical layout with buttons at bottom */}
@@ -5150,6 +5221,28 @@ const ChatInterface = ({
                 setUserInputText(e.target.value);
               }}
               onPaste={(e) => {
+                // Pasted images (screenshots, copied pictures) go through the
+                // regular file-upload pipeline, same as the paperclip button.
+                const items = Array.from(e.clipboardData?.items || []);
+                const imageFiles = items
+                  .filter(item => item.kind === 'file' && item.type.startsWith('image/'))
+                  .map(item => item.getAsFile())
+                  .filter(Boolean)
+                  .map((file, idx) => {
+                    // Clipboard files are often all named "image.png" — give
+                    // each a unique, readable name for the uploads list.
+                    const ext = (file.type.split('/')[1] || 'png').replace('jpeg', 'jpg');
+                    const stamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+                    return new File([file], `pasted-image-${stamp}${idx > 0 ? `-${idx + 1}` : ''}.${ext}`, { type: file.type });
+                  });
+                if (imageFiles.length > 0) {
+                  e.preventDefault();
+                  // Same synthetic-event pattern as handlePasteNotesSubmit
+                  // (avoids DataTransfer, unsupported on iOS Safari).
+                  handleFileSelect({ target: { files: imageFiles, value: '' } });
+                  return;
+                }
+
                 const html = e.clipboardData?.getData('text/html');
                 if (!html) return; // Let browser handle plain-text paste.
                 const markdown = htmlToMarkdown(html);

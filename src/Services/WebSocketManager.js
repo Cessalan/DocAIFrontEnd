@@ -17,6 +17,30 @@ class WebSocketManager {
   constructor() {
     this.connections = new Map(); // chat_id -> WebSocket
     this.keepaliveIntervals = new Map(); // chat_id -> interval ID
+    // chat_id -> onStatusUpdate of the in-flight request. If the socket dies
+    // mid-stream (Cloud Run restart, network drop), we notify the stream
+    // instead of leaving the UI typing forever.
+    this.activeStreams = new Map();
+  }
+
+  setActiveStream(chatId, notify) {
+    this.activeStreams.set(chatId, notify);
+  }
+
+  clearActiveStream(chatId) {
+    this.activeStreams.delete(chatId);
+  }
+
+  failActiveStream(chatId, message) {
+    const notify = this.activeStreams.get(chatId);
+    if (notify) {
+      this.activeStreams.delete(chatId);
+      try {
+        notify({ status: 'error', message });
+      } catch (e) {
+        console.error('Failed to notify active stream of connection loss:', e);
+      }
+    }
   }
 
   // Get or create WebSocket connection for a chat
@@ -89,6 +113,9 @@ class WebSocketManager {
         devLog(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
         this.stopKeepalive(chatId);
         this.connections.delete(chatId);
+        // If a request was mid-flight, surface it as an error instead of
+        // leaving the chat stuck on the typing indicator forever.
+        this.failActiveStream(chatId, 'Connection lost while waiting for the response.');
         // Connection will be re-established on next message if needed
       };
     });
@@ -208,6 +235,10 @@ export const ask_llm_websocket = async (
     // Get WebSocket connection
     const ws = await wsManager.getConnection(chat_id);
 
+    // Register this request as the chat's in-flight stream so a dropped
+    // connection can notify it (see ws.onclose -> failActiveStream).
+    wsManager.setActiveStream(chat_id, onStatusUpdate);
+
     // Set up message listener with chat_id for auto-close on complete
     wsManager.setupMessageListener(chat_id, (message) => {
       handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd, chat_id);
@@ -262,6 +293,11 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
         // Handle status updates (quiz generation, study sheets, etc.)
         devLog('📦 Calling onStatusUpdate with status:', data.status);
         onStatusUpdate(data);
+      }
+      else if (data.type === 'error') {
+        // Older backend error shape ({type: "error"} without status) —
+        // previously this chunk was silently dropped and the UI hung.
+        onStatusUpdate({ status: 'error', message: data.message || 'Processing failed' });
       }
       else if (data.answer_chunk) {
         // Handle regular text streaming
@@ -351,6 +387,7 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
 
     case 'stream_complete':
       streamComplete = true;
+      wsManager.clearActiveStream(chatId);
       if (onStreamEnd) {
         onStreamEnd();
       }
@@ -359,10 +396,16 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       break;
 
     case 'error':
+      wsManager.clearActiveStream(chatId);
       onStatusUpdate({
         status: "error",
         message: message.message
       });
+      break;
+
+    case 'stream_cancelled':
+      // User pressed stop — not an error; just stop tracking the request.
+      wsManager.clearActiveStream(chatId);
       break;
 
     case 'pong':

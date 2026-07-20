@@ -201,6 +201,7 @@ const ChatMessage = ({
   onQuizInteraction,
   isActiveQuiz = false,
   onSendMessage,
+  onRetryMessage,
   onFeedbackSubmit,
   onDeleteMessage,
   onEditMessage,
@@ -649,8 +650,54 @@ const ChatMessage = ({
           </div>
         )}
 
+        {/* Stream error — the response failed or came back empty.
+            Rendered instead of the regular text block; offers a Retry that
+            re-sends the original prompt. */}
+        {isAI && message.error && (
+          <div className="message-text">
+            {message.content && (
+              <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
+            )}
+            <div
+              role="alert"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 10,
+                flexWrap: 'wrap',
+                background: 'rgba(220,53,69,0.08)',
+                border: '1px solid rgba(220,53,69,0.35)',
+                borderRadius: 8,
+                padding: '10px 14px',
+                marginTop: message.content ? 8 : 0,
+                fontSize: '14px'
+              }}
+            >
+              <span>⚠️ {t('chat.streamError')}</span>
+              {message.retryText && onRetryMessage && (
+                <button
+                  type="button"
+                  onClick={() => onRetryMessage(message)}
+                  style={{
+                    background: 'rgba(220,53,69,0.15)',
+                    border: '1px solid rgba(220,53,69,0.45)',
+                    borderRadius: 6,
+                    padding: '4px 14px',
+                    cursor: 'pointer',
+                    color: 'inherit',
+                    fontSize: '13px',
+                    fontWeight: 600
+                  }}
+                >
+                  ↻ {t('chat.retry')}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Regular Text Message */}
-        {!parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
+        {!(isAI && message.error) && !parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
           <div className={isAI ? "message-text" : isEditing ? "message-edit-mode" : "user-text user-text-markdown"}>
             {isUser ? (
               isEditing ? (

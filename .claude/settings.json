@@ -17,7 +17,8 @@
       "PowerShell(Get-WmiObject Win32_LogicalDisk -Filter \"DeviceID='C:'\" | ForEach-Object { \"Free: \" + [math]::Round\\($_.FreeSpace/1GB, 2\\) + \" GB\" })",
       "Skill(claude-api)",
       "Skill(claude-api:*)",
-      "Bash(echo \"exit: $?\")"
+      "Bash(echo \"exit: $?\")",
+      "Bash(./venv/Scripts/python.exe -m py_compile main.py)"
     ]
   }
 }
