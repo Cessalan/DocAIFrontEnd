@@ -203,12 +203,12 @@ const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUnt
                 {plan.id === 'annual' ? t('upgrade.annual', 'Annual') : t('upgrade.monthly', 'Monthly')}
               </span>
               <span className="upgrade-plan-price">
-                <span className="upgrade-plan-amount">${plan.amount}</span>
+                <span className="upgrade-plan-amount">{plan.symbol || '$'}{plan.amount}</span>
                 <span className="upgrade-plan-interval">/{plan.interval === 'year' ? t('upgrade.yr', 'yr') : t('upgrade.mo', 'mo')}</span>
               </span>
               {plan.interval === 'year' ? (
                 <span className="upgrade-plan-sub">
-                  {t('upgrade.perMonthSave', '${{perMonth}}/mo · save {{savePct}}%', { perMonth: plan.perMonth, savePct: plan.savePct })}
+                  {t('upgrade.perMonthSave', 'CA${{perMonth}}/mo · save {{savePct}}%', { perMonth: plan.perMonth, savePct: plan.savePct })}
                 </span>
               ) : (
                 <span className="upgrade-plan-sub">

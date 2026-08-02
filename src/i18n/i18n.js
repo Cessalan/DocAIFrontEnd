@@ -24,7 +24,7 @@ const resources = {
         monthly: "Monthly",
         yr: "yr",
         mo: "mo",
-        perMonthSave: "${{perMonth}}/mo · save {{savePct}}%",
+        perMonthSave: "CA${{perMonth}}/mo · save {{savePct}}%",
         billedMonthly: "Billed monthly",
         wait: "I'll wait",
         notNow: "Not now",
@@ -66,6 +66,26 @@ const resources = {
         proUnlimited: "Pro · Unlimited",
         manage: "Manage",
         manageTitle: "Manage or cancel your subscription"
+      },
+      account: {
+        title: "Account",
+        close: "Close",
+        rowTitle: "Account & subscription",
+        noEmail: "Signed in",
+        planPro: "Pro",
+        planFree: "Free plan",
+        planFreeShort: "Free",
+        subscribed: "Subscribed",
+        notSubscribed: "Not subscribed",
+        proDetail: "Unlimited questions, uploads, and reviews.",
+        freeDetail: "{{used}} of {{limit}} questions used this 3-hour window.",
+        freeBlocked: "Out of questions — next batch in {{time}}.",
+        upgrade: "Upgrade to Pro",
+        upgradeShort: "Upgrade",
+        manage: "Manage subscription",
+        manageHint: "Change plan, update your card, or cancel — opens Stripe's secure portal.",
+        portalOpening: "Opening…",
+        signOut: "Sign out"
       },
       // Chat Interface
       chat: {
@@ -1643,7 +1663,7 @@ const resources = {
         monthly: "Mensuel",
         yr: "an",
         mo: "mois",
-        perMonthSave: "{{perMonth}} $/mois · économise {{savePct}} %",
+        perMonthSave: "{{perMonth}} $ CA/mois · économise {{savePct}} %",
         billedMonthly: "Facturé mensuellement",
         wait: "J'attends",
         notNow: "Plus tard",
@@ -1685,6 +1705,26 @@ const resources = {
         proUnlimited: "Pro · Illimité",
         manage: "Gérer",
         manageTitle: "Gérer ou annuler ton abonnement"
+      },
+      account: {
+        title: "Compte",
+        close: "Fermer",
+        rowTitle: "Compte et abonnement",
+        noEmail: "Connecté(e)",
+        planPro: "Pro",
+        planFree: "Forfait gratuit",
+        planFreeShort: "Gratuit",
+        subscribed: "Abonné(e)",
+        notSubscribed: "Non abonné(e)",
+        proDetail: "Questions, téléversements et révisions illimités.",
+        freeDetail: "{{used}} questions sur {{limit}} utilisées cette fenêtre de 3 heures.",
+        freeBlocked: "Plus de questions — prochaine recharge dans {{time}}.",
+        upgrade: "Passer à Pro",
+        upgradeShort: "Devenir Pro",
+        manage: "Gérer mon abonnement",
+        manageHint: "Change de forfait, mets à jour ta carte ou annule — via le portail sécurisé Stripe.",
+        portalOpening: "Ouverture…",
+        signOut: "Se déconnecter"
       },
       // Chat Interface
       chat: {

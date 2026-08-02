@@ -1,3 +1,12 @@
+/* The open sidebar's footer already shows usage (UsagePanel) and the account
+   row — hide the floating pill there so they don't stack on top of each
+   other. It comes back when the sidebar is collapsed, where it's the only
+   quota surface. (:has is supported everywhere the app runs; without it the
+   badge just stays visible, which is only cosmetic.) */
+body:has(.sidebar.open) .usage-badge {
+  display: none;
+}
+
 .usage-badge {
   position: fixed;
   bottom: 16px;

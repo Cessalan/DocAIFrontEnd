@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// ⚠️ TRANSITIONAL RULES — matches the previous fully-open behavior everywhere
+// EXCEPT billing integrity on users/{uid}. The database is still publicly
+// readable/writable otherwise; a real per-user lockdown is planned post-launch.
+//
+// Billing invariant: usage.tier, stripeCustomerId and stripeSubscriptionId can
+// only be changed by the backend Stripe webhook (Admin SDK bypasses these
+// rules). Clients may still freely write usage.count / usage.windowStart —
+// the quota bookkeeping — as long as the billing fields stay untouched.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+      allow read: if true;
+      // No client deletes: deleting the doc would erase the tier record.
+      allow delete: if false;
+      // Writes allowed only if billing fields end up unchanged.
+      // (request.resource.data is the post-merge state of the document.)
+      allow create, update: if
+        request.resource.data.get('usage', {}).get('tier', 'free')
+          == (resource == null ? 'free' : resource.data.get('usage', {}).get('tier', 'free'))
+        && request.resource.data.get('stripeCustomerId', '')
+          == (resource == null ? '' : resource.data.get('stripeCustomerId', ''))
+        && request.resource.data.get('stripeSubscriptionId', '')
+          == (resource == null ? '' : resource.data.get('stripeSubscriptionId', ''));
+
+      // Subcollections (users/{uid}/exams, ...) keep the old open behavior.
+      // NOTE: in rules v2 a bare {sub=**} matches ZERO or more segments and
+      // would therefore ALSO match the user document itself, reopening the
+      // billing fields — so this is anchored one level down on purpose.
+      match /{subcollection}/{subdoc=**} {
+        allow read, write: if true;
+      }
+    }
+
+    // Every other collection: unchanged (open) — deliberately identical to
+    // the previous rules so nothing else changes behavior.
+    match /{collection}/{docPath=**} {
+      allow read, write: if collection != 'users';
+    }
+  }
+}

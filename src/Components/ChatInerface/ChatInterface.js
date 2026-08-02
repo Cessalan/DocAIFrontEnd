@@ -1134,6 +1134,16 @@ const ChatInterface = ({
             setStreamingStatus(null);
             setIsStreaming(false);
             setIsAiTyping(false);
+
+            // Server-side quota rejection (usage_guard in NQBackEnd2): the
+            // paywall is the answer, not a retry — retrying would just be
+            // rejected again. Drop the placeholder and open the upgrade modal.
+            if (statusUpdate.code === "quota_exceeded") {
+              setChatMessages(prev => prev.filter(msg => msg.id !== streamingMessageId));
+              openUpgrade();
+              return;
+            }
+
             setChatMessages(prev =>
               prev.map(msg =>
                 msg.id === streamingMessageId

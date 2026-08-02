@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { handleSignOut } from "../../Firebase/auth";
 import { db, auth } from "../../Firebase/config";
 import {
   collection,
@@ -22,7 +21,8 @@ import FeedbackButton from './FeedbackButton';
 import OnboardingViewer from './OnboardingViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
 import RecordClassButton from '../RecordClass/RecordClassButton';
-import UsagePanel from '../Common/UsagePanel';
+import AccountModal from '../Common/AccountModal';
+import AccountRow from '../Common/AccountRow';
 import '../RecordClass/RecordClass.css';
 import '../../index.css';
 
@@ -44,6 +44,9 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
   // Onboarding viewer state (dev mode only)
   const [showOnboardingViewer, setShowOnboardingViewer] = useState(false);
+
+  // Account modal (profile + subscription status)
+  const [showAccountModal, setShowAccountModal] = useState(false);
 
   // Dev mode: impersonate any user by UID or email
   const [viewAsInput, setViewAsInput] = useState("");
@@ -592,7 +595,6 @@ const getchatDate = (timestamp) => {
       </div>
 
       <div className="sidebar-footer">
-        <UsagePanel />
         {isDevelopment && impersonatedUid && (
           <div
             onClick={onStopImpersonating}
@@ -674,15 +676,28 @@ const getchatDate = (timestamp) => {
             👁 View Onboarding (Dev)
           </div>
         )}
-        <div className="nav-item logout-item" onClick={handleSignOut}>
-          {t('side.logout')}
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-            <polyline points="16 17 21 12 16 7"/>
-            <line x1="21" y1="12" x2="9" y2="12"/>
-          </svg>
-        </div>
+        <AccountRow
+          user={{
+            uid: user?.uid,
+            email: user?.email,
+            displayName: user?.displayName,
+            photoURL: user?.photoURL
+          }}
+          onOpenAccount={() => setShowAccountModal(true)}
+        />
       </div>
+
+      {/* Account modal (profile + subscription status) */}
+      <AccountModal
+        isOpen={showAccountModal}
+        onClose={() => setShowAccountModal(false)}
+        user={{
+          uid: user?.uid,
+          email: user?.email,
+          displayName: user?.displayName,
+          photoURL: user?.photoURL
+        }}
+      />
 
       {/* Onboarding Viewer Modal (Dev Mode Only) */}
       {showOnboardingViewer && (

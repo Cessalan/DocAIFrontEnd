@@ -21,8 +21,9 @@ const CrownIcon = () => (
 );
 
 // Dev-only pill: click to override the free limit (e.g. 3) for throttle
-// testing. Never rendered in production builds.
-const DevLimitPill = () => {
+// testing. Never rendered in production builds. Exported for reuse in
+// AccountRow (which replaced this panel in the sidebar footer).
+export const DevLimitPill = () => {
   const { refresh } = useUsageLimit();
   const [override, setOverride] = useState(getDevFreeLimitOverride());
 

@@ -1,0 +1,141 @@
+/* AccountRow — ChatGPT/Gemini-style profile row in the sidebar footer. */
+
+.account-block {
+  padding: 8px 10px;
+  border-radius: 12px;
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.15s ease;
+}
+.account-block:hover { background: rgba(232, 141, 125, 0.08); }
+
+.account-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.account-row-avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.account-row-avatar-initial {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-coral, #e88d7d), var(--primary-coral-light, #f4a896));
+}
+
+.account-row-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+  line-height: 1.25;
+}
+
+.account-row-name {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary, #3d3d3d);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-row-plan {
+  font-size: 11.5px;
+  color: var(--text-muted, #999);
+}
+.account-row-plan.is-pro {
+  color: var(--primary-coral-dark, #c46a5a);
+  font-weight: 600;
+}
+
+.account-row-upgrade {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  border: 1px solid rgba(232, 141, 125, 0.4);
+  border-radius: 999px;
+  background: var(--bg-paper, #fffef9);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary-coral-dark, #c46a5a);
+  cursor: pointer;
+  transition: background 0.15s ease, transform 0.12s ease, box-shadow 0.12s ease;
+}
+.account-row-upgrade:hover {
+  background: rgba(232, 141, 125, 0.12);
+  transform: translateY(-1px);
+  box-shadow: 0 3px 10px rgba(232, 141, 125, 0.25);
+}
+
+/* ── Usage bar (free users) — merged from the old UsagePanel ───────────── */
+.account-usage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 7px;
+  padding-left: 2px;
+}
+
+.account-usage-count {
+  flex-shrink: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #6b6b6b);
+}
+.account-usage-limit { color: var(--text-muted, #999); font-weight: 500; }
+.account-usage.is-blocked .account-usage-count { color: var(--primary-coral-dark, #c46a5a); }
+
+.account-usage-track {
+  flex: 1;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(232, 141, 125, 0.16);
+  overflow: hidden;
+}
+
+.account-usage-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--primary-coral, #e88d7d), var(--primary-coral-light, #f4a896));
+  transition: width 0.3s ease;
+}
+.account-usage.is-blocked .account-usage-fill {
+  background: var(--primary-coral-dark, #c46a5a);
+}
+
+/* ── Dark mode — neutral darks + lavender accent ───────────────────────── */
+body.dark-mode .account-block:hover { background: rgba(255, 255, 255, 0.06); }
+body.dark-mode .account-row-name { color: #f5f5f5; }
+body.dark-mode .account-row-plan { color: #999; }
+body.dark-mode .account-row-plan.is-pro { color: var(--dark-accent-light, #d4c8e8); }
+body.dark-mode .account-row-avatar-initial {
+  background: linear-gradient(135deg, var(--dark-accent, #b8a5d4), var(--dark-accent-hover, #a894c9));
+}
+body.dark-mode .account-row-upgrade {
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border-color: var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+  color: var(--dark-accent-light, #d4c8e8);
+}
+body.dark-mode .account-row-upgrade:hover {
+  background: rgba(184, 165, 212, 0.15);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.3);
+}
+body.dark-mode .account-usage-count { color: #c8c8c8; }
+body.dark-mode .account-usage-limit { color: #999; }
+body.dark-mode .account-usage.is-blocked .account-usage-count { color: var(--dark-accent-light, #d4c8e8); }
+body.dark-mode .account-usage-track { background: rgba(255, 255, 255, 0.1); }
+body.dark-mode .account-usage-fill {
+  background: linear-gradient(90deg, var(--dark-accent, #b8a5d4), var(--dark-accent-light, #d4c8e8));
+}
+body.dark-mode .account-usage.is-blocked .account-usage-fill { background: var(--dark-accent, #b8a5d4); }

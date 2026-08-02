@@ -19,8 +19,9 @@ export const PLANS = [
   {
     id: 'annual',
     name: 'Annual',
-    amount: 45,              // $/year — display only
-    currency: 'USD',
+    amount: 45,              // CA$/year — display only; MUST match the Stripe price
+    currency: 'CAD',
+    symbol: 'CA$',           // shown before the amount (French copy renders "$ CA" via i18n)
     interval: 'year',
     perMonth: 3.75,          // 45 / 12, for the "$3.75/mo" subtitle
     savePct: 55,             // vs paying monthly (8.33*12 = 99.96 → 45 = ~55% off)
@@ -32,8 +33,9 @@ export const PLANS = [
   {
     id: 'monthly',
     name: 'Monthly',
-    amount: 8.33,            // $/month — display only
-    currency: 'USD',
+    amount: 8.33,            // CA$/month — display only; MUST match the Stripe price
+    currency: 'CAD',
+    symbol: 'CA$',
     interval: 'month',
     perMonth: 8.33,
     recommended: false,

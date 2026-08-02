@@ -399,6 +399,9 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       wsManager.clearActiveStream(chatId);
       onStatusUpdate({
         status: "error",
+        // Pass the machine-readable code through (e.g. "quota_exceeded"
+        // opens the upgrade modal instead of a retry bubble).
+        code: message.code,
         message: message.message
       });
       break;
