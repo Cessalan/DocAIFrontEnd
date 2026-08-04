@@ -31,7 +31,7 @@ import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore
 import { devLog } from './devLogger';
 
 // Tunable knobs — change these two constants to retune the throttle.
-export const FREE_LIMIT = 30;                 // questions (items) per window for free tier
+export const FREE_LIMIT = 12;                 // questions (items) per window for free tier
 export const WINDOW_MS = 3 * 60 * 60 * 1000;  // rolling window length (3 hours)
 
 /**

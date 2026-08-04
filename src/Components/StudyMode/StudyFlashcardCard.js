@@ -56,6 +56,9 @@ const parseFlashcardText = (text) => {
  * @param {Function} onContinue - Callback when user completes all cards
  * @param {Function} onExit - Callback to exit/close the card
  */
+/* Below this set size a mid-set milestone interrupts more than it rewards. */
+const CARD_MILESTONE_MIN_SET = 8;
+
 const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, adaptiveMessage = null, onReview, onContinue, onExit }) => {
   const { t } = useTranslation();
 
@@ -200,19 +203,21 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual cards received
   // This prevents milestone from triggering too early during streaming (e.g., 1/1 = 100% vs 1/12 = 8%)
-  const milestoneTotal = expectedTotal || 12;
-  const minCardsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total (e.g., 4 out of 12)
+  const milestoneTotal = expectedTotal || CARD_MILESTONE_MIN_SET;
+  const minCardsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total
   const isPerfect = masteredCount === totalCards;
+  // Sets are 5 cards now — a mid-set celebration after 2 would collide with
+  // the completion one. Long sets only.
+  const milestoneWorthShowing = milestoneTotal >= CARD_MILESTONE_MIN_SET;
 
-  // Trigger milestone celebration at 30%
-  // Only trigger when we've mastered at least 4 cards (30% of 12) to ensure meaningful progress
+  // Trigger milestone celebration at 30% (long sets only)
   useEffect(() => {
-    if (masteredCount >= minCardsForMilestone && !hasShownMilestone && !isReviewRound) {
+    if (milestoneWorthShowing && masteredCount >= minCardsForMilestone && !hasShownMilestone && !isReviewRound) {
       setShowMilestoneCelebration(true);
       setHasShownMilestone(true);
       playMilestoneSound();
     }
-  }, [masteredCount, minCardsForMilestone, hasShownMilestone, isReviewRound]);
+  }, [milestoneWorthShowing, masteredCount, minCardsForMilestone, hasShownMilestone, isReviewRound]);
 
   // Trigger completion celebration when all mastered
   useEffect(() => {

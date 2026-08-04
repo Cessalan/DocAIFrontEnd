@@ -1,5 +1,12 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { getStepTopicLabel } from './planFormatting';
+import {
+  isReminderSupported,
+  getReminderState,
+  enableReminder,
+  disableReminder,
+} from '../../Services/StudyReminderService';
 import './StudyMode.css';
 
 // Truncate long topic names per spec (40 chars + ellipsis)
@@ -22,6 +29,7 @@ const truncateTopic = (s, max = 40) => {
  *   - Low cognitive effort: don't make her think when there's nothing to think about.
  */
 const NodeTransition = ({
+  chatId,            // Study session id — keys the optional return reminder
   node,              // The node that was just completed
   content,           // Content that was shown (questions, cards, etc.)
   quizProgress,      // { questionStatuses: { 0: 'correct', 1: 'incorrect', ... } }
@@ -50,6 +58,30 @@ const NodeTransition = ({
   // The exit is deferred until they close this card so the message has time
   // to land before we navigate away.
   const [showFarewell, setShowFarewell] = useState(false);
+
+  // ── Return reminder (farewell card only) ──────────────────────────────
+  // Local notification opt-in. Permission is requested from this button —
+  // a user gesture, after a completed node — never on load, because a denied
+  // prompt is sticky and would kill the channel for good.
+  const reminderSupported = isReminderSupported();
+  const [reminderState, setReminderState] = useState(
+    () => (chatId ? getReminderState(chatId) : 'off')
+  );
+
+  const handleToggleReminder = async () => {
+    if (!chatId) return;
+    if (reminderState === 'on') {
+      setReminderState(disableReminder(chatId));
+      onAnalytics?.('return_reminder_disabled', {});
+      return;
+    }
+    const next = await enableReminder(chatId, {
+      label: nextNode ? getStepTopicLabel(nextNode.label) : null,
+      type: nextNode?.type || null,
+    });
+    setReminderState(next);
+    onAnalytics?.('return_reminder_enabled', { granted: next === 'on' });
+  };
 
   // ── Compute result data from the completed node ─────────────────────
   const result = useMemo(() => {
@@ -755,9 +787,52 @@ const NodeTransition = ({
           <p className="nt2-farewell__body">
             {t('transition.farewellBody1', "Your brain is now deciding what stays and what fades.")}
           </p>
-          <p className="nt2-farewell__body">
-            {t('transition.farewellBody2', "Tomorrow's 4-minute recall will reinforce the concepts that matter most.")}
-          </p>
+
+          {/* Name what's waiting. A designed exit that says exactly what comes
+              next, and how long it takes, gives the student something concrete
+              to return TO — "tomorrow" in the abstract is what gets skipped. */}
+          {nextNode ? (
+            <div className="nt2-farewell__next">
+              <span className="nt2-farewell__next-label">
+                {t('transition.farewellNextLabel', 'Next time')}
+              </span>
+              <span className="nt2-farewell__next-node">
+                {truncateTopic(getStepTopicLabel(nextNode.label))}
+              </span>
+              <span className="nt2-farewell__next-meta">
+                {t(`study.nodeType.${nextNode.type}`, nextNode.type)} · ~{getEstimate(nextNode.type)} min
+              </span>
+            </div>
+          ) : (
+            <p className="nt2-farewell__body">
+              {t('transition.farewellBody2', "Tomorrow's 4-minute recall will reinforce the concepts that matter most.")}
+            </p>
+          )}
+
+          {/* Optional nudge. Permission is requested here — after a completed
+              node, at the moment they've chosen to come back — never on load. */}
+          {reminderSupported && (
+            <button
+              type="button"
+              className={`nt2-farewell__remind${reminderState === 'on' ? ' is-on' : ''}`}
+              onClick={handleToggleReminder}
+              disabled={reminderState === 'blocked'}
+            >
+              {reminderState === 'on' ? (
+                <>
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.4"
+                       strokeLinecap="round" strokeLinejoin="round" width="13" height="13" aria-hidden="true">
+                    <polyline points="3 8.5 6.5 12 13 4.5" />
+                  </svg>
+                  {t('transition.remindOn', "I'll remind you tomorrow")}
+                </>
+              ) : reminderState === 'blocked' ? (
+                t('transition.remindBlocked', 'Reminders are blocked in your browser settings')
+              ) : (
+                t('transition.remindMe', 'Remind me tomorrow')
+              )}
+            </button>
+          )}
 
           <p className="nt2-farewell__footer">
             {t('transition.farewellFooter', 'Your streak continues tomorrow.')}

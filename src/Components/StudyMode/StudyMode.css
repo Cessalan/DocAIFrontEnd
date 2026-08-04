@@ -1004,6 +1004,490 @@ body.dark-mode .study-card-close-btn:hover {
   background: var(--node-done);
 }
 
+/* ═══════════════════════════════════════════
+   TODAY'S SESSION CARD — the near goal
+   ═══════════════════════════════════════════ */
+.tsc {
+  position: relative;
+  z-index: 1;
+  max-width: 640px;
+  margin: 0 auto 22px;
+  padding: 18px 20px 16px;
+  border-radius: 18px;
+  background: var(--card-bg, #fff);
+  border: 1px solid var(--border-color, rgba(0, 0, 0, 0.07));
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.05);
+}
+
+body.dark-mode .tsc {
+  background: #1e1e22;
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 3px 16px rgba(0, 0, 0, 0.28);
+}
+
+.tsc__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.tsc__eyebrow {
+  font-size: 11.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--study-coral, #e88d7d);
+}
+
+.tsc__minutes {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #999);
+}
+
+/* Segmented bar — one visible jump per node completed. */
+.tsc__track {
+  display: flex;
+  gap: 5px;
+  margin-bottom: 9px;
+}
+
+.tsc__seg {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--border-color, rgba(0, 0, 0, 0.09));
+  transition: background 0.35s ease;
+}
+
+body.dark-mode .tsc__seg {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Endowed segment: already earned by finishing onboarding. */
+.tsc__seg--endowed {
+  flex: 0 0 34px;
+  background: var(--node-done, #4caf50);
+  opacity: 0.55;
+}
+
+.tsc__seg--done {
+  background: var(--node-done, #4caf50);
+}
+
+.tsc__seg--next {
+  background: var(--study-coral, #e88d7d);
+  opacity: 0.42;
+}
+
+.tsc__status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  color: var(--text-secondary, #999);
+}
+
+.tsc__tuned {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 600;
+  color: var(--node-done, #4caf50);
+}
+
+.tsc__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.tsc__item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 13px;
+  border-radius: 13px;
+  border: 1px solid transparent;
+  background: var(--hover-bg, rgba(0, 0, 0, 0.028));
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+body.dark-mode .tsc__item {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.tsc__item.is-primary:hover {
+  transform: translateX(2px);
+  border-color: rgba(232, 141, 125, 0.45);
+}
+
+.tsc__item.is-primary {
+  background: rgba(232, 141, 125, 0.1);
+  border-color: rgba(232, 141, 125, 0.32);
+}
+
+/* Preview rows — visible, but the path is sequential so they aren't actionable. */
+.tsc__item.is-upcoming {
+  cursor: default;
+  opacity: 0.72;
+}
+
+/* Completed within this session — stays visible so the bar has visible proof. */
+.tsc__item.is-done {
+  cursor: default;
+  opacity: 0.6;
+}
+
+.tsc__item.is-done .tsc__item-label {
+  text-decoration: line-through;
+  text-decoration-color: rgba(120, 120, 120, 0.5);
+}
+
+.tsc__item.is-done .tsc__item-icon { color: var(--node-done, #4caf50); }
+
+.tsc__item.is-upcoming .tsc__item-label {
+  font-weight: 400;
+}
+
+.tsc__item-icon {
+  flex-shrink: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.tsc__item-icon svg {
+  width: 19px;
+  height: 19px;
+}
+
+.tsc__item-text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tsc__item-type {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--study-coral, #e88d7d);
+}
+
+.tsc__item-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary, #333);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body.dark-mode .tsc__item-label {
+  color: #e8e8e8;
+}
+
+.tsc__item-cta {
+  flex-shrink: 0;
+  padding: 6px 15px;
+  border-radius: 999px;
+  background: var(--study-coral, #e88d7d);
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+}
+
+.tsc__item-step {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #aaa);
+  min-width: 18px;
+  text-align: center;
+}
+
+.tsc__toggle {
+  width: 100%;
+  margin-top: 13px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary, #999);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  border-radius: 9px;
+  transition: color 0.18s ease, background 0.18s ease;
+}
+
+.tsc__toggle:hover {
+  color: var(--study-coral, #e88d7d);
+  background: rgba(232, 141, 125, 0.07);
+}
+
+.tsc__chev {
+  transition: transform 0.22s ease;
+}
+
+.tsc__chev.is-open {
+  transform: rotate(180deg);
+}
+
+.tsc__after {
+  margin: 4px 0 0;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-secondary, #aaa);
+}
+
+@media (max-width: 640px) {
+  .tsc {
+    margin-inline: 12px;
+    padding: 15px 15px 13px;
+  }
+  .tsc__item-label { font-size: 13.5px; }
+}
+
+/* ── Padlock replacements (locks read as paywalls) ── */
+.sov3-step__step-num {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #aaa);
+  white-space: nowrap;
+}
+
+.sov3-card__status-icon--upcoming {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--border-color, rgba(0, 0, 0, 0.07));
+  color: var(--text-secondary, #999);
+}
+
+body.dark-mode .sov3-card__status-icon--upcoming {
+  background: rgba(255, 255, 255, 0.09);
+  color: #aaa;
+}
+
+.sov3-card__status-num {
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.sov3-card__upcoming-tag,
+.sov3-milestone__upcoming {
+  flex-shrink: 0;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: var(--border-color, rgba(0, 0, 0, 0.06));
+  color: var(--text-secondary, #999);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+body.dark-mode .sov3-card__upcoming-tag,
+body.dark-mode .sov3-milestone__upcoming {
+  background: rgba(255, 255, 255, 0.08);
+  color: #aaa;
+}
+
+/* ── Diagnostic quiz: low-stakes framing ── */
+.study-quiz-diagnostic-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 10px 13px;
+  border-radius: 12px;
+  background: rgba(232, 141, 125, 0.09);
+  border: 1px solid rgba(232, 141, 125, 0.22);
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary, #777);
+}
+
+body.dark-mode .study-quiz-diagnostic-note {
+  background: rgba(232, 141, 125, 0.13);
+  color: #bbb;
+}
+
+.study-quiz-diagnostic-note__icon {
+  flex-shrink: 0;
+  line-height: 1.35;
+}
+
+/* Diagnostic completion — no score, just confirmation the plan adapted. */
+.study-diagnostic-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  padding: 20px 8px 8px;
+}
+
+.study-diagnostic-done__icon {
+  color: var(--study-coral, #e88d7d);
+}
+
+.study-diagnostic-done__title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary, #333);
+}
+
+body.dark-mode .study-diagnostic-done__title {
+  color: #eee;
+}
+
+.study-diagnostic-done__body {
+  margin: 0 0 8px;
+  max-width: 36ch;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text-secondary, #888);
+}
+
+/* ── Plan preview: first-node readiness line ── */
+.study-modal-firstnode {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 2px 0 12px;
+  font-size: 13px;
+  color: var(--text-secondary, #999);
+  transition: color 0.25s ease;
+}
+
+.study-modal-firstnode.is-ready {
+  color: var(--node-done, #4caf50);
+  font-weight: 600;
+}
+
+.study-modal-firstnode__spinner {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid rgba(120, 120, 120, 0.25);
+  border-top-color: var(--study-coral, #e88d7d);
+  animation: firstNodeSpin 0.75s linear infinite;
+}
+
+@keyframes firstNodeSpin {
+  to { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-modal-firstnode__spinner { animation-duration: 2.4s; }
+}
+
+/* Page not yet streamed in — visible but clearly not reachable. */
+.page-dot.is-pending {
+  background: transparent;
+  border: 1px dashed rgba(100, 100, 100, 0.35);
+  cursor: default;
+  animation: lessonGhostDot 1.6s ease-in-out infinite;
+}
+
+.page-dot.is-pending:hover {
+  background: transparent;
+  transform: none;
+}
+
+body.dark-mode .page-dot.is-pending {
+  border-color: rgba(255, 255, 255, 0.28);
+}
+
+@keyframes lessonGhostDot {
+  0%, 100% { opacity: 0.45; }
+  50%      { opacity: 0.9; }
+}
+
+/* Continue button while the next page is still being written. */
+.study-continue-btn.is-waiting {
+  opacity: 0.72;
+  cursor: default;
+}
+
+/* First-page skeleton — bridges the loading screen and the real lesson so
+   there is never a second blank state. */
+.study-lesson-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 0;
+}
+
+.study-lesson-skeleton__line {
+  height: 13px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(120, 120, 120, 0.11) 25%,
+    rgba(120, 120, 120, 0.2) 37%,
+    rgba(120, 120, 120, 0.11) 63%
+  );
+  background-size: 400% 100%;
+  animation: lessonSkeletonShimmer 1.4s ease-in-out infinite;
+}
+
+.study-lesson-skeleton__line--short {
+  width: 62%;
+}
+
+body.dark-mode .study-lesson-skeleton__line {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.07) 25%,
+    rgba(255, 255, 255, 0.14) 37%,
+    rgba(255, 255, 255, 0.07) 63%
+  );
+  background-size: 400% 100%;
+}
+
+.study-lesson-skeleton__label {
+  margin: 6px 0 0;
+  font-size: 13px;
+  color: var(--text-secondary, #999);
+}
+
+@keyframes lessonSkeletonShimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .study-lesson-skeleton__line,
+  .page-dot.is-pending {
+    animation: none;
+  }
+}
+
 /* -----------------------------------------
    QUIZ CARD STYLES
    ----------------------------------------- */
@@ -2794,6 +3278,87 @@ body.dark-mode .study-lesson-btn-green:hover {
 @keyframes premiumDotPulse {
   0%, 80%, 100% { opacity: 0.3; transform: scale(1); }
   40%           { opacity: 1;   transform: scale(1.3); }
+}
+
+/* Slow-generation copy reads as status, not flavour — slightly more present. */
+.study-loading-premium__msg.is-slow {
+  color: var(--text-primary, #555);
+  font-weight: 500;
+  max-width: 34ch;
+  margin-inline: auto;
+}
+
+.dark-mode .study-loading-premium__msg.is-slow {
+  color: #ccc;
+}
+
+/* Time-based progress bar — always moving, asymptotes below 100%. */
+.study-loading-premium__bar {
+  width: min(240px, 70%);
+  height: 4px;
+  margin: 18px auto 0;
+  border-radius: 999px;
+  background: var(--border-color, rgba(0, 0, 0, 0.08));
+  overflow: hidden;
+}
+
+.dark-mode .study-loading-premium__bar {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.study-loading-premium__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--study-coral, #e88d7d);
+  transition: width 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Escape hatch — only mounts after ESCAPE_AT seconds. */
+.study-loading-premium__escape {
+  margin-top: 26px;
+  animation: premiumMsgFade 0.4s ease-out;
+}
+
+.study-loading-premium__escape-label {
+  display: block;
+  font-size: 12.5px;
+  color: var(--text-secondary, #999);
+  margin-bottom: 10px;
+}
+
+.study-loading-premium__escape-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.study-loading-premium__escape-btn {
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--study-coral, #e88d7d);
+  background: var(--study-coral, #e88d7d);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.18s ease, transform 0.18s ease;
+}
+
+.study-loading-premium__escape-btn:hover {
+  opacity: 0.88;
+  transform: translateY(-1px);
+}
+
+.study-loading-premium__escape-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary, #888);
+  border-color: var(--border-color, rgba(0, 0, 0, 0.14));
+}
+
+.dark-mode .study-loading-premium__escape-btn--ghost {
+  color: #aaa;
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 /* -----------------------------------------
@@ -10758,6 +11323,82 @@ body.dark-mode .celebration-continue-btn:hover {
   margin: 8px 0 0;
   letter-spacing: -0.005em;
 }
+
+/* Named next step — gives the return something concrete to point at. */
+.nt2-farewell__next {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  margin: 14px 0 4px;
+  padding: 12px 18px;
+  border-radius: 13px;
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px solid rgba(232, 141, 125, 0.2);
+}
+
+body.dark-mode .nt2-farewell__next {
+  background: rgba(232, 141, 125, 0.12);
+}
+
+.nt2-farewell__next-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--study-coral, #e88d7d);
+}
+
+.nt2-farewell__next-node {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  text-align: center;
+}
+
+body.dark-mode .nt2-farewell__next-node { color: #eee; }
+
+.nt2-farewell__next-meta {
+  font-size: 12px;
+  color: var(--text-secondary, #999);
+}
+
+/* Reminder opt-in */
+.nt2-farewell__remind {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 12px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  border: 1px dashed rgba(232, 141, 125, 0.5);
+  background: transparent;
+  color: var(--study-coral-dark, #c46a5a);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.nt2-farewell__remind:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.09);
+}
+
+.nt2-farewell__remind.is-on {
+  border-style: solid;
+  border-color: var(--node-done, #4caf50);
+  color: var(--node-done, #4caf50);
+}
+
+.nt2-farewell__remind:disabled {
+  opacity: 0.55;
+  cursor: default;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: var(--text-secondary, #999);
+}
+
+body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896); }
 
 .nt2-farewell__close {
   margin-top: 8px;

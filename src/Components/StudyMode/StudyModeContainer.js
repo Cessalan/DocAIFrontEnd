@@ -39,6 +39,18 @@ import './StudyMode.css';
 // Dev mode flag - only true in development builds
 const isDev = process.env.NODE_ENV === 'development';
 
+/* ──────────────────────────────────────────────────────────
+   Node sizes — MUST match STUDY_QUIZ_QUESTIONS /
+   STUDY_FLASHCARD_CARDS / STUDY_DIAGNOSTIC_QUESTIONS in
+   NQBackEnd2/main.py. They drive `_expectedTotal`, which the
+   cards use for progress bars and "waiting for next item"
+   states while streaming — if they drift from the backend the
+   bar stalls short of full or completes early.
+   ────────────────────────────────────────────────────────── */
+const QUIZ_QUESTIONS = 5;
+const FLASHCARD_CARDS = 5;
+const DIAGNOSTIC_QUESTIONS = 3;
+
 // Coverage-aware readiness pct — mean across all topics, untested = 0.
 // Mirrors the snapshot logic in StudyPlanOverview so the delta we show
 // on the transition screen stays consistent with the readiness card.
@@ -126,6 +138,12 @@ const StudyModeContainer = ({
   const [savedProgress, setSavedProgress] = useState(null); // Flashcard/quiz progress
   const currentMessageIdRef = useRef(null); // Ref to track messageId for saving progress
   const [isLoadingContent, setIsLoadingContent] = useState(false);
+  // True while the active node is the plan's auto-launched first quiz. Drives
+  // the low-stakes calibration framing (short, unscored, "not sure" allowed).
+  const [isDiagnosticNode, setIsDiagnosticNode] = useState(false);
+  // Id of the first non-banner node — kept in a ref so handleStartNode can read
+  // it without taking `nodes` as a dependency (it would rebuild on every save).
+  const firstRealNodeIdRef = useRef(null);
   const [contentError, setContentError] = useState(null); // Error message when content generation fails
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioMessage, setAudioMessage] = useState('');
@@ -236,6 +254,7 @@ const StudyModeContainer = ({
 
   // Calculate progress (exclude section_banner pseudo-nodes)
   const realNodes = nodes.filter(n => n.type !== 'section_banner');
+  firstRealNodeIdRef.current = realNodes[0]?.id || null;
   const completedCount = realNodes.filter(n => n.status === 'done').length;
   const currentStep = completedCount + 1;
   const totalSteps = realNodes.length;
@@ -266,6 +285,17 @@ const StudyModeContainer = ({
     if (!node.messageId && !viewOnly && !requireQuota()) {
       return;
     }
+
+    // ── Diagnostic detection ──────────────────────────────────────────
+    // The first real node of phase 1 auto-launches. When it's a quiz, treat it
+    // as calibration rather than assessment: 3 questions, an "I'm not sure"
+    // option, and no score at the end. Production data showed quiz-first plans
+    // completing node 1 at 67% vs 89% for lesson-first — opening with a graded
+    // 12-question test is the single most avoidable way to lose an anxious user.
+    const isDiagnostic = node.type === 'quiz'
+      && node.id === firstRealNodeIdRef.current
+      && (node.phase || 1) === 1;
+    setIsDiagnosticNode(isDiagnostic);
 
     // Close sidebar when user starts interacting with content
     if (onCloseSidebar) {
@@ -418,17 +448,26 @@ const StudyModeContainer = ({
       // ========================================
       console.log('🔄 Generating new content for node:', node.id);
 
-      // For quiz and flashcard, we stream and show progressively
-      // For lesson, we just wait for the complete content
-      const isStreamable = node.type === 'quiz' || node.type === 'flashcard';
+      // Quiz, flashcard AND lesson all stream progressively.
+      // Lessons used to block on the full payload — measured against production
+      // data that cost ~1 in 5 lesson-first sessions, because a >18s wait meant
+      // staring at a frozen loading screen. The backend now emits lesson pages
+      // as they finish, so page 1 lands in a couple of seconds.
+      const isStreamable = node.type === 'quiz' || node.type === 'flashcard' || node.type === 'lesson';
 
       // Initialize empty content structure for progressive display
       if (isStreamable) {
         setIsLoadingContent(false); // Stop showing loading spinner
         if (node.type === 'quiz') {
-          setCurrentContent({ questions: [], _isStreaming: true, _expectedTotal: 12 });
+          setCurrentContent({
+            questions: [],
+            _isStreaming: true,
+            _expectedTotal: isDiagnostic ? DIAGNOSTIC_QUESTIONS : QUIZ_QUESTIONS
+          });
         } else if (node.type === 'flashcard') {
-          setCurrentContent({ cards: [], _isStreaming: true, _expectedTotal: 12 });
+          setCurrentContent({ cards: [], _isStreaming: true, _expectedTotal: FLASHCARD_CARDS });
+        } else if (node.type === 'lesson') {
+          setCurrentContent({ title: '', pages: [], _isStreaming: true, _expectedTotal: 5 });
         }
       }
 
@@ -464,6 +503,20 @@ const StudyModeContainer = ({
             cards: [...(prev?.cards || []), data.flashcard]
           }));
         }
+
+        // Lesson title lands before any page — gives the card a real heading
+        // instead of an empty bar while the pages are still being written.
+        if (data.status === 'lesson_title' && data.title) {
+          setCurrentContent(prev => ({ ...prev, title: data.title }));
+        }
+
+        // Handle individual lesson page arrival
+        if (data.status === 'lesson_page_ready' && data.page) {
+          setCurrentContent(prev => ({
+            ...prev,
+            pages: [...(prev?.pages || []), data.page]
+          }));
+        }
       };
 
       const result = await generate_study_item_stream(
@@ -473,7 +526,8 @@ const StudyModeContainer = ({
         node.tags || [],
         askedHashes,
         language,
-        handleStreamProgress
+        handleStreamProgress,
+        { isDiagnostic }
       );
 
       // Guard against null result (e.g. stream closed without sending 'complete')
@@ -485,7 +539,8 @@ const StudyModeContainer = ({
           if (!prev) return prev;
           const { _isStreaming, _expectedTotal, ...rest } = prev;
           // Check if any usable content arrived
-          const hasContent = (rest.questions?.length > 0) || (rest.cards?.length > 0) || rest.html;
+          const hasContent = (rest.questions?.length > 0) || (rest.cards?.length > 0)
+            || (rest.pages?.length > 0) || rest.html;
           if (!hasContent) {
             // Nothing usable arrived — show error state so user can retry
             setContentError(t('study.generationFailed', 'Something went wrong while generating your content. Please try again.'));
@@ -1560,6 +1615,7 @@ const StudyModeContainer = ({
           unitSubtitle={studyState?.path?.unitSubtitle || ''}
         />
         <NodeTransition
+          chatId={chatId}
           node={activeNode}
           content={currentContent}
           quizProgress={latestQuizProgressRef.current}
@@ -1706,7 +1762,15 @@ const StudyModeContainer = ({
         <div className="study-focused-layout">
           <div className="study-content-centered">
             {isLoadingContent ? (
-              <StudyLoadingScreen nodeType={activeNode?.type || 'lesson'} />
+              <StudyLoadingScreen
+                nodeType={activeNode?.type || 'lesson'}
+                onRetry={activeNode ? () => handleStartNode(activeNode) : undefined}
+                onBack={() => {
+                  setIsLoadingContent(false);
+                  setContentError(null);
+                  setView('overview');
+                }}
+              />
             ) : currentContent ? (
               <StudyStepCard
                 node={activeNode}
@@ -1714,6 +1778,7 @@ const StudyModeContainer = ({
                 savedProgress={savedProgress}
                 isLoading={false}
                 isReviewMode={isReviewingNode}
+                isDiagnostic={isDiagnosticNode}
                 viewOnly={viewOnly}
                 isGeneratingAudio={isGeneratingAudio}
                 audioGeneratingMessage={audioMessage}

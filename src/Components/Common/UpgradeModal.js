@@ -25,7 +25,7 @@ import './UpgradeModal.css';
  * @param {boolean} [isPro]      - already subscribed: show manage/cancel instead of the pitch
  */
 
-const UpgradeModal = ({ isOpen, onClose, limit = 30, remaining = Infinity, msUntilReset = 0, user = {}, studyGoal = null, examDate = null, isPro = false }) => {
+const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUntilReset = 0, user = {}, studyGoal = null, examDate = null, isPro = false }) => {
   const { t } = useTranslation();
   const [portalLoading, setPortalLoading] = useState(false);
 

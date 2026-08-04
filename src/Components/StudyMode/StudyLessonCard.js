@@ -23,7 +23,20 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
   // Handle both new multi-page format and legacy format
   const isMultiPage = content?.pages && Array.isArray(content.pages);
   const pages = isMultiPage ? content.pages : null;
-  const totalPages = pages ? pages.length : 1;
+
+  // ── Streaming support ────────────────────────────────────────────────
+  // Lessons now arrive page-by-page. `pages` grows while the student is
+  // already reading page 1, so anything derived from its length has to
+  // tolerate growth mid-render:
+  //   - progress bar uses the EXPECTED total so it doesn't rescale on
+  //     every arrival (which reads as the goal moving away from you)
+  //   - "Finish" must never appear before the last page has landed
+  const isStreaming = !!content?._isStreaming;
+  const receivedPages = pages ? pages.length : 0;
+  const expectedTotal = content?._expectedTotal || 0;
+  const totalPages = pages
+    ? (isStreaming ? Math.max(receivedPages, expectedTotal) : receivedPages)
+    : 1;
 
   // Legacy format fallback
   const { title, body, keyPoints = [] } = content || {};
@@ -71,12 +84,16 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
     return text.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
   };
 
-  // Handle next page or show celebration
+  // Handle next page or show celebration.
+  // Bounded by pages RECEIVED, not expected: while streaming, advancing past
+  // the last arrived page would render an undefined page.
   const handleNext = () => {
-    if (isMultiPage && currentPage < totalPages - 1) {
+    if (isMultiPage && currentPage < receivedPages - 1) {
       // Play correct sound for "Got it!" button
       playCorrectSound();
       setCurrentPage(prev => prev + 1);
+    } else if (isMultiPage && isStreaming) {
+      // Last received page but more still coming — no-op (button is disabled).
     } else {
       // Show celebration instead of immediately continuing
       setShowCelebration(true);
@@ -100,8 +117,47 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
   // Render multi-page lesson
   if (isMultiPage && pages) {
     const page = pages[currentPage];
-    const isLastPage = currentPage === totalPages - 1;
+    // "Last page" only once streaming has finished — otherwise the Finish
+    // button would appear on page 1 of a 1-page-so-far lesson.
+    const isLastPage = !isStreaming && currentPage === receivedPages - 1;
     const isFirstPage = currentPage === 0;
+    const waitingForNextPage = isStreaming && currentPage >= receivedPages - 1;
+
+    // Nothing has landed yet: the stream is open but page 1 is still being
+    // written. Show the shell (title, progress) so the transition from the
+    // loading screen is continuous rather than a second blank state.
+    if (!page) {
+      return (
+        <div className="study-step-card study-lesson-multipage">
+          <div className="study-card-header">
+            <div className="study-card-icon lesson">
+              <LessonIcon />
+            </div>
+            <h2 className="study-card-title">
+              {content.title || t('study.lessonTitle', 'Lesson')}
+            </h2>
+            {onExit && (
+              <button className="study-card-close-btn" onClick={onExit} title={t('study.close', 'Close')}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="6" x2="6" y2="18" />
+                  <line x1="6" y1="6" x2="18" y2="18" />
+                </svg>
+              </button>
+            )}
+          </div>
+          <div className="study-card-content study-lesson-page-content">
+            <div className="study-lesson-skeleton" aria-live="polite">
+              <span className="study-lesson-skeleton__line" />
+              <span className="study-lesson-skeleton__line" />
+              <span className="study-lesson-skeleton__line study-lesson-skeleton__line--short" />
+              <p className="study-lesson-skeleton__label">
+                {t('study.lessonWritingFirstPage', 'Writing your first page…')}
+              </p>
+            </div>
+          </div>
+        </div>
+      );
+    }
 
     return (
       <div className="study-step-card study-lesson-multipage">
@@ -173,13 +229,26 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
                 </svg>
               </button>
 
-              {/* Next/Continue button */}
-              <button className="study-continue-btn study-lesson-btn-green" onClick={handleNext}>
-                {isLastPage ? t('study.finishLesson', 'Finish') : t('study.gotItBtn', 'Got it!')}
-                <ArrowRightIcon />
+              {/* Next/Continue button.
+                  While the next page is still streaming the button stays put
+                  but goes into a waiting state — the student reads on, and it
+                  re-enables the moment the page arrives. */}
+              <button
+                className={`study-continue-btn study-lesson-btn-green${waitingForNextPage ? ' is-waiting' : ''}`}
+                onClick={handleNext}
+                disabled={waitingForNextPage}
+              >
+                {waitingForNextPage
+                  ? t('study.lessonWritingNextPage', 'Writing next page…')
+                  : isLastPage
+                    ? t('study.finishLesson', 'Finish')
+                    : t('study.gotItBtn', 'Got it!')}
+                {!waitingForNextPage && <ArrowRightIcon />}
               </button>
 
-              {/* Page indicator */}
+              {/* Page indicator — received pages are navigable; pages still
+                  being written show as ghosts so the lesson's real length is
+                  visible from the start. */}
               <div className="study-lesson-page-dots">
                 {pages.map((_, idx) => (
                   <span
@@ -188,6 +257,10 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
                     onClick={() => setCurrentPage(idx)}
                   />
                 ))}
+                {isStreaming && Array.from(
+                  { length: Math.max(0, expectedTotal - receivedPages) },
+                  (_, idx) => <span key={`ghost-${idx}`} className="page-dot is-pending" />
+                )}
               </div>
             </div>
           </>

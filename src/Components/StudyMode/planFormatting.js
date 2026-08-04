@@ -52,3 +52,25 @@ export const getStepTopicLabel = (label) => {
   }
   return clean.trim() || label;
 };
+
+/**
+ * Rough minutes a node takes. Used for the "~14 min" session estimate and the
+ * per-section time on the plan page. Students schedule around minutes, so a
+ * plan that never states its cost reads as open-ended — and open-ended is what
+ * people postpone.
+ */
+const NODE_MINUTES = {
+  lesson: 5,
+  quiz: 4,
+  flashcard: 3,
+  audio: 6,
+  mindmap: 5,
+  review: 2,
+  exam: 15,
+};
+
+export const getNodeEstimate = (type) => NODE_MINUTES[type] || 4;
+
+/** Summed estimate for a list of nodes, in whole minutes. */
+export const estimateMinutes = (nodes = []) =>
+  nodes.reduce((sum, n) => sum + getNodeEstimate(n?.type), 0);

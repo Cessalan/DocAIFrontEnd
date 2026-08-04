@@ -5,7 +5,12 @@ import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
-import { plan_study_path, start_study_journey, clear_in_flight_study_journey } from '../../Services/FastAPICalls';
+import {
+  plan_study_path,
+  start_study_journey,
+  clear_in_flight_study_journey,
+  get_prefetched_node_content
+} from '../../Services/FastAPICalls';
 import { createStudySession } from '../../Services/StudySessionService';
 import { formatNodeType, getStepTopicLabel } from './planFormatting';
 import { getStudyNodeIcon } from './planNodeIcon';
@@ -219,6 +224,7 @@ const StartStudyModal = ({
         {phase === 'plan_preview' && pathResult && (
           <PlanPreviewPane
             pathResult={pathResult}
+            chatId={chatId}
             onStart={handleStartFromPreview}
             t={t}
           />
@@ -360,7 +366,7 @@ const NODE_TYPE_META = {
   exam:      { icon: '📝', actionEn: 'practice exam on', actionFr: 'un examen blanc sur' }
 };
 
-const PlanPreviewPane = ({ pathResult, onStart, t }) => {
+const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
   const realNodes = (pathResult.nodes || []).filter(n => n.type !== 'section_banner');
   const firstNode = realNodes[0];
   const meta = (firstNode && NODE_TYPE_META[firstNode.type]) || NODE_TYPE_META.lesson;
@@ -369,6 +375,36 @@ const PlanPreviewPane = ({ pathResult, onStart, t }) => {
 
   const totalSteps = realNodes.length;
   const minutes = pathResult.estimated_time_minutes;
+
+  // ── First-node readiness ──────────────────────────────────────────────
+  // /study/start prefetches node 1 while the student reads this preview. We
+  // surface that instead of hiding it: "ready" turns the wait they already
+  // spent into a reason to tap, and a still-preparing state sets an honest
+  // expectation rather than dropping them onto a loading screen unannounced.
+  // The button is never blocked — a failed prefetch must not trap the user.
+  const [firstNodeReady, setFirstNodeReady] = useState(false);
+
+  useEffect(() => {
+    if (!chatId || !firstNode?.id) return undefined;
+    const pending = get_prefetched_node_content(chatId, firstNode.id);
+    if (!pending) return undefined;
+
+    let cancelled = false;
+    // Observe only — do NOT consume. StudyModeContainer still needs this entry.
+    Promise.resolve(pending)
+      .then(result => {
+        if (!cancelled && result?.content) setFirstNodeReady(true);
+      })
+      .catch(() => { /* fall back to the normal loading path */ });
+
+    return () => { cancelled = true; };
+  }, [chatId, firstNode?.id]);
+
+  const readyLabel = firstNode?.type === 'quiz'
+    ? t('study.firstQuizReady', 'Your first quiz is ready')
+    : firstNode?.type === 'flashcard'
+      ? t('study.firstCardsReady', 'Your first cards are ready')
+      : t('study.firstLessonReady', 'Your first lesson is ready');
 
   return (
     <div className="study-modal-content study-modal-plan-preview">
@@ -433,6 +469,24 @@ const PlanPreviewPane = ({ pathResult, onStart, t }) => {
           })}
         </p>
       ) : null}
+
+      {/* Readiness line — anticipation while waiting, payoff when ready. */}
+      <div className={`study-modal-firstnode${firstNodeReady ? ' is-ready' : ''}`} aria-live="polite">
+        {firstNodeReady ? (
+          <>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"
+                 strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+            <span>{readyLabel}</span>
+          </>
+        ) : (
+          <>
+            <span className="study-modal-firstnode__spinner" aria-hidden="true" />
+            <span>{t('study.firstNodePreparing', 'Getting your first step ready…')}</span>
+          </>
+        )}
+      </div>
 
       <button className="study-modal-start" onClick={onStart}>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

@@ -15,6 +15,8 @@ import StudyExamCard from './StudyExamCard';
  * @param {Object} savedProgress - Saved progress for resuming (flashcard/quiz)
  * @param {boolean} isLoading - Whether content is being generated
  * @param {boolean} isReviewMode - Whether this is a review of completed content (gives only 5 XP)
+ * @param {boolean} isDiagnostic - Quiz only: the plan's auto-launched first quiz. Renders as
+ *                                 low-stakes calibration (short, unscored, "not sure" allowed).
  * @param {boolean} viewOnly - Dev mode: view without tracking progress
  * @param {boolean} isGeneratingAudio - Whether audio is being generated
  * @param {string} audioGeneratingMessage - Message during audio generation
@@ -33,6 +35,7 @@ const StudyStepCard = ({
   savedProgress = null,
   isLoading = false,
   isReviewMode = false,
+  isDiagnostic = false,
   viewOnly = false,
   isGeneratingAudio = false,
   audioGeneratingMessage = '',
@@ -94,6 +97,7 @@ const StudyStepCard = ({
           content={content}
           savedProgress={savedProgress}
           isReviewMode={isReviewMode}
+          isDiagnostic={isDiagnostic}
           viewOnly={viewOnly}
           onAnswer={onAnswer}
           onContinue={onContinue}

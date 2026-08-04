@@ -19,7 +19,11 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
  * @param {Function} onContinue - Callback when user completes all questions
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit }) => {
+/* Below this set size a mid-set milestone celebration interrupts more than it
+   rewards — the completion celebration is only a couple of items away. */
+const QUIZ_MILESTONE_MIN_SET = 8;
+
+const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit }) => {
   const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -373,19 +377,22 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual questions received
   // This prevents milestone from triggering too early during streaming (e.g., 1/1 = 100% vs 1/12 = 8%)
-  const milestoneTotal = expectedTotal || 12;
-  const minQuestionsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total (e.g., 4 out of 12)
+  const milestoneTotal = expectedTotal || QUIZ_MILESTONE_MIN_SET;
+  const minQuestionsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total
   const isPerfect = correctCount === totalQuestions && Object.values(questionStatuses).every(s => s === 'correct');
+  // Sets are 5 questions now. A 30% milestone would fire after 2, with the
+  // completion celebration 3 questions later — two interruptions inside one
+  // short node. Mid-set celebration only earns its place on longer sets.
+  const milestoneWorthShowing = milestoneTotal >= QUIZ_MILESTONE_MIN_SET;
 
-  // Trigger milestone celebration at 30%
-  // Only trigger when we've answered at least 4 questions (30% of 12) to ensure meaningful progress
+  // Trigger milestone celebration at 30% (long sets only)
   useEffect(() => {
-    if (correctCount >= minQuestionsForMilestone && !hasShownMilestone && !isReviewRound) {
+    if (milestoneWorthShowing && correctCount >= minQuestionsForMilestone && !hasShownMilestone && !isReviewRound) {
       setShowMilestoneCelebration(true);
       setHasShownMilestone(true);
       playMilestoneSound();
     }
-  }, [correctCount, minQuestionsForMilestone, hasShownMilestone, isReviewRound]);
+  }, [milestoneWorthShowing, correctCount, minQuestionsForMilestone, hasShownMilestone, isReviewRound]);
 
   // Trigger completion celebration when all correct
   useEffect(() => {
@@ -865,6 +872,11 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
   const needsReviewRound = () => {
     // If more questions are coming, don't start review yet
     if (hasMoreQuestions || moreQuestionsExpected) return false;
+    // The diagnostic never sends the student back through misses. Its job is to
+    // calibrate the plan — the plan itself is what addresses the gaps. Making
+    // someone re-answer questions they just missed, on their very first
+    // interaction, is exactly the experience we're removing.
+    if (isDiagnostic) return false;
     const incorrectCount = Object.values(questionStatuses).filter(s => s === 'incorrect').length;
     return incorrectCount > 0;
   };
@@ -875,7 +887,11 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         <div className="study-card-icon quiz">
           <QuizIcon />
         </div>
-        <h2 className="study-card-title">{t('study.quickCheck', 'Quick Check')}</h2>
+        <h2 className="study-card-title">
+          {isDiagnostic
+            ? t('study.calibrationTitle', 'Quick calibration')
+            : t('study.quickCheck', 'Quick Check')}
+        </h2>
         {onExit && (
           <button className="study-card-close-btn" onClick={onExit} title={t('study.close', 'Close')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -908,14 +924,39 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
         </div>
       ) : !viewOnly && showCompletionCelebration ? (
         <div className="study-card-content">
-          <StudyCelebration
-            type="complete"
-            /* xpEarned={xpEarned} */
-            timeSeconds={getTimeTaken()}
-            isPerfect={isPerfect}
-            inline={true}
-            onContinue={handleCompletionContinue}
-          />
+          {isDiagnostic ? (
+            /* Diagnostic outcome is a TUNED PLAN, not a score. Showing "1/3"
+               to someone who just met the product tells them they're bad at
+               this; showing "your plan is tuned" tells them it worked. */
+            <div className="study-diagnostic-done">
+              <div className="study-diagnostic-done__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                     strokeLinecap="round" strokeLinejoin="round" width="34" height="34">
+                  <path d="M12 2l2.4 7.4H22l-6 4.5 2.3 7.1-6.3-4.6L5.7 21 8 13.9l-6-4.5h7.6z" />
+                </svg>
+              </div>
+              <h3 className="study-diagnostic-done__title">
+                {t('study.diagnosticDoneTitle', 'Plan tuned to you')}
+              </h3>
+              <p className="study-diagnostic-done__body">
+                {t('study.diagnosticDoneBody',
+                  "That's all I needed. Your plan now starts where it'll help you most.")}
+              </p>
+              <button className="study-continue-btn" onClick={handleCompletionContinue}>
+                {t('study.diagnosticDoneCta', 'See my plan')}
+                <ArrowRightIcon />
+              </button>
+            </div>
+          ) : (
+            <StudyCelebration
+              type="complete"
+              /* xpEarned={xpEarned} */
+              timeSeconds={getTimeTaken()}
+              isPerfect={isPerfect}
+              inline={true}
+              onContinue={handleCompletionContinue}
+            />
+          )}
         </div>
       ) : !viewOnly && showReviewTransition ? (
         <div className="study-card-content">
@@ -1006,6 +1047,22 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
           )}
 
           <div className="study-card-content" data-selectable="true">
+            {/* Diagnostic framing — states the contract before the first
+                question: short, purposeful, and NOT graded. The opening quiz
+                is where the most users are lost; naming the stakes removes
+                the reason to bail. */}
+            {isDiagnostic && (
+              <div className="study-quiz-diagnostic-note">
+                <span className="study-quiz-diagnostic-note__icon" aria-hidden="true">✨</span>
+                <span>
+                  {t('study.diagnosticIntro', {
+                    count: expectedTotal || 3,
+                    defaultValue: "{{count}} quick questions so I can tune your plan — this isn't graded."
+                  })}
+                </span>
+              </div>
+            )}
+
             {/* Question text */}
             <p className="study-quiz-question">{question || 'Loading question...'}</p>
 
@@ -1041,11 +1098,15 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, viewOnly 
               ))}
             </div>
 
-            {/* "I don't know" button - below options, hidden after feedback */}
+            {/* "I don't know" button - below options, hidden after feedback.
+                On the diagnostic it's phrased forward-looking ("Not sure yet")
+                — same signal, none of the finality. */}
             {!showFeedback && !viewOnly && (
               <button className="study-quiz-idk-btn" onClick={handleDontKnow}>
                 <HelpCircleIcon />
-                {t('study.dontKnow', "I don't know")}
+                {isDiagnostic
+                  ? t('study.notSureYet', 'Not sure yet')
+                  : t('study.dontKnow', "I don't know")}
               </button>
             )}
 

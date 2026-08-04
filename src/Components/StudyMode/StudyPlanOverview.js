@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { formatNodeType, getStepTopicLabel } from './planFormatting';
+import { formatNodeType, getStepTopicLabel, estimateMinutes } from './planFormatting';
 import { getStudyNodeIcon } from './planNodeIcon';
 import WarmUrgencyDashboard from './WarmUrgencyDashboard';
+import TodaySessionCard from './TodaySessionCard';
 import './StudyMode.css';
 
 /* ──────────────────────────────────────────────────────────
@@ -117,14 +118,6 @@ const buildSections = (nodes, topics, insightsData) => {
   return { sections, renderOrder };
 };
 
-
-/* ──────────────────────────────────────────────────────────
-   Helper: estimated minutes per node type
-   ────────────────────────────────────────────────────────── */
-const getNodeEstimate = (type) => {
-  const map = { lesson: 5, quiz: 4, flashcard: 3, audio: 6, mindmap: 5, review: 2, exam: 15 };
-  return map[type] || 4;
-};
 
 /* ──────────────────────────────────────────────────────────
    Mini-test question-count assumption.
@@ -434,6 +427,13 @@ const StudyPlanOverview = ({
     [nodes, topics, insightsData]
   );
 
+  // ── Full-plan disclosure ──
+  // The page leads with TodaySessionCard (the next few nodes). The complete
+  // 15–20 row list is opt-in: it's reference material, not the daily surface.
+  // Once a student has real momentum the wall stops reading as a wall, so it
+  // auto-expands after a third of the plan is behind them.
+  const [showFullPlan, setShowFullPlan] = useState(false);
+
   // ── Expand/collapse state for completed sections ──
   const [expandedSections, setExpandedSections] = useState(new Set());
   const toggleSection = (id) => {
@@ -443,6 +443,14 @@ const StudyPlanOverview = ({
       return next;
     });
   };
+
+  // Momentum unlocks the full plan: past a third done, the list is a map of
+  // what they've achieved rather than a pile of what's left.
+  useEffect(() => {
+    if (totalNodes > 0 && completedCount / totalNodes >= 0.34) {
+      setShowFullPlan(true);
+    }
+  }, [completedCount, totalNodes]);
 
   // ── Auto-scroll to active section on mount ──
   useEffect(() => {
@@ -499,8 +507,17 @@ const StudyPlanOverview = ({
     return hasAny ? groups : null;
   }, [insightsData]);
 
+  // Global 1-based position of each real node, for the "Step N" chip that
+  // replaced the padlocks.
+  const stepIndexById = useMemo(() => {
+    const map = new Map();
+    realNodes.forEach((n, i) => map.set(n.id, i));
+    return map;
+  }, [realNodes]);
+
   // ── Render a single step row ──
   const renderStep = (step) => {
+    const stepNumber = stepIndexById.get(step.id);
     const isActive = step.status === 'active';
     const isDone = step.status === 'done';
     const isLocked = step.status === 'locked';
@@ -520,14 +537,12 @@ const StudyPlanOverview = ({
         ].filter(Boolean).join(' ')}
         onClick={canClick ? (e) => { e.stopPropagation(); onNodeSelect(step); } : undefined}
       >
+        {/* Not-yet-reached steps keep their type icon, dimmed. A padlock here
+            reads as "pay to unlock" in a freemium app — it made a fully-free
+            plan look ~80% paywalled. Sequence is communicated by the step
+            number in the action slot instead. */}
         <div className="sov3-step__icon">
-          {isLocked && !isDev ? (
-            <svg viewBox="0 0 24 24" fill="currentColor">
-              <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
-            </svg>
-          ) : (
-            getStudyNodeIcon(step.type, step.status)
-          )}
+          {getStudyNodeIcon(step.type, step.status)}
         </div>
         <div className="sov3-step__content">
           <span className="sov3-step__format">
@@ -554,10 +569,8 @@ const StudyPlanOverview = ({
             </button>
           )}
           {isLocked && !isDev && (
-            <span className="sov3-step__lock-badge">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="12" height="12">
-                <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
-              </svg>
+            <span className="sov3-step__step-num">
+              {t('study.stepN', 'Step {{n}}', { n: (stepNumber ?? 0) + 1 })}
             </span>
           )}
         </div>
@@ -600,10 +613,8 @@ const StudyPlanOverview = ({
             <div className="sov3-card__status-icon sov3-card__status-icon--active" />
           )}
           {isLocked && !isDev && (
-            <div className="sov3-card__status-icon sov3-card__status-icon--locked">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-                <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
-              </svg>
+            <div className="sov3-card__status-icon sov3-card__status-icon--upcoming">
+              <span className="sov3-card__status-num">{section.sectionNumber}</span>
             </div>
           )}
 
@@ -629,11 +640,19 @@ const StudyPlanOverview = ({
             {isActive && (
               <p className="sov3-card__summary">
                 {doneSteps} {t('study.of', 'of')} {section.steps.length} {t('study.done', 'done')}
+                {' · '}
+                {t('study.aboutMinutes', '~{{min}} min', {
+                  min: estimateMinutes(section.steps.filter(s => s.status !== 'done')),
+                })}
               </p>
             )}
             {isLocked && (
               <p className="sov3-card__summary">
                 {section.steps.length} {t('study.nodes', 'nodes')}
+                {' · '}
+                {t('study.aboutMinutes', '~{{min}} min', {
+                  min: estimateMinutes(section.steps),
+                })}
               </p>
             )}
           </div>
@@ -656,10 +675,8 @@ const StudyPlanOverview = ({
           )}
 
           {isLocked && !isDev && (
-            <div className="sov3-card__lock">
-              <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
-              </svg>
+            <div className="sov3-card__upcoming-tag">
+              {t('study.upcoming', 'Upcoming')}
             </div>
           )}
         </div>
@@ -772,9 +789,9 @@ const StudyPlanOverview = ({
             </button>
           )}
           {isLocked && !isDev && (
-            <svg className="sov3-milestone__lock" viewBox="0 0 24 24" fill="currentColor" width="14" height="14">
-              <path d="M18 10h-1V7a5 5 0 00-10 0v3H6a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2v-8a2 2 0 00-2-2zM9 7a3 3 0 016 0v3H9V7zm3 9a2 2 0 110-4 2 2 0 010 4z"/>
-            </svg>
+            <span className="sov3-milestone__upcoming">
+              {t('study.upcoming', 'Upcoming')}
+            </span>
           )}
         </div>
 
@@ -995,21 +1012,39 @@ const StudyPlanOverview = ({
         })()}
 
 
-      {/* ── Section Cards + Milestones (interleaved) ── */}
-      <div className="sov3-sections">
-        {renderOrder.map(item =>
-          item.type === 'section'
-            ? renderSectionCard(item.data)
-            : renderMilestone(item.data)
-        )}
+      {/* ── Today's session — the near, finishable goal ── */}
+      {totalNodes > 0 && (
+        <TodaySessionCard
+          nodes={realNodes}
+          onNodeSelect={onNodeSelect}
+          planTuned={completedCount === 0}
+          expanded={showFullPlan}
+          onToggleFull={() => setShowFullPlan(v => !v)}
+        />
+      )}
 
-        {/* Empty state */}
-        {sections.length === 0 && totalNodes === 0 && (
+      {/* ── Section Cards + Milestones (interleaved) ──
+          Reference view. Hidden until the student asks for it (or earns it by
+          getting a third of the way in) so the first impression is a short
+          session, not a 20-row backlog. */}
+      {showFullPlan && (
+        <div className="sov3-sections">
+          {renderOrder.map(item =>
+            item.type === 'section'
+              ? renderSectionCard(item.data)
+              : renderMilestone(item.data)
+          )}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {sections.length === 0 && totalNodes === 0 && (
+        <div className="sov3-sections">
           <div className="sov3-empty">
             <p>{t('study.noNodesYet', 'No study plan generated yet.')}</p>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* ── Ambient Insights Sidebar (desktop only) ── */}
       {insightsGroups && (

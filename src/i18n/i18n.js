@@ -1203,6 +1203,40 @@ const resources = {
 
         // StudyQuizCard
         quickCheck: "Quick Check",
+        // Diagnostic (auto-launched first quiz) — calibration, not assessment
+        calibrationTitle: "Quick calibration",
+        diagnosticIntro_one: "{{count}} quick question so I can tune your plan — this isn't graded.",
+        diagnosticIntro_other: "{{count}} quick questions so I can tune your plan — this isn't graded.",
+        notSureYet: "Not sure yet",
+        diagnosticDoneTitle: "Plan tuned to you",
+        diagnosticDoneBody: "That's all I needed. Your plan now starts where it'll help you most.",
+        diagnosticDoneCta: "See my plan",
+        // Elapsed-aware loading screen
+        loadingTakingLonger: "This one's a little longer than usual — hang tight.",
+        loadingStillWorking: "Still going. Longer documents take a bit more thinking — your content is on its way.",
+        loadingProgressAria: "Generating your content",
+        loadingTakingTooLong: "Taking too long?",
+        loadingRetry: "Try again",
+        loadingBackToPlan: "Back to my plan",
+        // Streaming lessons
+        lessonWritingFirstPage: "Writing your first page…",
+        lessonWritingNextPage: "Writing next page…",
+        // Plan preview: first-node readiness
+        firstLessonReady: "Your first lesson is ready",
+        firstQuizReady: "Your first quiz is ready",
+        firstCardsReady: "Your first cards are ready",
+        firstNodePreparing: "Getting your first step ready…",
+        // Today's session card
+        todaySession: "Today's session",
+        aboutMinutes: "~{{min}} min",
+        planTuned: "Plan tuned",
+        nodesOfSession: "{{done}} of {{total}} done",
+        seeFullPlan: "{{count}}-step plan · see all",
+        hideFullPlan: "Hide full plan",
+        afterThisSession_one: "{{count}} more step after this",
+        afterThisSession_other: "{{count}} more steps after this",
+        stepN: "Step {{n}}",
+        upcoming: "Upcoming",
         correct: "Correct!",
         incorrect: "Incorrect",
         correctAnswer: "Correct Answer:",
@@ -1596,6 +1630,10 @@ const resources = {
         farewellBody1: "Your brain is now deciding what stays and what fades.",
         farewellBody2: "Tomorrow's 4-minute recall will reinforce the concepts that matter most.",
         farewellFooter: "Your streak continues tomorrow.",
+        farewellNextLabel: "Next time",
+        remindMe: "Remind me tomorrow",
+        remindOn: "I'll remind you tomorrow",
+        remindBlocked: "Reminders are blocked in your browser settings",
         farewellClose: "Close"
       },
 
@@ -2840,6 +2878,40 @@ const resources = {
 
         // StudyQuizCard
         quickCheck: "Vérification rapide",
+        // Diagnostic (premier quiz lancé automatiquement) — calibrage, pas évaluation
+        calibrationTitle: "Calibrage rapide",
+        diagnosticIntro_one: "{{count}} question rapide pour ajuster ton plan — ce n'est pas noté.",
+        diagnosticIntro_other: "{{count}} questions rapides pour ajuster ton plan — ce n'est pas noté.",
+        notSureYet: "Pas encore sûr",
+        diagnosticDoneTitle: "Plan ajusté pour toi",
+        diagnosticDoneBody: "C'est tout ce qu'il me fallait. Ton plan commence maintenant là où il t'aidera le plus.",
+        diagnosticDoneCta: "Voir mon plan",
+        // Écran de chargement sensible au temps écoulé
+        loadingTakingLonger: "Celui-ci est un peu plus long que d'habitude — encore un instant.",
+        loadingStillWorking: "Toujours en cours. Les documents plus longs demandent plus de réflexion — ton contenu arrive.",
+        loadingProgressAria: "Génération de ton contenu",
+        loadingTakingTooLong: "Ça prend trop de temps ?",
+        loadingRetry: "Réessayer",
+        loadingBackToPlan: "Retour à mon plan",
+        // Leçons en continu
+        lessonWritingFirstPage: "Rédaction de ta première page…",
+        lessonWritingNextPage: "Rédaction de la page suivante…",
+        // Aperçu du plan : première étape prête
+        firstLessonReady: "Ta première leçon est prête",
+        firstQuizReady: "Ton premier quiz est prêt",
+        firstCardsReady: "Tes premières cartes sont prêtes",
+        firstNodePreparing: "Préparation de ta première étape…",
+        // Carte « séance du jour »
+        todaySession: "Séance du jour",
+        aboutMinutes: "~{{min}} min",
+        planTuned: "Plan ajusté",
+        nodesOfSession: "{{done}} sur {{total}} terminées",
+        seeFullPlan: "Plan en {{count}} étapes · tout voir",
+        hideFullPlan: "Masquer le plan complet",
+        afterThisSession_one: "{{count}} étape de plus après celle-ci",
+        afterThisSession_other: "{{count}} étapes de plus après celle-ci",
+        stepN: "Étape {{n}}",
+        upcoming: "À venir",
         correct: "Correct!",
         incorrect: "Incorrect",
         correctAnswer: "Bonne réponse:",
@@ -3233,6 +3305,10 @@ const resources = {
         farewellBody1: "Ton cerveau décide en ce moment ce qui reste et ce qui s'efface.",
         farewellBody2: "Le rappel de 4 minutes de demain renforcera les concepts qui comptent le plus.",
         farewellFooter: "Ta série continue demain.",
+        farewellNextLabel: "La prochaine fois",
+        remindMe: "Rappelle-le-moi demain",
+        remindOn: "Je te le rappellerai demain",
+        remindBlocked: "Les notifications sont bloquées dans les réglages de ton navigateur",
         farewellClose: "Fermer"
       },
 

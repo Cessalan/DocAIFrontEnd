@@ -1426,15 +1426,20 @@ export const generate_study_item_stream = async (
   context_tags = [],
   asked_hashes = [],
   language = 'en',
-  onProgress = null
+  onProgress = null,
+  options = {}
 ) => {
+  // `options.isDiagnostic` marks the auto-launched first node of a plan. The
+  // backend shortens the quiz to 3 calibration questions; the UI suppresses
+  // scoring. See StudyItemRequest.is_diagnostic.
   const requestBody = JSON.stringify({
     chat_id: chat_id,
     node_type: node_type,
     node_label: node_label,
     context_tags: context_tags,
     asked_hashes: asked_hashes,
-    language: language
+    language: language,
+    is_diagnostic: !!options.isDiagnostic
   });
 
   // Abort the stream if no data arrives for 90 seconds.
