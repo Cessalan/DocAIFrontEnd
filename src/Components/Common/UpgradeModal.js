@@ -25,7 +25,11 @@ import './UpgradeModal.css';
  * @param {boolean} [isPro]      - already subscribed: show manage/cancel instead of the pitch
  */
 
-const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUntilReset = 0, user = {}, studyGoal = null, examDate = null, isPro = false }) => {
+const UpgradeModal = ({
+  isOpen, onClose, limit = 50, remaining = Infinity, msUntilReset = 0,
+  user = {}, studyGoal = null, examDate = null, isPro = false,
+  reason = null, planLimit = 3, plansRemaining = Infinity, planMsUntilReset = 0,
+}) => {
   const { t } = useTranslation();
   const [portalLoading, setPortalLoading] = useState(false);
 
@@ -90,10 +94,14 @@ const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUnt
     );
   }
 
-  // "Blocked" = actually out of questions — only then show the wait/countdown.
-  // Opening the modal proactively (badge tap with budget left) shows the plain
-  // marketing pitch instead.
-  const blocked = remaining <= 0;
+  // Which meter opened this? The plan gate and the question throttle are
+  // different promises, so they get different copy — telling someone who
+  // wanted a new subject that they're "out of questions" reads as a bug.
+  const isPlanGate = reason === 'plans';
+
+  // "Blocked" = actually out of budget on whichever meter fired. Opening the
+  // modal proactively (badge tap with budget left) shows the marketing pitch.
+  const blocked = isPlanGate ? plansRemaining <= 0 : remaining <= 0;
 
   // ── Personalization from onboarding (all fallback-safe) ──────────────────
   // Goal → headline. Exam date → urgency woven into the subtext.
@@ -111,7 +119,13 @@ const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUnt
       : t('upgrade.examInDays', 'in {{days}} days', { days: daysAway });
 
   let subtitle;
-  if (blocked) {
+  if (isPlanGate) {
+    subtitle = blocked
+      ? (examSoon
+          ? t('upgrade.bodyPlanBlockedExam', "You've started your {{count}} study plans for this month — and your exam is {{when}}. Go unlimited and add every subject you're carrying.", { count: planLimit, when: whenLabel })
+          : t('upgrade.bodyPlanBlocked', "You've started your {{count}} study plans for this month. Pro lets you add a plan for every subject you're taking.", { count: planLimit }))
+      : t('upgrade.bodyPlan', 'Pro lets you run a study plan for every subject you’re taking, not just a few.');
+  } else if (blocked) {
     subtitle = examSoon
       ? t('upgrade.bodyBlockedExam', "You've used your {{limit}} questions for this 3-hour window — and your exam is {{when}}. Don't lose momentum: go unlimited.", { limit, when: whenLabel })
       : t('upgrade.bodyBlocked', "You've used your {{limit}} questions for this 3-hour window. Keep your momentum going — practice as much as you need to be ready.", { limit });
@@ -139,12 +153,19 @@ const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUnt
 
         <p className="upgrade-body">{subtitle}</p>
 
-        {blocked && (
+        {/* Countdown. Demoted when the exam is close — "wait 3 hours" is not a
+            real option the night before, and giving it equal weight to the
+            plans costs conversions at the only moment that matters. */}
+        {blocked && !examSoon && (
           <div className="upgrade-countdown" aria-live="polite">
             <span className="upgrade-countdown-label">
-              {t('upgrade.nextBatch', 'Or wait — next batch in')}
+              {isPlanGate
+                ? t('upgrade.nextPlanIn', 'Or wait — next plan unlocks in')
+                : t('upgrade.nextBatch', 'Or wait — next batch in')}
             </span>
-            <span className="upgrade-countdown-time">{formatCountdown(msUntilReset)}</span>
+            <span className="upgrade-countdown-time">
+              {formatCountdown(isPlanGate ? planMsUntilReset : msUntilReset)}
+            </span>
           </div>
         )}
 
@@ -154,6 +175,14 @@ const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUnt
             <span className="upgrade-compare-feature" />
             <span className="upgrade-compare-free">{t('upgrade.cmp.free', 'Free')}</span>
             <span className="upgrade-compare-pro">{t('upgrade.cmp.pro', 'Pro')}</span>
+          </div>
+
+          <div className="upgrade-compare-row">
+            <span className="upgrade-compare-feature">{t('upgrade.cmp.plans', 'Study plans')}</span>
+            <span className="upgrade-compare-free">
+              {t('upgrade.cmp.plansPerMonth', '{{count}} / month', { count: planLimit })}
+            </span>
+            <span className="upgrade-compare-pro">{t('upgrade.cmp.unlimited', 'Unlimited')}</span>
           </div>
 
           <div className="upgrade-compare-row">
@@ -222,6 +251,16 @@ const UpgradeModal = ({ isOpen, onClose, limit = 12, remaining = Infinity, msUnt
         <button className="upgrade-wait" onClick={onClose}>
           {blocked ? t('upgrade.wait', "I'll wait") : t('upgrade.notNow', 'Not now')}
         </button>
+
+        {/* When the countdown is demoted (exam within 30 days) it still has to
+            be reachable — hiding the free path entirely would be dishonest. */}
+        {blocked && examSoon && (
+          <p className="upgrade-countdown-inline" aria-live="polite">
+            {isPlanGate
+              ? t('upgrade.nextPlanInline', 'Next free plan in {{time}}', { time: formatCountdown(planMsUntilReset) })
+              : t('upgrade.nextBatchInline', 'Next free questions in {{time}}', { time: formatCountdown(msUntilReset) })}
+          </p>
+        )}
       </div>
     </div>
   );

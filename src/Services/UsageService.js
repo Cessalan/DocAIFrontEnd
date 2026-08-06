@@ -31,7 +31,13 @@ import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore
 import { devLog } from './devLogger';
 
 // Tunable knobs — change these two constants to retune the throttle.
-export const FREE_LIMIT = 12;                 // questions (items) per window for free tier
+// Backstop, not the commercial gate. The plan quota below is what free users
+// are meant to hit; this only exists to cap runaway generation INSIDE an
+// active plan (retakes, regenerated nodes, configurable exams), which the plan
+// quota doesn't bound. Sized to sit above real usage: a topic unit costs 17
+// units, so 50 buys ~14 nodes per window — comfortably past the ~6-node depth
+// that predicts a user returning.
+export const FREE_LIMIT = 50;                 // questions (items) per window for free tier
 export const WINDOW_MS = 3 * 60 * 60 * 1000;  // rolling window length (3 hours)
 
 /**
@@ -147,6 +153,122 @@ export const deriveQuota = (usage, now = Date.now()) => {
   const msUntilReset = isPro ? 0 : Math.max(0, norm.windowStart + WINDOW_MS - now);
 
   return { tier: norm.tier, isPro, limit, used: norm.count, windowStart: norm.windowStart, remaining, canGenerate, msUntilReset };
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   PLAN QUOTA — a second, independent meter.
+
+   The question throttle above meters CONSUMPTION inside a plan. This one
+   meters how many NEW study plans a free user may create per month.
+
+   Why a separate meter: plan generation is by far the most expensive call
+   in the product (a full path plus the first node), and metering it is the
+   only gate that lands on engaged users rather than on anyone who studies
+   for twenty minutes. Production data (2026-08-03): 72.9% of users create
+   exactly one plan and 15.5% create two, so a cap of 3 is invisible to ~88%
+   of users and bites only the multi-subject cohort.
+
+   Three per window (not one) is deliberate: 66.5% of second plans are
+   created the SAME DAY — students set up several courses in one sitting.
+   A cap of one would wall that session and also destroy retry-after-failure,
+   which matters while ~1 in 8 first nodes still fails to generate.
+
+   Stored separately at users/{uid}.planUsage so the two meters never
+   interfere. Charged at plan COMMIT (createStudySession), not at generation,
+   because the preview flow is deliberately side-effect-free.
+   ══════════════════════════════════════════════════════════════════════ */
+
+export const FREE_PLANS_PER_WINDOW = 3;
+export const PLAN_WINDOW_MS = 30 * 24 * 60 * 60 * 1000; // 30 days, rolling
+
+const DEV_PLAN_LIMIT_KEY = 'nqDevPlanLimit';
+
+/** Dev-only plan-limit override (dev builds only), mirroring the question one. */
+export const getDevPlanLimitOverride = () => {
+  if (process.env.NODE_ENV !== 'development') return null;
+  try {
+    const n = parseInt(window.localStorage.getItem(DEV_PLAN_LIMIT_KEY), 10);
+    return Number.isFinite(n) && n > 0 ? n : null;
+  } catch {
+    return null;
+  }
+};
+
+export const getPlanLimit = () => getDevPlanLimitOverride() ?? FREE_PLANS_PER_WINDOW;
+
+/** Normalize planUsage against the rolling 30-day window. Pure. */
+const normalizePlanUsage = (raw, tier, now) => {
+  let windowStart = typeof raw?.windowStart === 'number' ? raw.windowStart : 0;
+  let count = typeof raw?.count === 'number' ? raw.count : 0;
+  if (!windowStart || now - windowStart >= PLAN_WINDOW_MS) {
+    windowStart = now;
+    count = 0;
+  }
+  return { tier: tier === 'pro' ? 'pro' : 'free', windowStart, count };
+};
+
+/**
+ * Public plan-quota view.
+ * @param {Object|undefined} planUsage - planUsage sub-object from the user doc
+ * @param {string} tier - 'free' | 'pro' (lives on usage.tier, the billing source of truth)
+ */
+export const derivePlanQuota = (planUsage, tier, now = Date.now()) => {
+  const norm = normalizePlanUsage(planUsage, tier, now);
+  const isPro = norm.tier === 'pro';
+  const limit = getPlanLimit();
+  const remaining = isPro ? Infinity : Math.max(0, limit - norm.count);
+  return {
+    isPro,
+    limit,
+    used: norm.count,
+    remaining,
+    canCreatePlan: isPro || remaining > 0,
+    windowStart: norm.windowStart,
+    msUntilReset: isPro ? 0 : Math.max(0, norm.windowStart + PLAN_WINDOW_MS - now),
+  };
+};
+
+/** Read-only plan quota for a user. Fails open (as Pro) on read errors. */
+export const getPlanQuota = async (uid) => {
+  if (!uid) return derivePlanQuota(undefined, 'free');
+  try {
+    const snap = await getDoc(doc(db, 'users', uid));
+    const data = snap.exists() ? snap.data() : {};
+    return derivePlanQuota(data.planUsage, data.usage?.tier);
+  } catch (error) {
+    console.error('Error reading plan quota:', error);
+    return derivePlanQuota(undefined, 'pro'); // fail open
+  }
+};
+
+/**
+ * Charge one plan against the rolling window. Call AFTER the plan is
+ * successfully committed to Firestore.
+ */
+export const consumePlan = async (uid) => {
+  const now = Date.now();
+  if (!uid) return derivePlanQuota(undefined, 'free', now);
+
+  try {
+    const userRef = doc(db, 'users', uid);
+    const result = await runTransaction(db, async (tx) => {
+      const snap = await tx.get(userRef);
+      const data = snap.exists() ? snap.data() : {};
+      const norm = normalizePlanUsage(data.planUsage, data.usage?.tier, now);
+
+      if (norm.tier === 'pro') return { planUsage: norm, tier: 'pro' };
+
+      const next = { windowStart: norm.windowStart, count: norm.count + 1 };
+      tx.set(userRef, { planUsage: next, updatedAt: serverTimestamp() }, { merge: true });
+      return { planUsage: next, tier: 'free' };
+    });
+
+    devLog('🗂️ Plan consumed:', result.planUsage.count, '/', getPlanLimit());
+    return derivePlanQuota(result.planUsage, result.tier, now);
+  } catch (error) {
+    console.error('Error consuming plan:', error);
+    return derivePlanQuota(undefined, 'pro', now); // fail open
+  }
 };
 
 /**

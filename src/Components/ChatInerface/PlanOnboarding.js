@@ -15,6 +15,7 @@ import {
   SparkleIcon
 } from './PlanOnboardingIcons';
 import PlanDatePicker from './PlanDatePicker';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import './PlanOnboarding.css';
 
 /**
@@ -67,6 +68,7 @@ const PlanOnboarding = ({
   onConfirm
 }) => {
   const { t } = useTranslation();
+  const { requirePlanQuota } = useUsageLimit();
 
   // ── State ────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState('q1');
@@ -180,6 +182,11 @@ const PlanOnboarding = ({
 
   const firePlanInBackground = useCallback((finalPrepStatus) => {
     if (!chatId) return;
+    // Plan gate. This is the EARLIEST point generation starts — the plan is
+    // pre-fired here so it's ready by the time the user taps "Build my plan",
+    // which means a blocked user would otherwise burn a full path generation
+    // before ever seeing the paywall. requirePlanQuota opens the modal itself.
+    if (!requirePlanQuota()) return;
     try {
       // Eagerly evict any prior cached promise so we get a fresh fire with
       // the latest prefs (relevant if the user came back via Edit Answers).
@@ -190,7 +197,7 @@ const PlanOnboarding = ({
       // Non-fatal: StartStudyModal will refire on click if the cache is empty
       console.warn('PlanOnboarding: background plan fire failed', e);
     }
-  }, [chatId, language, buildUserPreferences]);
+  }, [chatId, language, buildUserPreferences, requirePlanQuota]);
 
   const handlePrepSelect = (key) => {
     setPrepStatus(key);

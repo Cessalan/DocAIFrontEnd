@@ -220,6 +220,15 @@
 }
 .upgrade-wait:hover { color: var(--text-secondary, #6b6b6b); }
 
+/* Demoted countdown — still present, just no longer competing with the plans. */
+.upgrade-countdown-inline {
+  margin: 2px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-secondary, #9a9a9a);
+  opacity: 0.85;
+}
+
 @keyframes upgrade-fade-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes upgrade-pop-in {
   from { opacity: 0; transform: translateY(12px) scale(0.97); }

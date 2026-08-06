@@ -1050,6 +1050,9 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
       }
       case 'error': {
         const err = new Error(data.message || 'Study start stream error');
+        // Carry the machine-readable code so callers can distinguish a quota
+        // rejection (show the paywall) from a genuine failure (show retry).
+        if (data.code) err.code = data.code;
         if (!planResolved) rejectPlan(err);
         settleFirstNode(null);
         break;

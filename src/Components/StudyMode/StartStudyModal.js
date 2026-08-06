@@ -12,6 +12,7 @@ import {
   get_prefetched_node_content
 } from '../../Services/FastAPICalls';
 import { createStudySession } from '../../Services/StudySessionService';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { formatNodeType, getStepTopicLabel } from './planFormatting';
 import { getStudyNodeIcon } from './planNodeIcon';
 import './StudyMode.css';
@@ -37,6 +38,7 @@ const StartStudyModal = ({
   userPreferences = {}
 }) => {
   const { t } = useTranslation();
+  const { requirePlanQuota, consumePlan, openUpgrade } = useUsageLimit();
 
   // ── Phase machine ─────────────────────────────────────────
   // 'idle' | 'loading' | 'plan_preview' | 'starting' | 'done'
@@ -88,6 +90,14 @@ const StartStudyModal = ({
   // mode on next visit (see ChatInterface.js:713). If the user closes the
   // modal during plan_preview, no Firestore mutation should have happened.
   const handleStartJourney = async () => {
+    // Plan gate BEFORE generation — a study path plus its first node is the
+    // most expensive call in the product, so a blocked user must never trigger
+    // it. requirePlanQuota opens the upgrade modal itself when it returns false.
+    if (!requirePlanQuota()) {
+      onClose && onClose();
+      return;
+    }
+
     setPhase('loading');
     setError(null);
     setPathResult(null);
@@ -104,6 +114,15 @@ const StartStudyModal = ({
       setPhase('plan_preview');
     } catch (err) {
       console.error('Error starting study journey via /study/start:', err);
+      // Server-side plan gate fired (client check was stale or bypassed).
+      // Don't retry through the fallback — it enforces the same limit and
+      // would just burn another round trip.
+      if (err?.code === 'plan_quota_exceeded') {
+        openUpgrade('plans');
+        setPhase('idle');
+        onClose && onClose();
+        return;
+      }
       // Fallback to legacy two-call flow if the streaming endpoint fails for any reason.
       try {
         const path = await plan_study_path(chatId, uploadIds, userPreferences, language);
@@ -128,6 +147,9 @@ const StartStudyModal = ({
     try {
       const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
       const studyState = await createStudySession(chatId, pathResult, uploadIds);
+      // Charge the plan only once it actually exists. Abandoning the preview
+      // costs nothing, which is what keeps the preview side-effect-free.
+      consumePlan();
       setPhase('done');
       if (onStart) onStart(studyState);
     } catch (err) {

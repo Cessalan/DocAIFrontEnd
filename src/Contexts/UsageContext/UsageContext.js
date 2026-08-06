@@ -17,7 +17,14 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useAuth } from '../AuthContext/AuthContext';
-import { getQuota, consumeGeneration, deriveQuota } from '../../Services/UsageService';
+import {
+  getQuota,
+  consumeGeneration,
+  deriveQuota,
+  getPlanQuota,
+  consumePlan as consumePlanUnit,
+  derivePlanQuota,
+} from '../../Services/UsageService';
 import UpgradeModal from '../../Components/Common/UpgradeModal';
 import UsageBadge from '../../Components/Common/UsageBadge';
 
@@ -31,6 +38,9 @@ export const useUsageLimit = () => {
     return {
       isPro: true, limit: 0, used: 0, remaining: Infinity, canGenerate: true,
       msUntilReset: 0, requireQuota: () => true, consume: async () => {}, refresh: async () => {},
+      planLimit: 0, plansUsed: 0, plansRemaining: Infinity, canCreatePlan: true,
+      planMsUntilReset: 0, requirePlanQuota: () => true, consumePlan: async () => {},
+      openUpgrade: () => {},
     };
   }
   return ctx;
@@ -52,14 +62,26 @@ export function UsageProvider({ children }) {
   const usageRef = useRef(usage);
   usageRef.current = usage;
 
+  // Second, independent meter: NEW study plans per rolling 30 days.
+  // See the PLAN QUOTA block in UsageService for why this is separate.
+  const [planUsage, setPlanUsage] = useState({ windowStart: 0, count: 0 });
+  const planUsageRef = useRef(planUsage);
+  planUsageRef.current = planUsage;
+
+  // Which gate opened the modal — drives whether it talks about questions
+  // or about study plans. Reset when the modal closes.
+  const [upgradeReason, setUpgradeReason] = useState(null);
+
   // Fetch quota whenever the signed-in user changes.
   const refresh = useCallback(async () => {
     if (!uid) {
       setUsage({ tier: 'free', windowStart: 0, count: 0 });
+      setPlanUsage({ windowStart: 0, count: 0 });
       return;
     }
-    const q = await getQuota(uid);
+    const [q, p] = await Promise.all([getQuota(uid), getPlanQuota(uid)]);
     setUsage({ tier: q.tier, windowStart: q.windowStart, count: q.used });
+    setPlanUsage({ windowStart: p.windowStart, count: p.used });
   }, [uid]);
 
   useEffect(() => { refresh(); }, [refresh]);
@@ -91,9 +113,29 @@ export function UsageProvider({ children }) {
   const requireQuota = useCallback(() => {
     const live = deriveQuota(usageRef.current, Date.now());
     if (live.canGenerate) return true;
+    setUpgradeReason('questions');
     setShowUpgrade(true);
     return false;
   }, []);
+
+  // Plan gate — call BEFORE generating a new study plan. Generating a path
+  // plus its first node is the most expensive call in the product, so this
+  // blocks before the spend rather than at the commit point.
+  const requirePlanQuota = useCallback(() => {
+    const live = derivePlanQuota(planUsageRef.current, usageRef.current?.tier, Date.now());
+    if (live.canCreatePlan) return true;
+    setUpgradeReason('plans');
+    setShowUpgrade(true);
+    return false;
+  }, []);
+
+  // Charge one plan. Call AFTER createStudySession succeeds — the preview
+  // flow is deliberately side-effect-free, so an abandoned preview is free.
+  const consumePlan = useCallback(async () => {
+    if (!uid) return;
+    const p = await consumePlanUnit(uid);
+    setPlanUsage({ windowStart: p.windowStart, count: p.used });
+  }, [uid]);
 
   // Charge `amount` units (questions/cards) after a successful generation.
   const consume = useCallback(async (amount = 1) => {
@@ -101,6 +143,11 @@ export function UsageProvider({ children }) {
     const q = await consumeGeneration(uid, amount);
     setUsage({ tier: q.tier, windowStart: q.windowStart, count: q.used });
   }, [uid]);
+
+  const planQuota = useMemo(
+    () => derivePlanQuota(planUsage, usage.tier, now),
+    [planUsage, usage.tier, now]
+  );
 
   const value = useMemo(() => ({
     tier: quota.tier,
@@ -113,8 +160,19 @@ export function UsageProvider({ children }) {
     requireQuota,
     consume,
     refresh,
-    openUpgrade: () => setShowUpgrade(true),
-  }), [quota, requireQuota, consume, refresh]);
+    // Plan meter
+    planLimit: planQuota.limit,
+    plansUsed: planQuota.used,
+    plansRemaining: planQuota.remaining,
+    canCreatePlan: planQuota.canCreatePlan,
+    planMsUntilReset: planQuota.msUntilReset,
+    requirePlanQuota,
+    consumePlan,
+    openUpgrade: (reason = null) => {
+      setUpgradeReason(typeof reason === 'string' ? reason : null);
+      setShowUpgrade(true);
+    },
+  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan]);
 
   return (
     <UsageContext.Provider value={value}>
@@ -131,10 +189,14 @@ export function UsageProvider({ children }) {
       <UpgradeModal
         isOpen={showUpgrade}
         isPro={quota.isPro}
-        onClose={() => setShowUpgrade(false)}
+        onClose={() => { setShowUpgrade(false); setUpgradeReason(null); }}
+        reason={upgradeReason}
         limit={quota.limit}
         remaining={quota.remaining}
         msUntilReset={quota.msUntilReset}
+        planLimit={planQuota.limit}
+        plansRemaining={planQuota.remaining}
+        planMsUntilReset={planQuota.msUntilReset}
         user={{ uid: currentUser?.uid, email: currentUser?.email }}
         studyGoal={studyGoal}
         examDate={examDate}

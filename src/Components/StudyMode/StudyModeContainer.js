@@ -606,7 +606,11 @@ const StudyModeContainer = ({
           return null;
         }
         const { _isStreaming, _expectedTotal, ...rest } = prev;
-        const hasContent = (rest.questions?.length > 0) || (rest.cards?.length > 0) || rest.html;
+        // `pages` included so a lesson that streamed some pages before the
+        // stream threw keeps what arrived, instead of being thrown away for an
+        // error screen the student doesn't need.
+        const hasContent = (rest.questions?.length > 0) || (rest.cards?.length > 0)
+          || (rest.pages?.length > 0) || rest.html;
         if (!hasContent) {
           // Nothing usable arrived — show error state
           setContentError(t('study.generationFailed', 'Something went wrong while generating your content. Please try again.'));
