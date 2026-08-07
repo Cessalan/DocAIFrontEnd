@@ -1140,6 +1140,12 @@ const resources = {
 
         // StartStudyModal — plan preview pane (after onboarding confirm)
         planReadyTitle: "Your path is ready",
+        planSprintToday: "Your exam is today — here's the plan",
+        planSprintTomorrow: "Your exam is tomorrow — here's the plan",
+        planSprintSoon: "Your exam is in {{days}} days — here's the plan",
+        planSprintNote: "No new material — we find your gaps and drill them.",
+        planFocusTitle: "Built for your exam in {{days}} days",
+        planFocusNote: "We check what you know first, then rebuild the weak spots.",
         planPitch: "We'll start with a quick {{action}} {{label}} — just to see where you're at.",
         planFirstBadge: "Start here",
         planEstimate: "{{steps}} steps · about {{mins}} min total",
@@ -1487,6 +1493,9 @@ const resources = {
       // WarmUrgencyDashboard — empathic exam dashboard
       warmUrgency: {
         yourExam: "Your exam",
+        nodesDone_one: "{{count}} step done",
+        nodesDone_other: "{{count}} steps done",
+        topicsLocked: "{{count}} of {{total}} topics locked in",
         yourStudyJourney: "Your study journey",
         ofTotal: "of",
         journeyHeadline_one: "You've tackled {{count}} question so far",
@@ -2819,6 +2828,12 @@ const resources = {
 
         // StartStudyModal — plan preview pane (after onboarding confirm)
         planReadyTitle: "Ton parcours est prêt",
+        planSprintToday: "Ton examen est aujourd'hui — voici le plan",
+        planSprintTomorrow: "Ton examen est demain — voici le plan",
+        planSprintSoon: "Ton examen est dans {{days}} jours — voici le plan",
+        planSprintNote: "Pas de nouvelle matière — on cible tes lacunes et on s'entraîne.",
+        planFocusTitle: "Conçu pour ton examen dans {{days}} jours",
+        planFocusNote: "On vérifie d'abord ce que tu sais, puis on renforce les points faibles.",
         // {{action}} is gendered/articled per node type (see NODE_TYPE_META.actionFr
         // in StartStudyModal.js) — e.g. "un quiz sur" / "une leçon sur" — so the
         // sentence reads naturally regardless of the first-node type. Don't add
@@ -3170,6 +3185,9 @@ const resources = {
       // WarmUrgencyDashboard — tableau de bord empathique
       warmUrgency: {
         yourExam: "Ton examen",
+        nodesDone_one: "{{count}} étape terminée",
+        nodesDone_other: "{{count}} étapes terminées",
+        topicsLocked: "{{count}} sujets maîtrisés sur {{total}}",
         yourStudyJourney: "Ton parcours d'étude",
         ofTotal: "sur",
         journeyHeadline_one: "Tu as répondu à {{count}} question jusqu'ici",

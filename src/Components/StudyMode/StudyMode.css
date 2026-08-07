@@ -1372,6 +1372,19 @@ body.dark-mode .study-diagnostic-done__title {
   color: var(--text-secondary, #888);
 }
 
+/* Deadline-shaped plan note in the preview (sprint / focus). */
+.study-modal-plan-shape {
+  margin: -4px 0 14px;
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary, #8a8a8a);
+}
+
+body.dark-mode .study-modal-plan-shape {
+  color: #a5a5a5;
+}
+
 /* ── Plan preview: first-node readiness line ── */
 .study-modal-firstnode {
   display: flex;

@@ -765,6 +765,20 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
         return;
       }
 
+      // ── Diagnostic: finish here, right or wrong ──────────────────────
+      // The normal flow relies on the review round to mop up incorrect
+      // answers, so the end of the queue is only ever reached with
+      // everything correct — which is why completion is driven by
+      // `allCorrect`. The diagnostic has no review round (it calibrates,
+      // it doesn't drill), so that invariant doesn't hold: reaching the end
+      // with a single wrong answer would fall through to nothing and strand
+      // the student on the last question with no button.
+      if (isDiagnostic) {
+        setShowCompletionCelebration(true);
+        playCelebrationSound();
+        return;
+      }
+
       // Get questions that were incorrect (need review)
       const questionsToReview = Object.entries(questionStatuses)
         .filter(([_, status]) => status === 'incorrect')
@@ -867,6 +881,11 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const hasMoreQuestions = queueIndex < questionQueue.length - 1;
   const moreQuestionsExpected = isStreaming && totalQuestions < expectedTotal;
   const shouldShowContinueButton = hasMoreQuestions || moreQuestionsExpected;
+
+  // Diagnostic on its final question: no more questions and no review round
+  // to fall through to, so the advance button has to be rendered explicitly
+  // or there is no way out of the card.
+  const canFinishDiagnostic = isDiagnostic && !hasMoreQuestions && !moreQuestionsExpected;
 
   // Check if we need to start review round after current question
   const needsReviewRound = () => {
@@ -1221,7 +1240,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
                         )}
 
                         {/* GOT IT button */}
-                        {(shouldShowContinueButton || needsReviewRound()) && (
+                        {(shouldShowContinueButton || needsReviewRound() || canFinishDiagnostic) && (
                           <button
                             className="study-quiz-feedback-btn incorrect"
                             onClick={handleNextQuestion}
@@ -1325,7 +1344,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
                   )}
 
                   {/* Duolingo-style action button inside feedback */}
-                  {(shouldShowContinueButton || needsReviewRound()) && (
+                  {(shouldShowContinueButton || needsReviewRound() || canFinishDiagnostic) && (
                     <button
                       className={`study-quiz-feedback-btn ${isCorrect ? 'correct' : 'incorrect'}`}
                       onClick={handleNextQuestion}

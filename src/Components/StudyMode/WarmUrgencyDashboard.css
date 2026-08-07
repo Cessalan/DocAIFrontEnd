@@ -127,176 +127,29 @@
 }
 
 /* ============================================
-   JOURNEY CARD — effort framing + topic dots
+   PROGRESS LINE
+   Replaces the old journey block (headline + dot pair + full topic list).
+   Rendered only when there is real progress, so a new student never reads
+   a zero state presented as their biggest number.
    ============================================ */
-.wud-journey {
-  background: #fff;
-  border: 1px solid #f0ebe8;
-  border-radius: 14px;
-  padding: 18px 18px 16px;
-  box-shadow: 0 2px 20px rgba(0, 0, 0, 0.04);
+.wud-progress {
   display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.wud-journey__row {
-  display: flex;
-  align-items: flex-start;
-  gap: 16px;
-  justify-content: space-between;
-}
-
-.wud-journey__text {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 0;
-  flex: 1;
-}
-
-.wud-section-label {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  color: rgba(60, 60, 60, 0.5);
-  margin-bottom: 2px;
-}
-
-.wud-journey__headline {
+  align-items: center;
+  gap: 7px;
   margin: 0;
-  font-size: 17px;
-  font-weight: 700;
-  color: #1f1f1f;
-  letter-spacing: -0.2px;
-  line-height: 1.3;
+  padding: 11px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-secondary, #7a7a7a);
 }
 
-.wud-journey__sub {
-  margin: 0;
-  font-size: 13.5px;
-  color: rgba(60, 60, 60, 0.7);
-  line-height: 1.45;
-}
-
-/* ── Topic dots cluster ───────────────────── */
-.wud-journey__progress {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
-}
-
-.wud-journey__dots {
+.wud-progress__icon {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  color: var(--node-done, #4caf50);
 }
 
-.wud-journey__dot {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.wud-journey__dot--locked {
-  background: var(--wud-accent);
-  color: #fff;
-  box-shadow: 0 1px 4px rgba(58, 158, 110, 0.25);
-}
-
-.wud--urgent .wud-journey__dot--locked {
-  box-shadow: 0 1px 4px rgba(196, 122, 42, 0.25);
-}
-
-.wud-journey__dot--ready {
-  background: transparent;
-  border: 1.5px dashed rgba(120, 110, 105, 0.45);
-  color: rgba(60, 60, 60, 0.45);
-}
-
-.wud-journey__dot-line {
-  width: 12px;
-  height: 1.5px;
-  background: rgba(120, 110, 105, 0.3);
-  border-radius: 1px;
-}
-
-.wud-journey__dot-count {
-  font-size: 11px;
-  font-weight: 600;
-  color: rgba(60, 60, 60, 0.55);
-  letter-spacing: 0.2px;
-}
-
-/* ── Topics list ──────────────────────────── */
-.wud-topics {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.wud-topic {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 4px;
-  border-radius: 8px;
-}
-
-.wud-topic__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  flex-shrink: 0;
-}
-
-.wud-topic--locked_in .wud-topic__icon {
-  color: var(--wud-accent);
-}
-
-.wud-topic--ready .wud-topic__icon {
-  color: var(--wud-accent);
-  opacity: 0.7;
-}
-
-.wud-topic__name {
-  flex: 1;
-  font-size: 14px;
-  font-weight: 600;
-  color: #1f1f1f;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.wud-badge {
-  font-size: 11.5px;
-  font-weight: 600;
-  padding: 4px 10px;
-  border-radius: 12px;
-  white-space: nowrap;
-  letter-spacing: 0.1px;
-}
-
-.wud-badge--locked_in {
-  color: #2c8056;
-  background: #eaf7f0;
-}
-
-.wud-badge--ready {
-  color: #4a8eb5;
-  background: #eef6fb;
+body.dark-mode .wud-progress {
+  color: #aaa;
 }
 
 /* ============================================
@@ -422,51 +275,6 @@ body.dark-mode .wud-exam__label {
   color: rgba(240, 240, 240, 0.55);
 }
 
-body.dark-mode .wud-journey {
-  background: var(--dark-bg-secondary, #2f2f2f);
-  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
-  box-shadow: none;
-}
-
-body.dark-mode .wud-section-label {
-  color: rgba(240, 240, 240, 0.5);
-}
-
-body.dark-mode .wud-journey__headline {
-  color: #f0f0f0;
-}
-
-body.dark-mode .wud-journey__sub {
-  color: rgba(240, 240, 240, 0.7);
-}
-
-body.dark-mode .wud-journey__dot--ready {
-  border-color: rgba(240, 240, 240, 0.35);
-  color: rgba(240, 240, 240, 0.4);
-}
-
-body.dark-mode .wud-journey__dot-line {
-  background: rgba(240, 240, 240, 0.25);
-}
-
-body.dark-mode .wud-journey__dot-count {
-  color: rgba(240, 240, 240, 0.55);
-}
-
-body.dark-mode .wud-topic__name {
-  color: #f0f0f0;
-}
-
-body.dark-mode .wud-badge--locked_in {
-  color: #8fd6a8;
-  background: rgba(58, 158, 110, 0.18);
-}
-
-body.dark-mode .wud-badge--ready {
-  color: #9ec8dc;
-  background: rgba(74, 142, 181, 0.18);
-}
-
 body.dark-mode .wud-cta__title,
 body.dark-mode .wud-cta__sub {
   color: var(--wud-accent-strong);
@@ -502,36 +310,6 @@ body.dark-mode .wud-cta__arrow {
     font-size: 13px;
   }
 
-  .wud-journey {
-    padding: 16px 14px;
-  }
-
-  .wud-journey__row {
-    gap: 12px;
-  }
-
-  .wud-journey__headline {
-    font-size: 16px;
-  }
-
-  .wud-journey__sub {
-    font-size: 13px;
-  }
-
-  .wud-topic {
-    padding: 7px 2px;
-    gap: 8px;
-  }
-
-  .wud-topic__name {
-    font-size: 13.5px;
-  }
-
-  .wud-badge {
-    font-size: 11px;
-    padding: 3px 8px;
-  }
-
   .wud-cta {
     padding: 13px 12px 13px 14px;
     gap: 12px;
@@ -550,18 +328,5 @@ body.dark-mode .wud-cta__arrow {
   .wud-cta__arrow {
     width: 34px;
     height: 34px;
-  }
-}
-
-/* At extreme narrow widths, let the dots cluster wrap below */
-@media (max-width: 380px) {
-  .wud-journey__row {
-    flex-direction: column-reverse;
-    align-items: flex-start;
-  }
-
-  .wud-journey__progress {
-    flex-direction: row;
-    gap: 10px;
   }
 }

@@ -428,11 +428,39 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
       ? t('study.firstCardsReady', 'Your first cards are ready')
       : t('study.firstLessonReady', 'Your first lesson is ready');
 
+  // ── Deadline-shaped plans ─────────────────────────────────────────────
+  // The backend now picks a plan SHAPE from days-to-exam (sprint / focus /
+  // master). Naming it here is what makes the reshaping legible — otherwise
+  // the student just sees "a plan" and never learns that the exam date they
+  // entered did anything, which is why only 27.8% of plans carry one.
+  const archetype = pathResult.archetype;
+  const daysToExam = pathResult.days_to_exam;
+
+  const shapeTitle =
+    archetype === 'sprint'
+      ? (daysToExam === 0
+          ? t('study.planSprintToday', 'Your exam is today — here’s the plan')
+          : daysToExam === 1
+            ? t('study.planSprintTomorrow', 'Your exam is tomorrow — here’s the plan')
+            : t('study.planSprintSoon', 'Your exam is in {{days}} days — here’s the plan', { days: daysToExam }))
+      : archetype === 'focus'
+        ? t('study.planFocusTitle', 'Built for your exam in {{days}} days', { days: daysToExam })
+        : t('study.planReadyTitle', 'Your path is ready');
+
+  const shapeNote =
+    archetype === 'sprint'
+      ? t('study.planSprintNote', 'No new material — we find your gaps and drill them.')
+      : archetype === 'focus'
+        ? t('study.planFocusNote', 'We check what you know first, then rebuild the weak spots.')
+        : null;
+
   return (
     <div className="study-modal-content study-modal-plan-preview">
-      <h2 className="study-modal-title">
-        {t('study.planReadyTitle', 'Your path is ready')}
-      </h2>
+      <h2 className="study-modal-title">{shapeTitle}</h2>
+
+      {shapeNote && (
+        <p className="study-modal-plan-shape">{shapeNote}</p>
+      )}
 
       {firstNode && (
         <p className="study-modal-plan-pitch">

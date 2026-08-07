@@ -281,7 +281,13 @@ const buildScoredTopics = (nodes, topics, insightsData) => {
       ? 'weak'
       : pct >= 85 ? 'strong' : pct >= 60 ? 'developing' : 'weak';
     out.push({
-      name: entry.name,
+      // Strip node-label suffixes ("- Pre-Test", "- Review", …). Topic keys can
+      // originate from a node label: the backend tags a question with
+      // `node_label` when the question carries no topic of its own, and that
+      // string becomes a studyPerformance key. Without this, raw labels leak
+      // into user-facing copy — e.g. "One focused session on ABCDE Protocol -
+      // Pre-Test could lock it in".
+      name: getStepTopicLabel(entry.name),
       correct: entry.correct,
       total: entry.total,
       pct,
@@ -501,7 +507,8 @@ const StudyPlanOverview = ({
       if (scores.length === 0) continue;
       const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
       const level = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
-      groups[level].push({ name, pct: Math.round(avg * 100), level });
+      // Same node-label leak as in buildScoredTopics — strip suffixes.
+      groups[level].push({ name: getStepTopicLabel(name), pct: Math.round(avg * 100), level });
     }
     const hasAny = Object.values(groups).some(g => g.length > 0);
     return hasAny ? groups : null;
@@ -915,32 +922,21 @@ const StudyPlanOverview = ({
 
           const isMidSession = !phase1AllDone;
 
+          // The dashboard's only remaining action is starting the phase-2
+          // practice round once the plan is finished. Mid-plan there is no CTA
+          // here at all — TodaySessionCard owns "what do I do next", and a
+          // second button that did the same thing one block higher was both
+          // redundant and (while the section list was collapsed) a dead click.
           const handleCtaClick = (e) => {
             e.stopPropagation();
-            if (isMidSession) {
-              activeSectionRef.current?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-              });
-            } else {
-              onStartPhase2?.();
-            }
+            onStartPhase2?.();
           };
 
-          // Build the binary topics list — every curriculum topic is either
-          // "locked in" (strong + measured) or "ready to explore" (anything
-          // else, including untested). No "weak" / "not measured" labels
-          // surface to the user.
-          const topicsList = scoredTopics.map((topic) => ({
-            name: topic.name,
-            status: (!topic.untested && topic.level === 'strong') ? 'locked_in' : 'ready'
-          }));
-          // Stable order: locked-in first, then ready-to-explore in their
-          // original sort order (which already surfaces highest-priority first).
-          topicsList.sort((a, b) => {
-            if (a.status === b.status) return 0;
-            return a.status === 'locked_in' ? -1 : 1;
-          });
+          // (The binary "locked in / ready to explore" topic list that used to
+          // be built here is gone. Every entry rendered the same badge until a
+          // topic went strong, so it carried no information on the screen that
+          // matters most — a new student's first — while duplicating the topic
+          // list that TodaySessionCard and the full plan already show.)
 
           // Next-up topic = the most-prioritized "ready" entry.
           // snap.weak[] is already sorted untested-first then by lowest pct,
@@ -998,11 +994,10 @@ const StudyPlanOverview = ({
           return (
             <WarmUrgencyDashboard
               examDate={examDate}
-              questionsAnswered={snap.totalQuestions}
+              nodesCompleted={completedCount}
               topicsCompleted={snap.strongCount}
               topicsTotal={snap.topicsTotal}
               nextTopicName={nextTopicName}
-              topicsList={topicsList}
               studyComplete={phase1AllDone}
               estimatedMinutes={snap.estMin}
               onCtaClick={handleCtaClick}
