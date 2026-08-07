@@ -1372,6 +1372,75 @@ body.dark-mode .study-diagnostic-done__title {
   color: var(--text-secondary, #888);
 }
 
+/* ── Planner narration during generation ──
+   Each row is a real decision the planner made, checked off as the next
+   one arrives. Replaces a spinner with visible reasoning. */
+.study-modal-thinking {
+  list-style: none;
+  margin: 18px auto 4px;
+  padding: 0;
+  max-width: 340px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.study-modal-thinking__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 13.5px;
+  line-height: 1.4;
+  animation: thinkingIn 0.32s ease-out both;
+}
+
+@keyframes thinkingIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.study-modal-thinking__mark {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--node-done, #4caf50);
+}
+
+.study-modal-thinking__pulse {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--study-coral, #e88d7d);
+  animation: thinkingPulse 1.1s ease-in-out infinite;
+}
+
+@keyframes thinkingPulse {
+  0%, 100% { opacity: 0.35; transform: scale(1); }
+  50%      { opacity: 1;    transform: scale(1.35); }
+}
+
+.study-modal-thinking__item.is-done .study-modal-thinking__text {
+  color: var(--text-secondary, #999);
+}
+
+.study-modal-thinking__item.is-active .study-modal-thinking__text {
+  color: var(--text-primary, #444);
+  font-weight: 500;
+}
+
+body.dark-mode .study-modal-thinking__item.is-done .study-modal-thinking__text { color: #888; }
+body.dark-mode .study-modal-thinking__item.is-active .study-modal-thinking__text { color: #e6e6e6; }
+
+@media (prefers-reduced-motion: reduce) {
+  .study-modal-thinking__item { animation: none; }
+  .study-modal-thinking__pulse { animation: none; opacity: 0.8; }
+}
+
 /* Deadline-shaped plan note in the preview (sprint / focus). */
 .study-modal-plan-shape {
   margin: -4px 0 14px;

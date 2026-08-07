@@ -9,7 +9,8 @@ import {
   plan_study_path,
   start_study_journey,
   clear_in_flight_study_journey,
-  get_prefetched_node_content
+  get_prefetched_node_content,
+  subscribe_study_thinking
 } from '../../Services/FastAPICalls';
 import { createStudySession } from '../../Services/StudySessionService';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
@@ -53,6 +54,71 @@ const StartStudyModal = ({
 
   const [MascotComponent] = useState(() => MASCOTS[Math.floor(Math.random() * MASCOTS.length)]);
 
+  // ── Planner narration ─────────────────────────────────────
+  // Real decisions streamed from /study/start, not decorative copy. Each
+  // entry reports something the planner actually established.
+  const [thinking, setThinking] = useState([]);
+
+  useEffect(() => {
+    if (!isOpen || !chatId || phase !== 'loading') return undefined;
+
+    const toLine = (e) => {
+      switch (e.step) {
+        case 'topics': {
+          const list = (e.topics || []).slice(0, 3).join(', ');
+          return {
+            key: 'topics',
+            text: t('study.thinkTopics', 'Read your material — found {{count}} topics', {
+              count: (e.topics || []).length,
+            }) + (list ? `: ${list}` : ''),
+          };
+        }
+        case 'archetype': {
+          const d = e.days_to_exam;
+          if (e.archetype === 'sprint') {
+            return {
+              key: 'archetype',
+              text: d === 0
+                ? t('study.thinkSprintToday', 'Your exam is today — cutting straight to what you need')
+                : d === 1
+                  ? t('study.thinkSprintTomorrow', 'Your exam is tomorrow — skipping new material')
+                  : t('study.thinkSprintSoon', 'Only {{days}} days left — skipping new material', { days: d }),
+            };
+          }
+          if (e.archetype === 'focus') {
+            return {
+              key: 'archetype',
+              text: t('study.thinkFocus', '{{days}} days until your exam — prioritising your weak spots', { days: d }),
+            };
+          }
+          return {
+            key: 'archetype',
+            text: t('study.thinkMaster', 'Plenty of time — building full coverage'),
+          };
+        }
+        case 'focus':
+          return {
+            key: 'focus',
+            text: t('study.thinkHardest', 'Putting {{topics}} first — you said it’s the hardest', {
+              topics: (e.hardest || []).join(' and '),
+            }),
+          };
+        case 'building':
+          return { key: 'building', text: t('study.thinkBuilding', 'Building your steps…') };
+        default:
+          return null;
+      }
+    };
+
+    const unsubscribe = subscribe_study_thinking(chatId, (e) => {
+      const line = toLine(e);
+      if (!line) return;
+      // Keyed so a replayed backlog can't duplicate rows.
+      setThinking(prev => (prev.some(p => p.key === line.key) ? prev : [...prev, line]));
+    });
+    return unsubscribe;
+  }, [isOpen, chatId, phase, t]);
+
   // Rotating loading messages
   const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
   const loadingMessages = t('study.loadingMessages', { returnObjects: true });
@@ -75,6 +141,7 @@ const StartStudyModal = ({
       setError(null);
       setHasAutoStarted(false);
       setPathResult(null);
+      setThinking([]);
     }
   }, [isOpen]);
 
@@ -219,25 +286,58 @@ const StartStudyModal = ({
           </button>
         )}
 
-        {/* ── LOADING ── */}
+        {/* ── LOADING ──
+            Shows the planner's real decisions as they land, falling back to
+            the rotating messages until the first one arrives. The adaptation
+            is the thing worth paying for, and this is the only moment the
+            student can actually watch it happen. */}
         {phase === 'loading' && (
           <div className="study-modal-content">
             <div className="study-modal-mascot">
               <MascotComponent size={80} isActive={true} />
             </div>
             <h2 className="study-modal-title">{t('study.preparingJourney', 'Preparing Your Journey')}</h2>
-            <div className="study-modal-progress">
-              <div className="study-modal-loader">
-                <div className="study-modal-loader-dot" />
-                <div className="study-modal-loader-dot" />
-                <div className="study-modal-loader-dot" />
+
+            {thinking.length > 0 ? (
+              <ul className="study-modal-thinking">
+                {thinking.map((line, i) => {
+                  const isLast = i === thinking.length - 1;
+                  return (
+                    <li
+                      key={line.key}
+                      className={`study-modal-thinking__item${isLast ? ' is-active' : ' is-done'}`}
+                      style={{ animationDelay: `${Math.min(i, 4) * 60}ms` }}
+                    >
+                      <span className="study-modal-thinking__mark" aria-hidden="true">
+                        {isLast ? (
+                          <span className="study-modal-thinking__pulse" />
+                        ) : (
+                          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor"
+                               strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
+                               width="11" height="11">
+                            <polyline points="2.5 7.5 5.5 10.5 11.5 4" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="study-modal-thinking__text">{line.text}</span>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <div className="study-modal-progress">
+                <div className="study-modal-loader">
+                  <div className="study-modal-loader-dot" />
+                  <div className="study-modal-loader-dot" />
+                  <div className="study-modal-loader-dot" />
+                </div>
+                <p className="study-modal-step" key={loadingMsgIndex}>
+                  {messagesArray.length > 0
+                    ? messagesArray[loadingMsgIndex]
+                    : t('study.analyzingDocs', 'Analyzing your documents...')}
+                </p>
               </div>
-              <p className="study-modal-step" key={loadingMsgIndex}>
-                {messagesArray.length > 0
-                  ? messagesArray[loadingMsgIndex]
-                  : t('study.analyzingDocs', 'Analyzing your documents...')}
-              </p>
-            </div>
+            )}
           </div>
         )}
 

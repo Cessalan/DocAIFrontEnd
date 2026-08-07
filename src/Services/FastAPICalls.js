@@ -948,6 +948,21 @@ export const get_prefetched_node_content = (chat_id, node_id) => {
   return _studyPrefetchCache.get(`${chat_id}:${node_id}`);
 };
 
+/**
+ * Subscribe to the planner's narration for an in-flight /study/start.
+ *
+ * Replays everything already received before attaching, because the stream is
+ * pre-fired from PlanOnboarding and the modal that displays this mounts later.
+ * Returns an unsubscribe function; safe to call when no stream exists.
+ */
+export const subscribe_study_thinking = (chat_id, onEvent) => {
+  const entry = _inFlightStudyJourneys.get(chat_id);
+  if (!entry || typeof onEvent !== 'function') return () => {};
+  (entry.thinking || []).forEach(onEvent);   // backlog first
+  entry.thinkingListeners?.add(onEvent);
+  return () => entry.thinkingListeners?.delete(onEvent);
+};
+
 /** Manually drop a prefetch entry once it has been consumed. */
 export const consume_prefetched_node_content = (chat_id, node_id) => {
   _studyPrefetchCache.delete(`${chat_id}:${node_id}`);
@@ -1005,6 +1020,16 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
   let firstNodeCacheKey = null;
   let planResolved = false;
 
+  // Planner narration — see the handle comment below for why it's buffered.
+  const thinkingLog = [];
+  const thinkingListeners = new Set();
+  const pushThinking = (event) => {
+    thinkingLog.push(event);
+    thinkingListeners.forEach((cb) => {
+      try { cb(event); } catch (e) { /* a bad listener must not kill the stream */ }
+    });
+  };
+
   const requestBody = JSON.stringify({
     chat_id,
     upload_ids,
@@ -1038,6 +1063,10 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
         }
         planResolved = true;
         resolvePlan(plan);
+        break;
+      }
+      case 'plan_thinking': {
+        pushThinking(data);
         break;
       }
       case 'first_node_ready': {
@@ -1131,7 +1160,17 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
     }
   })();
 
-  const handle = { planPromise, abort: () => controller.abort() };
+  // `thinking` buffers the planner's narration events. It has to be a buffer
+  // rather than a plain callback because PlanOnboarding pre-fires this stream
+  // while the student is still reading the confirmation screen — several
+  // events land before StartStudyModal exists. Late subscribers get the
+  // backlog replayed, then live updates.
+  const handle = {
+    planPromise,
+    abort: () => controller.abort(),
+    thinking: thinkingLog,
+    thinkingListeners,
+  };
   _inFlightStudyJourneys.set(chat_id, handle);
 
   // Drop the in-flight entry once the stream is done. Use planPromise as the

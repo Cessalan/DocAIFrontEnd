@@ -1140,6 +1140,14 @@ const resources = {
 
         // StartStudyModal — plan preview pane (after onboarding confirm)
         planReadyTitle: "Your path is ready",
+        thinkTopics: "Read your material — found {{count}} topics",
+        thinkSprintToday: "Your exam is today — cutting straight to what you need",
+        thinkSprintTomorrow: "Your exam is tomorrow — skipping new material",
+        thinkSprintSoon: "Only {{days}} days left — skipping new material",
+        thinkFocus: "{{days}} days until your exam — prioritising your weak spots",
+        thinkMaster: "Plenty of time — building full coverage",
+        thinkHardest: "Putting {{topics}} first — you said it's the hardest",
+        thinkBuilding: "Building your steps…",
         planSprintToday: "Your exam is today — here's the plan",
         planSprintTomorrow: "Your exam is tomorrow — here's the plan",
         planSprintSoon: "Your exam is in {{days}} days — here's the plan",
@@ -2828,6 +2836,14 @@ const resources = {
 
         // StartStudyModal — plan preview pane (after onboarding confirm)
         planReadyTitle: "Ton parcours est prêt",
+        thinkTopics: "J'ai lu ta matière — {{count}} sujets trouvés",
+        thinkSprintToday: "Ton examen est aujourd'hui — on va droit à l'essentiel",
+        thinkSprintTomorrow: "Ton examen est demain — on saute la nouvelle matière",
+        thinkSprintSoon: "Plus que {{days}} jours — on saute la nouvelle matière",
+        thinkFocus: "{{days}} jours avant ton examen — on cible tes points faibles",
+        thinkMaster: "Tu as le temps — couverture complète",
+        thinkHardest: "{{topics}} en premier — tu as dit que c'est le plus difficile",
+        thinkBuilding: "Construction de tes étapes…",
         planSprintToday: "Ton examen est aujourd'hui — voici le plan",
         planSprintTomorrow: "Ton examen est demain — voici le plan",
         planSprintSoon: "Ton examen est dans {{days}} jours — voici le plan",
