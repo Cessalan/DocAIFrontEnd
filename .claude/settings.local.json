@@ -51,7 +51,8 @@
       "PowerShell($c = Get-NetTCPConnection -LocalPort 8001 -State Listen -ErrorAction SilentlyContinue | Select-Object -First 1; if \\($c\\) { Stop-Process -Id $c.OwningProcess -Force -Confirm:$false; \"test server stopped\" })",
       "PowerShell(& \"c:\\\\Users\\\\Billion\\\\Desktop\\\\NQBackEnd\\\\NQBackEnd2\\\\venv\\\\Scripts\\\\python.exe\" \"C:\\\\Users\\\\Billion\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\c--Users-Billion-Desktop-ragfrontend\\\\b3e9d32e-e5f9-4315-bdd4-552718947ac1\\\\scratchpad\\\\test_prompt_block.py\")",
       "Bash(PYTHONUTF8=1 venv/Scripts/python.exe \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/407fa04e-6bc6-43c0-a325-b4db6c89c113/scratchpad/paywall_exposure.py\")",
-      "Bash(PYTHONUTF8=1 venv/Scripts/python.exe \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/407fa04e-6bc6-43c0-a325-b4db6c89c113/scratchpad/charging_check.py\")"
+      "Bash(PYTHONUTF8=1 venv/Scripts/python.exe \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/407fa04e-6bc6-43c0-a325-b4db6c89c113/scratchpad/charging_check.py\")",
+      "PowerShell(Get-CimInstance Win32_Process -Filter \"Name='node.exe'\" | Where-Object { $_.CommandLine -match 'static-server' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }; Write-Output \"server stopped\")"
     ],
     "deny": [],
     "ask": [],

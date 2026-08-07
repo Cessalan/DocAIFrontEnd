@@ -61,14 +61,14 @@ body.dark-mode .feedback-cta:hover {
   animation: fadeIn 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+/* Opacity only — see the note in ChatStudySheet.css. The overlay keeps its
+   static blur; animating backdrop-filter re-filtered the backdrop each frame. */
 @keyframes fadeIn {
   from {
     opacity: 0;
-    backdrop-filter: blur(0px);
   }
   to {
     opacity: 1;
-    backdrop-filter: blur(8px);
   }
 }
 

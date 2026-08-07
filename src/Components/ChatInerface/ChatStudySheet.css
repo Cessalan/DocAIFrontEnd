@@ -156,14 +156,18 @@
   }
 }
 
+/* Opacity only. The overlay already sets a static backdrop-filter: blur(8px),
+   so animating the blur re-filtered the whole backdrop every frame to reach a
+   value it would have had anyway.
+   Note: @keyframes are global, and ~15 files each declare a "fadeIn". Keeping
+   this one to a plain opacity fade makes them all equivalent, so it no longer
+   matters which stylesheet loads last. */
 @keyframes fadeIn {
-  from { 
+  from {
     opacity: 0;
-    backdrop-filter: blur(0px);
   }
-  to { 
+  to {
     opacity: 1;
-    backdrop-filter: blur(8px);
   }
 }
 
@@ -173,8 +177,6 @@
   max-width: 1200px;
   max-height: 100vh;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-radius: 0;
   position: relative;
   overflow: hidden;

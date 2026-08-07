@@ -34,7 +34,24 @@
       "Bash(PYTHONUTF8=1 venv/Scripts/python.exe \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/407fa04e-6bc6-43c0-a325-b4db6c89c113/scratchpad/multiplan.py\")",
       "Bash(PYTHONUTF8=1 venv/Scripts/python.exe \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/407fa04e-6bc6-43c0-a325-b4db6c89c113/scratchpad/habits.py\")",
       "Bash(PYTHONUTF8=1 venv/Scripts/python.exe \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/407fa04e-6bc6-43c0-a325-b4db6c89c113/scratchpad/flashcard_verdict.py\")",
-      "Bash(python -)"
+      "Bash(python -)",
+      "Bash(npx react-scripts *)",
+      "Bash(tee /tmp/build2.log)",
+      "Bash(grep -v \"Browserslist\\\\|caniuse-lite\\\\|update-db\\\\|^$\")",
+      "Bash(node -e \"try{const p=require\\('puppeteer'\\);console.log\\('puppeteer OK'\\);}catch\\(e\\){console.log\\('no puppeteer:',e.code\\)}\")",
+      "Bash(npx serve *)",
+      "Bash(curl -s -o /dev/null -w \"server status: %{http_code}\\\\n\" http://localhost:4173/)",
+      "Bash(cat /tmp/serve.log 2>/dev/null | head -20)",
+      "Read(//tmp/**)",
+      "Bash(node C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/611276a5-b00a-4ed4-8f4b-248385c90a10/scratchpad/static-server.js c:/Users/Billion/Desktop/ragfrontend/build 4173)",
+      "Bash(curl -s -o /dev/null -w \"status: %{http_code}\\\\n\" http://localhost:4173/)",
+      "Bash(node \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/611276a5-b00a-4ed4-8f4b-248385c90a10/scratchpad/smoke.js\")",
+      "Bash(NODE_PATH=\"c:/Users/Billion/Desktop/ragfrontend/node_modules\" node \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/611276a5-b00a-4ed4-8f4b-248385c90a10/scratchpad/smoke.js\")",
+      "Bash(node -e \"const p=require\\('puppeteer'\\);console.log\\('puppeteer pkg:', require\\('puppeteer/package.json'\\).version\\)\")",
+      "Bash(export NODE_PATH=\"c:/Users/Billion/Desktop/ragfrontend/node_modules\")",
+      "Bash(export CHROME_PATH=\"C:/Program Files \\(x86\\)/Google/Chrome/Application/chrome.exe\")",
+      "Bash(awk ' *)",
+      "Bash(node \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/611276a5-b00a-4ed4-8f4b-248385c90a10/scratchpad/scan-blur.js\" src/Components/ChatInerface/ChatInterface.css)"
     ]
   }
 }

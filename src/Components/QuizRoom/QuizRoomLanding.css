@@ -296,8 +296,6 @@
 
   /* Warm paper card styling */
   background: rgba(255, 254, 249, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(232, 141, 125, 0.15);
   border-radius: 20px 24px 22px 18px; /* Organic shape */
   box-shadow:

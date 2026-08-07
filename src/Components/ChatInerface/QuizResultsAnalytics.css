@@ -9,8 +9,6 @@
   padding: 2rem;
   border-radius: 16px;
   background: rgba(255, 255, 255, 0.95);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(107, 70, 193, 0.1);
   box-shadow: 0 8px 32px rgba(107, 70, 193, 0.12);
   animation: resultsSlideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);

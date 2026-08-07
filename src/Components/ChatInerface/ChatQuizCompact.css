@@ -938,15 +938,16 @@ body:not(.dark-mode) .quiz-compact-option.incorrect .option-text {
   perspective: 1500px;
 }
 
+/* Only opacity is animated. The overlay already carries a static
+   backdrop-filter: blur(4px); animating the blur as well re-filtered the entire
+   backdrop on every frame of the transition for no visible benefit. */
 @keyframes modalOverlayFadeIn {
   from {
     opacity: 0;
-    backdrop-filter: blur(0px);
   }
 
   to {
     opacity: 1;
-    backdrop-filter: blur(4px);
   }
 }
 
@@ -958,19 +959,16 @@ body:not(.dark-mode) .quiz-compact-option.incorrect .option-text {
 @keyframes modalOverlayFadeOut {
   from {
     opacity: 1;
-    backdrop-filter: blur(4px);
   }
 
   to {
     opacity: 0;
-    backdrop-filter: blur(0px);
   }
 }
 
 .quiz-modal-content {
+  /* 98% opaque — a 20px blur behind it was never visible. */
   background: rgba(254, 250, 255, 0.98);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
   border-radius: 20px;
   padding: 32px 40px;
   max-width: 900px;

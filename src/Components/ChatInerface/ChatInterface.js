@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo, Suspense, lazy } from 'react';
 import { Navigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -20,10 +20,11 @@ import {
 
 // Components
 import ChatMessage from './ChatMessage';
+import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
 import FirstUploadWowCard from './FirstUploadWowCard';
-import FileViewerModal from './FileViewerModal';
+// FileViewerModal is lazy-loaded — see the code-splitting block below the imports.
 import PlanOnboarding from './PlanOnboarding';
 import QuizModeSelector from './QuizModeSelector';
 
@@ -87,7 +88,7 @@ import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
 import StudyGuideGenerator from './StudyGuideGenerator.js';
 import StudySheetLivePreview from './StudySheetLivePreview.js';
-import StudySheetSimple from './StudySheetSimple.js';
+// StudySheetSimple is lazy-loaded — see the code-splitting block below the imports.
 import StickyQuizProgress from './StickyQuizProgress';
 // DISABLED: Suggested prompts feature - see comment where component was rendered
 // import SuggestedPrompts from './SuggestedPrompts';
@@ -108,15 +109,14 @@ import ExamCountdown from '../Common/ExamCountdown';
 // Welcome-back toast (tab-return acknowledgement)
 import WelcomeBackToast from './WelcomeBackToast';
 
-// Mindmap
-import ChatMindmap from './ChatMindmap';
+// Mindmap — ChatMindmap is lazy-loaded, see the code-splitting block below the imports.
 
 // Web sources panel (rendered when a quiz is grounded in web-search results)
 import WebSourcesPanel from './WebSourcesPanel';
 
 // Study Mode
 import StartStudyModal from '../StudyMode/StartStudyModal';
-import StudyModeContainer from '../StudyMode/StudyModeContainer';
+// StudyModeContainer is lazy-loaded — see the code-splitting block below the imports.
 
 // Class recording — opens the overlay attached to the current chat so the
 // transcript embeds into this chat's vectorstore instead of creating a new one.
@@ -124,6 +124,56 @@ import { useRecordClass, RECORDING_FILES_REFRESH_EVENT } from '../RecordClass/Re
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
 import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
+
+// ============================================
+// CODE SPLITTING
+// ============================================
+// These four surfaces carry the app's heaviest dependencies and none of them
+// are on the path a user takes to read or send a message. Loading them on
+// demand keeps pdfjs, reactflow, html2pdf and the study-mode stylesheet out
+// of the chunk that has to arrive before the chat is usable.
+// ============================================
+
+// react-pdf + pdfjs-dist — the single largest dependency. Opens on file preview.
+const FileViewerModal = lazy(() => import('./FileViewerModal'));
+// html2pdf.js, for study-sheet export. Only for 'studysheet' messages.
+const StudySheetSimple = lazy(() => import('./StudySheetSimple.js'));
+// reactflow + its stylesheet. Only for 'mindmap' messages.
+const ChatMindmap = lazy(() => import('./ChatMindmap'));
+// Full-screen study surface: its own large stylesheet, plus reactflow via
+// StudyMindmapCard. Entered deliberately, so a chunk fetch costs nothing here.
+const StudyModeContainer = lazy(() => import('../StudyMode/StudyModeContainer'));
+
+/**
+ * Full-screen placeholder shown while the study-mode chunk downloads.
+ * Self-contained styles: StudyMode.css lives in that same chunk, so it isn't
+ * available yet at the moment this renders.
+ */
+const StudyModeFallback = () => (
+  <div
+    style={{
+      position: 'fixed',
+      inset: 0,
+      zIndex: 1000,
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: 'var(--bg-primary, #fdfaf7)'
+    }}
+  >
+    <div
+      style={{
+        width: 36,
+        height: 36,
+        borderRadius: '50%',
+        border: '3px solid var(--primary-peach, #f8c8c4)',
+        borderTopColor: 'var(--primary-coral, #e88d7d)',
+        animation: 'nq-route-spin 0.7s linear infinite'
+      }}
+    />
+    <style>{'@keyframes nq-route-spin{to{transform:rotate(360deg)}}'}</style>
+  </div>
+);
 
 /**
  * ChatInterface Component - A messenger-like interface for AI chat
@@ -4312,6 +4362,7 @@ const ChatInterface = ({
           studyState.chatId match ensures we never mount with a mismatched chat
           (e.g. mid-switch, when studyState belongs to the previous chat). */}
       {isStudyMode && studyState && studyState.chatId === currentChatID && (
+        <Suspense fallback={<StudyModeFallback />}>
         <StudyModeContainer
           key={currentChatID}
           chatId={currentChatID}
@@ -4339,6 +4390,7 @@ const ChatInterface = ({
           }}
           language={i18n?.language || 'en'}
         />
+        </Suspense>
       )}
 
       {/* Regular Chat Interface - Hidden when in study mode */}
@@ -4901,13 +4953,15 @@ const ChatInterface = ({
                 return (
                   <div key={message.id} className="message ai-message study-sheet-message">
                     <div className="message-content">
-                      <StudySheetSimple
-                        topic={message.topic}
-                        content={message.content}
-                        isStreaming={message.isStreaming}
-                        error={message.error}
-                        inline={true}
-                      />
+                      <Suspense fallback={<GhostLoader type="studysheet" />}>
+                        <StudySheetSimple
+                          topic={message.topic}
+                          content={message.content}
+                          isStreaming={message.isStreaming}
+                          error={message.error}
+                          inline={true}
+                        />
+                      </Suspense>
                     </div>
                   </div>
                 );
@@ -5003,11 +5057,13 @@ const ChatInterface = ({
                 return (
                   <div key={message.id} className="message ai-message mindmap-message">
                     <div className="message-content">
-                      <ChatMindmap
-                        mindmapData={message.mindmapData}
-                        isLoading={message.isStreaming}
-                        topic={message.content}
-                      />
+                      <Suspense fallback={<GhostLoader type="message" />}>
+                        <ChatMindmap
+                          mindmapData={message.mindmapData}
+                          isLoading={message.isStreaming}
+                          topic={message.content}
+                        />
+                      </Suspense>
                     </div>
                   </div>
                 );
@@ -5498,10 +5554,12 @@ const ChatInterface = ({
         }
 
         {viewerFile && (
-          <FileViewerModal
-            file={viewerFile}
-            onClose={() => setViewerFile(null)}
-          />
+          <Suspense fallback={null}>
+            <FileViewerModal
+              file={viewerFile}
+              onClose={() => setViewerFile(null)}
+            />
+          </Suspense>
         )}
       </div >
     </div >
