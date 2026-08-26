@@ -14,7 +14,12 @@ const ChatAudioPlayer = ({
   duration,
   script,
   isGenerating = false,
-  generatingMessage = ''
+  generatingMessage = '',
+  // Fired once, the first time playback actually starts. "Was it played?" is
+  // a far stronger engagement signal than "was it on screen", and this player
+  // is shared with StudyAudioCard, so one callback instruments both surfaces.
+  // Optional — callers that don't care simply omit it.
+  onFirstPlay
 }) => {
   const { t } = useTranslation();
   const audioRef = useRef(null);
@@ -22,6 +27,8 @@ const ChatAudioPlayer = ({
   const audioContextRef = useRef(null);
   const animationRef = useRef(null);
   const sourceRef = useRef(null);
+
+  const hasPlayedRef = useRef(false);
 
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -104,6 +111,16 @@ const ChatAudioPlayer = ({
       }
       await audioRef.current.play();
       animateWaveform();
+
+      // Telemetry, best-effort: never let a reporting failure stop playback.
+      if (!hasPlayedRef.current) {
+        hasPlayedRef.current = true;
+        try {
+          if (onFirstPlay) onFirstPlay();
+        } catch (e) {
+          /* ignore */
+        }
+      }
     }
     setIsPlaying(!isPlaying);
   };

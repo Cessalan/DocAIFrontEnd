@@ -21,6 +21,9 @@ import './PostUploadActions.css';
  * @param {object[]} actions - Array of action buttons to display
  *   Each action: { id: 'quiz', label: 'Quiz me on these topics', icon: '🧪' }
  * @param {boolean} showActions - Whether to show action buttons (hides after click)
+ * @param {string} selectedActionId - Which action the student chose. Once set,
+ *   the menu stays on screen: the chosen chip is marked and the others go
+ *   quiet, so the history shows what was picked instead of a blank gap.
  * @param {function} onAction - Callback when user clicks an action button
  */
 const PostUploadActions = ({
@@ -30,6 +33,7 @@ const PostUploadActions = ({
   actions = [],
   showActions = true,
   disabled = false,
+  selectedActionId = null,
   onAction
 }) => {
   const { t } = useTranslation();
@@ -37,6 +41,7 @@ const PostUploadActions = ({
   // Map action IDs to i18n translation keys
   const getLocalizedLabel = (actionId, fallbackLabel) => {
     const labelKeys = {
+      checkme: 'postUpload.checkmeLabel',
       quiz: 'postUpload.quizLabel',
       flashcards: 'postUpload.flashcardsLabel',
       studysheet: 'postUpload.studysheetLabel',
@@ -51,6 +56,14 @@ const PostUploadActions = ({
   // SVG icons for each action type (matching QuizRoomLanding)
   const getActionIcon = (actionId) => {
     switch (actionId) {
+      case 'checkme':
+        // Speech bubble with a check — "say it back, I'll confirm it"
+        return (
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M21 12a8 8 0 01-8 8H8l-4 3v-5.2A8 8 0 0113 4a8 8 0 018 8z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round"/>
+            <path d="M9 12l2.5 2.5L16 10" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+        );
       case 'quiz':
         return (
           <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -134,21 +147,44 @@ const PostUploadActions = ({
           Matches QuizRoomLanding sticky-note aesthetic
           ----------------------------------------- */}
       {showActions && actions.length > 0 && (
-        <div className={`post-upload-actions ${disabled ? 'actions-disabled' : ''}`}>
-          {actions.map((action) => (
-            <button
-              key={action.id}
-              className={`post-upload-action-btn action-${action.id} ${disabled ? 'btn-disabled' : ''}`}
-              onClick={() => !disabled && onAction && onAction(action.id)}
-              disabled={disabled}
-              type="button"
-            >
-              <span className="action-icon-circle">
-                {getActionIcon(action.id)}
-              </span>
-              <span className="action-label">{getLocalizedLabel(action.id, action.label)}</span>
-            </button>
-          ))}
+        <div
+          className={`post-upload-actions ${disabled ? 'actions-disabled' : ''} ${selectedActionId ? 'actions-resolved' : ''}`}
+        >
+          {actions.map((action) => {
+            const isChosen = selectedActionId === action.id;
+            const isPassedOver = Boolean(selectedActionId) && !isChosen;
+            // Once a choice is made every chip is inert — re-clicking the
+            // chosen one would fire the action a second time.
+            const isDisabled = disabled || Boolean(selectedActionId);
+
+            return (
+              <button
+                key={action.id}
+                className={[
+                  'post-upload-action-btn',
+                  `action-${action.id}`,
+                  disabled ? 'btn-disabled' : '',
+                  isChosen ? 'btn-chosen' : '',
+                  isPassedOver ? 'btn-passed-over' : ''
+                ].filter(Boolean).join(' ')}
+                onClick={() => !isDisabled && onAction && onAction(action.id)}
+                disabled={isDisabled}
+                aria-pressed={selectedActionId ? isChosen : undefined}
+                type="button"
+              >
+                <span className="action-icon-circle">
+                  {isChosen ? (
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M5 12.5L10 17.5L19 7" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  ) : (
+                    getActionIcon(action.id)
+                  )}
+                </span>
+                <span className="action-label">{getLocalizedLabel(action.id, action.label)}</span>
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

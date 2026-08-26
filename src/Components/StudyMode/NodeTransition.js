@@ -1,6 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getStepTopicLabel } from './planFormatting';
+import { buildNodeReadout } from './nodeReadout';
+import { get_node_debrief } from '../../Services/FastAPICalls';
 import {
   isReminderSupported,
   getReminderState,
@@ -44,14 +46,17 @@ const NodeTransition = ({
   onPracticeMore,    // (remediationNode) => insert & go to remediation node
   onCustomRequest,   // (userText) => open custom request flow
   onExit,            // () => exit study mode entirely
+  isAdvancing,       // Whether "continue" is in flight (advance + next node load)
   isLoadingPractice, // Whether "Practice More" is generating
   isLoadingCustom,   // Whether custom request is being interpreted
   customEcho,        // { message: "I'll create...", node: {...} } from backend
   onConfirmCustom,   // () => confirm the echoed custom node
   onCancelCustom,    // () => cancel the custom request
   onAnalytics,       // (event, payload) => fire analytics (no-op safe)
+  onTestTheory,      // (skill) => insert a single question built around the pattern
+  priorPerformance,  // studyPerformance snapshot taken BEFORE this node started
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customText, setCustomText] = useState('');
   // Farewell card shown after the user taps "Save progress & return tomorrow".
@@ -223,53 +228,149 @@ const NodeTransition = ({
     && readinessDelta > 0
     && (bucket === 'mastered' || bucket === 'solid');
 
-  // Identity-based copy — header, identity line, score-line tail
-  const identity = useMemo(() => {
-    if (!result?.scored || !bucket) return null;
+  /* Raw score for the header row. Everything the screen SAYS about that score
+     — the headline, the caption under it, and what to do next — is built in
+     nodeReadout from the same inputs, so a change of voice never drifts out of
+     sync with a change of recommendation. */
+  const score = useMemo(() => {
+    if (!result?.scored) return null;
+    return {
+      total: result.total,
+      got: result.type === 'flashcard' ? result.mastered : result.correct,
+    };
+  }, [result]);
 
-    const topic = truncateTopic(result.topic);
-    const total = result.total;
-    const got   = result.type === 'flashcard' ? result.mastered : result.correct;
-    const miss  = result.type === 'flashcard' ? result.needReview : result.incorrect;
+  /* ── Generated debrief ────────────────────────────────────────────────
+     What went right, what went wrong, what to work on — written against the
+     actual questions she just answered, not a template.
 
-    // Header — varies by bucket only
-    const header = bucket === 'mastered' ? t('transition.headerMastered', 'Knowledge locked in')
-                 : bucket === 'solid'    ? t('transition.headerSolid', 'Solid session')
-                 : bucket === 'gaps'     ? t('transition.headerGaps', 'Working the hard stuff')
-                 :                          t('transition.headerTough', 'Tough one — you showed up');
+     Fired here because this is the moment of maximum receptivity: she has
+     just felt the misses and has not yet decided what to do next. The call
+     is best-effort and never blocks — the transition renders immediately and
+     the section slots in when it arrives, or stays absent if it doesn't.
 
-    // Identity line — varies by bucket × content type
-    let line;
-    if (bucket === 'mastered') {
-      line = result.type === 'flashcard'
-        ? t('transition.identityMasteredFc', { topic, defaultValue: "You're building mastery on {{topic}}." })
-        : t('transition.identityMastered', { topic, defaultValue: "You're building mastery on {{topic}}." });
-    } else if (bucket === 'solid') {
-      line = result.type === 'flashcard'
-        ? t('transition.identitySolidFc', { topic, defaultValue: "You're sharpening your recall on {{topic}}." })
-        : t('transition.identitySolid', { topic, defaultValue: "You're sharpening your reasoning on {{topic}}." });
-    } else if (bucket === 'gaps') {
-      line = t('transition.identityGaps', { topic, defaultValue: "You're closing gaps on {{topic}}." });
-    } else {
-      line = t('transition.identityTough', { defaultValue: "You're tackling the part most students avoid." });
+     Quiz and exam only. The headline finding this produces is a FORMAT
+     pattern ("the ones you missed were all select-all-that-apply"), which
+     has no meaning for flashcards. */
+  /* Accumulated per-format record for the whole plan. Written per answer by
+     updateStudyPerformance, so it is only populated for sessions answered
+     after that counter shipped — absent simply means no pattern line. */
+  const planFormats = useMemo(() => {
+    const f = performanceData?.formats;
+    if (!f || typeof f !== 'object') return [];
+    return Object.entries(f).map(([type, b]) => ({
+      type,
+      correct: b?.correct || 0,
+      total: b?.total || 0,
+    }));
+  }, [performanceData]);
+
+  /* When the node just completed is the one-question experiment, the payoff
+     is confirming the theory rather than running a fresh diagnosis. Tagged at
+     insertion so this survives a reload — nothing is held in memory. */
+  const experimentSkill = useMemo(() => {
+    const tags = node?.tags || [];
+    const tag = tags.find((x) => typeof x === 'string' && x.startsWith('experiment:'));
+    return tag ? tag.slice('experiment:'.length) : null;
+  }, [node]);
+
+  const experimentConfirmed = !!experimentSkill
+    && !!result?.scored
+    && result.total > 0
+    && result.correct === result.total;
+
+  const [debrief, setDebrief] = useState(null);
+  const [debriefLoading, setDebriefLoading] = useState(false);
+
+  const daysUntilExam = useMemo(() => {
+    if (!examDate) return null;
+    const ms = new Date(examDate).getTime();
+    if (Number.isNaN(ms)) return null;
+    const days = Math.ceil((ms - Date.now()) / 86400000);
+    return days >= 0 ? days : null;
+  }, [examDate]);
+
+  useEffect(() => {
+    if (!result?.scored) return undefined;
+    if (result.type !== 'quiz' && result.type !== 'exam') return undefined;
+    // The experiment node has its own payoff copy; re-diagnosing a single
+    // question would also never clear the evidence bar anyway.
+    if (experimentConfirmed) {
+      setDebrief({ hasPattern: false, stillLooking: '' });
+      return undefined;
     }
 
-    // Score-line tail — extra context after "{n} of {total}."
-    let tail = '';
-    if (bucket === 'solid' && miss > 0) {
-      tail = t('transition.tailSolid', { count: miss, defaultValue: '{{count}} to firm up.' });
-    } else if (bucket === 'gaps') {
-      tail = t('transition.tailGaps', { count: miss, defaultValue: '{{count}} concepts to revisit.' });
-    } else if (bucket === 'tough') {
-      tail = t('transition.tailTough', { topic, defaultValue: '{{topic}} is worth another pass.' });
-    }
+    const questions = content?.questions;
+    if (!Array.isArray(questions) || !questions.length) return undefined;
 
-    return { header, line, total, got, tail };
-  }, [result, bucket, t]);
+    /* Quizzes and exams record correctness in different shapes — quizzes in
+       a status map keyed by index, exams in `answers` with an isCorrect flag.
+       Reading only the quiz shape silently skipped every exam, which are the
+       nodes that actually mix formats and so produce the most useful debrief. */
+    const statuses = quizProgress?.firstAttemptStatuses || quizProgress?.questionStatuses;
+    const answers = quizProgress?.answers;
+    if (!statuses && !answers) return undefined;
+
+    const wasCorrect = (i) => (answers ? !!answers[i]?.isCorrect : statuses[i] === 'correct');
+    // Only score what she actually reached; an abandoned exam would otherwise
+    // report every unseen question as a miss.
+    const wasAnswered = (i) => (answers ? answers[i] != null : statuses[i] != null);
+
+    const items = questions
+      .map((q, i) => ({
+        question: String(q?.question || '').slice(0, 400),
+        correct: wasCorrect(i),
+        answered: wasAnswered(i),
+        question_type: q?.questionType || q?.metadata?.questionType || 'mcq',
+        // Generators disagree on the field name; the debrief reads whichever
+        // is populated so it can explain the miss rather than just name it.
+        rationale: String(q?.justification || q?.rationale || q?.correctBlurb || '').slice(0, 600),
+      }))
+      .filter((it) => it.question && it.answered)
+      .map(({ answered, ...it }) => it);
+
+    if (!items.length) return undefined;
+
+    let alive = true;
+    setDebriefLoading(true);
+    (async () => {
+      const res = await get_node_debrief(
+        chatId,
+        {
+          topic: result.topic,
+          node_type: result.type,
+          score_percent: result.scorePercent,
+          items,
+          days_until_exam: daysUntilExam,
+          // Plan-wide per-format record, already in hand via performanceData —
+          // no extra read. Lets the debrief say "this keeps happening" rather
+          // than judging one node in isolation.
+          plan_formats: planFormats,
+        },
+        i18n?.language || 'en'
+      );
+      if (alive) {
+        setDebrief(res);
+        setDebriefLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [result, content, quizProgress, chatId, daysUntilExam, planFormats, experimentConfirmed, i18n]);
 
   // ── Build diagnosis message ─────────────────────────────────────────
   const diagnosis = useMemo(() => {
     if (!result) return '';
+
+    // A scored type can land here unscored when its progress snapshot is
+    // missing (e.g. an exam whose answers never made it into quizProgress).
+    // The score templates would then interpolate nothing and render
+    // "of on the … exam." — say something true and plain instead.
+    if (!result.scored && (result.type === 'quiz' || result.type === 'exam' || result.type === 'flashcard')) {
+      return t('transition.sessionDone', {
+        topic: result.topic,
+        defaultValue: `You finished ${result.topic}.`
+      });
+    }
 
     if (result.type === 'quiz') {
       if (result.scorePercent >= 90) {
@@ -440,6 +541,27 @@ const NodeTransition = ({
       defaultValue: `A focused practice session could help lock these in.`
     });
   }, [result, nextNode, t]);
+
+  /* ── The readout ──────────────────────────────────────────────────────
+     Headline, score caption and the recommendation, all built together from
+     one set of inputs. Built together on purpose: the recommendation's copy
+     claims to follow from the insight above it, so the two cannot be allowed
+     to come from different places and disagree. */
+  const readout = useMemo(() => {
+    if (!result?.scored) return null;
+    return buildNodeReadout({
+      result,
+      bucket,
+      debrief,
+      experimentConfirmed,
+      nextNode,
+      priorPerformance,
+      canTestTheory: !!onTestTheory,
+      node,
+      estimateMinutes: getEstimate,
+      t,
+    });
+  }, [result, bucket, debrief, experimentConfirmed, nextNode, priorPerformance, onTestTheory, node, t]);
 
   // ── Determine remediation node type based on severity ───────────────
   const remediationType = useMemo(() => {
@@ -646,20 +768,34 @@ const NodeTransition = ({
             );
           })()}
 
-          {/* Continue */}
+          {/* Continue — advancing takes a couple of network round trips before
+              the next node's content appears, so the button has to say so.
+              Silence here reads as a broken button and gets tapped again. */}
           <button
             className="node-transition__btn node-transition__btn--choice"
             onClick={onContinue}
+            disabled={isAdvancing}
           >
-            <span className="node-transition__btn-label">
-              {nextNode
-                ? t('transition.moveOn', { topic: nextNode.label, defaultValue: `Move on to ${nextNode.label}` })
-                : t('transition.continue', 'Continue')}
-            </span>
-            {nextNode && (
-              <span className="node-transition__btn-preview">
-                {t(`study.nodeType.${nextNode.type}`, nextNode.type)} · ~{getEstimate(nextNode.type)} min
-              </span>
+            {isAdvancing ? (
+              <>
+                <div className="node-transition__spinner" />
+                <span className="node-transition__btn-label">
+                  {t('transition.loadingNext', 'Loading your next step…')}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="node-transition__btn-label">
+                  {nextNode
+                    ? t('transition.moveOn', { topic: nextNode.label, defaultValue: `Move on to ${nextNode.label}` })
+                    : t('transition.continue', 'Continue')}
+                </span>
+                {nextNode && (
+                  <span className="node-transition__btn-preview">
+                    {t(`study.nodeType.${nextNode.type}`, nextNode.type)} · ~{getEstimate(nextNode.type)} min
+                  </span>
+                )}
+              </>
             )}
           </button>
 
@@ -668,7 +804,7 @@ const NodeTransition = ({
             className="node-transition__customize-link"
             onClick={() => setShowCustomInput(!showCustomInput)}
           >
-            {t('transition.orCustomize', 'Or tell the coach what you want')}
+            {t('transition.askFor', 'Ask for something else')}
           </button>
 
           {/* Custom input (expandable) */}
@@ -717,28 +853,56 @@ const NodeTransition = ({
     );
   }
 
-  // ════════════════════════════════════════════════════════════════════
-  // SCORED VARIANT — identity-based, single primary CTA, recap seed.
-  // Designed to feel like a checkpoint, not a finale: keeps high-momentum
-  // users moving while making stopping frictionless and planting a
-  // curiosity seed for return.
-  // ════════════════════════════════════════════════════════════════════
+  // ═════════════════════════════════════════════════════════════════════
+  // SCORED VARIANT — result → insight → recommendation → action.
+  //
+  // The order IS the argument: what happened, what it means, one thing to do
+  // about it. Anything that competes with that order turns the screen back
+  // into a dashboard — a second button of equal weight, a product feature
+  // announcing itself, a label like "YOUR NEXT STEP IS" over a button that
+  // says the same thing every time.
+  // ═════════════════════════════════════════════════════════════════════
 
-  // Primary CTA — falls back to a remediation drill when no next node exists
-  const hasNextStep = !!nextNode;
-  const primaryLabel = hasNextStep
-    ? t('transition.keepGoing', 'Keep going →')
-    : t('transition.morePractice', 'More questions on this topic');
-  const primarySublabel = hasNextStep
-    ? `${truncateTopic(nextNode.label, 36)} · ~${getEstimate(nextNode.type)} min`
-    : `${t('study.nodeType.quiz', 'Quiz')} · ~${getEstimate('quiz')} min`;
-  const handlePrimary = () => {
-    onAnalytics?.('keep_going_clicked', {
+  const recommendation = readout?.recommendation;
+
+  /* The one primary action. Where it goes is decided by what the insight just
+     claimed, not by the score — that dependency is the whole point, so it is
+     resolved from the recommendation and nowhere else. */
+  const handleRecommendation = () => {
+    if (!recommendation) return;
+    onAnalytics?.('transition_recommendation_clicked', {
+      kind: recommendation.kind,
+      tone: readout?.tone,
       score_bucket: bucket,
-      next_step_exists: hasNextStep,
+      skill: debrief?.skill || null,
     });
-    if (hasNextStep) onContinue();
-    else handlePracticeMore();
+    if (recommendation.testSkill && onTestTheory) {
+      onTestTheory(recommendation.testSkill);
+      return;
+    }
+    if (recommendation.node) {
+      onPracticeMore(recommendation.node);
+      return;
+    }
+    onContinue();
+  };
+
+  /* Secondary: lock in what she just covered. A flashcard pass over the SAME
+     node, never anything new — it is the retention move, not a second
+     recommendation, and must not read as a choice between two things the
+     tutor wants. Hidden when the recommendation is already a re-teach, which
+     would put the same offer on screen twice. */
+  const showRecap = !!recommendation && recommendation.kind !== 'walkthrough';
+  const handleRecap = () => {
+    onAnalytics?.('transition_recap_clicked', { score_bucket: bucket });
+    onPracticeMore({
+      type: 'flashcard',
+      label: t('transition.recapLabel', { topic: result.topic, defaultValue: 'Recap: {{topic}}' }),
+      tags: ['adaptive', 'recap', `source:${node?.id || 'unknown'}`],
+      difficulty: node?.difficulty || 1,
+      adaptive: true,
+      reason: t('transition.recapReason', 'Lock in what you just learned'),
+    });
   };
 
   const handleDoneForToday = () => {
@@ -857,72 +1021,199 @@ const NodeTransition = ({
           </button>
         )}
 
-        {/* ── Identity header: small check + bucket-specific heading ── */}
+        {/* ── 1. What happened ──
+             The topic sits above the headline as a quiet label rather than in
+             a sentence of its own: she knows what she just did, she needs one
+             line of orientation, not prose about it. */}
         <div className="nt2-identity">
           <div className={`nt2-identity__check nt2-identity__check--${bucket}`} aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <polyline points="20 6 9 17 4 12" />
             </svg>
           </div>
-          <h2 className="nt2-identity__header">{identity?.header}</h2>
-          <p className="nt2-identity__line" title={result.topic}>{identity?.line}</p>
 
-          {/* Score line — handwritten coral only on the score number */}
+          {result.topic && (
+            <p className="nt3-eyebrow" title={result.topic}>
+              {truncateTopic(getStepTopicLabel(result.topic), 44)}
+            </p>
+          )}
+
+          <h2 className="nt2-identity__header">{readout?.headline}</h2>
+
+          {/* The score supports the caption, not the other way round: the
+              number stays small and the sentence beside it says what it means. */}
           <p className="nt2-score-line">
             <span className="nt2-score-line__score">
-              {identity?.got} <span className="nt2-score-line__of">{t('transition.scoreOf', 'of')}</span> {identity?.total}
+              {score?.got} <span className="nt2-score-line__of">/</span> {score?.total}
             </span>
             <span className="nt2-score-line__sep">·</span>
-            {showReadinessDelta ? (
-              <span className="nt2-score-line__delta">↑ {readinessDelta}% {t('transition.closerToReady', 'closer to ready')}</span>
-            ) : identity?.tail ? (
-              <span className="nt2-score-line__tail">{identity.tail}</span>
-            ) : (
-              <span className="nt2-score-line__tail nt2-score-line__tail--quiet">
-                {t('transition.tailKeepBuilding', 'Keep building.')}
+            <span className="nt2-score-line__tail">{readout?.caption}</span>
+            {showReadinessDelta && (
+              <span className="nt2-score-line__delta">
+                ↑ {readinessDelta}% {t('transition.closerToReady', 'closer to ready')}
               </span>
             )}
           </p>
         </div>
 
-        <div className="nt2-divider" />
+        {/* ── 2. What I noticed ──
+             The most valuable thing on the screen, and the reason the
+             recommendation below is worth taking. Four states, deliberately:
 
-        {/* ── Tomorrow recap seed — the retention anchor ── */}
-        <div className="nt2-recap">
-          <p className="nt2-recap__label">
-            {t('transition.recapReady', 'Your next recap is ready:')}
+               experiment confirmed — she just proved the theory herself
+               pattern found        — the discovery, carrying its evidence
+               still learning       — honest about not knowing yet, and says
+                                      what would change that
+               (loading)            — a skeleton, because an insight that pops
+                                      in late reads as a guess
+
+             A manufactured pattern would be worse than none: it would teach
+             her to discount everything else the product says. The backend
+             decides which state applies; this only renders it. */}
+        {(debriefLoading || debrief) && (
+          <>
+            <div className="nt2-divider" />
+            <div className="nt2-insight">
+              {debriefLoading ? (
+                <div className="nt2-insight__skeleton" aria-live="polite" aria-busy="true">
+                  <span className="nt2-insight__bar nt2-insight__bar--head" />
+                  <span className="nt2-insight__bar" />
+                  <span className="nt2-insight__bar nt2-insight__bar--short" />
+                  <span className="sr-only">
+                    {t('transition.insightLoading', 'Looking at how you answered…')}
+                  </span>
+                </div>
+              ) : experimentConfirmed ? (
+                <div className="nt2-insight__confirm">
+                  <p className="nt2-insight__eureka">
+                    <span aria-hidden="true">🔓</span>{' '}
+                    {t('transition.thatsIt', "That's it.")}
+                  </p>
+                  <p className="nt2-insight__body">
+                    {t('transition.experimentWorked', {
+                      skill: experimentSkill,
+                      defaultValue:
+                        'You slowed down and worked the {{skill}} through before committing. You didn’t learn a new fact just now — you changed how you approached the question.',
+                    })}
+                  </p>
+                </div>
+              ) : debrief.hasPattern ? (
+                <>
+                  <p className="nt2-insight__lead">
+                    <span aria-hidden="true">🧠</span>{' '}
+                    {t('transition.iNoticed', 'I noticed something')}
+                  </p>
+                  <p className="nt2-insight__noticed">{debrief.noticed}</p>
+
+                  {/* Evidence is computed server-side from her actual answers,
+                      never written by the model — the numbers are the reason
+                      this reads as observation rather than flattery. */}
+                  {debrief.evidence?.length > 0 && (
+                    <ul className="nt2-insight__evidence">
+                      {debrief.evidence.map((e, i) => (
+                        <li key={i} className="nt2-insight__stat">{e}</li>
+                      ))}
+                    </ul>
+                  )}
+
+                  <p className="nt2-insight__body">{debrief.pattern}</p>
+                </>
+              ) : (
+                /* Nothing worth claiming yet. Rather than dressing that up as
+                   an insight ("I'm still figuring out your pattern"), say what
+                   is actually being looked for and what would settle it —
+                   which is also the only honest reason to answer one more. */
+                <div className="nt3-learning">
+                  <p className="nt2-insight__lead">
+                    <span aria-hidden="true">🧠</span>{' '}
+                    {t('transition.learningLead', "I'm learning how you think")}
+                  </p>
+                  <p className="nt2-insight__body">
+                    {t('transition.learningBody', {
+                      count: result.total,
+                      defaultValue:
+                        "I've been through all {{count}} of your answers. I'm watching how you approach a question, not just whether you got it right.",
+                    })}
+                  </p>
+                  <p className="nt3-learning__promise">
+                    {debrief.toPattern > 0
+                      ? t('transition.learningPromiseN', {
+                        count: debrief.toPattern,
+                        defaultValue: '{{count}} more of these and I should have something specific for you.',
+                      })
+                      : t('transition.learningPromise',
+                        'A few more questions and I should have something specific for you.')}
+                  </p>
+                </div>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* ── 3. What I'd do next ──
+             Not a navigation control. The title says what she gets, the line
+             under it says why THAT and not something else, and the button says
+             what it will do — all three move with the state above, which is
+             what makes this read as a decision somebody made rather than the
+             next step in a flow. */}
+        <div className="nt2-divider" />
+        <div className="nt3-rec">
+          <p className="nt2-insight__lead">
+            <span aria-hidden="true">🎯</span>{' '}
+            {t('transition.whatIdDo', "Here's what I'd do next")}
           </p>
-          <p className="nt2-recap__detail">
-            <span className="nt2-recap__bolt" aria-hidden="true">⚡</span>
-            {t('transition.recapDetail', '4 min on what you just learned, before you forget it.')}
-          </p>
+          <p className="nt3-rec__title">{recommendation?.title}</p>
+          <p className="nt3-rec__why">{recommendation?.rationale}</p>
+
+          <button
+            className="node-transition__btn node-transition__btn--choice nt2-primary"
+            onClick={handleRecommendation}
+            disabled={isLoadingPractice || isAdvancing}
+          >
+            {isAdvancing ? (
+              <>
+                <div className="node-transition__spinner" />
+                <span className="node-transition__btn-label">
+                  {t('transition.loadingNext', 'Loading your next step…')}
+                </span>
+              </>
+            ) : isLoadingPractice ? (
+              <>
+                <div className="node-transition__spinner" />
+                <span className="node-transition__btn-label">
+                  {t('transition.building', 'Building your practice...')}
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="node-transition__btn-label">{recommendation?.cta}</span>
+                <span className="node-transition__btn-preview">{recommendation?.meta}</span>
+              </>
+            )}
+          </button>
         </div>
 
-        <div className="nt2-divider" />
-
-        {/* ── Your next step — single primary CTA ── */}
-        <p className="nt2-step-label">{t('transition.nextStepIs', 'Your next step is:')}</p>
-        <button
-          className="node-transition__btn node-transition__btn--choice nt2-primary"
-          onClick={handlePrimary}
-          disabled={isLoadingPractice}
-        >
-          {isLoadingPractice ? (
-            <>
-              <div className="node-transition__spinner" />
-              <span className="node-transition__btn-label">
-                {t('transition.building', 'Building your practice...')}
+        {/* ── Secondary: retention, kept visually quiet on purpose ── */}
+        {showRecap && (
+          <button
+            type="button"
+            className="nt3-recap"
+            onClick={handleRecap}
+            disabled={isLoadingPractice || isAdvancing}
+          >
+            <span className="nt3-recap__text">
+              <span className="nt3-recap__label">
+                {t('transition.beforeYouMoveOn', 'Before you move on')}
               </span>
-            </>
-          ) : (
-            <>
-              <span className="node-transition__btn-label">{primaryLabel}</span>
-              <span className="node-transition__btn-preview">{primarySublabel}</span>
-            </>
-          )}
-        </button>
+              <span className="nt3-recap__detail">
+                {t('transition.recapDetailShort', '4 min · lock in what you just learned')}
+              </span>
+            </span>
+            <span className="nt3-recap__cta">{t('transition.review', 'Review →')}</span>
+          </button>
+        )}
 
-        {/* ── Coach link (with chips) — full user control preserved ── */}
+        {/* ── Full control, one line, no invitation to go browsing ── */}
         <button
           className="node-transition__coach-row nt2-coach"
           onClick={() => setShowCustomInput(!showCustomInput)}
@@ -931,7 +1222,7 @@ const NodeTransition = ({
             <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
           </svg>
           <span className="node-transition__coach-label">
-            {t('transition.orCustomize', 'Or tell the coach what you want')}
+            {t('transition.askFor', 'Ask for something else')}
           </span>
           <svg className="node-transition__coach-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
             <polyline points="9 18 15 12 9 6" />
@@ -982,7 +1273,7 @@ const NodeTransition = ({
 
         {/* ── Frictionless exit — small gray text link ── */}
         <button className="nt2-done" onClick={handleDoneForToday}>
-          {t('transition.doneForToday', 'Done for today')}
+          {t('transition.doneForToday', 'Save progress & return tomorrow')}
         </button>
       </div>
     </div>

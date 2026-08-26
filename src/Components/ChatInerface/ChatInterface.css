@@ -1302,24 +1302,42 @@ body.dark-mode .nursing-icon {
     border-top-color: #e5e7eb;
   }
 
-  /* Action row beneath AI messages — hosts Copy + Rewrite */
+  /* Action row beneath AI messages — hosts the thumbs + Copy/Rewrite.
+     Block-level flex (not inline-flex) so the buttons can wrap on narrow
+     viewports rather than overflowing the message.
+
+     The row itself no longer fades. The thumbs are a standing invitation to
+     rate — a control you have to hover to discover is one most people never
+     find, which is the whole reason the quiz 💬 popover collects so little.
+     Copy and Rewrite keep their hover reveal via the inner group below. */
   .message-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    row-gap: 10px;
+    margin-top: 14px;
+  }
+
+  /* Copy + Rewrite: hover-revealed, and ordered AFTER the thumbs so that
+     hiding them leaves no gap — the thumbs stay anchored at the left margin
+     and nothing shifts when the group fades in. */
+  .message-actions-hover-group {
     display: inline-flex;
     align-items: center;
     gap: 8px;
-    margin-top: 14px;
     opacity: 0;
     transition: opacity 0.18s ease;
   }
 
-  .ai-message:hover .message-actions-row,
-  .message-actions-row:focus-within {
+  .ai-message:hover .message-actions-hover-group,
+  .message-actions-row:focus-within .message-actions-hover-group {
     opacity: 1;
   }
 
   /* Touch devices: always visible since hover doesn't apply */
   @media (hover: none) {
-    .message-actions-row {
+    .message-actions-hover-group {
       opacity: 0.85;
     }
   }
@@ -1439,6 +1457,114 @@ body.dark-mode .nursing-icon {
   body.dark-mode .rewrite-spinner {
     border-color: rgba(200, 180, 220, 0.2);
     border-top-color: var(--dark-accent, #b8a5d4);
+  }
+
+  /* ----------------------------------------------------
+     Answer rating — thumbs in the action row
+     ---------------------------------------------------- */
+
+  .message-actions-divider {
+    width: 1px;
+    height: 16px;
+    background: rgba(100, 80, 60, 0.14);
+    margin: 0 2px;
+  }
+
+  .message-rating {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .message-rating-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    background: rgba(255, 255, 255, 0.78);
+    border: 1px solid rgba(100, 80, 60, 0.12);
+    border-radius: 8px;
+    color: var(--text-secondary, #6b6b6b);
+    cursor: pointer;
+    transition: color var(--transition-fast),
+                background var(--transition-fast),
+                border-color var(--transition-fast),
+                transform 0.1s ease;
+  }
+
+  .message-rating-btn:hover {
+    background: #ffffff;
+    border-color: rgba(100, 80, 60, 0.2);
+    color: var(--text-primary, #3d3d3d);
+  }
+
+  .message-rating-btn:active {
+    transform: scale(0.92);
+  }
+
+  .message-rating-btn.is-positive.is-active {
+    color: #16a34a;
+    background: rgba(34, 197, 94, 0.12);
+    border-color: rgba(34, 197, 94, 0.35);
+  }
+
+  .message-rating-btn.is-negative.is-active {
+    color: var(--primary-coral-dark, #c46a5a);
+    background: rgba(232, 141, 125, 0.14);
+    border-color: rgba(232, 141, 125, 0.38);
+  }
+
+  .message-rating-thanks {
+    font-size: 12px;
+    color: var(--text-secondary, #6b6b6b);
+    letter-spacing: 0.1px;
+    animation: ratingFadeIn 0.22s ease;
+  }
+
+  @keyframes ratingFadeIn {
+    from { opacity: 0; transform: translateY(-2px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .message-rating-thanks {
+      animation: none;
+    }
+  }
+
+  /* Dark mode — answer rating */
+  body.dark-mode .message-actions-divider {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  body.dark-mode .message-rating-btn {
+    background: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.6);
+  }
+
+  body.dark-mode .message-rating-btn:hover {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.18);
+    color: rgba(255, 255, 255, 0.92);
+  }
+
+  body.dark-mode .message-rating-btn.is-positive.is-active {
+    color: #4ade80;
+    background: rgba(74, 222, 128, 0.14);
+    border-color: rgba(74, 222, 128, 0.35);
+  }
+
+  body.dark-mode .message-rating-btn.is-negative.is-active {
+    color: var(--dark-accent-light, #d4c8e8);
+    background: rgba(200, 180, 220, 0.14);
+    border-color: rgba(200, 180, 220, 0.4);
+  }
+
+  body.dark-mode .message-rating-thanks {
+    color: rgba(255, 255, 255, 0.6);
   }
 
   /* ----------------------------------------------------

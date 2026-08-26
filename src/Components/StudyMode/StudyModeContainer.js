@@ -10,12 +10,16 @@ import StudyPlanOverview from './StudyPlanOverview';
 import QuizMasterySummary from './QuizMasterySummary';
 import NodeTransition from './NodeTransition';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
+import PerformanceBreakdown from '../Progress/PerformanceBreakdown';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
 import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import ExamConfigModal from './ExamConfigModal';
+import { getStepTopicLabel } from './planFormatting';
+import DevPaywallPill from '../Common/DevPaywallPill';
+import { markMessageEngaged } from '../../Services/FireBaseServiceChats';
 import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam, get_prefetched_node_content, consume_prefetched_node_content } from '../../Services/FastAPICalls';
 import { devLog } from '../../Services/devLogger';
 import {
@@ -32,7 +36,9 @@ import {
   saveMindmapProgress,
   updateStudyPerformance,
   getStudyPerformance,
-  appendPhase2
+  appendPhase2,
+  extendStudyPath,
+  getStudySession
 } from '../../Services/StudySessionService';
 import './StudyMode.css';
 
@@ -111,7 +117,8 @@ const SIDE_MASCOTS = [
 const StudyModeContainer = ({
   chatId,
   studyState,
-  examDate = null, // Hydrated from chat doc; drives the readiness countdown
+  examDate = null, // Hydrated from chat doc; drives the dated plan + countdown
+  examName = null, // Names the exam the plan is for ("Pharmacology Final")
   sidebarOpen = true,
   onCloseSidebar,
   onExit,
@@ -132,6 +139,11 @@ const StudyModeContainer = ({
 
   // State
   const [nodes, setNodes] = useState([]);
+  // Mirror of `nodes` readable from inside async handlers without stale
+  // closures — the transition screen needs the next node object immediately
+  // after advancing, before React has re-rendered.
+  const nodesRef = useRef([]);
+  nodesRef.current = nodes;
   const [activeNodeId, setActiveNodeId] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
   const [currentContent, setCurrentContent] = useState(null);
@@ -177,12 +189,19 @@ const StudyModeContainer = ({
   const [currentPhase, setCurrentPhase] = useState(studyState?.currentPhase || 1);
   const [totalPhases, setTotalPhases] = useState(studyState?.totalPhases || 1);
   const [pathUpdateToast, setPathUpdateToast] = useState(null); // { count: number }
+  // Tracked locally so the block-complete card updates the moment an extend
+  // lands, without waiting for the parent's chat doc to round-trip.
+  const [reserveRemaining, setReserveRemaining] = useState(null);
 
   // Quiz mastery summary (shown after every quiz instead of immediately advancing)
   const [quizSummaryData, setQuizSummaryData] = useState(null);
   // Performance snapshot captured when a scored node starts (to calculate
   // readiness delta on the post-node transition screen)
   const preNodeSnapshotRef = useRef(null);
+  // handleExamStart is defined below handleStartNode, which needs to call it
+  // for pre-configured drills. Held in a ref so the two don't have to be
+  // reordered (and so neither ends up in the other's dependency array).
+  const handleExamStartRef = useRef(null);
   // Latest quiz progress from handleAnswer (to get final score at completion)
   const latestQuizProgressRef = useRef(null);
   // Readiness delta (% closer to ready) for the transition screen.
@@ -200,6 +219,10 @@ const StudyModeContainer = ({
   const [pendingExamNode, setPendingExamNode] = useState(null); // The exam node awaiting config
 
   // ── Node Transition state (post-node decision screen) ──────────────
+  // isAdvancing drives the pending state on the primary CTA; advanceLockRef
+  // blocks re-entry while the advance is in flight (see handleTransitionContinue).
+  const [isAdvancing, setIsAdvancing] = useState(false);
+  const advanceLockRef = useRef(false);
   const [isLoadingPractice, setIsLoadingPractice] = useState(false);
   const [isLoadingCustom, setIsLoadingCustom] = useState(false);
   const [customEcho, setCustomEcho] = useState(null); // { message, node }
@@ -259,7 +282,23 @@ const StudyModeContainer = ({
   const currentStep = completedCount + 1;
   const totalSteps = realNodes.length;
 
-  // Handle starting/loading a node's content
+  // Topic the paywall would name if the user were blocked right now — the node
+  // they're on, else the next unfinished one. Dev preview only (see DevPaywallPill).
+  const paywallTopic = isDev
+    ? getStepTopicLabel(
+        activeNode?.label
+        || realNodes.find(n => n.status !== 'done')?.label
+        || realNodes[0]?.label
+        || ''
+      ) || null
+    : null;
+
+  // Handle starting/loading a node's content.
+  //
+  // Returns a marker when the start did NOT open the node view: 'exam_config'
+  // (config modal opened instead) or 'blocked' (paywall opened, nothing
+  // launched). Callers outside the overview MUST handle both — otherwise the
+  // user is left staring at the screen they clicked from with no reaction.
   const handleStartNode = useCallback(async (node) => {
     console.log('📚 Starting node:', node);
     console.log('📬 Node messageId:', node.messageId || 'NONE - will generate new content');
@@ -270,20 +309,39 @@ const StudyModeContainer = ({
       // Any remaining quota lets the exam through — the charge in
       // handleExamStart may overshoot the cap on purpose (we'd rather let her
       // finish a full mini-test than cut it short; the modal explains this).
-      if (!viewOnly && !requireQuota()) {
+      if (!viewOnly && !requireQuota({ topic: getStepTopicLabel(node.label) })) {
+        return 'blocked';
+      }
+      /* A node that arrives with its own config was built by the post-node
+         recommendation, which already told her what it was going to do and
+         why. Stopping to ask her to choose the format would contradict the
+         copy that got her here, so these launch straight into generation and
+         show the node view's loading state while it runs. */
+      if (node.examConfig && handleExamStartRef.current) {
+        setActiveNode(node);
+        setActiveNodeId(node.id);
+        setCurrentContent(null);
+        setContentError(null);
+        setSavedProgress(null);
+        setIsLoadingContent(true);
+        setView('node');
+        if (onCloseSidebar) onCloseSidebar();
+        setPendingExamNode(node);
+        handleExamStartRef.current(node.examConfig, node);
         return;
       }
+
       setPendingExamNode(node);
       setShowExamConfig(true);
-      return;
+      return 'exam_config';
     }
 
     // Usage throttle: only a brand-new node (no messageId) actually generates
     // and therefore costs a unit. Cached re-visits load saved content for free
     // and aren't gated. Dev viewOnly mode is exempt. Block before any loading
     // UI so a throttled start is a clean no-op (modal opens via requireQuota).
-    if (!node.messageId && !viewOnly && !requireQuota()) {
-      return;
+    if (!node.messageId && !viewOnly && !requireQuota({ topic: getStepTopicLabel(node.label) })) {
+      return 'blocked';
     }
 
     // ── Diagnostic detection ──────────────────────────────────────────
@@ -527,7 +585,7 @@ const StudyModeContainer = ({
         askedHashes,
         language,
         handleStreamProgress,
-        { isDiagnostic }
+        { isDiagnostic, numQuestions: node.num_questions || null }
       );
 
       // Guard against null result (e.g. stream closed without sending 'complete')
@@ -672,7 +730,11 @@ const StudyModeContainer = ({
             topic: topicLabel,
             type: 'quiz',
             correct: answerData.isCorrect,
-            concept: !answerData.isCorrect ? question.question : undefined
+            concept: !answerData.isCorrect ? question.question : undefined,
+            // Format drives the "which question types fail you" breakdown.
+            // Older payloads only carry it under metadata; mcq is the default
+            // shape when neither is present.
+            format: question.questionType || question.metadata?.questionType || 'mcq'
           });
 
           // Show the subtle tracking animation
@@ -959,7 +1021,12 @@ const StudyModeContainer = ({
       const result = await completeNodeAndAdvance(chatId, activeNodeId);
 
       setNodes(prev => prev.map(n => {
-        if (n.id === activeNodeId) return { ...n, status: 'done' };
+        // Mirror the completedAt stamp completeNodeAndAdvance just wrote, so
+        // today's mission counts this node immediately instead of waiting for
+        // the doc to round-trip.
+        if (n.id === activeNodeId) {
+          return { ...n, status: 'done', completedAt: n.completedAt || new Date().toISOString() };
+        }
         if (n.id === result.nextNodeId) return { ...n, status: 'active' };
         return n;
       }));
@@ -1035,13 +1102,30 @@ const StudyModeContainer = ({
 
   // ── Transition screen: user chose "Move on" ────────────────────────
   // Advances to next node AND immediately launches it (no overview stop)
+  //
+  // Every path out of here must change something on screen. Advancing costs
+  // two Firestore round trips before the next node's content even starts
+  // loading, so without a pending state the card sits frozen after the tap —
+  // which is exactly what showed up as dead clicks on this button.
   const handleTransitionContinue = useCallback(async () => {
+    // Re-entrancy guard: a second tap while the first is in flight would
+    // complete the *next* node (activeNodeId has already moved on) and silently
+    // skip it. The disabled button covers the UI; this covers the race.
+    if (advanceLockRef.current) return;
+    advanceLockRef.current = true;
+    setIsAdvancing(true);
+
     try {
       const result = await completeNodeAndAdvance(chatId, activeNodeId);
 
       // Update local node statuses
       setNodes(prev => prev.map(n => {
-        if (n.id === activeNodeId) return { ...n, status: 'done' };
+        // Mirror the completedAt stamp completeNodeAndAdvance just wrote, so
+        // today's mission counts this node immediately instead of waiting for
+        // the doc to round-trip.
+        if (n.id === activeNodeId) {
+          return { ...n, status: 'done', completedAt: n.completedAt || new Date().toISOString() };
+        }
         if (n.id === result.nextNodeId) return { ...n, status: 'active' };
         return n;
       }));
@@ -1066,20 +1150,31 @@ const StudyModeContainer = ({
         setActiveNodeId(result.nextNodeId);
         setCurrentContent(null);
 
-        // We need the full node object — find it from the updated nodes
-        setNodes(prev => {
-          const nextNode = prev.find(n => n.id === result.nextNodeId);
-          if (nextNode) {
-            // Launch immediately — setTimeout to let state settle
-            setTimeout(() => handleStartNode(nextNode), 0);
+        const nextNode = nodesRef.current.find(n => n.id === result.nextNodeId);
+
+        if (!nextNode) {
+          // Server advanced to a node our local plan doesn't know about yet
+          // (phase 2, an inserted node, a stale tab). Land on the overview
+          // rather than leaving the transition card up with nothing happening.
+          setView('overview');
+        } else {
+          const outcome = await handleStartNode(nextNode);
+          // 'exam_config' is fine — the config modal renders over this view.
+          // 'blocked' opened the paywall app-side and started nothing, so the
+          // transition card would otherwise stay up armed against a node the
+          // user never saw.
+          if (outcome === 'blocked') {
+            setView('overview');
           }
-          return prev;
-        });
+        }
       }
     } catch (error) {
       console.error('❌ Error advancing to next node:', error);
       // Fallback: go to overview
       setView('overview');
+    } finally {
+      advanceLockRef.current = false;
+      setIsAdvancing(false);
     }
   }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases, handleStartNode]);
 
@@ -1196,6 +1291,30 @@ const StudyModeContainer = ({
   }, [handleAdvanceNode]);
 
   // Handle Phase 2 generation — triggered when user clicks first placeholder node
+  /**
+   * Student finished their block and asked for the next one. The nodes were
+   * planned in the original call and parked in reserve, so this is a Firestore
+   * move — no generation, no quota charge, no waiting.
+   */
+  const handleExtendBlock = useCallback(async () => {
+    const result = await extendStudyPath(chatId);
+    if (!result?.added) return;
+
+    // Re-read rather than reconstructing the merge locally — extendStudyPath
+    // owns the node list, and duplicating its ordering rules here is how the
+    // two drift apart.
+    const session = await getStudySession(chatId);
+    if (session?.path?.nodes) {
+      setNodes(session.path.nodes);
+      setActiveNodeId(session.path.activeNodeId);
+      setIsComplete(false);
+    }
+    setReserveRemaining(result.remaining);
+
+    setPathUpdateToast({ count: result.added });
+    setTimeout(() => setPathUpdateToast(null), 3500);
+  }, [chatId]);
+
   const handleStartPhase2 = useCallback(async () => {
     setIsGeneratingPhase2(true);
 
@@ -1246,15 +1365,20 @@ const StudyModeContainer = ({
   }, [chatId, studyState, language, onComplete]);
 
   // ── Exam config: student configured and hit "Start Exam" ─────────
-  const handleExamStart = useCallback(async (examConfig) => {
-    if (!pendingExamNode) return;
+  //
+  // `nodeOverride` is set when a pre-configured drill launches itself from
+  // the transition screen: state set moments earlier isn't readable here yet,
+  // so the node comes in as an argument rather than through pendingExamNode.
+  const handleExamStart = useCallback(async (examConfig, nodeOverride) => {
+    const examNode = nodeOverride || pendingExamNode;
+    if (!examNode) return;
 
     setIsGeneratingExam(true);
 
     try {
       const result = await generate_exam(
         chatId,
-        pendingExamNode.label,
+        examNode.label,
         examConfig.questionTypes,
         examConfig.questionCount,
         examConfig.customInstructions,
@@ -1275,32 +1399,38 @@ const StudyModeContainer = ({
         ...result,
         examConfig: {
           ...result.examConfig,
-          timerEnabled: examConfig.timerEnabled,
-          timerSeconds: examConfig.timerSeconds,
+          // Coerced because this object is written straight to Firestore,
+          // which rejects undefined. A self-launching drill sets no timer at
+          // all, so the fields simply aren't in its config.
+          timerEnabled: !!examConfig.timerEnabled,
+          timerSeconds: examConfig.timerSeconds ?? null,
         }
       };
 
       // Save content and link to node
       const messageId = await saveNodeContent(
         chatId,
-        pendingExamNode.id,
+        examNode.id,
         examContent,
         'exam'
       );
 
-      await updateNodeStatus(chatId, pendingExamNode.id, { messageId });
+      await updateNodeStatus(chatId, examNode.id, { messageId });
 
       // Update local state
       setNodes(prev => prev.map(n =>
-        n.id === pendingExamNode.id ? { ...n, messageId } : n
+        n.id === examNode.id ? { ...n, messageId } : n
       ));
 
       // Close modal, start the exam
       setShowExamConfig(false);
       setIsGeneratingExam(false);
+      // Cleared for the direct-launch path, which put the node view into
+      // loading before calling this; a no-op when the config modal ran.
+      setIsLoadingContent(false);
 
       // Set up the node view
-      const node = { ...pendingExamNode, messageId };
+      const node = { ...examNode, messageId };
       setActiveNode(node);
       setActiveNodeId(node.id);
       setCurrentContent(examContent);
@@ -1313,10 +1443,19 @@ const StudyModeContainer = ({
       console.error('❌ Error generating exam:', error);
       setIsGeneratingExam(false);
       setShowExamConfig(false);
+      // A drill that launched itself has no config modal to fall back to, so
+      // the failure has to land somewhere she can act — the node view's error
+      // state with its retry — rather than an indefinite spinner.
+      setIsLoadingContent(false);
+      setContentError(t('study.generationFailed', 'Something went wrong while generating your content. Please try again.'));
     }
 
     setPendingExamNode(null);
-  }, [chatId, pendingExamNode, language, onCloseSidebar, consumeGeneration]);
+  }, [chatId, pendingExamNode, language, onCloseSidebar, consumeGeneration, t]);
+
+  // Kept current so handleStartNode (defined above) can launch a
+  // pre-configured drill without the two callbacks depending on each other.
+  handleExamStartRef.current = handleExamStart;
 
   // Handle retake exam — insert a fresh exam node after the completed one and launch it
   const handleRetakeExam = useCallback(async (examNode) => {
@@ -1342,6 +1481,104 @@ const StudyModeContainer = ({
       console.error('❌ Error creating retake exam:', error);
     }
   }, [chatId, handleStartNode]);
+
+  /**
+   * Insights CTA — build a targeted practice node from what the panel just
+   * diagnosed, and start it.
+   *
+   * The panel's whole argument is "here is the one thing costing you marks";
+   * leaving the student to go find that thing herself in the plan wastes the
+   * diagnosis. `focus` is the area it named (a question format or a topic),
+   * so the request carries the format when that's the weakness — a student
+   * weak on select-all-that-apply needs more SATA, not more of the topic.
+   *
+   * Reuses the adaptive-node path (`insertNodeAfterCurrent`), so this behaves
+   * like every other inserted node: same shape, same quota accounting, same
+   * generation flow.
+   */
+  const handlePracticeWeakArea = useCallback(async (focus, count = 5) => {
+    if (!focus) return;
+    setShowInsightsModal(false);
+    try {
+      const isFormat = focus.kind === 'format';
+      const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
+        chatId,
+        activeNodeId,
+        {
+          type: 'quiz',
+          label: isFormat
+            ? t('study.practiceFormatLabel', 'Targeted practice: {{name}}', { name: focus.name })
+            : focus.name,
+          tags: [isFormat ? focus.key : 'topic_practice', 'weak_area'],
+          // Practising a known weakness at difficulty 1 wastes the attempt.
+          difficulty: 2,
+          adaptive: true,
+          reason: isFormat
+            ? `Practice ${count} more ${focus.name} questions`
+            : `Practice ${count} more questions on ${focus.name}`,
+        }
+      );
+      setNodes(updatedNodes);
+      handleStartNode(insertedNode);
+    } catch (error) {
+      console.error('❌ Error creating targeted practice node:', error);
+    }
+  }, [chatId, activeNodeId, handleStartNode, t]);
+
+  /**
+   * "Test my theory" — the experiment that turns an observation into an
+   * aha moment.
+   *
+   * The insight claims her misses are a reasoning pattern rather than missing
+   * knowledge. A claim she cannot check is just an opinion, so this hands her
+   * ONE question built around that exact skill: get it right and she has
+   * proved it to herself, which no amount of explanation achieves.
+   *
+   * Tagged `experiment:<skill>` so the transition screen recognises the node
+   * on completion and shows the payoff instead of a fresh diagnosis. Tagging
+   * rather than component state means it survives a reload.
+   */
+  const handleTestTheory = useCallback(async (skill) => {
+    if (!skill) return;
+    try {
+      const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
+        chatId,
+        activeNodeId,
+        {
+          type: 'quiz',
+          label: t('study.experimentLabel', 'Testing a theory: {{skill}}', { skill }),
+          tags: [`experiment:${skill}`, 'weak_area'],
+          // A test of technique has to be hard enough to actually test it.
+          difficulty: 2,
+          adaptive: true,
+          num_questions: 1,
+          reason: `One question to test the ${skill} pattern`,
+        }
+      );
+      setNodes(updatedNodes);
+      handleStartNode(insertedNode);
+    } catch (error) {
+      console.error('❌ Error creating theory-test node:', error);
+    }
+  }, [chatId, activeNodeId, handleStartNode, t]);
+
+  /**
+   * Insights CTA — reopen the node a missed question came from, so "review
+   * this concept" lands on the explanation she already has rather than
+   * generating something new. Falls back to targeted practice when the
+   * source node can't be resolved.
+   */
+  const handleReviewConcept = useCallback((item, focus) => {
+    const sourceNode = nodes.find(
+      (n) => n.messageId && n.label && item?.topic && n.label.startsWith(item.topic)
+    );
+    if (sourceNode) {
+      setShowInsightsModal(false);
+      handleStartNode(sourceNode);
+      return;
+    }
+    handlePracticeWeakArea(focus);
+  }, [nodes, handleStartNode, handlePracticeWeakArea]);
 
   // Handle exit from node view - go back to overview
   const handleExitNode = useCallback(() => {
@@ -1466,132 +1703,25 @@ const StudyModeContainer = ({
             );
           })()}
 
+          {/* The whole insights body. Replaced ~200 lines of inline topic
+              rows whose only actionable content was one missed concept
+              truncated to 58 characters. PerformanceBreakdown answers the
+              four questions a student actually has — what will fail me,
+              which question types am I worst at, what do I work on, and
+              where am I already fine — and owns its own loading/empty
+              states, so the modal just hosts it. */}
           <div className="insights-modal__body">
             {insightsLoading ? (
               <div className="insights-modal__loading">
                 <div className="study-loading-spinner" />
                 <p>{t('study.loadingInsights', 'Loading...')}</p>
               </div>
-            ) : !insightsData || !insightsData.topics || Object.keys(insightsData.topics).length === 0 ? (
-              <div className="insights-modal__empty">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="32" height="32">
-                  <path d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p>{t('study.noInsightsYet', 'No data yet — complete a quiz or flashcard set to see your insights.')}</p>
-              </div>
             ) : (
-              <>
-                {(() => {
-                  // ── Merge similar topic names ──
-                  const mergedTopics = {};
-                  const strip = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-                  const getWords = (s) => new Set(strip(s).split(/\s+/).filter(w => w.length > 2));
-
-                  const findMergeKey = (name) => {
-                    const strippedName = strip(name);
-                    for (const existing of Object.keys(mergedTopics)) {
-                      const strippedExisting = strip(existing);
-                      if (strippedExisting.includes(strippedName) || strippedName.includes(strippedExisting)) return existing;
-                      const overlap = [...getWords(name)].filter(w => getWords(existing).has(w)).length;
-                      if (overlap > 0 && overlap >= Math.min(getWords(name).size, getWords(existing).size) * 0.5) return existing;
-                    }
-                    return null;
-                  };
-
-                  for (const [name, topic] of Object.entries(insightsData.topics)) {
-                    const mergeKey = findMergeKey(name);
-                    if (mergeKey) {
-                      const ex = mergedTopics[mergeKey];
-                      ex.questionsCorrect += topic.questionsCorrect || 0;
-                      ex.questionsTotal += topic.questionsTotal || 0;
-                      ex.flashcardsMastered += topic.flashcardsMastered || 0;
-                      ex.flashcardsTotal += topic.flashcardsTotal || 0;
-                      ex.missedConcepts = [...(ex.missedConcepts || []), ...(topic.missedConcepts || [])].slice(-20);
-                      if (name.length > mergeKey.length) { mergedTopics[name] = ex; delete mergedTopics[mergeKey]; }
-                    } else {
-                      mergedTopics[name] = { ...topic };
-                    }
-                  }
-
-                  // ── Recompute strength + compute avg per topic ──
-                  for (const topic of Object.values(mergedTopics)) {
-                    const qAcc = topic.questionsTotal > 0 ? topic.questionsCorrect / topic.questionsTotal : null;
-                    const fAcc = topic.flashcardsTotal > 0 ? topic.flashcardsMastered / topic.flashcardsTotal : null;
-                    const scores = [qAcc, fAcc].filter(s => s !== null);
-                    const avg = scores.length > 0 ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-                    topic._avg = avg !== null ? Math.round(avg * 100) : 0;
-                    topic.strengthLevel = avg !== null
-                      ? (avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak')
-                      : 'developing';
-                  }
-
-                  // ── Group by strength level ──
-                  const groups = { weak: [], developing: [], strong: [] };
-                  for (const [name, topic] of Object.entries(mergedTopics)) {
-                    groups[topic.strengthLevel].push([name, topic]);
-                  }
-
-                  const groupConfig = [
-                    { key: 'weak',       label: t('study.weak', 'Needs Work'),       icon: <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="10" height="10"><line x1="2" y1="2" x2="8" y2="8" strokeLinecap="round"/><line x1="8" y1="2" x2="2" y2="8" strokeLinecap="round"/></svg> },
-                    { key: 'developing', label: t('study.developing', 'Developing'), icon: <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" width="10" height="10"><circle cx="5" cy="5" r="3.5"/><circle cx="5" cy="5" r="1.2" fill="currentColor" stroke="none"/></svg> },
-                    { key: 'strong',     label: t('study.strong', 'Strong'),         icon: <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="10" height="10"><polyline points="1.5,5.5 3.5,7.5 8.5,2" strokeLinecap="round" strokeLinejoin="round"/></svg> },
-                  ];
-
-                  return groupConfig
-                    .filter(g => groups[g.key].length > 0)
-                    .map(({ key, label, icon }) => (
-                      <div key={key} className={`it-group it-group--${key}`}>
-                        <div className={`it-group__header it-group__header--${key}`}>
-                          <span className="it-group__icon">{icon}</span>
-                          <span className="it-group__label">{label}</span>
-                          <span className="it-group__count">{groups[key].length}</span>
-                        </div>
-                        {groups[key].map(([topicName, topic]) => {
-                          const quizAcc = topic.questionsTotal > 0
-                            ? Math.round((topic.questionsCorrect / topic.questionsTotal) * 100) : null;
-                          const flashAcc = topic.flashcardsTotal > 0
-                            ? Math.round((topic.flashcardsMastered / topic.flashcardsTotal) * 100) : null;
-                          const latestMissed = topic.missedConcepts?.slice(-1)[0];
-
-                          return (
-                            <div key={topicName} className={`it-row it-row--${key}`}>
-                              <div className="it-row__body">
-                                <div className="it-row__top">
-                                  <span className="it-row__name" title={topicName}>{topicName}</span>
-                                  <div className="it-row__scores">
-                                    {quizAcc !== null && (
-                                      <span className="it-score">
-                                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" width="11" height="11"><circle cx="6" cy="6" r="4.5"/><path d="M4.5 4.8c.25-.9 1.8-1.1 2.2 0 .3.8-.5 1.2-1 1.6" strokeLinecap="round"/><circle cx="6" cy="9" r=".6" fill="currentColor" stroke="none"/></svg>
-                                        {quizAcc}%
-                                        <span className="it-score__detail"> {topic.questionsCorrect}/{topic.questionsTotal}</span>
-                                      </span>
-                                    )}
-                                    {flashAcc !== null && (
-                                      <span className="it-score">
-                                        <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.3" width="11" height="11"><rect x="1.5" y="3" width="9" height="7" rx="1.2"/><path d="M4 1.5h4" strokeLinecap="round"/><line x1="4" y1="6.5" x2="8" y2="6.5" strokeLinecap="round"/></svg>
-                                        {flashAcc}%
-                                        <span className="it-score__detail"> {topic.flashcardsMastered}/{topic.flashcardsTotal}</span>
-                                      </span>
-                                    )}
-                                  </div>
-                                </div>
-                                <div className="it-row__track">
-                                  <div className={`it-row__fill it-row__fill--${key}`} style={{ width: `${topic._avg}%` }} />
-                                </div>
-                                {latestMissed && key !== 'strong' && (
-                                  <p className="it-row__missed">
-                                    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="1.5" width="11" height="11" style={{flexShrink:0}}><path d="M2.5 6a3.5 3.5 0 106 3" strokeLinecap="round"/><polyline points="8.5,7.5 9.5,9.5 7,9.5" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                                    {latestMissed.length > 58 ? latestMissed.substring(0, 58) + '…' : latestMissed}
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    ));
-                })()}
-              </>
+              <PerformanceBreakdown
+                chatId={chatId}
+                onPractice={handlePracticeWeakArea}
+                onReviewConcept={handleReviewConcept}
+              />
             )}
           </div>
         </div>
@@ -1607,6 +1737,12 @@ const StudyModeContainer = ({
     path: {
       ...studyState?.path,
       nodes: nodes
+    },
+    reserve: {
+      ...studyState?.reserve,
+      remaining: reserveRemaining !== null
+        ? reserveRemaining
+        : (studyState?.reserve?.remaining || 0)
     }
   };
 
@@ -1628,6 +1764,11 @@ const StudyModeContainer = ({
           audioSkipped={audioWasSkipped}
           nextNode={getNextPlannedNode()}
           performanceData={insightsData}
+          // Performance as it stood BEFORE this node ran. The only
+          // trustworthy baseline for "you're getting better at this":
+          // insightsData is loaded once per session and may already
+          // include the answers we'd be comparing against.
+          priorPerformance={preNodeSnapshotRef.current}
           examDate={examDate}
           readinessDelta={readinessDelta}
           onContinue={handleTransitionContinue}
@@ -1635,6 +1776,8 @@ const StudyModeContainer = ({
           onCustomRequest={handleTransitionCustomRequest}
           onExit={handleExitStudy}
           onAnalytics={handleTransitionAnalytics}
+          onTestTheory={handleTestTheory}
+          isAdvancing={isAdvancing}
           isLoadingPractice={isLoadingPractice}
           isLoadingCustom={isLoadingCustom}
           customEcho={customEcho}
@@ -1642,6 +1785,19 @@ const StudyModeContainer = ({
           onCancelCustom={handleCancelCustom}
         />
         {renderInsightsModal()}
+
+        {/* Exam config modal — the next node can be a mini-test, and
+            handleStartNode opens this instead of launching content. Without an
+            instance here the tap did nothing at all: the modal only existed in
+            the overview branch. Backing out drops to the overview rather than
+            back onto a transition card for a node already marked done. */}
+        <ExamConfigModal
+          isOpen={showExamConfig}
+          onClose={() => { setShowExamConfig(false); setPendingExamNode(null); setView('overview'); }}
+          onStart={handleExamStart}
+          topic={pendingExamNode?.label || ''}
+          isLoading={isGeneratingExam}
+        />
       </div>
     );
   }
@@ -1688,6 +1844,7 @@ const StudyModeContainer = ({
         <StudyPlanOverview
           studyState={currentStudyState}
           examDate={examDate}
+          examName={examName}
           onNodeSelect={handleNodeSelect}
           onRetakeExam={handleRetakeExam}
           onExit={handleExitStudy}
@@ -1696,8 +1853,12 @@ const StudyModeContainer = ({
           sidebarOpen={sidebarOpen}
           isGeneratingPhase2={isGeneratingPhase2}
           onStartPhase2={handleStartPhase2}
+          onExtendBlock={handleExtendBlock}
           isDev={isDev}
         />
+
+        {/* Dev only: force the paywall open without burning a real quota. */}
+        <DevPaywallPill topic={paywallTopic} />
 
         {renderInsightsModal()}
 
@@ -1802,6 +1963,14 @@ const StudyModeContainer = ({
                 onSaveMindmapProgress={handleSaveMindmapProgress}
                 onContinue={handleContinue}
                 onExit={handleExitNode}
+                onAudioFirstPlay={() => {
+                  // Node status records that the student advanced past this
+                  // lesson, not that they listened to it. Stamp the backing
+                  // message so the two are distinguishable in analytics.
+                  if (activeNode?.messageId) {
+                    markMessageEngaged(chatId, activeNode.messageId, 'study_audio');
+                  }
+                }}
               />
             ) : contentError ? (
               <div className="study-step-card">
@@ -1896,6 +2065,11 @@ const StudyModeContainer = ({
           </div>
         </div>
       </div>
+
+      {/* Dev only: force the paywall open without burning a real quota. Also
+          mounted here (not just the overview) because a real block happens
+          mid-node, and that's the state worth reviewing. */}
+      <DevPaywallPill topic={paywallTopic} />
 
       {renderInsightsModal()}
     </div>

@@ -27,6 +27,7 @@ import {
 } from '../../Services/UsageService';
 import UpgradeModal from '../../Components/Common/UpgradeModal';
 import UsageBadge from '../../Components/Common/UsageBadge';
+import { cleanTopicLabel } from '../../Components/Common/upgradeCopy';
 
 const UsageContext = createContext(null);
 
@@ -40,7 +41,7 @@ export const useUsageLimit = () => {
       msUntilReset: 0, requireQuota: () => true, consume: async () => {}, refresh: async () => {},
       planLimit: 0, plansUsed: 0, plansRemaining: Infinity, canCreatePlan: true,
       planMsUntilReset: 0, requirePlanQuota: () => true, consumePlan: async () => {},
-      openUpgrade: () => {},
+      openUpgrade: () => {}, simulateLimit: () => {},
     };
   }
   return ctx;
@@ -71,6 +72,20 @@ export function UsageProvider({ children }) {
   // Which gate opened the modal — drives whether it talks about questions
   // or about study plans. Reset when the modal closes.
   const [upgradeReason, setUpgradeReason] = useState(null);
+
+  // What the user was in the middle of when we interrupted them. The paywall
+  // names it back ("You were practicing: Cardiac Pharmacology") — a generic
+  // "you hit a limit" loses the only context that makes the offer feel like
+  // a continuation instead of a toll booth. Null = card is not rendered.
+  const [upgradeTopic, setUpgradeTopic] = useState(null);
+
+  // ── Dev-only paywall preview ─────────────────────────────────────────────
+  // The paywall is the hardest surface in the app to reach deliberately: you
+  // have to burn a real quota to see it, and the copy branches on gate ×
+  // exam-date × onboarding goal. This holds substitute numbers so the modal can
+  // be forced open in its BLOCKED state for review. Null = not simulating.
+  // Set only by simulateLimit(), which is itself a no-op in production builds.
+  const [devSim, setDevSim] = useState(null);
 
   // Fetch quota whenever the signed-in user changes.
   const refresh = useCallback(async () => {
@@ -110,10 +125,13 @@ export function UsageProvider({ children }) {
   }, [needsTick]);
 
   // Gate helper — returns whether generation is allowed, opening the modal if not.
-  const requireQuota = useCallback(() => {
+  // `ctx.topic` (optional) is what the caller was about to generate; it becomes
+  // the "You were practicing: …" line on the paywall.
+  const requireQuota = useCallback((ctx = null) => {
     const live = deriveQuota(usageRef.current, Date.now());
     if (live.canGenerate) return true;
     setUpgradeReason('questions');
+    setUpgradeTopic(cleanTopicLabel(ctx?.topic));
     setShowUpgrade(true);
     return false;
   }, []);
@@ -121,12 +139,38 @@ export function UsageProvider({ children }) {
   // Plan gate — call BEFORE generating a new study plan. Generating a path
   // plus its first node is the most expensive call in the product, so this
   // blocks before the spend rather than at the commit point.
-  const requirePlanQuota = useCallback(() => {
+  const requirePlanQuota = useCallback((ctx = null) => {
     const live = derivePlanQuota(planUsageRef.current, usageRef.current?.tier, Date.now());
     if (live.canCreatePlan) return true;
     setUpgradeReason('plans');
+    setUpgradeTopic(cleanTopicLabel(ctx?.topic));
     setShowUpgrade(true);
     return false;
+  }, []);
+
+  /**
+   * Dev-only: open the upgrade modal exactly as a blocked FREE user sees it —
+   * out of budget, and not subscribed — regardless of the signed-in account's
+   * real tier. Real usage is never written or mutated; only the props handed
+   * to <UpgradeModal> are substituted, and only while the modal is open.
+   * No-op in production builds.
+   *
+   * @param {'questions'|'plans'} reason - which gate to simulate
+   * @param {{ topic?: string }} [ctx]   - what they were "working on"
+   */
+  const simulateLimit = useCallback((reason = 'questions', ctx = null) => {
+    if (process.env.NODE_ENV !== 'development') return;
+    const live = deriveQuota(usageRef.current, Date.now());
+    setDevSim({
+      // A truly blocked user has spent the whole bucket; borrow the real count
+      // when there is one so the number on screen matches this account.
+      used: live.used > 0 ? live.used : live.limit,
+      msUntilReset: live.msUntilReset > 0 ? live.msUntilReset : 53557000,   // ~14:52:37
+      planMsUntilReset: 11 * 24 * 60 * 60 * 1000,                            // ~11 days
+    });
+    setUpgradeReason(reason === 'plans' ? 'plans' : 'questions');
+    setUpgradeTopic(cleanTopicLabel(ctx?.topic));
+    setShowUpgrade(true);
   }, []);
 
   // Charge one plan. Call AFTER createStudySession succeeds — the preview
@@ -168,11 +212,13 @@ export function UsageProvider({ children }) {
     planMsUntilReset: planQuota.msUntilReset,
     requirePlanQuota,
     consumePlan,
-    openUpgrade: (reason = null) => {
+    openUpgrade: (reason = null, ctx = null) => {
       setUpgradeReason(typeof reason === 'string' ? reason : null);
+      setUpgradeTopic(cleanTopicLabel(ctx?.topic));
       setShowUpgrade(true);
     },
-  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan]);
+    simulateLimit,
+  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan, simulateLimit]);
 
   return (
     <UsageContext.Provider value={value}>
@@ -183,20 +229,26 @@ export function UsageProvider({ children }) {
           remaining={quota.remaining}
           limit={quota.limit}
           msUntilReset={quota.msUntilReset}
-          onClick={() => setShowUpgrade(true)}
+          onClick={() => { setUpgradeReason(null); setUpgradeTopic(null); setShowUpgrade(true); }}
         />
       )}
       <UpgradeModal
         isOpen={showUpgrade}
-        isPro={quota.isPro}
-        onClose={() => { setShowUpgrade(false); setUpgradeReason(null); }}
+        // Simulating always shows the FREE-user pitch. Without this a Pro
+        // account (which every dev account eventually becomes) gets the
+        // manage-subscription branch instead — i.e. never the screen being
+        // reviewed. Only the modal's props are faked; the real tier is intact.
+        isPro={devSim ? false : quota.isPro}
+        onClose={() => { setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setDevSim(null); }}
         reason={upgradeReason}
+        topic={upgradeTopic}
         limit={quota.limit}
-        remaining={quota.remaining}
-        msUntilReset={quota.msUntilReset}
+        used={devSim ? devSim.used : quota.used}
+        remaining={devSim ? 0 : quota.remaining}
+        msUntilReset={devSim ? devSim.msUntilReset : quota.msUntilReset}
         planLimit={planQuota.limit}
-        plansRemaining={planQuota.remaining}
-        planMsUntilReset={planQuota.msUntilReset}
+        plansRemaining={devSim ? 0 : planQuota.remaining}
+        planMsUntilReset={devSim ? devSim.planMsUntilReset : planQuota.msUntilReset}
         user={{ uid: currentUser?.uid, email: currentUser?.email }}
         studyGoal={studyGoal}
         examDate={examDate}

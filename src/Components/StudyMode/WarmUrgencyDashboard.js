@@ -3,84 +3,72 @@ import { useTranslation } from 'react-i18next';
 import './WarmUrgencyDashboard.css';
 
 /* ──────────────────────────────────────────────────────────
-   WarmUrgencyDashboard
-   Replaces the old countdown-timer + confidence-gauge layout.
-   Same data, opposite emotional posture: effort-framed, no
-   deficit language, urgency expressed through tone + a
-   single concrete next step instead of a ticking clock.
+   WarmUrgencyDashboard — "where am I, and am I on track?"
+
+   Answers the first three questions a student should never have
+   to hunt for: what exam, how long left, how ready am I. The
+   fourth ("what do I do now?") belongs to TodaySessionCard, one
+   block below — this card deliberately has no mid-plan CTA, so
+   there's exactly one obvious next action on the page.
+
+   Effort-framed, no deficit language: urgency comes from tone
+   and a concrete next step, never from a ticking clock.
 
    Props:
-     examDate            — Date|string|number|Firestore Timestamp|null
-     questionsAnswered   — number  (total questions student has answered)
+     schedule            — from buildStudySchedule() (drives phase + countdown)
+     examName            — string|null   ("Pharmacology Final")
+     readinessPct        — number|null   coverage-aware readiness estimate
+     questionsAnswered   — number        evidence behind readinessPct
+     nodesCompleted      — number
      topicsCompleted     — number  (locked-in / strong topic count)
      topicsTotal         — number  (curriculum topic count)
      nextTopicName       — string|null  (first ready-to-explore topic)
-     topicsList          — Array<{ name: string, status: 'locked_in' | 'ready' }>
-     onCtaClick          — fn      (called on primary CTA + card click)
+     studyComplete       — boolean
+     estimatedMinutes    — number|null
+     onCtaClick          — fn      (phase-2 practice round; only when complete)
      language            — string  ('en'|'fr'|...) for date formatting
    ────────────────────────────────────────────────────────── */
 
-const HOUR_MS = 1000 * 60 * 60;
-const DAY_MS = HOUR_MS * 24;
-
-const coerceDate = (raw) => {
-  if (!raw) return null;
-  if (typeof raw.toDate === 'function') return raw.toDate();
-  if (raw instanceof Date) return raw;
-  if (typeof raw === 'number' || typeof raw === 'string') {
-    const d = new Date(raw);
-    return isNaN(d.getTime()) ? null : d;
-  }
-  return null;
-};
-
-const startOfDay = (d) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
-
-const computeTier = (exam) => {
-  if (!exam) return 'calm';
-  const hours = (exam.getTime() - Date.now()) / HOUR_MS;
-  if (hours <= 24) return 'urgent';
-  if (hours <= 72) return 'moderate';
-  return 'calm';
+/* The four countdown states from the product spec collapse onto the three
+   existing accent palettes. Keeping three palettes (rather than adding a
+   fourth) means exam day and the final 48h share one visual register — which
+   is right: both are "stop learning, start consolidating". */
+const TIER_BY_PHASE = {
+  examDay: 'urgent',
+  final: 'urgent',
+  focus: 'moderate',
+  steady: 'calm',
+  past: 'calm',
+  none: 'calm',
 };
 
 const formatExamDate = (exam, language) => {
   if (!exam) return null;
-  const now = new Date();
-  const days = Math.round((startOfDay(exam) - startOfDay(now)) / DAY_MS);
   const locale = language || undefined;
-  if (days <= 0) return { label: 'Today', full: exam.toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' }) };
-  if (days === 1) {
-    return {
-      label: `Tomorrow, ${exam.toLocaleDateString(locale, { weekday: 'short', month: 'short', day: 'numeric' })}`,
-      full: exam.toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' })
-    };
-  }
-  if (days <= 7) {
-    return {
-      label: exam.toLocaleDateString(locale, { weekday: 'long', month: 'short', day: 'numeric' }),
-      full: exam.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric' })
-    };
-  }
   return {
-    label: exam.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' }),
-    full: exam.toLocaleDateString(locale, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })
+    short: exam.toLocaleDateString(locale, { month: 'long', day: 'numeric' }),
+    full: exam.toLocaleDateString(locale, {
+      weekday: 'long', month: 'long', day: 'numeric', year: 'numeric',
+    }),
   };
 };
 
 /* ── Inline SVG icon set — single-color, current-color filled.
    Kept inline so the component has no asset dependencies. ── */
-const CalendarIcon = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-    <rect x="3" y="5" width="18" height="16" rx="2.5" />
-    <path d="M3 10h18" />
-    <path d="M8 3v4M16 3v4" />
+/* Growth, not a deadline. The literal date now lives in the page header, so
+   this slot is free to carry tone instead of repeating information. */
+const SproutIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M12 21v-8" />
+    <path d="M12 13c0-3.3-2.7-6-6-6 0 3.3 2.7 6 6 6z" />
+    <path d="M12 13c0-3.9 3.1-7 7-7 0 3.9-3.1 7-7 7z" />
   </svg>
 );
 
-const BoltIcon = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
-    <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" />
+const FlagIcon = () => (
+  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M5 21V4" />
+    <path d="M5 4h11l-1.6 3.5L16 11H5z" />
   </svg>
 );
 
@@ -89,13 +77,6 @@ const TargetIcon = () => (
     <circle cx="12" cy="12" r="9" />
     <circle cx="12" cy="12" r="5" />
     <circle cx="12" cy="12" r="1.5" fill="currentColor" stroke="none" />
-  </svg>
-);
-
-const BookIcon = () => (
-  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinejoin="round" aria-hidden="true">
-    <path d="M4 5a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2V5z" />
-    <path d="M6 17h14" />
   </svg>
 );
 
@@ -111,14 +92,46 @@ const ArrowIcon = () => (
   </svg>
 );
 
-const NUDGE_ICON_BY_TIER = {
-  urgent: <BoltIcon />,
+/* Lead icon carries the tone of the countdown phase: growing → aiming →
+   finishing. It replaces a calendar glyph that just restated the header. */
+const LEAD_ICON_BY_TIER = {
+  urgent: <FlagIcon />,
   moderate: <TargetIcon />,
-  calm: <BookIcon />
+  calm: <SproutIcon />,
+};
+
+/**
+ * Readiness ring. A gauge reads as "how full am I" at a glance; the bare
+ * number it replaces read as a statistic. Same value, and the same honest
+ * label — this is an estimate, not a predicted grade.
+ */
+const ReadinessRing = ({ pct }) => {
+  const R = 26;
+  const CIRC = 2 * Math.PI * R;
+  const clamped = Math.max(0, Math.min(100, pct));
+  return (
+    <svg className="wud-ring" viewBox="0 0 64 64" width="64" height="64" aria-hidden="true">
+      <circle
+        className="wud-ring__track"
+        cx="32" cy="32" r={R}
+        fill="none" strokeWidth="6" strokeLinecap="round"
+      />
+      <circle
+        className="wud-ring__value"
+        cx="32" cy="32" r={R}
+        fill="none" strokeWidth="6" strokeLinecap="round"
+        strokeDasharray={`${(clamped / 100) * CIRC} ${CIRC}`}
+        transform="rotate(-90 32 32)"
+      />
+    </svg>
+  );
 };
 
 const WarmUrgencyDashboard = ({
-  examDate,
+  schedule = null,
+  examName = null,
+  readinessPct = null,
+  questionsAnswered = 0,
   nodesCompleted = 0,
   topicsCompleted = 0,
   topicsTotal = 0,
@@ -126,39 +139,85 @@ const WarmUrgencyDashboard = ({
   studyComplete = false,
   estimatedMinutes = null,
   onCtaClick,
-  language
+  language,
 }) => {
   const { t } = useTranslation();
 
-  const exam = useMemo(() => coerceDate(examDate), [examDate]);
-  const tier = useMemo(() => computeTier(exam), [exam]);
-  const dateInfo = useMemo(() => formatExamDate(exam, language), [exam, language]);
+  const {
+    hasExam = false,
+    examAt = null,
+    daysRemaining = null,
+    phase = 'none',
+    onTrack = true,
+  } = schedule || {};
+
+  const tier = TIER_BY_PHASE[phase] || 'calm';
+  const dateInfo = useMemo(() => formatExamDate(examAt, language), [examAt, language]);
 
   const remaining = Math.max(0, topicsTotal - topicsCompleted);
   const allLocked = topicsTotal > 0 && remaining === 0;
 
-  // ── Nudge — one sentence, tone driven by how close the exam is ──────
+  // ── Countdown headline ──────────────────────────────────────────────
+  // The days number is the biggest thing on the card. It's the one fact that
+  // makes every other number on the page mean something.
+  let countdownLabel = null;
+  if (hasExam) {
+    if (phase === 'examDay') {
+      countdownLabel = t('warmUrgency.examToday', 'Your exam is today');
+    } else if (daysRemaining === 1) {
+      countdownLabel = t('warmUrgency.examTomorrow', 'Your exam is tomorrow');
+    } else {
+      countdownLabel = t('warmUrgency.daysUntilExam', '{{count}} days until your exam', {
+        count: daysRemaining,
+      });
+    }
+  }
+
+  // ── Nudge — one sentence, tone driven by the countdown phase ────────
   let nudgeText;
   if (studyComplete) {
     nudgeText = allLocked
       ? t('warmUrgency.nudgeCompleteAllLocked', "Plan's done and topics are locked in — a practice round keeps it sharp.")
       : t('warmUrgency.nudgeCompletePartial', "You've made it through the plan — one practice round can solidify everything.");
-  } else if (tier === 'urgent') {
+  } else if (phase === 'past') {
+    // Exam date has passed but the plan is still open. Don't keep counting
+    // down to a date that's gone — the material is still worth finishing.
+    nudgeText = t('warmUrgency.nudgePast', 'That exam date has passed — finish the plan whenever suits you, or start a new one.');
+  } else if (phase === 'examDay') {
+    // Exam day is not a study day. Anything that sounds like "there's still
+    // time to learn this" is actively harmful a few hours before a test.
+    nudgeText = t('warmUrgency.nudgeExamDay', "Don't learn anything new today — a light review of what you've covered is enough.");
+  } else if (phase === 'final') {
     nudgeText = nextTopicName
-      ? t('warmUrgency.nudgeUrgent', 'One focused session on {{topic}} could lock it in before tomorrow.', { topic: nextTopicName })
-      : t('warmUrgency.nudgeUrgentGeneric', 'A short focused session today could lock things in before tomorrow.');
-  } else if (tier === 'moderate') {
-    nudgeText = t('warmUrgency.nudgeModerate', "You've got time — a 20-min focus session today keeps your momentum going.");
+      ? t('warmUrgency.nudgeFinal', 'Review beats cramming now. {{topic}} is the highest-impact thing left.', { topic: nextTopicName })
+      : t('warmUrgency.nudgeFinalGeneric', 'Review beats cramming now — focus on what you already half-know.');
+  } else if (phase === 'focus') {
+    nudgeText = nextTopicName
+      ? t('warmUrgency.nudgeFocus', "Exam week. Today's session targets {{topic}} — your biggest gap.", { topic: nextTopicName })
+      : t('warmUrgency.nudgeFocusGeneric', "Exam week — today's session targets your biggest gaps first.");
+  } else if (!onTrack) {
+    // Rebalanced, not scolded: the plan already redistributed the backlog, so
+    // say that rather than reporting a debt they can't pay off.
+    nudgeText = t('warmUrgency.nudgeRebalanced', "We've rebalanced the rest of your plan around the days you have left.");
   } else {
-    nudgeText = t('warmUrgency.nudgeCalm', 'No rush — steady practice beats cramming every time.');
+    // Only reachable at 8+ days out, which is what makes "good position"
+    // true rather than flattery. The same sentence at 3 days would be a lie —
+    // hence the phase branches above.
+    nudgeText = t('warmUrgency.nudgeCalm', "You're in a good position. Consistent daily sessions are what turn into confidence on exam day.");
   }
 
+  // ── Readiness ───────────────────────────────────────────────────────
+  // Only shown once questions have actually been answered. Before that the
+  // score is structurally 0% (untested topics count as zero), and rendering
+  // "0% ready" as a new student's biggest number is the exact zero-state
+  // mistake the old journey block made.
+  //
+  // Labelled an ESTIMATE on purpose: it's coverage-weighted accuracy over a
+  // few dozen questions, not a predicted exam grade, and calling it one would
+  // be false precision the data can't back.
+  const showReadiness = readinessPct != null && questionsAnswered > 0;
+
   // ── Progress line ───────────────────────────────────────────────────
-  // Replaces the old journey block (headline + dot pair + full topic list).
-  // That block announced "0 of 4 topics locked in" to every new student —
-  // a zero state rendered as the biggest number on the page — and repeated
-  // the topic list that TodaySessionCard and the full plan already show.
-  // Only render once there is something real to report.
   const progressParts = [];
   if (nodesCompleted > 0) {
     progressParts.push(t('warmUrgency.nodesDone', '{{count}} done', { count: nodesCompleted }));
@@ -167,7 +226,7 @@ const WarmUrgencyDashboard = ({
     progressParts.push(
       t('warmUrgency.topicsLocked', '{{count}} of {{total}} topics locked in', {
         count: topicsCompleted,
-        total: topicsTotal
+        total: topicsTotal,
       })
     );
   }
@@ -186,24 +245,42 @@ const WarmUrgencyDashboard = ({
     : t('warmUrgency.ctaCompleteSubGeneric', 'Pull it all together');
 
   // Nothing worth a card: no exam date, no progress, no action.
-  if (!dateInfo && !showProgress && !showCta) return null;
+  if (!dateInfo && !showProgress && !showCta && !showReadiness) return null;
 
   return (
     <div className={`wud wud--${tier}`}>
       {dateInfo && (
         <div className="wud-exam">
           <div className="wud-exam__row">
-            <span className="wud-exam__icon"><CalendarIcon /></span>
+            <span className="wud-exam__icon">{LEAD_ICON_BY_TIER[tier]}</span>
             <div className="wud-exam__text">
-              <div className="wud-exam__label">{t('warmUrgency.yourExam', 'Your exam')}</div>
-              <div className="wud-exam__date" title={dateInfo.full}>{dateInfo.label}</div>
+              {/* Countdown leads. The exam's name and literal date are the page
+                  header's job — repeating them here would be a third printing
+                  of the same fact. */}
+              <div className="wud-exam__date" title={dateInfo.full}>
+                {countdownLabel || dateInfo.short}
+              </div>
+              <div className="wud-exam__sub">{nudgeText}</div>
             </div>
-          </div>
-          <div className="wud-exam__nudge">
-            <span className="wud-exam__nudge-icon">
-              {NUDGE_ICON_BY_TIER[tier]}
-            </span>
-            <span className="wud-exam__nudge-text">{nudgeText}</span>
+
+            {showReadiness && (
+              <div className="wud-ready" title={t(
+                'warmUrgency.readinessTooltip',
+                'Estimated from {{count}} practice questions across your topics. Topics you have not been tested on yet count as zero.',
+                { count: questionsAnswered }
+              )}>
+                <ReadinessRing pct={readinessPct} />
+                <div className="wud-ready__inner">
+                  <div className="wud-ready__pct">{readinessPct}%</div>
+                  <div className="wud-ready__label">
+                    {t('warmUrgency.readinessLabel', 'Readiness')}
+                  </div>
+                  <div className="wud-ready__sub">
+                    {t('warmUrgency.readinessEstimated', 'estimated')}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}

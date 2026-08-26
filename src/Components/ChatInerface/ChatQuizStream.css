@@ -33,7 +33,6 @@
   --cqs-text-muted: #8a8a9a;
 
   /* Transitions */
-  --cqs-transition-bounce: 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   --cqs-transition-smooth: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 
   /* Shadows */
@@ -48,8 +47,8 @@
   position: relative;
   background: var(--cqs-card-bg);
   border-radius: 16px;
-  padding: 24px;
-  margin: 12px 0;
+  padding: 16px 18px;
+  margin: 10px 0;
   box-shadow: var(--cqs-shadow-soft);
   border: 1px solid rgba(232, 141, 125, 0.15);
   animation: cqsSlideIn 0.4s ease-out;
@@ -111,12 +110,12 @@
    PROGRESS BAR
    ----------------------------------------- */
 .cqs-progress-container {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
 }
 
 .cqs-progress-bar {
   position: relative;
-  height: 8px;
+  height: 6px;
   background: rgba(232, 141, 125, 0.15);
   border-radius: 4px;
   overflow: hidden;
@@ -153,8 +152,8 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
-  font-size: 13px;
+  margin-top: 6px;
+  font-size: 11.5px;
   color: var(--cqs-text-muted);
 }
 
@@ -202,9 +201,14 @@
   padding: 4px 10px;
   background: rgba(232, 141, 125, 0.15);
   border-radius: 12px;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 600;
   color: var(--cqs-coral-dark);
+}
+
+body.dark-mode .cqs-review-badge {
+  background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+  color: var(--dark-accent-light, #d4c8e8);
 }
 
 .cqs-review-badge svg {
@@ -218,29 +222,29 @@
 .cqs-topic-badge {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
+  gap: 5px;
+  padding: 3px 9px;
   background: linear-gradient(135deg, #e8dff5 0%, #f3e8ff 100%);
   border-radius: 20px;
-  margin-bottom: 16px;
-  font-size: 12px;
+  margin-bottom: 8px;
+  font-size: 10.5px;
   font-weight: 600;
   color: #6b46c1;
 }
 
 .cqs-topic-icon {
-  font-size: 14px;
+  font-size: 12px;
 }
 
 /* -----------------------------------------
    QUESTION
    ----------------------------------------- */
 .cqs-question {
-  font-size: 20px;
+  font-size: 15.5px;
   font-weight: 600;
   color: var(--cqs-text-primary);
-  line-height: 1.5;
-  margin-bottom: 24px;
+  line-height: 1.4;
+  margin-bottom: 11px;
 }
 
 /* -----------------------------------------
@@ -249,58 +253,47 @@
 .cqs-options {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 7px;
 }
 
 .cqs-option {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 10px;
+  padding: 9px 13px;
   background: white;
-  border: 2.5px solid rgba(100, 100, 100, 0.12);
-  border-radius: 12px;
+  border: 2px solid rgba(100, 100, 100, 0.12);
+  border-radius: 10px;
   cursor: pointer;
-  transition: all var(--cqs-transition-bounce);
+  /* Colour only, and barely any duration. Anything that moves the row —
+     a slide, a shadow that grows — keeps animating after the cursor has
+     already stopped, and that settling is what reads as delay. Two paints
+     at 80ms feels immediate. */
+  transition:
+    border-color 0.08s linear,
+    background-color 0.08s linear;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
   text-align: left;
   width: 100%;
-  /* Scale grows from the left edge so the option doesn't drift into the
-     center column or overlap its neighbour on either side. */
-  transform-origin: left center;
 }
 
-/* Clean hover — relies on `.cqs-option-enter` using `backwards` fill so
-   the entry animation doesn't lock transform after it completes. With
-   that lock gone, the existing `transition: all` on `.cqs-option` can
-   smoothly animate the slide + shadow + border-color in one sweep,
-   matching the StudyQuizCard hover feel. */
+/* Hover is a border and a tint. No slide, no shadow bloom — the row stays
+   exactly where it is, so there is nothing left in flight when you move on. */
 .cqs-option:hover:not(.disabled) {
   border-color: var(--cqs-coral);
-  background: rgba(232, 141, 125, 0.05);
-  transform: translateX(4px);
-  box-shadow: 0 8px 20px rgba(232, 141, 125, 0.22);
-  z-index: 1;
+  background-color: rgba(232, 141, 125, 0.07);
 }
 
-/* Letter circle picks up the coral fill on hover — no scaling, just
-   color, so the change reads as confident rather than bouncy. */
+/* Letter circle picks up the coral fill on hover — colour only. */
 .cqs-option:hover:not(.disabled) .cqs-option-letter {
   background: var(--cqs-coral);
   color: #fff;
-  box-shadow: 0 3px 10px rgba(232, 141, 125, 0.28);
 }
 
 @media (prefers-reduced-motion: reduce) {
   .cqs-option,
   .cqs-option-letter {
     transition: none !important;
-  }
-  .cqs-option:hover:not(.disabled) {
-    transform: none !important;
-  }
-  .cqs-option:hover:not(.disabled) .cqs-option-letter {
-    transform: none !important;
   }
 }
 
@@ -312,7 +305,7 @@
 /* Correct answer - Bold green with thick border and glow */
 .cqs-option.correct {
   border-color: var(--cqs-correct);
-  border-width: 4px;
+  border-width: 3px;
   background: rgba(46, 213, 115, 0.2);
   box-shadow: 0 0 20px rgba(46, 213, 115, 0.3);
   animation: correctPop 0.4s ease-out;
@@ -328,7 +321,7 @@
 /* Incorrect answer - Peach/coral highlight */
 .cqs-option.incorrect {
   border-color: var(--cqs-coral);
-  border-width: 4px;
+  border-width: 3px;
   background: rgba(232, 141, 125, 0.2);
   box-shadow: 0 0 15px rgba(232, 141, 125, 0.3);
   animation: incorrectShake 0.4s ease-out;
@@ -352,18 +345,20 @@
 }
 
 .cqs-option-letter {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
+  width: 26px;
+  height: 26px;
+  border-radius: 8px;
   background: rgba(100, 100, 100, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 800;
-  font-size: 15px;
+  font-size: 12.5px;
   color: var(--cqs-text-secondary);
   flex-shrink: 0;
-  transition: all var(--cqs-transition-smooth);
+  transition:
+    background-color 0.08s linear,
+    color 0.08s linear;
 }
 
 .cqs-option.selected .cqs-option-letter {
@@ -383,29 +378,25 @@
 }
 
 .cqs-option-text {
-  font-size: 16px;
+  font-size: 14px;
   color: var(--cqs-text-primary);
-  line-height: 1.4;
-  /* Animate the weight bump on hover; we deliberately don't shift the
-     text color — staying with the primary text color preserves contrast
-     against the white card background and keeps the words easier to
-     read than a coral tint would. */
-  transition: font-weight var(--cqs-transition-smooth);
+  line-height: 1.35;
 }
 
-/* Hover emphasis on the text — just a one-step weight bump. No size
-   change (no reflow), no color shift (no contrast loss). */
-.cqs-option:hover:not(.disabled) .cqs-option-text {
-  font-weight: 600;
-}
+/* No weight bump on hover. font-weight is not a cheap property to change,
+   let alone transition: the browser re-shapes the whole text run, which is
+   layout work rather than paint work, on every frame — and it is the main
+   reason this hover felt heavy. It could also rewrap a long option onto an
+   extra line and grow the row under the cursor. The border, background and
+   letter disc already carry the hover state. */
 
 /* -----------------------------------------
    FEEDBACK SECTION
    ----------------------------------------- */
 .cqs-feedback {
-  margin-top: 24px;
-  padding: 26px 24px 22px;
-  border-radius: 16px;
+  margin-top: 12px;
+  padding: 13px 15px 12px;
+  border-radius: 14px;
   animation: feedbackSlide 0.4s ease-out;
   text-align: center;
 }
@@ -437,13 +428,13 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 16px;
+  gap: 6px;
+  margin-bottom: 10px;
 }
 
 .cqs-feedback-icon {
-  width: 44px;
-  height: 44px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -451,8 +442,8 @@
 }
 
 .cqs-feedback-icon svg {
-  width: 22px;
-  height: 22px;
+  width: 17px;
+  height: 17px;
 }
 
 .cqs-feedback.correct .cqs-feedback-icon {
@@ -468,7 +459,7 @@
 }
 
 .cqs-feedback-title {
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: -0.2px;
 }
@@ -486,8 +477,8 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  margin: 0 auto 14px;
+  gap: 3px;
+  margin: 0 auto 10px;
   max-width: 540px;
 }
 
@@ -500,16 +491,16 @@
 }
 
 .cqs-correct-text {
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #991b1b;
-  line-height: 1.45;
+  line-height: 1.4;
 }
 
 /* Short rationale */
 .cqs-feedback-short {
-  font-size: 14.5px;
-  line-height: 1.65;
+  font-size: 13.5px;
+  line-height: 1.55;
   margin: 0 auto;
   max-width: 560px;
 }
@@ -529,10 +520,10 @@
   gap: 6px;
   background: rgba(255, 255, 255, 0.55);
   border: 1px solid currentColor;
-  padding: 6px 14px;
-  margin: 14px auto 0;
+  padding: 5px 12px;
+  margin: 10px auto 0;
   border-radius: 999px;
-  font-size: 12.5px;
+  font-size: 11.5px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.2s, transform 0.2s;
@@ -728,11 +719,11 @@
 
 /* Full rationale */
 .cqs-feedback-rationale {
-  font-size: 14px;
-  line-height: 1.7;
-  margin: 16px auto 0;
+  font-size: 13px;
+  line-height: 1.6;
+  margin: 10px auto 0;
   max-width: 600px;
-  padding: 16px 18px;
+  padding: 11px 13px;
   background: rgba(255, 255, 255, 0.85);
   border-radius: 12px;
   border-left: 3px solid currentColor;
@@ -765,19 +756,19 @@
 .cqs-feedback-rationale.structured {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 10px;
   border-left: none;
   background: rgba(255, 255, 255, 0.55);
 }
 
 .cqs-feedback-rationale.structured .rationale-row {
   display: grid;
-  grid-template-columns: 26px 1fr;
-  gap: 12px;
+  grid-template-columns: 22px 1fr;
+  gap: 10px;
   align-items: start;
-  padding: 11px 13px;
-  border-radius: 10px;
+  padding: 8px 10px;
+  border-radius: 9px;
   border: 1px solid transparent;
 }
 
@@ -792,8 +783,8 @@
 }
 
 .cqs-feedback-rationale .rationale-row-marker {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -803,8 +794,8 @@
 }
 
 .cqs-feedback-rationale .rationale-row-marker svg {
-  width: 13px;
-  height: 13px;
+  width: 11px;
+  height: 11px;
 }
 
 .cqs-feedback-rationale .rationale-row.correct .rationale-row-marker {
@@ -826,12 +817,12 @@
 .cqs-feedback-rationale .rationale-row-label {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 6px;
+  margin-bottom: 2px;
 }
 
 .cqs-feedback-rationale .rationale-row-letter {
-  font-size: 13.5px;
+  font-size: 12.5px;
   font-weight: 700;
   color: #111827;
   letter-spacing: -0.1px;
@@ -857,8 +848,8 @@
 }
 
 .cqs-feedback-rationale .rationale-row-text {
-  font-size: 13px;
-  line-height: 1.6;
+  font-size: 12.5px;
+  line-height: 1.5;
   color: #374151;
 }
 
@@ -871,11 +862,11 @@
 /* Duolingo-style action button */
 .cqs-feedback-btn {
   width: 100%;
-  padding: 16px 24px;
-  margin-top: 20px;
+  padding: 11px 20px;
+  margin-top: 10px;
   border: none;
-  border-radius: 14px;
-  font-size: 16px;
+  border-radius: 12px;
+  font-size: 14px;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -1109,10 +1100,10 @@
 .cqs-skeleton-option {
   display: flex;
   align-items: center;
-  gap: 14px;
-  padding: 16px 20px;
+  gap: 10px;
+  padding: 9px 13px;
   background: white;
-  border: 2.5px solid rgba(100, 100, 100, 0.08);
+  border: 2px solid rgba(100, 100, 100, 0.08);
   border-radius: 12px;
   animation: skeletonOptionFade 1.2s ease-in-out infinite;
 }
@@ -1129,8 +1120,8 @@
 }
 
 .cqs-skeleton-option-letter {
-  width: 36px;
-  height: 36px;
+  width: 26px;
+  height: 26px;
   border-radius: 10px;
   background: linear-gradient(
     90deg,
@@ -1149,16 +1140,16 @@
 
 /* Dark mode skeleton */
 body.dark-mode .cqs-skeleton-option {
-  background: rgba(40, 40, 60, 0.8);
-  border-color: rgba(150, 150, 180, 0.1);
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
 }
 
 body.dark-mode .cqs-skeleton-line {
   background: linear-gradient(
     90deg,
-    rgba(232, 141, 125, 0.05) 0%,
-    rgba(232, 141, 125, 0.15) 50%,
-    rgba(232, 141, 125, 0.05) 100%
+    rgba(255, 255, 255, 0.05) 0%,
+    rgba(255, 255, 255, 0.13) 50%,
+    rgba(255, 255, 255, 0.05) 100%
   );
   background-size: 200% 100%;
 }
@@ -1166,9 +1157,9 @@ body.dark-mode .cqs-skeleton-line {
 body.dark-mode .cqs-skeleton-option-letter {
   background: linear-gradient(
     90deg,
-    rgba(150, 150, 180, 0.1) 0%,
-    rgba(150, 150, 180, 0.2) 50%,
-    rgba(150, 150, 180, 0.1) 100%
+    rgba(255, 255, 255, 0.07) 0%,
+    rgba(255, 255, 255, 0.16) 50%,
+    rgba(255, 255, 255, 0.07) 100%
   );
   background-size: 200% 100%;
 }
@@ -1198,14 +1189,11 @@ body.dark-mode .cqs-skeleton-option-letter {
 
 /* Option staggered entrance animation */
 .cqs-option-enter {
-  /* `backwards` fill mode (instead of `forwards`) is the key here. With
-     `forwards`, the keyframe's final values (`opacity: 1; transform:
-     translateX(0)`) stay locked AFTER the animation ends — and CSS animation
-     locks have higher precedence than :hover transforms, which broke the
-     hover scale/slide. With `backwards`, the 0% keyframe state only applies
-     BEFORE the animation runs (during animation-delay). After the animation
-     completes the element returns to its natural CSS values, which means
-     hover transforms can take over without a fight. */
+  /* `backwards` rather than `forwards`: with `forwards` the final keyframe
+     values stay locked on the element after the animation ends, and an
+     animation lock outranks any later rule. `backwards` applies the 0%
+     state only during animation-delay, so once the entrance finishes the
+     option is back on its plain CSS values. */
   animation: optionEnter 0.3s cubic-bezier(0.4, 0, 0.2, 1) backwards;
 }
 
@@ -1270,9 +1258,13 @@ body.dark-mode .cqs-skeleton-option-letter {
   margin-left: 4px;
 }
 
+body.dark-mode .cqs-progress-bar {
+  background: rgba(255, 255, 255, 0.08);
+}
+
 body.dark-mode .cqs-streaming-status {
-  background: linear-gradient(135deg, rgba(232, 141, 125, 0.1) 0%, rgba(232, 141, 125, 0.15) 100%);
-  border-color: rgba(232, 141, 125, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
 }
 
 body.dark-mode .cqs-streaming-status-text {
@@ -1286,12 +1278,12 @@ body.dark-mode .cqs-streaming-status-text {
 .cqs-question-number {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 12px;
-  padding: 4px 12px;
+  gap: 5px;
+  margin-bottom: 8px;
+  padding: 3px 10px;
   background: rgba(232, 141, 125, 0.1);
   border-radius: 16px;
-  font-size: 12px;
+  font-size: 10.5px;
   font-weight: 700;
   color: var(--cqs-coral-dark);
   text-transform: uppercase;
@@ -1299,8 +1291,8 @@ body.dark-mode .cqs-streaming-status-text {
 }
 
 body.dark-mode .cqs-question-number {
-  background: rgba(232, 141, 125, 0.15);
-  color: var(--cqs-coral-light);
+  background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+  color: var(--dark-accent-light, #d4c8e8);
 }
 
 /* -----------------------------------------
@@ -1708,67 +1700,120 @@ body.dark-mode .cqs-question-number {
 /* Dark mode for post-review */
 body.dark-mode .cqs-review-questions-btn {
   color: var(--cqs-text-secondary);
-  border-color: rgba(150, 150, 180, 0.3);
+  border-color: rgba(255, 255, 255, 0.16);
 }
 
 body.dark-mode .cqs-review-questions-btn:hover {
-  background: rgba(150, 150, 180, 0.15);
-  border-color: rgba(150, 150, 180, 0.5);
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--dark-accent, #b8a5d4);
 }
 
 body.dark-mode .cqs-post-review-nav {
-  border-top-color: rgba(150, 150, 180, 0.2);
+  border-top-color: var(--dark-border, rgba(255, 255, 255, 0.08));
 }
 
 body.dark-mode .cqs-nav-prev,
 body.dark-mode .cqs-nav-next {
-  background: rgba(150, 150, 180, 0.15);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 body.dark-mode .cqs-nav-prev:hover:not(:disabled),
 body.dark-mode .cqs-nav-next:hover:not(:disabled) {
-  background: rgba(150, 150, 180, 0.25);
+  background: rgba(255, 255, 255, 0.14);
 }
 
 /* -----------------------------------------
    DARK MODE
    ----------------------------------------- */
+/* The card used to carry its own navy-and-coral palette, which read as a
+   foreign panel dropped into the app's neutral charcoal dark mode. It now
+   borrows the shared tokens from index.css: --dark-bg-* for the surfaces,
+   and --dark-accent (lavender) everywhere light mode uses coral — the same
+   swap the rest of the chat interface already makes. Correct and incorrect
+   keep their green and red; those are semantic, not brand. */
 body.dark-mode .chat-quiz-stream-card {
-  --cqs-bg: #1a1a2e;
-  --cqs-bg-cream: #16162a;
-  --cqs-card-bg: rgba(30, 30, 50, 0.95);
-  --cqs-text-primary: #f0f0f5;
-  --cqs-text-secondary: #a0a0b5;
-  --cqs-text-muted: #6a6a80;
+  --cqs-coral: var(--dark-accent, #b8a5d4);
+  --cqs-coral-hover: var(--dark-accent-hover, #a894c9);
+  --cqs-coral-dark: #9a87be;
+  --cqs-coral-light: var(--dark-accent-light, #d4c8e8);
+  --cqs-peach: var(--dark-accent-light, #d4c8e8);
+
+  --cqs-bg: var(--dark-bg-primary, #1a1a1a);
+  --cqs-bg-cream: var(--dark-bg-elevated, #262626);
+  --cqs-card-bg: var(--dark-bg-elevated, #262626);
+
+  --cqs-text-primary: #e5e5e5;
+  --cqs-text-secondary: #b4b4b4;
+  /* Lifted from the old #6a6a80 — the progress row shrank to 11.5px and
+     needed the contrast back. */
+  --cqs-text-muted: #9b9b9b;
 
   background: var(--cqs-card-bg);
-  border-color: rgba(232, 141, 125, 0.2);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  /* No shadow — dark surfaces in this app separate by value, not elevation. */
+  border: 1px solid var(--dark-border, rgba(255, 255, 255, 0.08));
+  box-shadow: none;
 }
 
 body.dark-mode .cqs-option {
-  background: rgba(40, 40, 60, 0.8);
-  border-color: rgba(150, 150, 180, 0.15);
+  background: var(--dark-bg-tertiary, #3d3d3d);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
+  box-shadow: none;
 }
 
 body.dark-mode .cqs-option:hover:not(.disabled) {
-  background: rgba(232, 141, 125, 0.1);
+  background-color: #4a4a4a;
+  border-color: var(--dark-accent, #b8a5d4);
+}
+
+body.dark-mode .cqs-option:hover:not(.disabled) .cqs-option-letter {
+  background: var(--dark-accent, #b8a5d4);
+  color: #1a1a1a;
+}
+
+body.dark-mode .cqs-option.selected {
+  background: var(--dark-accent-muted, rgba(200, 180, 220, 0.15));
+  border-color: var(--dark-accent, #b8a5d4);
+}
+
+body.dark-mode .cqs-option.selected .cqs-option-letter {
+  background: var(--dark-accent, #b8a5d4);
+  color: #1a1a1a;
 }
 
 body.dark-mode .cqs-option-letter {
-  background: rgba(150, 150, 180, 0.15);
+  background: rgba(255, 255, 255, 0.08);
+  color: #cfcfcf;
+}
+
+body.dark-mode .cqs-option.correct {
+  border-color: #34d399;
+  background: rgba(16, 185, 129, 0.2);
+  box-shadow: 0 0 18px rgba(16, 185, 129, 0.22);
+}
+
+/* Coral IS the accent here, so the wrong-answer highlight has to be spelled
+   out in red — inheriting it would make a miss look merely selected. */
+body.dark-mode .cqs-option.incorrect {
+  border-color: #ef4444;
+  background: rgba(220, 38, 38, 0.18);
+  box-shadow: 0 0 15px rgba(220, 38, 38, 0.22);
+}
+
+body.dark-mode .cqs-option.incorrect .cqs-option-letter {
+  background: #dc2626;
+  color: #ffffff;
 }
 
 body.dark-mode .cqs-feedback.correct {
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.18) 0%, rgba(20, 22, 32, 0.55) 100%);
-  border-color: rgba(46, 213, 115, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, rgba(16, 185, 129, 0.16) 0%, rgba(45, 45, 45, 0.9) 100%);
+  border-color: rgba(16, 185, 129, 0.28);
+  box-shadow: none;
 }
 
 body.dark-mode .cqs-feedback.incorrect {
-  background: linear-gradient(180deg, rgba(220, 38, 38, 0.16) 0%, rgba(20, 22, 32, 0.55) 100%);
-  border-color: rgba(220, 38, 38, 0.3);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+  background: linear-gradient(180deg, rgba(220, 38, 38, 0.14) 0%, rgba(45, 45, 45, 0.9) 100%);
+  border-color: rgba(220, 38, 38, 0.28);
+  box-shadow: none;
 }
 
 body.dark-mode .cqs-feedback.correct .cqs-feedback-title {
@@ -1810,7 +1855,7 @@ body.dark-mode .cqs-learn-more-btn:hover {
 }
 
 body.dark-mode .cqs-feedback-rationale {
-  background: rgba(15, 17, 26, 0.85);
+  background: rgba(26, 26, 26, 0.85);
   color: #e5e7eb;
   border: 1px solid rgba(255, 255, 255, 0.06);
   border-left-width: 3px;
@@ -1830,7 +1875,7 @@ body.dark-mode .cqs-feedback.incorrect .cqs-feedback-rationale {
 
 /* Structured rationale - dark mode */
 body.dark-mode .cqs-feedback-rationale.structured {
-  background: rgba(15, 17, 26, 0.85);
+  background: rgba(26, 26, 26, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
@@ -1867,13 +1912,107 @@ body.dark-mode .cqs-feedback-rationale .rationale-row-text b {
   color: #ffffff;
 }
 
+/* Lavender is much lighter than the coral it replaces, so anything filled
+   with the accent needs dark text on it — same pairing the rest of the app
+   uses (see .message-edit-save in ChatInterface.css). */
+body.dark-mode .cqs-milestone-btn,
+body.dark-mode .cqs-review-btn,
+body.dark-mode .cqs-nav-done,
+body.dark-mode .cqs-feedback-btn.incorrect {
+  color: #1a1a1a;
+}
+
+/* The green CONTINUE keeps white text, but its ledge shade was tuned
+   against a cream card and goes muddy on charcoal. */
+body.dark-mode .cqs-feedback-btn.correct {
+  background: #10b981;
+  box-shadow: 0 5px 0 #0b7a5c;
+}
+
+body.dark-mode .cqs-feedback-btn.correct:hover {
+  background: #0ea472;
+  box-shadow: 0 7px 0 #0b7a5c;
+}
+
 body.dark-mode .cqs-stat-card {
-  background: rgba(40, 40, 60, 0.8);
+  background: var(--dark-bg-tertiary, #3d3d3d);
 }
 
 body.dark-mode .cqs-topic-badge {
-  background: linear-gradient(135deg, rgba(139, 92, 246, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%);
-  color: #c4b5fd;
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--dark-accent-light, #d4c8e8);
+}
+
+/* -----------------------------------------
+   SHORT VIEWPORTS
+   -----------------------------------------
+   A laptop at 768px tall gives the chat pane roughly 600px once the header
+   and composer take their cut. The base card is already tight; here we drop
+   below it again so the stem and all four options land on screen together
+   without the student scrolling. The component's scroll-into-view effects
+   take over once the feedback panel opens. */
+@media (max-height: 820px) {
+  .chat-quiz-stream-card {
+    padding: 13px 15px;
+  }
+
+  .cqs-progress-container {
+    margin-bottom: 8px;
+  }
+
+  .cqs-question-number,
+  .cqs-topic-badge {
+    margin-bottom: 6px;
+    font-size: 10px;
+  }
+
+  .cqs-question {
+    font-size: 14.5px;
+    margin-bottom: 9px;
+  }
+
+  .cqs-options {
+    gap: 6px;
+  }
+
+  .cqs-option {
+    padding: 7px 11px;
+  }
+
+  .cqs-option-letter {
+    width: 23px;
+    height: 23px;
+    font-size: 11.5px;
+    border-radius: 7px;
+  }
+
+  .cqs-option-text {
+    font-size: 13px;
+  }
+
+  .cqs-feedback {
+    margin-top: 9px;
+    padding: 11px 13px 10px;
+  }
+
+  .cqs-feedback-icon {
+    width: 27px;
+    height: 27px;
+  }
+
+  .cqs-feedback-title {
+    font-size: 14.5px;
+  }
+
+  .cqs-feedback-short {
+    font-size: 12.5px;
+  }
+
+  .cqs-feedback-btn {
+    padding: 9px 18px;
+    margin-top: 8px;
+    font-size: 13px;
+  }
 }
 
 /* -----------------------------------------
@@ -1881,30 +2020,30 @@ body.dark-mode .cqs-topic-badge {
    ----------------------------------------- */
 @media (max-width: 640px) {
   .chat-quiz-stream-card {
-    padding: 18px;
+    padding: 13px 14px;
     border-radius: 12px;
   }
 
   .cqs-question {
-    font-size: 17px;
-  }
-
-  .cqs-option {
-    padding: 14px 16px;
-  }
-
-  .cqs-option-letter {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
-  }
-
-  .cqs-option-text {
     font-size: 15px;
   }
 
+  .cqs-option {
+    padding: 9px 12px;
+  }
+
+  .cqs-option-letter {
+    width: 24px;
+    height: 24px;
+    font-size: 12px;
+  }
+
+  .cqs-option-text {
+    font-size: 13.5px;
+  }
+
   .cqs-feedback {
-    padding: 16px;
+    padding: 12px 13px;
   }
 
   .cqs-completion-stats {

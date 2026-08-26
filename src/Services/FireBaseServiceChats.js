@@ -19,45 +19,71 @@ import {
 import { generate_title } from '../Services/FastAPICalls.js';
 import { devLog } from './devLogger';
 
-const CreateNewChatWithMessage = async (messageObject) => {
+/**
+ * Stand-in title, used until the AI title lands — or forever, if it never does.
+ * A slightly worse title is an acceptable outcome; a conversation that doesn't
+ * exist is not.
+ */
+export const provisionalTitle = (text) => {
+  const clean = String(text || "").replace(/\s+/g, " ").trim();
+  if (!clean) return "New conversation";
+  if (clean.length <= 48) return clean;
+  return clean.slice(0, 48).replace(/\s+\S*$/, "") + "...";
+};
+
+/**
+ * Create a chat and store its first message.
+ *
+ * ORDERING IS THE WHOLE POINT. This used to `await generate_title()` before
+ * creating anything, which made an LLM round-trip a hard prerequisite for the
+ * conversation existing at all. When that call failed, the catch swallowed it
+ * and returned undefined: no chat document, no saved message, and ChatInterface
+ * then fell back to a null chat id and opened a socket to `/ws/undefined`. From
+ * the student's side they typed their first message and nothing happened — no
+ * answer, no error, and nothing in the sidebar afterwards. Only NEW chats hit
+ * it, because existing ones skip titling entirely.
+ *
+ * Now: the chat and the message are durable before any network call, and the
+ * title is best-effort afterwards.
+ */
+const CreateNewChatWithMessage = async (messageObject, language) => {
   try {
     const userId = auth.currentUser.uid;
+    const chatRef = doc(collection(db, "chats")); // doc ref with a random ID
 
-    // Step 1: Create a custom chat ID (optional — or use addDoc for auto ID)
-    const chatRef = doc(collection(db, "chats")); // creates a doc ref with random ID
-
-    // Step 2: Create a title for the chat based on the content of the message
-    // make a request to FAST API to generate title using AI
-    let chat_title_promise = await generate_title(messageObject.content);
-    let chat_title = chat_title_promise.title;
-
-    devLog("chat title created: ", chat_title);
-
-    // create a new chat document
-    const newChat = {
+    await setDoc(chatRef, {
       userId,
-      title: chat_title,
+      title: provisionalTitle(messageObject.content),
       description: "New conversation started.",
       updatedAt: serverTimestamp(),
-    };
+    });
 
-    // add document to firebase
-    await setDoc(chatRef, newChat);
-
-    // inside the chat docucument add a collection of messages
     await addDoc(collection(chatRef, "messages"), {
-      // add a document inside the collection
       ...messageObject,
       timestamp: serverTimestamp(),
     });
 
-    // log that it was successful
     devLog("✅ New chat created and message added to:", chatRef.id);
+
+    // Title in the background. Deliberately NOT awaited: a slow or dead title
+    // service must never delay the student's first answer, and a failure here
+    // costs nothing but a prettier title.
+    generate_title(messageObject.content, language)
+      .then((res) => {
+        if (res?.title) {
+          devLog("chat title created: ", res.title);
+          return updateDoc(chatRef, { title: res.title, updatedAt: serverTimestamp() });
+        }
+      })
+      .catch((error) => {
+        devLog("Title generation failed; keeping the provisional title:", error);
+      });
 
     return chatRef.id;
 
   } catch (error) {
-    console.error("❌ Error creating chat with message message:", error);
+    console.error("❌ Error creating chat with message:", error);
+    return null;
   }
 };
 
@@ -77,12 +103,12 @@ const ChatHasMessages = async (chatId) => {
   }
 };
 
-const AppendToChat = async (chatId, messageObject) => {
+const AppendToChat = async (chatId, messageObject, language) => {
 
   // if there is no chatID, create a new chat and insert the first message
   // this will also generate a chat title
   if (!chatId) {
-    chatId = await CreateNewChatWithMessage(messageObject);
+    chatId = await CreateNewChatWithMessage(messageObject, language);
     return chatId;
   }
 
@@ -94,26 +120,22 @@ const AppendToChat = async (chatId, messageObject) => {
     const chatHasMessages = await ChatHasMessages(chatId);
 
     if (!chatHasMessages) {
-      // if chat doesnt have a message generate a title using AI
-      let chat_title_promise = await generate_title(messageObject.content);
-      let chat_title = chat_title_promise.title;
-
-      try {
-        // query the chat i want to update
-        const chatRef = doc(db, "chats", chatId);
-
-        // update the chat doc by adding the title generated
-        await updateDoc(chatRef, {
-          title: chat_title,
-          updatedAt: serverTimestamp()  // Optional: update timestamp
+      // Same hazard as CreateNewChatWithMessage: this used to be awaited, so a
+      // failing title service threw past the addDoc below and the student's
+      // message was silently dropped. Title is best-effort; the message is not.
+      generate_title(messageObject.content, language)
+        .then((res) => {
+          if (res?.title) {
+            devLog("✅ Chat title updated");
+            return updateDoc(doc(db, "chats", chatId), {
+              title: res.title,
+              updatedAt: serverTimestamp()
+            });
+          }
+        })
+        .catch((error) => {
+          devLog("Title generation failed; chat keeps its current title:", error);
         });
-
-        // show that the update was successful
-        devLog("✅ Chat title updated");
-
-      } catch (error) {
-        console.error("❌ Error updating chat title:", error);
-      }
     }
 
     devLog("Adding message do addDoc: ", messageObject)
@@ -868,6 +890,183 @@ export const UpdateMessageContent = async (chatId, messageId, newContent) => {
   } catch (error) {
     console.error("UpdateMessageContent failed:", error);
     throw error;
+  }
+};
+
+/**
+ * Resolve a message's real Firestore document reference.
+ *
+ * `message.id` in React state is NOT reliably the Firestore doc id — some
+ * messages are written with an auto-generated doc id and carry the app-level
+ * id in an `id` FIELD instead. Writing straight to doc(...messages/messageId)
+ * therefore fails silently for those. UpdateQuizAnswer has always worked
+ * around this inline; this is the same two-step lookup, shared.
+ *
+ * @returns {Promise<DocumentReference|null>} null if no such message exists.
+ */
+const resolveMessageRef = async (chatId, messageId) => {
+  if (!chatId || !messageId) return null;
+
+  // Step 1: treat messageId as the doc id.
+  try {
+    const directRef = doc(db, "chats", chatId, "messages", messageId);
+    const snap = await getDoc(directRef);
+    if (snap.exists()) return directRef;
+  } catch (e) {
+    /* fall through to the query */
+  }
+
+  // Step 2: fall back to matching the `id` field.
+  try {
+    const q = query(
+      collection(db, "chats", chatId, "messages"),
+      where("id", "==", messageId)
+    );
+    const found = await getDocs(q);
+    if (!found.empty) return found.docs[0].ref;
+  } catch (e) {
+    /* fall through */
+  }
+
+  return null;
+};
+
+/**
+ * Stamp that a student actually engaged with a rendered artifact.
+ *
+ * WHY THIS EXISTS
+ * Quizzes and flashcards already write `updatedAt` when answered or reviewed
+ * (see SaveQuizAnswer / SaveFlashcardReview above), which is the only reason
+ * their real usage is measurable — 71.7% of quizzes are attempted, 41.3% of
+ * flashcard decks reviewed. Study sheets, concept maps and audio had no
+ * equivalent signal, so analytics could see that they were *delivered* but
+ * never whether anyone used them. This closes that gap with the same shape of
+ * write, so both kinds of engagement read the same way in a query.
+ *
+ * `engagementKind` distinguishes a passive read (dwell) from an active answer,
+ * so the two are never silently averaged together.
+ *
+ * Best-effort by design: telemetry must never break rendering, so failures are
+ * logged and swallowed rather than thrown.
+ *
+ * @param {string} chatId
+ * @param {string} messageId
+ * @param {string} kind - artifact type that was engaged with, e.g. 'studysheet'
+ */
+export const markMessageEngaged = async (chatId, messageId, kind) => {
+  if (!chatId || !messageId) return { success: false, reason: "missing-ids" };
+  try {
+    const ref = await resolveMessageRef(chatId, messageId);
+    if (!ref) return { success: false, reason: "not-found" };
+    await updateDoc(ref, {
+      engagedAt: serverTimestamp(),
+      engagementKind: kind || null,
+      updatedAt: new Date()
+    });
+    return { success: true };
+  } catch (error) {
+    devLog("markMessageEngaged failed (non-fatal):", error?.message);
+    return { success: false };
+  }
+};
+
+/**
+ * Replace a quiz message's question list with an extended one.
+ *
+ * Quizzes ship short and grow as the student advances (see useQuizAutoExtend).
+ * Without this write a reload would drop the quiz back to its first batch and
+ * pay to generate the rest again — which is the cost the whole change exists to
+ * avoid.
+ *
+ * Writes the merged array rather than an arrayUnion so answered questions keep
+ * their `userSelection`: the caller merges old and new, and the old entries it
+ * passes back are the live ones from state.
+ *
+ * @param {string} chatId
+ * @param {string} messageId
+ * @param {Array} quizData Full merged question list.
+ */
+export const AppendQuizQuestions = async (chatId, messageId, quizData) => {
+  if (!chatId || !messageId || !Array.isArray(quizData)) {
+    return { success: false, reason: "missing-args" };
+  }
+  try {
+    const ref = await resolveMessageRef(chatId, messageId);
+    if (!ref) return { success: false, reason: "not-found" };
+    await updateDoc(ref, {
+      quizData,
+      expectedTotal: quizData.length,
+      updatedAt: new Date()
+    });
+    return { success: true };
+  } catch (error) {
+    devLog("AppendQuizQuestions failed (non-fatal):", error?.message);
+    return { success: false };
+  }
+};
+
+/**
+ * Mirror a chat-answer rating onto the message it belongs to.
+ *
+ * The analyzable copy lives in `satisfactionSignals` (see SatisfactionService);
+ * this write exists purely so the thumbs render in their chosen state after a
+ * reload. Without it the student rates an answer, refreshes, and is asked
+ * again — which reads as the rating having been thrown away.
+ *
+ * Stored under `rating` rather than the existing `feedbackData` on purpose:
+ * `feedbackData` is the quiz/flashcard shape ({ rating: 'good', detail }) and
+ * is what those components check to hide their own prompt. Overloading it would
+ * make a thumbs-up on a quiz message silently suppress the quiz rating popover.
+ *
+ * Best-effort, like markMessageEngaged: a lost mirror costs the visual state,
+ * not the measurement.
+ *
+ * @param {string} chatId
+ * @param {string} messageId
+ * @param {{sentiment: number, reasons: ?string[]}} rating
+ */
+export const markMessageRated = async (chatId, messageId, rating) => {
+  if (!chatId || !messageId || !rating) return { success: false, reason: "missing-ids" };
+  try {
+    const ref = await resolveMessageRef(chatId, messageId);
+    if (!ref) return { success: false, reason: "not-found" };
+    await updateDoc(ref, {
+      rating: {
+        sentiment: rating.sentiment,
+        reasons: rating.reasons || [],
+        ratedAt: new Date()
+      },
+      updatedAt: new Date()
+    });
+    return { success: true };
+  } catch (error) {
+    devLog("markMessageRated failed (non-fatal):", error?.message);
+    return { success: false };
+  }
+};
+
+/**
+ * Record which post-upload chip the student picked.
+ *
+ * Persisted rather than kept in local state so that reopening the chat still
+ * shows the choice — otherwise the menu comes back fully live on reload and
+ * the action can be fired a second time.
+ *
+ * Best-effort: a failure here costs the visual record, not the action itself.
+ */
+export const SavePostUploadSelection = async (chatId, messageId, actionId) => {
+  if (!chatId || !messageId || !actionId) return { success: false };
+  try {
+    const ref = await resolveMessageRef(chatId, messageId);
+    if (!ref) return { success: false, reason: "not-found" };
+    await updateDoc(ref, {
+      selectedAction: actionId,
+      updatedAt: new Date()
+    });
+    return { success: true };
+  } catch (error) {
+    devLog("SavePostUploadSelection failed (non-fatal):", error?.message);
+    return { success: false };
   }
 };
 

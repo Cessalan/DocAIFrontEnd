@@ -18,7 +18,11 @@ const StudyAudioCard = ({
   generatingMessage = '',
   onGenerateAudio,
   onContinue,
-  onExit
+  onExit,
+  // Fired once when playback actually starts. Node status tells us a student
+  // advanced past this lesson; it does NOT tell us whether they listened to
+  // it. Optional — omit to record nothing.
+  onFirstPlay
 }) => {
   const { t } = useTranslation();
   const [hasListened, setHasListened] = useState(false);
@@ -190,6 +194,7 @@ const StudyAudioCard = ({
               intent={intent}
               duration={suggestedDuration}
               onEnded={handleAudioEnd}
+              onFirstPlay={onFirstPlay}
             />
           ) : (
             <div className="study-audio-generating">

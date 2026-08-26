@@ -1,3 +1,13 @@
+/* The CTA deliberately runs hotter than --primary-coral (#e88d7d). The brand
+   coral is a *background* color used all over the app, so a button painted in
+   it reads as one more surface rather than as the one thing to press. These
+   two stops stay in the coral family but carry enough saturation to be the
+   loudest element on the modal. Change these two values to retune it. */
+.upgrade-modal {
+  --upgrade-cta-from: #ef6f57;
+  --upgrade-cta-to: #d2432f;
+}
+
 .upgrade-overlay {
   position: fixed;
   inset: 0;
@@ -14,10 +24,15 @@
 .upgrade-modal {
   position: relative;
   width: 100%;
-  max-width: 420px;
+  max-width: 440px;
   max-height: 92vh;
-  overflow-y: auto;
-  padding: 36px 28px 24px;
+  /* Column so the pitch scrolls inside .upgrade-scroll while .upgrade-footer
+     stays pinned. The modal itself must never scroll — that's what buried the
+     CTA on short windows. */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 26px 26px 16px;
   border-radius: 20px;
   background: var(--bg-paper, #fffef9);
   border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.15));
@@ -45,93 +60,368 @@
 .upgrade-close:hover { background: rgba(0, 0, 0, 0.05); color: var(--text-primary, #3d3d3d); }
 .upgrade-close svg { width: 18px; height: 18px; }
 
+/* Scrolling pitch. Negative side margins + matching padding let the scrollbar
+   sit at the modal edge instead of cutting into the content. */
+.upgrade-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  margin: 0 -26px;
+  padding: 0 26px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 141, 125, 0.45) transparent;
+}
+.upgrade-scroll::-webkit-scrollbar { width: 8px; }
+.upgrade-scroll::-webkit-scrollbar-track { background: transparent; }
+.upgrade-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+  background-color: rgba(232, 141, 125, 0.45);
+}
+
+/* Pinned decision zone. */
+.upgrade-footer {
+  flex: 0 0 auto;
+  padding-top: 12px;
+  border-top: 1px solid var(--glass-border, rgba(232, 141, 125, 0.15));
+}
+
+/* Mascot + headline side by side. Left-aligned here only; the rest of the
+   modal stays centered. `padding-right` keeps the copy clear of the close X. */
+.upgrade-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  padding-right: 22px;
+  text-align: left;
+}
+.upgrade-head-text { min-width: 0; }
+
 .upgrade-icon {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 8px;
 }
 
 .upgrade-title {
-  margin: 0 0 8px;
-  font-size: 22px;
-  font-weight: 700;
+  margin: 0 0 4px;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
   color: var(--text-primary, #3d3d3d);
 }
 
 .upgrade-body {
-  margin: 0 auto 20px;
-  max-width: 320px;
-  font-size: 15px;
-  line-height: 1.5;
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.4;
   color: var(--text-secondary, #6b6b6b);
 }
 
-.upgrade-countdown {
+/* The Pro branch keeps the original stacked, centered header. */
+.upgrade-modal > .upgrade-icon { justify-content: center; margin-bottom: 6px; }
+.upgrade-modal > .upgrade-title { text-align: center; font-size: 22px; }
+.upgrade-modal > .upgrade-body { margin: 0 auto 20px; max-width: 320px; text-align: center; }
+
+/* ── "You were practicing: X" ─────────────────────────────────────────── */
+.upgrade-context {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 2px;
-  margin-bottom: 22px;
-  padding: 14px;
+  gap: 12px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
   border-radius: 14px;
-  background: var(--bg-warm, #fff5eb);
-  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.15));
-}
-.upgrade-countdown-label {
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--text-muted, #999);
-}
-.upgrade-countdown-time {
-  font-size: 30px;
-  font-weight: 700;
-  font-variant-numeric: tabular-nums;
-  color: var(--primary-coral, #e88d7d);
-}
-
-.upgrade-compare {
-  margin-bottom: 20px;
-  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.15));
-  border-radius: 14px;
-  overflow: hidden;
-}
-.upgrade-compare-row {
-  display: grid;
-  grid-template-columns: 1.5fr 0.85fr 0.85fr;
-  align-items: center;
-  padding: 9px 12px;
-  font-size: 13px;
-  border-top: 1px solid var(--glass-border, rgba(232, 141, 125, 0.12));
-}
-.upgrade-compare-row:first-child { border-top: none; }
-
-.upgrade-compare-head {
-  background: var(--bg-warm, #fff5eb);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-}
-
-.upgrade-compare-feature {
   text-align: left;
-  color: var(--text-primary, #3d3d3d);
-  font-weight: 500;
+  background: var(--bg-warm, #fff5eb);
+  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.18));
 }
-.upgrade-compare-free {
-  text-align: center;
-  color: var(--text-muted, #999);
-}
-.upgrade-compare-pro {
-  text-align: center;
-  font-weight: 700;
+.upgrade-context-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(232, 141, 125, 0.16);
   color: var(--primary-coral-dark, #c46a5a);
 }
-.upgrade-compare-head .upgrade-compare-pro { color: var(--primary-coral, #e88d7d); }
-.upgrade-compare-head .upgrade-compare-free { color: var(--text-secondary, #6b6b6b); }
+.upgrade-context-icon svg { width: 18px; height: 18px; }
+.upgrade-context-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.upgrade-context-label {
+  font-size: 12px;
+  color: var(--text-muted, #999);
+}
+.upgrade-context-topic {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--primary-coral-dark, #c46a5a);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 
+/* ── Momentum stats row ───────────────────────────────────────────────── */
+.upgrade-stats {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px 18px;
+  margin-bottom: 12px;
+}
+.upgrade-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-secondary, #6b6b6b);
+}
+.upgrade-stat-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(126, 190, 150, 0.18);
+  color: #4f8a67;
+  font-size: 12.5px;
+  font-weight: 800;
+}
+.upgrade-stat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  background: rgba(232, 141, 125, 0.16);
+  color: var(--primary-coral-dark, #c46a5a);
+}
+.upgrade-stat-icon svg { width: 14px; height: 14px; }
+
+/* ── The Pro offer, framed as outcomes ────────────────────────────────── */
+.upgrade-pro {
+  position: relative;
+  margin-bottom: 12px;
+  padding: 12px 13px 11px;
+  border-radius: 16px;
+  text-align: left;
+  background: var(--bg-cream, #fdf8f3);
+  border: 1.5px solid rgba(232, 141, 125, 0.35);
+}
+
+.upgrade-pro-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.upgrade-pro-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: linear-gradient(135deg, var(--primary-coral, #e88d7d), var(--primary-coral-dark, #c46a5a));
+}
+.upgrade-pro-badge::before { content: '★'; font-size: 10px; }
+.upgrade-pro-trophy {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  margin: -2px -2px 0 0;
+  color: var(--primary-coral, #e88d7d);
+  opacity: 0.75;
+}
+.upgrade-pro-trophy svg { width: 26px; height: 26px; }
+
+.upgrade-pro-title {
+  margin: 7px 0 11px;
+  font-size: 16.5px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #3d3d3d);
+}
+
+.upgrade-outcomes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 11px 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.upgrade-outcome {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+.upgrade-outcome-icon {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  background: rgba(232, 141, 125, 0.14);
+  color: var(--primary-coral-dark, #c46a5a);
+}
+.upgrade-outcome-icon svg { width: 16px; height: 16px; }
+.upgrade-outcome-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.upgrade-outcome-title {
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary, #3d3d3d);
+}
+.upgrade-outcome-sub {
+  font-size: 11px;
+  line-height: 1.3;
+  color: var(--text-muted, #999);
+}
+
+/* ── Price: one number, with annual as a swap rather than a rival CTA ─── */
+.upgrade-price {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 4px;
+  padding: 12px 14px;
+  border-radius: 16px;
+  text-align: left;
+  background: var(--bg-warm, #fff5eb);
+  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.18));
+}
+.upgrade-price-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 5px;
+}
+.upgrade-price-amount {
+  font-size: 26px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text-primary, #3d3d3d);
+}
+.upgrade-price-interval {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #999);
+}
+.upgrade-price-sub {
+  flex: 1 0 100%;
+  margin-top: 2px;
+  font-size: 11.5px;
+  color: var(--text-muted, #999);
+}
+
+.upgrade-price-swap {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 12px;
+  border: 1px solid rgba(232, 141, 125, 0.35);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--primary-coral-dark, #c46a5a);
+  font-size: 11.5px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+}
+.upgrade-price-swap:hover { transform: translateY(-1px); border-color: var(--primary-coral, #e88d7d); }
+.upgrade-price-swap.is-on {
+  background: rgba(232, 141, 125, 0.16);
+  border-color: var(--primary-coral, #e88d7d);
+}
+.upgrade-swap-main { display: block; }
+.upgrade-swap-sub { display: block; font-weight: 500; font-size: 10.5px; opacity: 0.8; }
+.upgrade-price-swap .upgrade-swap-main + .upgrade-swap-sub { margin-left: -0.5px; }
+.upgrade-swap-chevron { font-size: 15px; line-height: 1; opacity: 0.7; }
+
+/* ── The single CTA ───────────────────────────────────────────────────── */
+.upgrade-cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 15px 18px;
+  border: none;
+  border-radius: 14px;
+  font-size: 15.5px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(135deg, var(--upgrade-cta-from), var(--upgrade-cta-to));
+  box-shadow: 0 8px 20px rgba(210, 67, 47, 0.35);
+  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+}
+.upgrade-cta:hover {
+  transform: translateY(-1px);
+  filter: brightness(1.05);
+  box-shadow: 0 12px 26px rgba(210, 67, 47, 0.42);
+}
+.upgrade-cta:active { transform: translateY(0); }
+.upgrade-cta:disabled { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
+.upgrade-cta-lock { display: inline-flex; }
+.upgrade-cta-lock svg { width: 16px; height: 16px; }
+.upgrade-cta-arrow { font-size: 16px; line-height: 1; }
+
+.upgrade-or {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0 2px;
+  color: var(--text-muted, #bbb);
+  font-size: 12px;
+}
+.upgrade-or::before,
+.upgrade-or::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--glass-border, rgba(232, 141, 125, 0.2));
+}
+
+/* Free path — present and honest, no longer competing with the CTA. */
+.upgrade-wait {
+  width: 100%;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-muted, #999);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+}
+.upgrade-wait:hover { color: var(--text-secondary, #6b6b6b); }
+
+/* ── Pro-user branch (manage subscription) ────────────────────────────── */
 .upgrade-plans {
   display: flex;
   gap: 12px;
@@ -163,43 +453,10 @@
   background: linear-gradient(180deg, rgba(232, 141, 125, 0.10), var(--bg-cream, #fdf8f3));
 }
 
-.upgrade-plan-badge {
-  position: absolute;
-  top: -10px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: #fff;
-  white-space: nowrap;
-  background: linear-gradient(135deg, var(--primary-coral, #e88d7d), var(--primary-coral-dark, #c46a5a));
-  box-shadow: 0 4px 10px rgba(232, 141, 125, 0.4);
-}
-
 .upgrade-plan-name {
   font-size: 13px;
   font-weight: 600;
   color: var(--text-secondary, #6b6b6b);
-}
-.upgrade-plan-price {
-  display: flex;
-  align-items: baseline;
-  gap: 1px;
-  margin-top: 2px;
-}
-.upgrade-plan-amount {
-  font-size: 26px;
-  font-weight: 800;
-  color: var(--text-primary, #3d3d3d);
-}
-.upgrade-plan-interval {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted, #999);
 }
 .upgrade-plan-sub {
   font-size: 11.5px;
@@ -207,26 +464,6 @@
   color: var(--primary-coral-dark, #c46a5a);
   margin-top: 2px;
   text-align: center;
-}
-
-.upgrade-wait {
-  width: 100%;
-  padding: 10px;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  color: var(--text-muted, #999);
-  cursor: pointer;
-}
-.upgrade-wait:hover { color: var(--text-secondary, #6b6b6b); }
-
-/* Demoted countdown — still present, just no longer competing with the plans. */
-.upgrade-countdown-inline {
-  margin: 2px 0 0;
-  text-align: center;
-  font-size: 12px;
-  color: var(--text-secondary, #9a9a9a);
-  opacity: 0.85;
 }
 
 @keyframes upgrade-fade-in { from { opacity: 0; } to { opacity: 1; } }
@@ -242,18 +479,59 @@ body.dark-mode .upgrade-modal {
 }
 body.dark-mode .upgrade-title { color: #f5f5f5; }
 body.dark-mode .upgrade-body { color: #c8c8c8; }
-body.dark-mode .upgrade-countdown {
+body.dark-mode .upgrade-close:hover { background: rgba(255, 255, 255, 0.08); color: #f5f5f5; }
+body.dark-mode .upgrade-footer { border-top-color: var(--dark-border, rgba(255, 255, 255, 0.1)); }
+body.dark-mode .upgrade-scroll { scrollbar-color: rgba(184, 165, 212, 0.45) transparent; }
+body.dark-mode .upgrade-scroll::-webkit-scrollbar-thumb { background-color: rgba(184, 165, 212, 0.45); }
+
+body.dark-mode .upgrade-context,
+body.dark-mode .upgrade-price {
   background: var(--dark-bg-secondary, #2f2f2f);
   border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
 }
-body.dark-mode .upgrade-countdown-time { color: var(--dark-accent-light, #d4c8e8); }
-body.dark-mode .upgrade-compare { border-color: var(--dark-border, rgba(255, 255, 255, 0.1)); }
-body.dark-mode .upgrade-compare-row { border-top-color: var(--dark-border, rgba(255, 255, 255, 0.07)); }
-body.dark-mode .upgrade-compare-head { background: var(--dark-bg-secondary, #2f2f2f); }
-body.dark-mode .upgrade-compare-feature { color: #e8e8e8; }
-body.dark-mode .upgrade-compare-free { color: #999; }
-body.dark-mode .upgrade-compare-pro { color: var(--dark-accent-light, #d4c8e8); }
-body.dark-mode .upgrade-compare-head .upgrade-compare-pro { color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .upgrade-context-icon,
+body.dark-mode .upgrade-outcome-icon,
+body.dark-mode .upgrade-stat-icon {
+  background: rgba(184, 165, 212, 0.18);
+  color: var(--dark-accent-light, #d4c8e8);
+}
+body.dark-mode .upgrade-context-topic { color: var(--dark-accent-light, #d4c8e8); }
+body.dark-mode .upgrade-stat { color: #c8c8c8; }
+body.dark-mode .upgrade-stat-num { background: rgba(126, 190, 150, 0.22); color: #9fd4b4; }
+
+body.dark-mode .upgrade-pro {
+  background: var(--dark-bg-secondary, #2f2f2f);
+  border-color: rgba(184, 165, 212, 0.4);
+}
+body.dark-mode .upgrade-pro-badge {
+  background: linear-gradient(135deg, var(--dark-accent, #b8a5d4), var(--dark-accent-hover, #a894c9));
+}
+body.dark-mode .upgrade-pro-trophy { color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .upgrade-pro-title { color: #f5f5f5; }
+body.dark-mode .upgrade-outcome-title { color: #e8e8e8; }
+body.dark-mode .upgrade-outcome-sub { color: #999; }
+
+body.dark-mode .upgrade-price-amount { color: #f5f5f5; }
+body.dark-mode .upgrade-price-swap {
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(184, 165, 212, 0.4);
+  color: var(--dark-accent-light, #d4c8e8);
+}
+body.dark-mode .upgrade-price-swap.is-on { background: rgba(184, 165, 212, 0.2); }
+
+body.dark-mode .upgrade-modal {
+  /* Dark mode's accent is lavender, not coral — the CTA follows it so the
+     modal doesn't look like a different product with the lights off. */
+  --upgrade-cta-from: #b8a5d4;
+  --upgrade-cta-to: #9d86c4;
+}
+body.dark-mode .upgrade-cta {
+  box-shadow: 0 8px 20px rgba(140, 120, 180, 0.35);
+  color: #1f1b24;
+}
+body.dark-mode .upgrade-or::before,
+body.dark-mode .upgrade-or::after { background: var(--dark-border, rgba(255, 255, 255, 0.1)); }
+
 body.dark-mode .upgrade-plan {
   background: var(--dark-bg-secondary, #2f2f2f);
   border-color: var(--dark-border, rgba(255, 255, 255, 0.1));
@@ -263,14 +541,77 @@ body.dark-mode .upgrade-plan.is-recommended {
   border-color: var(--dark-accent, #b8a5d4);
   background: linear-gradient(180deg, rgba(184, 165, 212, 0.15), var(--dark-bg-secondary, #2f2f2f));
 }
-body.dark-mode .upgrade-plan-badge {
-  background: linear-gradient(135deg, var(--dark-accent, #b8a5d4), var(--dark-accent-hover, #a894c9));
-}
 body.dark-mode .upgrade-plan-name { color: #c8c8c8; }
-body.dark-mode .upgrade-plan-amount { color: #f5f5f5; }
 body.dark-mode .upgrade-plan-sub { color: var(--dark-accent-light, #d4c8e8); }
-body.dark-mode .upgrade-close:hover { background: rgba(255, 255, 255, 0.08); color: #f5f5f5; }
 
-@media (max-width: 420px) {
+/* ── Phones ───────────────────────────────────────────────────────────────
+   The benefit grid drops to one column here, which is what makes the modal
+   tall — six rows instead of three. Rather than cut the sub-lines (they carry
+   the actual benefit), everything gets tighter metrics: the whole pitch fits
+   a ~700px viewport without scrolling, and the CTA is pinned regardless. */
+@media (max-width: 480px) {
+  .upgrade-overlay { padding: 8px; }
+  .upgrade-modal { max-height: 96vh; padding: 18px 16px 12px; }
+  .upgrade-scroll { margin: 0 -16px; padding: 0 16px; }
+
+  .upgrade-head { gap: 10px; margin-bottom: 10px; padding-right: 26px; }
+  .upgrade-title { font-size: 18px; }
+  .upgrade-body { font-size: 13px; line-height: 1.35; }
+  /* NurseQuizMascot sizes itself with inline width/height, so !important is
+     the only way to shrink it from CSS. Buys ~12px of text column, which is
+     a whole wrapped line at this width. */
+  .upgrade-icon .nurse-quiz-mascot,
+  .upgrade-icon .nurse-quiz-mascot svg { width: 52px !important; height: 52px !important; }
+
+  .upgrade-context { gap: 10px; margin-bottom: 8px; padding: 8px 10px; }
+  .upgrade-context-icon { width: 30px; height: 30px; border-radius: 9px; }
+  .upgrade-context-icon svg { width: 16px; height: 16px; }
+  .upgrade-context-topic { font-size: 14px; }
+
+  .upgrade-stats { gap: 4px 12px; margin-bottom: 10px; font-size: 12px; }
+  .upgrade-stat { font-size: 12px; gap: 5px; }
+  .upgrade-stat-num { min-width: 21px; height: 21px; font-size: 12px; }
+  .upgrade-stat-icon { width: 21px; height: 21px; }
+  .upgrade-stat-icon svg { width: 12px; height: 12px; }
+
+  .upgrade-pro { margin-bottom: 10px; padding: 10px 11px 9px; }
+  .upgrade-pro-title { margin: 6px 0 9px; font-size: 15.5px; }
+  .upgrade-pro-trophy { width: 28px; height: 28px; }
+  .upgrade-pro-trophy svg { width: 22px; height: 22px; }
+
+  .upgrade-outcomes { grid-template-columns: 1fr; gap: 8px; }
+  .upgrade-outcome { gap: 7px; }
+  .upgrade-outcome-icon { width: 23px; height: 23px; border-radius: 7px; }
+  .upgrade-outcome-icon svg { width: 14px; height: 14px; }
+  .upgrade-outcome-title { font-size: 12px; line-height: 1.2; }
+  .upgrade-outcome-sub { font-size: 10.5px; line-height: 1.25; }
+
+  /* Stays a row: stacking it costs ~40px and the two halves do fit at 320px. */
+  .upgrade-price { padding: 10px 12px; }
+  .upgrade-price-amount { font-size: 23px; }
+  .upgrade-price-sub { font-size: 11px; }
+  .upgrade-price-swap { padding: 6px 8px; font-size: 11px; }
+
+  .upgrade-footer { padding-top: 10px; }
+  .upgrade-cta { padding: 13px 14px; font-size: 15px; }
+  .upgrade-or { margin: 8px 0 0; }
+  .upgrade-wait { padding: 6px; font-size: 12.5px; }
+
   .upgrade-plans { flex-direction: column; }
+}
+
+/* Short windows (landscape phones, small laptops) hit the same wall from the
+   other axis — trim the tallest blocks there too. */
+@media (max-height: 740px) {
+  .upgrade-overlay { padding: 8px; }
+  .upgrade-modal { max-height: 96vh; }
+  .upgrade-outcomes { gap: 8px 10px; }
+  .upgrade-pro-title { margin: 6px 0 9px; }
+  .upgrade-head { margin-bottom: 10px; }
+  .upgrade-stats { margin-bottom: 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upgrade-overlay, .upgrade-modal { animation: none; }
+  .upgrade-cta:hover, .upgrade-price-swap:hover, .upgrade-plan:hover { transform: none; }
 }

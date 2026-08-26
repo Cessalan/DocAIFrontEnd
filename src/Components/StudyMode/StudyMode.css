@@ -181,7 +181,7 @@
 /* ── Sound mute toggle ────────────────────────────────────────────
    Pill button on the right edge of the study header. The center title
    is absolutely positioned so this toggle is the only flex-flow item
-   in the row — `margin-left: auto` parks it at the end regardless of
+   in the row — \`margin-left: auto\` parks it at the end regardless of
    title length. */
 .study-sound-toggle {
   margin-left: auto;
@@ -373,7 +373,7 @@ body.dark-mode .study-sound-toggle.is-muted {
    STUDY MAIN CONTENT AREA
    ----------------------------------------- */
 .study-main-content {
-  flex: 1;
+  flex: 1 1;
   display: flex;
   position: relative;
   z-index: 1;
@@ -604,7 +604,7 @@ body.dark-mode .study-sound-toggle.is-muted {
    STUDY CONTENT AREA (Right Column)
    ----------------------------------------- */
 .study-content-container {
-  flex: 1;
+  flex: 1 1;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -736,7 +736,7 @@ body.dark-mode .study-sound-toggle.is-muted {
   font-weight: 600;
   color: var(--text-primary);
   margin: 0;
-  flex: 1; /* Allow title to take remaining space */
+  flex: 1 1; /* Allow title to take remaining space */
 }
 
 /* Close button inside card header - subtle style */
@@ -1048,183 +1048,266 @@ body.dark-mode .tsc {
 }
 
 /* Segmented bar — one visible jump per node completed. */
-.tsc__track {
-  display: flex;
-  gap: 5px;
-  margin-bottom: 9px;
-}
-
-.tsc__seg {
-  flex: 1;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--border-color, rgba(0, 0, 0, 0.09));
-  transition: background 0.35s ease;
-}
-
-body.dark-mode .tsc__seg {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-/* Endowed segment: already earned by finishing onboarding. */
-.tsc__seg--endowed {
-  flex: 0 0 34px;
-  background: var(--node-done, #4caf50);
-  opacity: 0.55;
-}
-
-.tsc__seg--done {
-  background: var(--node-done, #4caf50);
-}
-
-.tsc__seg--next {
-  background: var(--study-coral, #e88d7d);
-  opacity: 0.42;
-}
-
-.tsc__status {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin: 0 0 14px;
-  font-size: 12.5px;
-  color: var(--text-secondary, #999);
-}
-
-.tsc__tuned {
+/* ── Dated-plan header line ────────────────────────────
+   "Day 3 of 20" beside the minute estimate: together they answer
+   "how much of this is mine today?" in one glance. */
+.tsc__meta {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  color: var(--node-done, #4caf50);
-}
-
-.tsc__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 7px;
-}
-
-.tsc__item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 11px 13px;
-  border-radius: 13px;
-  border: 1px solid transparent;
-  background: var(--hover-bg, rgba(0, 0, 0, 0.028));
-  cursor: pointer;
-  text-align: left;
-  font: inherit;
-  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-}
-
-body.dark-mode .tsc__item {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.tsc__item.is-primary:hover {
-  transform: translateX(2px);
-  border-color: rgba(232, 141, 125, 0.45);
-}
-
-.tsc__item.is-primary {
-  background: rgba(232, 141, 125, 0.1);
-  border-color: rgba(232, 141, 125, 0.32);
-}
-
-/* Preview rows — visible, but the path is sequential so they aren't actionable. */
-.tsc__item.is-upcoming {
-  cursor: default;
-  opacity: 0.72;
-}
-
-/* Completed within this session — stays visible so the bar has visible proof. */
-.tsc__item.is-done {
-  cursor: default;
-  opacity: 0.6;
-}
-
-.tsc__item.is-done .tsc__item-label {
-  text-decoration: line-through;
-  text-decoration-color: rgba(120, 120, 120, 0.5);
-}
-
-.tsc__item.is-done .tsc__item-icon { color: var(--node-done, #4caf50); }
-
-.tsc__item.is-upcoming .tsc__item-label {
-  font-weight: 400;
-}
-
-.tsc__item-icon {
-  flex-shrink: 0;
-  width: 30px;
-  height: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.tsc__item-icon svg {
-  width: 19px;
-  height: 19px;
-}
-
-.tsc__item-text {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.tsc__item-type {
-  font-size: 10.5px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--study-coral, #e88d7d);
-}
-
-.tsc__item-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary, #333);
-  overflow: hidden;
-  text-overflow: ellipsis;
+  align-items: baseline;
+  gap: 9px;
   white-space: nowrap;
 }
 
-body.dark-mode .tsc__item-label {
-  color: #e8e8e8;
-}
-
-.tsc__item-cta {
-  flex-shrink: 0;
-  padding: 6px 15px;
-  border-radius: 999px;
-  background: var(--study-coral, #e88d7d);
-  color: #fff;
+.tsc__day {
   font-size: 12.5px;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--text-primary, #333);
+  letter-spacing: -0.1px;
 }
 
-.tsc__item-step {
+body.dark-mode .tsc__day { color: #ececec; }
+
+/* The last 48h and exam day get a warmer eyebrow — the card is about
+   consolidating by then, not starting new material. */
+.tsc--final .tsc__eyebrow,
+.tsc--examDay .tsc__eyebrow {
+  color: #c47a2a;
+}
+
+/* ── Focus block — what we're doing today, and why ─────
+   The card's centre of gravity: the topic named once, big. */
+.tsc__focus {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  margin: 2px 0 16px;
+}
+
+/* Deliberately a BEAT glyph, not topic artwork. Topics come from whatever
+   the student uploaded, so per-topic illustration would be guesswork that
+   looks worse when it misses than no image at all. */
+.tsc__medallion {
   flex-shrink: 0;
+  width: 52px;
+  height: 52px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  color: var(--study-coral, #e88d7d);
+  background: linear-gradient(145deg, rgba(232, 141, 125, 0.16), rgba(232, 141, 125, 0.05));
+}
+
+.tsc__medallion svg { width: 24px; height: 24px; }
+
+body.dark-mode .tsc__medallion {
+  background: linear-gradient(145deg, rgba(232, 141, 125, 0.2), rgba(232, 141, 125, 0.06));
+}
+
+.tsc__focus-text { min-width: 0; }
+
+.tsc__focus-topic {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.28;
+  letter-spacing: -0.35px;
+  color: var(--text-primary, #222);
+}
+
+body.dark-mode .tsc__focus-topic { color: #f2f2f2; }
+
+.tsc__focus-tags {
+  margin: 5px 0 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary, #8c8c8c);
+}
+
+.tsc__focus-why {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--text-secondary, #7d7d7d);
+}
+
+body.dark-mode .tsc__focus-why,
+body.dark-mode .tsc__focus-tags { color: #a6a6a6; }
+
+/* ── The arc — Learn → Practice → Review ───────────────
+   Gives the session a shape before the student commits. A summary,
+   not a queue: nothing here is clickable, the CTA below acts. */
+.tsc__arc {
+  list-style: none;
+  display: flex;
+  align-items: flex-start;
+  margin: 0 0 16px;
+  padding: 0;
+}
+
+.tsc__beat {
+  position: relative;
+  flex: 1 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  text-align: center;
+  min-width: 0;
+}
+
+.tsc__beat-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-color, rgba(0, 0, 0, 0.1));
+  color: var(--text-secondary, #b0b0b0);
+  background: var(--card-bg, #fff);
+  transition: color 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+}
+
+.tsc__beat-icon svg { width: 16px; height: 16px; }
+
+body.dark-mode .tsc__beat-icon {
+  background: #1e1e22;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: #808080;
+}
+
+.tsc__beat.is-active .tsc__beat-icon {
+  color: var(--study-coral, #e88d7d);
+  border-color: var(--study-coral, #e88d7d);
+  background: rgba(232, 141, 125, 0.1);
+}
+
+.tsc__beat.is-done .tsc__beat-icon {
+  color: #fff;
+  border-color: var(--node-done, #4caf50);
+  background: var(--node-done, #4caf50);
+}
+
+.tsc__beat-name {
   font-size: 12px;
   font-weight: 600;
-  color: var(--text-secondary, #aaa);
-  min-width: 18px;
+  color: var(--text-primary, #555);
+  line-height: 1.2;
+}
+
+.tsc__beat.is-active .tsc__beat-name { color: var(--study-coral, #e88d7d); }
+
+body.dark-mode .tsc__beat-name { color: #c8c8c8; }
+
+.tsc__beat-min {
+  font-size: 10.5px;
+  color: var(--text-secondary, #a8a8a8);
+}
+
+/* Connector sits in the gap to the next beat, aligned with the icon row. */
+.tsc__beat-sep {
+  position: absolute;
+  top: 11px;
+  left: calc(50% + 26px);
+  right: auto;
+  width: 12px;
+  color: var(--border-color, rgba(0, 0, 0, 0.18));
+  display: inline-flex;
+}
+
+body.dark-mode .tsc__beat-sep { color: rgba(255, 255, 255, 0.22); }
+
+/* ── The one action ────────────────────────────────────
+   Replaces a list where only one row was clickable — which read as a
+   menu with broken items. */
+.tsc__cta {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.1px;
+  color: #fff;
+  background: linear-gradient(135deg, #ef9585 0%, #e2705c 100%);
+  box-shadow: 0 4px 14px rgba(226, 112, 92, 0.3);
+  transition: transform 0.15s ease, box-shadow 0.18s ease, filter 0.18s ease;
+}
+
+.tsc__cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 7px 20px rgba(226, 112, 92, 0.36);
+  filter: brightness(1.03);
+}
+
+.tsc__cta:active { transform: translateY(0); }
+
+.tsc__cta:focus-visible {
+  outline: 2px solid var(--study-coral, #e88d7d);
+  outline-offset: 3px;
+}
+
+.tsc__cta-arrow { flex-shrink: 0; transition: transform 0.18s ease; }
+.tsc__cta:hover .tsc__cta-arrow { transform: translateX(3px); }
+
+/* ── Outcome pill — action → what it gets you ──────────
+   Replaces the old step-count footer ("11 more steps, spread over your
+   remaining 19 days"), which described the system, not the student. */
+.tsc__outcome {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(232, 141, 125, 0.09);
   text-align: center;
 }
 
+body.dark-mode .tsc__outcome { background: rgba(232, 141, 125, 0.13); }
+
+.tsc__outcome-spark {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--study-coral, #e88d7d);
+}
+
+.tsc__outcome-text {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--text-secondary, #7d7d7d);
+}
+
+body.dark-mode .tsc__outcome-text { color: #b0b0b0; }
+
+.tsc__outcome-pct {
+  font-weight: 800;
+  color: var(--study-coral, #d97a66);
+  font-variant-numeric: tabular-nums;
+}
+
+body.dark-mode .tsc__outcome-pct { color: #f0a898; }
+
+/* Groundwork days: no graded node, so no number to move — quieter. */
+.tsc__outcome--soft {
+  background: var(--input-bg, rgba(0, 0, 0, 0.035));
+}
+
+body.dark-mode .tsc__outcome--soft { background: rgba(255, 255, 255, 0.05); }
+
+/* ── Quiet reference affordances ───────────────────────
+   The full plan is reference material, not a call to action. */
 .tsc__toggle {
   width: 100%;
-  margin-top: 13px;
+  margin-top: 10px;
   padding: 8px;
   display: flex;
   align-items: center;
@@ -1232,7 +1315,7 @@ body.dark-mode .tsc__item-label {
   gap: 6px;
   border: none;
   background: transparent;
-  color: var(--text-secondary, #999);
+  color: var(--text-secondary, #a5a5a5);
   font: inherit;
   font-size: 12.5px;
   font-weight: 600;
@@ -1243,30 +1326,153 @@ body.dark-mode .tsc__item-label {
 
 .tsc__toggle:hover {
   color: var(--study-coral, #e88d7d);
-  background: rgba(232, 141, 125, 0.07);
+  background: var(--input-bg, rgba(0, 0, 0, 0.03));
 }
 
-.tsc__chev {
-  transition: transform 0.22s ease;
-}
+.tsc__chev { transition: transform 0.22s ease; flex-shrink: 0; }
+.tsc__chev.is-open { transform: rotate(180deg); }
 
-.tsc__chev.is-open {
-  transform: rotate(180deg);
-}
-
-.tsc__after {
-  margin: 4px 0 0;
-  text-align: center;
+/* Endowed progress: the plan arrives already personalised, and says so. */
+.tsc__tuned-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin: 6px 0 0;
   font-size: 11.5px;
-  color: var(--text-secondary, #aaa);
+  font-weight: 600;
+  color: var(--node-done, #4caf50);
+  opacity: 0.85;
 }
+
+@media (max-width: 640px) {
+  .tsc__medallion { width: 44px; height: 44px; border-radius: 14px; }
+  .tsc__medallion svg { width: 21px; height: 21px; }
+  .tsc__focus { gap: 12px; }
+  .tsc__focus-topic { font-size: 17.5px; }
+  .tsc__focus-why, .tsc__focus-tags { font-size: 12.5px; }
+  .tsc__beat-name { font-size: 11.5px; }
+  .tsc__beat-sep { left: calc(50% + 22px); }
+  .tsc__cta { font-size: 15px; padding: 13px 16px; }
+}
+
+/* Narrow phones: the connectors stop fitting between beats. */
+@media (max-width: 380px) {
+  .tsc__beat-sep { display: none; }
+  .tsc__beat-min { display: none; }
+}
+
+
+/* ── Mission complete — where the daily loop closes ──── */
+.tsc--complete {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.tsc__done-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.tsc__done-check {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(76, 175, 80, 0.12);
+  color: var(--node-done, #4caf50);
+}
+
+.tsc__done-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.tsc__done-title {
+  margin: 0;
+  font-size: 15.5px;
+  font-weight: 700;
+  letter-spacing: -0.15px;
+  color: var(--text-primary, #222);
+}
+
+body.dark-mode .tsc__done-title { color: #f0f0f0; }
+
+.tsc__done-sub {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--text-secondary, #888);
+}
+
+/* Naming tomorrow's topic is the return hook — a finished day that
+   ends in a full stop gives no reason to come back. */
+.tsc__next {
+  display: flex;
+  align-items: baseline;
+  gap: 9px;
+  padding: 10px 12px;
+  border-radius: 11px;
+  background: var(--input-bg, rgba(0, 0, 0, 0.03));
+}
+
+body.dark-mode .tsc__next { background: rgba(255, 255, 255, 0.05); }
+
+.tsc__next-label {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary, #999);
+  flex-shrink: 0;
+}
+
+.tsc__next-topics {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text-primary, #333);
+  line-height: 1.35;
+}
+
+body.dark-mode .tsc__next-topics { color: #ececec; }
+
+/* Deliberately quiet: the mission is a floor, not a ceiling, but
+   pushing more work at someone who just finished undoes the reward. */
+.tsc__keep-going {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--text-secondary, #999);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.tsc__keep-going:hover { color: var(--study-coral, #e88d7d); }
 
 @media (max-width: 640px) {
   .tsc {
     margin-inline: 12px;
     padding: 15px 15px 13px;
   }
-  .tsc__item-label { font-size: 13.5px; }
+
+  /* Eyebrow and day/minutes stack rather than squeezing onto one line. */
+  .tsc__head {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+  }
 }
 
 /* ── Padlock replacements (locks read as paywalls) ── */
@@ -1945,7 +2151,7 @@ body.dark-mode .study-lesson-skeleton__line {
 }
 
 .study-quiz-rationale-skel-body {
-  flex: 1;
+  flex: 1 1;
   display: flex;
   flex-direction: column;
   gap: 6px;
@@ -2521,7 +2727,7 @@ body.dark-mode .rationale-row-text b {
 
 .study-flashcard-card .study-card-content {
   padding: 20px 24px 28px;
-  flex: 1;
+  flex: 1 1;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -3852,7 +4058,7 @@ body.dark-mode .study-lesson-btn-green:hover {
    Mirrors the row layout used on the destination StudyPlanOverview page so
    the preview reads as the same plan, not a different rendering of it. */
 .study-modal-plan-content {
-  flex: 1;
+  flex: 1 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -4413,7 +4619,7 @@ body.dark-mode .start-study-doc-name {
   }
 
   .study-progress-indicator {
-    flex: 1;
+    flex: 1 1;
     justify-content: center;
   }
 
@@ -4451,7 +4657,7 @@ body.dark-mode .start-study-doc-name {
   justify-content: center;
   align-items: stretch;
   width: 100%;
-  flex: 1;
+  flex: 1 1;
   min-height: 0; /* Critical: allows flex child to shrink and enable scrolling */
   overflow-y: auto; /* This element scrolls */
   overflow-x: hidden;
@@ -4923,7 +5129,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 .study-overview-title-section {
-  flex: 1;
+  flex: 1 1;
 }
 
 .study-overview-title {
@@ -5011,7 +5217,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 .study-overview-path {
   position: relative;
   z-index: 1;
-  flex: 1;
+  flex: 1 1;
   padding: 20px 0 100px 0;
 }
 
@@ -5567,7 +5773,7 @@ body.dark-mode .study-mode-focused .study-main-content {
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: #999;
-  flex: 1;
+  flex: 1 1;
 }
 .sii-header__arrow { color: #d0c0bb; flex-shrink: 0; }
 
@@ -5580,7 +5786,7 @@ body.dark-mode .study-mode-focused .study-main-content {
   margin-bottom: 2px;
 }
 .sii-group__icon  { font-size: 10px; font-weight: 800; }
-.sii-group__label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; flex: 1; }
+.sii-group__label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; flex: 1 1; }
 .sii-group__count {
   font-size: 9px; font-weight: 700;
   width: 16px; height: 16px; border-radius: 50%;
@@ -5617,12 +5823,12 @@ body.dark-mode .study-mode-focused .study-main-content {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
 }
 
 .sii-row__track {
-  flex: 1;
+  flex: 1 1;
   height: 4px;
   background: rgba(0,0,0,0.07);
   border-radius: 2px;
@@ -5684,7 +5890,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 .study-overview-path-v2 {
   position: relative;
   z-index: 1;
-  flex: 1;
+  flex: 1 1;
   padding: 20px 0 120px 0;
   display: flex;
   justify-content: center;
@@ -6898,7 +7104,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 
 /* Loading/generating body */
 .study-mindmap-body {
-  flex: 1;
+  flex: 1 1;
   display: flex;
   flex-direction: column;
   padding: 0 8px 8px;
@@ -6988,7 +7194,7 @@ body.dark-mode .study-mode-focused .study-main-content {
 }
 
 .study-mindmap-progress-bar-track {
-  flex: 1;
+  flex: 1 1;
   height: 5px;
   background: var(--border-color, #e8e8e8);
   border-radius: 3px;
@@ -7032,7 +7238,7 @@ body.dark-mode .study-mode-focused .study-main-content {
   border: 1.5px solid var(--border-color, #e8e8e8);
   border-radius: 16px;
   padding: 22px 24px;
-  flex: 1;
+  flex: 1 1;
   overflow-y: auto;
 }
 
@@ -8015,7 +8221,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .review-confirm-cancel {
-  flex: 1;
+  flex: 1 1;
   padding: 14px 20px;
   border-radius: 12px;
   font-size: 1rem;
@@ -8033,7 +8239,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .review-confirm-button {
-  flex: 1;
+  flex: 1 1;
   padding: 14px 20px;
   border-radius: 12px;
   font-size: 1rem;
@@ -8321,9 +8527,14 @@ body.dark-mode .celebration-continue-btn:hover {
 .insights-modal {
   background: var(--bg-paper, #fffef9);
   border-radius: 20px;
-  max-width: 420px;
+  /* Widened from 420px. This modal used to hold a short chip list; it now
+     carries the session's whole diagnosis — hero, focus area, coaching and
+     the full breakdown — and at 420 that arrived as a narrow column behind
+     a scrollbar, which reads as an afterthought for the most important
+     screen in the study flow. */
+  max-width: 620px;
   width: 92%;
-  max-height: 80vh;
+  max-height: 88vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
@@ -8378,9 +8589,39 @@ body.dark-mode .celebration-continue-btn:hover {
 
 /* Body */
 .insights-modal__body {
-  padding: 10px 16px 16px;
+  padding: 14px 28px 28px;
   overflow-y: auto;
-  flex: 1;
+  flex: 1 1;
+  /* Thin, self-coloured scrollbar. The platform default is a heavy grey
+     slab that dominated a modal this size. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 141, 125, 0.35) transparent;
+}
+
+.insights-modal__body::-webkit-scrollbar { width: 8px; }
+.insights-modal__body::-webkit-scrollbar-track { background: transparent; }
+
+.insights-modal__body::-webkit-scrollbar-thumb {
+  background: rgba(232, 141, 125, 0.3);
+  border-radius: 4px;
+  /* Inset via a transparent border so the thumb reads as a hairline rule
+     rather than a bar pinned to the edge. */
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.insights-modal__body::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 141, 125, 0.5);
+  background-clip: content-box;
+}
+
+.dark-mode .insights-modal__body {
+  scrollbar-color: rgba(232, 141, 125, 0.3) transparent;
+}
+
+.dark-mode .insights-modal__body::-webkit-scrollbar-thumb {
+  background: rgba(232, 141, 125, 0.28);
+  background-clip: content-box;
 }
 
 /* Loading */
@@ -8420,7 +8661,7 @@ body.dark-mode .celebration-continue-btn:hover {
 .insights-summary {
   display: flex;
   gap: 6px;
-  padding: 10px 16px 4px;
+  padding: 12px 28px 0;
   flex-wrap: wrap;
 }
 
@@ -8451,7 +8692,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .it-group__icon  { display: flex; align-items: center; line-height: 1; }
-.it-group__label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; flex: 1; }
+.it-group__label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; flex: 1 1; }
 .it-group__count {
   font-size: 10px; font-weight: 600;
   width: 18px; height: 18px; border-radius: 50%;
@@ -8487,7 +8728,7 @@ body.dark-mode .celebration-continue-btn:hover {
 .it-row--developing::before { background: #ffc107; }
 .it-row--weak::before       { background: #e88d7d; }
 
-.it-row__body { flex: 1; padding: 8px 10px; min-width: 0; }
+.it-row__body { flex: 1 1; padding: 8px 10px; min-width: 0; }
 
 .it-row__top {
   display: flex;
@@ -8504,7 +8745,7 @@ body.dark-mode .celebration-continue-btn:hover {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
 }
 
@@ -8594,9 +8835,12 @@ body.dark-mode .celebration-continue-btn:hover {
 /* ---- Tablet + Mobile ---- */
 @media (max-width: 1024px) {
   .insights-modal {
-    max-width: 100%;
+    /* Was max-width:100%, which let the modal balloon to ~960px on a tablet
+       — wider than the desktop cap. Hold the same ceiling and let small
+       screens fall back to the 96% width. */
+    max-width: 620px;
     width: 96%;
-    max-height: 85vh;
+    max-height: 88vh;
     border-radius: 16px;
   }
 
@@ -9123,8 +9367,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .exam-config__slider {
-  flex: 1;
-  -webkit-appearance: none;
+  flex: 1 1;
   appearance: none;
   height: 8px;
   border-radius: 4px;
@@ -9134,7 +9377,6 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .exam-config__slider::-webkit-slider-thumb {
-  -webkit-appearance: none;
   appearance: none;
   width: 26px;
   height: 26px;
@@ -9143,6 +9385,7 @@ body.dark-mode .celebration-continue-btn:hover {
   cursor: pointer;
   border: 3px solid #fff;
   box-shadow: 0 2px 8px rgba(232, 141, 125, 0.4), 0 1px 3px rgba(0, 0, 0, 0.15);
+  -webkit-transition: transform 0.15s ease, box-shadow 0.15s ease;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
@@ -9260,7 +9503,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .exam-config__toggle-info {
-  flex: 1;
+  flex: 1 1;
 }
 
 .exam-config__toggle-info .exam-config__label {
@@ -9628,7 +9871,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .study-mastery-bar {
-  flex: 1;
+  flex: 1 1;
   height: 5px;
   background: var(--border-color, rgba(0,0,0,0.1));
   border-radius: 3px;
@@ -10044,7 +10287,7 @@ body.dark-mode .celebration-continue-btn:hover {
   color: #888;
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  flex: 1;
+  flex: 1 1;
 }
 
 .quiz-mastery-summary__score-value {
@@ -10346,7 +10589,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .node-transition__header-text {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
 }
 
@@ -10606,7 +10849,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .node-transition__check-text {
-  flex: 1;
+  flex: 1 1;
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -10641,7 +10884,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .node-transition__coach-label {
-  flex: 1;
+  flex: 1 1;
   font-size: 13px;
   color: #888;
   text-align: left;
@@ -10719,7 +10962,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .node-transition__input {
-  flex: 1;
+  flex: 1 1;
   padding: 10px 14px;
   border: 2px solid #e8e8e8;
   border-radius: 12px;
@@ -10800,7 +11043,7 @@ body.dark-mode .celebration-continue-btn:hover {
 }
 
 .node-transition__echo-actions .node-transition__btn {
-  flex: 1;
+  flex: 1 1;
 }
 
 /* ── Spinner ── */
@@ -11805,7 +12048,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 
 /* Middle column: eyebrow + primary number row */
 .sov3-countdown__main {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -12122,7 +12365,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 }
 
 .sov3-readiness__title-group {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -12259,7 +12502,8 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
   align-items: center;
   justify-content: center;
   line-height: 1;
-  user-select: none;
+  -webkit-user-select: none;
+          user-select: none;
 }
 
 .sov3-readiness__ring-pct {
@@ -12374,7 +12618,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 }
 
 .sov3-readiness__gap-name {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
   font-weight: 600;
   color: var(--text-primary);
@@ -12476,7 +12720,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 }
 
 .sov3-readiness__cta {
-  flex: 1;
+  flex: 1 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -12655,7 +12899,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 }
 
 .sov3-readiness__step-text {
-  flex: 1;
+  flex: 1 1;
 }
 
 /* ── Mobile tweaks ── */
@@ -12755,7 +12999,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 
 /* Title group */
 .sov3-card__title-group {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
 }
 
@@ -12964,7 +13208,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 
 /* Step content */
 .sov3-step__content {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -13313,7 +13557,7 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
 
 /* ── Milestone content ── */
 .sov3-milestone__content {
-  flex: 1;
+  flex: 1 1;
   min-width: 0;
   display: flex;
   flex-direction: column;
@@ -13566,245 +13810,6 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
   }
 }
 
-/* ============================================
-   INSIGHTS SIDEBAR — Ambient Progress Panel
-   ============================================ */
-
-.sov3-insights {
-  position: fixed;
-  right: 24px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 200px;
-  background: rgba(255, 255, 255, 0.92);
-  border: 1px solid rgba(200, 170, 160, 0.15);
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  cursor: pointer;
-  opacity: 0.55;
-  filter: saturate(0.5);
-  transition: opacity 0.35s ease, filter 0.35s ease, box-shadow 0.25s ease, border-color 0.25s ease, transform 0.25s ease;
-  box-shadow: 0 4px 20px rgba(100, 80, 60, 0.06);
-  z-index: 100;
-}
-
-.sov3-insights:hover {
-  opacity: 1;
-  filter: saturate(1);
-  box-shadow: 0 8px 32px rgba(100, 80, 60, 0.12);
-  border-color: rgba(232, 141, 125, 0.3);
-}
-
-.dark-mode .sov3-insights {
-  background: rgba(45, 45, 45, 0.92);
-  border-color: rgba(255, 255, 255, 0.06);
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
-}
-
-.dark-mode .sov3-insights:hover {
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border-color: rgba(232, 141, 125, 0.25);
-}
-
-/* ── Insights header ── */
-.sov3-insights__header {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
-  color: #e88d7d;
-}
-
-.dark-mode .sov3-insights__header {
-  border-bottom-color: rgba(255, 255, 255, 0.06);
-}
-
-.sov3-insights__title {
-  font-size: 10px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #999;
-  flex: 1;
-}
-
-.dark-mode .sov3-insights__title {
-  color: #888;
-}
-
-/* ── Strength chips ── */
-.sov3-insights__chips {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.sov3-insights__chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 11px;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.sov3-insights__chip--strong {
-  background: rgba(46, 213, 115, 0.1);
-  color: #1a7a44;
-  border: 1px solid rgba(46, 213, 115, 0.2);
-}
-
-.sov3-insights__chip--strong svg {
-  stroke: #2ed573;
-}
-
-.dark-mode .sov3-insights__chip--strong {
-  background: rgba(46, 213, 115, 0.12);
-  color: #2ed573;
-  border-color: rgba(46, 213, 115, 0.18);
-}
-
-.sov3-insights__chip--developing {
-  background: rgba(255, 193, 7, 0.1);
-  color: #9a7b00;
-  border: 1px solid rgba(255, 193, 7, 0.2);
-}
-
-.sov3-insights__chip--developing svg {
-  stroke: #ffc107;
-}
-
-.dark-mode .sov3-insights__chip--developing {
-  background: rgba(255, 193, 7, 0.1);
-  color: #ffc107;
-  border-color: rgba(255, 193, 7, 0.15);
-}
-
-.sov3-insights__chip--weak {
-  background: rgba(232, 141, 125, 0.1);
-  color: #c0543a;
-  border: 1px solid rgba(232, 141, 125, 0.2);
-}
-
-.sov3-insights__chip--weak svg {
-  stroke: #e88d7d;
-}
-
-.dark-mode .sov3-insights__chip--weak {
-  background: rgba(232, 141, 125, 0.1);
-  color: #e88d7d;
-  border-color: rgba(232, 141, 125, 0.15);
-}
-
-/* ── Topic progress bars ── */
-.sov3-insights__topics {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.sov3-insights__topic {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.sov3-insights__topic-name {
-  font-size: 11px;
-  font-weight: 500;
-  color: #666;
-  width: 70px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  flex-shrink: 0;
-}
-
-.dark-mode .sov3-insights__topic-name {
-  color: #aaa;
-}
-
-.sov3-insights__topic-bar {
-  flex: 1;
-  height: 5px;
-  background: rgba(0, 0, 0, 0.05);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.dark-mode .sov3-insights__topic-bar {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.sov3-insights__topic-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.sov3-insights__topic-fill--strong {
-  background: linear-gradient(90deg, #2ed573, #26b85f);
-}
-
-.sov3-insights__topic-fill--developing {
-  background: linear-gradient(90deg, #ffc107, #ffca28);
-}
-
-.sov3-insights__topic-fill--weak {
-  background: linear-gradient(90deg, #e88d7d, #f4a896);
-}
-
-.sov3-insights__topic-pct {
-  font-size: 10px;
-  font-weight: 700;
-  width: 28px;
-  text-align: right;
-  flex-shrink: 0;
-}
-
-.sov3-insights__topic-pct--strong { color: #1a7a44; }
-.sov3-insights__topic-pct--developing { color: #9a7b00; }
-.sov3-insights__topic-pct--weak { color: #c0543a; }
-
-.dark-mode .sov3-insights__topic-pct--strong { color: #2ed573; }
-.dark-mode .sov3-insights__topic-pct--developing { color: #ffc107; }
-.dark-mode .sov3-insights__topic-pct--weak { color: #e88d7d; }
-
-/* ── Insights footer ── */
-.sov3-insights__footer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(0, 0, 0, 0.05);
-  font-size: 11px;
-  font-weight: 600;
-  color: #e88d7d;
-  transition: gap 0.2s ease;
-}
-
-.sov3-insights:hover .sov3-insights__footer {
-  gap: 6px;
-}
-
-.dark-mode .sov3-insights__footer {
-  border-top-color: rgba(255, 255, 255, 0.06);
-  color: #f4a896;
-}
-
-/* ── Insights responsive: hide on mobile/tablet ── */
-@media (max-width: 1100px) {
-  .sov3-insights {
-    display: none;
-  }
-}
 
 /* ============================================
    MOBILE / iPHONE RESPONSIVE FIXES
@@ -14059,4 +14064,536 @@ body.dark-mode .nt2-farewell__remind { color: var(--study-coral-light, #f4a896);
   .study-loading-mascot {
     transform: scale(0.8);
   }
+}
+
+/* ============================================
+   BLOCK COMPLETE CARD
+   The ending a capped plan makes reachable. Sits where TodaySessionCard
+   normally lives, because once the block is done there is no mission left
+   to show. Achievement first, the offer to continue second.
+   ============================================ */
+
+.block-complete-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  text-align: center;
+  padding: 28px 24px;
+  margin: 0 0 20px;
+  background: var(--bg-paper, #fffef9);
+  border: 1px solid var(--path-line, rgba(232, 141, 125, 0.25));
+  border-radius: 18px;
+  box-shadow: 0 6px 22px rgba(100, 80, 60, 0.08);
+}
+
+body.dark-mode .block-complete-card {
+  background: var(--dark-bg-elevated, #262626);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: none;
+}
+
+.block-complete-mark {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  color: #fff;
+  background: var(--node-done, #2ed573);
+  box-shadow: 0 4px 14px var(--node-done-bg, rgba(46, 213, 115, 0.15));
+}
+
+.block-complete-title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-primary, #2c2c2c);
+}
+
+body.dark-mode .block-complete-title {
+  color: var(--dark-text-primary, #f0f0f0);
+}
+
+.block-complete-body {
+  margin: 0;
+  max-width: 42ch;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+body.dark-mode .block-complete-body {
+  color: var(--dark-text-secondary, rgba(255, 255, 255, 0.65));
+}
+
+.block-complete-cta {
+  margin-top: 6px;
+  padding: 12px 26px;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, var(--study-coral, #e88d7d) 0%, var(--study-coral-dark, #c46a5a) 100%);
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+  box-shadow: 0 4px 14px rgba(232, 141, 125, 0.35);
+}
+
+.block-complete-cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(232, 141, 125, 0.45);
+}
+
+.block-complete-cta:disabled {
+  opacity: 0.65;
+  cursor: default;
+}
+
+.block-complete-cta:focus-visible {
+  outline: 2px solid var(--study-coral-dark, #c46a5a);
+  outline-offset: 3px;
+}
+
+.block-complete-error {
+  margin: 0;
+  font-size: 13px;
+  color: #c0392b;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .block-complete-cta { transition: none; }
+  .block-complete-cta:hover:not(:disabled) { transform: none; }
+}
+
+/* ── "See how you're doing" — the overview's only route into the insights
+   modal. Deliberately quiet: a text button, not a card, so it doesn't
+   re-create the floating progress panel that was removed from this page
+   for competing with the readiness ring. ── */
+.sov3-insights-link-row {
+  display: flex;
+  justify-content: center;
+  padding: 4px 0 28px;
+}
+
+.sov3-insights-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  border: 1px solid rgba(232, 141, 125, 0.28);
+  border-radius: 999px;
+  background: rgba(232, 141, 125, 0.08);
+  color: #a0522d;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease;
+}
+
+.sov3-insights-link:hover {
+  background: rgba(232, 141, 125, 0.15);
+  border-color: rgba(232, 141, 125, 0.42);
+}
+
+.sov3-insights-link:focus-visible {
+  outline: 2px solid var(--study-coral, #e88d7d);
+  outline-offset: 2px;
+}
+
+.dark-mode .sov3-insights-link {
+  border-color: rgba(232, 141, 125, 0.3);
+  background: rgba(232, 141, 125, 0.1);
+  color: #f4a896;
+}
+
+.dark-mode .sov3-insights-link:hover { background: rgba(232, 141, 125, 0.18); }
+
+/* ══ The coaching moment ══════════════════════════════════════════════
+   "I noticed something" — the discovery, not a report card.
+
+   Deliberately NOT three labelled boxes. Labels like "What went well" turn
+   a tutor's observation back into a form, and the point of this block is
+   that it reads as someone talking. So: one lead line, one plain sentence,
+   the evidence as small hard numbers, then the explanation. ══ */
+.nt2-insight {
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.nt2-insight__lead {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--study-coral, #e88d7d);
+}
+
+/* The observation. Largest text in the block — it is the thing she should
+   read even if she reads nothing else. */
+.nt2-insight__noticed {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.45;
+  letter-spacing: -0.01em;
+  color: var(--text-primary, #3d3d3d);
+}
+
+/* Evidence: computed from her answers, never phrased by the model. These
+   numbers are what separate "the app is being nice" from "the app watched
+   me", so they are set as hard monospaced figures rather than prose. */
+.nt2-insight__evidence {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.nt2-insight__stat {
+  padding: 5px 11px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.045);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 11.5px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.nt2-insight__body {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.65;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+/* ── The experiment ── */
+.nt2-insight__experiment {
+  margin-top: 4px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(232, 141, 125, 0.07);
+  border: 1px solid rgba(232, 141, 125, 0.18);
+}
+
+.nt2-insight__test-lead {
+  margin: 0 0 5px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary, #3d3d3d);
+}
+
+.nt2-insight__test-copy {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.nt2-insight__cta {
+  display: block;
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 10px;
+  border: 1px solid rgba(232, 141, 125, 0.4);
+  background: rgba(232, 141, 125, 0.14);
+  color: #a0522d;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease;
+}
+
+.nt2-insight__cta:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.22);
+  border-color: rgba(232, 141, 125, 0.55);
+}
+
+.nt2-insight__cta:disabled { opacity: 0.55; cursor: default; }
+
+.nt2-insight__cta:focus-visible {
+  outline: 2px solid var(--study-coral, #e88d7d);
+  outline-offset: 2px;
+}
+
+/* ── The payoff, after the experiment lands ── */
+.nt2-insight__confirm {
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(46, 213, 115, 0.09);
+  border: 1px solid rgba(46, 213, 115, 0.22);
+}
+
+.nt2-insight__eureka {
+  margin: 0 0 7px;
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a7a44;
+}
+
+.nt2-insight__confirm .nt2-insight__body { color: var(--text-primary, #3d3d3d); }
+
+/* ── Honest "not yet" ── */
+.nt2-insight__searching {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted, #999);
+  font-style: italic;
+}
+
+/* ── Skeleton ── */
+.nt2-insight__skeleton { display: flex; flex-direction: column; gap: 10px; }
+
+.nt2-insight__bar {
+  height: 11px;
+  border-radius: 6px;
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.05) 25%,
+    rgba(0, 0, 0, 0.09) 37%,
+    rgba(0, 0, 0, 0.05) 63%
+  );
+  background-size: 400% 100%;
+  animation: nt2-insight-shimmer 1.4s ease-in-out infinite;
+}
+
+.nt2-insight__bar--head { height: 16px; width: 55%; }
+.nt2-insight__bar--short { width: 70%; }
+
+@keyframes nt2-insight-shimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nt2-insight__bar { animation: none; }
+}
+
+/* ── Dark mode ── */
+.dark-mode .nt2-insight__noticed { color: #fff; }
+.dark-mode .nt2-insight__body { color: #aaa; }
+.dark-mode .nt2-insight__lead { color: #f4a896; }
+
+.dark-mode .nt2-insight__stat {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  color: #bbb;
+}
+
+.dark-mode .nt2-insight__experiment {
+  background: rgba(232, 141, 125, 0.1);
+  border-color: rgba(232, 141, 125, 0.22);
+}
+
+.dark-mode .nt2-insight__test-lead { color: #fff; }
+.dark-mode .nt2-insight__test-copy { color: #aaa; }
+
+.dark-mode .nt2-insight__cta {
+  background: rgba(232, 141, 125, 0.16);
+  border-color: rgba(232, 141, 125, 0.35);
+  color: #f4a896;
+}
+
+.dark-mode .nt2-insight__cta:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.24);
+}
+
+.dark-mode .nt2-insight__confirm {
+  background: rgba(46, 213, 115, 0.12);
+  border-color: rgba(46, 213, 115, 0.25);
+}
+
+.dark-mode .nt2-insight__eureka { color: #6ee7a0; }
+.dark-mode .nt2-insight__confirm .nt2-insight__body { color: #e0e0e0; }
+.dark-mode .nt2-insight__searching { color: #666; }
+
+.dark-mode .nt2-insight__bar {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 37%,
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+}
+
+/* ══ NodeTransition v3 — the tutor's recommendation ══════════════════════
+   Same card, same restraint, one change of emphasis: the insight and the
+   recommendation are the content, and everything else (topic, score, recap,
+   coach) is set quieter than them on purpose. Nothing new is introduced
+   visually — the blocks below reuse the v2 hairlines, coral accent and
+   spacing so the screen still reads as one surface. ══ */
+
+/* Topic label above the headline. Deliberately small and quiet: it is
+   orientation, not a sentence, and it replaces a full line of prose
+   ("You're sharpening your reasoning on X") that said nothing she didn't
+   already know. */
+.nt3-eyebrow {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: #a8a8a8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── The honest "not yet" state ──────────────────────────────────────
+   Replaces the one-line "I'm still figuring out your pattern", which read
+   as an apology. This says what is being looked for and what would settle
+   it, so the reason to answer one more question is a real one. */
+.nt3-learning {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nt3-learning__promise {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  color: var(--study-coral-dark, #c46a5a);
+}
+
+/* ── The recommendation ──────────────────────────────────────────────
+   Title, reason, action. The title is the largest text in the block because
+   it is what she is being offered; the reason underneath is what makes it a
+   recommendation rather than a menu item. */
+.nt3-rec {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+}
+
+.nt3-rec__title {
+  margin: 2px 0 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 16px;
+  font-weight: 650;
+  line-height: 1.35;
+  letter-spacing: -0.012em;
+  color: #0d0d0d;
+}
+
+.nt3-rec__why {
+  margin: 0 0 10px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  font-size: 13.5px;
+  font-weight: 400;
+  line-height: 1.6;
+  color: #7a7a7a;
+}
+
+/* ── Secondary review row ────────────────────────────────────────────
+   Retention, offered without competing. A hairline row rather than a second
+   button: the moment this gets equal weight, the screen is asking her to
+   choose between two things the tutor supposedly wants, which is exactly the
+   dashboard feeling the redesign is removing. */
+.nt3-recap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 11px 14px;
+  border: 1px solid rgba(0, 0, 0, 0.07);
+  border-radius: 11px;
+  background: transparent;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.16s ease, background 0.16s ease;
+}
+
+.nt3-recap:hover:not(:disabled) {
+  border-color: rgba(0, 0, 0, 0.14);
+  background: rgba(0, 0, 0, 0.02);
+}
+
+.nt3-recap:disabled { opacity: 0.5; cursor: default; }
+
+.nt3-recap:focus-visible {
+  outline: 2px solid var(--study-coral, #e88d7d);
+  outline-offset: 2px;
+}
+
+.nt3-recap__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.nt3-recap__label {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #3d3d3d;
+}
+
+.nt3-recap__detail {
+  font-size: 12px;
+  font-weight: 400;
+  color: #969696;
+}
+
+.nt3-recap__cta {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--study-coral-dark, #c46a5a);
+}
+
+/* ── Dark mode ── */
+.dark-mode .nt3-eyebrow          { color: #6a6a6a; }
+.dark-mode .nt3-rec__title       { color: #f2f2f2; }
+.dark-mode .nt3-rec__why         { color: #969696; }
+.dark-mode .nt3-learning__promise { color: var(--study-coral-light, #f4a896); }
+
+.dark-mode .nt3-recap {
+  border-color: rgba(255, 255, 255, 0.08);
+}
+
+.dark-mode .nt3-recap:hover:not(:disabled) {
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.dark-mode .nt3-recap__label  { color: #e2e2e2; }
+.dark-mode .nt3-recap__detail { color: #7a7a7a; }
+.dark-mode .nt3-recap__cta    { color: var(--study-coral-light, #f4a896); }
+
+@media (max-width: 420px) {
+  .nt3-rec__title { font-size: 15px; }
+  .nt3-rec__why   { font-size: 13px; }
+}
+
+/* Screen-reader-only text. The insight skeleton announces itself here while
+   the debrief is in flight; without this rule that announcement renders as
+   visible copy under the loading bars. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }

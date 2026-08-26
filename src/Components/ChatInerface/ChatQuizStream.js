@@ -4,6 +4,7 @@ import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilesto
 import { getQuestionType } from '../../utils/quizScoring';
 import parseRationaleOptions from '../../utils/parseRationale';
 import { fetchQuizRationale } from '../../Services/FastAPICalls';
+import useQuizAutoExtend from './useQuizAutoExtend';
 import SATAQuestion from './SATAQuestion';
 import CaseStudyQuestion from './CaseStudyQuestion';
 import './ChatQuizStream.css';
@@ -30,7 +31,13 @@ const ChatQuizStream = ({
   onRationaleFetched,
   onComplete,
   onFeedbackSubmit,
-  feedbackData
+  feedbackData,
+  // Auto-extension: the quiz ships short and grows as the student advances.
+  // Both are required for it to run at all — without them the quiz simply
+  // stays the length it arrived at. See useQuizAutoExtend.
+  chatId,
+  quizTopic,
+  onQuestionsAppended
 }) => {
   const { t, i18n } = useTranslation();
 
@@ -204,6 +211,18 @@ const ChatQuizStream = ({
   const [queueIndex, setQueueIndex] = useState(0);
   const [questionStatuses, setQuestionStatuses] = useState({});
   const [isReviewRound, setIsReviewRound] = useState(false);
+
+  // Fetches the next batch once the student is within a couple of questions of
+  // the end, so the quiz grows without them ever meeting a loading state.
+  // Declared after queueIndex — it reads the student's current position.
+  useQuizAutoExtend({
+    chatId,
+    topic: quizTopic,
+    quizData: questions,
+    currentIndex: queueIndex,
+    isStreaming,
+    onQuestions: onQuestionsAppended
+  });
   // Initialize queue with indices when questions exist - critical for streaming!
   const [questionQueue, setQuestionQueue] = useState(() =>
     quizData.length > 0 ? quizData.map((_, i) => i) : []
@@ -424,6 +443,62 @@ const ChatQuizStream = ({
       }));
     }
   }, [questions, questionRationales, expandedRationales, onRationaleFetched, i18n?.language]);
+
+  // ── Keeping the question in view ──────────────────────────────────────
+  // The card lives inside the chat's scroll pane, so a long stem plus four
+  // options plus an open rationale is taller than the viewport and the
+  // student has to go hunting for the choices they haven't seen. Shrinking
+  // the card alone can't fix that — question length varies too much — so we
+  // also move the scroller for them at the three moments the card changes
+  // height: a new question, the feedback panel opening, and the rationale
+  // expanding. scrollIntoView walks every scrollable ancestor, which is what
+  // we want: the chat pane and the window both settle.
+  const cardRef = useRef(null);
+  const feedbackRef = useRef(null);
+  const rationaleRef = useRef(null);
+
+  const reveal = useCallback((el, block) => {
+    if (!el) return;
+    const reduced = typeof window !== 'undefined'
+      && window.matchMedia
+      && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    el.scrollIntoView({ behavior: reduced ? 'auto' : 'smooth', block });
+  }, []);
+
+  // Skip the very first pass so we don't fight the chat's own
+  // scroll-to-bottom when the quiz message first arrives.
+  const hasMountedRef = useRef(false);
+
+  // New question → put the card's top at the top of the pane.
+  useEffect(() => {
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+    const id = setTimeout(() => reveal(cardRef.current, 'start'), 60);
+    return () => clearTimeout(id);
+  }, [currentQueuePosition, isReviewRound, reveal]);
+
+  // Feedback opened → 'nearest' scrolls the minimum needed, and nothing at
+  // all when the panel already fits below the options.
+  useEffect(() => {
+    if (!showFeedback) return undefined;
+    const id = setTimeout(() => reveal(feedbackRef.current, 'nearest'), 140);
+    return () => clearTimeout(id);
+  }, [showFeedback, currentQueuePosition, reveal]);
+
+  // Rationale expanded (or its skeleton swapped for real text) → wait out
+  // the 0.34s grid-row transition, then bring it into view. We target the
+  // rationale itself rather than the feedback panel: once four per-option
+  // rows are open the panel is taller than the pane, and aligning *its* top
+  // would scroll back up past the text the student just asked to see.
+  const rationaleOpen = expandedRationales.has(currentQueuePosition);
+  const rationaleLoading = !!questionRationales[currentQueuePosition]?.loading;
+  useEffect(() => {
+    if (!rationaleOpen) return undefined;
+    const id = setTimeout(() => reveal(rationaleRef.current, 'nearest'), 380);
+    return () => clearTimeout(id);
+  }, [rationaleOpen, rationaleLoading, currentQueuePosition, reveal]);
 
   // Track previous queue position to detect navigation
   const prevQueuePositionRef = useRef(currentQueuePosition);
@@ -1044,7 +1119,7 @@ const ChatQuizStream = ({
   // ── SATA question ──────────────────────────────────────────────────────
   if (currentQuestionType === 'sata') {
     return (
-      <div className="chat-quiz-stream-card">
+      <div className="chat-quiz-stream-card" ref={cardRef}>
         {showXpPopup && <div className="cqs-xp-popup">+10 XP</div>}
         {progressHeader}
         <SATAQuestion
@@ -1066,7 +1141,7 @@ const ChatQuizStream = ({
   // ── Case study / ordering / bowtie question ────────────────────────────
   if (currentQuestionType === 'casestudy' || currentQuestionType === 'ordering' || currentQuestionType === 'bowtie') {
     return (
-      <div className="chat-quiz-stream-card">
+      <div className="chat-quiz-stream-card" ref={cardRef}>
         {showXpPopup && <div className="cqs-xp-popup">+10 XP</div>}
         {progressHeader}
         <CaseStudyQuestion
@@ -1087,7 +1162,7 @@ const ChatQuizStream = ({
 
   // ── MCQ (default) ──────────────────────────────────────────────────────
   return (
-    <div className="chat-quiz-stream-card">
+    <div className="chat-quiz-stream-card" ref={cardRef}>
       {/* XP Popup */}
       {showXpPopup && (
         <div className="cqs-xp-popup">
@@ -1154,7 +1229,10 @@ const ChatQuizStream = ({
 
         {/* Feedback */}
         {showFeedback && (
-          <div className={`cqs-feedback ${isCorrect ? 'correct' : 'incorrect'}`}>
+          <div
+            className={`cqs-feedback ${isCorrect ? 'correct' : 'incorrect'}`}
+            ref={feedbackRef}
+          >
             <div className="cqs-feedback-header">
               <div className="cqs-feedback-icon">
                 {isCorrect ? <CheckIcon /> : <XIcon />}
@@ -1214,7 +1292,10 @@ const ChatQuizStream = ({
                     0fr → 1fr trick lets us animate to natural content height
                     without a JS measurement pass. The inner div needs
                     overflow:hidden to clip during the transition. */}
-                <div className={`cqs-rationale-collapse${isRationaleExpanded ? ' expanded' : ''}`}>
+                <div
+                  className={`cqs-rationale-collapse${isRationaleExpanded ? ' expanded' : ''}`}
+                  ref={rationaleRef}
+                >
                   <div className="cqs-rationale-collapse-inner">
                     {isRationaleLoading ? (
                       <div className="cqs-rationale-skeleton" aria-hidden="true">

@@ -8,6 +8,7 @@ import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
 import FlashcardFeedback from "./FlashcardFeedback";
+import MessageRating from "./MessageRating";
 
 import QuizLoading from "./QuizLoading";
 import StreamingLogo from "./StreamingLogo";
@@ -17,6 +18,12 @@ import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
 import { devLog } from '../../Services/devLogger';
 import { rewrite_text } from '../../Services/FastAPICalls';
+import DiagramAwarePre from '../Mindmap/DiagramAwarePre';
+import useArtifactEngagement from './useArtifactEngagement';
+
+// Draws the ASCII concept maps and pathophysiology flows the tutor writes in
+// fenced blocks as real graphs. Ordinary code blocks pass through untouched.
+const diagramMarkdownComponents = { pre: DiagramAwarePre };
 
 function CopyMessageButton({ text }) {
   const { t } = useTranslation();
@@ -194,6 +201,7 @@ function DevCopyJsonButton({ quizData }) {
  */
 const ChatMessage = ({
   message,
+  chatId,
   onOptionClick,
   onQuizAnswerSelect,
   uploadedFilesList,
@@ -203,6 +211,8 @@ const ChatMessage = ({
   onSendMessage,
   onRetryMessage,
   onFeedbackSubmit,
+  onMessageRated,
+  onQuizExtended,
   onDeleteMessage,
   onEditMessage,
   viewAllChatsMode = false
@@ -220,6 +230,12 @@ const ChatMessage = ({
 
   // Hover state for delete button (dev mode only)
   const [isHovered, setIsHovered] = useState(false);
+
+  // Engagement telemetry for passive artifacts (study sheet / concept map /
+  // audio). Quizzes and flashcards stamp themselves when answered; these have
+  // no such event, so we measure dwell on the message container instead.
+  const messageNodeRef = useRef(null);
+  useArtifactEngagement(chatId, message, messageNodeRef);
 
   // Inline edit state (user messages only)
   const [isEditing, setIsEditing] = useState(false);
@@ -499,6 +515,7 @@ const ChatMessage = ({
 
   return (
     <div
+      ref={messageNodeRef}
       className={`message ${isUser ? "user-message" : "ai-message"} ${hasFlashcards ? "message-with-flashcards" : ""}`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
@@ -553,6 +570,16 @@ const ChatMessage = ({
               }}
               onFeedbackSubmit={onFeedbackSubmit}
               feedbackData={message.feedbackData}
+              chatId={chatId}
+              /* Quizzes now ship short and grow as the student advances. The
+                 topic is what the next batch is generated from — without it
+                 the quiz simply stays the length it arrived at. */
+              quizTopic={message.quizTopic || message.topic || null}
+              onQuestionsAppended={
+                onQuizExtended
+                  ? (questions) => onQuizExtended(message.id, questions)
+                  : undefined
+              }
             />
             {process.env.NODE_ENV === 'development' && (
               <DevCopyJsonButton quizData={parsedQuizData || []} />
@@ -673,7 +700,7 @@ const ChatMessage = ({
                 fontSize: '14px'
               }}
             >
-              <span>⚠️ {t('chat.streamError')}</span>
+              <span>⚠️ {t(message.errorKey || 'chat.streamError')}</span>
               {message.retryText && onRetryMessage && (
                 <button
                   type="button"
@@ -741,17 +768,34 @@ const ChatMessage = ({
               )
             ) : (
               <div className={`ai-message-wrapper ${message.isStreaming ? 'streaming' : 'complete'}`}>
-                <ReactMarkDown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkDown>
+                {/* A half-streamed fence would parse into a garbled graph, so
+                    diagrams are only promoted once the answer has landed. */}
+                <ReactMarkDown
+                  remarkPlugins={[remarkGfm]}
+                  components={message.isStreaming ? undefined : diagramMarkdownComponents}
+                >
+                  {message.content}
+                </ReactMarkDown>
                 {message.isStreaming && (
                   <span className="streaming-cursor">▊</span>
                 )}
                 {!message.isStreaming && message.content && (
                   <div className="message-actions-row">
-                    <CopyMessageButton text={message.content} />
-                    <RewriteButton
-                      busy={rewriteState.busy}
-                      onClick={handleRewrite}
+                    {/* Thumbs first, and always visible — Copy/Rewrite fade in
+                        to their right so nothing moves when they appear. */}
+                    <MessageRating
+                      chatId={chatId}
+                      message={message}
+                      onRated={onMessageRated}
                     />
+                    <div className="message-actions-hover-group">
+                      <span className="message-actions-divider" aria-hidden="true" />
+                      <CopyMessageButton text={message.content} />
+                      <RewriteButton
+                        busy={rewriteState.busy}
+                        onClick={handleRewrite}
+                      />
+                    </div>
                   </div>
                 )}
                 {rewriteState.error && (

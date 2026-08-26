@@ -83,48 +83,99 @@
   min-width: 0;
 }
 
-.wud-exam__label {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  color: rgba(60, 60, 60, 0.55);
-}
-
 .wud-exam__date {
-  font-size: 16px;
+  font-size: 16.5px;
   font-weight: 700;
   color: #1f1f1f;
-  letter-spacing: -0.1px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: -0.2px;
 }
 
-.wud-exam__nudge {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding-top: 12px;
-  border-top: 1px solid var(--wud-accent-border);
-}
-
-.wud-exam__nudge-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--wud-accent);
-  flex-shrink: 0;
-  width: 18px;
-  height: 18px;
-  margin-top: 1px;
-}
-
-.wud-exam__nudge-text {
-  font-size: 13.5px;
+/* The one sentence of coaching, sitting directly under the countdown.
+   Phase-driven — see WarmUrgencyDashboard.js. */
+.wud-exam__sub {
+  font-size: 13px;
+  font-weight: 500;
   line-height: 1.45;
   color: var(--wud-accent-strong);
-  font-weight: 500;
+  opacity: 0.85;
+  margin-top: 3px;
 }
+
+/* ============================================
+   READINESS RING
+   Sits opposite the countdown so the two numbers that matter —
+   time left and where you stand — read as a pair. A gauge answers
+   "how full am I" at a glance where the bare number read as a stat.
+   Only rendered once real questions have been answered; see the
+   comment in WarmUrgencyDashboard.js for why a 0% here is worse
+   than no number at all.
+   ============================================ */
+.wud-ready {
+  position: relative;
+  margin-left: auto;
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: default;
+}
+
+.wud-ring {
+  position: absolute;
+  inset: 0;
+}
+
+.wud-ring__track {
+  stroke: rgba(0, 0, 0, 0.08);
+}
+
+body.dark-mode .wud-ring__track {
+  stroke: rgba(255, 255, 255, 0.12);
+}
+
+.wud-ring__value {
+  stroke: var(--wud-accent);
+  transition: stroke-dasharray 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.wud-ready__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.wud-ready__pct {
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -0.5px;
+  color: var(--wud-accent-strong);
+  font-variant-numeric: tabular-nums;
+}
+
+.wud-ready__label {
+  font-size: 7.5px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: rgba(60, 60, 60, 0.5);
+  white-space: nowrap;
+  margin-top: 2px;
+}
+
+.wud-ready__sub {
+  font-size: 7px;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: rgba(60, 60, 60, 0.4);
+  white-space: nowrap;
+}
+
+body.dark-mode .wud-ready__label { color: rgba(240, 240, 240, 0.5); }
+body.dark-mode .wud-ready__sub { color: rgba(240, 240, 240, 0.38); }
 
 /* ============================================
    PROGRESS LINE
@@ -271,10 +322,6 @@ body.dark-mode .wud-exam__date {
   color: #f0f0f0;
 }
 
-body.dark-mode .wud-exam__label {
-  color: rgba(240, 240, 240, 0.55);
-}
-
 body.dark-mode .wud-cta__title,
 body.dark-mode .wud-cta__sub {
   color: var(--wud-accent-strong);
@@ -303,11 +350,24 @@ body.dark-mode .wud-cta__arrow {
 
   .wud-exam__date {
     font-size: 15px;
-    white-space: normal;
   }
 
-  .wud-exam__nudge-text {
-    font-size: 13px;
+  .wud-exam__sub {
+    font-size: 12.5px;
+  }
+
+  .wud-ready {
+    width: 56px;
+    height: 56px;
+  }
+
+  .wud-ring {
+    width: 56px;
+    height: 56px;
+  }
+
+  .wud-ready__pct {
+    font-size: 14px;
   }
 
   .wud-cta {

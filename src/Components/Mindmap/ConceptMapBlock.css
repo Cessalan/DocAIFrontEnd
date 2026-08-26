@@ -1,0 +1,142 @@
+/* ConceptMapBlock.css — the frame around an ASCII diagram promoted to a real
+   concept map inside a chat message. Warm coral/cream palette, same as the
+   rest of the chat surface. */
+
+.concept-map-block {
+  width: 100%;
+  max-width: 100%;
+  margin: 18px 0;
+  border: 1px solid rgba(232, 141, 125, 0.22);
+  border-radius: var(--radius-xl, 20px);
+  background: var(--bg-cream, #fdf8f3);
+  overflow: hidden;
+}
+
+body.dark-mode .concept-map-block {
+  background: var(--dark-bg-secondary, #2a2a2a);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+/* --- top bar --- */
+
+.concept-map-block-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  border-bottom: 1px solid rgba(232, 141, 125, 0.16);
+}
+
+body.dark-mode .concept-map-block-bar {
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+.concept-map-block-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #c25e4e;
+}
+
+body.dark-mode .concept-map-block-badge {
+  color: #e88d7d;
+}
+
+.concept-map-block-toggle {
+  flex-shrink: 0;
+  padding: 5px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  color: #7a6a62;
+  background: transparent;
+  border: 1px solid rgba(160, 130, 110, 0.3);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+}
+
+.concept-map-block-toggle:hover {
+  color: #c25e4e;
+  border-color: rgba(232, 141, 125, 0.55);
+  background: rgba(232, 141, 125, 0.08);
+}
+
+body.dark-mode .concept-map-block-toggle {
+  color: rgba(255, 255, 255, 0.7);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+body.dark-mode .concept-map-block-toggle:hover {
+  color: #f3b5a8;
+  border-color: rgba(232, 141, 125, 0.5);
+  background: rgba(232, 141, 125, 0.12);
+}
+
+/* --- body --- */
+
+.concept-map-block-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 220px;
+  font-size: 13px;
+  color: #8a7a72;
+}
+
+body.dark-mode .concept-map-block-loading {
+  color: rgba(255, 255, 255, 0.55);
+}
+
+/* The original sketch, kept verbatim behind the toggle. */
+.concept-map-block-source {
+  margin: 0;
+  padding: 14px 16px;
+  overflow-x: auto;
+  font-size: 12px;
+  line-height: 1.5;
+  background: transparent;
+}
+
+.concept-map-block-source code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  white-space: pre;
+  background: none;
+  padding: 0;
+}
+
+.concept-map-block-hint {
+  margin: 0;
+  padding: 8px 14px 10px;
+  font-size: 11.5px;
+  color: #9a8a82;
+  text-align: center;
+}
+
+body.dark-mode .concept-map-block-hint {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+/* This block supplies the frame, so the viewer drops its own. Its height is
+   left at the default on desktop: that is what a generated mindmap already
+   looks like in a chat message, and a concept map needs the room to be
+   legible — "Expand" is there for the full-screen view. */
+.concept-map-block .mindmap-viewer {
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+/* On a phone the default 500px would swallow the viewport. Both properties
+   have to move — min-height wins over height otherwise. */
+@media (max-width: 640px) {
+  .concept-map-block .mindmap-container {
+    height: 320px;
+    min-height: 320px;
+  }
+}

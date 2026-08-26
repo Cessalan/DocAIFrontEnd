@@ -15,6 +15,7 @@ import {
 import { createStudySession } from '../../Services/StudySessionService';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { formatNodeType, getStepTopicLabel } from './planFormatting';
+import { buildFirstBlock, isRealNode } from './firstBlock';
 import { getStudyNodeIcon } from './planNodeIcon';
 import './StudyMode.css';
 
@@ -489,14 +490,18 @@ const NODE_TYPE_META = {
 };
 
 const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
-  const realNodes = (pathResult.nodes || []).filter(n => n.type !== 'section_banner');
+  // The session persists the first block, not the whole path — so the preview
+  // has to quote the block. Showing "17 steps · 58 min" over a plan that saves
+  // 6 of them for later is both an over-ask and a promise we don't keep.
+  const { block, blockCount, reserveCount, estimatedMinutes } = buildFirstBlock(pathResult);
+  const realNodes = block.filter(isRealNode);
   const firstNode = realNodes[0];
   const meta = (firstNode && NODE_TYPE_META[firstNode.type]) || NODE_TYPE_META.lesson;
   const lang = (t('locale.code', 'en') || 'en').toLowerCase();
   const action = lang.startsWith('fr') ? meta.actionFr : meta.actionEn;
 
-  const totalSteps = realNodes.length;
-  const minutes = pathResult.estimated_time_minutes;
+  const totalSteps = blockCount;
+  const minutes = estimatedMinutes || pathResult.estimated_time_minutes;
 
   // ── First-node readiness ──────────────────────────────────────────────
   // /study/start prefetches node 1 while the student reads this preview. We
@@ -572,7 +577,7 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
       )}
 
       <ul className="study-modal-plan-list">
-        {realNodes.slice(0, 6).map((node, idx) => {
+        {realNodes.map((node, idx) => {
           const isFirst = idx === 0;
           // Render the same way the destination StudyPlanOverview does — same
           // SVG icon, type tag on top in coral, clean topic label below — so
@@ -604,9 +609,11 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
             </li>
           );
         })}
-        {realNodes.length > 6 && (
+        {reserveCount > 0 && (
           <li className="study-modal-plan-more">
-            +{realNodes.length - 6} {t('study.planMore', 'more steps')}
+            {t('study.planReserveNote', '+{{count}} more, unlocked when you finish these', {
+              count: reserveCount
+            })}
           </li>
         )}
       </ul>

@@ -23,6 +23,7 @@
   --sticky-green: #d8f5d8;
   --sticky-yellow: #fff8b8;
   --sticky-purple: #e8dff5;
+  --sticky-teal: #ccf2ec;
 
   --text-primary: #3d3d3d;
   --text-secondary: #6b6b6b;
@@ -141,6 +142,20 @@
    INDIVIDUAL BUTTON COLORS
    Each action has its signature sticky-note color
    ----------------------------------------- */
+
+/* Check my understanding - Teal sticky note.
+   Sixth colour: the other five are taken by quiz/flashcards/audio/
+   studysheet/mindmap, and studyjourney owns coral. */
+.post-upload-action-btn.action-checkme {
+  background: var(--sticky-teal);
+}
+.post-upload-action-btn.action-checkme:hover {
+  border-color: rgba(13, 148, 136, 0.4);
+}
+.action-checkme .action-icon-circle {
+  background: rgba(45, 212, 191, 0.28);
+  color: #0d9488;
+}
 
 /* Quiz - Blue sticky note */
 .post-upload-action-btn.action-quiz {
@@ -280,6 +295,13 @@ body.dark-mode .post-upload-action-btn .action-label {
 }
 
 /* Dark mode - Keep colors vibrant but slightly muted */
+body.dark-mode .post-upload-action-btn.action-checkme {
+  background: #a8e6db;
+}
+body.dark-mode .post-upload-action-btn.action-checkme:hover {
+  border-color: rgba(13, 148, 136, 0.6);
+}
+
 body.dark-mode .post-upload-action-btn.action-quiz {
   background: #b8e4f7;
 }
@@ -346,6 +368,61 @@ body.dark-mode .post-upload-action-btn.action-studyjourney:hover {
 
 .post-upload-action-btn.btn-disabled .action-icon-circle {
   transform: none !important;
+}
+
+/* ============================================
+   AFTER A CHOICE IS MADE
+   The menu stays put rather than disappearing, so the chat history still
+   shows what the student picked. The chosen chip keeps its colour and gains
+   a check; the others fade back but stay readable.
+   ============================================ */
+
+/* The row itself must NOT inherit .actions-disabled's pointer-events:none —
+   the chosen chip still needs to show a cursor and a tooltip. */
+.post-upload-actions.actions-resolved {
+  opacity: 1;
+}
+
+.post-upload-action-btn.btn-chosen {
+  cursor: default;
+  opacity: 1;
+  transform: none !important;
+  border-color: rgba(60, 60, 60, 0.35);
+  box-shadow:
+    2px 2px 0px rgba(60, 60, 60, 0.14),
+    0 2px 10px rgba(0, 0, 0, 0.07);
+}
+
+.post-upload-action-btn.btn-chosen .action-label {
+  font-weight: 600;
+}
+
+/* Not chosen: recede, but stay legible so the menu reads as a record of the
+   choice rather than a broken control. */
+.post-upload-action-btn.btn-passed-over {
+  cursor: default;
+  opacity: 0.4;
+  filter: saturate(0.35);
+  transform: none !important;
+  box-shadow: none;
+}
+
+.post-upload-action-btn.btn-chosen:hover,
+.post-upload-action-btn.btn-passed-over:hover {
+  transform: none !important;
+}
+
+.post-upload-action-btn.btn-chosen:hover .action-icon-circle,
+.post-upload-action-btn.btn-passed-over:hover .action-icon-circle {
+  transform: none !important;
+}
+
+body.dark-mode .post-upload-action-btn.btn-chosen {
+  border-color: rgba(255, 255, 255, 0.45);
+}
+
+body.dark-mode .post-upload-action-btn.btn-passed-over {
+  opacity: 0.32;
 }
 
 /* ============================================

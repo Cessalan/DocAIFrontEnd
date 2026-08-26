@@ -57,9 +57,12 @@ import {
   UpdateQuizAnswer,
   UpdateFlashcardReview,
   SaveQuizFeedback,
+  AppendQuizQuestions,
   DeleteMessage,
   SaveOrUpdateMessage,
-  UpdateMessageContent
+  UpdateMessageContent,
+  markMessageEngaged,
+  SavePostUploadSelection
 } from '../../Services/FireBaseServiceChats.js';
 
 import { loadFilesForChat, saveAudioToStorage } from '../../Services/FireBaseFiles.js';
@@ -94,6 +97,7 @@ import StickyQuizProgress from './StickyQuizProgress';
 // import SuggestedPrompts from './SuggestedPrompts';
 import AudioConfirmCard from './AudioConfirmCard';
 import ChatAudioPlayer from './ChatAudioPlayer';
+import CheckUnderstandingCard from './CheckUnderstandingCard';
 
 // Progress Tracking
 import CompactProgressWidget from '../Progress/CompactProgressWidget';
@@ -1097,7 +1101,7 @@ const ChatInterface = ({
     // Usage throttle: block + show upgrade modal when the hourly generation
     // bucket is empty. Checked before any UI/loading state changes so a blocked
     // send is a clean no-op. (Charged on generation-complete events below.)
-    if (!requireQuota()) return;
+    if (!requireQuota({ topic: currentChatTitleRef.current })) return;
 
     // IMMEDIATELY show loading state - don't wait for connection
     setUserInputText('');
@@ -1146,10 +1150,38 @@ const ChatInterface = ({
     // Save to Firebase (non-blocking for UI) — skipped when re-generating after an edit
     let updatedChatId = null;
     if (!skipFirebaseSave) {
-      updatedChatId = await AppendToChat(currentChatID, newUserMessage);
+      updatedChatId = await AppendToChat(currentChatID, newUserMessage, currentLanguage);
       if (updatedChatId && updatedChatId !== currentChatID) {
         setChatId(updatedChatId);
       }
+    }
+
+    // No chat id means chat creation failed outright. There is nowhere to
+    // stream to: ask_llm_websocket would open a socket to `/ws/undefined` and
+    // the student would sit on the typing indicator forever with nothing saved.
+    // Fail loudly with a retry instead — this is the first message of a brand
+    // new conversation, so silence here reads as "the product is broken".
+    const targetChatId = updatedChatId || currentChatID;
+    if (!targetChatId) {
+      console.error("❌ No chat id after AppendToChat — aborting send");
+      setIsStreaming(false);
+      setIsAiTyping(false);
+      setStreamingStatus(null);
+      setChatMessages(prev =>
+        prev.map(msg =>
+          msg.id === streamingMessageId
+            ? {
+                ...msg,
+                content: '',
+                error: true,
+                errorKey: 'chat.streamError',
+                retryText: messageToSend,
+                isStreaming: false
+              }
+            : msg
+        )
+      );
+      return;
     }
 
     let fullResponse = "";
@@ -1164,7 +1196,7 @@ const ChatInterface = ({
         messageToSend,
         formatChatHistory(historyOverride || chatMessages),
         formatFilesForAPI(uploadedFilesList),
-        updatedChatId || currentChatID,
+        targetChatId,
 
         // Status callback - handles all your current status updates
         (statusUpdate) => {
@@ -1190,7 +1222,7 @@ const ChatInterface = ({
             // rejected again. Drop the placeholder and open the upgrade modal.
             if (statusUpdate.code === "quota_exceeded") {
               setChatMessages(prev => prev.filter(msg => msg.id !== streamingMessageId));
-              openUpgrade();
+              openUpgrade('questions', { topic: currentChatTitleRef.current });
               return;
             }
 
@@ -1201,6 +1233,12 @@ const ChatInterface = ({
                       ...msg,
                       content: streamingContentRef.current || '',
                       error: true,
+                      // A watchdog timeout reads differently from a crash:
+                      // nothing went wrong that we saw, the answer just never
+                      // came. Say that rather than blaming a generic error.
+                      errorKey: statusUpdate.code === 'timeout'
+                        ? 'chat.timeoutError'
+                        : 'chat.streamError',
                       retryText: messageToSend,
                       isStreaming: false
                     }
@@ -2678,7 +2716,7 @@ const ChatInterface = ({
     // Free plan: one upload per chat. If this chat already has a file, block
     // the second upload and pitch Pro instead.
     if (!isPro && uploadedFilesListRef.current.length > 0) {
-      openUpgrade();
+      openUpgrade(null, { topic: currentChatTitleRef.current });
       if (e.target) e.target.value = '';
       return;
     }
@@ -3465,6 +3503,16 @@ const ChatInterface = ({
   // 2. Build a prompt based on the action and topics
   // 3. Send as a user message (triggers normal chat flow)
   // ============================================
+  // Record the chosen post-upload chip locally and in Firestore. Replaces the
+  // old `showActions: false`, which hid the whole menu and left the student
+  // with no record of what they'd clicked.
+  const markPostUploadChoice = (messageId, actionId) => {
+    setChatMessages(prev => prev.map(msg =>
+      msg.id === messageId ? { ...msg, selectedAction: actionId } : msg
+    ));
+    SavePostUploadSelection(currentChatID, messageId, actionId);
+  };
+
   const handlePostUploadAction = async (actionId, messageData) => {
     devLog('🎯 Post-upload action clicked:', actionId, messageData);
     devLog('🎯 Current chatId:', currentChatID);
@@ -3485,12 +3533,9 @@ const ChatInterface = ({
     if (actionId === 'quiz') {
       devLog('🎯 Generating knowledge quiz directly from document');
 
-      // Hide action buttons on this message
-      setChatMessages(prev => prev.map(msg =>
-        msg.id === messageData.id
-          ? { ...msg, showActions: false }
-          : msg
-      ));
+      // Mark which chip was chosen. The menu stays visible with the rest
+      // greyed out, so the history shows what the student picked.
+      markPostUploadChoice(messageData.id, actionId);
 
       // Generate knowledge quiz prompt - backend will use document content by default
       const quizPrompt = t('postUpload.knowledgeQuizPrompt', {
@@ -3516,13 +3561,9 @@ const ChatInterface = ({
       return;
     }
 
-    // Step 1: Hide action buttons on this message
-    // This prevents double-clicks and shows the action was taken
-    setChatMessages(prev => prev.map(msg =>
-      msg.id === messageData.id
-        ? { ...msg, showActions: false }
-        : msg
-    ));
+    // Step 1: Mark the chosen chip. This prevents double-clicks and leaves a
+    // visible record of the choice instead of an empty gap.
+    markPostUploadChoice(messageData.id, actionId);
 
     // Special handling for audio - show the AudioConfirmCard
     if (actionId === 'audio') {
@@ -3546,6 +3587,7 @@ const ChatInterface = ({
     }
 
     const prompts = {
+      checkme: t('postUpload.checkmePrompt', { topics: topicsStr }),
       flashcards: t('postUpload.flashcardsPrompt', { topics: topicsStr }),
       studysheet: t('postUpload.studysheetPrompt'),
       mindmap: t('postUpload.mindmapPrompt', { topics: topicsStr })
@@ -3556,6 +3598,29 @@ const ChatInterface = ({
 
     if (!promptToSend) {
       console.warn('Unknown action:', actionId);
+      return;
+    }
+
+    // "Check my understanding" posts a session card instead of the raw
+    // instruction. Showing the literal prompt we send the model is the single
+    // biggest tell that this is a chatbot being puppeted, so it goes out
+    // hidden and the card stands in for it.
+    if (actionId === 'checkme') {
+      const topicList = messageData.topics || [];
+      const cardId = `checkme-${Date.now()}`;
+      const card = {
+        id: cardId,
+        role: 'assistant',
+        type: 'checkme_card',
+        topics: topicList,
+        total: topicList.length,
+        timestamp: new Date()
+      };
+      setChatMessages(prev => [...prev, card]);
+      SaveOrUpdateMessage(currentChatID, card).catch(() => {
+        /* card is cosmetic — a failed save must not block the session */
+      });
+      await handleSendNewUserMessage(null, promptToSend, { hideUserMessage: true });
       return;
     }
 
@@ -3581,12 +3646,8 @@ const ChatInterface = ({
       ? messageData.topics.join(', ')
       : 'the uploaded material';
 
-    // Hide action buttons on the original message
-    setChatMessages(prev => prev.map(msg =>
-      msg.id === messageData.id
-        ? { ...msg, showActions: false }
-        : msg
-    ));
+    // Mark the quiz chip as the one that was chosen on the original message
+    markPostUploadChoice(messageData.id, 'quiz');
 
     // Build quiz prompt with mode
     // The backend will parse the quiz mode from the prompt
@@ -3669,8 +3730,9 @@ const ChatInterface = ({
       return;
     }
 
-    // For flashcards, studysheet, mindmap: send the prompt directly
+    // For checkme, flashcards, studysheet, mindmap: send the prompt directly
     const prompts = {
+      checkme: t('postUpload.checkmePrompt', { topics: topicsStr }),
       flashcards: t('postUpload.flashcardsPrompt', { topics: topicsStr }),
       studysheet: t('postUpload.studysheetPrompt'),
       mindmap: t('postUpload.mindmapPrompt', { topics: topicsStr })
@@ -3982,6 +4044,53 @@ const ChatInterface = ({
   }, [currentChatID]);
 
   // ============================================
+  // ANSWER RATING (thumbs on AI messages)
+  // ============================================
+  // MessageRating already persisted the signal and the message mirror; this
+  // only keeps the in-memory transcript honest, so a re-render doesn't show an
+  // unrated answer the student just rated.
+  const handleMessageRated = useCallback((messageId, rating) => {
+    setChatMessages(prev =>
+      prev.map(msg =>
+        msg.id === messageId
+          ? { ...msg, rating: { ...rating, ratedAt: new Date() } }
+          : msg
+      )
+    );
+  }, []);
+
+  // ============================================
+  // QUIZ AUTO-EXTENSION
+  // ============================================
+  // Quizzes are generated as one parallel burst, so asking for 15 up front pays
+  // for 15 immediately — and most students never reach the end of them. They
+  // now arrive short and grow here as the student advances.
+  const handleQuizExtended = useCallback(async (messageId, newQuestions) => {
+    if (!messageId || !Array.isArray(newQuestions) || newQuestions.length === 0) return;
+
+    let merged = null;
+    setChatMessages(prev =>
+      prev.map(msg => {
+        if (msg.id !== messageId) return msg;
+        const existing = Array.isArray(msg.quizData) ? msg.quizData : [];
+        merged = [...existing, ...newQuestions];
+        return { ...msg, quizData: merged, expectedTotal: merged.length };
+      })
+    );
+
+    if (!merged) return;
+    try {
+      // Persist so a reload doesn't drop the questions back to the first batch
+      // and re-generate them.
+      await AppendQuizQuestions(currentChatID, messageId, merged);
+    } catch (error) {
+      // The student already has the questions on screen; losing the write
+      // costs a re-fetch later, not their place in the quiz.
+      devLog("Failed to persist extended quiz (non-fatal):", error?.message);
+    }
+  }, [currentChatID]);
+
+  // ============================================
   // FLASHCARD FEEDBACK HANDLING
   // ============================================
   const handleFlashcardFeedback = useCallback(async (messageId, feedbackData) => {
@@ -4097,7 +4206,7 @@ const ChatInterface = ({
   const openFileUploadDialog = () => {
     // Free plan: one upload per chat — pitch Pro instead of opening the picker.
     if (!isPro && uploadedFilesListRef.current.length > 0) {
-      openUpgrade();
+      openUpgrade(null, { topic: currentChatTitleRef.current });
       return;
     }
     documentFileInputRef.current?.click();
@@ -4368,6 +4477,7 @@ const ChatInterface = ({
           chatId={currentChatID}
           studyState={studyState}
           examDate={currentExamData?.examDate || null}
+          examName={currentExamData?.examName || null}
           sidebarOpen={sidebarOpen}
           onCloseSidebar={onCloseSidebar}
           viewOnly={viewAllChatsMode} // Dev mode: view without triggering reviews
@@ -4813,7 +4923,7 @@ const ChatInterface = ({
 
           {/* Actual Messages - hidden until positioned */}
           <div style={{ opacity: isInitialLoadComplete ? 1 : 0, transition: 'opacity 0.3s ease' }}>
-            {chatMessages.map((message) => {
+            {chatMessages.map((message, messageIndex) => {
               // ============================================
               // UPLOAD LOADING BOX
               // ============================================
@@ -4887,6 +4997,7 @@ const ChatInterface = ({
                         actions={message.actions}
                         showActions={message.showActions}
                         disabled={isSystemBusy}
+                        selectedActionId={message.selectedAction}
                         onAction={(actionId) => handlePostUploadAction(actionId, message)}
                       />
                     </div>
@@ -4968,6 +5079,30 @@ const ChatInterface = ({
               }
 
               // ============================================
+              // CHECK MY UNDERSTANDING — session card
+              // ============================================
+              if (message.type === 'checkme_card') {
+                // Progress is derived, not stored: count the replies the
+                // student has sent since this card. Nothing to keep in sync,
+                // and it rebuilds correctly after a reload.
+                const repliesSince = chatMessages
+                  .slice(messageIndex + 1)
+                  .filter(m => m.role === 'user' && !m.hidden).length;
+
+                return (
+                  <div key={message.id} className="message ai-message">
+                    <div className="message-content">
+                      <CheckUnderstandingCard
+                        topics={message.topics || []}
+                        total={message.total || (message.topics || []).length}
+                        current={repliesSince + 1}
+                      />
+                    </div>
+                  </div>
+                );
+              }
+
+              // ============================================
               // AUDIO OPTIONS MESSAGE (confirmation card)
               // ============================================
               if (message.type === 'audio_options') {
@@ -5019,6 +5154,7 @@ const ChatInterface = ({
                         script={message.script}
                         isGenerating={message.isGenerating}
                         generatingMessage={message.generatingMessageKey ? t(message.generatingMessageKey) : message.generatingMessage}
+                        onFirstPlay={() => markMessageEngaged(currentChatID, message.id, 'audio')}
                       />
                       {message.error && (
                         <div className="audio-error-message">
@@ -5044,6 +5180,7 @@ const ChatInterface = ({
                         duration={message.duration || ''}
                         script={message.script}
                         isGenerating={false}
+                        onFirstPlay={() => markMessageEngaged(currentChatID, message.id, 'audio')}
                       />
                     </div>
                   </div>
@@ -5103,6 +5240,7 @@ const ChatInterface = ({
                   >
                     <ChatMessage
                       message={message}
+                      chatId={currentChatID}
                       onOptionClick={stableHandlePostDocumentUploadOption}
                       onQuizAnswerSelect={stableHandleQuizAnswerSelect}
                       uploadedFilesList={uploadedFilesList}
@@ -5110,6 +5248,8 @@ const ChatInterface = ({
                       onQuizInteraction={handleQuizInteraction}
                       isActiveQuiz={message.id === activeQuizId}
                       onFeedbackSubmit={handleQuizFeedback}
+                      onMessageRated={handleMessageRated}
+                      onQuizExtended={handleQuizExtended}
                       onSendMessage={stableHandleSendMessage}
                       onRetryMessage={handleRetryMessage}
                       onDeleteMessage={handleDeleteMessage}

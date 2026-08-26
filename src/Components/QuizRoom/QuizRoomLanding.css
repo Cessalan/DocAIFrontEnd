@@ -2707,8 +2707,39 @@
   color: var(--primary-coral);
 }
 
-.badge-icon.stars-icon {
-  color: #f59e0b;
+/* Country flags beside the "1,000+ students" claim. Spaced rather than
+   overlapped: five different flags at 19px are already hard to tell apart, and
+   stacking them the way avatar groups do costs the recognition this is for. */
+.flag-strip {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  flex-shrink: 0;
+}
+
+.flag-strip-item {
+  display: inline-flex;
+  width: 19px;
+  height: 12.67px; /* 3:2, matching the 24x16 viewBox */
+  border-radius: 2.5px;
+  overflow: hidden;
+  /* Canada and the Philippines are largely white; without a hairline they
+     dissolve into the cream badge background. */
+  box-shadow:
+    0 0 0 0.5px rgba(60, 60, 60, 0.22),
+    0 1px 2px rgba(60, 60, 60, 0.12);
+}
+
+.flag-strip-item svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+body.dark-mode .flag-strip-item {
+  box-shadow:
+    0 0 0 0.5px rgba(255, 255, 255, 0.28),
+    0 1px 2px rgba(0, 0, 0, 0.4);
 }
 
 .badge-text {

@@ -1,0 +1,523 @@
+/* ============================================
+   STUDY INSIGHTS — coach, not report.
+
+   Styled off the study-mode design system, NOT a palette of its own:
+   coral accent (--study-coral), paper surfaces, and the same three status
+   colours the insight chips already use (#1a7a44 / #9a7b00 / #a0522d, and
+   their dark-mode counterparts #6ee7a0 / #ffd54f / #f4a896).
+
+   Light-first with a .dark-mode layer, matching how StudyMode.css handles
+   the modal that hosts this. An earlier pass was dark-only with an invented
+   violet gradient, which read as a foreign component dropped into the app.
+   ============================================ */
+
+.perf-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  color: var(--text-primary, #3d3d3d);
+}
+
+.perf-panel--loading,
+.perf-panel--empty {
+  padding: 28px 4px;
+  text-align: center;
+  color: var(--text-muted, #999);
+  font-size: 13px;
+  line-height: 1.6;
+}
+
+.perf-empty-copy { margin: 0; }
+
+/* ── 1. Hero ─────────────────────────────────────────────────────────── */
+.perf-hero {
+  text-align: center;
+  padding: 28px 22px 24px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.perf-hero-fraction {
+  display: flex;
+  align-items: baseline;
+  justify-content: center;
+  gap: 3px;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-hero-correct {
+  font-size: 52px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+.perf-hero-slash {
+  font-size: 30px;
+  font-weight: 300;
+  color: var(--text-muted, #999);
+  opacity: 0.6;
+}
+
+.perf-hero-total {
+  font-size: 30px;
+  font-weight: 600;
+  color: var(--text-muted, #999);
+}
+
+.perf-hero--strong .perf-hero-correct { color: #1a7a44; }
+.perf-hero--developing .perf-hero-correct { color: #9a7b00; }
+.perf-hero--weak .perf-hero-correct { color: #a0522d; }
+
+.perf-hero-label {
+  margin-top: 5px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, #999);
+}
+
+.perf-hero-accuracy {
+  margin-top: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #3d3d3d);
+}
+
+.perf-hero-line {
+  margin: 7px auto 0;
+  max-width: 30ch;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+/* ── 2. The one area ─────────────────────────────────────────────────── */
+.perf-eyebrow {
+  margin: 0 0 12px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted, #999);
+}
+
+.perf-focus-head {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 12px;
+}
+
+.perf-focus-icon { font-size: 18px; line-height: 1; }
+
+.perf-focus-name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.perf-focus-meta {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+
+.perf-focus-count {
+  font-size: 12.5px;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.perf-focus-pct {
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.perf-focus-line {
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.perf-focus-coaching {
+  margin: 11px 0 0;
+  padding: 11px 13px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.025);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.perf-focus-thin {
+  margin: 7px 0 0;
+  font-size: 11px;
+  font-style: italic;
+  color: var(--text-muted, #999);
+}
+
+/* ── 3. The question to re-learn ─────────────────────────────────────── */
+.perf-strengthen {
+  margin-top: 16px;
+  padding: 14px;
+  border-radius: 12px;
+  background: rgba(232, 141, 125, 0.07);
+  border: 1px solid rgba(232, 141, 125, 0.18);
+}
+
+.perf-strengthen-title {
+  margin: 0 0 8px;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #a0522d;
+}
+
+.perf-strengthen-q {
+  /* Full question text. Truncating it was the original sin of this panel —
+     a stem cut mid-clause tells a student nothing she can act on. */
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  color: var(--text-primary, #3d3d3d);
+}
+
+/* ── CTAs ────────────────────────────────────────────────────────────── */
+.perf-cta {
+  display: block;
+  width: 100%;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, color 0.16s ease;
+}
+
+.perf-cta:focus-visible {
+  outline: 2px solid var(--study-coral, #e88d7d);
+  outline-offset: 2px;
+}
+
+/* Soft tinted fill + matching border, the same treatment as .wud-cta —
+   the app doesn't use saturated gradient buttons anywhere. */
+.perf-cta--primary {
+  background: rgba(232, 141, 125, 0.1);
+  border: 1px solid rgba(232, 141, 125, 0.28);
+  color: #a0522d;
+}
+
+.perf-cta--primary:hover {
+  background: rgba(232, 141, 125, 0.16);
+  border-color: rgba(232, 141, 125, 0.42);
+}
+
+.perf-cta--ghost {
+  margin-top: 10px;
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid rgba(232, 141, 125, 0.3);
+  color: #a0522d;
+  font-size: 12.5px;
+}
+
+.perf-cta--ghost:hover { background: rgba(232, 141, 125, 0.1); }
+
+.perf-allclear {
+  margin: 0;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(46, 213, 115, 0.09);
+  color: #1a7a44;
+  font-size: 12.5px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+/* ── 4. Full breakdown, folded away ──────────────────────────────────── */
+.perf-more-wrap {
+  border-top: 1px solid rgba(0, 0, 0, 0.06);
+  padding-top: 14px;
+}
+
+.perf-disclose {
+  display: block;
+  margin: 0 auto;
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  color: var(--text-muted, #999);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.perf-disclose:hover { color: var(--text-primary, #3d3d3d); }
+
+/* Two columns once there's room: the two ranked lists sit side by side
+   instead of stacking into a long scroll, and only the missed-question list
+   — whose rows are full question text — spans the full width. */
+.perf-all {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 26px;
+  margin-top: 18px;
+  align-items: start;
+}
+
+.perf-section--full { grid-column: 1 / -1; }
+
+@media (max-width: 560px) {
+  .perf-all { grid-template-columns: minmax(0, 1fr); }
+}
+
+.perf-section { display: flex; flex-direction: column; gap: 10px; }
+
+.perf-section-title {
+  margin: 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-muted, #999);
+}
+
+.perf-section-count {
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 20px;
+  background: rgba(0, 0, 0, 0.05);
+  font-size: 10px;
+}
+
+.perf-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.perf-row { display: flex; flex-direction: column; gap: 5px; }
+
+.perf-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.perf-row-label {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--text-primary, #3d3d3d);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.perf-row-score {
+  flex-shrink: 0;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.perf-row-fraction {
+  margin-left: 6px;
+  font-size: 10.5px;
+  font-weight: 500;
+  color: var(--text-muted, #999);
+}
+
+/* ── Bars ── */
+.perf-bar {
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+}
+
+.perf-bar--lg { height: 8px; border-radius: 4px; }
+
+.perf-bar-fill {
+  height: 100%;
+  border-radius: inherit;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Same three status colours as the node states and insight chips. */
+.perf-row--weak .perf-bar-fill { background: var(--study-coral, #e88d7d); }
+.perf-row--developing .perf-bar-fill { background: #ffc107; }
+.perf-row--strong .perf-bar-fill { background: var(--node-done, #2ed573); }
+.perf-row--unknown .perf-bar-fill { background: rgba(0, 0, 0, 0.18); }
+
+.perf-row--weak .perf-focus-pct { color: #a0522d; }
+.perf-row--developing .perf-focus-pct { color: #9a7b00; }
+.perf-row--strong .perf-focus-pct { color: #1a7a44; }
+.perf-focus-pct--warn { color: #a0522d; }
+
+.perf-row-thin {
+  font-size: 10.5px;
+  font-style: italic;
+  color: var(--text-muted, #999);
+}
+
+/* ── Missed list ── */
+.perf-missed-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.perf-missed {
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.perf-missed-tag {
+  display: inline-block;
+  margin-bottom: 5px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 10px;
+  font-weight: 600;
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.perf-missed-tag--sata,
+.perf-missed-tag--casestudy {
+  background: rgba(232, 141, 125, 0.14);
+  color: #a0522d;
+}
+
+.perf-missed-text {
+  margin: 0 0 5px;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--text-primary, #3d3d3d);
+}
+
+.perf-missed-topic { font-size: 10.5px; color: var(--text-muted, #999); }
+
+.perf-foot {
+  margin: 0;
+  font-size: 11px;
+  color: var(--text-muted, #999);
+}
+
+/* ══ Dark mode ══════════════════════════════════════════════════════════
+   Mirrors .dark-mode .insights-* in StudyMode.css so the panel reads as
+   part of the modal rather than a pasted-in card. */
+.dark-mode .perf-panel { color: #e0e0e0; }
+.dark-mode .perf-panel--loading,
+.dark-mode .perf-panel--empty { color: #999; }
+
+.dark-mode .perf-hero {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+
+.dark-mode .perf-hero--strong .perf-hero-correct { color: #6ee7a0; }
+.dark-mode .perf-hero--developing .perf-hero-correct { color: #ffd54f; }
+.dark-mode .perf-hero--weak .perf-hero-correct { color: #f4a896; }
+.dark-mode .perf-hero-slash,
+.dark-mode .perf-hero-total,
+.dark-mode .perf-hero-label { color: #666; }
+.dark-mode .perf-hero-accuracy { color: #fff; }
+.dark-mode .perf-hero-line { color: #aaa; }
+
+.dark-mode .perf-eyebrow,
+.dark-mode .perf-section-title,
+.dark-mode .perf-row-fraction,
+.dark-mode .perf-missed-topic,
+.dark-mode .perf-row-thin,
+.dark-mode .perf-focus-thin,
+.dark-mode .perf-foot { color: #666; }
+
+.dark-mode .perf-focus-name,
+.dark-mode .perf-row-label,
+.dark-mode .perf-missed-text,
+.dark-mode .perf-strengthen-q { color: #e0e0e0; }
+
+.dark-mode .perf-focus-count,
+.dark-mode .perf-focus-line,
+.dark-mode .perf-row-score { color: #aaa; }
+
+.dark-mode .perf-focus-coaching {
+  background: rgba(255, 255, 255, 0.03);
+  border-color: rgba(255, 255, 255, 0.07);
+  color: #aaa;
+}
+
+.dark-mode .perf-strengthen {
+  background: rgba(232, 141, 125, 0.09);
+  border-color: rgba(232, 141, 125, 0.22);
+}
+.dark-mode .perf-strengthen-title { color: #f4a896; }
+
+.dark-mode .perf-cta--primary {
+  background: rgba(232, 141, 125, 0.13);
+  border-color: rgba(232, 141, 125, 0.3);
+  color: #f4a896;
+}
+.dark-mode .perf-cta--primary:hover { background: rgba(232, 141, 125, 0.2); }
+
+.dark-mode .perf-cta--ghost {
+  border-color: rgba(232, 141, 125, 0.3);
+  color: #f4a896;
+}
+.dark-mode .perf-cta--ghost:hover { background: rgba(232, 141, 125, 0.12); }
+
+.dark-mode .perf-allclear { background: rgba(46, 213, 115, 0.12); color: #6ee7a0; }
+
+.dark-mode .perf-more-wrap { border-top-color: rgba(255, 255, 255, 0.07); }
+.dark-mode .perf-disclose { color: #666; }
+.dark-mode .perf-disclose:hover { color: #e0e0e0; }
+
+.dark-mode .perf-bar { background: rgba(255, 255, 255, 0.08); }
+.dark-mode .perf-row--weak .perf-bar-fill { background: #f4a896; }
+.dark-mode .perf-row--developing .perf-bar-fill { background: #ffd54f; }
+.dark-mode .perf-row--strong .perf-bar-fill { background: #6ee7a0; }
+
+.dark-mode .perf-row--weak .perf-focus-pct,
+.dark-mode .perf-focus-pct--warn { color: #f4a896; }
+.dark-mode .perf-row--developing .perf-focus-pct { color: #ffd54f; }
+.dark-mode .perf-row--strong .perf-focus-pct { color: #6ee7a0; }
+
+.dark-mode .perf-missed {
+  background: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.07);
+}
+.dark-mode .perf-missed-tag { background: rgba(255, 255, 255, 0.07); color: #aaa; }
+.dark-mode .perf-missed-tag--sata,
+.dark-mode .perf-missed-tag--casestudy {
+  background: rgba(232, 141, 125, 0.18);
+  color: #f4a896;
+}
+.dark-mode .perf-section-count { background: rgba(255, 255, 255, 0.07); color: #aaa; }
+
+@media (max-width: 640px) {
+  .perf-panel { gap: 16px; }
+  .perf-hero { padding: 18px 14px 16px; }
+  .perf-hero-correct { font-size: 38px; }
+  .perf-focus-name { font-size: 14px; }
+}

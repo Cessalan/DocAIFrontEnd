@@ -4,6 +4,11 @@ import { formatNodeType, getStepTopicLabel, estimateMinutes } from './planFormat
 import { getStudyNodeIcon } from './planNodeIcon';
 import WarmUrgencyDashboard from './WarmUrgencyDashboard';
 import TodaySessionCard from './TodaySessionCard';
+import BlockCompleteCard from './BlockCompleteCard';
+import { buildStudySchedule } from './studySchedule';
+// normalizeTopic lives with the projection because both sides must bucket
+// node labels the same way — two copies would silently drift apart.
+import { projectReadiness, normalizeTopic } from './readinessProjection';
 import './StudyMode.css';
 
 /* ──────────────────────────────────────────────────────────
@@ -149,18 +154,6 @@ const MIN_QUESTIONS_THRESHOLD = 10;
    (one wrong answer swings a 3-question topic by 33%).
    ────────────────────────────────────────────────────────── */
 const MIN_PER_TOPIC_QUESTIONS = 5;
-
-/* ──────────────────────────────────────────────────────────
-   Helper: normalize a topic name for fuzzy matching.
-   Strip diacritics, lowercase, collapse whitespace.
-   ────────────────────────────────────────────────────────── */
-const normalizeTopic = (s) =>
-  (s || '')
-    .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
-    .toLowerCase()
-    .replace(/\s+/g, ' ')
-    .trim();
 
 /* ──────────────────────────────────────────────────────────
    Helper: build per-topic { correct, total } stats by merging
@@ -408,6 +401,7 @@ const NARRATION_STAGES = [
 const StudyPlanOverview = ({
   studyState,
   examDate = null,
+  examName = null,
   onNodeSelect,
   onRetakeExam,
   onShowInsights,
@@ -415,15 +409,22 @@ const StudyPlanOverview = ({
   sidebarOpen = true,
   isGeneratingPhase2 = false,
   onStartPhase2,
+  onExtendBlock,
   isDev = false
 }) => {
   const { t, i18n } = useTranslation();
   const language = i18n?.language || 'en';
   const activeSectionRef = useRef(null);
 
-  const nodes = studyState?.path?.nodes || [];
-  const topics = studyState?.path?.topics || [];
-  const realNodes = nodes.filter(n => n.type !== 'section_banner');
+  // Memoised because `?? []` mints a fresh array on every render, which would
+  // otherwise invalidate every downstream useMemo — including the schedule,
+  // whose pinned `now` is only stable if its deps are.
+  const nodes = useMemo(() => studyState?.path?.nodes || [], [studyState?.path?.nodes]);
+  const topics = useMemo(() => studyState?.path?.topics || [], [studyState?.path?.topics]);
+  const realNodes = useMemo(
+    () => nodes.filter(n => n.type !== 'section_banner'),
+    [nodes]
+  );
   const completedCount = realNodes.filter(n => n.status === 'done').length;
   const totalNodes = realNodes.length;
 
@@ -470,9 +471,38 @@ const StudyPlanOverview = ({
     }
   }, [sections]);
 
+  // ── The dated plan ──
+  // Recomputed every render from node status + completedAt + examDate. See
+  // studySchedule.js for why nothing here is persisted: a stored calendar
+  // goes stale the first day a student misses, and then every screen is
+  // nagging them about a past they can't change.
+  //
+  // `now` is pinned to plan-state changes rather than read at call time, so an
+  // unrelated re-render can't shuffle the mission window mid-interaction. It
+  // refreshes when a node completes — exactly when the day's picture changed.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const now = useMemo(() => new Date(), [realNodes, examDate]);
+
+  const schedule = useMemo(
+    () => buildStudySchedule({
+      nodes: realNodes,
+      examDate,
+      startDate: studyState?.startedAt || null,
+      now,
+    }),
+    [realNodes, examDate, studyState?.startedAt, now]
+  );
+
   // ── Phase 2 detection ──
   const hasPhase2Nodes = nodes.some(n => n.phase === 2);
   const phase1AllDone = completedCount === totalNodes && totalNodes > 0 && !hasPhase2Nodes;
+
+  // ── Block completion ──
+  // The plan ships one finishable block at a time (see firstBlock.js); the rest
+  // of the planner's path waits in reserve. Finishing the block is the ending
+  // the old 15-node plan never gave anyone.
+  const reserveCount = studyState?.reserve?.remaining || 0;
+  const blockComplete = phase1AllDone;
 
   // ── Narration stage progression while Phase 2 generates ──
   const [narrationIdx, setNarrationIdx] = useState(0);
@@ -496,23 +526,22 @@ const StudyPlanOverview = ({
     [nodes, topics, insightsData]
   );
 
-  // ── Compute insights groups for the sidebar ──
-  const insightsGroups = useMemo(() => {
-    if (!insightsData?.topics) return null;
-    const groups = { weak: [], developing: [], strong: [] };
-    for (const [name, tp] of Object.entries(insightsData.topics)) {
-      const qAcc = tp.questionsTotal > 0 ? tp.questionsCorrect / tp.questionsTotal : null;
-      const fAcc = tp.flashcardsTotal > 0 ? tp.flashcardsMastered / tp.flashcardsTotal : null;
-      const scores = [qAcc, fAcc].filter(s => s !== null);
-      if (scores.length === 0) continue;
-      const avg = scores.reduce((a, b) => a + b, 0) / scores.length;
-      const level = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
-      // Same node-label leak as in buildScoredTopics — strip suffixes.
-      groups[level].push({ name: getStepTopicLabel(name), pct: Math.round(avg * 100), level });
-    }
-    const hasAny = Object.values(groups).some(g => g.length > 0);
-    return hasAny ? groups : null;
-  }, [insightsData]);
+  // ── Action → outcome ──
+  // Turns today's mission into the only number the student actually cares
+  // about: where this session leaves their readiness. Replaces the step-count
+  // footer, which described the system rather than the outcome.
+  const projection = useMemo(
+    () => projectReadiness({
+      scoredTopics,
+      missionNodes: schedule.missionNodes,
+      remainingNodes: realNodes.filter(n => n.status !== 'done'),
+      labelOf: (n) => getStepTopicLabel(n?.label || ''),
+    }),
+    [scoredTopics, schedule.missionNodes, realNodes]
+  );
+
+  // (The per-topic grouping that fed the ambient "Your Progress" sidebar lived
+  // here. It went with the panel — the insights modal computes its own.)
 
   // Global 1-based position of each real node, for the "Step N" chip that
   // replaced the padlocks.
@@ -882,17 +911,29 @@ const StudyPlanOverview = ({
         </svg>
       </div>
 
-      {/* ── Header ── */}
+      {/* ── Header ──
+          The exam is the top of the hierarchy (exam → readiness → today's
+          mission), so it takes the h1 when we know its name. The plan's topic
+          becomes the mission headline further down rather than the page title,
+          which is where a student looking for "what am I preparing for?"
+          used to land on a subject name instead of their exam. */}
       <div className="sov3-header">
         <div className="sov3-header__title-section">
           <h1 className="study-overview-title">
-            {topics.length > 0 ? topics[0] : t('study.yourStudyPlan', 'Your Study Plan')}
+            {examName
+              || (topics.length > 0 ? topics[0] : t('study.yourStudyPlan', 'Your Study Plan'))}
           </h1>
-          {topics.length > 1 && (
+          {examName && schedule.examAt ? (
+            <p className="study-overview-subtitle">
+              {schedule.examAt.toLocaleDateString(language, {
+                year: 'numeric', month: 'long', day: 'numeric',
+              })}
+            </p>
+          ) : topics.length > 1 ? (
             <p className="study-overview-subtitle">
               {topics.slice(1, 3).join(', ')}
             </p>
-          )}
+          ) : null}
         </div>
 
         {/* Segmented progress bar */}
@@ -919,8 +960,6 @@ const StudyPlanOverview = ({
       {!hasPhase2Nodes && (() => {
           const snap = buildReadinessSnapshot(scoredTopics);
           if (!snap.hasData) return null;
-
-          const isMidSession = !phase1AllDone;
 
           // The dashboard's only remaining action is starting the phase-2
           // practice round once the plan is finished. Mid-plan there is no CTA
@@ -993,7 +1032,10 @@ const StudyPlanOverview = ({
 
           return (
             <WarmUrgencyDashboard
-              examDate={examDate}
+              schedule={schedule}
+              examName={examName}
+              readinessPct={snap.overallPct}
+              questionsAnswered={snap.totalQuestions}
               nodesCompleted={completedCount}
               topicsCompleted={snap.strongCount}
               topicsTotal={snap.topicsTotal}
@@ -1007,10 +1049,21 @@ const StudyPlanOverview = ({
         })()}
 
 
-      {/* ── Today's session — the near, finishable goal ── */}
-      {totalNodes > 0 && (
+      {/* ── The ending. Shown in place of today's mission once the block is
+             done, because there is no mission left to show. ── */}
+      {blockComplete && (
+        <BlockCompleteCard
+          completedCount={completedCount}
+          reserveCount={reserveCount}
+          onExtend={onExtendBlock}
+        />
+      )}
+
+      {/* ── Today's mission — the near, finishable, DATED goal ── */}
+      {totalNodes > 0 && !blockComplete && (
         <TodaySessionCard
-          nodes={realNodes}
+          schedule={schedule}
+          projection={projection}
           onNodeSelect={onNodeSelect}
           planTuned={completedCount === 0}
           expanded={showFullPlan}
@@ -1041,72 +1094,30 @@ const StudyPlanOverview = ({
         </div>
       )}
 
-      {/* ── Ambient Insights Sidebar (desktop only) ── */}
-      {insightsGroups && (
-        <div
-          className="sov3-insights"
-          onClick={onShowInsights}
-          role="button"
-          title={t('study.viewInsights', 'View full insights')}
-        >
-          <div className="sov3-insights__header">
-            <svg viewBox="0 0 14 14" fill="currentColor" width="12" height="12">
-              <rect x="0" y="7" width="3.5" height="7" rx="1"/>
-              <rect x="5.25" y="3.5" width="3.5" height="10.5" rx="1"/>
-              <rect x="10.5" y="0" width="3.5" height="14" rx="1"/>
+      {/* The ambient "Your Progress" sidebar used to float here — a truncated
+          topic list with per-topic bars and a "View all" link. Removed: it
+          competed with the readiness ring and today's mission for attention
+          while answering neither "am I ready?" nor "what do I do now?", and
+          on the page that leads with one action, a second floating panel is
+          just clutter. The same data is one tap away via the insights modal.
+
+          That tap is this link. `onShowInsights` was passed in but never
+          rendered when the panel was removed, which left the modal reachable
+          only from the mascot INSIDE a node — so the overview, the page you
+          land on, had no route to your own results at all. A single quiet
+          line doesn't compete with the ring the way the panel did. */}
+      {onShowInsights && completedCount > 0 && (
+        <div className="sov3-insights-link-row">
+          <button
+            type="button"
+            className="sov3-insights-link"
+            onClick={onShowInsights}
+          >
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" width="15" height="15" aria-hidden="true">
+              <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" strokeLinecap="round" strokeLinejoin="round" />
             </svg>
-            <span className="sov3-insights__title">{t('study.yourProgress', 'Your Progress')}</span>
-          </div>
-
-          {/* Strength summary chips */}
-          <div className="sov3-insights__chips">
-            {insightsGroups.strong.length > 0 && (
-              <span className="sov3-insights__chip sov3-insights__chip--strong">
-                <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="8" height="8"><polyline points="1.5,5.5 3.5,7.5 8.5,2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                {insightsGroups.strong.length}
-              </span>
-            )}
-            {insightsGroups.developing.length > 0 && (
-              <span className="sov3-insights__chip sov3-insights__chip--developing">
-                <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.8" width="8" height="8"><circle cx="5" cy="5" r="3.5"/></svg>
-                {insightsGroups.developing.length}
-              </span>
-            )}
-            {insightsGroups.weak.length > 0 && (
-              <span className="sov3-insights__chip sov3-insights__chip--weak">
-                <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="2.2" width="8" height="8"><line x1="2" y1="2" x2="8" y2="8" strokeLinecap="round"/><line x1="8" y1="2" x2="2" y2="8" strokeLinecap="round"/></svg>
-                {insightsGroups.weak.length}
-              </span>
-            )}
-          </div>
-
-          {/* Topic bars — show up to 5 most relevant */}
-          <div className="sov3-insights__topics">
-            {[...insightsGroups.weak, ...insightsGroups.developing, ...insightsGroups.strong]
-              .slice(0, 5)
-              .map(topic => (
-                <div key={topic.name} className="sov3-insights__topic">
-                  <span className="sov3-insights__topic-name" title={topic.name}>{topic.name}</span>
-                  <div className="sov3-insights__topic-bar">
-                    <div
-                      className={`sov3-insights__topic-fill sov3-insights__topic-fill--${topic.level}`}
-                      style={{ width: `${Math.max(topic.pct, 6)}%` }}
-                    />
-                  </div>
-                  <span className={`sov3-insights__topic-pct sov3-insights__topic-pct--${topic.level}`}>
-                    {topic.pct}%
-                  </span>
-                </div>
-              ))}
-          </div>
-
-          {/* "View all" nudge */}
-          <div className="sov3-insights__footer">
-            <span>{t('study.viewAll', 'View all')}</span>
-            <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" width="9" height="9">
-              <path d="M2 8L8 2M8 2H4M8 2v4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          </div>
+            {t('study.viewInsightsLink', 'See how you\'re doing')}
+          </button>
         </div>
       )}
 

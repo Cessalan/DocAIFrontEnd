@@ -9,57 +9,62 @@ const resources = {
       // Upgrade / monetization modal
       upgrade: {
         title: "Study without limits",
-        titleNclex: "Pass your NCLEX without limits",
+        titleNclex: "Pass your NCLEX with room to spare",
         titleCourse: "Ace your course exam",
-        body: "Master every topic, find your weak spots faster, and walk into your exam ready — with unlimited practice.",
-        bodyBlocked: "You've used your {{limit}} questions for this 3-hour window. Keep your momentum going — practice as much as you need to be ready.",
-        bodyExam: "Your exam is {{when}} — don't let a question limit slow your final push. Practice unlimited.",
-        bodyBlockedExam: "You've used your {{limit}} questions for this 3-hour window — and your exam is {{when}}. Don't lose momentum: go unlimited.",
+        titleBlocked: "Don't stop now. 🔥",
+        titlePlanBlocked: "You've got more exams to prepare for.",
+        body: "Master every topic, find your weak spots faster, and walk into your exam ready.",
+        bodyBlocked: "You've reached your free practice limit. Upgrade to Pro and keep preparing for your exam.",
+        bodyExam: "Your exam is {{when}} — don't let a question limit slow your final push.",
+        bodyBlockedExam: "You've reached your free practice limit — and your exam is {{when}}. Upgrade to Pro and keep preparing.",
         examToday: "today",
         examTomorrow: "tomorrow",
         examInDays: "in {{days}} days",
-        nextBatch: "Or wait — next batch in",
-        nextPlanIn: "Or wait — next plan unlocks in",
-        nextBatchInline: "Next free questions in {{time}}",
-        nextPlanInline: "Next free plan in {{time}}",
-        bodyPlan: "Pro lets you run a study plan for every subject you're taking, not just a few.",
-        bodyPlanBlocked: "You've started your {{count}} study plans for this month. Pro lets you add a plan for every subject you're taking.",
-        bodyPlanBlockedExam: "You've started your {{count}} study plans for this month — and your exam is {{when}}. Go unlimited and add every subject you're carrying.",
-        bestValue: "Best value",
-        annual: "Annual",
-        monthly: "Monthly",
-        yr: "yr",
-        mo: "mo",
-        perMonthSave: "CA${{perMonth}}/mo · save {{savePct}}%",
-        billedMonthly: "Billed monthly",
-        wait: "I'll wait",
+        examIs: "Your exam is {{when}}",
+        nextBatchInline: "Continue free in {{time}} (next batch)",
+        nextPlanInline: "Continue free in {{time}} (next plan)",
+        bodyPlan: "Pro gives every course you're taking its own plan — not just the first few.",
+        bodyPlanBlocked: "You've already started {{count}} study plans this month. Give every course its own personalized plan with Pro.",
+        bodyPlanBlockedExam: "You've already started {{count}} study plans this month — and your exam is {{when}}. Give every course its own personalized plan with Pro.",
+        // Context + momentum
+        wereStudying: "You were practicing",
+        questionsDone: "questions completed",
+        momentumNudge: "Keep your momentum going!",
+        // The offer
+        proBadge: "PRO",
+        excelTitle: "Study to excel, not just to pass.",
+        out: {
+          practice: "Practice until it clicks",
+          practiceSub: "No limits, no waiting",
+          plans: "A plan for every exam",
+          plansSub: "Built around your exam date",
+          uploads: "Your notes become questions",
+          uploadsSub: "Study what's actually on your test",
+          faster: "Get exam-ready sooner",
+          fasterSub: "Practice what you're weakest at",
+          weakSpots: "Turn weak spots into strengths",
+          weakSpotsSub: "We track them so you don't have to",
+          nextStep: "Know what to study next",
+          nextStepSub: "Never waste a study session"
+        },
+        // Price + CTA
+        perMonth: "/ month",
+        cancelAnytime: "Cancel anytime. No commitments.",
+        billedYearly: "Billed {{symbol}}{{amount}} yearly. Cancel anytime.",
+        savePct: "Save {{pct}}%",
+        withAnnual: "with annual",
+        switchMonthly: "Switch to monthly",
+        ctaContinue: "Continue studying with Pro",
+        ctaPlans: "Unlock every plan with Pro",
+        or: "or",
         notNow: "Not now",
+        // Already-Pro branch
         proTitle: "You're on Pro",
         proBody: "Unlimited practice, uploads, and weak-spot reviews — you have it all. Manage your plan, update payment details, or cancel anytime.",
         manage: "Manage subscription",
         manageSub: "Change plan, update card, or cancel",
         portalOpening: "Opening…",
-        close: "Close",
-        cmp: {
-          free: "Free",
-          pro: "Pro",
-          practice: "Practice every topic",
-          plans: "Study plans",
-          plansPerMonth: "{{count}} / month",
-          perHour: "{{limit}} / 3 hrs",
-          unlimited: "Unlimited",
-          uploads: "Upload your notes",
-          onePerChat: "1 per chat",
-          weakSpots: "Find your weak spots",
-          hourlyCap: "3-hour limit",
-          anytime: "Anytime",
-          momentum: "Keep your momentum",
-          pausesAt: "Pauses at {{limit}}",
-          neverBreaks: "Never breaks",
-          readyFaster: "Get exam-ready faster",
-          slower: "Slowed by waits",
-          fullSpeed: "Full speed"
-        }
+        close: "Close"
       },
       usageBadge: {
         title: "Questions left — refills every 3 hours",
@@ -222,6 +227,7 @@ const resources = {
         copy: "Copy",
         copied: "Copied",
         streamError: "Something went wrong and no response was received.",
+        timeoutError: "That one didn't come back. Nothing was lost — tap retry.",
         retry: "Retry",
         copyMessageAria: "Copy message",
         copyTooltip: "Copy",
@@ -237,6 +243,26 @@ const resources = {
         discardRewrite: "Discard",
         discardRewriteAria: "Discard rewrite",
         rewriteFailed: "Rewrite failed. Please try again.",
+        ratingGroupAria: "Rate this answer",
+        ratingHelpful: "Helpful",
+        ratingHelpfulAria: "Mark this answer helpful",
+        ratingNotHelpful: "Not helpful",
+        ratingNotHelpfulAria: "Mark this answer not helpful",
+        ratingThanks: "Thanks — noted",
+        ratingReasonIncorrect: "Incorrect or incomplete",
+        ratingReasonNotAsked: "Not what I asked for",
+        ratingReasonConfusing: "Confusing explanation",
+        ratingReasonNotExamStyle: "Not exam-style",
+        ratingReasonTooLong: "Too long",
+        ratingReasonSlowBuggy: "Slow or buggy",
+        ratingReasonOther: "Other",
+        shareFeedbackTitle: "Share feedback",
+        shareFeedbackClose: "Close",
+        shareFeedbackReasonsAria: "What went wrong?",
+        shareFeedbackDetailsAria: "Details",
+        shareFeedbackPlaceholder: "Tell us what you needed instead (optional)",
+        shareFeedbackPrivacy: "This conversation will be sent with your feedback so we can improve the tutor.",
+        shareFeedbackSubmit: "Submit",
         edit: "Edit",
         editMessage: "Edit message",
         editCancel: "Cancel",
@@ -479,14 +505,26 @@ const resources = {
       },
 
       // Post-Upload Actions
+      // "Check my understanding" session card (stands in for the raw prompt)
+      checkme: {
+        title: "Checking your understanding",
+        stepOf: "Concept {{current}} of {{total}}",
+        allCovered: "All {{total}} covered"
+      },
+
       postUpload: {
         // Action button labels
+        checkmeLabel: "Check my understanding",
         quizLabel: "Quiz me",
         flashcardsLabel: "Create flashcards",
         studysheetLabel: "Study sheet",
         audioLabel: "Audio summary",
         mindmapLabel: "Concept map",
         // Action prompts sent to AI (quiz prompts now handled by mode selector)
+        // "in my own words" is load-bearing: it matches TEACH_PATTERNS in the
+        // backend orchestrator, which routes this to a direct written answer
+        // instead of a generated artifact. Don't drop that phrase.
+        checkmePrompt: "Ask me to explain {{topics}} in my own words, one concept at a time, and correct me whenever I get something wrong.",
         flashcardsPrompt: "Create flashcards for: {{topics}}",
         studysheetPrompt: "Create a study sheet summarizing the uploaded documents",
         mindmapPrompt: "Create a concept map for: {{topics}}",
@@ -568,7 +606,12 @@ const resources = {
         // Loading states
         analyzingDocument: "Analyzing document structure...",
         extractingConcepts: "Extracting concepts and relationships...",
-        errorGenerating: "Could not generate mindmap. Please try again."
+        errorGenerating: "Could not generate mindmap. Please try again.",
+        // Diagrams drawn from an ASCII sketch inside a chat answer
+        conceptMapBadge: "Concept map",
+        viewAsText: "View as text",
+        viewAsDiagram: "View as diagram",
+        buildingDiagram: "Drawing your concept map..."
       },
 
       // Quiz Navigation
@@ -878,6 +921,7 @@ const resources = {
         // Social proof badges
         badge1: "Made with nurses",
         badge2: "Used by 1,000+ nursing students",
+        badge2Countries: "Students in the United States, Canada, the Philippines, Australia and South Africa",
         // Footer
         footerText: "Built for nursing students. Med-Surg, Pharm, Patho — not just NCLEX.",
         // Product showcase section
@@ -1158,6 +1202,12 @@ const resources = {
         planFirstBadge: "Start here",
         planEstimate: "{{steps}} steps · about {{mins}} min total",
         planMore: "more steps",
+        planReserveNote: "+{{count}} more, unlocked when you finish these",
+        blockDoneTitle: "Block complete",
+        blockDoneBody: "You finished all {{count}} steps. That's the whole block done.",
+        blockExtend: "Add the next {{count}} steps",
+        blockExtending: "Adding your next steps...",
+        blockAllDone: "You've finished everything we planned from these documents.",
         letsGo: "Let's go",
         closeAria: "Close",
 
@@ -1258,6 +1308,40 @@ const resources = {
         afterThisSession_one: "{{count}} more step after this",
         afterThisSession_other: "{{count}} more steps after this",
         stepN: "Step {{n}}",
+        // Dated plan — today's mission
+        todayMission: "Today's mission",
+        finalPrep: "Final prep",
+        examDayReview: "Exam day · final review",
+        dayXofY: "Day {{day}} of {{total}}",
+        focusPrefix: "Focus:",
+        // Session arc — Learn → Practice → Review
+        arcLearn: "Learn",
+        arcPractice: "Practice",
+        arcReview: "Review",
+        startMission: "Start mission",
+        continueMission: "Continue mission",
+        seeWholePlan: "See the whole plan",
+        tunedFromAnswers: "Tuned from your onboarding answers",
+        // Why today is worth doing — by the student's standing on the topic
+        whyExamDay: "Reviewing what you're most likely to miss — nothing new today.",
+        whyFinal: "Consolidating what you already half-know is what pays off now.",
+        whyUntested: "You haven't been tested on this yet — today gives you a real score on it.",
+        whyWeak: "This is one of your weaker areas, so it's where today buys you the most.",
+        whyDeveloping: "You're close on this one. Today should tip it over.",
+        whyStrong: "A quick pass to keep this one sharp.",
+        // Action → outcome
+        completeToRaise: "Complete today's mission",
+        readinessJump: "{{from}}% → {{to}}%",
+        estimatedReadiness: "estimated readiness",
+        firstScore: "Today's practice gives you your first readiness score.",
+        groundworkToday: "Groundwork today — finishing your plan puts you near {{pct}}% estimated readiness.",
+        nowReady: "You're now at {{pct}}% estimated readiness.",
+        missionComplete: "Today's mission complete",
+        onTrackFor: "You're on track to be ready by {{date}}.",
+        everyDayCounts: "Every session closes the gap before {{date}}.",
+        comeBackTomorrow: "Nice work — pick it back up tomorrow.",
+        tomorrowFocus: "Tomorrow",
+        keepGoing: "Keep going anyway",
         upcoming: "Upcoming",
         correct: "Correct!",
         incorrect: "Incorrect",
@@ -1515,7 +1599,23 @@ const resources = {
         nudgeUrgent: "One focused session on {{topic}} could lock it in before tomorrow.",
         nudgeUrgentGeneric: "A short focused session today could lock things in before tomorrow.",
         nudgeModerate: "You've got time — a 20-min focus session today keeps your momentum going.",
-        nudgeCalm: "No rush — steady practice beats cramming every time.",
+        nudgeCalm: "You're in a good position. Consistent daily sessions are what turn into confidence on exam day.",
+
+        // Dated plan — countdown states
+        daysUntilExam_one: "{{count}} day until your exam",
+        daysUntilExam_other: "{{count}} days until your exam",
+        examTomorrow: "Your exam is tomorrow",
+        examToday: "Your exam is today",
+        nudgeExamDay: "Don't learn anything new today — a light review of what you've covered is enough.",
+        nudgeFinal: "Review beats cramming now. {{topic}} is the highest-impact thing left.",
+        nudgeFinalGeneric: "Review beats cramming now — focus on what you already half-know.",
+        nudgeFocus: "Exam week. Today's session targets {{topic}} — your biggest gap.",
+        nudgeFocusGeneric: "Exam week — today's session targets your biggest gaps first.",
+        nudgeRebalanced: "We've rebalanced the rest of your plan around the days you have left.",
+        nudgePast: "That exam date has passed — finish the plan whenever suits you, or start a new one.",
+        readinessLabel: "Readiness",
+        readinessEstimated: "estimated",
+        readinessTooltip: "Estimated from {{count}} practice questions across your topics. Topics you have not been tested on yet count as zero.",
         ctaUrgentTitle: "Quick review: 10 key questions",
         ctaUrgentSub: "~15 min · focused on {{topic}}",
         ctaUrgentSubGeneric: "~15 min · keep it sharp",
@@ -1591,6 +1691,8 @@ const resources = {
         moveOn: "Move on to {{topic}}",
         continue: "Continue",
         building: "Building your practice...",
+        loadingNext: "Loading your next step…",
+        sessionDone: "You finished {{topic}}.",
 
         // Remediation labels
         remediationLesson: "Review: {{topic}}",
@@ -1659,7 +1761,82 @@ const resources = {
         remindMe: "Remind me tomorrow",
         remindOn: "I'll remind you tomorrow",
         remindBlocked: "Reminders are blocked in your browser settings",
-        farewellClose: "Close"
+        farewellClose: "Close",
+
+        // ── Post-node readout (see nodeReadout.js) ──
+        // Headline: what happened, in the tutor's voice. One per state, never
+        // one for all of them — a header that never changes is a header nobody
+        // reads.
+        hConfirmed: "You just proved it.",
+        hPattern: "I found something interesting.",
+        hImproving: "You're getting better at {{topic}}.",
+        hMastered: "That's locked in.",
+        hSolid: "You're getting the hang of this.",
+        hGaps: "This one exposed a gap worth fixing.",
+        hTough: "Now I know what to work on with you.",
+
+        // Score caption — what the number means, not the number again
+        capImproving: "Up from {{pct}}% on this topic before today.",
+        capPattern: "Your misses here aren't random.",
+        capMastered: "Nothing left to firm up here.",
+        capMasteredFc: "Every card, first time.",
+        capSolidOne: "One thing to firm up.",
+        capSolid: "{{count}} to firm up.",
+        capGaps_one: "{{count}} concept to revisit.",
+        capGaps_other: "{{count}} concepts to revisit.",
+        capTough: "Worth another pass before you move on.",
+
+        // "Not enough evidence yet" — says what's being looked for and what
+        // would settle it, instead of apologising for having nothing
+        learningLead: "I'm learning how you think",
+        learningBody: "I've been through all {{count}} of your answers. I'm watching how you approach a question, not just whether you got it right.",
+        learningPromise: "A few more questions and I should have something specific for you.",
+        learningPromiseN_one: "{{count}} more of these and I should have something specific for you.",
+        learningPromiseN_other: "{{count}} more of these and I should have something specific for you.",
+
+        // The recommendation
+        whatIdDo: "Here's what I'd do next",
+        skillPriority: "prioritization",
+        skillMulti: "select-all-that-apply",
+        skillGeneric: "these",
+        recTestTitle: "One question, built around {{skill}}",
+        recTestWhy: "If I'm right, you'll get it by changing how you read it — not by knowing more.",
+        recFixTitle: "{{count}} {{skill}} questions",
+        recFixWhy: "Aimed at the exact pattern I just described — not at the topic.",
+        recMissedTitle: "{{count}} questions on what you missed",
+        recMissedWhy: "Same concepts, asked a different way.",
+        recWalkTitle: "One worked example first",
+        recWalkWhy: "Let's slow this one down. I'll walk you through it before testing you again.",
+        recHarderTitle: "A harder version of {{topic}}",
+        recHarderWhy: "Same concepts inside a full patient scenario — that's where they actually get tested.",
+        recMoreTitle: "More on {{topic}}",
+        recMoreWhy: "You've finished the plan for this one — let's keep it warm.",
+        recNextWhy: "You're solid here — this is what it builds into.",
+        recNextWhyConfirmed: "Carry that same approach into the next one.",
+        recNextFallback: "The next step in your plan",
+
+        // CTAs — each says what the button will actually do
+        ctaTest: "Test my theory →",
+        ctaFix: "Fix this →",
+        ctaWalk: "Show me how →",
+        ctaHarder: "Challenge me →",
+        ctaKeep: "Keep building →",
+        metaOneQuestion: "1 question · ~2 min",
+        metaDrill: "{{count}} questions · ~5 min",
+        metaLesson: "Lesson · ~5 min",
+        metaChallenge: "2 scenarios · ~6 min",
+        drillLabel: "Targeted practice: {{skill}}",
+        challengeLabel: "Harder: {{topic}}",
+
+        // Secondary review row — retention, offered without competing
+        beforeYouMoveOn: "Before you move on",
+        recapDetailShort: "4 min · lock in what you just learned",
+        review: "Review →",
+        recapLabel: "Recap: {{topic}}",
+        recapReason: "Lock in what you just learned",
+
+        // Coach link
+        askFor: "Ask for something else"
       },
 
       // Exam — mini-test at end of each section
@@ -1711,57 +1888,63 @@ const resources = {
       // Upgrade / monetization modal
       upgrade: {
         title: "Étudie sans limites",
-        titleNclex: "Réussis ton NCLEX sans limites",
+        titleNclex: "Réussis ton NCLEX avec de la marge",
         titleCourse: "Cartonne à ton examen",
-        body: "Maîtrise chaque sujet, repère tes points faibles plus vite et arrive prêt(e) à ton examen — avec une pratique illimitée.",
-        bodyBlocked: "Tu as utilisé tes {{limit}} questions pour cette période de 3 heures. Garde ton élan — pratique autant que nécessaire pour être prêt(e).",
-        bodyExam: "Ton examen est {{when}} — ne laisse pas une limite de questions freiner ta dernière ligne droite. Pratique sans limite.",
-        bodyBlockedExam: "Tu as utilisé tes {{limit}} questions pour cette période de 3 heures — et ton examen est {{when}}. Ne perds pas ton élan : passe en illimité.",
+        titleBlocked: "N'arrête pas maintenant. 🔥",
+        titlePlanBlocked: "Tu as d'autres examens à préparer.",
+        body: "Maîtrise chaque sujet, repère tes points faibles plus vite et arrive prêt(e) à ton examen.",
+        bodyBlocked: "Tu as atteint ta limite de pratique gratuite. Passe en Pro et continue à préparer ton examen.",
+        bodyExam: "Ton examen est {{when}} — ne laisse pas une limite de questions freiner ta dernière ligne droite.",
+        bodyBlockedExam: "Tu as atteint ta limite de pratique gratuite — et ton examen est {{when}}. Passe en Pro et continue ta préparation.",
         examToday: "aujourd'hui",
         examTomorrow: "demain",
         examInDays: "dans {{days}} jours",
-        nextBatch: "Ou attends — prochaine série dans",
-        nextPlanIn: "Ou attends — prochain plan débloqué dans",
-        nextBatchInline: "Prochaines questions gratuites dans {{time}}",
-        nextPlanInline: "Prochain plan gratuit dans {{time}}",
-        bodyPlan: "Pro te permet d'avoir un plan d'étude pour chaque matière que tu suis, pas seulement quelques-unes.",
-        bodyPlanBlocked: "Tu as créé tes {{count}} plans d'étude pour ce mois-ci. Pro te permet d'ajouter un plan pour chaque matière que tu suis.",
-        bodyPlanBlockedExam: "Tu as créé tes {{count}} plans d'étude pour ce mois-ci — et ton examen est {{when}}. Passe en illimité et ajoute toutes tes matières.",
-        bestValue: "Meilleure offre",
-        annual: "Annuel",
-        monthly: "Mensuel",
-        yr: "an",
-        mo: "mois",
-        perMonthSave: "{{perMonth}} $ CA/mois · économise {{savePct}} %",
-        billedMonthly: "Facturé mensuellement",
-        wait: "J'attends",
+        examIs: "Ton examen est {{when}}",
+        nextBatchInline: "Continuer gratuitement dans {{time}} (prochaine série)",
+        nextPlanInline: "Continuer gratuitement dans {{time}} (prochain plan)",
+        bodyPlan: "Pro donne à chaque cours que tu suis son propre plan — pas seulement aux premiers.",
+        bodyPlanBlocked: "Tu as déjà créé {{count}} plans d'étude ce mois-ci. Donne à chaque cours son propre plan personnalisé avec Pro.",
+        bodyPlanBlockedExam: "Tu as déjà créé {{count}} plans d'étude ce mois-ci — et ton examen est {{when}}. Donne à chaque cours son propre plan personnalisé avec Pro.",
+        // Contexte + élan
+        wereStudying: "Tu pratiquais",
+        questionsDone: "questions complétées",
+        momentumNudge: "Garde ton élan !",
+        // L'offre
+        proBadge: "PRO",
+        excelTitle: "Étudie pour exceller, pas juste pour passer.",
+        out: {
+          practice: "Pratique jusqu'à ce que ça clique",
+          practiceSub: "Aucune limite, aucune attente",
+          plans: "Un plan pour chaque examen",
+          plansSub: "Bâti autour de la date de ton examen",
+          uploads: "Tes notes deviennent des questions",
+          uploadsSub: "Étudie ce qui est vraiment à ton examen",
+          faster: "Sois prêt(e) à l'examen plus tôt",
+          fasterSub: "Pratique ce que tu maîtrises le moins",
+          weakSpots: "Transforme tes faiblesses en forces",
+          weakSpotsSub: "On les suit pour toi",
+          nextStep: "Sache quoi étudier ensuite",
+          nextStepSub: "Ne perds plus une seule séance"
+        },
+        // Prix + CTA
+        perMonth: "/ mois",
+        cancelAnytime: "Annule à tout moment. Sans engagement.",
+        // Le symbole est écrit en toutes lettres ici : "CA$45" se dit "45 $ CA".
+        billedYearly: "Facturé {{amount}} $ CA par année. Annule à tout moment.",
+        savePct: "Économise {{pct}} %",
+        withAnnual: "avec l'annuel",
+        switchMonthly: "Passer au mensuel",
+        ctaContinue: "Continuer d'étudier avec Pro",
+        ctaPlans: "Débloquer tous les plans avec Pro",
+        or: "ou",
         notNow: "Plus tard",
+        // Déjà Pro
         proTitle: "Tu es en Pro",
         proBody: "Pratique, téléversements et révisions illimités — tu as tout. Gère ton forfait, mets à jour ton paiement ou annule à tout moment.",
         manage: "Gérer l'abonnement",
         manageSub: "Changer de forfait, mettre à jour la carte ou annuler",
         portalOpening: "Ouverture…",
-        close: "Fermer",
-        cmp: {
-          free: "Gratuit",
-          pro: "Pro",
-          practice: "Pratique chaque sujet",
-          plans: "Plans d'étude",
-          plansPerMonth: "{{count}} / mois",
-          perHour: "{{limit}} / 3 h",
-          unlimited: "Illimité",
-          uploads: "Téléverse tes notes",
-          onePerChat: "1 par chat",
-          weakSpots: "Repère tes points faibles",
-          hourlyCap: "Limite par 3 h",
-          anytime: "À tout moment",
-          momentum: "Garde ton élan",
-          pausesAt: "Pause à {{limit}}",
-          neverBreaks: "Jamais interrompu",
-          readyFaster: "Sois prêt(e) plus vite",
-          slower: "Ralenti par les attentes",
-          fullSpeed: "Plein régime"
-        }
+        close: "Fermer"
       },
       usageBadge: {
         title: "Questions restantes — recharge toutes les 3 heures",
@@ -1924,6 +2107,7 @@ const resources = {
         copy: "Copier",
         copied: "Copié",
         streamError: "Une erreur est survenue et aucune réponse n'a été reçue.",
+        timeoutError: "Cette réponse n'est jamais arrivée. Rien n'est perdu — réessaie.",
         retry: "Réessayer",
         copyMessageAria: "Copier le message",
         copyTooltip: "Copier",
@@ -1939,6 +2123,26 @@ const resources = {
         discardRewrite: "Annuler",
         discardRewriteAria: "Annuler la reformulation",
         rewriteFailed: "La reformulation a échoué. Veuillez réessayer.",
+        ratingGroupAria: "Évaluer cette réponse",
+        ratingHelpful: "Utile",
+        ratingHelpfulAria: "Marquer cette réponse comme utile",
+        ratingNotHelpful: "Pas utile",
+        ratingNotHelpfulAria: "Marquer cette réponse comme pas utile",
+        ratingThanks: "Merci — c'est noté",
+        ratingReasonIncorrect: "Incorrect ou incomplet",
+        ratingReasonNotAsked: "Ce n'est pas ce que j'ai demandé",
+        ratingReasonConfusing: "Explication confuse",
+        ratingReasonNotExamStyle: "Pas le style de l'examen",
+        ratingReasonTooLong: "Trop long",
+        ratingReasonSlowBuggy: "Lent ou bogué",
+        ratingReasonOther: "Autre",
+        shareFeedbackTitle: "Partager un commentaire",
+        shareFeedbackClose: "Fermer",
+        shareFeedbackReasonsAria: "Qu'est-ce qui n'allait pas ?",
+        shareFeedbackDetailsAria: "Détails",
+        shareFeedbackPlaceholder: "Dis-nous ce dont tu avais besoin à la place (facultatif)",
+        shareFeedbackPrivacy: "Cette conversation sera envoyée avec ton commentaire afin d'améliorer le tuteur.",
+        shareFeedbackSubmit: "Envoyer",
         edit: "Modifier",
         editMessage: "Modifier le message",
         editCancel: "Annuler",
@@ -2181,14 +2385,25 @@ const resources = {
       },
 
       // Post-Upload Actions
+      // Carte de session « Vérifie ma compréhension »
+      checkme: {
+        title: "Vérification de ta compréhension",
+        stepOf: "Concept {{current}} sur {{total}}",
+        allCovered: "Les {{total}} concepts sont couverts"
+      },
+
       postUpload: {
         // Action button labels
+        checkmeLabel: "Vérifie ma compréhension",
         quizLabel: "Quiz",
         flashcardsLabel: "Créer des cartes mémoire",
         studysheetLabel: "Feuille d'étude",
         audioLabel: "Résumé audio",
         mindmapLabel: "Schéma conceptuel",
         // Action prompts sent to AI (quiz prompts now handled by mode selector)
+        // « dans mes propres mots » est essentiel : cette phrase correspond à
+        // TEACH_PATTERNS côté backend et force une réponse rédigée directe.
+        checkmePrompt: "Demande-moi d'expliquer {{topics}} dans mes propres mots, un concept à la fois, et corrige-moi dès que je me trompe.",
         flashcardsPrompt: "Crée des cartes mémoire pour : {{topics}}",
         studysheetPrompt: "Crée une feuille d'étude résumant les documents téléversés",
         mindmapPrompt: "Crée un schéma conceptuel pour : {{topics}}",
@@ -2268,7 +2483,12 @@ const resources = {
         // Loading states
         analyzingDocument: "Analyse de la structure du document...",
         extractingConcepts: "Extraction des concepts et relations...",
-        errorGenerating: "Impossible de générer la carte mentale. Veuillez réessayer."
+        errorGenerating: "Impossible de générer la carte mentale. Veuillez réessayer.",
+        // Schémas dessinés à partir d'un croquis ASCII dans une réponse
+        conceptMapBadge: "Schéma conceptuel",
+        viewAsText: "Voir en texte",
+        viewAsDiagram: "Voir le schéma",
+        buildingDiagram: "Création de votre schéma conceptuel..."
       },
 
       // Quiz Navigation
@@ -2576,6 +2796,7 @@ const resources = {
         // Social proof badges
         badge1: "Créé avec des infirmières",
         badge2: "Utilisé par 1 000+ étudiants en soins infirmiers",
+        badge2Countries: "Étudiants aux États-Unis, au Canada, aux Philippines, en Australie et en Afrique du Sud",
         // Footer
         footerText: "Conçu pour les étudiants en soins infirmiers. Med-Surg, pharmaco, patho — pas seulement le NCLEX.",
         // Product showcase section
@@ -2858,6 +3079,12 @@ const resources = {
         planFirstBadge: "Commence ici",
         planEstimate: "{{steps}} étapes · environ {{mins}} min au total",
         planMore: "étapes de plus",
+        planReserveNote: "+{{count}} autres, débloquées quand tu auras terminé celles-ci",
+        blockDoneTitle: "Bloc terminé",
+        blockDoneBody: "Tu as terminé les {{count}} étapes. Le bloc est complet.",
+        blockExtend: "Ajouter les {{count}} prochaines étapes",
+        blockExtending: "Ajout de tes prochaines étapes...",
+        blockAllDone: "Tu as terminé tout ce qu'on avait prévu à partir de ces documents.",
         letsGo: "C'est parti",
         closeAria: "Fermer",
 
@@ -2958,6 +3185,40 @@ const resources = {
         afterThisSession_one: "{{count}} étape de plus après celle-ci",
         afterThisSession_other: "{{count}} étapes de plus après celle-ci",
         stepN: "Étape {{n}}",
+        // Plan daté — mission du jour
+        todayMission: "Mission du jour",
+        finalPrep: "Dernière ligne droite",
+        examDayReview: "Jour J · révision finale",
+        dayXofY: "Jour {{day}} sur {{total}}",
+        focusPrefix: "Au programme :",
+        // Arc de la séance — Apprendre → S'exercer → Réviser
+        arcLearn: "Apprendre",
+        arcPractice: "S'exercer",
+        arcReview: "Réviser",
+        startMission: "Démarrer la mission",
+        continueMission: "Continuer la mission",
+        seeWholePlan: "Voir tout le plan",
+        tunedFromAnswers: "Ajusté selon tes réponses de départ",
+        // Pourquoi ça vaut le coup aujourd'hui
+        whyExamDay: "On revoit ce que tu risques le plus d'oublier — rien de nouveau aujourd'hui.",
+        whyFinal: "Consolider ce que tu sais déjà à moitié, c'est ça qui paie maintenant.",
+        whyUntested: "Tu n'as pas encore été testé·e là-dessus — aujourd'hui te donne un vrai score.",
+        whyWeak: "C'est un de tes points faibles, donc c'est là que la séance rapporte le plus.",
+        whyDeveloping: "Tu y es presque. Aujourd'hui devrait faire basculer les choses.",
+        whyStrong: "Un passage rapide pour garder ça au frais.",
+        // Action → résultat
+        completeToRaise: "Termine la mission du jour",
+        readinessJump: "{{from}} % → {{to}} %",
+        estimatedReadiness: "de préparation estimée",
+        firstScore: "L'entraînement du jour te donne ton premier score de préparation.",
+        groundworkToday: "Séance de fond aujourd'hui — terminer ton plan t'amène autour de {{pct}} % de préparation estimée.",
+        nowReady: "Tu es maintenant à {{pct}} % de préparation estimée.",
+        missionComplete: "Mission du jour accomplie",
+        onTrackFor: "Tu es en bonne voie pour être prêt·e le {{date}}.",
+        everyDayCounts: "Chaque séance réduit l'écart avant le {{date}}.",
+        comeBackTomorrow: "Beau travail — on reprend demain.",
+        tomorrowFocus: "Demain",
+        keepGoing: "Continuer quand même",
         upcoming: "À venir",
         correct: "Correct!",
         incorrect: "Incorrect",
@@ -3215,7 +3476,23 @@ const resources = {
         nudgeUrgent: "Une session ciblée sur {{topic}} pourrait suffire avant demain.",
         nudgeUrgentGeneric: "Une courte session ciblée aujourd'hui pourrait tout solidifier avant demain.",
         nudgeModerate: "Tu as le temps — une session de 20 minutes aujourd'hui garde ton élan.",
-        nudgeCalm: "Pas de pression — la pratique régulière vaut mieux que le bachotage.",
+        nudgeCalm: "Tu es bien placé·e. C'est la régularité qui se transforme en confiance le jour J.",
+
+        // Plan daté — états du compte à rebours
+        daysUntilExam_one: "Plus que {{count}} jour avant ton examen",
+        daysUntilExam_other: "Plus que {{count}} jours avant ton examen",
+        examTomorrow: "Ton examen est demain",
+        examToday: "Ton examen est aujourd'hui",
+        nudgeExamDay: "N'apprends rien de nouveau aujourd'hui — une révision légère de ce que tu as vu suffit.",
+        nudgeFinal: "Mieux vaut réviser que bachoter. {{topic}} est ce qui rapportera le plus.",
+        nudgeFinalGeneric: "Mieux vaut réviser que bachoter — concentre-toi sur ce que tu sais déjà à moitié.",
+        nudgeFocus: "Semaine d'examen. La session d'aujourd'hui cible {{topic}} — ta plus grande lacune.",
+        nudgeFocusGeneric: "Semaine d'examen — la session d'aujourd'hui cible d'abord tes plus grandes lacunes.",
+        nudgeRebalanced: "On a réparti le reste de ton plan sur les jours qu'il te reste.",
+        nudgePast: "Cette date d'examen est passée — termine le plan quand tu veux, ou lances-en un nouveau.",
+        readinessLabel: "Préparation",
+        readinessEstimated: "estimée",
+        readinessTooltip: "Estimé à partir de {{count}} questions d'entraînement sur tes sujets. Les sujets pas encore testés comptent pour zéro.",
         ctaUrgentTitle: "Révision rapide : 10 questions clés",
         ctaUrgentSub: "~15 min · ciblé sur {{topic}}",
         ctaUrgentSubGeneric: "~15 min · pour rester affûté·e",
@@ -3291,6 +3568,8 @@ const resources = {
         moveOn: "Passer à {{topic}}",
         continue: "Continuer",
         building: "Préparation de ta pratique...",
+        loadingNext: "Chargement de ta prochaine étape…",
+        sessionDone: "Tu as terminé {{topic}}.",
 
         // Labels de remédiation
         remediationLesson: "Révision : {{topic}}",
@@ -3359,7 +3638,78 @@ const resources = {
         remindMe: "Rappelle-le-moi demain",
         remindOn: "Je te le rappellerai demain",
         remindBlocked: "Les notifications sont bloquées dans les réglages de ton navigateur",
-        farewellClose: "Fermer"
+        farewellClose: "Fermer",
+
+        // ── Bilan de fin de nœud (voir nodeReadout.js) ──
+        hConfirmed: "Tu viens de le prouver.",
+        hPattern: "J'ai remarqué quelque chose d'intéressant.",
+        hImproving: "Tu progresses sur {{topic}}.",
+        hMastered: "C'est acquis.",
+        hSolid: "Tu commences à maîtriser ça.",
+        hGaps: "Celui-ci a révélé une lacune à corriger.",
+        hTough: "Maintenant je sais quoi travailler avec toi.",
+
+        // Légende du score — ce que le chiffre veut dire
+        capImproving: "Tu étais à {{pct}} % sur ce sujet avant aujourd'hui.",
+        capPattern: "Tes erreurs ici ne sont pas au hasard.",
+        capMastered: "Plus rien à consolider ici.",
+        capMasteredFc: "Toutes les cartes, du premier coup.",
+        capSolidOne: "Une chose à consolider.",
+        capSolid: "{{count}} à consolider.",
+        capGaps_one: "{{count}} concept à revoir.",
+        capGaps_other: "{{count}} concepts à revoir.",
+        capTough: "Ça mérite un second passage avant de continuer.",
+
+        // Pas encore assez d'indices
+        learningLead: "J'apprends comment tu raisonnes",
+        learningBody: "J'ai repris tes {{count}} réponses. Je regarde comment tu abordes une question, pas seulement si tu as juste.",
+        learningPromise: "Encore quelques questions et j'aurai quelque chose de précis pour toi.",
+        learningPromiseN_one: "Encore {{count}} de ce type et j'aurai quelque chose de précis pour toi.",
+        learningPromiseN_other: "Encore {{count}} de ce type et j'aurai quelque chose de précis pour toi.",
+
+        // La recommandation
+        whatIdDo: "Voici ce que je ferais maintenant",
+        skillPriority: "priorisation",
+        skillMulti: "réponses multiples",
+        skillGeneric: "ces",
+        recTestTitle: "Une question, construite autour de la {{skill}}",
+        recTestWhy: "Si j'ai raison, tu vas la réussir en changeant ta façon de la lire — pas en apprenant plus.",
+        recFixTitle: "{{count}} questions de {{skill}}",
+        recFixWhy: "Ciblées sur le schéma que je viens de décrire — pas sur le sujet.",
+        recMissedTitle: "{{count}} questions sur ce que tu as manqué",
+        recMissedWhy: "Les mêmes concepts, posés autrement.",
+        recWalkTitle: "D'abord un exemple guidé",
+        recWalkWhy: "On ralentit sur celui-là. Je te l'explique pas à pas avant de te retester.",
+        recHarderTitle: "Une version plus difficile de {{topic}}",
+        recHarderWhy: "Les mêmes concepts dans un vrai scénario clinique — c'est là qu'ils sont testés.",
+        recMoreTitle: "Encore sur {{topic}}",
+        recMoreWhy: "Tu as terminé le plan là-dessus — gardons ça au chaud.",
+        recNextWhy: "Tu es solide ici — voilà la suite logique.",
+        recNextWhyConfirmed: "Garde la même approche pour la suite.",
+        recNextFallback: "La prochaine étape de ton plan",
+
+        // Boutons — chacun dit ce qu'il va faire
+        ctaTest: "Teste ta théorie →",
+        ctaFix: "Corriger ça →",
+        ctaWalk: "Montre-moi →",
+        ctaHarder: "Corse-moi ça →",
+        ctaKeep: "On continue →",
+        metaOneQuestion: "1 question · ~2 min",
+        metaDrill: "{{count}} questions · ~5 min",
+        metaLesson: "Leçon · ~5 min",
+        metaChallenge: "2 scénarios · ~6 min",
+        drillLabel: "Pratique ciblée : {{skill}}",
+        challengeLabel: "Plus difficile : {{topic}}",
+
+        // Révision secondaire
+        beforeYouMoveOn: "Avant de passer à la suite",
+        recapDetailShort: "4 min · ancrer ce que tu viens d'apprendre",
+        review: "Réviser →",
+        recapLabel: "Récap : {{topic}}",
+        recapReason: "Ancrer ce que tu viens d'apprendre",
+
+        // Lien coach
+        askFor: "Demander autre chose"
       },
 
       // Examen — mini-test à la fin de chaque section

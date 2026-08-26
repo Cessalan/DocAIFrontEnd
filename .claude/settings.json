@@ -51,7 +51,17 @@
       "Bash(export NODE_PATH=\"c:/Users/Billion/Desktop/ragfrontend/node_modules\")",
       "Bash(export CHROME_PATH=\"C:/Program Files \\(x86\\)/Google/Chrome/Application/chrome.exe\")",
       "Bash(awk ' *)",
-      "Bash(node \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/611276a5-b00a-4ed4-8f4b-248385c90a10/scratchpad/scan-blur.js\" src/Components/ChatInerface/ChatInterface.css)"
+      "Bash(node \"C:/Users/Billion/AppData/Local/Temp/claude/c--Users-Billion-Desktop-ragfrontend/611276a5-b00a-4ed4-8f4b-248385c90a10/scratchpad/scan-blur.js\" src/Components/ChatInerface/ChatInterface.css)",
+      "Bash(./venv/Scripts/python.exe -c \"import firebase_admin, google.cloud.firestore; print\\('firebase_admin OK'\\)\")",
+      "Bash(/c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe probe.py)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 /c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe probe.py)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 /c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe lookalike.py)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 /c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe part2.py)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 /c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe part3.py)",
+      "Bash(./venv/Scripts/python.exe -c \"import pytest; print\\('pytest', pytest.__version__\\)\")",
+      "Bash(PYTHONUTF8=1 ./venv/Scripts/python.exe tests/test_answer_discipline.py)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 /c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe corpus_check.py)",
+      "Bash(PYTHONUTF8=1 PYTHONIOENCODING=utf-8 /c/Users/Billion/Desktop/NQBackEnd/NQBackEnd2/venv/Scripts/python.exe ab_test.py)"
     ]
   }
 }

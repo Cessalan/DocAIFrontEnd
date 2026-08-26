@@ -358,7 +358,13 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
     clearTimeout(overallTimer);
   }
 };
-export const generate_title = async(message, language = 'en') => {
+// A title is cosmetic, so this call gets a hard ceiling. Without one, a slow
+// backend (Cloud Run cold start on top of an LLM call) left the caller awaiting
+// forever — which is how a dead title service used to take the whole first
+// message of a new conversation down with it.
+const TITLE_TIMEOUT_MS = 10000;
+
+export const generate_title = async(message, language = 'en', timeoutMs = TITLE_TIMEOUT_MS) => {
   // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
   const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
 
@@ -366,11 +372,16 @@ export const generate_title = async(message, language = 'en') => {
     message: message || "",
     language: normalizedLang
   });
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+
   try {
     const response = await fetch(`${FAST_API_BASE}/chat/generate-title`, {
       method: "POST",
       headers: header,
-      body: requestBody
+      body: requestBody,
+      signal: controller.signal
     });
 
     if (!response.ok) {
@@ -384,6 +395,8 @@ export const generate_title = async(message, language = 'en') => {
   } catch(error) {
     console.error("Error during title generation:", error);
     throw error;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -1349,6 +1362,64 @@ export const interpret_study_request = async (chat_id, user_text, current_topic,
 };
 
 /**
+ * Post-node debrief — what went right, what went wrong, what to work on.
+ *
+ * Called right after a scored node, from the transition screen. The items
+ * carry each question's TYPE so the debrief can name a format pattern
+ * ("the ones you missed were all select-all-that-apply"), which is the
+ * finding that changes how a student studies rather than just what.
+ *
+ * NEVER throws. The transition screen is a hard dependency of the study
+ * flow and must render whether or not this returns, so a failure resolves
+ * to null and the caller simply omits the section.
+ *
+ * @param {string} chat_id
+ * @param {Object} payload
+ * @param {string} payload.topic
+ * @param {string} payload.node_type       - quiz | exam | flashcard
+ * @param {number} payload.score_percent
+ * @param {Array}  payload.items           - [{ question, correct, question_type, rationale }]
+ * @param {number|null} payload.days_until_exam
+ * @param {Array}  payload.plan_formats     - [{ type, correct, total }] plan-wide
+ * @param {string} language
+ * @returns {Promise<{wentRight, wentWrong, workOn, generated}|null>}
+ */
+export const get_node_debrief = async (chat_id, payload, language = 'en') => {
+  try {
+    devLog("🧭 Requesting node debrief:", payload.topic);
+
+    const response = await fetch(`${FAST_API_BASE}/study/node-debrief`, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify({
+        chat_id,
+        topic: payload.topic || '',
+        node_type: payload.node_type || 'quiz',
+        score_percent: payload.score_percent || 0,
+        items: payload.items || [],
+        days_until_exam: payload.days_until_exam ?? null,
+        plan_formats: payload.plan_formats || [],
+        language
+      })
+    });
+
+    if (!response.ok) {
+      devLog("⚠️ Node debrief failed:", response.status);
+      return null;
+    }
+
+    const result = await response.json();
+    devLog("✅ Node debrief:", result);
+    return result;
+
+  } catch (error) {
+    // Swallowed on purpose — see the note above about never throwing.
+    console.error("❌ Error fetching node debrief:", error);
+    return null;
+  }
+};
+
+/**
  * Generate a single study item (lesson, flashcard, quiz, or audio config)
  *
  * @param {string} chat_id - Study session chat ID
@@ -1481,7 +1552,11 @@ export const generate_study_item_stream = async (
     context_tags: context_tags,
     asked_hashes: asked_hashes,
     language: language,
-    is_diagnostic: !!options.isDiagnostic
+    is_diagnostic: !!options.isDiagnostic,
+    // Node-specified length. The backend falls back to STUDY_QUIZ_QUESTIONS
+    // when this is null, so only nodes that genuinely need a different size
+    // (the single-question pattern experiment) set it.
+    num_questions: options.numQuestions || null
   });
 
   // Abort the stream if no data arrives for 90 seconds.
@@ -1957,4 +2032,101 @@ export const fetchExplain = async (text, context = "chat", language = null) => {
   }
 
   return await response.json();
+};
+/**
+ * Fetch the NEXT batch of questions for a quiz already on screen.
+ *
+ * WHY THIS EXISTS
+ *
+ * The backend fires one LLM call per question, all in parallel, the moment a
+ * quiz is requested — so a 15-question quiz is paid for in full before the
+ * student answers question one. Measured over 776 real 15-question quizzes,
+ * 21.5% were never started and only 40.3% were finished, which made roughly
+ * half of everything generated pure waste.
+ *
+ * Quizzes now arrive short and grow. The caller prefetches the next batch while
+ * the student is still answering the current one, so the growth is invisible
+ * and nobody ever waits at a batch boundary.
+ *
+ * `existingQuestions` does double duty: it steers concept selection away from
+ * what has already been asked, and its length tells the server what index the
+ * new questions start at.
+ *
+ * @param {Object} params
+ * @param {string} params.chatId
+ * @param {string} params.topic
+ * @param {string[]} params.existingQuestions  Question text already shown.
+ * @param {number} [params.count=5]
+ * @param {Function} [params.onQuestion]  Called per question as it lands.
+ * @param {AbortSignal} [params.signal]
+ * @returns {Promise<Array>} the new questions, in arrival order
+ */
+export const extend_quiz_stream = async ({
+  chatId,
+  topic,
+  existingQuestions = [],
+  count = 5,
+  difficulty = 'medium',
+  questionTypes = null,
+  quizMode = 'knowledge',
+  learningObjective = 'general',
+  language = 'en',
+  onQuestion = null,
+  signal = null
+}) => {
+  const response = await fetch(`${FAST_API_BASE}/quiz/extend-stream`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    signal,
+    body: JSON.stringify({
+      chat_id: chatId,
+      topic,
+      count,
+      difficulty,
+      question_types: questionTypes,
+      quiz_mode: quizMode,
+      learning_objective: learningObjective,
+      language,
+      existing_questions: existingQuestions
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`Quiz extend failed: ${response.status}`);
+  }
+
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder('utf-8');
+  let buffer = '';
+  const collected = [];
+
+  const handleLine = (line) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    let payload;
+    try {
+      payload = JSON.parse(trimmed);
+    } catch {
+      return; // partial or malformed line — the next read completes it
+    }
+    if (payload.status === 'error') {
+      throw new Error(payload.message || 'Quiz extend failed');
+    }
+    if (payload.status === 'question_ready' && payload.question) {
+      collected.push(payload.question);
+      if (onQuestion) onQuestion(payload.question, payload.index);
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    lines.forEach(handleLine);
+  }
+  if (buffer.trim()) handleLine(buffer);
+
+  return collected;
 };

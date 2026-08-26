@@ -1,0 +1,137 @@
+/* ============================================
+   CheckUnderstandingCard
+   Stands in for the raw prompt bubble at the start of a
+   "Check my understanding" session. Reads as a session header, not a
+   message — so it should feel quieter than a chat bubble, not louder.
+   ============================================ */
+
+.check-understanding-card {
+  --cuc-accent: #0d9488;
+  --cuc-accent-soft: rgba(45, 212, 191, 0.16);
+  --cuc-surface: #f4fbf9;
+  --cuc-border: rgba(13, 148, 136, 0.22);
+  --cuc-text: #14524b;
+  --cuc-muted: #5b8f88;
+
+  max-width: 560px;
+  margin: 6px 0 14px auto;
+  padding: 12px 14px;
+  border: 1px solid var(--cuc-border);
+  border-radius: 14px;
+  background: var(--cuc-surface);
+  font-family: inherit;
+}
+
+.cuc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.cuc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 0.86rem;
+  font-weight: 650;
+  color: var(--cuc-text);
+  letter-spacing: -0.01em;
+}
+
+.cuc-badge svg {
+  width: 15px;
+  height: 15px;
+  flex: 0 0 auto;
+  color: var(--cuc-accent);
+}
+
+.cuc-counter {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--cuc-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cuc-bar {
+  margin-top: 10px;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--cuc-accent-soft);
+  overflow: hidden;
+}
+
+.cuc-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--cuc-accent);
+  transition: width 420ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.cuc-topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.cuc-topic {
+  font-size: 0.73rem;
+  line-height: 1.3;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(13, 148, 136, 0.07);
+  color: var(--cuc-muted);
+  transition: color 200ms ease, background 200ms ease;
+}
+
+.cuc-topic.is-current {
+  background: var(--cuc-accent-soft);
+  border-color: var(--cuc-border);
+  color: var(--cuc-text);
+  font-weight: 620;
+}
+
+.cuc-topic.is-done {
+  color: var(--cuc-accent);
+  opacity: 0.72;
+}
+
+.cuc-topic.is-done::before {
+  content: '✓ ';
+}
+
+/* ============================================
+   DARK MODE
+   ============================================ */
+body.dark-mode .check-understanding-card {
+  --cuc-surface: rgba(13, 148, 136, 0.10);
+  --cuc-border: rgba(45, 212, 191, 0.28);
+  --cuc-text: #a8e6db;
+  --cuc-muted: #7fc4b8;
+  --cuc-accent: #2dd4bf;
+  --cuc-accent-soft: rgba(45, 212, 191, 0.22);
+}
+
+body.dark-mode .cuc-topic {
+  background: rgba(45, 212, 191, 0.10);
+}
+
+/* ============================================
+   MOBILE
+   ============================================ */
+@media (max-width: 640px) {
+  .check-understanding-card {
+    max-width: 100%;
+    margin-left: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cuc-bar-fill {
+    transition: none;
+  }
+}

@@ -13,7 +13,36 @@ import { devLog } from './devLogger';
 
 const KEEPALIVE_INTERVAL = 120000; // 2 minutes - send ping to keep connection alive
 
-class WebSocketManager {
+// ============================================================================
+// SILENT-RESPONSE WATCHDOG
+// ----------------------------------------------------------------------------
+// ws.onclose already covers a *dropped* connection. This covers the worse case:
+// the socket stays OPEN, the backend accepts the message, and then nothing ever
+// comes back (LLM routing that picks no tool and emits no text). onclose never
+// fires, so the chat sits on the typing indicator forever — the student retypes
+// their question two or three times and then leaves. Measured in production:
+// two of our most engaged students hit this 10 and 32 times respectively.
+//
+// Two windows, because "no answer yet" and "answer stalled" are different:
+//
+//   FIRST_RESPONSE_MS — from the request until the first sign of REAL work.
+//       The backend acks with status:"processing" almost immediately (see
+//       process_chat_message in NQBackEnd2/main.py), so that ack deliberately
+//       does NOT count as progress — otherwise a request that dies right after
+//       the ack would wait for the long window instead of this short one.
+//
+//   STALL_MS — max silence BETWEEN events once real output is flowing. Generous
+//       on purpose: a research-grounded quiz legitimately runs 60-150s with
+//       gaps between phases (intent analyzer -> web research -> generation).
+//
+// Both sit far below the server's 300s CONNECTION_IDLE_TIMEOUT, which was the
+// only backstop before this and is far longer than anyone waits.
+// ============================================================================
+const FIRST_RESPONSE_MS = 45000; // 45s to the first substantive event
+const STALL_MS = 90000;          // 90s of silence mid-stream
+
+// Exported for tests — the app uses the shared `wsManager` instance below.
+export class WebSocketManager {
   constructor() {
     this.connections = new Map(); // chat_id -> WebSocket
     this.keepaliveIntervals = new Map(); // chat_id -> interval ID
@@ -21,25 +50,84 @@ class WebSocketManager {
     // mid-stream (Cloud Run restart, network drop), we notify the stream
     // instead of leaving the UI typing forever.
     this.activeStreams = new Map();
+    // chat_id -> { timer, sawProgress } for the watchdog above.
+    this.watchdogs = new Map();
   }
 
   setActiveStream(chatId, notify) {
     this.activeStreams.set(chatId, notify);
+    this.armWatchdog(chatId, false);
   }
 
   clearActiveStream(chatId) {
     this.activeStreams.delete(chatId);
+    this.clearWatchdog(chatId);
   }
 
-  failActiveStream(chatId, message) {
+  failActiveStream(chatId, message, code) {
+    this.clearWatchdog(chatId);
     const notify = this.activeStreams.get(chatId);
     if (notify) {
       this.activeStreams.delete(chatId);
       try {
-        notify({ status: 'error', message });
+        notify({ status: 'error', code, message });
       } catch (e) {
         console.error('Failed to notify active stream of connection loss:', e);
       }
+    }
+  }
+
+  /**
+   * (Re)arm the watchdog for a chat. `sawProgress` selects the window: false
+   * while we're still waiting for the first real event, true once output is
+   * flowing and we're only guarding against a stall.
+   */
+  armWatchdog(chatId, sawProgress) {
+    this.clearWatchdog(chatId);
+    const ms = sawProgress ? STALL_MS : FIRST_RESPONSE_MS;
+    const timer = setTimeout(() => {
+      this.watchdogs.delete(chatId);
+      console.warn(`⏰ Chat ${chatId} went silent for ${ms}ms — failing the stream`);
+
+      // The answer might still be alive on the backend. We've already told the
+      // student it failed, so let it go — otherwise text streams in underneath
+      // an error bubble, which is worse than either outcome alone. Best effort:
+      // only when the socket is actually open, and never reconnect just to
+      // cancel. The backend honours {type: "cancel_stream"} (main.py:585).
+      const ws = this.connections.get(chatId);
+      if (ws && ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.send(JSON.stringify({ type: 'cancel_stream', chat_id: chatId }));
+        } catch (e) {
+          // Nothing useful to do — the error bubble is going up regardless.
+        }
+      }
+
+      this.failActiveStream(
+        chatId,
+        `No response after ${Math.round(ms / 1000)}s.`,
+        'timeout'
+      );
+    }, ms);
+    this.watchdogs.set(chatId, { timer, sawProgress });
+  }
+
+  /**
+   * Called for every inbound frame. Any frame proves the backend is alive and
+   * pushes the deadline out; a substantive one also widens the window from
+   * FIRST_RESPONSE_MS to STALL_MS. No-op when no request is in flight.
+   */
+  kickWatchdog(chatId, substantive) {
+    const wd = this.watchdogs.get(chatId);
+    if (!wd) return;
+    this.armWatchdog(chatId, wd.sawProgress || Boolean(substantive));
+  }
+
+  clearWatchdog(chatId) {
+    const wd = this.watchdogs.get(chatId);
+    if (wd) {
+      clearTimeout(wd.timer);
+      this.watchdogs.delete(chatId);
     }
   }
 
@@ -268,6 +356,9 @@ export const ask_llm_websocket = async (
 
   } catch (error) {
     console.error('WebSocket chat error:', error);
+    // Stop tracking before notifying, or the watchdog armed by setActiveStream
+    // above keeps running and fires a second error 45s later.
+    wsManager.clearActiveStream(chat_id);
     onStatusUpdate({ status: "error", message: "WebSocket connection failed: " + error.message });
   }
 };
@@ -277,6 +368,16 @@ export const ask_llm_websocket = async (
 function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStreamEnd, chatId) {
   const { type, data } = message;
   let streamComplete = false;
+
+  // Feed the silent-response watchdog. `pong` is keepalive — it proves the
+  // socket is up but says nothing about the request, so it must not count.
+  // `status: processing` is the backend's immediate ack, which arrives before
+  // any real work: it pushes the deadline out but does not earn the longer
+  // stall window (see FIRST_RESPONSE_MS above).
+  if (type !== 'pong') {
+    const isAck = type === 'status' && message.status === 'processing';
+    wsManager.kickWatchdog(chatId, !isAck);
+  }
 
   switch (type) {
     case 'status':

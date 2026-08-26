@@ -48,7 +48,10 @@ const StudyStepCard = ({
   onGenerateMindmap,
   onSaveMindmapProgress,
   onContinue,
-  onExit
+  onExit,
+  // Engagement telemetry: fired once when an audio lesson actually starts
+  // playing. Node status only records that the student moved past the step.
+  onAudioFirstPlay
 }) => {
   const { t } = useTranslation();
 
@@ -129,6 +132,7 @@ const StudyStepCard = ({
           onGenerateAudio={onGenerateAudio}
           onContinue={onContinue}
           onExit={onExit}
+          onFirstPlay={onAudioFirstPlay}
         />
       );
 

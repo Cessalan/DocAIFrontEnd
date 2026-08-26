@@ -24,6 +24,8 @@ import {
 } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { devLog } from './devLogger';
+import { buildFirstBlock, extendWithReserve, isRealNode } from '../Components/StudyMode/firstBlock';
+import { estimateMinutes } from '../Components/StudyMode/planFormatting';
 
 /**
  * Create a new study session from the existing chat
@@ -46,16 +48,36 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
       throw new Error('Invalid study path: no nodes found');
     }
 
-    // Generate unique IDs for each node (backend may not provide them)
-    const nodesWithIds = pathResult.nodes.map((node, index) => ({
+    // Only the first block goes live; the rest waits on the shelf. A plan the
+    // student can finish is the whole point — see firstBlock.js for the funnel
+    // this comes from. The planner's full path is preserved, not discarded.
+    const { block, reserve, blockCount, reserveCount, plannedTotal, estimatedMinutes } =
+      buildFirstBlock(pathResult);
+
+    // Banners are headers, so they carry 'banner' rather than a work status —
+    // matching appendPhase2. Marking position 0 active blindly would hand the
+    // active slot to a leading section header and leave no node open.
+    const withIds = (node, isActive = false) => ({
       id: node.id || `node-${uuidv4().slice(0, 8)}`,
       type: node.type,
       label: node.label,
       tags: node.tags || [],
       difficulty: node.difficulty || 1,
-      status: index === 0 ? 'active' : 'locked',
+      status: !isRealNode(node) ? 'banner' : (isActive ? 'active' : 'locked'),
       messageId: null // Will be set when content is generated
-    }));
+    });
+
+    const firstRealIndex = block.findIndex(isRealNode);
+    const nodesWithIds = block.map((node, index) => withIds(node, index === firstRealIndex));
+    // Reserve nodes are shaped identically so extending is a straight append —
+    // no second pass of id generation, no divergent node shape to reason about.
+    // None start active: the student is still working the live block.
+    const reserveWithIds = reserve.map((node) => withIds(node, false));
+
+    devLog(
+      `📦 First block: ${blockCount} of ${plannedTotal} planned nodes live, ` +
+      `${reserveCount} held in reserve`
+    );
 
     // Build the study session data
     // We UPDATE the existing chat rather than creating a new one
@@ -84,13 +106,27 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
         },
         path: {
           topics: topics,
-          totalNodes: pathResult.total_nodes || nodesWithIds.length,
-          estimatedMinutes: pathResult.estimated_time_minutes || nodesWithIds.length * 3,
-          activeNodeId: nodesWithIds[0]?.id || null,
+          // Counts describe the LIVE block, so "done" is reachable and every
+          // progress readout in the app is measured against something finishable.
+          totalNodes: blockCount || nodesWithIds.filter(isRealNode).length,
+          estimatedMinutes: estimatedMinutes || nodesWithIds.length * 3,
+          activeNodeId: nodesWithIds.find(isRealNode)?.id || null,
           nodes: nodesWithIds
         },
+        // What the planner produced beyond this block. Extending is a local
+        // move: no regeneration, no plan-quota charge, nothing to re-fetch.
+        reserve: {
+          nodes: reserveWithIds,
+          remaining: reserveCount,
+          plannedTotal: plannedTotal
+        },
         askedHashes: [], // Anti-repeat tracking
-        lastActionAt: serverTimestamp()
+        lastActionAt: serverTimestamp(),
+        // Day 1 of the dated plan. ISO string rather than serverTimestamp()
+        // so buildStudySchedule can read it on this very render instead of
+        // waiting for the write to round-trip. Plans created before this
+        // field existed fall back to their earliest node completion.
+        startedAt: new Date().toISOString()
       }
     };
 
@@ -108,7 +144,8 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
         totalNodes: nodesWithIds.length,
         estimatedMinutes: studyData.study.path.estimatedMinutes
       },
-      askedHashes: []
+      askedHashes: [],
+      startedAt: studyData.study.startedAt
     };
   } catch (error) {
     console.error('❌ Error creating study session:', error);
@@ -203,9 +240,13 @@ export const getStudySession = async (chatId) => {
       chatId: docSnap.id,
       status: data.study?.status || 'active',
       path: data.study?.path || { nodes: [], activeNodeId: null },
+      // Nodes the planner produced beyond the live block. Sessions created
+      // before the block cap simply have none.
+      reserve: data.study?.reserve || { nodes: [], remaining: 0 },
       askedHashes: data.study?.askedHashes || [],
       currentPhase: data.study?.currentPhase || 1,
-      totalPhases: data.study?.totalPhases || 1
+      totalPhases: data.study?.totalPhases || 1,
+      startedAt: data.study?.startedAt || null // Day 1 anchor for the dated plan
     };
   } catch (error) {
     console.error('❌ Error fetching study session:', error);
@@ -268,7 +309,12 @@ export const updateNodeStatus = async (chatId, nodeId, nodeUpdates) => {
 
     nodes[nodeIndex] = {
       ...nodes[nodeIndex],
-      ...nodeUpdates
+      ...nodeUpdates,
+      // Stamp the first transition to 'done' so the dated plan can tell
+      // "finished today" from "finished last Tuesday". See stampCompletedAt.
+      ...(nodeUpdates.status === 'done' && !nodes[nodeIndex].completedAt
+        ? { completedAt: new Date().toISOString() }
+        : {})
     };
 
     // Update the document
@@ -309,10 +355,16 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
       throw new Error(`Node ${currentNodeId} not found`);
     }
 
-    // Mark current node as done
+    // Mark current node as done.
+    //
+    // `completedAt` is an ISO STRING, not serverTimestamp() — Firestore
+    // rejects sentinel values inside array elements, and the dated plan reads
+    // it back client-side the moment it's written. Stamped only once, so a
+    // replayed completion can't drag an old node into today's mission.
     nodes[currentIndex] = {
       ...nodes[currentIndex],
-      status: 'done'
+      status: 'done',
+      completedAt: nodes[currentIndex].completedAt || new Date().toISOString()
     };
 
     // Find next non-banner node (skip section_banner pseudo-nodes)
@@ -390,10 +442,16 @@ export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) 
       throw new Error(`Node ${currentNodeId} not found`);
     }
 
-    // Mark current node as done
+    // Mark current node as done.
+    //
+    // `completedAt` is an ISO STRING, not serverTimestamp() — Firestore
+    // rejects sentinel values inside array elements, and the dated plan reads
+    // it back client-side the moment it's written. Stamped only once, so a
+    // replayed completion can't drag an old node into today's mission.
     nodes[currentIndex] = {
       ...nodes[currentIndex],
-      status: 'done'
+      status: 'done',
+      completedAt: nodes[currentIndex].completedAt || new Date().toISOString()
     };
 
     // Build the new node with a unique ID and active status
@@ -408,7 +466,17 @@ export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) 
       status: 'active',
       messageId: null,
       // Carry phase from current node so it appears in the right section
-      phase: nodes[currentIndex].phase || 1
+      phase: nodes[currentIndex].phase || 1,
+      // Node-specified length, omitted unless the caller asked for one. The
+      // fields here are an explicit whitelist, so anything not listed is
+      // silently dropped — which is how the single-question pattern
+      // experiment quietly became a full-length quiz.
+      ...(newNodeDef.num_questions ? { num_questions: newNodeDef.num_questions } : {}),
+      // Pre-decided mini-test settings. Set by the post-node recommendation,
+      // whose whole claim is that NurseQuiz already chose the format — a node
+      // that arrives without this stops at the config modal and asks her to
+      // choose it herself, which contradicts the copy that got her here.
+      ...(newNodeDef.examConfig ? { examConfig: newNodeDef.examConfig } : {})
     };
 
     // Splice the new node right after the current one
@@ -792,12 +860,17 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
  * @param {boolean} [result.correct] - For quiz: was the answer correct
  * @param {boolean} [result.mastered] - For flashcard: was it mastered on first try
  * @param {string} [result.concept] - The question text or card front (what they missed)
+ * @param {'mcq'|'sata'|'casestudy'} [result.format] - Question format, for the
+ *        format breakdown. Stored at the DOC root (not per topic): a chat is
+ *        one uploaded subject, so doc-level buckets already give subject ×
+ *        format, and keeping it off the topic map avoids multiplying the
+ *        number of counters by the number of node labels.
  */
 /**
  * Find the best matching existing topic key, or return the input as-is.
  * Prevents near-duplicate entries like "Testostérone" vs "Sleep and Testosterone".
  */
-const findMatchingTopicKey = (newTopic, existingKeys) => {
+export const findMatchingTopicKey = (newTopic, existingKeys) => {
   if (!newTopic || existingKeys.length === 0) return newTopic;
 
   // Exact match (case-insensitive)
@@ -881,6 +954,18 @@ export const updateStudyPerformance = async (chatId, result) => {
       topic.strengthLevel = avg >= 0.85 ? 'strong' : avg >= 0.6 ? 'developing' : 'weak';
     }
 
+    // Format bucket — only quizzes carry a format; flashcards have none.
+    // Written even when the answer is right, because a breakdown needs the
+    // denominator, not just the misses.
+    if (result.type === 'quiz' && result.format) {
+      const formats = data.formats || {};
+      const bucket = formats[result.format] || { correct: 0, total: 0 };
+      bucket.total++;
+      if (result.correct) bucket.correct++;
+      formats[result.format] = bucket;
+      data.formats = formats;
+    }
+
     data.topics[topicKey] = topic;
     data.updatedAt = serverTimestamp();
     data.chatId = chatId;
@@ -894,6 +979,239 @@ export const updateStudyPerformance = async (chatId, result) => {
     // Non-critical — don't throw
     return null;
   }
+};
+
+/* ══════════════════════════════════════════════════════════════════════
+   PERFORMANCE BREAKDOWN — accuracy ranked by subject and by question format.
+
+   Reads every studyPerformance doc for the user and folds them two ways:
+   by subject (one doc = one uploaded subject) and by question format
+   (mcq / sata / casestudy, summed across subjects).
+
+   Format is the one that earns its place. Measured on the first paying
+   study-mode user: 89% on multiple choice, 21% on select-all-that-apply,
+   40% on priority ordering — a 7x spread that neither she nor the product
+   could see, because accuracy was only ever tracked per topic. A student
+   who is "at 69%" is not weak on the material, she is weak on two formats,
+   and those are the two the NCLEX leans on hardest.
+
+   MIN_SAMPLE guards the headline: three questions is not a pattern, and
+   "0% on select-all-that-apply" off a single item is a lie that reads as
+   authoritative.
+   ══════════════════════════════════════════════════════════════════════ */
+
+/** Below this many answered questions a bucket is shown but never ranked. */
+export const BREAKDOWN_MIN_SAMPLE = 5;
+
+/** Display order / labels live in the UI; this is just the known set. */
+const KNOWN_FORMATS = ['mcq', 'sata', 'casestudy'];
+
+/**
+ * Accuracy by topic and by question format for ONE study session.
+ *
+ * Scoped to a single chat on purpose: the breakdown is read next to the plan
+ * it describes, where "you are weak on select-all-that-apply" is actionable
+ * against the nodes still in front of you. A cross-session rollup answers a
+ * question nobody asks mid-plan.
+ *
+ * Both lists are sorted WEAKEST FIRST — the point of the panel is what to
+ * fix, so the thing needing work is never below the fold. Rows under
+ * MIN_SAMPLE sort last regardless of accuracy, so a 1-of-1 miss can't
+ * masquerade as the top priority.
+ *
+ * @param {string} chatId - the study session to summarize
+ * @param {string} [userId] - defaults to the signed-in user
+ * @returns {Promise<{
+ *   formats: Array,        // per question type, weakest first
+ *   topics: Array,         // per topic, weakest first
+ *   missed: Array,         // every missed question, tagged with format + topic
+ *   totalAnswered: number,
+ *   derived: boolean       // true when format counts came from the fallback
+ * }>}
+ */
+export const getSessionInsights = async (chatId, userId) => {
+  const empty = { formats: [], missedMix: [], topics: [], missed: [], totalAnswered: 0, derived: false };
+  try {
+    const uid = userId || auth.currentUser?.uid;
+    if (!uid || !chatId) return empty;
+
+    // Reuse getStudyPerformance rather than reading the doc directly: it
+    // carries the dev/viewAllChats fallback to the CHAT OWNER's record.
+    // Reading users/{me}/studyPerformance/{chatId} straight left the panel
+    // empty on any chat opened in view-all mode while the modal's own chips —
+    // which do use this helper — showed data, so the same modal disagreed
+    // with itself.
+    const [data, index] = await Promise.all([
+      getStudyPerformance(chatId),
+      buildQuestionIndex(chatId),
+    ]);
+    if (!data) return empty;
+
+    /* ── Topics ──────────────────────────────────────────────────────────
+       Keyed on the topic name with the node-kind suffix stripped, so
+       "X - Mini-Test" and "X - Drill" become one row instead of reading as
+       two different subjects. */
+    const topicTotals = {};
+    let totalAnswered = 0;
+    Object.entries(data.topics || {}).forEach(([key, tp]) => {
+      const total = tp.questionsTotal || 0;
+      if (!total) return;
+      const name = baseTopicName(key);
+      const acc = topicTotals[name] || { correct: 0, total: 0 };
+      acc.correct += tp.questionsCorrect || 0;
+      acc.total += total;
+      topicTotals[name] = acc;
+      totalAnswered += total;
+    });
+
+    /* ── Missed questions, tagged with the format they came from ─────────
+       The doc stores only question TEXT, so the format comes from joining
+       against the session's generated questions. Deduped: a question can be
+       appended more than once across review rounds. */
+    const seenText = new Set();
+    const missed = [];
+    Object.entries(data.topics || {}).forEach(([key, tp]) => {
+      (tp.missedConcepts || []).forEach((text) => {
+        const clean = String(text || '').trim();
+        if (!clean || seenText.has(clean)) return;
+        seenText.add(clean);
+        missed.push({
+          text: clean,
+          topic: baseTopicName(key),
+          format: index.get(clean)?.format || null,
+        });
+      });
+    });
+
+    /* ── Formats ─────────────────────────────────────────────────────────
+       Only reported as ACCURACY when the per-answer counter exists, because
+       only then is the denominator real.
+
+       The fallback for older sessions used to derive one from the questions
+       in the plan. Both attempts failed: counting every generated question
+       inflated the denominator (88% multiple choice sitting next to a 75%
+       topic row built from the same answers), and restricting it to completed
+       nodes produced "missed 7 of 6" — misses accumulate from nodes that were
+       answered but never marked done. There is no honest denominator to
+       recover after the fact.
+
+       So pre-counter sessions get `missedMix` instead: the COMPOSITION of
+       their mistakes by format. "7 of your 13 mistakes were select-all-that-
+       apply" is exact, needs no denominator, and still points at the thing
+       worth fixing. */
+    const stored = data.formats && Object.keys(data.formats).length > 0;
+    const missedByFormat = {};
+    missed.forEach((m) => {
+      if (m.format) missedByFormat[m.format] = (missedByFormat[m.format] || 0) + 1;
+    });
+    const totalTagged = Object.values(missedByFormat).reduce((a, b) => a + b, 0);
+
+    const formats = !stored ? [] : KNOWN_FORMATS.map((key) => {
+      const seen = data.formats[key]?.total || 0;
+      if (!seen) return null;
+      const miss = Math.max(0, seen - (data.formats[key]?.correct || 0));
+      return {
+        key,
+        seen,
+        missed: miss,
+        accuracy: Math.round(((seen - miss) / seen) * 100),
+        ranked: seen >= BREAKDOWN_MIN_SAMPLE,
+      };
+    }).filter(Boolean);
+
+    const missedMix = stored || !totalTagged ? [] : KNOWN_FORMATS
+      .filter((key) => missedByFormat[key])
+      .map((key) => ({
+        key,
+        count: missedByFormat[key],
+        share: Math.round((missedByFormat[key] / totalTagged) * 100),
+      }))
+      .sort((a, b) => b.count - a.count);
+
+    /* Strictly weakest first — including thin rows.
+       Sorting low-sample rows to the BOTTOM was worse than the problem it
+       solved: a "0%, missed 4 of 4" landing underneath a 95% reads as the
+       student's strongest area. Honesty about sample size is the row's own
+       "too few to be sure" label, not its position. The risk headline still
+       filters on `ranked`, so a 1-of-1 miss can never become the callout. */
+    const weakestFirst = (a, b) => a.accuracy - b.accuracy;
+
+    const topics = Object.entries(topicTotals)
+      .map(([name, b]) => ({
+        key: name,
+        label: name,
+        correct: b.correct,
+        total: b.total,
+        accuracy: Math.round((b.correct / b.total) * 100),
+        ranked: b.total >= BREAKDOWN_MIN_SAMPLE,
+      }))
+      .sort(weakestFirst);
+
+    return {
+      formats: formats.sort(weakestFirst),
+      missedMix,
+      topics,
+      missed,
+      totalAnswered,
+      derived: !stored,
+    };
+  } catch (error) {
+    console.error('❌ Error building session insights:', error);
+    return empty;
+  }
+};
+
+/**
+ * Build a question-text → { format, topic } index from a session's messages.
+ *
+ * Needed for two things the studyPerformance doc can't do alone:
+ *   1. Tagging each stored `missedConcepts` string with the format it came
+ *      from — the doc stores only the question text.
+ *   2. Deriving format counts for sessions answered BEFORE the `formats`
+ *      counter existed, so the panel is useful on existing data instead of
+ *      staying blank until a migration runs.
+ *
+ * Keyed on normalized question text, which is exactly what missedConcepts
+ * stores, so the join is exact rather than fuzzy.
+ */
+const buildQuestionIndex = async (chatId) => {
+  const index = new Map();
+  try {
+    const msgs = await getDocs(collection(db, 'chats', chatId, 'messages'));
+    msgs.forEach((m) => {
+      const questions = m.data()?.studyContent?.questions;
+      if (!Array.isArray(questions)) return;
+      questions.forEach((q) => {
+        const text = String(q?.question || '').trim();
+        if (!text) return;
+        index.set(text, {
+          format: q?.questionType || q?.metadata?.questionType || 'mcq',
+          topic: q?.topic || null,
+        });
+      });
+    });
+  } catch (error) {
+    console.error('❌ Error indexing session questions:', error);
+  }
+  return index;
+};
+
+/**
+ * Strip the node-kind suffix off a topic key.
+ *
+ * Keys are built as "<topic> - <node kind>" — "Smoking Cessation - Quick
+ * Check", "… - Mini-Test", "… - Drill" — so the same topic lands under two
+ * or three keys and looks like separate subjects. Taking the segment before
+ * the first " - " merges them.
+ *
+ * A topic containing " - " itself would be truncated; accepted, because the
+ * labels are model-generated topic names where that is rare, and the failure
+ * mode is a shorter label rather than a wrong number.
+ */
+const baseTopicName = (key) => {
+  const s = String(key || '').trim();
+  const cut = s.split(' - ')[0].trim();
+  return cut || s;
 };
 
 /**
@@ -1011,6 +1329,67 @@ export const appendPhase2 = async (chatId, reviewPathResult) => {
     };
   } catch (error) {
     console.error('❌ Error appending Phase 2:', error);
+    throw error;
+  }
+};
+
+/**
+ * Move the next block of the planner's path onto the live plan.
+ *
+ * Called when a student finishes their block and asks for more. The nodes were
+ * planned in the original call and parked in `study.reserve`, so this is a
+ * local move: no generation, no plan-quota charge, no round trip to the model.
+ *
+ * @param {string} chatId - Study session chat ID
+ * @returns {Promise<{added: number, remaining: number, activeNodeId: string|null}>}
+ */
+export const extendStudyPath = async (chatId) => {
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId) throw new Error('User not authenticated');
+
+    const docRef = doc(db, 'chats', chatId);
+    const docSnap = await getDoc(docRef);
+    if (!docSnap.exists()) throw new Error('Study session not found');
+
+    const data = docSnap.data();
+    const existingNodes = data.study?.path?.nodes || [];
+    const reserveNodes = data.study?.reserve?.nodes || [];
+
+    if (reserveNodes.length === 0) {
+      devLog('📦 Nothing left in reserve — plan is fully extended');
+      return { added: 0, remaining: 0, activeNodeId: data.study?.path?.activeNodeId || null };
+    }
+
+    const { nodes: merged, reserve: rest, addedCount, reserveCount } =
+      extendWithReserve(existingNodes, reserveNodes);
+
+    // The block that just ended left nothing active — open the first new node.
+    const firstAdded = merged.slice(existingNodes.length).find(isRealNode) || null;
+    const activeNodeId = firstAdded ? firstAdded.id : data.study?.path?.activeNodeId || null;
+    const nodesWithActive = merged.map(n =>
+      firstAdded && n.id === firstAdded.id ? { ...n, status: 'active' } : n
+    );
+
+    const liveCount = nodesWithActive.filter(isRealNode).length;
+
+    await updateDoc(docRef, {
+      'study.status': 'active',
+      'study.path.nodes': nodesWithActive,
+      'study.path.activeNodeId': activeNodeId,
+      'study.path.totalNodes': liveCount,
+      'study.path.estimatedMinutes': estimateMinutes(nodesWithActive.filter(isRealNode)),
+      'study.reserve.nodes': rest,
+      'study.reserve.remaining': reserveCount,
+      'study.lastActionAt': serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+
+    devLog(`✅ Extended plan by ${addedCount} nodes — ${reserveCount} still in reserve`);
+
+    return { added: addedCount, remaining: reserveCount, activeNodeId };
+  } catch (error) {
+    console.error('❌ Error extending study path:', error);
     throw error;
   }
 };
