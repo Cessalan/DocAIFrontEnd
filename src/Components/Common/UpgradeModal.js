@@ -9,7 +9,7 @@ import './UpgradeModal.css';
 /**
  * UpgradeModal
  * Shown when a free user has exhausted their question budget for the current
- * 3-hour window, when the study-plan meter is empty, or when they tap the
+ * weekly window, when the study-plan meter is empty, or when they tap the
  * usage badge.
  *
  * Structure, top to bottom — this order is the pitch and is deliberate:
@@ -20,7 +20,7 @@ import './UpgradeModal.css';
  *   5. the free path, de-emphasized below the fold of the decision
  *
  * The earlier free-vs-Pro comparison table sold capabilities ("1 per chat",
- * "3-hour limit"), which asks the student to do the translation work into
+ * "weekly limit"), which asks the student to do the translation work into
  * "…and therefore I'll do better on my exam". The outcome grid does that
  * translation for them.
  *

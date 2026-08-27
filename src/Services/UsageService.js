@@ -2,7 +2,7 @@
  * UsageService.js
  * Frontend usage throttle for AI generations (monetization gate).
  *
- * Model: a rolling 3-hour window. Free users get FREE_LIMIT *questions*
+ * Model: a rolling 7-day window. Free users get FREE_LIMIT *questions*
  * per window; when the window has elapsed the bucket refills automatically.
  * Pro users (usage.tier === 'pro') are unlimited.
  *
@@ -30,15 +30,30 @@ import { db } from '../Firebase/config';
 import { doc, getDoc, runTransaction, serverTimestamp } from 'firebase/firestore';
 import { devLog } from './devLogger';
 
-// Tunable knobs — change these two constants to retune the throttle.
-// Backstop, not the commercial gate. The plan quota below is what free users
-// are meant to hit; this only exists to cap runaway generation INSIDE an
-// active plan (retakes, regenerated nodes, configurable exams), which the plan
-// quota doesn't bound. Sized to sit above real usage: a topic unit costs 17
-// units, so 50 buys ~14 nodes per window — comfortably past the ~6-node depth
-// that predicts a user returning.
-export const FREE_LIMIT = 50;                 // questions (items) per window for free tier
-export const WINDOW_MS = 3 * 60 * 60 * 1000;  // rolling window length (3 hours)
+/* Tunable knobs — change these two constants to retune the throttle.
+ *
+ * ⚠️ THIS IS NOW THE PRIMARY COMMERCIAL GATE (changed 2026-08-26).
+ * It used to be 50 per rolling 3 HOURS, described as a backstop behind the
+ * plan quota. That framing was wrong in production:
+ *
+ *   - The 3h window RESETS (see normalizeUsage). A student who came back the
+ *     next day started at 0 again, forever. Our single best free user did 36
+ *     study nodes across 11.6 days and the meter never read above 33/50 — it
+ *     could not fire on exactly the returning students worth converting.
+ *   - The plan quota (3 per 30d) only bites MULTI-COURSE students. 43 of 86
+ *     free users in the first monetized fortnight created exactly ONE plan,
+ *     so no gate could ever reach them.
+ *   - Net effect: only ~13% of free users ever saw a hard block at all.
+ *
+ * 70 per rolling 7 days is deliberately BINDING, not a backstop. One study
+ * plan runs ~40 units (our 4th subscriber spent 39 on a single 8-node plan),
+ * so a week buys roughly 1.5 plans — the block now lands mid-plan, on an
+ * engaged student, which is the only moment that has ever converted anyone.
+ * Consequence to keep in mind: this largely retires the plan quota as a live
+ * gate, since 70 units runs out before 3 plans do.
+ */
+export const FREE_LIMIT = 70;                      // questions (items) per window for free tier
+export const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;  // rolling window length (7 days)
 
 /**
  * Dev-only limit override, so the throttle can be exercised without burning
@@ -81,8 +96,11 @@ export const setDevFreeLimitOverride = (n) => {
 export const getFreeLimit = () => getDevFreeLimitOverride() ?? FREE_LIMIT;
 
 /**
- * Format a reset countdown for display. Hour-aware since the window is 3
- * hours: "2:14:09" when an hour or more remains, "14:09" below that.
+ * Format a reset countdown for display. Day-aware since the window is 7 days:
+ * "6d 4h" at day scale, "2:14:09" under 24 hours, "14:09" under an hour.
+ * A ticking seconds display is meaningless a week out, so days round up to
+ * the next hour and stop ticking; the shorter forms keep the live countdown
+ * that made the old 3-hour window feel immediate.
  * Shared by UsageBadge, UsagePanel and UpgradeModal.
  *
  * @param {number} ms - milliseconds until the bucket refills
@@ -90,9 +108,11 @@ export const getFreeLimit = () => getDevFreeLimitOverride() ?? FREE_LIMIT;
  */
 export const formatCountdown = (ms) => {
   const total = Math.max(0, Math.ceil(ms / 1000));
-  const h = Math.floor(total / 3600);
+  const d = Math.floor(total / 86400);
+  const h = Math.floor((total % 86400) / 3600);
   const m = Math.floor((total % 3600) / 60);
   const s = total % 60;
+  if (d > 0) return `${d}d ${h}h`;
   if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
 };

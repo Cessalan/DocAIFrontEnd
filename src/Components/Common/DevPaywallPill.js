@@ -4,7 +4,7 @@ import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 /**
  * DevPaywallPill — development-only control that forces the upgrade modal open
  * in its BLOCKED state so the paywall can be reviewed without burning a real
- * quota (30+ generations) or waiting out a 3-hour window.
+ * quota (70+ generations) or waiting out a 7-day window.
  *
  * Two buttons because the modal has two genuinely different pitches:
  *   Q  → the question throttle ("Don't stop now." + "You were practicing: X")

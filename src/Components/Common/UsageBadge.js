@@ -6,7 +6,7 @@ import './UsageBadge.css';
 /**
  * UsageBadge
  * Small always-visible pill showing how many AI generations remain in the
- * current 3-hour window. Hidden for Pro (unlimited) users. Rendered globally
+ * current weekly window. Hidden for Pro (unlimited) users. Rendered globally
  * by UsageProvider so it appears on every screen (chat + study) without
  * threading props through the big container components.
  *
@@ -32,7 +32,7 @@ const UsageBadge = ({ isPro, remaining, limit, msUntilReset, onClick }) => {
       onClick={onClick}
       title={blocked
         ? t('usageBadge.blockedTitle', 'Out of questions — resets soon, or upgrade to skip the wait')
-        : t('usageBadge.title', 'Questions left — refills every 3 hours')}
+        : t('usageBadge.title', 'Questions left — refills every week')}
     >
       <span className="usage-badge-dot" aria-hidden="true">⚡</span>
       {blocked ? (

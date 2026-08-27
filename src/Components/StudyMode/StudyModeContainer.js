@@ -131,7 +131,7 @@ const StudyModeContainer = ({
   const { userProfile } = useAuth() || {};
 
   // Usage throttle (monetization gate): block + show upgrade modal when the
-  // 3-hour generation bucket is empty; charge one unit per new node generated.
+  // weekly generation bucket is empty; charge one unit per new node generated.
   const { requireQuota, consume: consumeGeneration } = useUsageLimit();
 
   // View state: 'node' (showing content) | 'overview' (showing plan)

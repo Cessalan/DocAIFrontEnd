@@ -67,13 +67,13 @@ const resources = {
         close: "Close"
       },
       usageBadge: {
-        title: "Questions left — refills every 3 hours",
+        title: "Questions left — refills every week",
         blockedTitle: "Out of questions — resets soon, or upgrade to skip the wait",
         resetsIn: "Resets in {{time}}",
         remaining: "{{remaining}}/{{limit}} questions"
       },
       usagePanel: {
-        tooltip: "Questions used — refills every 3 hours",
+        tooltip: "Questions used — refills every week",
         upgradeTitle: "Upgrade to Pro",
         upgrade: "Upgrade",
         proUnlimited: "Pro · Unlimited",
@@ -91,7 +91,7 @@ const resources = {
         subscribed: "Subscribed",
         notSubscribed: "Not subscribed",
         proDetail: "Unlimited questions, uploads, and reviews.",
-        freeDetail: "{{used}} of {{limit}} questions used this 3-hour window.",
+        freeDetail: "{{used}} of {{limit}} questions used this week.",
         freeBlocked: "Out of questions — next batch in {{time}}.",
         upgrade: "Upgrade to Pro",
         upgradeShort: "Upgrade",
@@ -1858,7 +1858,7 @@ const resources = {
         optional: "optional",
         customPlaceholder: "e.g. \"My professor focuses on prioritization\" or \"Include drug calculations\"",
         graceNote: "You have {{remaining}} free questions left right now and this mini-test needs {{count}}. We’ll build the full test anyway — your success comes first.",
-        graceUpgrade: "Free questions refill every 3 hours · Go unlimited with Pro",
+        graceUpgrade: "Free questions refill every week · Go unlimited with Pro",
         startExam: "Start Mini-Test",
         generating: "Building your mini-test...",
         generatingHint: "Generating {{count}} questions with mixed formats",
@@ -1947,13 +1947,13 @@ const resources = {
         close: "Fermer"
       },
       usageBadge: {
-        title: "Questions restantes — recharge toutes les 3 heures",
+        title: "Questions restantes — recharge chaque semaine",
         blockedTitle: "Plus de questions — réinitialisation bientôt, ou passe en Pro pour éviter l'attente",
         resetsIn: "Réinitialisation dans {{time}}",
         remaining: "{{remaining}}/{{limit}} questions"
       },
       usagePanel: {
-        tooltip: "Questions utilisées — recharge toutes les 3 heures",
+        tooltip: "Questions utilisées — recharge chaque semaine",
         upgradeTitle: "Passer à Pro",
         upgrade: "Devenir Pro",
         proUnlimited: "Pro · Illimité",
@@ -1971,7 +1971,7 @@ const resources = {
         subscribed: "Abonné(e)",
         notSubscribed: "Non abonné(e)",
         proDetail: "Questions, téléversements et révisions illimités.",
-        freeDetail: "{{used}} questions sur {{limit}} utilisées cette fenêtre de 3 heures.",
+        freeDetail: "{{used}} questions sur {{limit}} utilisées cette semaine.",
         freeBlocked: "Plus de questions — prochaine recharge dans {{time}}.",
         upgrade: "Passer à Pro",
         upgradeShort: "Devenir Pro",
@@ -3731,7 +3731,7 @@ const resources = {
         optional: "optionnel",
         customPlaceholder: "ex. « Mon prof se concentre sur la priorisation » ou « Inclure des calculs de dosage »",
         graceNote: "Il te reste {{remaining}} questions gratuites en ce moment et ce mini-test en demande {{count}}. On le génère quand même au complet — ta réussite passe en premier.",
-        graceUpgrade: "Tes questions gratuites se rechargent toutes les 3 heures · Passe à Pro pour l'illimité",
+        graceUpgrade: "Tes questions gratuites se rechargent chaque semaine · Passe à Pro pour l'illimité",
         startExam: "Commencer le mini-test",
         generating: "Préparation de ton mini-test...",
         generatingHint: "Génération de {{count}} questions en formats mixtes",

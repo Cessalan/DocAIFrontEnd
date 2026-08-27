@@ -165,8 +165,8 @@ export function UsageProvider({ children }) {
       // A truly blocked user has spent the whole bucket; borrow the real count
       // when there is one so the number on screen matches this account.
       used: live.used > 0 ? live.used : live.limit,
-      msUntilReset: live.msUntilReset > 0 ? live.msUntilReset : 53557000,   // ~14:52:37
-      planMsUntilReset: 11 * 24 * 60 * 60 * 1000,                            // ~11 days
+      msUntilReset: live.msUntilReset > 0 ? live.msUntilReset : 5 * 24 * 60 * 60 * 1000,  // ~5 days
+      planMsUntilReset: 11 * 24 * 60 * 60 * 1000,                                         // ~11 days
     });
     setUpgradeReason(reason === 'plans' ? 'plans' : 'questions');
     setUpgradeTopic(cleanTopicLabel(ctx?.topic));

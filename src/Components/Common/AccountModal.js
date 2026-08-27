@@ -110,7 +110,7 @@ const AccountModal = ({ isOpen, onClose, user = {} }) => {
             <p className="account-plan-detail">
               {blocked
                 ? t('account.freeBlocked', 'Out of questions — next batch in {{time}}.', { time: formatCountdown(msUntilReset) })
-                : t('account.freeDetail', '{{used}} of {{limit}} questions used this 3-hour window.', { used, limit })}
+                : t('account.freeDetail', '{{used}} of {{limit}} questions used this week.', { used, limit })}
             </p>
           )}
 

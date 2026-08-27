@@ -229,7 +229,7 @@ const ExamConfigModal = ({
                       className="exam-config__grace-upgrade"
                       onClick={openUpgrade}
                     >
-                      {t('exam.graceUpgrade', 'Free questions refill every 3 hours · Go unlimited with Pro')}
+                      {t('exam.graceUpgrade', 'Free questions refill every week · Go unlimited with Pro')}
                     </button>
                   </div>
                 </div>

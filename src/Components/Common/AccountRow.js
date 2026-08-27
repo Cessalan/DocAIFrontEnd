@@ -9,7 +9,7 @@ import './AccountRow.css';
  * AccountRow
  * ChatGPT/Gemini-style profile block for the sidebar footer: avatar + name +
  * plan subtitle with an Upgrade pill, and (for free users) the usage bar for
- * the current 3-hour window directly below the username. This is the single
+ * the current weekly window directly below the username. This is the single
  * merged quota/account surface — it replaced the separate UsagePanel meter.
  * Clicking the row opens the AccountModal (profile + subscription management).
  *
@@ -62,11 +62,11 @@ const AccountRow = ({ user = {}, onOpenAccount }) => {
         )}
       </div>
 
-      {/* Usage for the current 3-hour window — free users only. */}
+      {/* Usage for the current weekly window — free users only. */}
       {!isPro && (
         <div
           className={`account-usage ${blocked ? 'is-blocked' : ''}`}
-          title={t('usagePanel.tooltip', 'Questions used — refills every 3 hours')}
+          title={t('usagePanel.tooltip', 'Questions used — refills every week')}
         >
           <span className="account-usage-count">
             {blocked
