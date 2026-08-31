@@ -1,7 +1,11 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getStepTopicLabel } from './planFormatting';
 import { buildNodeReadout } from './nodeReadout';
+import { buildHistoryFeedback } from './studyHistoryModel';
+import { collectCovered, wasSkipped } from './lightReadout';
+import { appendStudyHistory, getStudyPerformance } from '../../Services/StudySessionService';
+import { selectActiveStruggles, selectResolvedConcepts } from '../../Services/conceptLedger';
 import { get_node_debrief } from '../../Services/FastAPICalls';
 import {
   isReminderSupported,
@@ -357,6 +361,130 @@ const NodeTransition = ({
     return () => { alive = false; };
   }, [result, content, quizProgress, chatId, daysUntilExam, planFormats, experimentConfirmed, i18n]);
 
+  /* ── Debrief for everything that isn't a quiz ──────────────────────────
+     Flashcards, lessons, audio and concept maps are most of a plan, and
+     until this they ended on a green tick and a restatement of the node
+     label — sentences writable before she arrived. A student who is paying
+     us for insight into her own studying was getting it on her quizzes and
+     inventory on everything else, which is the half of the product she can
+     most easily conclude is automated.
+
+     A SEPARATE effect from the quiz one above rather than a branch inside
+     it: the two need different payloads and different guards, and only one
+     can ever fire for a given node, so there is no race between them.
+
+     Two shapes:
+
+       FLASHCARDS are scored but single-format, so the format-pattern
+       machinery can never fire on them. The backend reads the cards
+       directly instead. Cards map onto the item shape as front→question,
+       got_it→correct, back→rationale, which is what lets the note say what
+       the ones she blanked on had in common.
+
+       LESSON / AUDIO / MINDMAP have no right or wrong at all. What makes a
+       note on them worth reading is the connection between what the node
+       covered and what her record says she keeps missing — so we send both,
+       and the backend decides whether the link is real. `covered` is
+       deliberately only what she actually reached (see lightReadout).
+
+     Best-effort like the quiz debrief: the screen renders immediately and
+     the note slots in, or never arrives and the plain acknowledgement
+     stands. Nothing here blocks Continue. */
+  /* One request per completed node, enforced by id rather than by effect
+     deps. Several of the deps below (`content`, `nextNode`, the progress
+     objects) are references the parent can hand us fresh on any render, and
+     a re-fire here is not a wasted render — it is another model call, billed,
+     that also replaces a note she may already be reading. */
+  const notedNodeRef = useRef(null);
+
+  useEffect(() => {
+    if (!result) return undefined;
+    const type = result.type;
+    const isCards = result.scored && type === 'flashcard';
+    const isUnscored = !result.scored
+      && (type === 'lesson' || type === 'audio' || type === 'mindmap');
+    if (!isCards && !isUnscored) return undefined;
+
+    const key = `${node?.id || 'node'}:${type}`;
+    if (notedNodeRef.current === key) return undefined;
+
+    let items = [];
+    if (isCards) {
+      const cards = content?.cards;
+      const statuses = flashcardProgress?.cardStatuses;
+      if (!Array.isArray(cards) || !cards.length || !statuses) return undefined;
+      /* Only cards she actually reached. An abandoned deck would otherwise
+         report every card she never saw as one she couldn't recall, and the
+         note would describe a blank she never drew. */
+      items = cards
+        .map((c, i) => ({
+          question: String(c?.front || '').slice(0, 400),
+          correct: statuses[i] === 'got_it',
+          question_type: 'mcq',
+          rationale: String(c?.back || '').slice(0, 600),
+          _answered: statuses[i] != null,
+        }))
+        .filter((it) => it.question && it._answered)
+        .map(({ _answered, ...it }) => it);
+      if (!items.length) return undefined;
+    }
+
+    /* Claimed only once every guard above has passed. Set any earlier and a
+       node whose content is still streaming in would burn its one attempt on
+       the render where the cards had not arrived yet, and never ask again. */
+    notedNodeRef.current = key;
+
+    let alive = true;
+    setDebriefLoading(true);
+    (async () => {
+      /* Her concept ledger is the whole basis of an unscored note, so it is
+         read fresh here rather than taken from `performanceData` — that one
+         is loaded once when the session opens and would be missing every
+         concept resolved since. Failure is not fatal: no ledger simply
+         means the backend writes the forward-looking note instead. */
+      let struggles = [];
+      let resolved = [];
+      if (isUnscored && chatId) {
+        try {
+          const perf = await getStudyPerformance(chatId);
+          const concepts = perf?.concepts || {};
+          // `key` is the normalised label and is always present; falling back
+          // to it keeps an entry whose display label was never captured.
+          struggles = selectActiveStruggles(concepts).map((c) => c.label || c.key).filter(Boolean).slice(0, 8);
+          resolved = selectResolvedConcepts(concepts).map((c) => c.label || c.key).filter(Boolean).slice(0, 8);
+        } catch {
+          // Ledger unavailable — carry on with empty lists.
+        }
+      }
+      if (!alive) return;
+
+      const res = await get_node_debrief(
+        chatId,
+        {
+          topic: result.topic,
+          node_type: type,
+          score_percent: isCards ? result.scorePercent : 0,
+          items,
+          days_until_exam: daysUntilExam,
+          plan_formats: [],
+          covered: isUnscored ? collectCovered({ node, content, mindmapProgress }) : [],
+          struggles,
+          resolved,
+          skipped: isUnscored && wasSkipped({ node, audioSkipped, mindmapProgress }),
+          next_label: nextNode?.label || '',
+          next_type: nextNode?.type || '',
+        },
+        i18n?.language || 'en'
+      );
+      if (alive) {
+        setDebrief(res);
+        setDebriefLoading(false);
+      }
+    })();
+    return () => { alive = false; };
+  }, [result, node, content, flashcardProgress, mindmapProgress, audioSkipped,
+    nextNode, chatId, daysUntilExam, i18n]);
+
   // ── Build diagnosis message ─────────────────────────────────────────
   const diagnosis = useMemo(() => {
     if (!result) return '';
@@ -606,6 +734,57 @@ const NodeTransition = ({
     return chips;
   }, [result, t]);
 
+  /* ── History: what she has done, and what we told her about it ──────
+     Recorded once per node, alongside the conclusion drawn. Storing the
+     conclusion is what stops us delivering the same observation twice as
+     though it were new — nothing erodes "it's paying attention" faster
+     than being told the same thing about yourself three screens running.
+
+     The feedback line is built from the SAME read, so the sentence she
+     sees and the sentence we record can never disagree. */
+  const [historyLine, setHistoryLine] = useState(null);
+
+  useEffect(() => {
+    if (!chatId || !result?.scored || !result?.topic) return;
+    let alive = true;
+
+    (async () => {
+      try {
+        const perf = await getStudyPerformance(chatId);
+        if (!alive) return;
+
+        const feedback = buildHistoryFeedback({
+          history: perf?.history || [],
+          concepts: perf?.concepts || {},
+          topic: result.topic,
+        });
+
+        if (feedback) {
+          setHistoryLine(t(feedback.key, feedback.fallback, feedback.params));
+        }
+
+        // Append AFTER reading, so this node's own result cannot be used as
+        // evidence that she improved during this very node.
+        await appendStudyHistory(chatId, {
+          nodeId: node?.id,
+          type: result.type,
+          topic: result.topic,
+          correct: score?.got ?? 0,
+          total: score?.total ?? 0,
+          missed: result.missedConcepts || [],
+          conclusion: feedback?.conclusionKey || null,
+        });
+      } catch (err) {
+        // A missing history line costs a nice sentence, never the screen.
+        console.warn('History feedback unavailable:', err);
+      }
+    })();
+
+    return () => { alive = false; };
+    // Once per node, deliberately — same lifecycle as the analytics event.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // ── Analytics: fire shown event once per mount with score bucket ───
   useEffect(() => {
     if (!onAnalytics || !result) return;
@@ -767,6 +946,64 @@ const NodeTransition = ({
               </div>
             );
           })()}
+
+          {/* ── What I wrote down ──
+              The one thing on this screen that could not have been written
+              before she arrived. Same treatment as the scored variant on
+              purpose: a note in the tutor's own hand, and underneath it the
+              concepts it is talking about — which are matched server-side
+              from her ledger, never phrased by the model.
+
+              It is allowed to say nothing. A lesson that has no bearing on
+              anything she has missed gets a forward-looking note and no
+              chips, because the alternative is claiming a connection that
+              isn't there, and a student who catches that once stops
+              believing the quiz insights too. */}
+          {(debriefLoading || debrief?.note) && (
+            <div className="nt2-insight nt2-insight--light">
+              {debriefLoading ? (
+                <div className="nt2-insight__skeleton" aria-live="polite" aria-busy="true">
+                  <span className="nt2-insight__bar nt2-insight__bar--head" />
+                  <span className="nt2-insight__bar" />
+                  <span className="sr-only">
+                    {t('transition.noteLoading', 'Looking at what this covered for you…')}
+                  </span>
+                </div>
+              ) : (
+                <>
+                  {/* Same one-line shape as the scored screen's takeaway.
+                      Two visual languages for "here is the personalised bit"
+                      inside one component would teach her that the styling
+                      means something, when all it would mean is which branch
+                      rendered it. The label differs because this one is a
+                      connection to her record, not a thing to revise. */}
+                  <p className="nt4-takeaway">
+                    <span className="nt4-takeaway__label">
+                      {t('transition.noticedLead', 'What I noticed')}
+                    </span>
+                    <span className="nt4-takeaway__text">{debrief.note}</span>
+                  </p>
+                  {debrief.linked?.length > 0 && (
+                    <ul className="nt2-insight__evidence">
+                      {debrief.linked.map((label, i) => (
+                        <li key={i} className="nt2-insight__stat">
+                          {debrief.noteMode === 'reinforced'
+                            ? t('transition.linkedFixed', {
+                              concept: label,
+                              defaultValue: 'you used to miss “{{concept}}”',
+                            })
+                            : t('transition.linkedStruggle', {
+                              concept: label,
+                              defaultValue: 'still costing you: “{{concept}}”',
+                            })}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </div>
+          )}
 
           {/* Continue — advancing takes a couple of network round trips before
               the next node's content appears, so the button has to say so.
@@ -1054,6 +1291,14 @@ const NodeTransition = ({
               </span>
             )}
           </p>
+
+          {/* The history line. Absent whenever there is nothing true to say —
+              buildHistoryFeedback returns null rather than manufacturing
+              encouragement, and the silence is what makes it land when it
+              does appear. */}
+          {historyLine && (
+            <p className="nt2-history-line">{historyLine}</p>
+          )}
         </div>
 
         {/* ── 2. What I noticed ──
@@ -1070,7 +1315,12 @@ const NodeTransition = ({
              A manufactured pattern would be worse than none: it would teach
              her to discount everything else the product says. The backend
              decides which state applies; this only renders it. */}
-        {(debriefLoading || debrief) && (
+        {/* Nothing to show is a real state now that the fallback copy is gone:
+            a debrief with no pattern and no takeaway renders neither, so the
+            divider and its container must go too or the screen keeps a gap
+            where the insight would have been. */}
+        {(debriefLoading
+          || (debrief && (experimentConfirmed || debrief.hasPattern || debrief.note))) && (
           <>
             <div className="nt2-divider" />
             <div className="nt2-insight">
@@ -1119,52 +1369,60 @@ const NodeTransition = ({
                   <p className="nt2-insight__body">{debrief.pattern}</p>
                 </>
               ) : (
-                /* Nothing worth claiming yet. Rather than dressing that up as
-                   an insight ("I'm still figuring out your pattern"), say what
-                   is actually being looked for and what would settle it —
-                   which is also the only honest reason to answer one more. */
-                <div className="nt3-learning">
-                  <p className="nt2-insight__lead">
-                    <span aria-hidden="true">🧠</span>{' '}
-                    {t('transition.learningLead', "I'm learning how you think")}
+                /* No format pattern yet — so the insight is a TAKEAWAY, one
+                   line, and it is the hero of the screen.
+
+                   This replaced a headed block containing a handwritten note
+                   card plus a "2 more of these and I'll have something
+                   specific" promise. Three pieces of furniture around one
+                   sentence, and the sentence was competing with them: the
+                   personalised part is the only reason to read the screen, so
+                   it gets the weight and everything else gets out of its way.
+
+                   The line is a NOUN PHRASE naming the thing to focus on, not
+                   a narration of what happened — the backend drops anything
+                   that opens with "You missed…". Its label follows the mode,
+                   because "focus on" is wrong for a clean run and wrong again
+                   for a total blank. */
+                debrief.note ? (
+                  <p className="nt4-takeaway">
+                    <span className="nt4-takeaway__label">
+                      {debrief.noteMode === 'clean'
+                        ? t('transition.takeawayClean', 'Locked in')
+                        : debrief.noteMode === 'blank'
+                          ? t('transition.takeawayBlank', 'Start here')
+                          : t('transition.takeawayFocus', 'Focus on')}
+                    </span>
+                    <span className="nt4-takeaway__text">{debrief.note}</span>
                   </p>
-                  <p className="nt2-insight__body">
-                    {t('transition.learningBody', {
-                      count: result.total,
-                      defaultValue:
-                        "I've been through all {{count}} of your answers. I'm watching how you approach a question, not just whether you got it right.",
-                    })}
-                  </p>
-                  <p className="nt3-learning__promise">
-                    {debrief.toPattern > 0
-                      ? t('transition.learningPromiseN', {
-                        count: debrief.toPattern,
-                        defaultValue: '{{count}} more of these and I should have something specific for you.',
-                      })
-                      : t('transition.learningPromise',
-                        'A few more questions and I should have something specific for you.')}
-                  </p>
-                </div>
+                ) : (
+                  /* The takeaway is unavailable — offline, slow, or dropped by
+                     its own guards. Say nothing rather than manufacture an
+                     insight; the score line above already said something true,
+                     and the screen still works with the action alone. */
+                  null
+                )
               )}
             </div>
           </>
         )}
 
-        {/* ── 3. What I'd do next ──
-             Not a navigation control. The title says what she gets, the line
-             under it says why THAT and not something else, and the button says
-             what it will do — all three move with the state above, which is
-             what makes this read as a decision somebody made rather than the
-             next step in a flow. */}
-        <div className="nt2-divider" />
-        <div className="nt3-rec">
-          <p className="nt2-insight__lead">
-            <span aria-hidden="true">🎯</span>{' '}
-            {t('transition.whatIdDo', "Here's what I'd do next")}
-          </p>
-          <p className="nt3-rec__title">{recommendation?.title}</p>
-          <p className="nt3-rec__why">{recommendation?.rationale}</p>
+        {/* ── 3. The next action ──
+             ONE dominant control, and nothing above it.
 
+             This used to carry a "Here's what I'd do next" heading, the node
+             title, and a line explaining why that node and not another —
+             three pieces of copy introducing a button whose own label and
+             subtitle already say what it does and how long it takes. Stacked
+             under a headed insight block it made the screen read as a form to
+             work through rather than a decision to make, and it pushed the
+             one personalised line on the screen into the middle of a list.
+
+             The reasoning behind the choice has not gone anywhere: it still
+             comes from buildNodeReadout, still changes with what was found,
+             and now arrives as the button she presses instead of as a
+             paragraph she reads first. */}
+        <div className="nt3-rec">
           <button
             className="node-transition__btn node-transition__btn--choice nt2-primary"
             onClick={handleRecommendation}
@@ -1193,24 +1451,24 @@ const NodeTransition = ({
           </button>
         </div>
 
-        {/* ── Secondary: retention, kept visually quiet on purpose ── */}
+        {/* ── The alternative, offered as a sentence rather than a rival ──
+             This was a bordered card sitting directly under the primary
+             button, at nearly the same visual weight — two boxes competing to
+             be pressed, which is not a quiet secondary option, it is a second
+             decision. As one line it reads as an aside the primary action
+             already assumes she will skip. */}
         {showRecap && (
-          <button
-            type="button"
-            className="nt3-recap"
-            onClick={handleRecap}
-            disabled={isLoadingPractice || isAdvancing}
-          >
-            <span className="nt3-recap__text">
-              <span className="nt3-recap__label">
-                {t('transition.beforeYouMoveOn', 'Before you move on')}
-              </span>
-              <span className="nt3-recap__detail">
-                {t('transition.recapDetailShort', '4 min · lock in what you just learned')}
-              </span>
-            </span>
-            <span className="nt3-recap__cta">{t('transition.review', 'Review →')}</span>
-          </button>
+          <p className="nt4-alt">
+            {t('transition.lockInFirst', 'Want to lock in that weak spot first?')}{' '}
+            <button
+              type="button"
+              className="nt4-alt__link"
+              onClick={handleRecap}
+              disabled={isLoadingPractice || isAdvancing}
+            >
+              {t('transition.reviewMins', 'Review · 4 min')}
+            </button>
+          </p>
         )}
 
         {/* ── Full control, one line, no invitation to go browsing ── */}

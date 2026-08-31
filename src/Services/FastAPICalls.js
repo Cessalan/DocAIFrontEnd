@@ -895,12 +895,16 @@ export const speech_to_text = async (audioBlob) => {
  *   ]
  * }
  */
-export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}, language = 'en') => {
+export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}, language = 'en', diagnostic = null) => {
   const requestBody = JSON.stringify({
     chat_id: chat_id,
     upload_ids: upload_ids,
     language: language,
-    userPreferences: user_preferences
+    userPreferences: user_preferences,
+    // {topic: percent} from the pre-plan diagnostic, or null when she skipped
+    // it. Null reproduces the old uniform plan exactly — same code path on the
+    // backend, not a second one.
+    diagnostic: diagnostic
   });
 
   try {
@@ -1014,7 +1018,7 @@ export const clear_in_flight_study_journey = (chat_id) => {
  *   as soon as the backend emits `plan_ready` — well before first-node generation
  *   finishes. The first-node content lands in _studyPrefetchCache as a side effect.
  */
-export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, language = 'en') => {
+export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, language = 'en', diagnostic = null) => {
   // Reuse an in-flight stream for the same chat_id. This lets us "pre-fire"
   // the journey while the upload tail is still running and have StartStudyModal
   // pick up the same plan promise when the user actually clicks Begin Journey.
@@ -1047,7 +1051,8 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
     chat_id,
     upload_ids,
     language,
-    userPreferences: user_preferences
+    userPreferences: user_preferences,
+    diagnostic
   });
 
   const settleFirstNode = (value) => {
@@ -1209,13 +1214,69 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
  * @param {string} language - Language for questions
  * @returns {Promise<Object>} - { questions: [{ question, options, correctIndex, rationale, topic }] }
  */
+/**
+ * Voice pass over the knowledge-map narration.
+ *
+ * The lines are already written and already true — this only rewrites the
+ * WORDING with a cheap model so a student's second and third plan do not open
+ * with the identical sentence. Anything less than a clean, validated response
+ * resolves to null and the caller keeps its templates.
+ *
+ * Never throws. A failed voice pass is not a failed screen.
+ *
+ * @param {string}   chat_id
+ * @param {string[]} lines            the rendered template lines
+ * @param {string[]} protected_terms  topic names that must survive the rewrite
+ * @returns {Promise<string[]|null>}
+ */
+export const narrate_study_map = async (
+  chat_id,
+  lines,
+  { language = 'en', phase = null, daysToExam = null, protectedTerms = [] } = {}
+) => {
+  try {
+    const response = await fetch(`${FAST_API_BASE}/study/narrate`, {
+      method: "POST",
+      headers: header,
+      body: JSON.stringify({
+        chat_id,
+        lines,
+        language,
+        phase,
+        days_to_exam: daysToExam,
+        protected_terms: protectedTerms
+      })
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    // Length is re-checked here as well as server-side: the caller maps these
+    // onto narration beats by index, so a mismatch would put the wrong
+    // sentence next to the wrong evidence.
+    if (!Array.isArray(data?.lines) || data.lines.length !== lines.length) return null;
+    devLog("🗣️ Narration voiced");
+    return data.lines;
+  } catch (error) {
+    devLog("🗣️ Narration voice pass unavailable — using templates");
+    return null;
+  }
+};
+
 export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en', user_preferences = {}) => {
   try {
-    devLog("🔬 Requesting diagnostic quiz...");
+    devLog("🔬 Requesting diagnostic...");
     const response = await fetch(`${FAST_API_BASE}/study/diagnostic-quiz`, {
       method: "POST",
       headers: header,
-      body: JSON.stringify({ chat_id, upload_ids, language, userPreferences: user_preferences })
+      body: JSON.stringify({
+        chat_id,
+        upload_ids,
+        language,
+        userPreferences: user_preferences,
+        // Verify what she told us was hardest instead of taking her word for
+        // it. When the result contradicts the self-report, that contradiction
+        // is the most valuable thing the diagnostic produces.
+        hardestTopics: user_preferences?.hardestTopics || []
+      })
     });
 
     if (!response.ok) {
@@ -1399,6 +1460,15 @@ export const get_node_debrief = async (chat_id, payload, language = 'en') => {
         items: payload.items || [],
         days_until_exam: payload.days_until_exam ?? null,
         plan_formats: payload.plan_formats || [],
+        // Unscored nodes (lesson, audio, mindmap) carry no items, so the
+        // debrief writes from what the node covered set against her concept
+        // ledger instead. Ignored by the backend for scored node types.
+        covered: payload.covered || [],
+        struggles: payload.struggles || [],
+        resolved: payload.resolved || [],
+        skipped: !!payload.skipped,
+        next_label: payload.next_label || '',
+        next_type: payload.next_type || '',
         language
       })
     });

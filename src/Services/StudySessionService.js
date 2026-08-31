@@ -7,6 +7,7 @@
  */
 
 import { db, auth, storage } from '../Firebase/config';
+import { applyConceptOutcome } from './conceptLedger';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   collection,
@@ -860,6 +861,10 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
  * @param {boolean} [result.correct] - For quiz: was the answer correct
  * @param {boolean} [result.mastered] - For flashcard: was it mastered on first try
  * @param {string} [result.concept] - The question text or card front (what they missed)
+ * @param {string} [result.conceptKey] - Short concept label from the generator
+ *        ("preload vs afterload"). Feeds the concept ledger. Pass it on EVERY
+ *        answer, correct or not — see the ledger block below. Absent on older
+ *        content, in which case that answer simply is not tracked.
  * @param {'mcq'|'sata'|'casestudy'} [result.format] - Question format, for the
  *        format breakdown. Stored at the DOC root (not per topic): a chat is
  *        one uploaded subject, so doc-level buckets already give subject ×
@@ -904,6 +909,79 @@ export const findMatchingTopicKey = (newTopic, existingKeys) => {
   }
 
   return newTopic;
+};
+
+/**
+ * How many completed nodes we keep. Enough to see a trend across a plan
+ * without letting one document grow unbounded.
+ */
+export const HISTORY_CAP = 40;
+
+/**
+ * Append one completed node to the session's history.
+ *
+ * WHY A TIMELINE AND NOT JUST THE RUNNING TOTALS
+ * ──────────────────────────────────────────────
+ * `topics` already holds cumulative correct/total, which can answer "how is
+ * she doing on Cardiac". It cannot answer "is she getting BETTER at Cardiac",
+ * because averages absorb the change: a student who went 2/5 then 5/5 and one
+ * who went 4/5 twice both read as 70%, and only one of them has a story worth
+ * telling her.
+ *
+ * The `conclusion` is stored alongside the score on purpose. It is what we
+ * TOLD her last time, which lets later feedback refer back to it instead of
+ * delivering the same observation twice as if it were new.
+ *
+ * Only scored nodes are recorded. A lesson has no result to trend.
+ *
+ * Timestamps are ISO strings, never serverTimestamp() — Firestore rejects
+ * sentinel values inside array elements, and this is an array.
+ */
+export const appendStudyHistory = async (chatId, entry) => {
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId || !chatId || !entry?.topic) return;
+
+    const ref = doc(db, 'users', userId, 'studyPerformance', chatId);
+    const snap = await getDoc(ref);
+    const data = snap.exists() ? snap.data() : {};
+    const history = Array.isArray(data.history) ? data.history : [];
+
+    // Same node twice (a re-render, a back-and-forward) must not double-count
+    // a result and invent a trend that never happened.
+    const stamp = entry.at || new Date().toISOString();
+    if (entry.nodeId && history.some((h) => h.nodeId === entry.nodeId)) {
+      devLog('📜 History entry already recorded for node', entry.nodeId);
+      return;
+    }
+
+    const row = {
+      at: stamp,
+      nodeId: entry.nodeId || null,
+      type: entry.type || 'quiz',
+      topic: entry.topic,
+      correct: Number(entry.correct) || 0,
+      total: Number(entry.total) || 0,
+      pct: entry.total ? Math.round((entry.correct / entry.total) * 100) : 0,
+      missed: (entry.missed || []).filter(Boolean).slice(0, 5),
+      conclusion: entry.conclusion || null,
+    };
+
+    await setDoc(
+      ref,
+      {
+        history: [...history, row].slice(-HISTORY_CAP),
+        chatId,
+        updatedAt: serverTimestamp(),
+      },
+      { merge: true }
+    );
+    devLog('📜 History recorded:', row.topic, `${row.correct}/${row.total}`);
+  } catch (error) {
+    // Non-critical: losing a history row costs a nicer sentence later, never
+    // the session itself.
+    console.error('❌ Error appending study history:', error);
+  }
 };
 
 export const updateStudyPerformance = async (chatId, result) => {
@@ -964,6 +1042,27 @@ export const updateStudyPerformance = async (chatId, result) => {
       if (result.correct) bucket.correct++;
       formats[result.format] = bucket;
       data.formats = formats;
+    }
+
+    /* ── Concept ledger ──────────────────────────────────────────────
+       Separate from `missedConcepts` on purpose, and NOT a replacement for
+       it. `missedConcepts` stores raw question TEXT because
+       buildQuestionIndex joins on exactly that to recover each question's
+       format; repointing it at concept labels would break that join
+       silently and blank the format breakdown.
+
+       This ledger keys on the short concept label instead, so a variant
+       question on the same misconception lands on the same entry — which is
+       what makes "you were confusing X, and now you aren't" computable.
+
+       Written on EVERY answer, right or wrong. A ledger fed only failures
+       can say what she got wrong but never that she fixed it, which is the
+       whole reason this exists. */
+    if (result.conceptKey) {
+      data.concepts = applyConceptOutcome(data.concepts, {
+        label: result.conceptKey,
+        correct: result.type === 'flashcard' ? !!result.mastered : !!result.correct,
+      });
     }
 
     data.topics[topicKey] = topic;

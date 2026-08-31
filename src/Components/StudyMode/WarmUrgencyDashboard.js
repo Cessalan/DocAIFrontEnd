@@ -1,5 +1,6 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { buildExamNudge } from './examNudgeModel';
 import './WarmUrgencyDashboard.css';
 
 /* ──────────────────────────────────────────────────────────
@@ -173,38 +174,31 @@ const WarmUrgencyDashboard = ({
     }
   }
 
-  // ── Nudge — one sentence, tone driven by the countdown phase ────────
-  let nudgeText;
-  if (studyComplete) {
-    nudgeText = allLocked
-      ? t('warmUrgency.nudgeCompleteAllLocked', "Plan's done and topics are locked in — a practice round keeps it sharp.")
-      : t('warmUrgency.nudgeCompletePartial', "You've made it through the plan — one practice round can solidify everything.");
-  } else if (phase === 'past') {
-    // Exam date has passed but the plan is still open. Don't keep counting
-    // down to a date that's gone — the material is still worth finishing.
-    nudgeText = t('warmUrgency.nudgePast', 'That exam date has passed — finish the plan whenever suits you, or start a new one.');
-  } else if (phase === 'examDay') {
-    // Exam day is not a study day. Anything that sounds like "there's still
-    // time to learn this" is actively harmful a few hours before a test.
-    nudgeText = t('warmUrgency.nudgeExamDay', "Don't learn anything new today — a light review of what you've covered is enough.");
-  } else if (phase === 'final') {
-    nudgeText = nextTopicName
-      ? t('warmUrgency.nudgeFinal', 'Review beats cramming now. {{topic}} is the highest-impact thing left.', { topic: nextTopicName })
-      : t('warmUrgency.nudgeFinalGeneric', 'Review beats cramming now — focus on what you already half-know.');
-  } else if (phase === 'focus') {
-    nudgeText = nextTopicName
-      ? t('warmUrgency.nudgeFocus', "Exam week. Today's session targets {{topic}} — your biggest gap.", { topic: nextTopicName })
-      : t('warmUrgency.nudgeFocusGeneric', "Exam week — today's session targets your biggest gaps first.");
-  } else if (!onTrack) {
-    // Rebalanced, not scolded: the plan already redistributed the backlog, so
-    // say that rather than reporting a debt they can't pay off.
-    nudgeText = t('warmUrgency.nudgeRebalanced', "We've rebalanced the rest of your plan around the days you have left.");
-  } else {
-    // Only reachable at 8+ days out, which is what makes "good position"
-    // true rather than flattery. The same sentence at 3 days would be a lie —
-    // hence the phase branches above.
-    nudgeText = t('warmUrgency.nudgeCalm', "You're in a good position. Consistent daily sessions are what turn into confidence on exam day.");
-  }
+  // ── Nudge — one sentence: an honest read plus one instruction ───────
+  // The branching lives in examNudgeModel so the copy can be asserted. It
+  // reads the calendar AND the readiness estimate, because the night before
+  // an exam the advice for someone at 67% (consolidate what you have) is the
+  // opposite of the advice for someone at 25% (abandon most of it and get one
+  // thing solid). The previous version used one sentence for both, and told
+  // her off about cramming while it did so.
+  const nudge = useMemo(
+    () =>
+      buildExamNudge({
+        phase,
+        daysRemaining,
+        nextTopic: nextTopicName,
+        // Gate on evidence, exactly as the readiness ring does below: an
+        // estimate off two answered questions must not be allowed to tell
+        // her she is in good shape.
+        readinessPct: questionsAnswered > 0 ? readinessPct : null,
+        onTrack,
+        studyComplete,
+        allLocked,
+      }),
+    [phase, daysRemaining, nextTopicName, readinessPct, questionsAnswered,
+     onTrack, studyComplete, allLocked]
+  );
+  const nudgeText = t(nudge.key, nudge.fallback, nudge.params);
 
   // ── Readiness ───────────────────────────────────────────────────────
   // Only shown once questions have actually been answered. Before that the

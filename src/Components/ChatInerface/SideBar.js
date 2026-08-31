@@ -19,6 +19,7 @@ import { DeleteChat, RenameChat } from "../../Services/FireBaseServiceChats.js";
 import DarkModeToggle from './DarkModeToggle';
 import FeedbackButton from './FeedbackButton';
 import OnboardingViewer from './OnboardingViewer';
+import ProMembersViewer from './ProMembersViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
 import RecordClassButton from '../RecordClass/RecordClassButton';
 import AccountModal from '../Common/AccountModal';
@@ -44,6 +45,9 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
   // Onboarding viewer state (dev mode only)
   const [showOnboardingViewer, setShowOnboardingViewer] = useState(false);
+
+  // Pro members viewer state (dev mode only)
+  const [showProMembers, setShowProMembers] = useState(false);
 
   // Account modal (profile + subscription status)
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -676,6 +680,11 @@ const getchatDate = (timestamp) => {
             👁 View Onboarding (Dev)
           </div>
         )}
+        {isDevelopment && (
+          <div className="nav-item" onClick={() => setShowProMembers(true)}>
+            💎 Pro Members (Dev)
+          </div>
+        )}
         <AccountRow
           user={{
             uid: user?.uid,
@@ -702,6 +711,14 @@ const getchatDate = (timestamp) => {
       {/* Onboarding Viewer Modal (Dev Mode Only) */}
       {showOnboardingViewer && (
         <OnboardingViewer onClose={() => setShowOnboardingViewer(false)} />
+      )}
+
+      {/* Pro Members Viewer Modal (Dev Mode Only) */}
+      {showProMembers && (
+        <ProMembersViewer
+          onClose={() => setShowProMembers(false)}
+          onImpersonateUser={onImpersonateUser}
+        />
       )}
 
       {/* Delete confirmation modal */}

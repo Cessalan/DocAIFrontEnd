@@ -18,6 +18,7 @@ import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import ExamConfigModal from './ExamConfigModal';
 import { getStepTopicLabel } from './planFormatting';
+import { computeReadinessDelta } from './readinessDelta';
 import DevPaywallPill from '../Common/DevPaywallPill';
 import { markMessageEngaged } from '../../Services/FireBaseServiceChats';
 import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam, get_prefetched_node_content, consume_prefetched_node_content } from '../../Services/FastAPICalls';
@@ -57,36 +58,15 @@ const QUIZ_QUESTIONS = 5;
 const FLASHCARD_CARDS = 5;
 const DIAGNOSTIC_QUESTIONS = 3;
 
-// Coverage-aware readiness pct — mean across all topics, untested = 0.
-// Mirrors the snapshot logic in StudyPlanOverview so the delta we show
-// on the transition screen stays consistent with the readiness card.
-const meanReadinessPct = (perf) => {
-  const topics = perf?.topics ? Object.values(perf.topics) : [];
-  if (topics.length === 0) return null;
-  let sum = 0;
-  for (const t of topics) {
-    const qTotal = t?.questionsTotal || 0;
-    const qCorrect = t?.questionsCorrect || 0;
-    const fTotal = t?.flashcardsTotal || 0;
-    const fMastered = t?.flashcardsMastered || 0;
-    const parts = [];
-    if (qTotal > 0) parts.push(qCorrect / qTotal);
-    if (fTotal > 0) parts.push(fMastered / fTotal);
-    if (parts.length === 0) sum += 0; // untested topics count as 0
-    else sum += parts.reduce((a, b) => a + b, 0) / parts.length;
-  }
-  return (sum / topics.length) * 100;
-};
+/* Readiness maths lives in readinessDelta.js, tested.
 
-const computeReadinessDelta = (before, after) => {
-  if (!before || !after) return null;
-  const b = meanReadinessPct(before);
-  const a = meanReadinessPct(after);
-  if (b == null || a == null) return null;
-  // Round so we don't show "↑ 0.4% closer to ready" — that reads as fake
-  // gamified noise. Caller hides the line entirely when delta <= 0.
-  return Math.round(a - b);
-};
+   It used to be inlined here and it was wrong in a way a student could see:
+   it averaged only the topics she had already TOUCHED, while the readiness
+   card on the plan overview averages every CURRICULUM topic with untested
+   ones at 0. Same label, two different numbers — and early in a plan the
+   inline version turned one 5-of-5 quiz into "↑ 28% closer to ready", which
+   overstates it by more than double. See the file header for the full
+   account. */
 
 // Mascots that can be randomly selected (excluding NurseQuiz and Brain which have special states)
 const SIDE_MASCOTS = [
@@ -731,6 +711,11 @@ const StudyModeContainer = ({
             type: 'quiz',
             correct: answerData.isCorrect,
             concept: !answerData.isCorrect ? question.question : undefined,
+            // Ledger key — passed whether she got it right or wrong, because a
+            // record of only failures can never show a misconception being
+            // fixed. Undefined on content generated before the backend began
+            // emitting it; that answer is skipped rather than mis-keyed.
+            conceptKey: question.concept,
             // Format drives the "which question types fail you" breakdown.
             // Older payloads only carry it under metadata; mcq is the default
             // shape when neither is present.
@@ -820,6 +805,11 @@ const StudyModeContainer = ({
           type: 'flashcard',
           mastered: isMastered,
           concept: !isMastered ? card.front : undefined
+          // No conceptKey on purpose. Flashcard "mastery" is SELF-reported —
+          // she taps "got it" — so letting it feed the ledger would mean the
+          // readout tells her she fixed a misconception on the strength of her
+          // own opinion. The ledger takes graded evidence only: quizzes and
+          // exams. See conceptLedger.js.
         });
 
         // Show the subtle tracking animation
@@ -1086,11 +1076,18 @@ const StudyModeContainer = ({
     // appears once the post-snapshot resolves.
     if (preNodeSnapshotRef.current && examDate) {
       getStudyPerformance(chatId).then(after => {
-        const delta = computeReadinessDelta(preNodeSnapshotRef.current, after);
+        // The curriculum is the denominator. Without it the number silently
+        // becomes "the average of what you have touched", which is a much
+        // bigger and much less true claim.
+        const delta = computeReadinessDelta(
+          preNodeSnapshotRef.current,
+          after,
+          studyState?.path?.topics || []
+        );
         setReadinessDelta(delta);
       }).catch(() => setReadinessDelta(null));
     }
-  }, [viewOnly, handleAdvanceNode, chatId, examDate]);
+  }, [viewOnly, handleAdvanceNode, chatId, examDate, studyState]);
 
   // Lightweight analytics sink — currently logs in dev. Wire this to
   // a real provider (PostHog, Amplitude, GA) later without touching

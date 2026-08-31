@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
+import SATAQuestion from '../ChatInerface/SATAQuestion';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
 import useGlossary from '../Glossary/useGlossary';
 import parseRationaleOptions from '../../utils/parseRationale';
@@ -228,6 +229,12 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   // - correctBlurb: shipped with every new question; renders as the immediate
   //   one-line "why" under the verdict.
   const { question, options = [], correctIndex: rawCorrectIndex } = currentQuestion;
+  // Quiz nodes used to be MCQ-only, so questionType was absent and could be
+  // assumed. They now emit a MCQ-weighted mix with at least one SATA per node
+  // (STUDY_QUIZ_TYPES, backend) — an MCQ-only first quiz was the last thing
+  // ~39% of students ever saw, and MCQ is the format they're already good at.
+  // Missing questionType still means MCQ, which keeps every saved quiz working.
+  const isSata = currentQuestion.questionType === 'sata';
   const rationale = currentQuestion.rationale || currentQuestion.justification || '';
   const correctBlurb = currentQuestion.correctBlurb || currentQuestion.correct_blurb || '';
 
@@ -702,6 +709,56 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
     }
   };
 
+  /**
+   * Answer handler for non-MCQ questions (currently SATA).
+   *
+   * SATAQuestion owns its own selection UI, submit button and feedback panel,
+   * so this does only the bookkeeping `handleOptionClick` does — status map,
+   * sound, and the onAnswer callback the parent saves progress from. It
+   * deliberately does NOT set selectedIndex: that drives the MCQ option
+   * styling, which isn't rendered for this branch.
+   *
+   * @param {Object} answerData - from SATAQuestion: { isCorrect, score, maxScore, ... }
+   */
+  const handleComplexAnswer = (answerData) => {
+    if (showFeedback) return;
+
+    const correct = !!answerData?.isCorrect;
+    setIsCorrect(correct);
+    setShowFeedback(true);
+
+    if (correct) {
+      playCorrectSound();
+    } else {
+      playIncorrectSound();
+    }
+
+    const newStatuses = {
+      ...questionStatuses,
+      [currentQueuePosition]: correct ? 'correct' : 'incorrect'
+    };
+    setQuestionStatuses(newStatuses);
+
+    if (onAnswer) {
+      onAnswer({
+        selectedIndex: null,
+        questionType: answerData?.questionType || 'sata',
+        isCorrect: correct,
+        score: answerData?.score,
+        maxScore: answerData?.maxScore,
+        questionIndex: currentQueuePosition,
+        progress: {
+          questionStatuses: newStatuses,
+          firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+            ? firstAttemptStatuses
+            : newStatuses,
+          queueIndex: queueIndex,
+          isReviewRound: isReviewRound
+        }
+      });
+    }
+  };
+
   const handleDontKnow = () => {
     if (showFeedback) return;
 
@@ -1082,6 +1139,24 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
               </div>
             )}
 
+            {isSata ? (
+              /* SATA renders its whole question — stem, multi-select options,
+                 submit and feedback — so it replaces the MCQ body rather than
+                 slotting into it. Same component the exam card uses, so the
+                 two surfaces grade select-all identically. quizIndex is the
+                 queue position, which advances on every step (including the
+                 review round), giving the component a fresh key each time. */
+              <SATAQuestion
+                quiz={currentQuestion}
+                quizIndex={queueIndex}
+                totalQuestions={expectedTotal || totalQuestions}
+                onAnswerSelect={handleComplexAnswer}
+                onNext={handleNextQuestion}
+                isLastQuestion={queueIndex >= questionQueue.length - 1}
+                inModal={false}
+              />
+            ) : (
+            <>
             {/* Question text */}
             <p className="study-quiz-question">{question || 'Loading question...'}</p>
 
@@ -1355,6 +1430,8 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
                 </div>
               );
             })()}
+            </>
+            )}
           </div>
 
           {/* Summary and Continue - show when all questions are correct */}

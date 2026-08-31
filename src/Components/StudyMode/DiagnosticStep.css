@@ -1,0 +1,460 @@
+/* ============================================
+   DIAGNOSTIC STEP — warm notebook, same as everywhere else
+
+   FIRST VERSION OF THIS FILE WAS WRONG and the mistake is worth
+   recording. It invented a cool-green palette on cold white,
+   reasoning from "calm study feeling" rather than from the app.
+   It looked like a different product bolted onto this one, which
+   is the opposite of reassuring at the exact moment we are asking
+   a nervous student to trust us.
+
+   So: no new colours here. Everything below comes from the coral
+   notebook system in index.css and StudyMode.css —
+     · coral #e88d7d as the only accent
+     · cream paper, not white
+     · slightly irregular border-radius (the "messy notes" tell)
+     · offset hard shadow + soft shadow, stacked
+     · Kalam for letter chips and eyebrows, Outfit for prose
+     · --transition-wobbly for anything that reacts to a tap
+   The only thing this screen does differently is what it REFUSES
+   to render: no score, no red, no cross against her answer.
+   ============================================ */
+
+.diagnostic {
+  --dg-coral: var(--study-coral, #e88d7d);
+  --dg-coral-dark: var(--study-coral-dark, #c46a5a);
+  --dg-ink: var(--text-primary, #3d3d3d);
+  --dg-ink-soft: var(--text-secondary, #6b6b6b);
+  --dg-muted: var(--text-muted, #999999);
+  --dg-line: rgba(100, 100, 100, 0.12);
+
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 40px 20px 56px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  color: var(--dg-ink);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* ── Header ─────────────────────────────── */
+
+.diagnostic__head {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.diagnostic__eyebrow {
+  margin: 0;
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--dg-coral);
+}
+
+.diagnostic__title {
+  margin: 0;
+  font-size: 28px;
+  line-height: 1.25;
+  font-weight: 700;
+  color: var(--dg-ink);
+}
+
+.diagnostic__sub {
+  margin: 0 auto;
+  max-width: 46ch;
+  font-size: 15.5px;
+  line-height: 1.6;
+  color: var(--dg-ink-soft);
+}
+
+/* Dots rather than "3 of 6 · 1 right". A visible counter invites
+   her to do arithmetic about how she is doing, which is precisely
+   the habit this screen exists to interrupt. */
+.diagnostic__dots {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.diagnostic__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: rgba(100, 100, 100, 0.16);
+  transition: all var(--transition-wobbly, 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55));
+}
+
+.diagnostic__dot.is-done {
+  background: var(--study-peach, #f8c8c4);
+}
+
+.diagnostic__dot.is-current {
+  background: var(--dg-coral);
+  transform: scale(1.4);
+}
+
+/* ── Question card ──────────────────────── */
+
+.diagnostic__card {
+  background: #ffffff;
+  border: 2px solid var(--dg-line);
+  /* Uneven corners — the notebook tell used on every study card. */
+  border-radius: 14px 16px 15px 14px;
+  padding: 26px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 2px 3px 0px rgba(60, 60, 60, 0.06), 0 4px 12px rgba(0, 0, 0, 0.04);
+}
+
+.diagnostic__question {
+  margin: 0 0 4px;
+  font-size: 18px;
+  line-height: 1.5;
+  font-weight: 600;
+  color: var(--dg-ink);
+}
+
+.diagnostic__options {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+
+.diagnostic__option {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  text-align: left;
+  padding: 15px 18px;
+  background: #ffffff;
+  border: 2px solid var(--dg-line);
+  border-radius: 10px 12px 11px 10px;
+  font-family: inherit;
+  font-size: 15.5px;
+  line-height: 1.45;
+  color: var(--dg-ink);
+  cursor: pointer;
+  transition: all var(--transition-wobbly, 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55));
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.04);
+}
+
+.diagnostic__option:hover:not(.is-locked) {
+  border-color: var(--dg-coral);
+  background: rgba(232, 141, 125, 0.05);
+  transform: translateX(4px);
+  box-shadow: 0 8px 20px rgba(232, 141, 125, 0.22);
+}
+
+.diagnostic__option:hover:not(.is-locked) .diagnostic__optionLetter {
+  background: var(--dg-coral);
+  color: #fff;
+}
+
+.diagnostic__optionLetter {
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: rgba(100, 100, 100, 0.08);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--dg-ink-soft);
+  transition: all var(--transition-smooth, 0.3s cubic-bezier(0.4, 0, 0.2, 1));
+}
+
+.diagnostic__optionText { flex: 1; }
+
+.diagnostic__option.is-locked {
+  cursor: default;
+  opacity: 0.7;
+  transform: none;
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.04);
+}
+
+/* The right answer is marked. Her wrong pick is NOT marked wrong —
+   no red, no cross. She can already see which one she chose; adding
+   a failure mark tells her nothing she does not know and takes
+   something from her on the way. Note this is a deliberate
+   DEPARTURE from .study-quiz-option, which does show a wrong state:
+   in a real quiz she is being assessed, here she is not. */
+.diagnostic__option.is-answer {
+  border-color: var(--node-done, #2ed573);
+  background: rgba(46, 213, 115, 0.1);
+  opacity: 1;
+  font-weight: 600;
+}
+
+.diagnostic__option.is-answer .diagnostic__optionLetter {
+  background: var(--node-done, #2ed573);
+  color: #fff;
+}
+
+.diagnostic__option.is-picked:not(.is-answer) {
+  border-color: rgba(100, 100, 100, 0.28);
+  background: rgba(100, 100, 100, 0.04);
+}
+
+/* Same size and shape as a real option: this is an answer, not a
+   forfeit. Dashed only so it reads as the open-ended one. */
+.diagnostic__unsure {
+  width: 100%;
+  padding: 15px 18px;
+  border: 2px dashed rgba(100, 100, 100, 0.2);
+  border-radius: 10px 12px 11px 10px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 15.5px;
+  color: var(--dg-ink-soft);
+  cursor: pointer;
+  transition: all var(--transition-smooth, 0.3s ease);
+}
+
+.diagnostic__unsure:hover {
+  border-color: var(--dg-coral);
+  color: var(--dg-coral-dark);
+  background: rgba(232, 141, 125, 0.04);
+}
+
+/* ── Feedback ───────────────────────────── */
+
+.diagnostic__feedback {
+  border-radius: 12px 14px 13px 12px;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  animation: dgFeedbackIn 260ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes dgFeedbackIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.diagnostic__feedback.is-known,
+.diagnostic__feedback.is-unsure {
+  background: var(--sticky-green, #d8f5d8);
+  border: 2px solid rgba(46, 213, 115, 0.3);
+}
+
+/* Peach sticky note, not a warning. Nothing in this flow is a
+   failure state, so nothing in it is allowed to look like one. */
+.diagnostic__feedback.is-teach {
+  background: var(--sticky-orange, #ffe4c9);
+  border: 2px solid rgba(232, 141, 125, 0.3);
+}
+
+.diagnostic__feedbackTitle {
+  margin: 0;
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--dg-ink);
+}
+
+.diagnostic__feedbackBody {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #55504a;
+}
+
+.diagnostic__next {
+  align-self: flex-start;
+  margin-top: 6px;
+  padding: 11px 24px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--dg-coral) 0%, var(--dg-coral-dark) 100%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 4px 14px rgba(232, 141, 125, 0.3);
+  transition: all var(--transition-wobbly, 0.3s ease);
+}
+
+.diagnostic__next:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(232, 141, 125, 0.4);
+}
+
+/* ── Skip ───────────────────────────────── */
+
+.diagnostic__skip {
+  align-self: center;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--dg-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  padding: 6px 10px;
+}
+
+.diagnostic__skip:hover { color: var(--dg-ink-soft); }
+
+/* ── Hand-off ───────────────────────────── */
+
+.diagnostic__finishing {
+  text-align: center;
+  padding: 64px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.diagnostic__pulse {
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  background: rgba(232, 141, 125, 0.12);
+  border: 3px solid var(--dg-coral);
+  animation: dgPulse 1.4s ease-in-out infinite;
+}
+
+@keyframes dgPulse {
+  0%, 100% { transform: scale(1);    opacity: 0.65; }
+  50%      { transform: scale(1.14); opacity: 1; }
+}
+
+.diagnostic__finishingTitle {
+  margin: 0;
+  font-size: 21px;
+  font-weight: 700;
+}
+
+.diagnostic__finishingSub {
+  margin: 0;
+  font-size: 15px;
+  color: var(--dg-ink-soft);
+}
+
+/* ── Dark mode ──────────────────────────── */
+/* The app has a full dark mode and the first version of this screen
+   ignored it entirely — a white card in a dark app is its own way of
+   feeling like a different product. */
+
+body.dark-mode .diagnostic {
+  --dg-ink: #ececec;
+  --dg-ink-soft: #b8b8b8;
+  --dg-muted: #8a8a8a;
+  --dg-line: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .diagnostic__card,
+body.dark-mode .diagnostic__option {
+  background: #3d3d3d;
+  box-shadow: none;
+}
+
+body.dark-mode .diagnostic__card { background: #2f2f2f; }
+
+body.dark-mode .diagnostic__option:hover:not(.is-locked) {
+  background: rgba(232, 141, 125, 0.15);
+}
+
+body.dark-mode .diagnostic__optionLetter {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cfcfcf;
+}
+
+body.dark-mode .diagnostic__option.is-answer {
+  background: rgba(46, 213, 115, 0.18);
+}
+
+body.dark-mode .diagnostic__option.is-picked:not(.is-answer) {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+body.dark-mode .diagnostic__feedback.is-known,
+body.dark-mode .diagnostic__feedback.is-unsure {
+  background: rgba(46, 213, 115, 0.15);
+}
+
+body.dark-mode .diagnostic__feedback.is-teach {
+  background: rgba(232, 141, 125, 0.15);
+}
+
+body.dark-mode .diagnostic__feedbackBody { color: #c9c9c9; }
+
+body.dark-mode .diagnostic__unsure {
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diagnostic__feedback,
+  .diagnostic__pulse { animation: none; }
+  .diagnostic__option:hover:not(.is-locked),
+  .diagnostic__next:hover { transform: none; }
+}
+
+/* ── Small screens ──────────────────────── */
+
+@media (max-width: 560px) {
+  .diagnostic { padding: 24px 14px 40px; gap: 20px; }
+  .diagnostic__title { font-size: 23px; }
+  .diagnostic__card  { padding: 20px 16px; }
+  .diagnostic__next  { align-self: stretch; text-align: center; }
+}
+
+/* ============================================
+   TAKEOVER
+   The diagnostic and the map own the viewport while they run.
+   Framed inside a modal beside the chat, six questions read as
+   an interruption; full-bleed they read as the beginning of
+   something. The background is the app's own paper gradient and
+   mesh, so this is unmistakably still NurseQuiz — the first
+   version used a flat off-white here, which is most of why the
+   screen felt foreign.
+   ============================================ */
+
+.diagnostic-takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background:
+    radial-gradient(at 0% 0%, rgba(248, 200, 196, 0.2) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(255, 243, 205, 0.15) 0px, transparent 50%),
+    linear-gradient(180deg, var(--bg-paper, #fffef9) 0%, var(--bg-cream, #fdf8f3) 100%);
+}
+
+body.dark-mode .diagnostic-takeover {
+  background: var(--dark-bg-primary, #1a1a1a);
+}
+
+/* Screen-reader-only text. The app defines .sr-only in StudyMode.css, but
+   that lives in a lazily-loaded chunk which is not guaranteed to be present
+   while the diagnostic runs — the diagnostic happens BEFORE study mode is
+   ever opened. Scoped locally so the progress announcement cannot become
+   visible text on a cold load. */
+.diagnostic .sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}

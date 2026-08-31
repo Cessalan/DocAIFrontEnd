@@ -4,10 +4,13 @@ rules_version = '2';
 // EXCEPT billing integrity on users/{uid}. The database is still publicly
 // readable/writable otherwise; a real per-user lockdown is planned post-launch.
 //
-// Billing invariant: usage.tier, stripeCustomerId and stripeSubscriptionId can
-// only be changed by the backend Stripe webhook (Admin SDK bypasses these
-// rules). Clients may still freely write usage.count / usage.windowStart —
-// the quota bookkeeping — as long as the billing fields stay untouched.
+// Billing invariant: usage.tier, stripeCustomerId, stripeSubscriptionId and
+// the whole `billing` map (proSince / proEndedAt / status / ...) can only be
+// changed by the backend Stripe webhook (Admin SDK bypasses these rules).
+// Clients may still freely write usage.count / usage.windowStart — the quota
+// bookkeeping — as long as the billing fields stay untouched.
+// The billingEvents subcollection is the immutable revenue log: readable, but
+// client writes are refused so the timeline can't be forged or erased.
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -24,14 +27,21 @@ service cloud.firestore {
         && request.resource.data.get('stripeCustomerId', '')
           == (resource == null ? '' : resource.data.get('stripeCustomerId', ''))
         && request.resource.data.get('stripeSubscriptionId', '')
-          == (resource == null ? '' : resource.data.get('stripeSubscriptionId', ''));
+          == (resource == null ? '' : resource.data.get('stripeSubscriptionId', ''))
+        // Map equality covers every key inside `billing` in one clause, so
+        // fields added to it later are protected without touching this rule.
+        && request.resource.data.get('billing', {})
+          == (resource == null ? {} : resource.data.get('billing', {}));
 
       // Subcollections (users/{uid}/exams, ...) keep the old open behavior.
       // NOTE: in rules v2 a bare {sub=**} matches ZERO or more segments and
       // would therefore ALSO match the user document itself, reopening the
       // billing fields — so this is anchored one level down on purpose.
+      // NOTE: rules OR together, so a narrower match below cannot take write
+      // access AWAY from an open rule. billingEvents has to be excluded here.
       match /{subcollection}/{subdoc=**} {
-        allow read, write: if true;
+        allow read: if true;
+        allow write: if subcollection != 'billingEvents';
       }
     }
 

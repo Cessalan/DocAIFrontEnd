@@ -120,6 +120,8 @@ import WebSourcesPanel from './WebSourcesPanel';
 
 // Study Mode
 import StartStudyModal from '../StudyMode/StartStudyModal';
+import DiagnosticFlow from '../StudyMode/DiagnosticFlow';
+import { coerceDate, calendarDaysBetween } from '../StudyMode/studySchedule';
 // StudyModeContainer is lazy-loaded — see the code-splitting block below the imports.
 
 // Class recording — opens the overlay attached to the current chat so the
@@ -397,6 +399,12 @@ const ChatInterface = ({
 
   // Study mode state
   const [showStartStudyModal, setShowStartStudyModal] = useState(false);
+  // The pre-plan diagnostic. `diagnosticSession` holds the in-flight questions
+  // promise while the two screens run; `studyDiagnostic` holds the {topic: pct}
+  // result handed to the plan. Null in the second means "skipped or failed",
+  // which is the uniform-plan path.
+  const [diagnosticSession, setDiagnosticSession] = useState(null);
+  const [studyDiagnostic, setStudyDiagnostic] = useState(null);
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [studyState, setStudyState] = useState(null);
   const [studyAutoStart, setStudyAutoStart] = useState(false);
@@ -3780,9 +3788,9 @@ const ChatInterface = ({
       .catch(err => console.error('❌ Failed to persist post-upload actions after plan onboarding:', err));
   };
 
-  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences) => {
+  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences, diagnosticPromise) => {
     if (!planOnboardingMsg) return;
-    devLog('✅ PlanOnboarding confirm — opening StartStudyModal with merged prefs');
+    devLog('✅ PlanOnboarding confirm — running the diagnostic before the plan');
 
     // Persist the user's exam-prep answers (test date + hardest topics)
     // onto the chat document so downstream UI — readiness countdown,
@@ -3848,7 +3856,20 @@ const ChatInterface = ({
     setPendingStudyDocs(docsForStudy);
     setPendingStudyTopics(planOnboardingMsg.topics || []);
     setPendingStudyUserPreferences(userPreferences || userProfile?.onboarding || {});
-    setShowStartStudyModal(true);
+
+    // Diagnostic first, plan second. Without a questions promise there is
+    // nothing to run — go straight to the plan rather than showing a screen
+    // that can only fail.
+    if (diagnosticPromise) {
+      setStudyDiagnostic(null);
+      setDiagnosticSession({
+        promise: diagnosticPromise,
+        userPreferences: userPreferences || userProfile?.onboarding || {},
+        examDate: examDateValue,
+      });
+    } else {
+      setShowStartStudyModal(true);
+    }
   };
 
   // ============================================
@@ -4819,6 +4840,40 @@ const ChatInterface = ({
           topics={pendingQuizMessageData?.topics || []}
         />
 
+        {/* Pre-plan diagnostic → knowledge map. Takes over the viewport: it is
+            a moment in its own right, and framing it in a modal alongside the
+            chat would make six questions look like an interruption rather than
+            the start of something. */}
+        {diagnosticSession && (
+          <div className="diagnostic-takeover">
+            <DiagnosticFlow
+              chatId={currentChatID}
+              questionsPromise={diagnosticSession.promise}
+              userPreferences={diagnosticSession.userPreferences}
+              examName={currentExamData?.examName}
+              daysToExam={(() => {
+                // Reuse the schedule's date helpers rather than adding a
+                // second definition of "how many days is that" — the two
+                // would drift on timezone and midnight handling, and the
+                // student would see one countdown here and a different one
+                // on the plan.
+                const d = coerceDate(diagnosticSession.examDate);
+                return d ? calendarDaysBetween(new Date(), d) : null;
+              })()}
+              onDone={({ scores }) => {
+                setStudyDiagnostic(scores);
+                setDiagnosticSession(null);
+                setShowStartStudyModal(true);
+              }}
+              onSkip={() => {
+                setStudyDiagnostic(null);
+                setDiagnosticSession(null);
+                setShowStartStudyModal(true);
+              }}
+            />
+          </div>
+        )}
+
         {/* Start Study Journey Modal */}
         <StartStudyModal
           isOpen={showStartStudyModal}
@@ -4844,6 +4899,7 @@ const ChatInterface = ({
           language={i18n?.language || 'en'}
           autoStart={true}
           userPreferences={pendingStudyUserPreferences || userProfile?.onboarding || {}}
+          diagnostic={studyDiagnostic}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
@@ -5050,7 +5106,9 @@ const ChatInterface = ({
                         chatId={currentChatID}
                         userOnboarding={userProfile?.onboarding || {}}
                         disabled={isSystemBusy}
-                        onConfirm={({ userPreferences }) => handlePlanOnboardingConfirm(message, userPreferences)}
+                        onConfirm={({ userPreferences, diagnosticPromise }) =>
+                          handlePlanOnboardingConfirm(message, userPreferences, diagnosticPromise)
+                        }
                       />
                     </div>
                   </div>

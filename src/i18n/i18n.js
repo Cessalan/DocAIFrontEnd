@@ -1135,6 +1135,62 @@ const resources = {
       },
 
       // Study Mode
+      history: {
+        fixedConcept: "You were getting {{concept}} wrong earlier. You’ve had it right {{count}} times since.",
+        topicClimb: "First time on {{topic}} you got {{firstCorrect}} of {{firstTotal}}. This time, {{latestCorrect}} of {{latestTotal}}.",
+        persistentConcept: "{{concept}} has caught you {{count}} times now. That’s the one worth slowing down on."
+      },
+      narration: {
+        ack: "Okay \u2014 that tells me a lot.",
+        strongOne: "You\u2019re in better shape than you might think. This one\u2019s already yours:",
+        strongMany: "You\u2019re in better shape than you might think. These are already yours:",
+        contradiction: "And here\u2019s the thing \u2014 you told me {{feared}} was your hardest. It isn\u2019t. You\u2019ve got that one.",
+        work: "Where it gets shaky is here:",
+        workAfterTwist: "What actually needs your time is this:"
+      },
+      coach: {
+        steady: "Your exam is {{count}} days away \u2014 we\u2019ve got time.",
+        focus: "Your exam is {{count}} days away. Enough time to fix real gaps \u2014 not enough to redo everything.",
+        twoDays: "Two days out. That\u2019s tight.",
+        tomorrow: "Your exam is tomorrow. That\u2019s not much time.",
+        examDay: "Your exam is today.",
+        past: "That exam date has already gone by.",
+        undated: "No exam date set, so we\u2019ll go at a steady pace.",
+        planSteady: "Here\u2019s the game plan. We start with {{topics}}, and we take them properly rather than skimming.",
+        planFocus: "So here\u2019s the plan: {{topics}} first, properly.",
+        planFinal: "So we\u2019re not covering everything. Straight at {{topics}} \u2014 that\u2019s where the marks are.",
+        planExamDay: "No new material today \u2014 that never helps. One fast pass over {{topics}}, then stop.",
+        planAllStrong: "Honestly, you\u2019re in good shape. Your path is short checks to keep it that way, not a rebuild.",
+        tail: "{{strong}} you\u2019ve already got \u2014 that moves to the end as a quick refresh."
+      },
+      diagnostic: {
+        eyebrow: "Before we build your plan",
+        eyebrowExam: "Before we plan for {{exam}}",
+        title: "A few quick questions",
+        sub: "Nothing here is graded. I just don\u2019t want to waste your time teaching you things you already know.",
+        progressSr: "Question {{n}} of {{total}}",
+        unsure: "I\u2019m not sure yet",
+        knownTitle: "You\u2019ve got this one.",
+        unsureTitle: "Good \u2014 that\u2019s worth knowing.",
+        teachTitle: "Here\u2019s the idea:",
+        next: "Next",
+        seeResults: "Show me where I stand",
+        skip: "Skip this \u2014 just build my plan",
+        loadingTitle: "Reading your material\u2026",
+        loadingSub: "Working out what to ask you.",
+        buildingTitle: "Reading what you just showed me\u2026",
+        buildingSub: "Working out where you actually stand."
+      },
+      map: {
+        eyebrow: "Here\u2019s where you stand",
+        contradiction: "You told me {{feared}} was your hardest \u2014 you\u2019re actually solid there. It\u2019s {{actual}} that needs the work.",
+        strongEvidence: "You had {{concepts}}.",
+        workEvidence: "Specifically: {{concepts}}.",
+        workEvidenceGeneric: "We haven\u2019t proven this one yet.",
+        cta: "Show me the plan",
+        ctaBusy: "Building your path\u2026",
+        and: " and "
+      },
       study: {
         // StartStudyModal
         startJourney: "Start Study Journey",
@@ -1607,10 +1663,17 @@ const resources = {
         examTomorrow: "Your exam is tomorrow",
         examToday: "Your exam is today",
         nudgeExamDay: "Don't learn anything new today — a light review of what you've covered is enough.",
-        nudgeFinal: "Review beats cramming now. {{topic}} is the highest-impact thing left.",
-        nudgeFinalGeneric: "Review beats cramming now — focus on what you already half-know.",
-        nudgeFocus: "Exam week. Today's session targets {{topic}} — your biggest gap.",
-        nudgeFocusGeneric: "Exam week — today's session targets your biggest gaps first.",
+        nudgeExamDayReady: "Today's the day. Nothing new now \u2014 one calm pass over {{topic}}, then trust the work you've put in.",
+        nudgeExamDayTopic: "Today's the day. Nothing new now \u2014 one calm pass over {{topic}} and leave the rest.",
+        nudgeTomorrowReady: "Tomorrow \u2014 and you've got a real base. Tonight is for locking in {{topic}}, not starting anything new.",
+        nudgeTomorrowBehind: "Tomorrow. Don't spread yourself thin \u2014 get {{topic}} solid and let the rest go. One topic properly beats five half-read.",
+        nudgeTomorrowGeneric: "Tomorrow. Go back over the things you already half-know \u2014 that is where tonight actually pays off.",
+        nudgeTwoDaysReady: "Two days. That's enough to make {{topic}} properly solid \u2014 it's the one that moves your score most.",
+        nudgeTwoDaysBehind: "Two days, so we go narrow: {{topic}} today, review tomorrow. Chasing everything is how both days disappear.",
+        nudgeTwoDaysGeneric: "Two days. Go narrow \u2014 a couple of topics made solid will do more than a pass over everything.",
+        nudgeFocus: "{{count}} days out. Enough time to fix {{topic}} properly, and that is what today is for.",
+        nudgeFocusBehind: "{{count}} days out, and the plan's been reshaped around them. {{topic}} is today.",
+        nudgeFocusGeneric: "Exam week — today's session goes at your biggest gaps first.",
         nudgeRebalanced: "We've rebalanced the rest of your plan around the days you have left.",
         nudgePast: "That exam date has passed — finish the plan whenever suits you, or start a new one.",
         readinessLabel: "Readiness",
@@ -1789,7 +1852,27 @@ const resources = {
         // "Not enough evidence yet" — says what's being looked for and what
         // would settle it, instead of apologising for having nothing
         learningLead: "I'm learning how you think",
+        noteLead: "What I wrote down",
         learningBody: "I've been through all {{count}} of your answers. I'm watching how you approach a question, not just whether you got it right.",
+
+        // The takeaway — one line, the hero of the transition screen. The
+        // label follows the note's mode: "focus on" is wrong for a clean run
+        // and wrong again for a total blank.
+        takeawayFocus: "Focus on",
+        noticedLead: "What I noticed",
+        takeawayClean: "Locked in",
+        takeawayBlank: "Start here",
+        // The alternative action, offered as an aside rather than a rival card
+        lockInFirst: "Want to lock in that weak spot first?",
+        reviewMins: "Review · 4 min",
+
+        // The note on a node with no score (lesson, audio, concept map).
+        // The two "linked" lines label concepts matched server-side against
+        // her ledger — they are the evidence for the note above them, so
+        // they state a fact about her record and never praise her for it.
+        noteLoading: "Looking at what this covered for you…",
+        linkedStruggle: "still costing you: “{{concept}}”",
+        linkedFixed: "you used to miss “{{concept}}”",
         learningPromise: "A few more questions and I should have something specific for you.",
         learningPromiseN_one: "{{count}} more of these and I should have something specific for you.",
         learningPromiseN_other: "{{count}} more of these and I should have something specific for you.",
@@ -3010,6 +3093,62 @@ const resources = {
       },
 
       // Study Mode
+      history: {
+        fixedConcept: "Tu te trompais sur {{concept}} plus tôt. Tu l’as eu juste {{count}} fois depuis.",
+        topicClimb: "La première fois sur {{topic}}, tu avais {{firstCorrect}} sur {{firstTotal}}. Cette fois, {{latestCorrect}} sur {{latestTotal}}.",
+        persistentConcept: "{{concept}} t’a piégée {{count}} fois maintenant. C’est celui-là qui mérite qu’on ralentisse."
+      },
+      narration: {
+        ack: "D\u2019accord \u2014 \u00e7a m\u2019en dit beaucoup.",
+        strongOne: "Tu es en meilleure position que tu ne le penses. Celui-l\u00e0, tu l\u2019as d\u00e9j\u00e0\u00a0:",
+        strongMany: "Tu es en meilleure position que tu ne le penses. Ceux-l\u00e0, tu les as d\u00e9j\u00e0\u00a0:",
+        contradiction: "Et voil\u00e0 le truc \u2014 tu m\u2019avais dit que {{feared}} \u00e9tait le plus dur. Ce ne l\u2019est pas. Celui-l\u00e0, tu l\u2019as.",
+        work: "L\u00e0 o\u00f9 \u00e7a se complique, c\u2019est ici\u00a0:",
+        workAfterTwist: "Ce qui a vraiment besoin de ton temps, c\u2019est \u00e7a\u00a0:"
+      },
+      coach: {
+        steady: "Ton examen est dans {{count}} jours \u2014 on a le temps.",
+        focus: "Ton examen est dans {{count}} jours. Assez pour combler de vraies lacunes \u2014 pas assez pour tout refaire.",
+        twoDays: "Deux jours. C\u2019est serr\u00e9.",
+        tomorrow: "Ton examen est demain. \u00c7a laisse peu de temps.",
+        examDay: "Ton examen est aujourd\u2019hui.",
+        past: "Cette date d\u2019examen est d\u00e9j\u00e0 pass\u00e9e.",
+        undated: "Pas de date d\u2019examen, alors on y va \u00e0 un rythme r\u00e9gulier.",
+        planSteady: "Voici le plan de match. On commence par {{topics}}, et on les fait pour vrai, pas en surface.",
+        planFocus: "Alors voici le plan\u00a0: {{topics}} d\u2019abord, comme il faut.",
+        planFinal: "On ne couvrira donc pas tout. Droit sur {{topics}} \u2014 c\u2019est l\u00e0 que sont les points.",
+        planExamDay: "Pas de nouvelle mati\u00e8re aujourd\u2019hui \u2014 \u00e7a n\u2019aide jamais. Une passe rapide sur {{topics}}, puis on arr\u00eate.",
+        planAllStrong: "Franchement, tu es en bonne position. Ton parcours sert \u00e0 garder \u00e7a \u2014 des v\u00e9rifications courtes, pas un recommencement.",
+        tail: "{{strong}}, tu l\u2019as d\u00e9j\u00e0 \u2014 \u00e7a passe \u00e0 la fin, en r\u00e9vision rapide."
+      },
+      diagnostic: {
+        eyebrow: "Avant de b\u00e2tir ton plan",
+        eyebrowExam: "Avant de planifier pour {{exam}}",
+        title: "Quelques questions rapides",
+        sub: "Rien ici n\u2019est not\u00e9. Je ne veux simplement pas te faire perdre du temps sur ce que tu ma\u00eetrises d\u00e9j\u00e0.",
+        progressSr: "Question {{n}} sur {{total}}",
+        unsure: "Je ne suis pas encore s\u00fbre",
+        knownTitle: "\u00c7a, tu l\u2019as.",
+        unsureTitle: "Bien \u2014 c\u2019est utile \u00e0 savoir.",
+        teachTitle: "Voici l\u2019id\u00e9e\u00a0:",
+        next: "Suivant",
+        seeResults: "Montre-moi o\u00f9 j\u2019en suis",
+        skip: "Passer \u2014 b\u00e2tis simplement mon plan",
+        loadingTitle: "Je lis ton mat\u00e9riel\u2026",
+        loadingSub: "Je pr\u00e9pare mes questions.",
+        buildingTitle: "Je regarde ce que tu viens de me montrer\u2026",
+        buildingSub: "Je situe o\u00f9 tu en es vraiment."
+      },
+      map: {
+        eyebrow: "Voici o\u00f9 tu en es",
+        contradiction: "Tu m\u2019avais dit que {{feared}} \u00e9tait le plus dur \u2014 en fait tu es solide l\u00e0-dessus. C\u2019est {{actual}} qui demande du travail.",
+        strongEvidence: "Tu avais {{concepts}}.",
+        workEvidence: "Pr\u00e9cis\u00e9ment\u00a0: {{concepts}}.",
+        workEvidenceGeneric: "On n\u2019a pas encore v\u00e9rifi\u00e9 celui-l\u00e0.",
+        cta: "Montre-moi le plan",
+        ctaBusy: "Je b\u00e2tis ton parcours\u2026",
+        and: " et "
+      },
       study: {
         // StartStudyModal
         startJourney: "Commencer le parcours d'étude",
@@ -3484,10 +3623,17 @@ const resources = {
         examTomorrow: "Ton examen est demain",
         examToday: "Ton examen est aujourd'hui",
         nudgeExamDay: "N'apprends rien de nouveau aujourd'hui — une révision légère de ce que tu as vu suffit.",
-        nudgeFinal: "Mieux vaut réviser que bachoter. {{topic}} est ce qui rapportera le plus.",
-        nudgeFinalGeneric: "Mieux vaut réviser que bachoter — concentre-toi sur ce que tu sais déjà à moitié.",
-        nudgeFocus: "Semaine d'examen. La session d'aujourd'hui cible {{topic}} — ta plus grande lacune.",
-        nudgeFocusGeneric: "Semaine d'examen — la session d'aujourd'hui cible d'abord tes plus grandes lacunes.",
+        nudgeExamDayReady: "C'est aujourd'hui. Rien de nouveau maintenant \u2014 une passe calme sur {{topic}}, puis fais confiance au travail accompli.",
+        nudgeExamDayTopic: "C'est aujourd'hui. Rien de nouveau maintenant \u2014 une passe calme sur {{topic}}, et laisse le reste.",
+        nudgeTomorrowReady: "C'est demain \u2014 et tu as une vraie base. Ce soir, on consolide {{topic}}, on ne commence rien de neuf.",
+        nudgeTomorrowBehind: "C'est demain. Ne t'\u00e9parpille pas \u2014 rends {{topic}} solide et laisse aller le reste. Un sujet bien ma\u00eetris\u00e9 vaut mieux que cinq survol\u00e9s.",
+        nudgeTomorrowGeneric: "C'est demain. Reprends ce que tu sais d\u00e9j\u00e0 \u00e0 moiti\u00e9 \u2014 c'est l\u00e0 que la soir\u00e9e rapporte vraiment.",
+        nudgeTwoDaysReady: "Deux jours. C'est assez pour rendre {{topic}} vraiment solide \u2014 c'est ce qui fera le plus bouger ton score.",
+        nudgeTwoDaysBehind: "Deux jours, alors on resserre\u00a0: {{topic}} aujourd'hui, r\u00e9vision demain. Vouloir tout couvrir, c'est perdre les deux jours.",
+        nudgeTwoDaysGeneric: "Deux jours. Resserre \u2014 deux sujets bien solides valent mieux qu'un survol de tout.",
+        nudgeFocus: "Dans {{count}} jours. Assez de temps pour régler {{topic}} comme il faut, et c'est à ça que sert aujourd'hui.",
+        nudgeFocusBehind: "Dans {{count}} jours, et le plan a été refait autour de ces jours-là. {{topic}}, c'est aujourd'hui.",
+        nudgeFocusGeneric: "Semaine d'examen — la session d'aujourd'hui attaque d'abord tes plus grandes lacunes.",
         nudgeRebalanced: "On a réparti le reste de ton plan sur les jours qu'il te reste.",
         nudgePast: "Cette date d'examen est passée — termine le plan quand tu veux, ou lances-en un nouveau.",
         readinessLabel: "Préparation",
@@ -3662,7 +3808,21 @@ const resources = {
 
         // Pas encore assez d'indices
         learningLead: "J'apprends comment tu raisonnes",
+        noteLead: "Ce que j’ai noté",
         learningBody: "J'ai repris tes {{count}} réponses. Je regarde comment tu abordes une question, pas seulement si tu as juste.",
+
+        // Le point à retenir — une ligne, l'élément principal de l'écran.
+        takeawayFocus: "À retenir",
+        noticedLead: "Ce que j’ai remarqué",
+        takeawayClean: "Acquis",
+        takeawayBlank: "Commence par",
+        lockInFirst: "Tu veux d'abord consolider ce point faible ?",
+        reviewMins: "Réviser · 4 min",
+
+        // La note sur une étape sans score (leçon, audio, carte conceptuelle).
+        noteLoading: "Je regarde ce que ça couvre pour toi…",
+        linkedStruggle: "te coûte encore : « {{concept}} »",
+        linkedFixed: "tu ratais « {{concept}} » avant",
         learningPromise: "Encore quelques questions et j'aurai quelque chose de précis pour toi.",
         learningPromiseN_one: "Encore {{count}} de ce type et j'aurai quelque chose de précis pour toi.",
         learningPromiseN_other: "Encore {{count}} de ce type et j'aurai quelque chose de précis pour toi.",

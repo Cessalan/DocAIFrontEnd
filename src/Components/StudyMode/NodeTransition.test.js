@@ -52,13 +52,15 @@ const setup = (props = {}) => {
   return { ...handlers, ...utils };
 };
 
-const noPattern = (toPattern = 0) => ({
+const noPattern = (toPattern = 0, note = '', noteMode = '') => ({
   hasPattern: false,
   noticed: '',
   evidence: [],
   pattern: '',
   skill: '',
   toPattern,
+  note,
+  noteMode,
   stillLooking: 'unused',
 });
 
@@ -84,16 +86,48 @@ describe('NodeTransition — the post-node readout', () => {
     expect(screen.getByText("You're getting the hang of this.")).toBeInTheDocument();
   });
 
-  test('with no pattern it says what it is looking for, and never fakes one', async () => {
+  test('the takeaway is one labelled line, and it is the only insight shown', async () => {
+    get_node_debrief.mockResolvedValue(
+      noPattern(2, 'Why high-flow oxygen and bag-mask ventilation are used.', 'single')
+    );
+    setup();
+
+    expect(await screen.findByText('Focus on')).toBeInTheDocument();
+    expect(
+      screen.getByText('Why high-flow oxygen and bag-mask ventilation are used.')
+    ).toBeInTheDocument();
+    expect(screen.queryByText('I noticed something')).toBeNull();
+    // The furniture the takeaway replaced: a heading, a handwritten note card
+    // and a promise to have something specific later. Three pieces of framing
+    // around one sentence, all competing with it.
+    expect(screen.queryByText('What I wrote down')).toBeNull();
+    expect(screen.queryByText(/more of these and I should have something specific/i)).toBeNull();
+    expect(screen.queryByText("I'm learning how you think")).toBeNull();
+  });
+
+  test('the label follows the mode, because "focus on" is wrong for a clean run', async () => {
+    get_node_debrief.mockResolvedValue(
+      noPattern(0, 'Fast recall of the emergency airway steps.', 'clean')
+    );
+    setup();
+
+    expect(await screen.findByText('Locked in')).toBeInTheDocument();
+    expect(screen.queryByText('Focus on')).toBeNull();
+  });
+
+  test('with nothing worth saying, nothing is said — no block, no filler', async () => {
+    // The old screen filled this silence with "I'm learning how you think" and
+    // a promise, which was a claim to be observing her printed immediately
+    // after five answers we could simply have read.
     get_node_debrief.mockResolvedValue(noPattern(2));
     setup();
 
-    expect(await screen.findByText("I'm learning how you think")).toBeInTheDocument();
-    expect(
-      screen.getByText('2 more of these and I should have something specific for you.')
-    ).toBeInTheDocument();
-    expect(screen.queryByText('I noticed something')).toBeNull();
-    // The old copy admitted defeat instead of giving a reason to continue.
+    await screen.findByText('Keep building →');
+    // The skeleton is up until the debrief resolves — an insight that popped
+    // in late would read as a guess, so the space is held while it loads.
+    // What must not survive is the block once we know there is nothing in it.
+    await waitFor(() => expect(document.querySelector('.nt2-insight')).toBeNull());
+    expect(document.querySelector('.nt4-takeaway')).toBeNull();
     expect(screen.queryByText(/still figuring out your pattern/i)).toBeNull();
   });
 
@@ -110,8 +144,14 @@ describe('NodeTransition — the post-node readout', () => {
     get_node_debrief.mockResolvedValue(pattern(3));
     const { onPracticeMore } = setup();
 
-    expect(await screen.findByText('3 prioritization questions')).toBeInTheDocument();
-    expect(screen.getByText('2 of your 3 misses here involved prioritization')).toBeInTheDocument();
+    expect(
+      await screen.findByText('2 of your 3 misses here involved prioritization')
+    ).toBeInTheDocument();
+    // The recommendation's title and reasoning no longer render above the
+    // button — the button's own label and subtitle carry it. The reasoning
+    // still drives WHICH node is built, which is what the click asserts.
+    expect(screen.queryByText('3 prioritization questions')).toBeNull();
+    expect(screen.queryByText("Here's what I'd do next")).toBeNull();
 
     fireEvent.click(screen.getByText('Fix this →'));
     const node = onPracticeMore.mock.calls[0][0];
@@ -133,7 +173,9 @@ describe('NodeTransition — the post-node readout', () => {
     get_node_debrief.mockResolvedValue(noPattern(0));
     const { onPracticeMore } = setup();
 
-    fireEvent.click(await screen.findByText('Review →'));
+    // Offered as a sentence rather than a bordered card, so it stops reading
+    // as a rival to the primary button — but it still does the same thing.
+    fireEvent.click(await screen.findByText('Review · 4 min'));
     const node = onPracticeMore.mock.calls[0][0];
     expect(node.type).toBe('flashcard');
     expect(node.tags).toContain('recap');

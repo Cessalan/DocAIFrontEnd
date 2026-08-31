@@ -37,7 +37,11 @@ const StartStudyModal = ({
   topics = [],
   language = 'en',
   autoStart = false,
-  userPreferences = {}
+  userPreferences = {},
+  // {topic: percent} from the pre-plan diagnostic, or null when she skipped it
+  // (or the diagnostic failed). Null produces the old uniform plan, which is
+  // why nothing else in this component needs to know whether it ran.
+  diagnostic = null
 }) => {
   const { t } = useTranslation();
   const { requirePlanQuota, consumePlan, openUpgrade } = useUsageLimit();
@@ -173,7 +177,7 @@ const StartStudyModal = ({
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
 
     try {
-      const { planPromise } = start_study_journey(chatId, uploadIds, userPreferences, language);
+      const { planPromise } = start_study_journey(chatId, uploadIds, userPreferences, language, diagnostic);
       const path = await planPromise;
 
       if (!path?.nodes?.length) throw new Error('Failed to generate study path');
@@ -193,7 +197,7 @@ const StartStudyModal = ({
       }
       // Fallback to legacy two-call flow if the streaming endpoint fails for any reason.
       try {
-        const path = await plan_study_path(chatId, uploadIds, userPreferences, language);
+        const path = await plan_study_path(chatId, uploadIds, userPreferences, language, diagnostic);
         if (!path?.nodes?.length) throw new Error('Failed to generate study path');
         setPathResult(path);
         setPhase('plan_preview');

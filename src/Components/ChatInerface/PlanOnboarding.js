@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { useTranslation } from 'react-i18next';
 import {
   start_study_journey,
+  plan_diagnostic_quiz,
   clear_in_flight_study_journey
 } from '../../Services/FastAPICalls';
 import {
@@ -77,6 +78,7 @@ const PlanOnboarding = ({
   const [hardestTopics, setHardestTopics] = useState([]);
   const [prepStatus, setPrepStatus] = useState(null);
   const planHandleRef = useRef(null);
+  const diagnosticHandleRef = useRef(null);
   const dateAnchorRef = useRef(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
   // Set in handleConfirm so the unmount cleanup below knows we're handing the
@@ -182,20 +184,28 @@ const PlanOnboarding = ({
 
   const firePlanInBackground = useCallback((finalPrepStatus) => {
     if (!chatId) return;
-    // Plan gate. This is the EARLIEST point generation starts — the plan is
-    // pre-fired here so it's ready by the time the user taps "Build my plan",
-    // which means a blocked user would otherwise burn a full path generation
-    // before ever seeing the paywall. requirePlanQuota opens the modal itself.
+    // Plan gate. This stays exactly where it was even though what we pre-fire
+    // has changed. The diagnostic itself is never metered, so the gate is no
+    // longer protecting a generation call here — it is protecting the STUDENT,
+    // who would otherwise answer six questions, watch her knowledge map
+    // assemble, and only then be told she cannot have a plan. Check early,
+    // charge late. requirePlanQuota opens the upgrade modal itself.
     if (!requirePlanQuota()) return;
     try {
       // Eagerly evict any prior cached promise so we get a fresh fire with
       // the latest prefs (relevant if the user came back via Edit Answers).
       clear_in_flight_study_journey(chatId);
       const prefs = buildUserPreferences({ prepStatus: finalPrepStatus });
-      planHandleRef.current = start_study_journey(chatId, [], prefs, language);
+
+      // Pre-fire the DIAGNOSTIC, not the plan. The plan now depends on the
+      // diagnostic result, so it cannot start until the questions are
+      // answered — but that is not a delay we pay for: generating the plan
+      // takes less time than she spends answering, so it hides completely
+      // inside the diagnostic instead of inside this screen.
+      diagnosticHandleRef.current = plan_diagnostic_quiz(chatId, [], language, prefs);
     } catch (e) {
-      // Non-fatal: StartStudyModal will refire on click if the cache is empty
-      console.warn('PlanOnboarding: background plan fire failed', e);
+      // Non-fatal: DiagnosticFlow falls back to the uniform plan.
+      console.warn('PlanOnboarding: background diagnostic fire failed', e);
     }
   }, [chatId, language, buildUserPreferences, requirePlanQuota]);
 
@@ -208,6 +218,9 @@ const PlanOnboarding = ({
   const handleEditAnswers = () => {
     if (chatId) clear_in_flight_study_journey(chatId);
     planHandleRef.current = null;
+    // Her answers are about to change, so questions chosen from the old ones
+    // are stale — notably hardestTopics, which decides what gets asked twice.
+    diagnosticHandleRef.current = null;
     setPhase('q1');
   };
 
@@ -219,7 +232,9 @@ const PlanOnboarding = ({
     if (topics.length > 0 && hardestTopics.length === 0) return;
     confirmedRef.current = true;
     onConfirm && onConfirm({
-      userPreferences: buildUserPreferences()
+      userPreferences: buildUserPreferences(),
+      // Resolved (or still in flight) diagnostic questions, pre-fired on Q3.
+      diagnosticPromise: diagnosticHandleRef.current
     });
   };
 

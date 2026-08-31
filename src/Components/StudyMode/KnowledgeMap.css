@@ -1,0 +1,246 @@
+/* ============================================
+   KNOWLEDGE MAP — a tutor talking, not a report
+
+   Rebuilt twice. The first version invented a cool-green
+   palette on cold white and looked like a different product.
+   The second used the right colours but the wrong SHAPE: two
+   headed lists and a coral panel, all arriving in one frame,
+   which read as a dashboard however warm the words were.
+
+   This version is a single stream. Sentences arrive typed,
+   and the evidence for each one slides in underneath it as it
+   is mentioned. There are no section headings, because a
+   person talking does not announce headings — the sentence
+   IS the heading.
+
+   Constraints that must not be re-litigated:
+     · no percentages anywhere on this screen
+     · no gauges, bars, ticks or crosses
+     · strengths appear before gaps, always
+   ============================================ */
+
+.kmap {
+  --km-coral: var(--study-coral, #e88d7d);
+  --km-coral-dark: var(--study-coral-dark, #c46a5a);
+  --km-ink: var(--text-primary, #3d3d3d);
+  --km-ink-soft: var(--text-secondary, #6b6b6b);
+  --km-line: rgba(100, 100, 100, 0.12);
+
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 56px 20px 64px;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  color: var(--km-ink);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+/* Tap anywhere to finish the typing. */
+.kmap:not(:has(.kmap__cta.is-ready)) { cursor: pointer; }
+
+/* ── The stream ─────────────────────────── */
+
+.kmap__stream {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.kmap__line {
+  margin: 0;
+  font-size: 19px;
+  line-height: 1.62;
+  color: var(--km-ink);
+  animation: kmLineIn 300ms ease-out;
+}
+
+/* The opening line is the tutor drawing breath — larger, and it
+   sets the register for everything under it. */
+.kmap__line.is-open {
+  font-size: 26px;
+  line-height: 1.35;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+/* The correction — "you told me X was your hardest. It isn't."
+   This is the moment the screen exists for, so it gets the
+   handwritten face and a highlighter behind it rather than a
+   card. A card would make it another row of data; the
+   highlighter makes it something someone said. */
+.kmap__line.is-twist {
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 22px;
+  line-height: 1.5;
+  font-weight: 700;
+  background: linear-gradient(180deg, transparent 62%, var(--sticky-yellow, #fff8b8) 62%);
+  display: inline;
+  padding: 0 2px;
+}
+
+@keyframes kmLineIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.kmap__caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: text-bottom;
+  background: var(--km-coral);
+  animation: kmCaret 1s steps(2, start) infinite;
+}
+
+@keyframes kmCaret {
+  0%, 50%      { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* ── Evidence, revealed under the sentence that names it ── */
+
+.kmap__reveal {
+  margin: -4px 0 4px;
+}
+
+.kmap__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+/* Notes placed on a table, one at a time — the slight rotation and
+   the overshoot are what stop these reading as table rows. */
+.kmap__item {
+  display: flex;
+  gap: 13px;
+  align-items: flex-start;
+  padding: 14px 17px;
+  border-radius: 12px 14px 13px 12px;
+  border: 2px solid var(--km-line);
+  background: #fff;
+  box-shadow: 2px 2px 0px rgba(60, 60, 60, 0.04);
+  opacity: 0;
+  animation: kmNoteIn 420ms cubic-bezier(0.68, -0.4, 0.265, 1.4) forwards;
+}
+
+@keyframes kmNoteIn {
+  from { opacity: 0; transform: translateY(10px) rotate(-0.6deg); }
+  to   { opacity: 1; transform: none; }
+}
+
+.kmap__item--strong {
+  background: var(--sticky-green, #d8f5d8);
+  border-color: rgba(46, 213, 115, 0.3);
+}
+
+.kmap__item--work {
+  background: var(--sticky-orange, #ffe4c9);
+  border-color: rgba(232, 141, 125, 0.3);
+}
+
+/* A dot, never a tick or a cross. A cross beside a topic name is a
+   mark on her, and this screen never marks her. */
+.kmap__mark {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  margin-top: 7px;
+  border-radius: 50%;
+}
+
+.kmap__mark--strong { background: var(--node-done, #2ed573); }
+.kmap__mark--work   { background: var(--km-coral); }
+
+.kmap__itemBody {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.kmap__itemName {
+  margin: 0;
+  font-size: 16.5px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+/* The sentence that turns a score into being understood. */
+.kmap__itemEvidence {
+  margin: 0;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #5c574f;
+}
+
+/* ── CTA ────────────────────────────────── */
+
+.kmap__cta {
+  align-self: flex-start;
+  padding: 15px 30px;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, var(--km-coral) 0%, var(--km-coral-dark) 100%);
+  color: #fff;
+  font-family: inherit;
+  font-size: 16.5px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(232, 141, 125, 0.32);
+  /* Present from the start but quiet, so a student in a hurry can always
+     leave — it brightens when the narration finishes rather than appearing
+     then, because a button that pops into existence is a button she has to
+     wait for. */
+  opacity: 0.55;
+  transition: opacity 400ms ease, transform var(--transition-wobbly, 0.3s ease),
+              box-shadow 300ms ease;
+}
+
+.kmap__cta.is-ready { opacity: 1; }
+
+.kmap__cta:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(232, 141, 125, 0.45);
+}
+
+.kmap__cta:disabled { opacity: 0.5; cursor: default; }
+
+/* ── Dark mode ──────────────────────────── */
+
+body.dark-mode .kmap {
+  --km-ink: #ececec;
+  --km-ink-soft: #b8b8b8;
+  --km-line: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .kmap__item { background: #2f2f2f; box-shadow: none; }
+
+body.dark-mode .kmap__item--strong { background: rgba(46, 213, 115, 0.14); }
+body.dark-mode .kmap__item--work   { background: rgba(232, 141, 125, 0.14); }
+
+body.dark-mode .kmap__itemEvidence { color: #c2c2c2; }
+
+body.dark-mode .kmap__line.is-twist {
+  background: linear-gradient(180deg, transparent 62%, rgba(255, 248, 184, 0.28) 62%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .kmap__line,
+  .kmap__item { animation: none; opacity: 1; }
+  .kmap__caret { animation: none; }
+  .kmap__cta:hover:not(:disabled) { transform: none; }
+}
+
+@media (max-width: 560px) {
+  .kmap { padding: 32px 16px 48px; gap: 22px; }
+  .kmap__line { font-size: 17.5px; }
+  .kmap__line.is-open { font-size: 22px; }
+  .kmap__line.is-twist { font-size: 19px; }
+  .kmap__cta { align-self: stretch; text-align: center; }
+}
