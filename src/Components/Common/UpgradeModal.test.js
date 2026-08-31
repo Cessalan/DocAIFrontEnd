@@ -42,10 +42,10 @@ describe('UpgradeModal (blocked, question gate)', () => {
 
   test('annual is a swap, not a rival button', () => {
     render(<UpgradeModal {...base} />);
-    expect(screen.getByText('CA$8.33')).toBeInTheDocument();
-    fireEvent.click(screen.getByText('Save 55%'));
-    expect(screen.getByText('CA$3.75')).toBeInTheDocument();
-    expect(screen.getByText(/Billed CA\$45 yearly/)).toBeInTheDocument();
+    expect(screen.getByText('$8.33')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Save 50%'));
+    expect(screen.getByText('$4.17')).toBeInTheDocument();
+    expect(screen.getByText(/Billed \$50 yearly/)).toBeInTheDocument();
   });
 
   test('omits the context card when the topic is a placeholder title', () => {

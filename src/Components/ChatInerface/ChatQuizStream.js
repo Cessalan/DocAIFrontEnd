@@ -7,6 +7,8 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
 import useQuizAutoExtend from './useQuizAutoExtend';
 import SATAQuestion from './SATAQuestion';
 import CaseStudyQuestion from './CaseStudyQuestion';
+import ContentRating from './ContentRating';
+import { ratingFromChatQuiz } from '../StudyMode/ratingContext';
 import './ChatQuizStream.css';
 
 /**
@@ -30,8 +32,6 @@ const ChatQuizStream = ({
   // is still cached client-side for the rest of the session.
   onRationaleFetched,
   onComplete,
-  onFeedbackSubmit,
-  feedbackData,
   // Auto-extension: the quiz ships short and grows as the student advances.
   // Both are required for it to run at all — without them the quiz simply
   // stays the length it arrived at. See useQuizAutoExtend.
@@ -238,6 +238,17 @@ const ChatQuizStream = ({
 
   // Post-completion review mode (browse questions without answering)
   const [isPostReviewMode, setIsPostReviewMode] = useState(false);
+
+  /* First-attempt record, keyed by question index.
+     `questionStatuses` is overwritten during the review round, and the
+     completion screen only appears once every question is correct — so by the
+     time anything on that screen is rendered, questionStatuses says 100% no
+     matter how the quiz actually went. That is fine for the XP it drives and
+     useless as a measure of the quiz. This ref never overwrites an entry, so
+     it keeps what she got right the FIRST time, which is the number the rating
+     context needs. A ref rather than state: nothing renders from it, and a
+     re-render per answer to store a number for later is wasted work. */
+  const firstAttemptRef = useRef({});
   const [postReviewIndex, setPostReviewIndex] = useState(0);
 
   // XP animation
@@ -260,6 +271,13 @@ const ChatQuizStream = ({
       questions.forEach((q, idx) => {
         if (q.userSelection) {
           restoredStatuses[idx] = q.userSelection.isCorrect ? 'correct' : 'incorrect';
+          // Seed the first-attempt record for a resumed quiz. The persisted
+          // selection is the closest thing to a first attempt we have across a
+          // reload; leaving it unseeded would report every resumed quiz as
+          // zero correct, which is worse than approximate.
+          if (firstAttemptRef.current[idx] === undefined) {
+            firstAttemptRef.current[idx] = !!q.userSelection.isCorrect;
+          }
         }
       });
 
@@ -587,6 +605,12 @@ const ChatQuizStream = ({
     };
     setQuestionStatuses(newStatuses);
 
+    // Record the first attempt only. A retry in the review round must not
+    // overwrite the miss that sent her there.
+    if (firstAttemptRef.current[currentQueuePosition] === undefined) {
+      firstAttemptRef.current[currentQueuePosition] = correct;
+    }
+
     // Notify parent
     if (onAnswerSelect) {
       onAnswerSelect({
@@ -702,6 +726,27 @@ const ChatQuizStream = ({
   const xpEarned = correctCount * 10;
   const timeTaken = Math.floor((Date.now() - startTimeRef.current) / 1000);
   const isPerfect = correctCount === totalQuestions && Object.values(questionStatuses).every(s => s === 'correct');
+
+  /* Context for the post-quiz rating. Built from the FIRST-attempt record, not
+     questionStatuses — the celebration screen this is shown on only appears
+     once every question is correct, so questionStatuses reads 100% for
+     everyone and would flatten every rating into the same bucket. Recomputed
+     on the celebration render only; it is stable by then. */
+  const rating = useMemo(() => {
+    const attempts = Object.values(firstAttemptRef.current);
+    if (attempts.length === 0) return null;
+    return ratingFromChatQuiz(
+      {
+        correctCount: attempts.filter(Boolean).length,
+        totalQuestions: attempts.length,
+        topic: quizTopic || topic
+      },
+      { locale: i18n.language }
+    );
+    // questionStatuses is not read here, but it changes on every answer and is
+    // the cheapest signal that the first-attempt record may have grown.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [questionStatuses, quizTopic, topic, i18n.language]);
 
   // Format time
   const formatTime = (seconds) => {
@@ -852,6 +897,17 @@ const ChatQuizStream = ({
               {t('study.reviewQuestions', 'Review Questions')} 📖
             </button>
           </div>
+
+          {/* Was the quiz itself any good? Asked here rather than mid-quiz:
+              this is the first moment she can actually answer it. */}
+          {rating && (
+            <ContentRating
+              surface={rating.surface}
+              chatId={chatId}
+              subjectId={messageId}
+              context={rating.context}
+            />
+          )}
         </div>
       </div>
     );

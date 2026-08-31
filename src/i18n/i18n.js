@@ -614,6 +614,38 @@ const resources = {
         buildingDiagram: "Drawing your concept map..."
       },
 
+      // Post-content satisfaction rating (ContentRating). Replaced the
+      // QuizFeedback popover, whose three emoji and single reason wrote to a
+      // field nothing read. Prompts and chips are picked by surface.
+      contentRating: {
+        promptQuiz: "Was this quiz useful?",
+        promptFlashcard: "Were these cards useful?",
+        promptBlock: "Was this useful?",
+        thanks: "Thanks \u2014 noted",
+        groupAria: "Rate this content",
+        helpful: "Useful",
+        helpfulAria: "This was useful",
+        notHelpful: "Not useful",
+        notHelpfulAria: "This was not useful",
+        modalTitleQuiz: "What was wrong with this quiz?",
+        modalTitleFlashcard: "What was wrong with these cards?",
+        modalTitleBlock: "What was wrong with this?",
+        reasonWrongAnswer: "Wrong answer marked correct",
+        reasonNotInMaterial: "Not from my material",
+        reasonBadExplanation: "Explanation didn't help",
+        reasonConfusingWording: "Confusing wording",
+        reasonTooHard: "Too hard",
+        reasonTooEasy: "Too easy",
+        reasonNotExamStyle: "Not NCLEX-style",
+        reasonCardWrong: "The answer looks wrong",
+        reasonCardWordy: "Too much text on the card",
+        reasonRepetitive: "Repetitive cards",
+        reasonNothingNew: "Didn't teach me anything new",
+        reasonTooShallow: "Too shallow",
+        reasonTooLong: "Too long",
+        reasonOther: "Other"
+      },
+
       // Quiz Navigation
       quizNavigation: {
         title: "Quiz Navigation",
@@ -623,26 +655,6 @@ const resources = {
         skipped: "Skipped",
         unanswered: "Unanswered",
         questionPrefix: "Q"
-      },
-
-      // Quiz Feedback
-      quizFeedback: {
-        title: "Quick Feedback",
-        leaveFeedback: "Leave Feedback",
-        submitted: "Feedback sent!",
-        question: "How is your quiz experience?",
-        whatWrong: "Oh no! What went wrong?",
-        whatLike: "What do you like most?",
-        thanks: "Thanks for your help!",
-        ratingBad: "Bad",
-        ratingOkay: "Okay",
-        ratingGood: "Good",
-        tooHard: "Too Hard",
-        confusing: "Confusing",
-        bugs: "Bugs",
-        content: "Content",
-        design: "Design",
-        learning: "Learning"
       },
 
       // Quiz Results Analytics
@@ -739,26 +751,6 @@ const resources = {
         new: "New",
         learning: "Learning",
         mastered: "Mastered"
-      },
-
-      // Flashcard Feedback
-      flashcardFeedback: {
-        title: "Quick Feedback",
-        leaveFeedback: "Leave Feedback",
-        submitted: "Feedback sent!",
-        question: "How is your flashcard experience?",
-        whatWrong: "Oh no! What went wrong?",
-        whatLike: "What do you like most?",
-        thanks: "Thanks for your help!",
-        ratingBad: "Bad",
-        ratingOkay: "Okay",
-        ratingGood: "Good",
-        tooHard: "Too Hard",
-        confusing: "Confusing",
-        bugs: "Bugs",
-        content: "Content",
-        design: "Design",
-        learning: "Learning"
       },
 
       // Onboarding
@@ -2012,8 +2004,8 @@ const resources = {
         // Prix + CTA
         perMonth: "/ mois",
         cancelAnytime: "Annule à tout moment. Sans engagement.",
-        // Le symbole est écrit en toutes lettres ici : "CA$45" se dit "45 $ CA".
-        billedYearly: "Facturé {{amount}} $ CA par année. Annule à tout moment.",
+        // Le symbole est écrit en toutes lettres ici : "$50" se dit "50 $ US".
+        billedYearly: "Facturé {{amount}} $ US par année. Annule à tout moment.",
         savePct: "Économise {{pct}} %",
         withAnnual: "avec l'annuel",
         switchMonthly: "Passer au mensuel",
@@ -2574,6 +2566,36 @@ const resources = {
         buildingDiagram: "Création de votre schéma conceptuel..."
       },
 
+      // \u00c9valuation de satisfaction apr\u00e8s un contenu (ContentRating)
+      contentRating: {
+        promptQuiz: "Ce quiz vous a-t-il \u00e9t\u00e9 utile\u00a0?",
+        promptFlashcard: "Ces cartes vous ont-elles \u00e9t\u00e9 utiles\u00a0?",
+        promptBlock: "Cela vous a-t-il \u00e9t\u00e9 utile\u00a0?",
+        thanks: "Merci \u2014 c'est not\u00e9",
+        groupAria: "\u00c9valuer ce contenu",
+        helpful: "Utile",
+        helpfulAria: "Cela m'a \u00e9t\u00e9 utile",
+        notHelpful: "Pas utile",
+        notHelpfulAria: "Cela ne m'a pas \u00e9t\u00e9 utile",
+        modalTitleQuiz: "Qu'est-ce qui n'allait pas dans ce quiz\u00a0?",
+        modalTitleFlashcard: "Qu'est-ce qui n'allait pas dans ces cartes\u00a0?",
+        modalTitleBlock: "Qu'est-ce qui n'allait pas\u00a0?",
+        reasonWrongAnswer: "Mauvaise r\u00e9ponse marqu\u00e9e correcte",
+        reasonNotInMaterial: "Absent de mes documents",
+        reasonBadExplanation: "L'explication n'a pas aid\u00e9",
+        reasonConfusingWording: "Formulation confuse",
+        reasonTooHard: "Trop difficile",
+        reasonTooEasy: "Trop facile",
+        reasonNotExamStyle: "Pas dans le style NCLEX",
+        reasonCardWrong: "La r\u00e9ponse semble incorrecte",
+        reasonCardWordy: "Trop de texte sur la carte",
+        reasonRepetitive: "Cartes r\u00e9p\u00e9titives",
+        reasonNothingNew: "Ne m'a rien appris de nouveau",
+        reasonTooShallow: "Trop superficiel",
+        reasonTooLong: "Trop long",
+        reasonOther: "Autre"
+      },
+
       // Quiz Navigation
       quizNavigation: {
         title: "Navigation du Quiz",
@@ -2583,26 +2605,6 @@ const resources = {
         skipped: "Passée",
         unanswered: "Non répondue",
         questionPrefix: "Q"
-      },
-
-      // Quiz Feedback
-      quizFeedback: {
-        title: "Commentaire rapide",
-        leaveFeedback: "Laisser un commentaire",
-        submitted: "Commentaire envoyé!",
-        question: "Comment se passe ton quiz?",
-        whatWrong: "Oh non! Qu'est-ce qui ne va pas?",
-        whatLike: "Qu'est-ce que tu aimes le plus?",
-        thanks: "Merci pour ton aide!",
-        ratingBad: "Mauvais",
-        ratingOkay: "Correct",
-        ratingGood: "Bon",
-        tooHard: "Trop difficile",
-        confusing: "Confus",
-        bugs: "Bogues",
-        content: "Contenu",
-        design: "Design",
-        learning: "Apprentissage"
       },
 
       // Quiz Results Analytics
@@ -2699,26 +2701,6 @@ const resources = {
         new: "Nouveau",
         learning: "En apprentissage",
         mastered: "Maîtrisé"
-      },
-
-      // Flashcard Feedback
-      flashcardFeedback: {
-        title: "Commentaire rapide",
-        leaveFeedback: "Laisser un commentaire",
-        submitted: "Commentaire envoyé!",
-        question: "Comment se passent tes cartes mémoire?",
-        whatWrong: "Oh non! Qu'est-ce qui ne va pas?",
-        whatLike: "Qu'est-ce que tu aimes le plus?",
-        thanks: "Merci pour ton aide!",
-        ratingBad: "Mauvais",
-        ratingOkay: "Correct",
-        ratingGood: "Bon",
-        tooHard: "Trop difficile",
-        confusing: "Confus",
-        bugs: "Bogues",
-        content: "Contenu",
-        design: "Design",
-        learning: "Apprentissage"
       },
 
       // Onboarding

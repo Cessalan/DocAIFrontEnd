@@ -1219,24 +1219,6 @@ body.dark-mode .flashcard-compact-loading {
   color: #c9b8bd;
 }
 
-/* Dev feedback display */
-.flashcard-feedback-dev-display {
-  margin-top: 12px;
-  background: rgba(249, 115, 22, 0.1);
-  border: 1px solid rgba(249, 115, 22, 0.3);
-  border-radius: 8px;
-  font-size: 12px;
-}
-
-.dev-feedback-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background: rgba(249, 115, 22, 0.15);
-  border-bottom: 1px solid rgba(249, 115, 22, 0.2);
-}
-
 .dev-badge {
   background: #f97316;
   color: white;
@@ -1244,65 +1226,6 @@ body.dark-mode .flashcard-compact-loading {
   font-weight: 700;
   padding: 2px 5px;
   border-radius: 3px;
-}
-
-.dev-feedback-title {
-  font-size: 11px;
-  font-weight: 600;
-  color: #ea580c;
-}
-
-.dev-feedback-content {
-  padding: 10px;
-}
-
-.dev-feedback-row {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 4px;
-}
-
-.dev-feedback-label {
-  font-weight: 600;
-  color: #9a3412;
-}
-
-.dev-feedback-value {
-  color: #ea580c;
-}
-
-/* Feedback section under results */
-.flashcard-results-feedback {
-  display: flex;
-  justify-content: center;
-  padding-top: 12px;
-  margin-top: 14px;
-  border-top: 1px dashed rgba(219, 39, 119, 0.2);
-}
-
-body.dark-mode .flashcard-results-feedback {
-  border-top-color: rgba(244, 114, 182, 0.2);
-}
-
-body.dark-mode .flashcard-feedback-dev-display {
-  background: rgba(249, 115, 22, 0.1);
-  border-color: rgba(249, 115, 22, 0.2);
-}
-
-body.dark-mode .dev-feedback-header {
-  background: rgba(249, 115, 22, 0.12);
-}
-
-body.dark-mode .dev-feedback-title {
-  color: #fb923c;
-}
-
-body.dark-mode .dev-feedback-label {
-  color: #fb923c;
-}
-
-body.dark-mode .dev-feedback-value {
-  color: #fdba74;
 }
 
 /* ============================================

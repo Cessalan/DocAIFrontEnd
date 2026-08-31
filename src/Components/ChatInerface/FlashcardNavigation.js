@@ -1,6 +1,5 @@
 import React from 'react';
 import './FlashcardNavigation.css';
-import FlashcardFeedback from './FlashcardFeedback';
 
 /**
  * FlashcardNavigation - Clean sidebar navigation for flashcards
@@ -8,13 +7,8 @@ import FlashcardFeedback from './FlashcardFeedback';
 function FlashcardNavigation({
   flashcards,
   currentIndex,
-  onNavigate,
-  onFeedbackSubmit,
-  hasGivenFeedback,
-  feedbackData
+  onNavigate
 }) {
-  const isDev = process.env.NODE_ENV === 'development';
-
   if (!flashcards || flashcards.length === 0) {
     return null;
   }
@@ -79,22 +73,6 @@ function FlashcardNavigation({
           );
         })}
       </div>
-
-      {/* Feedback */}
-      <div className="flashcard-nav-feedback">
-        <FlashcardFeedback
-          onFeedbackSubmit={onFeedbackSubmit}
-          hasSubmitted={hasGivenFeedback}
-        />
-      </div>
-
-      {/* Dev Mode */}
-      {isDev && feedbackData && (
-        <div className="dev-feedback-box">
-          <span className="dev-badge">DEV</span>
-          <span className="dev-text">{feedbackData.rating}</span>
-        </div>
-      )}
     </div>
   );
 }

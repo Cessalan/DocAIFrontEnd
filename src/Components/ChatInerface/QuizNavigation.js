@@ -1,16 +1,13 @@
 import React, { useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import './QuizNavigation.css';
-import QuizFeedback from './QuizFeedback';
 
 function QuizNavigation({
   questions = [],
   currentIndex,
   onNavigate,
   userAnswers = [],
-  skippedQuestions = [],
-  onFeedbackSubmit,
-  hasGivenFeedback
+  skippedQuestions = []
 }) {
   const { t } = useTranslation();
   const navListRef = useRef(null);
@@ -102,13 +99,6 @@ function QuizNavigation({
             </button>
           );
         })}
-      </div>
-
-      <div className="quiz-nav-footer">
-        <QuizFeedback
-          onFeedbackSubmit={onFeedbackSubmit}
-          hasSubmitted={hasGivenFeedback}
-        />
       </div>
     </div>
   );

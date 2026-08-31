@@ -23,6 +23,7 @@ const BlogList = lazy(() => import("./Components/Blog/BlogList"));
 const BlogPost = lazy(() => import("./Components/Blog/BlogPost"));
 const NclexQuestionGenerator = lazy(() => import("./Components/LandingPages/NclexQuestionGenerator"));
 const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmin"));
+const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
 
 /**
  * Route-level loading state. Deliberately self-contained (inline styles, brand
@@ -80,6 +81,9 @@ function App() {
         {/* Admin Routes - DEV ONLY */}
         {isDev && (
           <Route path="/admin/question-bank" element={<QuestionBankAdmin />} />
+        )}
+        {isDev && (
+          <Route path="/admin/satisfaction" element={<SatisfactionDashboard />} />
         )}
 
         {/* Home - Redirect to chat */}

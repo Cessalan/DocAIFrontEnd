@@ -76,7 +76,6 @@ function ChatQuiz(props) {
   const {
     quiz,
     onAnswerSelect,
-    messageId,
     quizIndex = 0,
     onNext,
     isLastQuestion = false,
@@ -89,8 +88,6 @@ function ChatQuiz(props) {
     onModalChange,  // Callback to update parent modal state
     skippedQuestions = [], // New prop for skipped questions
     onNavigate, // New prop for navigation
-    onFeedbackSubmit, // New prop for feedback submission
-    feedbackData, // Feedback data from message (if already submitted)
     isStreaming = false, // Whether quiz is still being generated
     expectedTotal = 10 // Expected total questions (for progress bar during streaming)
   } = props;
@@ -100,19 +97,8 @@ function ChatQuiz(props) {
   const [revealed, setRevealed] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [reviewMode, setReviewMode] = useState(false);
-  const [feedbackGiven, setFeedbackGiven] = useState(false);
-  const [submittedFeedback, setSubmittedFeedback] = useState(feedbackData);
   const [showXpAnimation, setShowXpAnimation] = useState(false);
   const [jsonCopied, setJsonCopied] = useState(false);
-
-  const handleFeedbackSubmit = (data) => {
-    console.log('Quiz Feedback Submitted:', data);
-    setFeedbackGiven(true);
-    setSubmittedFeedback(data);
-    if (onFeedbackSubmit) {
-      onFeedbackSubmit(messageId, data);
-    }
-  };
 
   // Development mode detection
   const isDevelopment = process.env.NODE_ENV === 'development';
@@ -161,19 +147,6 @@ function ChatQuiz(props) {
       }
     }
   }, [quiz, quizIndex]); // Added quizIndex to ensure reset on question change
-
-  // Initialize feedbackGiven from message data
-  useEffect(() => {
-    // Check if message has feedbackData to determine if feedback was already given
-    console.log('📊 Checking feedbackData:', feedbackData);
-    if (feedbackData && feedbackData.submittedAt) {
-      console.log('✅ Feedback already submitted, hiding feedback button');
-      setFeedbackGiven(true);
-    } else {
-      console.log('❌ No feedback found, showing feedback button');
-      setFeedbackGiven(false);
-    }
-  }, [feedbackData]);
 
   useEffect(() => {
     if (showReview) {
@@ -339,8 +312,6 @@ function ChatQuiz(props) {
                 onNavigate={onNavigate}
                 userAnswers={userAnswers}
                 skippedQuestions={skippedQuestions}
-                onFeedbackSubmit={handleFeedbackSubmit}
-                hasGivenFeedback={feedbackGiven}
               />
             </div>
           )}
@@ -381,8 +352,6 @@ function ChatQuiz(props) {
                 onNavigate={onNavigate}
                 userAnswers={userAnswers}
                 skippedQuestions={skippedQuestions}
-                onFeedbackSubmit={handleFeedbackSubmit}
-                hasGivenFeedback={feedbackGiven}
               />
             </div>
           )}
@@ -423,8 +392,6 @@ function ChatQuiz(props) {
                 onNavigate={onNavigate}
                 userAnswers={userAnswers}
                 skippedQuestions={skippedQuestions}
-                onFeedbackSubmit={handleFeedbackSubmit}
-                hasGivenFeedback={feedbackGiven}
               />
             </div>
           )}
@@ -499,8 +466,6 @@ function ChatQuiz(props) {
               onNavigate={onNavigate}
               userAnswers={userAnswers}
               skippedQuestions={skippedQuestions}
-              onFeedbackSubmit={handleFeedbackSubmit}
-              hasGivenFeedback={feedbackGiven}
             />
           </div>
         )}
@@ -763,29 +728,6 @@ function ChatQuiz(props) {
         </div>
       )}
 
-      {/* Dev Mode: Show collected feedback below quiz */}
-      {isDevelopment && submittedFeedback && (
-        <div style={{ marginTop: '16px', padding: '12px', background: 'rgba(249, 115, 22, 0.08)', border: '1px solid rgba(249, 115, 22, 0.3)', borderRadius: '8px', fontSize: '13px' }}>
-          <div style={{ fontWeight: '600', color: '#ea580c', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ background: '#f97316', color: 'white', fontSize: '9px', padding: '2px 5px', borderRadius: '3px', fontWeight: '700' }}>DEV</span>
-            Quiz Feedback Collected
-          </div>
-          <div style={{ display: 'flex', gap: '16px', fontSize: '12px' }}>
-            <div>
-              <span style={{ fontWeight: '600', color: '#9a3412' }}>Rating: </span>
-              <span style={{ color: '#ea580c' }}>
-                {submittedFeedback.rating === 'bad' && '☹️ Bad'}
-                {submittedFeedback.rating === 'neutral' && '😐 Neutral'}
-                {submittedFeedback.rating === 'good' && '😄 Good'}
-              </span>
-            </div>
-            <div>
-              <span style={{ fontWeight: '600', color: '#9a3412' }}>Detail: </span>
-              <span style={{ color: '#ea580c' }}>{submittedFeedback.detail}</span>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   );
 }

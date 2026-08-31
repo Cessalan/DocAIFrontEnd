@@ -261,7 +261,6 @@ function PublicQuizView() {
             onSkip={handleSkip}
             onNavigate={handleNavigate}
             isLastQuestion={currentQuizIndex === quizData.quizzes.length - 1}
-            messageId={`public-${shareId}`}
           />
         )}
       </div>

@@ -60,36 +60,6 @@ export const SubmitFeedback = async (feedbackData) => {
 };
 
 /**
- * Submit quick feedback (emoji reactions, ratings, etc.)
- * @param {Object} quickFeedback - Quick feedback data
- * @returns {Promise<Object>} - Result object
- */
-export const SubmitQuickFeedback = async (quickFeedback) => {
-  try {
-    const feedbackRef = collection(db, "quickFeedback");
-
-    const feedbackDoc = {
-      ...quickFeedback,
-      timestamp: serverTimestamp(),
-      createdAt: new Date()
-    };
-
-    const docRef = await addDoc(feedbackRef, feedbackDoc);
-
-    console.log("✅ Quick feedback submitted:", docRef.id);
-
-    return {
-      success: true,
-      feedbackId: docRef.id
-    };
-
-  } catch (error) {
-    console.error("❌ Error submitting quick feedback:", error);
-    throw error;
-  }
-};
-
-/**
  * Get all feedback from Firebase (DEV MODE ONLY)
  * @returns {Promise<Array>} - Array of feedback documents
  */

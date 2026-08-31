@@ -1,0 +1,394 @@
+/**
+ * SatisfactionDashboard — dev-only read screen for `satisfactionSignals`.
+ *
+ * Deliberately plainer than the student-facing surfaces: this is a tool, and
+ * the numbers should be the only thing competing for attention. It still
+ * follows the app's tokens and dark-mode convention so it doesn't flash white
+ * inside a dark session.
+ */
+
+.sat-dash {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 32px 24px 80px;
+  color: var(--text-primary, #3d3d3d);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+}
+
+.sat-dash__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(100, 80, 60, 0.12);
+}
+
+.sat-dash__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.sat-dash__sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted, #999);
+}
+
+.sat-dash__sub code {
+  font-size: 12px;
+  background: rgba(100, 80, 60, 0.07);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.sat-dash__windows {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sat-dash__window,
+.sat-dash__refresh {
+  padding: 6px 12px;
+  font-size: 12.5px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid rgba(100, 80, 60, 0.14);
+  background: rgba(255, 255, 255, 0.7);
+  color: var(--text-secondary, #6b6b6b);
+  cursor: pointer;
+  transition: background var(--transition-fast, 0.2s ease),
+              border-color var(--transition-fast, 0.2s ease),
+              color var(--transition-fast, 0.2s ease);
+}
+
+.sat-dash__window:hover,
+.sat-dash__refresh:hover {
+  border-color: rgba(100, 80, 60, 0.28);
+  color: var(--text-primary, #3d3d3d);
+}
+
+.sat-dash__window.is-active {
+  background: var(--primary-coral, #e88d7d);
+  border-color: var(--primary-coral, #e88d7d);
+  color: #fff;
+}
+
+.sat-dash__refresh {
+  margin-left: 8px;
+}
+
+.sat-dash__section {
+  margin-bottom: 40px;
+}
+
+.sat-dash__h2 {
+  margin: 0 0 6px;
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+.sat-dash__count {
+  font-weight: 400;
+  color: var(--text-muted, #999);
+}
+
+.sat-dash__note {
+  margin: 0 0 14px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted, #999);
+  max-width: 62ch;
+}
+
+.sat-dash__state {
+  font-size: 13.5px;
+  color: var(--text-secondary, #6b6b6b);
+  padding: 14px 0;
+}
+
+.sat-dash__state--error {
+  color: #c0392b;
+}
+
+.sat-dash__warn {
+  margin-top: 12px;
+  font-size: 12.5px;
+  color: #b26a00;
+}
+
+/* ── Stat cards ───────────────────────────────────────────────────── */
+
+.sat-dash__cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+}
+
+.sat-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 16px;
+  border: 1px solid rgba(100, 80, 60, 0.12);
+  border-radius: var(--radius-md, 12px);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+/* The one number this screen exists to show. */
+.sat-card--primary {
+  border-color: rgba(232, 141, 125, 0.45);
+  background: rgba(232, 141, 125, 0.07);
+}
+
+.sat-card__label {
+  font-size: 12px;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.sat-card__value {
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.sat-card__meta {
+  font-size: 11.5px;
+  color: var(--text-muted, #999);
+}
+
+/* ── Table ────────────────────────────────────────────────────────── */
+
+.sat-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+
+.sat-table th {
+  text-align: left;
+  font-weight: 500;
+  font-size: 11.5px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted, #999);
+  padding: 6px 10px;
+  border-bottom: 1px solid rgba(100, 80, 60, 0.12);
+}
+
+.sat-table td {
+  padding: 9px 10px;
+  border-bottom: 1px solid rgba(100, 80, 60, 0.07);
+}
+
+.sat-table td:not(:first-child),
+.sat-table th:not(:first-child) {
+  text-align: right;
+  width: 80px;
+}
+
+.sat-net.is-bad { color: #c0392b; font-weight: 600; }
+.sat-net.is-good { color: #16a34a; font-weight: 600; }
+
+/* ── Reason bars ──────────────────────────────────────────────────── */
+
+.sat-bars {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sat-bar {
+  display: grid;
+  grid-template-columns: minmax(140px, 1.2fr) 3fr auto;
+  gap: 12px;
+  align-items: center;
+  font-size: 12.5px;
+}
+
+.sat-bar__label { color: var(--text-secondary, #6b6b6b); }
+
+.sat-bar__track {
+  height: 8px;
+  border-radius: 4px;
+  background: rgba(100, 80, 60, 0.09);
+  overflow: hidden;
+}
+
+.sat-bar__fill {
+  display: block;
+  height: 100%;
+  border-radius: 4px;
+  background: var(--primary-coral, #e88d7d);
+}
+
+.sat-bar__count {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-muted, #999);
+  white-space: nowrap;
+}
+
+/* ── Volume sparkline ─────────────────────────────────────────────── */
+
+.sat-spark {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  height: 72px;
+  padding: 4px 0;
+  overflow-x: auto;
+}
+
+.sat-spark__col {
+  flex: 1 0 6px;
+  min-width: 6px;
+  display: flex;
+  flex-direction: column-reverse;
+  height: 100%;
+  justify-content: flex-start;
+}
+
+.sat-spark__pos { background: rgba(34, 197, 94, 0.55); border-radius: 2px 2px 0 0; }
+.sat-spark__neg { background: rgba(232, 141, 125, 0.85); }
+
+/* ── Comments ─────────────────────────────────────────────────────── */
+
+.sat-comments {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sat-comment {
+  padding: 13px 15px;
+  border: 1px solid rgba(100, 80, 60, 0.12);
+  border-radius: var(--radius-md, 12px);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.sat-comment__head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  font-size: 11.5px;
+  color: var(--text-muted, #999);
+  margin-bottom: 7px;
+}
+
+.sat-comment__surface { font-weight: 600; color: var(--text-secondary, #6b6b6b); }
+.sat-comment__date { margin-left: auto; }
+
+.sat-comment__score,
+.sat-comment__topic {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: rgba(100, 80, 60, 0.07);
+}
+
+.sat-comment__text {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.sat-comment__reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 9px;
+}
+
+.sat-comment__chip {
+  font-size: 11px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(232, 141, 125, 0.35);
+  color: var(--primary-coral-dark, #c46a5a);
+  background: rgba(232, 141, 125, 0.08);
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────── */
+
+body.dark-mode .sat-dash { color: rgba(255, 255, 255, 0.92); }
+
+body.dark-mode .sat-dash__header { border-bottom-color: rgba(255, 255, 255, 0.1); }
+
+body.dark-mode .sat-dash__sub,
+body.dark-mode .sat-dash__note,
+body.dark-mode .sat-card__meta,
+body.dark-mode .sat-bar__count,
+body.dark-mode .sat-comment__head,
+body.dark-mode .sat-dash__count { color: rgba(255, 255, 255, 0.45); }
+
+body.dark-mode .sat-dash__state,
+body.dark-mode .sat-card__label,
+body.dark-mode .sat-bar__label,
+body.dark-mode .sat-comment__surface { color: rgba(255, 255, 255, 0.65); }
+
+body.dark-mode .sat-dash__sub code,
+body.dark-mode .sat-comment__score,
+body.dark-mode .sat-comment__topic { background: rgba(255, 255, 255, 0.08); }
+
+body.dark-mode .sat-dash__window,
+body.dark-mode .sat-dash__refresh {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.12);
+  color: rgba(255, 255, 255, 0.65);
+}
+
+body.dark-mode .sat-dash__window:hover,
+body.dark-mode .sat-dash__refresh:hover {
+  border-color: rgba(255, 255, 255, 0.24);
+  color: rgba(255, 255, 255, 0.95);
+}
+
+body.dark-mode .sat-dash__window.is-active {
+  background: var(--dark-accent, #b8a5d4);
+  border-color: var(--dark-accent, #b8a5d4);
+  color: #1a1a1a;
+}
+
+body.dark-mode .sat-card,
+body.dark-mode .sat-comment {
+  background: rgba(255, 255, 255, 0.035);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .sat-card--primary {
+  background: rgba(200, 180, 220, 0.1);
+  border-color: rgba(200, 180, 220, 0.4);
+}
+
+body.dark-mode .sat-table th { border-bottom-color: rgba(255, 255, 255, 0.12); }
+body.dark-mode .sat-table td { border-bottom-color: rgba(255, 255, 255, 0.07); }
+
+body.dark-mode .sat-bar__track { background: rgba(255, 255, 255, 0.08); }
+body.dark-mode .sat-bar__fill { background: var(--dark-accent, #b8a5d4); }
+body.dark-mode .sat-spark__neg { background: rgba(200, 180, 220, 0.85); }
+
+body.dark-mode .sat-net.is-bad { color: #f87171; }
+body.dark-mode .sat-net.is-good { color: #4ade80; }
+
+body.dark-mode .sat-dash__state--error { color: #f87171; }
+body.dark-mode .sat-dash__warn { color: #fbbf24; }
+
+body.dark-mode .sat-comment__chip {
+  color: var(--dark-accent-light, #d4c8e8);
+  border-color: rgba(200, 180, 220, 0.35);
+  background: rgba(200, 180, 220, 0.1);
+}

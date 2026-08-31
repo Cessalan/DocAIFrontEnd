@@ -4,6 +4,8 @@ import { getStepTopicLabel } from './planFormatting';
 import { buildNodeReadout } from './nodeReadout';
 import { buildHistoryFeedback } from './studyHistoryModel';
 import { collectCovered, wasSkipped } from './lightReadout';
+import { ratingFromNodeResult } from './ratingContext';
+import ContentRating from '../ChatInerface/ContentRating';
 import { appendStudyHistory, getStudyPerformance } from '../../Services/StudySessionService';
 import { selectActiveStruggles, selectResolvedConcepts } from '../../Services/conceptLedger';
 import { get_node_debrief } from '../../Services/FastAPICalls';
@@ -282,6 +284,20 @@ const NodeTransition = ({
     && !!result?.scored
     && result.total > 0
     && result.correct === result.total;
+
+  /* Rating surface + context for whatever node just finished. The adapter
+     routes on node type (quiz/exam -> quiz, flashcard -> flashcard, everything
+     else -> study block), so neither branch below has to decide which chips a
+     student should be offered; getting that wrong would file a flashcard
+     complaint under the quiz surface with no way to detect it afterwards.
+
+     Every node type is rateable. Scored ones carry their score, because a
+     thumbs-down at 9/10 and one at 2/10 are different complaints; unscored
+     ones carry nulls rather than a stand-in zero. */
+  const rating = useMemo(
+    () => ratingFromNodeResult(result, { locale: i18n.language }),
+    [result, i18n.language]
+  );
 
   const [debrief, setDebrief] = useState(null);
   const [debriefLoading, setDebriefLoading] = useState(false);
@@ -1036,6 +1052,27 @@ const NodeTransition = ({
             )}
           </button>
 
+          {/* ── Was this worth her time? ──
+              Lessons, audio and mindmaps outnumber quizzes in a plan, and
+              until now every one of them ended without asking anything. There
+              is no score here to interpret a complaint against, which makes
+              the chips carry more weight, not less: "didn't teach me anything
+              new" is the likeliest thing sitting behind an abandoned plan and
+              had nowhere to be said.
+
+              Same position as the scored card - after the decision, before the
+              escape hatches - so the two variants don't teach different habits
+              about where this question lives. */}
+          {rating && (
+            <ContentRating
+              surface={rating.surface}
+              chatId={chatId}
+              subjectId={node?.id}
+              context={rating.context}
+              className="content-rating--inline"
+            />
+          )}
+
           {/* Subtle: customize link */}
           <button
             className="node-transition__customize-link"
@@ -1469,6 +1506,29 @@ const NodeTransition = ({
               {t('transition.reviewMins', 'Review · 4 min')}
             </button>
           </p>
+        )}
+
+        {/* ── Was the content itself any good? ──
+            Placed after the recommendation and before the escape hatches, not
+            at the foot of the card. Below "Ask for something else" and the
+            exit link it sat in the chrome zone — the region a reader has
+            already classified as footer by the time they reach it — and read
+            as something we were obliged to include rather than something we
+            wanted answered. Here it is still after the decision (she has
+            picked what's next before being asked to grade what just happened,
+            or the question competes with the choice), but inside the body of
+            the card where things are meant to be read.
+
+            Absent for flashcards and unscored nodes — ratingContext is null
+            there. */}
+        {rating && (
+          <ContentRating
+            surface={rating.surface}
+            chatId={chatId}
+            subjectId={node?.id}
+            context={rating.context}
+            className="content-rating--inline"
+          />
         )}
 
         {/* ── Full control, one line, no invitation to go browsing ── */}

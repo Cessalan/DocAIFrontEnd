@@ -56,7 +56,6 @@ import {
   GetFileMetadataByName,
   UpdateQuizAnswer,
   UpdateFlashcardReview,
-  SaveQuizFeedback,
   AppendQuizQuestions,
   DeleteMessage,
   SaveOrUpdateMessage,
@@ -4044,27 +4043,6 @@ const ChatInterface = ({
   // RENDER
   // ============================================
   // ============================================
-  // QUIZ FEEDBACK HANDLING
-  // ============================================
-  const handleQuizFeedback = useCallback(async (messageId, feedbackData) => {
-    try {
-      devLog("📝 Saving quiz feedback:", { messageId, feedbackData });
-      await SaveQuizFeedback(currentChatID, messageId, feedbackData);
-
-      // Update local state to reflect feedback given
-      setChatMessages(prev =>
-        prev.map(msg =>
-          msg.id === messageId
-            ? { ...msg, feedbackData: { ...feedbackData, submittedAt: new Date() } }
-            : msg
-        )
-      );
-    } catch (error) {
-      console.error("Failed to save quiz feedback:", error);
-    }
-  }, [currentChatID]);
-
-  // ============================================
   // ANSWER RATING (thumbs on AI messages)
   // ============================================
   // MessageRating already persisted the signal and the message mirror; this
@@ -4108,27 +4086,6 @@ const ChatInterface = ({
       // The student already has the questions on screen; losing the write
       // costs a re-fetch later, not their place in the quiz.
       devLog("Failed to persist extended quiz (non-fatal):", error?.message);
-    }
-  }, [currentChatID]);
-
-  // ============================================
-  // FLASHCARD FEEDBACK HANDLING
-  // ============================================
-  const handleFlashcardFeedback = useCallback(async (messageId, feedbackData) => {
-    try {
-      devLog("📝 Saving flashcard feedback:", { messageId, feedbackData });
-      await SaveQuizFeedback(currentChatID, messageId, feedbackData);
-
-      // Update local state to reflect feedback given
-      setChatMessages(prev =>
-        prev.map(msg =>
-          msg.id === messageId
-            ? { ...msg, feedbackData: { ...feedbackData, submittedAt: new Date() } }
-            : msg
-        )
-      );
-    } catch (error) {
-      console.error("Failed to save flashcard feedback:", error);
     }
   }, [currentChatID]);
 
@@ -5305,7 +5262,6 @@ const ChatInterface = ({
                       onQuizVisibilityChange={handleQuizVisibilityChange}
                       onQuizInteraction={handleQuizInteraction}
                       isActiveQuiz={message.id === activeQuizId}
-                      onFeedbackSubmit={handleQuizFeedback}
                       onMessageRated={handleMessageRated}
                       onQuizExtended={handleQuizExtended}
                       onSendMessage={stableHandleSendMessage}

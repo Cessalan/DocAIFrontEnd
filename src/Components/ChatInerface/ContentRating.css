@@ -1,0 +1,150 @@
+/**
+ * ContentRating — post-quiz thumbs.
+ *
+ * Sits inside two very different end screens (the study path's transition card
+ * and the chat quiz's celebration card), so it carries no background of its own
+ * and inherits whatever surface it lands on. The only structural commitment is
+ * a hairline rule above it, which is what keeps it reading as a quiet aside
+ * rather than a second call to action competing with Continue.
+ */
+
+.content-rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(100, 80, 60, 0.1);
+}
+
+/**
+ * Inline variant — for a rating that sits INSIDE the body of a card rather
+ * than under it. The default's hairline and centring read as "footer", which
+ * is right at the end of the chat celebration and wrong halfway up the study
+ * transition card: there the rule would cut the card in two and split the
+ * recommendation from the actions below it. This keeps the left-aligned rhythm
+ * of the text it sits among, and separates with space instead of a line.
+ */
+.content-rating--inline {
+  justify-content: flex-start;
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: none;
+}
+
+.content-rating__prompt {
+  font-size: 13px;
+  color: var(--text-secondary, #6b6b6b);
+  letter-spacing: 0.1px;
+}
+
+.content-rating__buttons {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.content-rating__btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(100, 80, 60, 0.12);
+  border-radius: var(--radius-sm, 8px);
+  color: var(--text-secondary, #6b6b6b);
+  cursor: pointer;
+  transition: color var(--transition-fast, 0.2s ease),
+              background var(--transition-fast, 0.2s ease),
+              border-color var(--transition-fast, 0.2s ease),
+              transform 0.1s ease;
+}
+
+.content-rating__btn:hover {
+  background: #ffffff;
+  border-color: rgba(100, 80, 60, 0.2);
+  color: var(--text-primary, #3d3d3d);
+}
+
+.content-rating__btn:active {
+  transform: scale(0.92);
+}
+
+.content-rating__btn:focus-visible {
+  outline: 2px solid var(--primary-coral, #e88d7d);
+  outline-offset: 2px;
+}
+
+.content-rating__btn.is-positive.is-active {
+  color: #16a34a;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.content-rating__btn.is-negative.is-active {
+  color: var(--primary-coral-dark, #c46a5a);
+  background: rgba(232, 141, 125, 0.14);
+  border-color: rgba(232, 141, 125, 0.38);
+}
+
+/* The prompt swaps to the thank-you in place. Fading it makes the swap read as
+   a response to the tap rather than a layout glitch. */
+.content-rating__prompt {
+  animation: contentRatingFadeIn 0.22s ease;
+}
+
+@keyframes contentRatingFadeIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .content-rating__prompt {
+    animation: none;
+  }
+  .content-rating__btn:active {
+    transform: none;
+  }
+}
+
+/* ── Dark mode ─────────────────────────────────────────────────────── */
+
+body.dark-mode .content-rating {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+body.dark-mode .content-rating__prompt {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .content-rating__btn {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.6);
+}
+
+body.dark-mode .content-rating__btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  color: rgba(255, 255, 255, 0.92);
+}
+
+body.dark-mode .content-rating__btn.is-positive.is-active {
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.14);
+  border-color: rgba(74, 222, 128, 0.35);
+}
+
+body.dark-mode .content-rating__btn.is-negative.is-active {
+  color: var(--dark-accent-light, #d4c8e8);
+  background: rgba(200, 180, 220, 0.16);
+  border-color: rgba(200, 180, 220, 0.38);
+}
+
+body.dark-mode .content-rating__btn:focus-visible {
+  outline-color: var(--dark-accent, #b8a5d4);
+}

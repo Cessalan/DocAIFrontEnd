@@ -7,7 +7,6 @@ import FlashcardResults from "./FlashcardResults";
 import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
-import FlashcardFeedback from "./FlashcardFeedback";
 import MessageRating from "./MessageRating";
 
 import QuizLoading from "./QuizLoading";
@@ -210,7 +209,6 @@ const ChatMessage = ({
   isActiveQuiz = false,
   onSendMessage,
   onRetryMessage,
-  onFeedbackSubmit,
   onMessageRated,
   onQuizExtended,
   onDeleteMessage,
@@ -568,8 +566,6 @@ const ChatMessage = ({
                   onQuizInteraction(null);
                 }
               }}
-              onFeedbackSubmit={onFeedbackSubmit}
-              feedbackData={message.feedbackData}
               chatId={chatId}
               /* Quizzes now ship short and grow as the student advances. The
                  topic is what the next batch is generated from — without it
@@ -621,20 +617,11 @@ const ChatMessage = ({
                       return Object.values(topicMap);
                     })()}
                   />
-
-                  {/* Feedback (matches design under flashcard view) */}
-                  <div className="flashcard-results-feedback">
-                    <FlashcardFeedback
-                      onFeedbackSubmit={(data) => onFeedbackSubmit && onFeedbackSubmit(message.id, data)}
-                      hasSubmitted={!!message.feedbackData}
-                    />
-                  </div>
                 </>
               ) : parsedFlashcardData[currentCardIndex] ? (
                 /* Current Flashcard */
                 <ChatFlashcard
                   flashcard={parsedFlashcardData[currentCardIndex]}
-                  messageId={message.id}
                   cardIndex={currentCardIndex}
                   onCardReview={handleCardReview}
                   onNext={handleNextCard}
@@ -649,9 +636,6 @@ const ChatMessage = ({
                   showResults={showFlashcardResults}
                   onReviewFlashcards={handleReviewFlashcards}
                   onContinueLearning={handleContinueLearning}
-                  onFeedbackSubmit={onFeedbackSubmit}
-                  hasGivenFeedback={!!message.feedbackData}
-                  feedbackData={message.feedbackData}
                   isStreaming={message.isStreaming}
                 />
               ) : (

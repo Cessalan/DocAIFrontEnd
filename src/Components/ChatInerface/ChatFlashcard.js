@@ -92,7 +92,6 @@ function ChatFlashcard(props) {
   const {
     flashcard,
     onCardReview,
-    messageId,
     cardIndex = 0,
     onNext,
     isLastCard = false,
@@ -106,10 +105,7 @@ function ChatFlashcard(props) {
     onNavigate,
     showResults = false,
     onReviewFlashcards,
-    onContinueLearning,
-    onFeedbackSubmit,
-    hasGivenFeedback,
-    feedbackData
+    onContinueLearning
   } = props;
 
   // State
@@ -263,13 +259,6 @@ function ChatFlashcard(props) {
   const handleNavigation = (index) => {
     if (onNavigate) {
       onNavigate(index);
-    }
-  };
-
-  const handleFeedbackSubmit = (data) => {
-    console.log('Flashcard Feedback Submitted:', data);
-    if (onFeedbackSubmit) {
-      onFeedbackSubmit(messageId, data);
     }
   };
 
@@ -466,58 +455,10 @@ function ChatFlashcard(props) {
               onReview={onReviewFlashcards}
               topicBreakdown={resultsData.topicBreakdown}
             />
-
-            {/* DEV MODE: Display Feedback Data - In results view */}
-            {process.env.NODE_ENV === 'development' && feedbackData && (
-              <div className="flashcard-feedback-dev-display" style={{ marginTop: '12px' }}>
-                <div className="dev-feedback-header">
-                  <span className="dev-badge">DEV</span>
-                  <span className="dev-feedback-title">Flashcard Feedback Collected</span>
-                </div>
-                <div className="dev-feedback-content">
-                  <div className="dev-feedback-row">
-                    <span className="dev-feedback-label">Rating:</span>
-                    <span className="dev-feedback-value">
-                      {feedbackData.rating === 'good' ? '😄 Good' :
-                       feedbackData.rating === 'neutral' ? '😐 Okay' :
-                       feedbackData.rating === 'bad' ? '☹️ Bad' : feedbackData.rating}
-                    </span>
-                  </div>
-                  <div className="dev-feedback-row">
-                    <span className="dev-feedback-label">Detail:</span>
-                    <span className="dev-feedback-value">{feedbackData.detail}</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <>
             {flashcard && renderFlashcardContent()}
-
-            {/* DEV MODE: Display Feedback Data - In flashcard view */}
-            {process.env.NODE_ENV === 'development' && feedbackData && flashcard && (
-              <div className="flashcard-feedback-dev-display" style={{ marginTop: '12px' }}>
-                <div className="dev-feedback-header">
-                  <span className="dev-badge">DEV</span>
-                  <span className="dev-feedback-title">Flashcard Feedback Collected</span>
-                </div>
-                <div className="dev-feedback-content">
-                  <div className="dev-feedback-row">
-                    <span className="dev-feedback-label">Rating:</span>
-                    <span className="dev-feedback-value">
-                      {feedbackData.rating === 'good' ? '😄 Good' :
-                       feedbackData.rating === 'neutral' ? '😐 Okay' :
-                       feedbackData.rating === 'bad' ? '☹️ Bad' : feedbackData.rating}
-                    </span>
-                  </div>
-                  <div className="dev-feedback-row">
-                    <span className="dev-feedback-label">Detail:</span>
-                    <span className="dev-feedback-value">{feedbackData.detail}</span>
-                  </div>
-                </div>
-              </div>
-            )}
           </>
         )}
       </div>
@@ -546,9 +487,6 @@ function ChatFlashcard(props) {
                 flashcards={allFlashcards}
                 currentIndex={cardIndex}
                 onNavigate={handleNavigation}
-                onFeedbackSubmit={handleFeedbackSubmit}
-                hasGivenFeedback={hasGivenFeedback}
-                feedbackData={feedbackData}
               />
             </div>
           )}

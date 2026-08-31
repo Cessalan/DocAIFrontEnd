@@ -2,6 +2,7 @@ import { db, auth } from "../Firebase/config";
 import { collection, addDoc, doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { devLog } from "./devLogger";
 import { markMessageRated } from "./FireBaseServiceChats";
+import { SURFACE, SENTIMENT } from "./satisfactionEnums";
 
 /**
  * SatisfactionService — one shape for every "how did that feel?" signal.
@@ -15,10 +16,17 @@ import { markMessageRated } from "./FireBaseServiceChats";
  * answer "are students happy this week?", because the three shapes had no
  * common field to group on.
  *
- * Every signal now also lands here as one flat row: who, which surface, how
- * they felt, and optionally why. That makes satisfaction countable — by
- * surface, by week, by tier — without touching the per-surface storage the
- * existing UIs already depend on.
+ * Every signal now lands here as one flat row: who, which surface, how they
+ * felt, and optionally why. That makes satisfaction countable — by surface, by
+ * week, by tier — from a single query.
+ *
+ * The `feedbackData` and `quickFeedback` paths have since been deleted
+ * outright rather than kept in parallel: the popovers that wrote them were
+ * unreachable in practice, and their only reader (an unmounted FeedbackViewer)
+ * was dead code. Documents written before that removal still exist and are
+ * simply not read; there is no backfill, because a hidden popover's three-emoji
+ * rating and a deliberate thumbs-down are not the same measurement and merging
+ * them would make the trend line lie about when it started.
  *
  * `reasons` is an ARRAY. A student reporting a wrong answer that is also too
  * long has two complaints, and a single-valued field silently discards one of
@@ -27,9 +35,8 @@ import { markMessageRated } from "./FireBaseServiceChats";
  * DESIGN NOTES
  *
  *  - Sentiment is -1 / 0 / +1, not 'bad' / 'neutral' / 'good'. Numbers average;
- *    strings don't. The legacy vocabulary maps onto it exactly (see
- *    `sentimentFromLegacyRating`), so historical quiz ratings can be backfilled
- *    into the same funnel rather than stranded.
+ *    strings don't. `sentimentFromLegacyRating` still maps the retired
+ *    vocabulary for anyone reading old rows by hand; nothing is backfilled.
  *
  *  - Sentiment is written the instant it's tapped, before any reason is picked,
  *    and the caller gets the id back to refine later. A student who taps 👎 and
@@ -41,20 +48,11 @@ import { markMessageRated } from "./FireBaseServiceChats";
  *    surface would break the conversation the student is actually having.
  */
 
-/** Where the signal was captured. Kept as a closed set so grouping stays sane. */
-export const SURFACE = {
-  CHAT_ANSWER: "chat_answer",
-  QUIZ: "quiz",
-  FLASHCARD: "flashcard",
-  STUDY_BLOCK: "study_block",
-  APP: "app"
-};
-
-export const SENTIMENT = {
-  NEGATIVE: -1,
-  NEUTRAL: 0,
-  POSITIVE: 1
-};
+/* Defined in satisfactionEnums so pure modules can read them without importing
+   this file, which initialises Firebase at module scope. Imported as well as
+   re-exported: a bare `export ... from` would not bind them locally, and this
+   file uses both. */
+export { SURFACE, SENTIMENT };
 
 const COLLECTION = "satisfactionSignals";
 
@@ -203,4 +201,64 @@ export const rateChatAnswer = async ({
   markMessageRated(chatId, messageId, { sentiment, reasons: reasons || [] });
 
   return result;
+};
+
+/**
+ * Rate a piece of study content the student has just finished — a quiz, a set
+ * of flashcards, or an unscored block (lesson, audio, mindmap).
+ *
+ * Replaces the `feedbackData` popover that used to hang off the quiz nav
+ * footer. That one asked mid-quiz, was hover-discovered, allowed exactly one
+ * reason, and wrote to a field with no reader — so content quality was the
+ * least measured thing in the app despite being the thing students complain
+ * about most.
+ *
+ * The score travels in `context` (built by ratingContext) because a
+ * thumbs-down means something different at 9/10 than at 2/10, and without it
+ * the two are indistinguishable in aggregate. Unscored blocks carry
+ * `scored: false` and null counts rather than a stand-in zero, so they can be
+ * excluded from a score average instead of dragging it down.
+ *
+ * Unlike rateChatAnswer there is no mirror back onto a document. The study
+ * path's transition screen is shown once and never returned to, and the chat
+ * quiz's celebration is cheap to re-reach, so neither has state worth
+ * restoring. The cost is that reloading a finished chat quiz lets the same
+ * student rate it twice; `subjectId` is the node or message id, so those
+ * duplicates are removable at read time by taking one row per
+ * (userId, subjectId). Storing a mirror to prevent a duplicate that analysis
+ * can already collapse would mean a schema change on the message document for
+ * no gain.
+ *
+ * @param {Object} params
+ * @param {string} params.surface    SURFACE.QUIZ | FLASHCARD | STUDY_BLOCK.
+ * @param {string} [params.chatId]
+ * @param {string} params.subjectId  Node id (study) or message id (chat).
+ * @param {number} params.sentiment  SENTIMENT.POSITIVE | SENTIMENT.NEGATIVE
+ * @param {Object} params.context    From ratingContext's adapters.
+ * @param {string[]} [params.reasons] Reason slugs, on the refine pass.
+ * @param {string} [params.comment]   Free text, on the refine pass.
+ * @param {string} [params.signalId]  Id from the first pass, when refining.
+ */
+export const rateContent = async ({
+  surface = SURFACE.QUIZ,
+  chatId,
+  subjectId,
+  sentiment,
+  context,
+  reasons,
+  comment,
+  signalId
+}) => {
+  if (!subjectId) return { success: false, reason: "missing-subject" };
+
+  return recordSignal({
+    surface,
+    sentiment,
+    subjectId,
+    chatId,
+    reasons,
+    comment,
+    signalId,
+    context: context || {}
+  });
 };
