@@ -1,0 +1,1102 @@
+/**
+ * ExamDrill.css
+ *
+ * The exam feeling comes from LAYOUT AND RESTRAINT, not from a new palette.
+ * Every colour here is an existing token from index.css. The drill surface
+ * deliberately drops the warm coral accents the rest of the app uses and sits
+ * on near-neutral paper — then the coral comes back at the checkpoint. Austere
+ * while she is being tested, warm when she is being told where she stands;
+ * the palette does the emotional work without inventing a single new colour.
+ *
+ * Dark mode is a `dark-mode` class on <body> observed via MutationObserver,
+ * not a media query, so every surface below carries an explicit
+ * `body.dark-mode` rule.
+ */
+
+/* ── Page ───────────────────────────────────────────────────────────── */
+
+/* Full-bleed surface. No chat box, and the sidebar collapsed to its rail:
+   the exam feeling comes from what is not on screen.
+
+   THIS IS THE SCROLL CONTAINER. The drill renders inside `.main-content`,
+   which is `height: 100vh; overflow: hidden` on purpose — the chat manages
+   its own scrolling region inside it. The drill has to do the same, or a long
+   question (a SATA with its feedback panel and rationale open runs well past
+   a viewport) simply has no way to be reached.
+
+   `min-height: 0` is what actually makes it work: a flex child will not
+   shrink below its content without it, so the overflow would sit outside the
+   clipped parent instead of scrolling inside this one. */
+.drill-page {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  background: var(--bg-paper);
+}
+
+/* Same scrollbar the rest of the app uses (see .messages-container): 6px,
+   transparent track, coral thumb. A default OS scrollbar down the side of the
+   exam sheet was the one piece of chrome that gave the surface away. */
+.drill-page::-webkit-scrollbar {
+  width: 6px;
+}
+
+.drill-page::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drill-page::-webkit-scrollbar-thumb {
+  background: rgba(232, 141, 125, 0.25);
+  border-radius: 3px;
+}
+
+.drill-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 141, 125, 0.4);
+}
+
+/* Firefox has no ::-webkit pseudo-elements; these are the equivalent. */
+.drill-page {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 141, 125, 0.3) transparent;
+}
+
+body.dark-mode .drill-page::-webkit-scrollbar-thumb {
+  background: rgba(184, 165, 212, 0.28);
+}
+
+body.dark-mode .drill-page::-webkit-scrollbar-thumb:hover {
+  background: rgba(184, 165, 212, 0.45);
+}
+
+body.dark-mode .drill-page {
+  scrollbar-color: rgba(184, 165, 212, 0.32) transparent;
+}
+
+body.dark-mode .drill-page {
+  background: var(--dark-bg-primary);
+}
+
+/* ── Shell ──────────────────────────────────────────────────────────── */
+
+.drill-shell {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-height: 100%;
+  flex-shrink: 0;   /* grow past the viewport rather than being squeezed */
+  max-width: 780px;
+  margin: 0 auto;
+  padding: 0 20px 40px;
+  box-sizing: border-box;
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-primary);
+}
+
+.drill-shell--centered {
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding-top: 80px;
+  text-align: center;
+}
+
+/* Neutral ground: no gradient mesh, no warm wash. */
+.drill-shell--exam {
+  background: var(--bg-paper);
+}
+
+body.dark-mode .drill-shell {
+  color: #ededed;
+}
+
+body.dark-mode .drill-shell--exam {
+  background: var(--dark-bg-primary);
+}
+
+/* ── Status bar ─────────────────────────────────────────────────────── */
+
+.drill-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 0 12px;
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background: var(--bg-paper);
+}
+
+body.dark-mode .drill-bar {
+  background: var(--dark-bg-primary);
+}
+
+.drill-bar__left,
+.drill-bar__right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.drill-bar__count {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+body.dark-mode .drill-bar__count {
+  color: #ededed;
+}
+
+.drill-bar__format {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  padding: 4px 10px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 999px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+body.dark-mode .drill-bar__format {
+  color: #9a9a9a;
+  border-color: var(--dark-border);
+}
+
+.drill-bar__exit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.drill-bar__exit:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--text-primary);
+}
+
+body.dark-mode .drill-bar__exit {
+  color: #8a8a8a;
+}
+
+body.dark-mode .drill-bar__exit:hover {
+  background: var(--dark-bg-tertiary);
+  color: #ededed;
+}
+
+/* ── Progress ───────────────────────────────────────────────────────── */
+
+.drill-progress {
+  height: 3px;
+  border-radius: var(--radius-full);
+  background: rgba(0, 0, 0, 0.07);
+  overflow: hidden;
+  margin-bottom: 28px;
+}
+
+.drill-progress__fill {
+  height: 100%;
+  background: var(--text-secondary);
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+body.dark-mode .drill-progress {
+  background: var(--dark-border);
+}
+
+body.dark-mode .drill-progress__fill {
+  background: #8a8a8a;
+}
+
+/* ── Question body ──────────────────────────────────────────────────── */
+
+.drill-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.drill-mcq__question {
+  font-size: 1.15rem;
+  line-height: 1.6;
+  font-weight: 500;
+  margin: 0 0 24px;
+  color: var(--text-primary);
+}
+
+body.dark-mode .drill-mcq__question {
+  color: #ededed;
+}
+
+.drill-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drill-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 18px;
+  text-align: left;
+  font-size: 0.97rem;
+  line-height: 1.5;
+  font-family: inherit;
+  color: var(--text-primary);
+  background: var(--bg-cream);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color var(--transition-fast), background var(--transition-fast);
+}
+
+.drill-option:hover:not(:disabled) {
+  border-color: var(--text-muted);
+  background: var(--bg-warm);
+}
+
+.drill-option:disabled {
+  cursor: default;
+}
+
+.drill-option__letter {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border-radius: var(--radius-sm);
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+}
+
+.drill-option__text {
+  flex: 1;
+  min-width: 0;
+}
+
+.drill-option.revealed {
+  opacity: 0.75;
+}
+
+.drill-option.correct {
+  opacity: 1;
+  border-color: #4caf7d;
+  background: rgba(76, 175, 125, 0.1);
+}
+
+.drill-option.incorrect {
+  opacity: 1;
+  border-color: var(--primary-coral-dark);
+  background: rgba(232, 141, 125, 0.12);
+}
+
+body.dark-mode .drill-option {
+  color: #ededed;
+  background: var(--dark-bg-secondary);
+  border-color: var(--dark-border);
+}
+
+body.dark-mode .drill-option:hover:not(:disabled) {
+  border-color: var(--dark-border-accent);
+  background: var(--dark-bg-tertiary);
+}
+
+body.dark-mode .drill-option__letter {
+  background: rgba(255, 255, 255, 0.08);
+  color: #b5b5b5;
+}
+
+body.dark-mode .drill-option.correct {
+  border-color: #4caf7d;
+  background: rgba(76, 175, 125, 0.18);
+}
+
+body.dark-mode .drill-option.incorrect {
+  border-color: var(--primary-coral);
+  background: rgba(232, 141, 125, 0.18);
+}
+
+/* ── Verdict & rationale ────────────────────────────────────────────── */
+
+.drill-verdict {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 20px;
+  padding: 14px 18px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--text-muted);
+  background: var(--bg-cream);
+}
+
+.drill-verdict.correct {
+  border-left-color: #4caf7d;
+}
+
+.drill-verdict.incorrect {
+  border-left-color: var(--primary-coral-dark);
+}
+
+.drill-verdict__label {
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--text-secondary);
+}
+
+.drill-verdict__blurb {
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-primary);
+}
+
+body.dark-mode .drill-verdict {
+  background: var(--dark-bg-secondary);
+}
+
+body.dark-mode .drill-verdict__label {
+  color: #9a9a9a;
+}
+
+body.dark-mode .drill-verdict__blurb {
+  color: #ededed;
+}
+
+.drill-rationale {
+  margin-top: 14px;
+}
+
+.drill-rationale__toggle {
+  padding: 0;
+  border: none;
+  background: none;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--primary-coral-dark);
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.drill-rationale__text {
+  margin: 10px 0 0;
+  font-size: 0.92rem;
+  line-height: 1.65;
+  color: var(--text-secondary);
+}
+
+body.dark-mode .drill-rationale__toggle {
+  color: var(--dark-accent-light);
+}
+
+body.dark-mode .drill-rationale__text {
+  color: #b5b5b5;
+}
+
+/* ── Footer ─────────────────────────────────────────────────────────── */
+
+.drill-foot {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+.drill-foot__hint {
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+body.dark-mode .drill-foot__hint {
+  color: #8a8a8a;
+}
+
+/* ── Buttons ────────────────────────────────────────────────────────── */
+
+.drill-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 26px;
+  font-family: inherit;
+  font-size: 0.97rem;
+  font-weight: 600;
+  border: none;
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast), opacity var(--transition-fast);
+}
+
+.drill-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.drill-btn--primary {
+  background: var(--primary-coral);
+  color: var(--text-white);
+  box-shadow: var(--shadow-sm);
+}
+
+.drill-btn--primary:hover:not(:disabled) {
+  background: var(--primary-coral-hover);
+}
+
+.drill-btn--primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.drill-btn--ghost {
+  background: transparent;
+  color: var(--text-secondary);
+}
+
+.drill-btn--ghost:hover {
+  color: var(--text-primary);
+}
+
+body.dark-mode .drill-btn--primary {
+  background: var(--dark-accent);
+  color: #1a1a1a;
+}
+
+body.dark-mode .drill-btn--primary:hover:not(:disabled) {
+  background: var(--dark-accent-hover);
+}
+
+body.dark-mode .drill-btn--ghost {
+  color: #9a9a9a;
+}
+
+body.dark-mode .drill-btn--ghost:hover {
+  color: #ededed;
+}
+
+/* ── Writing the next question ──────────────────────────────────────── */
+
+/* Occupies roughly the height of a question so the page does not collapse
+   and jump when the real one arrives. */
+.drill-writing {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  min-height: 300px;
+  animation: drill-fade-in 260ms ease both;
+}
+
+/* The shape of the question to come, shimmering into place. A skeleton beats
+   a spinner here because the drill always produces the same shape, so this
+   says "your next question is arriving, and this is what it looks like". */
+.drill-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.drill-skeleton__stem {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drill-skeleton__options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.drill-skeleton__line,
+.drill-skeleton__option {
+  display: block;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.045) 25%,
+    rgba(0, 0, 0, 0.085) 37%,
+    rgba(0, 0, 0, 0.045) 63%
+  );
+  background-size: 400% 100%;
+  animation: drill-shimmer 1.5s ease-in-out infinite;
+}
+
+.drill-skeleton__line {
+  height: 18px;
+}
+
+.drill-skeleton__line--short {
+  width: 62%;
+}
+
+.drill-skeleton__option {
+  height: 54px;
+  border-radius: var(--radius-md);
+}
+
+/* Staggered, so the rows arrive in sequence rather than pulsing as one block —
+   the difference between "loading" and "being written". */
+.drill-skeleton__option:nth-child(1) { animation-delay: 0s; }
+.drill-skeleton__option:nth-child(2) { animation-delay: 0.12s; }
+.drill-skeleton__option:nth-child(3) { animation-delay: 0.24s; }
+.drill-skeleton__option:nth-child(4) { animation-delay: 0.36s; }
+
+@keyframes drill-shimmer {
+  0%   { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+.drill-writing__text {
+  margin: 0;
+  text-align: center;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  animation: drill-message-in 400ms ease both;
+}
+
+.drill-writing__text.is-slow {
+  color: var(--text-muted);
+}
+
+body.dark-mode .drill-skeleton__line,
+body.dark-mode .drill-skeleton__option {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 37%,
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+}
+
+body.dark-mode .drill-writing__text {
+  color: #9a9a9a;
+}
+
+body.dark-mode .drill-writing__text.is-slow {
+  color: #7d7d7d;
+}
+
+/* Placeholder for the question counter, which cannot be known until the drill
+   has loaded. A shimmering stub rather than a jumping "Question 1 of 5" that
+   appears from nothing. */
+.drill-bar__count--placeholder {
+  display: inline-block;
+  width: 116px;
+  height: 14px;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(
+    90deg,
+    rgba(0, 0, 0, 0.045) 25%,
+    rgba(0, 0, 0, 0.085) 37%,
+    rgba(0, 0, 0, 0.045) 63%
+  );
+  background-size: 400% 100%;
+  animation: drill-shimmer 1.5s ease-in-out infinite;
+}
+
+body.dark-mode .drill-bar__count--placeholder {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.05) 25%,
+    rgba(255, 255, 255, 0.1) 37%,
+    rgba(255, 255, 255, 0.05) 63%
+  );
+  background-size: 400% 100%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drill-bar__count--placeholder { animation: none; opacity: 0.6; }
+}
+
+/* ── Question transitions ───────────────────────────────────────────────
+   A question rises and fades in rather than appearing, and its options
+   follow a beat behind it. Short and eased — the point is that the surface
+   feels turned rather than overwritten, not that anything is animated at. */
+
+.drill-enter {
+  animation: drill-question-in 380ms cubic-bezier(0.22, 0.68, 0.32, 1) both;
+}
+
+.drill-enter .drill-option,
+.drill-enter .sata-option,
+.drill-enter .case-study-tab {
+  animation: drill-option-in 420ms cubic-bezier(0.22, 0.68, 0.32, 1) both;
+}
+
+.drill-enter .drill-option:nth-child(1) { animation-delay: 90ms; }
+.drill-enter .drill-option:nth-child(2) { animation-delay: 150ms; }
+.drill-enter .drill-option:nth-child(3) { animation-delay: 210ms; }
+.drill-enter .drill-option:nth-child(4) { animation-delay: 270ms; }
+.drill-enter .drill-option:nth-child(5) { animation-delay: 330ms; }
+.drill-enter .drill-option:nth-child(6) { animation-delay: 390ms; }
+
+@keyframes drill-question-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drill-option-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes drill-fade-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes drill-message-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Motion is decoration here; the drill must work identically without it. */
+@media (prefers-reduced-motion: reduce) {
+  .drill-enter,
+  .drill-enter .drill-option,
+  .drill-enter .sata-option,
+  .drill-enter .case-study-tab,
+  .drill-writing,
+  .drill-writing__text {
+    animation: none;
+  }
+
+  .drill-skeleton__line,
+  .drill-skeleton__option {
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* ── Loading ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .drill-progress__fill { transition: none; }
+}
+
+.drill-loading-text {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+}
+
+body.dark-mode .drill-loading-text {
+  color: #9a9a9a;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   CHECKPOINT — a tutor talking, not a readout.
+
+   The warmth returns here and only here: the drill above is deliberately
+   neutral, so arriving at the checkpoint should feel like someone leaning
+   back and speaking to you. Everything is set as prose. There is no score,
+   no per-topic fraction and no section grid — see DrillCheckpoint.js for
+   why each of those was removed rather than restyled.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.drill-cp {
+  padding: 40px 0 12px;
+  cursor: default;
+}
+
+.drill-cp__eyebrow {
+  display: inline-block;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--primary-coral-dark);
+  margin-bottom: 20px;
+}
+
+body.dark-mode .drill-cp__eyebrow {
+  color: var(--dark-accent-light);
+}
+
+/* The narration. Generous measure and leading, because this is the one
+   place in the drill the student is meant to slow down and read. */
+.drill-cp__narration {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 30px;
+  max-width: 34em;
+}
+
+.drill-cp__line {
+  margin: 0;
+  font-size: 1.06rem;
+  line-height: 1.65;
+  color: var(--text-primary);
+}
+
+/* The opening beat carries the moment; the rest are the findings. */
+.drill-cp__line--lead {
+  font-size: 1.32rem;
+  line-height: 1.45;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+
+body.dark-mode .drill-cp__line {
+  color: #ededed;
+}
+
+/* Quiet corroboration under the sentence that just said these numbers.
+   Small on purpose: the sentence is the finding, this is the receipt. */
+.drill-cp__gap {
+  display: inline-flex;
+  align-items: stretch;
+  gap: 18px;
+  padding: 14px 20px;
+  margin-bottom: 30px;
+  border-radius: var(--radius-md);
+  background: var(--bg-warm);
+  border: 1px solid var(--glass-border);
+}
+
+.drill-cp__gap-side {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.drill-cp__gap-rule {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.1);
+}
+
+.drill-cp__gap-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-secondary);
+}
+
+.drill-cp__gap-side--weak .drill-cp__gap-value {
+  color: var(--primary-coral-dark);
+}
+
+.drill-cp__gap-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+body.dark-mode .drill-cp__gap {
+  background: var(--dark-bg-elevated);
+  border-color: var(--dark-border-accent);
+}
+
+body.dark-mode .drill-cp__gap-rule {
+  background: var(--dark-border);
+}
+
+body.dark-mode .drill-cp__gap-value {
+  color: #b5b5b5;
+}
+
+body.dark-mode .drill-cp__gap-side--weak .drill-cp__gap-value {
+  color: var(--primary-coral-light);
+}
+
+body.dark-mode .drill-cp__gap-label {
+  color: #8a8a8a;
+}
+
+/* Actions */
+
+.drill-cp__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-width: 34em;
+}
+
+.drill-cp__spent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px;
+  border-radius: var(--radius-md);
+  background: var(--bg-warm);
+  border: 1px solid var(--glass-border);
+}
+
+.drill-cp__spent-text {
+  margin: 0;
+  font-size: 0.94rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+  text-align: center;
+}
+
+.drill-cp__remaining {
+  margin: 14px 0 0;
+  max-width: 34em;
+  text-align: center;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+body.dark-mode .drill-cp__spent {
+  background: var(--dark-bg-elevated);
+  border-color: var(--dark-border-accent);
+}
+
+body.dark-mode .drill-cp__spent-text {
+  color: #ededed;
+}
+
+body.dark-mode .drill-cp__remaining {
+  color: #8a8a8a;
+}
+
+
+/* ── Small screens ──────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .drill-shell {
+    padding: 0 14px 32px;
+  }
+
+  .drill-mcq__question {
+    font-size: 1.06rem;
+  }
+
+  .drill-cp__line--lead {
+    font-size: 1.16rem;
+  }
+
+  .drill-cp__line {
+    font-size: 1rem;
+  }
+
+  .drill-cp__gap {
+    display: flex;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .drill-bar__format {
+    display: none; /* the badge is repeated by the question itself */
+  }
+}
+
+
+/* ── One counter, one progress bar ───────────────────────────────────────
+   The bar at the top is the only place a question number appears. The exam
+   cards we reuse for SATA and case study render their own "Question X of Y"
+   and their own progress track, both counting the BLOCK — so on a SATA
+   question the student saw two different numbers, side by side, under the
+   same word. Hidden here rather than in the shared components: the exam node
+   still renders them whole and needs its own header. */
+.drill-enter .sata-title,
+.drill-enter .case-study-title,
+.drill-enter .sata-progress-track,
+.drill-enter .case-study-progress-track {
+  display: none;
+}
+
+.drill-bar__checkpoint {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+body.dark-mode .drill-bar__checkpoint {
+  color: #8a8a8a;
+}
+
+
+/* ── The one question before the drill ───────────────────────────────────
+   Deliberately quiet. This is a tax on the drill's "straight into being
+   examined" promise, so it is paid in one tap and never dressed up as an
+   onboarding flow: no progress dots, no illustration, no second screen. */
+.drill-date {
+  gap: 0;
+  /* Wide enough for all five choices on one row. At 560 the last one dropped
+     to a line of its own, which reads as a different kind of answer. */
+  max-width: 640px;
+  text-align: center;
+}
+
+.drill-date__eyebrow {
+  margin: 0 0 10px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.drill-date__question {
+  margin: 0 0 10px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+
+.drill-date__why {
+  margin: 0 0 26px;
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.drill-date__chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+/* Filled, like .drill-option — a hairline border at 12% opacity on a dark
+   background is invisible, which is how these first rendered as bare text. */
+.drill-date__chip {
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-cream);
+  border: 1.5px solid rgba(0, 0, 0, 0.08);
+  /* 999px, not --radius-full: that token is 50%, which is a CIRCLE. On
+     anything wider than it is tall 50% renders an ellipse, which is what
+     this control was doing. Every other pill in the app hardcodes 999px. */
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.drill-date__chip:hover:not(:disabled) {
+  background: rgba(232, 141, 125, 0.1);
+  border-color: var(--primary-coral-hover);
+  transform: translateY(-1px);
+}
+
+.drill-date__chip:focus-visible {
+  outline: 2px solid var(--primary-coral-dark);
+  outline-offset: 2px;
+}
+
+.drill-date__chip:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.drill-date__skip {
+  font-size: 0.9rem;
+}
+
+body.dark-mode .drill-date__eyebrow {
+  color: #8a8a8a;
+}
+
+body.dark-mode .drill-date__question {
+  color: #ededed;
+}
+
+body.dark-mode .drill-date__why {
+  color: #a0a0a0;
+}
+
+body.dark-mode .drill-date__chip {
+  color: #ededed;
+  background: var(--dark-bg-secondary);
+  border-color: var(--dark-border);
+}
+
+body.dark-mode .drill-date__chip:hover:not(:disabled) {
+  background: rgba(184, 165, 212, 0.14);
+  border-color: var(--dark-accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drill-date__chip:hover:not(:disabled) { transform: none; }
+}
+
+/* The calendar chip. Same control as plan onboarding's "Pick a date" — it
+   opens PlanDatePicker, which portals itself next to this anchor. */
+.drill-date__chip--date {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.drill-date__chip-icon {
+  display: inline-flex;
+  align-items: center;
+  color: var(--primary-coral-dark);
+}
+
+.drill-date__chip--date.is-selected {
+  border-color: var(--primary-coral-hover);
+  background: rgba(232, 141, 125, 0.12);
+}
+
+body.dark-mode .drill-date__chip-icon {
+  color: var(--dark-accent);
+}
+
+body.dark-mode .drill-date__chip--date.is-selected {
+  border-color: var(--dark-accent);
+  background: rgba(184, 165, 212, 0.16);
+}
+
+/* The date question rendered over the chat during a drill upload. Opaque, not
+   a dimmed scrim: she has already committed to the drill, and letting the chat
+   show through invites her to go back to a conversation she just left. */
+.drill-date-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: var(--bg-paper);
+  overflow-y: auto;
+}
+
+body.dark-mode .drill-date-overlay {
+  background: var(--dark-bg-primary);
+}

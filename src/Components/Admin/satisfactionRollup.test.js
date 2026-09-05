@@ -186,3 +186,169 @@ describe('buildRollup — by day', () => {
     expect(byDay).toEqual([]);
   });
 });
+
+describe('buildRollup — exam debriefs', () => {
+  const debrief = (over = {}) =>
+    row({
+      surface: 'exam_debrief',
+      sentiment: 1,
+      context: { preparedness: 4, examLabel: 'Pharmacology', daysAfterExam: 1 },
+      ...over
+    });
+
+  it('is empty, not absent, when nobody has been asked yet', () => {
+    const { examDebrief } = buildRollup([row()]);
+    expect(examDebrief.total).toBe(0);
+    expect(examDebrief.preparedRate).toBeNull();
+    expect(examDebrief.byGap).toEqual([]);
+  });
+
+  it('counts the top two answers as prepared', () => {
+    const { examDebrief } = buildRollup([
+      debrief({ context: { preparedness: 4 } }),
+      debrief({ context: { preparedness: 3 } }),
+      debrief({ context: { preparedness: 2 }, sentiment: -1 }),
+      debrief({ context: { preparedness: 1 }, sentiment: -1 })
+    ]);
+    expect(examDebrief.answered).toBe(4);
+    expect(examDebrief.preparedCount).toBe(2);
+    expect(examDebrief.preparedRate).toBe(50);
+    expect(examDebrief.distribution.map((d) => d.count)).toEqual([1, 1, 1, 1]);
+  });
+
+  it('reports the distribution best-first regardless of arrival order', () => {
+    const { examDebrief } = buildRollup([
+      debrief({ context: { preparedness: 1 }, sentiment: -1 }),
+      debrief({ context: { preparedness: 4 } })
+    ]);
+    expect(examDebrief.distribution.map((d) => d.value)).toEqual([4, 3, 2, 1]);
+  });
+
+  it('counts gaps from happy respondents too, unlike byReason', () => {
+    // The whole reason this section exists separately: a student who felt well
+    // prepared and still wants harder questions is a real signal, and the
+    // negatives-only tally in byReason drops it on the floor.
+    const rows = [
+      debrief({ sentiment: 1, context: { preparedness: 4 }, reasons: ['harder_questions'] })
+    ];
+    expect(buildRollup(rows).byReason).toEqual([]);
+    expect(buildRollup(rows).examDebrief.byGap).toEqual([
+      { reason: 'harder_questions', count: 1, share: 100 }
+    ]);
+  });
+
+  it('shares gaps against everyone asked, and sorts by demand', () => {
+    const { examDebrief } = buildRollup([
+      debrief({ reasons: ['harder_questions', 'more_case_scenarios'] }),
+      debrief({ reasons: ['harder_questions'] }),
+      debrief({ reasons: [] })
+    ]);
+    expect(examDebrief.byGap).toEqual([
+      { reason: 'harder_questions', count: 2, share: 67 },
+      { reason: 'more_case_scenarios', count: 1, share: 33 }
+    ]);
+  });
+
+  it('keeps a debrief that was skipped after question one out of the answers', () => {
+    // A row can exist with no preparedness if the write is ever changed to
+    // create it earlier; it must not be counted as an answer of zero.
+    const { examDebrief } = buildRollup([
+      debrief({ context: {}, sentiment: null }),
+      debrief({ context: { preparedness: 4 } })
+    ]);
+    expect(examDebrief.total).toBe(2);
+    expect(examDebrief.answered).toBe(1);
+    expect(examDebrief.preparedRate).toBe(100);
+  });
+
+  it('drops dev-preview rows before counting anything', () => {
+    // Dev and production share a Firebase project, so a developer opening the
+    // preview writes real rows. Counting those as student sentiment would be a
+    // quiet lie on every number on the page.
+    const rollup = buildRollup([
+      debrief({ context: { preparedness: 1, devPreview: true }, sentiment: -1 }),
+      debrief({ context: { preparedness: 4 } })
+    ]);
+    expect(rollup.examDebrief.total).toBe(1);
+    expect(rollup.examDebrief.preparedRate).toBe(100);
+    expect(rollup.overall.total).toBe(1);
+  });
+
+  it('tallies the exam against expectations, separately from preparedness', () => {
+    // A student can walk in ready and still be blindsided by the format; the
+    // two axes have to be readable apart or that case disappears.
+    const { examDebrief } = buildRollup([
+      debrief({ context: { preparedness: 4, insights: { difficulty: 'harder_than_expected' } } }),
+      debrief({ context: { preparedness: 3, insights: { difficulty: 'harder_than_expected' } } }),
+      debrief({ context: { preparedness: 4, insights: { difficulty: 'as_expected' } } }),
+      debrief({ context: { preparedness: 4 } })
+    ]);
+    expect(examDebrief.difficulty).toEqual({
+      harder_than_expected: 2,
+      as_expected: 1,
+      easier_than_expected: 0
+    });
+    expect(examDebrief.preparedRate).toBe(100);
+  });
+
+  it('lists what they asked for, newest first, skipping conversations with no ask', () => {
+    const { examDebrief } = buildRollup([
+      debrief({
+        createdAt: new Date('2026-08-20T10:00:00Z'),
+        context: { preparedness: 3, insights: { biggestImprovement: 'More SATA practice' } }
+      }),
+      debrief({
+        createdAt: new Date('2026-08-24T10:00:00Z'),
+        context: { preparedness: 2, insights: { biggestImprovement: 'Multi-patient scenarios' } }
+      }),
+      debrief({ context: { preparedness: 4, insights: { biggestImprovement: '' } } })
+    ]);
+    expect(examDebrief.asks.map((a) => a.insights.biggestImprovement)).toEqual([
+      'Multi-patient scenarios',
+      'More SATA practice'
+    ]);
+  });
+
+  it('keeps the transcript on the row, so a tally can be read back to source', () => {
+    const transcript = [
+      { role: 'assistant', content: 'How did it go?' },
+      { role: 'user', content: 'Rough' }
+    ];
+    const { examDebrief } = buildRollup([
+      debrief({ comment: 'Rough', context: { preparedness: 1, transcript } })
+    ]);
+    expect(examDebrief.surprises[0].transcript).toEqual(transcript);
+  });
+
+  it('does not count an unstated preparedness as a malformed row', () => {
+    // A conversation where she never said how prepared she felt has no
+    // sentiment, honestly. Counting it as malformed would make that number
+    // climb every week the feature works as designed.
+    const rollup = buildRollup([
+      debrief({ sentiment: null, context: { insights: { difficulty: 'as_expected' } } }),
+      row({ sentiment: null })
+    ]);
+    expect(rollup.malformed).toBe(1);
+  });
+
+  it('lists surprises newest first, with the exam and how prepared they felt', () => {
+    const { examDebrief } = buildRollup([
+      debrief({
+        comment: 'Half the paper was on delegation.',
+        createdAt: new Date('2026-08-20T10:00:00Z')
+      }),
+      debrief({
+        comment: 'Way more math than expected.',
+        createdAt: new Date('2026-08-22T10:00:00Z'),
+        context: { preparedness: 2, examLabel: 'Med-Surg' },
+        sentiment: -1
+      }),
+      debrief({ comment: null })
+    ]);
+    expect(examDebrief.surprises.map((c) => c.comment)).toEqual([
+      'Way more math than expected.',
+      'Half the paper was on delegation.'
+    ]);
+    expect(examDebrief.surprises[0]).toMatchObject({ examLabel: 'Med-Surg', preparedness: 2 });
+  });
+});

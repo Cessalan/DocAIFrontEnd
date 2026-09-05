@@ -24,6 +24,7 @@ const BlogPost = lazy(() => import("./Components/Blog/BlogPost"));
 const NclexQuestionGenerator = lazy(() => import("./Components/LandingPages/NclexQuestionGenerator"));
 const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmin"));
 const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
+const ConversationReader = lazy(() => import("./Components/Admin/ConversationReader"));
 
 /**
  * Route-level loading state. Deliberately self-contained (inline styles, brand
@@ -85,6 +86,9 @@ function App() {
         {isDev && (
           <Route path="/admin/satisfaction" element={<SatisfactionDashboard />} />
         )}
+        {isDev && (
+          <Route path="/admin/conversations" element={<ConversationReader />} />
+        )}
 
         {/* Home - Redirect to chat */}
         <Route
@@ -103,6 +107,18 @@ function App() {
         {/* Protected Chat Layout - with chat ID in URL */}
         <Route
           path="/c/:chatId"
+          element={
+            <ProtectedRoute>
+              <ChatLayout />
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Exam Drill. Renders ChatLayout, which swaps the chat pane for the
+            drill — so leaving a drill is a state change instead of a full
+            remount of the sidebar, its listeners and the chat. */}
+        <Route
+          path="/drill/:chatId"
           element={
             <ProtectedRoute>
               <ChatLayout />

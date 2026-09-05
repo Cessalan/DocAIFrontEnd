@@ -1,0 +1,478 @@
+/**
+ * ConversationReader — dev-only reading screen for the post-exam debriefs.
+ *
+ * Plainer than the student-facing surfaces, and deliberately quieter than the
+ * dashboard: on this page the student's own words are the content, so nothing
+ * else gets to be loud. Follows the app's tokens and the `body.dark-mode`
+ * convention so it doesn't flash white inside a dark session.
+ */
+
+.conv {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+  color: var(--text-primary, #3d3d3d);
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", sans-serif;
+}
+
+.conv__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-end;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(100, 80, 60, 0.12);
+}
+
+.conv__title {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 650;
+  letter-spacing: -0.02em;
+}
+
+.conv__sub {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted, #999);
+}
+
+.conv__sub code {
+  font-size: 12px;
+  background: rgba(100, 80, 60, 0.07);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+.conv__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.conv__windows {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.conv__window,
+.conv__refresh,
+.conv__chip,
+.conv__copy {
+  padding: 6px 12px;
+  font-size: 12.5px;
+  border-radius: var(--radius-sm, 8px);
+  border: 1px solid rgba(100, 80, 60, 0.14);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.conv__window:hover,
+.conv__refresh:hover,
+.conv__chip:hover,
+.conv__copy:hover {
+  background: rgba(100, 80, 60, 0.06);
+}
+
+.conv__window.is-active,
+.conv__chip.is-active {
+  background: var(--accent-soft, rgba(255, 138, 101, 0.14));
+  border-color: var(--accent, #ff8a65);
+  font-weight: 600;
+}
+
+/* ── Controls ─────────────────────────────────────────────────────── */
+
+.conv__controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.conv__search {
+  flex: 1 1 320px;
+  min-width: 220px;
+  padding: 9px 13px;
+  font-size: 13.5px;
+  font-family: inherit;
+  color: inherit;
+  background: transparent;
+  border: 1px solid rgba(100, 80, 60, 0.16);
+  border-radius: var(--radius-sm, 8px);
+}
+
+.conv__search:focus {
+  outline: none;
+  border-color: var(--accent, #ff8a65);
+}
+
+.conv__chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.conv__toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  color: var(--text-muted, #999);
+  cursor: pointer;
+}
+
+.conv__note {
+  margin: 0 0 16px;
+  font-size: 12.5px;
+  line-height: 1.55;
+  color: var(--text-muted, #999);
+}
+
+.conv__note--foot {
+  margin: 16px 0 0;
+}
+
+.conv__state {
+  margin: 24px 0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.conv__state--inline {
+  margin: 12px 0;
+  font-size: 12.5px;
+}
+
+.conv__state--error {
+  color: #c0392b;
+}
+
+/* ── Two panes ────────────────────────────────────────────────────── */
+
+.conv__body {
+  display: grid;
+  grid-template-columns: minmax(240px, 340px) minmax(0, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.conv__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 74vh;
+  overflow-y: auto;
+}
+
+.conv__item {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  width: 100%;
+  padding: 11px 12px;
+  text-align: left;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid rgba(100, 80, 60, 0.12);
+  border-left: 3px solid transparent;
+  border-radius: var(--radius-sm, 8px);
+  transition: background 0.14s ease, border-color 0.14s ease;
+}
+
+.conv__item:hover {
+  background: rgba(100, 80, 60, 0.05);
+}
+
+.conv__item.is-selected {
+  background: var(--accent-soft, rgba(255, 138, 101, 0.12));
+  border-left-color: var(--accent, #ff8a65);
+}
+
+.conv__item-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11.5px;
+  color: var(--text-muted, #999);
+}
+
+.conv__item-prep {
+  font-weight: 600;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.conv__item-snippet {
+  font-size: 13px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.conv__item-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: 11px;
+  color: var(--text-muted, #999);
+}
+
+.conv__pill {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  background: rgba(100, 80, 60, 0.08);
+}
+
+.conv__pill--dev {
+  background: rgba(255, 138, 101, 0.18);
+  margin-left: 6px;
+}
+
+/* ── The conversation itself ──────────────────────────────────────── */
+
+.conv__detail {
+  border: 1px solid rgba(100, 80, 60, 0.12);
+  border-radius: var(--radius-md, 12px);
+  padding: 20px 22px 22px;
+  min-height: 320px;
+}
+
+.conv__detail-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.conv__detail-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 640;
+  letter-spacing: -0.01em;
+}
+
+.conv__detail-meta {
+  margin: 3px 0 0;
+  font-size: 12px;
+  color: var(--text-muted, #999);
+}
+
+.conv__badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 18px;
+}
+
+.conv__badge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  background: rgba(100, 80, 60, 0.07);
+}
+
+.conv__badge--quiet {
+  color: var(--text-muted, #999);
+}
+
+.conv__transcript {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-height: 52vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.conv__line {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  max-width: 78%;
+}
+
+.conv__line--assistant {
+  align-self: flex-start;
+}
+
+.conv__line--user {
+  align-self: flex-end;
+  align-items: flex-end;
+}
+
+.conv__speaker {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted, #999);
+}
+
+.conv__bubble {
+  margin: 0;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-size: 14px;
+  line-height: 1.58;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.conv__line--assistant .conv__bubble {
+  background: rgba(100, 80, 60, 0.07);
+  border-bottom-left-radius: 5px;
+}
+
+/* The student's words are the point of the screen, so they get the accent. */
+.conv__line--user .conv__bubble {
+  background: var(--accent-soft, rgba(255, 138, 101, 0.16));
+  border-bottom-right-radius: 5px;
+}
+
+.conv-mark {
+  background: rgba(255, 214, 102, 0.55);
+  color: inherit;
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+/* ── Claude's structured read ─────────────────────────────────────── */
+
+.conv__insights {
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(100, 80, 60, 0.12);
+}
+
+.conv__insights-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 640;
+}
+
+.conv__fields {
+  margin: 0;
+  display: grid;
+  gap: 12px;
+}
+
+.conv__field {
+  display: grid;
+  grid-template-columns: minmax(140px, 210px) minmax(0, 1fr);
+  gap: 12px;
+  align-items: start;
+}
+
+.conv__field dt {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.conv__field dd {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.conv__values {
+  margin: 0;
+  padding-left: 18px;
+  display: grid;
+  gap: 4px;
+}
+
+@media (max-width: 900px) {
+  .conv__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .conv__list {
+    max-height: 320px;
+  }
+
+  .conv__line {
+    max-width: 92%;
+  }
+
+  .conv__field {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2px;
+  }
+}
+
+/* ── Dark mode ────────────────────────────────────────────────────── */
+
+body.dark-mode .conv { color: rgba(255, 255, 255, 0.92); }
+
+body.dark-mode .conv__header,
+body.dark-mode .conv__insights { border-color: rgba(255, 255, 255, 0.1); }
+
+body.dark-mode .conv__sub,
+body.dark-mode .conv__note,
+body.dark-mode .conv__toggle,
+body.dark-mode .conv__item-head,
+body.dark-mode .conv__item-meta,
+body.dark-mode .conv__detail-meta,
+body.dark-mode .conv__speaker,
+body.dark-mode .conv__badge--quiet { color: rgba(255, 255, 255, 0.45); }
+
+body.dark-mode .conv__state,
+body.dark-mode .conv__item-prep,
+body.dark-mode .conv__field dt { color: rgba(255, 255, 255, 0.65); }
+
+body.dark-mode .conv__state--error { color: #f87171; }
+
+body.dark-mode .conv__sub code,
+body.dark-mode .conv__pill,
+body.dark-mode .conv__badge,
+body.dark-mode .conv__line--assistant .conv__bubble { background: rgba(255, 255, 255, 0.08); }
+
+body.dark-mode .conv__window,
+body.dark-mode .conv__refresh,
+body.dark-mode .conv__chip,
+body.dark-mode .conv__copy,
+body.dark-mode .conv__search,
+body.dark-mode .conv__item,
+body.dark-mode .conv__detail { border-color: rgba(255, 255, 255, 0.14); }
+
+body.dark-mode .conv__window:hover,
+body.dark-mode .conv__refresh:hover,
+body.dark-mode .conv__chip:hover,
+body.dark-mode .conv__copy:hover,
+body.dark-mode .conv__item:hover { background: rgba(255, 255, 255, 0.07); }
+
+body.dark-mode .conv__window.is-active,
+body.dark-mode .conv__chip.is-active,
+body.dark-mode .conv__item.is-selected {
+  background: rgba(184, 165, 212, 0.2);
+  border-color: var(--dark-accent, #b8a5d4);
+}
+
+body.dark-mode .conv__search:focus { border-color: var(--dark-accent, #b8a5d4); }
+
+body.dark-mode .conv__item.is-selected { border-left-color: var(--dark-accent, #b8a5d4); }
+
+body.dark-mode .conv__pill--dev { background: rgba(184, 165, 212, 0.28); }
+
+body.dark-mode .conv__line--user .conv__bubble { background: rgba(184, 165, 212, 0.22); }
+
+body.dark-mode .conv-mark { background: rgba(255, 214, 102, 0.35); color: inherit; }

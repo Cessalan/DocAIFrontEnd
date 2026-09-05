@@ -39,6 +39,12 @@
   color: var(--text-muted, #999);
 }
 
+.sat-dash__link {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .sat-dash__sub code {
   font-size: 12px;
   background: rgba(100, 80, 60, 0.07);
@@ -91,6 +97,18 @@
   font-size: 15px;
   font-weight: 600;
   letter-spacing: -0.01em;
+}
+
+/* Sub-heading inside a section. The exam-debrief block is the only one with
+   three distinct readings under one heading (distribution, gaps, surprises),
+   and without a step down between them they run together as one list. */
+.sat-dash__h3 {
+  margin: 22px 0 6px;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--text-muted, #999);
 }
 
 .sat-dash__count {
@@ -391,4 +409,68 @@ body.dark-mode .sat-comment__chip {
   color: var(--dark-accent-light, #d4c8e8);
   border-color: rgba(200, 180, 220, 0.35);
   background: rgba(200, 180, 220, 0.1);
+}
+
+/* A secondary line under a comment — what helped, what was missing. Quieter
+   than the quote it sits under, because the quote is the evidence and this is
+   the annotation. */
+.sat-comment__aside {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted, #999);
+}
+
+/* Full debrief transcript, collapsed. Every count in the exam section is a
+   compression of one of these, and being able to open one is what keeps a
+   surprising tally checkable instead of just believable. */
+.sat-transcript {
+  margin-top: 8px;
+  font-size: 12.5px;
+}
+
+.sat-transcript summary {
+  cursor: pointer;
+  color: var(--text-muted, #999);
+}
+
+.sat-transcript__line {
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.sat-transcript__line--user {
+  color: var(--text-primary, #3d3d3d);
+}
+
+.sat-transcript__line--assistant {
+  color: var(--text-muted, #999);
+}
+
+/* Free-text labels from the debrief conversations — topics and formats the
+   real exams tested. A list rather than bars: the counts are small and the
+   words are the point, so ranking them visually would overstate what two
+   mentions mean. */
+.sat-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 8px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sat-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  font-size: 13px;
+  border: 1px solid var(--sat-border, rgba(100, 80, 60, 0.16));
+  border-radius: 999px;
+}
+
+.sat-tag__count {
+  font-size: 11px;
+  font-weight: 700;
+  opacity: 0.6;
 }

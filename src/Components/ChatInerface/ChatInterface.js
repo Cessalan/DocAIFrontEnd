@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo, Suspense, lazy } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 // Firebase imports
@@ -123,12 +123,12 @@ import DiagnosticFlow from '../StudyMode/DiagnosticFlow';
 import { coerceDate, calendarDaysBetween } from '../StudyMode/studySchedule';
 // StudyModeContainer is lazy-loaded — see the code-splitting block below the imports.
 
-// Class recording — opens the overlay attached to the current chat so the
-// transcript embeds into this chat's vectorstore instead of creating a new one.
-import { useRecordClass, RECORDING_FILES_REFRESH_EVENT } from '../RecordClass/RecordClassContext';
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
 import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
+import DrillExamDate from '../ExamDrill/DrillExamDate';
+import DrillTargetIcon from '../ExamDrill/DrillTargetIcon';
+import { saveExamDate, noteExamDateAsked } from '../../Services/ExamDrillService';
 
 // ============================================
 // CODE SPLITTING
@@ -199,6 +199,10 @@ const ChatInterface = ({
   // Auth context - need reactive auth state for pending upload processing
   const { isUserLoggedIn, userProfile, currentUser, setUserProfile } = useAuth() || {};
 
+  // Router. Used by the Exam Drill entry point, which leaves the chat surface
+  // entirely for the full-screen drill at /drill/:chatId.
+  const navigate = useNavigate();
+
   // Progress tracking context
   const { addCorrectAnswer, addIncorrectAnswer } = useProgress();
 
@@ -207,10 +211,6 @@ const ChatInterface = ({
   // when a generation actually completes. isPro / openUpgrade also gate the
   // free "one upload per chat" limit.
   const { requireQuota, consume: consumeGeneration, isPro, openUpgrade } = useUsageLimit();
-
-  // Class recording overlay
-  const { openOverlay: openRecordOverlay, status: recordStatus, STATUS: RECORD_STATUS, expand: expandRecordOverlay } = useRecordClass();
-  const isRecordingActive = recordStatus === RECORD_STATUS.RECORDING || recordStatus === RECORD_STATUS.PAUSED;
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
@@ -229,6 +229,14 @@ const ChatInterface = ({
   const [chatMessages, setChatMessages] = useState([]);
   const [isGameChat, setIsGameChat] = useState(false);
   const [gameState, setGameState] = useState(null);
+
+  // Exam Drill in progress on this chat, or null. Drives the resume bar that
+  // stands in for the composer — see the input area below.
+  const [drillSummary, setDrillSummary] = useState(null);
+
+  // Chat whose drill is waiting on an exam-date answer before we hand over to
+  // the examiner. Null the rest of the time.
+  const [pendingDrillDateChatId, setPendingDrillDateChatId] = useState(null);
   const [currentExamData, setCurrentExamData] = useState(null); // { examId, examName, examDate, hardestTopics }
   const [isChatDataLoaded, setIsChatDataLoaded] = useState(!chatId); // True if no chatId (new chat) or after chat doc is fetched
   const [userInputText, setUserInputText] = useState('');
@@ -854,6 +862,10 @@ const ChatInterface = ({
     setIsStudyMode(false);
     setStudyState(null);
     setStudyAutoStart(false);
+    // Same reasoning as the states above: without this, switching chats
+    // flashes the previous chat's drill bar over the new chat's composer
+    // until getDoc resolves.
+    setDrillSummary(null);
 
     // Get chat title and check if it's a game chat or exam chat
     latestRequestedChatIdRef.current = chatId; // Track the latest request
@@ -906,6 +918,34 @@ const ChatInterface = ({
           setCurrentExamData(null);
         }
 
+        // Exam Drill. A chat that has been drilled carries a `drill` map (see
+        // ExamDrillService). The resume card needs the headline figure plus
+        // what has actually been covered — the full student model stays where
+        // the drill reads it.
+        //
+        // Topics are ordered most-drilled first and carry NO scores. This card
+        // is a way back in, not a report; the checkpoint is where findings get
+        // delivered, and repeating "0/2" here would undo that.
+        // `drill` exists from the moment the examiner opens, not from the
+        // first answer — a student who left on question one still has a drill
+        // waiting, and before this she was shown the post-upload analysis card
+        // with no way back to it.
+        if (chatData.drill) {
+          const topicMap = chatData.drill.topics || {};
+          const covered = Object.keys(topicMap)
+            .map((topic) => ({
+              topic,
+              seen: Object.values(topicMap[topic] || {})
+                .reduce((n, b) => n + (b?.total || 0), 0),
+            }))
+            .sort((a, b) => b.seen - a.seen)
+            .map((t) => t.topic);
+
+          setDrillSummary({ answered: chatData.drill.answered || 0, topics: covered });
+        } else {
+          setDrillSummary(null);
+        }
+
         // Check if this is a study session - if so, auto-enter study mode
         if (chatData.isStudySession) {
           devLog('📚 This chat is a study session, entering study mode');
@@ -930,6 +970,7 @@ const ChatInterface = ({
         setCurrentExamData(null);
         setIsStudyMode(false);
         setStudyState(null);
+        setDrillSummary(null);
       }
       // Mark chat data as loaded - now safe to render empty states
       setIsChatDataLoaded(true);
@@ -1073,13 +1114,6 @@ const ChatInterface = ({
     };
 
     fetchFiles();
-
-    // Refetch when a class recording finalizes into this chat.
-    const onRecordingFilesRefresh = (e) => {
-      if (e.detail?.chatId === currentChatID) fetchFiles();
-    };
-    window.addEventListener(RECORDING_FILES_REFRESH_EVENT, onRecordingFilesRefresh);
-    return () => window.removeEventListener(RECORDING_FILES_REFRESH_EVENT, onRecordingFilesRefresh);
   }, [currentChatID]);
 
   const { t, i18n } = useTranslation();
@@ -2971,7 +3005,12 @@ const ChatInterface = ({
           filename: update.filename,
           topics: update.topics || [],
           concepts: update.concepts || [],
-          documentType: update.document_type
+          documentType: update.document_type,
+          // Classification skills the document actually teaches (nursing process,
+          // Maslow, ABCDE...). Detected server-side from the full text against a
+          // closed set; [] means this document teaches none, which is the common
+          // case. Persisted so the planner can build practice on them later.
+          frameworks: update.frameworks || []
         };
 
         devLog(`   Created insight object:`, newInsight);
@@ -3209,6 +3248,38 @@ const ChatInterface = ({
       // ============================================
       case 'post_upload_message':
         devLog('📬 Post-upload message received:', update);
+
+        // Exam Drill entry. Checked BEFORE the study-journey branch because
+        // the drill is a different destination entirely: no plan, no
+        // onboarding card, straight into being examined on what was just
+        // uploaded. First upload is still marked, so the funnel stays intact.
+        if (window._pendingDrill) {
+          devLog('🎯 Drill mode — routing straight to the examiner');
+          window._pendingDrill = false;
+
+          if (currentUser?.uid && !userProfile?.hasCompletedFirstUpload) {
+            markFirstUploadComplete(currentUser.uid)
+              .then(() => setUserProfile(prev => ({ ...prev, hasCompletedFirstUpload: true })))
+              .catch(err => console.error('❌ Failed to mark first upload:', err));
+          }
+
+          // Ask for the exam date here, on the upload that created the drill,
+          // and hold the redirect until she answers. Holding it is what makes
+          // this safe: the navigation is ours to delay, so the question is not
+          // racing a redirect she did not trigger.
+          //
+          // Only when nothing in the app already knows the date — a student who
+          // set one on her plan is never asked twice. ExamDrillPage asks the
+          // same question as a fallback for drills this path cannot reach.
+          const knownExamDate = currentExamData?.examDate || userProfile?.onboarding?.examDate;
+          if (!knownExamDate) {
+            setPendingDrillDateChatId(chatId);
+            break;
+          }
+
+          navigate(`/drill/${chatId}`);
+          break;
+        }
 
         // Check if user clicked "Study Journey" card - skip post-upload actions and go directly to study mode
         if (window._pendingStudyJourney) {
@@ -4609,122 +4680,195 @@ const ChatInterface = ({
             chats here — they don't have an exam entity to feature in the
             landing card. The countdown still surfaces inside StudyMode. */}
         {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData?.examName && (
-          <div className="empty-chat-state">
-            <div className="empty-chat-single-cta">
-              {/* Main upload CTA - defaults to Study Journey */}
-              <div className="empty-cta-card">
-                <div className="empty-cta-icon">
-                  <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    {/* Graduation cap */}
-                    <path d="M32 12L6 26L32 40L58 26L32 12Z" fill="#e88d7d" stroke="#c46a5a" strokeWidth="2.5" strokeLinejoin="round"/>
-                    <path d="M16 32V46C16 46 24 52 32 52C40 52 48 46 48 46V32" stroke="#c46a5a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                    <path d="M52 28V44" stroke="#c46a5a" strokeWidth="2.5" strokeLinecap="round"/>
-                    <circle cx="52" cy="47" r="3" fill="#c46a5a"/>
-                    {/* Sparkles */}
-                    <circle cx="12" cy="18" r="2" fill="#fbbf24"/>
-                    <circle cx="52" cy="14" r="2" fill="#fbbf24"/>
-                    <circle cx="10" cy="38" r="1.5" fill="#fbbf24"/>
-                  </svg>
-                </div>
-                {!examPrepExpanded && (
-                  <p className="empty-cta-tagline">
-                    {t('chat.prepareTagline', 'A personalized study plan built from your notes')}
-                  </p>
-                )}
-                {!examPrepExpanded ? (
-                  <button
-                    className="empty-cta-button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExamPrepExpanded(true);
-                    }}
-                  >
-                    {t('chat.prepareForExam', 'Prepare for exam')}
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16" style={{ marginLeft: 2 }}>
-                      <line x1="5" y1="12" x2="19" y2="12" />
-                      <polyline points="12 5 19 12 12 19" />
-                    </svg>
-                  </button>
-                ) : (
-                  <>
-                    <p className="empty-cta-prompt">
-                      {t('chat.howToAddNotes', 'How would you like to add your notes?')}
-                    </p>
-                    <div className="empty-cta-buttons-row empty-cta-buttons-row--compact">
-                      <button className="empty-cta-button empty-cta-button--compact" onClick={(e) => {
-                        e.stopPropagation();
-                        documentFileInputRef.current?.click();
-                        window._pendingStudyJourney = true;
-                      }}>
-                        <svg viewBox="0 0 24 24"
-                             fill="none"
-                             stroke="currentColor"
-                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                          <polyline points="17 8 12 3 7 8" />
-                          <line x1="12" y1="3" x2="12" y2="15" />
-                        </svg>
-                        {t('chat.uploadNotes', 'Upload notes')}
-                      </button>
-                      <button className="empty-cta-button empty-cta-button--compact paste-notes-btn" onClick={(e) => {
-                        e.stopPropagation();
-                        setShowPasteNotesModal(true);
-                      }}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                            strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                          <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
-                          <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
-                        </svg>
-                        {t('chat.pasteNotes', 'Paste notes')}
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="empty-cta-back"
-                      onClick={(e) => { e.stopPropagation(); setExamPrepExpanded(false); }}
-                    >
-                      ← {t('chat.back', 'Back')}
-                    </button>
-                  </>
-                )}
-              </div>
+          <div className="empty-chat-state empty-chat-state--paths">
+            {/* ── Two doors, shown as peers ──────────────────────────────
+                The plan is for a student who wants to be TAUGHT; the drill
+                is for one who wants to be TESTED. They used to be stacked —
+                a card for the plan, then a tagline and a quiet outlined
+                button underneath — which reads as a primary action with an
+                afterthought below it. In the production data the tested path
+                is what every paying user actually did (7x the exams, almost
+                none of the lessons), so it is not an afterthought and should
+                not be drawn as one.
 
-              {/* Secondary path: live-class recording. Stacked below the
-                  primary upload card so students sitting in a lecture right
-                  now have an obvious entry point. */}
-              <div className="empty-cta-card empty-cta-card--record">
-                <div className="empty-cta-icon empty-cta-icon--record">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="40" height="40" aria-hidden="true">
-                    <circle cx="8" cy="7" r="3" />
-                    <path d="M2 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
-                    <path d="M15 9a3 3 0 0 1 0 4" />
-                    <path d="M17.5 7a6.5 6.5 0 0 1 0 8" />
-                  </svg>
-                </div>
-                <p className="empty-cta-tagline empty-cta-tagline--record">
-                  {t('chat.recordTagline', 'Sitting in a lecture? Transcribe it live.')}
+                Both doors still go through an upload: neither is worth
+                anything until the questions come from HER material. */}
+            {!examPrepExpanded ? (
+              <div className="path-choice">
+                <h2 className="path-choice__title">
+                  {t('chat.pathTitle', 'What do you want to focus on today?')}
+                </h2>
+                <p className="path-choice__sub">
+                  {t('chat.pathSub', "Choose your path. We'll meet you where you are.")}
                 </p>
-                <div className="empty-cta-buttons-row">
-                  <button className="empty-cta-button record-class-btn" onClick={(e) => {
-                    e.stopPropagation();
-                    openRecordOverlay({ chatId: currentChatID || null });
-                  }}>
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
-                      <circle cx="12" cy="12" r="9" />
-                      <circle cx="12" cy="12" r="4" fill="currentColor" stroke="none" />
-                    </svg>
-                    {t('chat.recordClassCta', 'Record a class')}
+
+                <div className="path-choice__cards">
+                  <article className="path-card path-card--plan">
+                    <div className="path-card__icon">
+                      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                        <path d="M32 12L6 26L32 40L58 26L32 12Z" fill="currentColor" opacity="0.85" />
+                        <path d="M16 32V46C16 46 24 52 32 52C40 52 48 46 48 46V32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M52 28V44" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                        <circle cx="52" cy="47" r="3" fill="currentColor" />
+                      </svg>
+                    </div>
+                    <h3 className="path-card__title">
+                      {t('chat.planCardTitle', 'Follow your study plan')}
+                    </h3>
+                    <p className="path-card__desc">
+                      {t('chat.planCardDesc', 'A personalized, step-by-step plan built from your notes to help you master the material.')}
+                    </p>
+                    <button
+                      className="path-card__cta"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExamPrepExpanded(true);
+                      }}
+                    >
+                      {t('chat.prepareForExam', 'Study for exam')}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </button>
+                    <p className="path-card__note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                           strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
+                        <path d="M4 5a2 2 0 0 1 2-2h12a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2z" />
+                        <line x1="8" y1="7" x2="15" y2="7" />
+                        <line x1="8" y1="11" x2="15" y2="11" />
+                      </svg>
+                      {t('chat.planCardNote', 'Best for building knowledge and long-term retention')}
+                    </p>
+                  </article>
+
+                  <article className="path-card path-card--drill">
+                    <div className="path-card__icon">
+                      <DrillTargetIcon aria-hidden="true" />
+                    </div>
+                    <h3 className="path-card__title">
+                      {t('chat.drillCardTitle', 'Find my weak spots')}
+                      <span className="path-card__new">{t('chat.newBadge', 'New')}</span>
+                    </h3>
+                    <p className="path-card__desc">
+                      {t('chat.drillCardDesc', 'Get challenged with difficult questions from your notes and see what you need to work on.')}
+                    </p>
+                    <button
+                      className="path-card__cta"
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        window._pendingDrill = true;
+                        documentFileInputRef.current?.click();
+                      }}
+                    >
+                      {t('chat.drillCardCta', 'Test my exam readiness')}
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
+                          <line x1="5" y1="12" x2="19" y2="12" />
+                          <polyline points="12 5 19 12 12 19" />
+                        </svg>
+                    </button>
+                    <p className="path-card__note">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
+                           strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
+                        <polygon points="13 2 4 14 11 14 10 22 19 10 12 10 13 2" />
+                      </svg>
+                      {t('chat.drillCardNote', 'Best for quick assessment and exam readiness')}
+                    </p>
+                  </article>
+                </div>
+              </div>
+            ) : (
+              /* Expanded: the plan door asks HOW the notes arrive. Unchanged
+                 behaviour — only its place in the tree moved. */
+              <div className="empty-chat-single-cta">
+                <div className="empty-cta-card">
+                  <p className="empty-cta-prompt">
+                    {t('chat.howToAddNotes', 'How would you like to add your notes?')}
+                  </p>
+                  <div className="empty-cta-buttons-row empty-cta-buttons-row--compact">
+                    <button className="empty-cta-button empty-cta-button--compact" onClick={(e) => {
+                      e.stopPropagation();
+                      documentFileInputRef.current?.click();
+                      window._pendingStudyJourney = true;
+                    }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="17 8 12 3 7 8" />
+                        <line x1="12" y1="3" x2="12" y2="15" />
+                      </svg>
+                      {t('chat.uploadNotes', 'Upload notes')}
+                    </button>
+                    <button className="empty-cta-button empty-cta-button--compact paste-notes-btn" onClick={(e) => {
+                      e.stopPropagation();
+                      setShowPasteNotesModal(true);
+                    }}>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                           strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
+                        <path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2" />
+                        <rect x="8" y="2" width="8" height="4" rx="1" ry="1" />
+                      </svg>
+                      {t('chat.pasteNotes', 'Paste notes')}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="empty-cta-back"
+                    onClick={(e) => { e.stopPropagation(); setExamPrepExpanded(false); }}
+                  >
+                    ← {t('chat.back', 'Back')}
                   </button>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         )}
 
         {/* Exam Prep Modal */}
+        {/* ── The exam date, asked on a drill upload ─────────────────────
+            Rendered over the chat rather than as a step inside it: the
+            student pressed "Drill me on my notes" and is on her way to the
+            examiner, so this is the last thing between her and it, not a new
+            place to be. Answering or skipping completes the handover. */}
+        {pendingDrillDateChatId && (
+          <div className="drill-date-overlay">
+            <DrillExamDate
+              language={i18n.language}
+              onSubmit={(key, customDate) => {
+                const chosen = saveExamDate({
+                  chatId: pendingDrillDateChatId,
+                  uid: currentUser?.uid,
+                  key,
+                  customDate,
+                });
+                // Light the countdown up now rather than after a reload — the
+                // resume card reads this the moment she comes back out.
+                if (chosen) {
+                  setCurrentExamData(prev => ({
+                    examId: prev?.examId || null,
+                    examName: prev?.examName || null,
+                    examDate: chosen,
+                    hardestTopics: prev?.hardestTopics || [],
+                  }));
+                }
+                const target = pendingDrillDateChatId;
+                setPendingDrillDateChatId(null);
+                navigate(`/drill/${target}`);
+              }}
+              onSkip={() => {
+                noteExamDateAsked(pendingDrillDateChatId);
+                const target = pendingDrillDateChatId;
+                setPendingDrillDateChatId(null);
+                navigate(`/drill/${target}`);
+              }}
+            />
+          </div>
+        )}
+
         {showExamPrepModal && (
           <ExamPrepModal
             onClose={() => setShowExamPrepModal(false)}
@@ -4937,6 +5081,12 @@ const ChatInterface = ({
           {/* Actual Messages - hidden until positioned */}
           <div style={{ opacity: isInitialLoadComplete ? 1 : 0, transition: 'opacity 0.3s ease' }}>
             {chatMessages.map((message, messageIndex) => {
+              // Once the drill is running, the upload analysis card has done
+              // its job. It reports on a step the student has already moved
+              // past, and leaving it up puts a finished green "Analysis
+              // complete" panel above the only live thing on the page.
+              if (drillSummary && message.type === 'upload_loading') return null;
+
               // ============================================
               // UPLOAD LOADING BOX
               // ============================================
@@ -5419,7 +5569,7 @@ const ChatInterface = ({
         {/* Pre-upload study options removed - single CTA card handles upload */}
 
         {/* Input Area */}
-        <form className="input-area" onSubmit={handleSendNewUserMessage}>
+        <form className={`input-area${drillSummary ? ' input-area--drill' : ''}`} onSubmit={handleSendNewUserMessage}>
           <input
             type="file"
             ref={documentFileInputRef}
@@ -5429,7 +5579,118 @@ const ChatInterface = ({
             accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.txt,.md,.jpg,.jpeg,.png,.bmp,.tiff,.webp,.heic,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,application/vnd.ms-powerpoint,application/vnd.openxmlformats-officedocument.presentationml.presentation,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,text/plain,text/markdown,image/*"
           />
 
-          {/* Input wrapper - vertical layout with buttons at bottom */}
+          {/* ── Drill in progress: the composer stands down ───────────────
+              Once a chat is being drilled it is a drill surface, not a
+              conversation, so the resume control takes the composer's place
+              rather than sitting somewhere else on the page. Putting it here
+              means the answer to "how do I get back in?" is exactly where the
+              student's hands already are.
+
+              The hidden file input above stays mounted either way — the
+              empty-state CTA still needs it. */}
+          {drillSummary ? (
+            <div className="drill-resume">
+              <div className="drill-resume__head">
+                <span className="drill-resume__eyebrow">
+                  {drillSummary.answered > 0
+                    ? t('drill.inProgress', 'Drill in progress')
+                    : t('drill.readyEyebrow', 'Drill ready')}
+                </span>
+                <span className="drill-resume__meta">
+                  {drillSummary.answered > 0
+                    ? t('drill.answeredSoFar', '{{count}} questions answered so far', {
+                        count: drillSummary.answered,
+                      })
+                    : t('drill.notStartedYet', 'Nothing answered yet')}
+                </span>
+              </div>
+
+              {/* What has been covered, written onto the ruled lines and
+                  ticked off. Names only, no scores — this sheet is a way back
+                  in, not a report; the checkpoint delivers findings.
+
+                  A list rather than chips because these labels are generated
+                  and run long ("Impact of Sleep Timing on Hormonal Health"),
+                  and because a tick means "done" where a sticky note would
+                  mean "still to do". */}
+              {drillSummary.topics.length > 0 && (
+                <div className="drill-resume__topics">
+                  <span className="drill-resume__topics-label">
+                    {t('drill.coveredSoFar', 'Covered so far')}
+                  </span>
+                  <ul className="drill-resume__list">
+                    {drillSummary.topics.slice(0, 6).map((topic) => (
+                      <li className="drill-resume__line" key={topic}>
+                        <svg
+                          className="drill-resume__tick"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2.5"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          aria-hidden="true"
+                        >
+                          <path d="M4 13.5 L9.5 19 L20 5" />
+                        </svg>
+                        <span className="drill-resume__subject">{topic}</span>
+                      </li>
+                    ))}
+                    {drillSummary.topics.length > 6 && (
+                      <li className="drill-resume__line drill-resume__line--more">
+                        {t('drill.moreTopics', '+{{count}} more', {
+                          count: drillSummary.topics.length - 6,
+                        })}
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              )}
+
+              {/* The CTA and its countdown move together, so the deadline
+                  reads as the reason to press the button rather than as a
+                  separate fact somewhere else on the page. */}
+              <div className="drill-resume__action">
+                <button
+                  type="button"
+                  className="drill-resume__button"
+                  onClick={() => navigate(`/drill/${chatId}`)}
+                >
+                  <span className="drill-resume__play" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
+                      <path d="M8 5v14l11-7z" />
+                    </svg>
+                  </span>
+                  {drillSummary.answered > 0
+                    ? t('drill.keepDrilling', 'Keep drilling')
+                    : t('drill.startDrilling', 'Start the drill')}
+                </button>
+
+                {(() => {
+                  // Same date helpers the plan and the diagnostic use — a
+                  // second definition of "how many days is that" would drift
+                  // on timezones and midnight, and she would see one
+                  // countdown here and a different one on her plan.
+                  const raw = currentExamData?.examDate || userProfile?.onboarding?.examDate;
+                  const when = coerceDate(raw);
+                  if (!when) return null;
+                  const days = calendarDaysBetween(new Date(), when);
+                  // An exam that has been and gone is not a countdown.
+                  if (days === null || days < 0) return null;
+
+                  return (
+                    <p className="drill-resume__countdown">
+                      {days === 0
+                        ? t('drill.examToday', 'Your exam is today')
+                        : days === 1
+                          ? t('drill.examTomorrow', 'Your exam is tomorrow')
+                          : t('drill.examInDays', '{{count}} days until your exam', { count: days })}
+                    </p>
+                  );
+                })()}
+              </div>
+            </div>
+          ) : (
           <div className="input-wrapper-container">
             {/* Textarea */}
             <textarea
@@ -5505,33 +5766,6 @@ const ChatInterface = ({
                   disabled={isSystemBusy}>
                   <SvgFileUpload />
                 </button>
-
-                {currentChatID && (
-                  <button
-                    type="button"
-                    className={`upload-button record-class-inline ${isRecordingActive ? 'is-active' : ''}`}
-                    onClick={() => {
-                      if (isRecordingActive) {
-                        expandRecordOverlay();
-                      } else {
-                        openRecordOverlay({ chatId: currentChatID });
-                      }
-                    }}
-                    data-tooltip={isRecordingActive ? t('chat.tooltipRecordActive') : t('chat.tooltipRecordIdle')}
-                    disabled={isSystemBusy && !isRecordingActive}
-                  >
-                    {isRecordingActive ? (
-                      <span className="record-class-inline__pulse" aria-hidden="true" />
-                    ) : (
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <circle cx="8" cy="7" r="3" />
-                        <path d="M2 21v-1a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v1" />
-                        <path d="M15 9a3 3 0 0 1 0 4" />
-                        <path d="M17.5 7a6.5 6.5 0 0 1 0 8" />
-                      </svg>
-                    )}
-                  </button>
-                )}
 
                 <button type="button"
                   className="upload-button photo-button"
@@ -5631,6 +5865,7 @@ const ChatInterface = ({
               </div>
             </div>
           </div>
+          )}
         </form>
 
         {/* Files Modal */}

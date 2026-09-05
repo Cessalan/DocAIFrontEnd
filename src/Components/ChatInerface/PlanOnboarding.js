@@ -16,6 +16,7 @@ import {
   SparkleIcon
 } from './PlanOnboardingIcons';
 import PlanDatePicker from './PlanDatePicker';
+import { EXAM_DATE_CHOICES } from '../../Services/examDateChoices';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import './PlanOnboarding.css';
 
@@ -40,16 +41,15 @@ import './PlanOnboarding.css';
  * users. Non-exam users get the existing PostUploadActions/wow-card path.
  */
 
-// Q1 choices map to a relative day count off "today". The day numbers below
-// are friendly approximations — the exam-date prompt only needs to capture
-// urgency tier, not a precise calendar day. Users who care can hit "Pick a date".
-const EXAM_OPTIONS = [
-  { key: 'today',           daysAway: 0 },
-  { key: 'tomorrow',        daysAway: 1 },
-  { key: 'this_week',       daysAway: 5 },
-  { key: 'next_week',       daysAway: 10 },
-  { key: 'two_plus_weeks',  daysAway: 21 }
-];
+// Q1 choices map to a relative day count off "today". The day numbers are
+// friendly approximations — the prompt only needs to capture urgency tier, not
+// a precise calendar day. Users who care can hit "Pick a date".
+//
+// Shared with the drill, which asks the same question of students who never
+// pass through this card. See Services/examDateChoices.js: two surfaces owning
+// their own offsets is how a countdown ends up saying 10 days on one screen
+// and 14 on another.
+const EXAM_OPTIONS = EXAM_DATE_CHOICES;
 
 const PREP_OPTIONS = [
   { key: 'not_started',     Icon: NotStartedIcon },

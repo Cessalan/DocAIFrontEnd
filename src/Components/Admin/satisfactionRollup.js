@@ -1,3 +1,5 @@
+import { SURFACE, PREPAREDNESS } from '../../Services/satisfactionEnums';
+
 /**
  * satisfactionRollup — turning satisfaction rows into the four things worth knowing.
  *
@@ -79,6 +81,16 @@ export const normalizeRow = (raw = {}) => {
     scored: context.scored === true,
     scorePercent: typeof context.scorePercent === 'number' ? context.scorePercent : null,
     bucket: context.bucket || null,
+    // Exam debrief only. Null everywhere else, which is what keeps
+    // `buildExamDebrief` from having to guess which rows are its own.
+    preparedness: typeof context.preparedness === 'number' ? context.preparedness : null,
+    examLabel: context.examLabel || null,
+    // The whole structured read of a debrief conversation, and the transcript
+    // it came from. Null on every other surface.
+    insights: context.insights && typeof context.insights === 'object' ? context.insights : null,
+    transcript: Array.isArray(context.transcript) ? context.transcript : [],
+    devPreview: context.devPreview === true,
+    daysAfterExam: typeof context.daysAfterExam === 'number' ? context.daysAfterExam : null,
     at: toDate(raw.timestamp) || toDate(raw.createdAt)
   };
 };
@@ -96,6 +108,148 @@ const tally = (acc, row) => {
 export const netSentiment = ({ positive, negative, rated }) =>
   rated > 0 ? Math.round(((positive - negative) / rated) * 100) : null;
 
+/** Preparedness ordinals, best first — the order the answers were offered in. */
+const PREPAREDNESS_ORDER = [
+  PREPAREDNESS.WELL,
+  PREPAREDNESS.MOSTLY,
+  PREPAREDNESS.SOMEWHAT_UNPREPARED,
+  PREPAREDNESS.NOT_ENOUGH
+];
+
+/**
+ * The post-exam debrief, rolled up on its own.
+ *
+ * WHY IT IS NOT JUST ANOTHER SURFACE
+ *
+ * Every other row rates a piece of content while the student is looking at it.
+ * These rate the exam — the outcome the whole product is pointed at — and they
+ * carry a four-point answer that the shared -1/0/+1 column flattens away. Read
+ * through `bySurface` alone, a debrief is one more thumb.
+ *
+ * Two things here deliberately differ from the general rollup:
+ *
+ *  - Gaps are counted across ALL respondents, not just the negative ones.
+ *    "What would have helped?" is asked of everyone, and a student who felt
+ *    well prepared and still wanted harder questions is telling us something
+ *    the negatives-only tally in `byReason` would silently drop.
+ *
+ *  - `preparedRate` is the top TWO answers, matching the 2/2 split used to
+ *    derive sentiment. Reporting only "well prepared" would make a good week
+ *    look like a bad one.
+ *
+ * @param {Array} rows  Normalised rows (all surfaces; this filters its own).
+ */
+export const buildExamDebrief = (rows = []) => {
+  const debriefs = rows.filter((r) => r.surface === SURFACE.EXAM_DEBRIEF);
+
+  const counts = new Map(PREPAREDNESS_ORDER.map((value) => [value, 0]));
+  let answered = 0;
+  debriefs.forEach((row) => {
+    if (!counts.has(row.preparedness)) return;
+    counts.set(row.preparedness, counts.get(row.preparedness) + 1);
+    answered += 1;
+  });
+
+  const distribution = PREPAREDNESS_ORDER.map((value) => ({
+    value,
+    count: counts.get(value),
+    share: answered > 0 ? Math.round((counts.get(value) / answered) * 100) : null
+  }));
+
+  const preparedCount = counts.get(PREPAREDNESS.WELL) + counts.get(PREPAREDNESS.MOSTLY);
+
+  const gapMap = new Map();
+  debriefs.forEach((row) => {
+    row.reasons.forEach((reason) => {
+      gapMap.set(reason, (gapMap.get(reason) || 0) + 1);
+    });
+  });
+  const byGap = [...gapMap.entries()]
+    .map(([reason, count]) => ({
+      reason,
+      count,
+      // Share of everyone who answered, not of everyone who cited something —
+      // "3 of 12 students wanted harder questions" is the sentence this needs
+      // to support. Sums past 100%: one student can ask for several things.
+      share: debriefs.length > 0 ? Math.round((count / debriefs.length) * 100) : null
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // How the exam compared with what she expected — a separate axis from how
+  // prepared she felt. A student can feel well prepared and still be blindsided
+  // by the format, and that pair is the most actionable thing on this page.
+  const difficulty = { harder_than_expected: 0, as_expected: 0, easier_than_expected: 0 };
+  debriefs.forEach((row) => {
+    const value = row.insights?.difficulty;
+    if (value && Object.prototype.hasOwnProperty.call(difficulty, value)) {
+      difficulty[value] += 1;
+    }
+  });
+
+  /**
+   * The two open-ended lists, tallied by exact label.
+   *
+   * Deliberately NOT normalised, clustered or stemmed: "SATA" and "select all
+   * that apply" stay two rows. A fuzzy merge here would be a guess presented as
+   * a count, and the list is short enough to read with human eyes — which is
+   * also the only thing that can tell whether those two are the same complaint.
+   */
+  const tallyLabels = (field) => {
+    const counts = new Map();
+    debriefs.forEach((row) => {
+      (row.insights?.[field] || []).forEach((label) => {
+        const key = String(label).trim();
+        if (!key) return;
+        counts.set(key, (counts.get(key) || 0) + 1);
+      });
+    });
+    return [...counts.entries()]
+      .map(([label, count]) => ({ label, count }))
+      .sort((a, b) => b.count - a.count || a.label.localeCompare(b.label));
+  };
+
+  return {
+    total: debriefs.length,
+    answered,
+    preparedCount,
+    // What the real exam tested that they were not ready for. The most directly
+    // actionable output of the whole feature: each of these is a lesson or a
+    // question set somebody could go and build this week.
+    topicsMissed: tallyLabels('topicsMissed'),
+    // Formats that caught them out — what our generator should be producing
+    // more of, as opposed to what it should be producing more ABOUT.
+    questionFormats: tallyLabels('questionFormats'),
+    // Real questions students sat, each with the exam it came from. Not tallied
+    // — no two are the same, and the value is in reading them, not counting
+    // them. This is the closest thing we have to seeing the exam paper.
+    examples: debriefs
+      .filter((r) => (r.insights?.exampleQuestions || []).length > 0)
+      .sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0))
+      .flatMap((r) =>
+        r.insights.exampleQuestions.map((text, index) => ({
+          id: `${r.id}-${index}`,
+          text,
+          examLabel: r.examLabel,
+          at: r.at
+        }))
+      ),
+    preparedRate: answered > 0 ? Math.round((preparedCount / answered) * 100) : null,
+    distribution,
+    difficulty,
+    // What she said we could change, newest first. Free text, so it is the only
+    // place something we never thought to ask about can show up.
+    asks: debriefs
+      .filter((r) => r.insights?.biggestImprovement)
+      .sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0)),
+    byGap,
+    // What the exam threw at them that we never covered. The only field in the
+    // whole collection that can name something we did not think to ask about.
+    surprises: debriefs
+      .filter((r) => r.comment)
+      .sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0))
+  };
+};
+
 /**
  * Build the whole rollup.
  *
@@ -105,7 +259,11 @@ export const netSentiment = ({ positive, negative, rated }) =>
  * @returns {Object}
  */
 export const buildRollup = (rawRows = [], { commentLimit = 50 } = {}) => {
-  const rows = rawRows.map(normalizeRow);
+  // Dev-preview rows are dropped before anything is counted. They are written
+  // for real — dev and production share a Firebase project — and a dashboard
+  // that reports a developer's clicking as student sentiment is worse than one
+  // with no data on it at all.
+  const rows = rawRows.map(normalizeRow).filter((r) => !r.devPreview);
 
   const overall = rows.reduce(tally, emptyTally());
 
@@ -189,10 +347,18 @@ export const buildRollup = (rawRows = [], { commentLimit = 50 } = {}) => {
     bySurface,
     byReason,
     defect,
+    examDebrief: buildExamDebrief(rows),
     comments,
     byDay,
     // Rows that arrived without a usable sentiment. Surfaced rather than
     // dropped: a rising count here means the writer is broken.
-    malformed: rows.filter((r) => r.sentiment === null).length
+    //
+    // Exam debriefs are exempt. A conversation where the student never said how
+    // prepared she felt legitimately has no sentiment — that is the honest
+    // reading, not a broken write — and counting those here would make this
+    // number climb every week the feature works as designed.
+    malformed: rows.filter(
+      (r) => r.sentiment === null && r.surface !== SURFACE.EXAM_DEBRIEF
+    ).length
   };
 };

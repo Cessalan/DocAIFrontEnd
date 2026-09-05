@@ -107,6 +107,12 @@ export const recordSignal = async ({
 
   try {
     // Refine pass: the row already exists, only add what's new.
+    //
+    // `context` is refinable as well as insertable because the exam debrief
+    // rewrites it on every turn: the conversation's structured insights are
+    // re-derived from the whole transcript each time, and a student's second
+    // message routinely corrects the reading of her first. Callers that refine
+    // only a reason or a comment simply pass no context, and nothing changes.
     if (signalId) {
       await updateDoc(
         doc(db, COLLECTION, signalId),
@@ -114,6 +120,7 @@ export const recordSignal = async ({
           sentiment,
           reasons,
           comment,
+          context,
           refinedAt: serverTimestamp(),
           updatedAt: new Date()
         })

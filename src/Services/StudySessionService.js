@@ -8,6 +8,7 @@
 
 import { db, auth, storage } from '../Firebase/config';
 import { applyConceptOutcome } from './conceptLedger';
+import { findMatchingTopicKey } from './topicKey';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import {
   collection,
@@ -872,44 +873,15 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
  *        number of counters by the number of node labels.
  */
 /**
- * Find the best matching existing topic key, or return the input as-is.
- * Prevents near-duplicate entries like "Testostérone" vs "Sleep and Testosterone".
+ * Re-exported so every existing caller keeps working. The implementation
+ * moved to Services/topicKey.js when the drill's pure model needed it too —
+ * see that file's header for why it cannot live behind Firebase.
+ *
+ * Imported as well as re-exported on purpose: `export ... from` forwards the
+ * name without binding it in this module, and updateStudyPerformance below
+ * calls it directly.
  */
-export const findMatchingTopicKey = (newTopic, existingKeys) => {
-  if (!newTopic || existingKeys.length === 0) return newTopic;
-
-  // Exact match (case-insensitive)
-  const exact = existingKeys.find(k => k.toLowerCase() === newTopic.toLowerCase());
-  if (exact) return exact;
-
-  // Strip accents for comparison
-  const strip = (s) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-  const strippedNew = strip(newTopic);
-
-  // Check if one contains the other (after accent stripping)
-  for (const existing of existingKeys) {
-    const strippedExisting = strip(existing);
-    if (strippedExisting.includes(strippedNew) || strippedNew.includes(strippedExisting)) {
-      return existing;
-    }
-  }
-
-  // Check significant word overlap (words > 2 chars)
-  const words = (s) => new Set(strip(s).split(/\s+/).filter(w => w.length > 2));
-  const newWords = words(newTopic);
-  if (newWords.size === 0) return newTopic;
-
-  for (const existing of existingKeys) {
-    const existingWords = words(existing);
-    const overlap = [...newWords].filter(w => existingWords.has(w)).length;
-    const threshold = Math.min(newWords.size, existingWords.size) * 0.5;
-    if (overlap > 0 && overlap >= threshold) {
-      return existing;
-    }
-  }
-
-  return newTopic;
-};
+export { findMatchingTopicKey };
 
 /**
  * How many completed nodes we keep. Enough to see a trend across a plan

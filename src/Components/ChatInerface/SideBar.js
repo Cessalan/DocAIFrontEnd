@@ -18,17 +18,19 @@ import { loadFilesForChat } from '../../Services/FireBaseFiles.js';
 import { DeleteChat, RenameChat } from "../../Services/FireBaseServiceChats.js";
 import DarkModeToggle from './DarkModeToggle';
 import FeedbackButton from './FeedbackButton';
+import DrillTargetIcon from '../ExamDrill/DrillTargetIcon';
 import OnboardingViewer from './OnboardingViewer';
 import ProMembersViewer from './ProMembersViewer';
 import { SubmitFeedback } from '../../Services/FeedbackService';
-import RecordClassButton from '../RecordClass/RecordClassButton';
+import { fetchSignals } from '../../Services/SatisfactionQueries';
+import { normalizeRow } from '../Admin/satisfactionRollup';
 import AccountModal from '../Common/AccountModal';
 import AccountRow from '../Common/AccountRow';
-import '../RecordClass/RecordClass.css';
 import '../../index.css';
 
 // translation
 import { useTranslation } from 'react-i18next';
+import { examCountdown } from './examCountdown';
 
 const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewModeChange, impersonatedUid, onImpersonateUser, onStopImpersonating }) => {
   const navigate = useNavigate();
@@ -48,6 +50,28 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
 
   // Pro members viewer state (dev mode only)
   const [showProMembers, setShowProMembers] = useState(false);
+
+  /* Satisfaction at a glance (dev mode only).
+     The dashboard answers everything; this badge only has to make it worth
+     opening. It shows negatives in the last 7 days, so silence reads as "ok"
+     rather than as an empty screen nobody bothered to check. Failures leave the
+     badge off — a wrong count here is worse than no count. */
+  const [satisfactionBadge, setSatisfactionBadge] = useState(null);
+
+  useEffect(() => {
+    if (!isDevelopment) return;
+    let cancelled = false;
+    fetchSignals({ days: 7, max: 500 })
+      .then((rows) => {
+        if (cancelled) return;
+        const negatives = rows
+          .map(normalizeRow)
+          .filter((r) => r.sentiment < 0).length;
+        setSatisfactionBadge(negatives);
+      })
+      .catch(() => { /* badge stays hidden */ });
+    return () => { cancelled = true; };
+  }, [isDevelopment]);
 
   // Account modal (profile + subscription status)
   const [showAccountModal, setShowAccountModal] = useState(false);
@@ -405,7 +429,6 @@ const getchatDate = (timestamp) => {
         <button className="new-chat-button" onClick={handleNewChat}>
           + {t('side.newChat')}
         </button>
-        <RecordClassButton />
       </div>
 
       {isDevelopment && viewAllChats && !impersonatedUid && (
@@ -467,7 +490,7 @@ const getchatDate = (timestamp) => {
         {chats.map((chat) => (
          <div
               key={chat.id}
-              className={`conversation-item ${activeChatId === chat.id ? "active" : ""} ${chat.isStudySession ? "study-session" : ""}`}
+              className={`conversation-item ${activeChatId === chat.id ? "active" : ""} ${chat.isStudySession ? "study-session" : ""} ${chat.drill ? "drill-chat" : ""}`}
               onClick={() => { if (!renamingChatId) handleSelectChat(chat.id); }}
               onMouseEnter={() => setHoveredChatId(chat.id)}
               onMouseLeave={() => setHoveredChatId(null)}
@@ -487,8 +510,24 @@ const getchatDate = (timestamp) => {
                   </div>
                 )}
 
-                {/* File count badge - only show for non-study sessions */}
-                {!chat.isStudySession && chatFileCounts[chat.id] > 0 && (
+                {/* Drill icon. A target rather than another cap: the drill is
+                    aimed at what she is weak on, and it has to be tellable
+                    from a study plan at a glance.
+
+                    Shown for any chat that HAS a drill, not one that has been
+                    answered: `drill` is written the moment the examiner opens,
+                    and a student who left on question one still has a drill
+                    waiting. It is the same drawing the path chooser offers, so
+                    the mark on the chat matches the door she came through. */}
+                {chat.drill && (
+                  <div className="drill-chat-icon" title={t('side.drillSession', 'Exam drill')}>
+                    <DrillTargetIcon />
+                  </div>
+                )}
+
+                {/* File count badge — suppressed once the chat carries a
+                    plan or a drill, so the row keeps one marker, not three. */}
+                {!chat.isStudySession && !chat.drill && chatFileCounts[chat.id] > 0 && (
                   <div className="file-count-badge">
                     <span className="paperclip-icon">📎</span>
                     <span className="file-count-number">{chatFileCounts[chat.id]}</span>
@@ -561,6 +600,21 @@ const getchatDate = (timestamp) => {
                     <span className="conversation-time">
                       {getchatDate(chat.updatedAt)}
                     </span>
+                    {/* Exam timing, so the list can be read for urgency rather
+                        than just recency. Past exams are shown too — knowing a
+                        chat can be skipped is half of prioritising. */}
+                    {(() => {
+                      const exam = examCountdown(chat.examDate);
+                      if (!exam) return null;
+                      return (
+                        <>
+                          <span className="conversation-metadata-separator">•</span>
+                          <span className={`conversation-exam conversation-exam--${exam.tone}`}>
+                            {t(exam.key, exam.fallback, exam.params)}
+                          </span>
+                        </>
+                      );
+                    })()}
                     {isDevelopment && viewAllChats && !impersonatedUid && (
                       <>
                         <span className="conversation-metadata-separator">•</span>
@@ -683,6 +737,16 @@ const getchatDate = (timestamp) => {
         {isDevelopment && (
           <div className="nav-item" onClick={() => setShowProMembers(true)}>
             💎 Pro Members (Dev)
+          </div>
+        )}
+        {isDevelopment && (
+          <div className="nav-item" onClick={() => navigate('/admin/satisfaction')}>
+            📊 Satisfaction (Dev)
+            {satisfactionBadge !== null && (
+              <span className={`nav-item-badge${satisfactionBadge > 0 ? ' alert' : ''}`}>
+                {satisfactionBadge > 0 ? `${satisfactionBadge} 👎` : 'ok'}
+              </span>
+            )}
           </div>
         )}
         <AccountRow

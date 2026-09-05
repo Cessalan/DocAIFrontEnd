@@ -644,22 +644,6 @@ body.dark-mode .app-brand-name {
   font-size: 14px;
 }
 
-.sidebar-actions-row .record-class-btn {
-  flex: 0 0 auto;
-  width: auto;
-  margin: 0;
-  padding: 8px 10px;
-  gap: 0;
-}
-
-.sidebar-actions-row .record-class-btn__label {
-  display: none;
-}
-
-.sidebar-actions-row .record-class-btn.is-active .record-class-btn__time {
-  display: none;
-}
-
 .new-chat-button {
   background: #e8dff5;
   color: #2d2d2d;
@@ -831,6 +815,35 @@ body.dark-mode .app-brand-name {
   font-weight: 500;
 }
 
+/* Exam timing in the chat list, so the sidebar can be scanned for urgency
+   rather than only for recency. Tone reinforces, it never carries the
+   message — the words say "today" / "in 5 days" / "5 days ago" on their own. */
+.conversation-exam {
+  font-size: 11px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Sat today: the one that cannot wait. */
+.conversation-exam--today { color: #c0392b; }
+
+/* Inside the urgent window. */
+.conversation-exam--soon { color: var(--primary-coral-dark); }
+
+/* Far enough out to plan around — green, so a glance down the list reads as a
+   traffic light: red today, coral this week, green there's time, grey done.
+   Kept a shade deeper than a true pastel because this is 11px text and a
+   lighter green loses legibility on the paper background. */
+.conversation-exam--future { color: #58a97f; font-weight: 500; }
+
+/* Already sat — dimmed so it recedes, which is the whole point. */
+.conversation-exam--past { color: #9aa0a6; font-weight: 400; }
+
+body.dark-mode .conversation-exam--today { color: #ff8a75; }
+body.dark-mode .conversation-exam--soon { color: var(--primary-coral-light); }
+body.dark-mode .conversation-exam--future { color: #a3dcbd; font-weight: 500; }
+body.dark-mode .conversation-exam--past { color: #6e6e6e; font-weight: 400; }
+
 .conversation-metadata-separator {
   color: #dadce0;
   font-weight: 300;
@@ -922,6 +935,59 @@ body.dark-mode .app-brand-name {
 
 .conversation-item.study-session.active {
   border-left-color: var(--primary-coral-dark);
+}
+
+/* Exam drill marker. Purple rather than the plan's coral, because the two
+   need telling apart at a glance in a list — a student with four courses is
+   scanning for "which of these am I mid-drill on", and two coral markers
+   would answer the wrong question. */
+.drill-chat-icon {
+  width: 19px;
+  height: 19px;
+  color: #8b7ab8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.drill-chat-icon svg {
+  width: 100%;
+  height: 100%;
+}
+
+.conversation-item.active .drill-chat-icon {
+  color: #7566a5;
+}
+
+.conversation-item.drill-chat {
+  border-left: 3px solid #8b7ab8;
+}
+
+.conversation-item.drill-chat.active {
+  border-left-color: #7566a5;
+}
+
+/* A chat that is both a plan and a drill keeps the plan's border — the plan
+   is the bigger commitment — and shows both icons. */
+.conversation-item.study-session.drill-chat {
+  border-left-color: var(--primary-coral);
+}
+
+body.dark-mode .drill-chat-icon {
+  color: var(--dark-accent);
+}
+
+body.dark-mode .conversation-item.active .drill-chat-icon {
+  color: var(--dark-accent-light);
+}
+
+body.dark-mode .conversation-item.drill-chat {
+  border-left-color: var(--dark-accent);
+}
+
+body.dark-mode .conversation-item.drill-chat.active {
+  border-left-color: var(--dark-accent-light);
 }
 
 /* ============================================
@@ -1689,13 +1755,6 @@ body:not(.dark-mode) .login-prompt-reassurance {
     min-height: 40px;
   }
 
-  .sidebar-actions-row .record-class-btn {
-    margin: 0;
-    width: auto;
-    padding: 10px;
-    min-height: 40px;
-  }
-
   /* Sidebar footer */
   .sidebar-footer {
     padding: 8px 12px;
@@ -1705,4 +1764,32 @@ body:not(.dark-mode) .login-prompt-reassurance {
   .app-global-brand {
     display: none;
   }
+}
+/* Dev-only satisfaction badge in the sidebar nav.
+   "ok" and a count are deliberately different shapes: no negatives and no data
+   must not look alike. */
+.nav-item-badge {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(232, 141, 125, 0.12);
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.nav-item-badge.alert {
+  background: rgba(255, 107, 53, 0.15);
+  color: #d1441a;
+}
+
+body.dark-mode .nav-item-badge {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-secondary);
+}
+
+body.dark-mode .nav-item-badge.alert {
+  background: rgba(255, 107, 53, 0.2);
+  color: #ff9a70;
 }

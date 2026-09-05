@@ -5,6 +5,7 @@ import FlashcardNavigation from './FlashcardNavigation';
 import FlashcardResults from './FlashcardResults';
 import StreamingIndicator from './StreamingIndicator';
 import { useTranslation } from 'react-i18next';
+import { toDisplayText } from './flashcardText';
 
 // Icon Components
 function FlipIcon() {
@@ -35,12 +36,19 @@ function CloseIcon() {
   );
 }
 
-// Helper to format flashcard text with bold and line breaks
+// Helper to format flashcard text with bold and line breaks.
+//
+// Everything goes through toDisplayText first. The old guard was
+// `if (!text) return null`, which only catches falsy values — any truthy
+// non-string (a list of bullet points, a wrapper object) reached .split()
+// and threw, taking the whole chat down with it. See flashcardText.js for
+// why this content cannot be trusted to be a string.
 function formatFlashcardText(text) {
-  if (!text) return null;
+  const source = toDisplayText(text);
+  if (!source) return null;
 
   // Split by newlines and process each line
-  const lines = text.split('\n');
+  const lines = source.split('\n');
 
   return lines.map((line, lineIndex) => {
     // Process bold text (**text** -> <strong>text</strong>)
@@ -309,7 +317,10 @@ function ChatFlashcard(props) {
         <div className="flashcard-card-face flashcard-card-front">
           <div className="flashcard-content">
             <div className="flashcard-label">{t('flashcard.question', 'Question')}</div>
-            <div className="flashcard-text" data-selectable="true">{flashcard.front}</div>
+            {/* Normalised too: the front renders raw, so a non-string here
+                throws "Objects are not valid as a React child" instead — a
+                different crash from the same malformed card. */}
+            <div className="flashcard-text" data-selectable="true">{toDisplayText(flashcard.front)}</div>
             {flashcard.hint && !isFlipped && (
               <div className="flashcard-hint">
                 {showHint ? (

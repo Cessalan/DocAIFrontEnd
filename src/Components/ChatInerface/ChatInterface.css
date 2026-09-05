@@ -2511,19 +2511,6 @@ body.dark-mode .nursing-icon {
     box-shadow: 0 12px 32px rgba(232, 141, 125, 0.2);
   }
 
-  .empty-cta-icon {
-    width: 56px;
-    height: 56px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .empty-cta-icon svg {
-    width: 100%;
-    height: 100%;
-  }
-
   .empty-cta-title {
     font-size: 18px;
     font-weight: 700;
@@ -2570,6 +2557,404 @@ body.dark-mode .nursing-icon {
   }
 
   /* Dark mode for single CTA */
+  /* ── Exam Drill: the second door under the study-plan card ──────────
+     Deliberately quieter than the primary CTA. This is an alternative for
+     the student who does not want to be taught, not a competing offer —
+     if it shouted as loudly as the plan card, the empty state would stop
+     being a single clear decision. Text-forward, no fill, no shadow. */
+
+  /* The one filled thing on an outlined button — it is here to be noticed.
+
+     Inside the button rather than pinned to its corner: the corner badge is
+     the version that gets clipped the first time an ancestor grows an
+     overflow rule, and it also stops being part of the click target. This
+     one rides along with the label, so it cannot detach from what it is
+     labelling. */
+
+  /* ── Drill resume card ─────────────────────────────────────────────
+     Stands in for the composer on a chat that is being drilled, so the
+     answer to "how do I get back in?" is where the student's hands already
+     are. Sized as a CTA: it is the only action on the surface.
+
+     Styled as a sheet of exam paper taped to the desk — ruled lines, a red
+     margin rule, washi tape at the top, everything a fraction off-square.
+     This is the app's existing vocabulary (the empty-state CTA already tapes
+     itself down, and Caveat/Kalam are already loaded), not a new one.
+
+     Deliberately no scores — the checkpoint delivers findings, and echoing
+     "0/2" here would rebuild the dashboard the checkpoint stopped being. */
+  .drill-resume {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    width: 100%;
+    padding: 30px 26px 26px 40px;   /* room for the margin rule on the left */
+    box-sizing: border-box;
+    border-radius: 3px 3px 6px 6px; /* paper, not a card */
+    transform: rotate(-0.35deg);
+
+    /* Warm paper. The ruled lines live on the written rows themselves (see
+       .drill-resume__line): a sheet-wide gradient cannot know where the
+       writing starts, so every subject floated at a random offset against
+       the lines it was supposed to be sitting on. */
+    background-color: #fffdf7;
+    border: 1px solid rgba(120, 100, 80, 0.16);
+
+    /* Sheets stacked underneath. */
+    box-shadow:
+      0 1px 0 rgba(0, 0, 0, 0.03),
+      2px 3px 0 -1px #fdf8ef,
+      3px 5px 0 -1px rgba(120, 100, 80, 0.12),
+      0 10px 28px rgba(100, 80, 60, 0.14);
+  }
+
+  /* Washi tape holding it down. */
+  .drill-resume::before {
+    content: '';
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    width: 96px;
+    height: 22px;
+    transform: translateX(-50%) rotate(-1.6deg);
+    background: rgba(255, 240, 170, 0.85);
+    border-left: 1px dashed rgba(200, 170, 90, 0.35);
+    border-right: 1px dashed rgba(200, 170, 90, 0.35);
+    box-shadow: 0 1px 3px rgba(120, 100, 60, 0.16);
+  }
+
+  /* The margin rule down the left, as in a school exercise book. */
+  .drill-resume::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 26px;
+    width: 1px;
+    background: rgba(214, 122, 106, 0.4);
+  }
+
+  .drill-resume__head {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  /* Stamped, not typeset. */
+  .drill-resume__eyebrow {
+    display: inline-block;
+    padding: 3px 10px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--primary-coral-dark);
+    border: 1.5px solid rgba(214, 122, 106, 0.55);
+    border-radius: 3px;
+    transform: rotate(-1.4deg);
+  }
+
+  .drill-resume__meta {
+    font-family: var(--font-accent);
+    font-size: 1.06rem;
+    color: #7d6a5c;
+    transform: rotate(0.5deg);
+  }
+
+  .drill-resume__topics {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .drill-resume__topics-label {
+    font-family: var(--font-accent);
+    font-size: 1.18rem;
+    font-weight: 600;
+    color: #6b7f9e;
+    transform: rotate(-0.6deg);
+    transform-origin: left center;
+  }
+
+  /* Subjects written onto the page and ticked off. Bold and full size on
+     purpose: this is the content of the sheet, not a caption. */
+  .drill-resume__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid rgba(120, 145, 190, 0.16);
+  }
+
+  /* Each row carries its own rule. The sheet used to draw a 34px gradient
+     from its own top edge, which meant the lines landed wherever the heading
+     above happened to end — writing floating across ruled paper instead of
+     sitting on it, which is what made this look like a mistake rather than a
+     page. A border on the row cannot drift: there is exactly one line per
+     subject and the writing always sits on it. */
+  .drill-resume__line {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-height: 38px;
+    padding-right: 4px;
+    border-bottom: 1px solid rgba(120, 145, 190, 0.16);
+    font-family: var(--font-handwritten);
+    font-size: 1.12rem;
+    font-weight: 700;
+    line-height: 1.25;
+    color: #3f3a34;
+  }
+
+  .drill-resume__tick {
+    flex-shrink: 0;
+    width: 17px;
+    height: 17px;
+    color: var(--primary-coral-dark);
+    transform: rotate(-6deg);   /* pen, not print */
+  }
+
+  /* Ticked by hand, not stamped by a printer: no two sit at the same angle. */
+  .drill-resume__line:nth-child(2n) .drill-resume__tick { transform: rotate(-1deg); }
+  .drill-resume__line:nth-child(3n) .drill-resume__tick { transform: rotate(-9deg) translateY(-0.5px); }
+  .drill-resume__line:nth-child(5n) .drill-resume__tick { transform: rotate(-4deg) translateY(0.5px); }
+
+  .drill-resume__subject {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;        /* one subject, one rule */
+  }
+
+  .drill-resume__line--more {
+    padding-left: 28px;         /* aligns with the text, past the tick */
+    padding-top: 4px;
+    min-height: 0;
+    border-bottom: none;        /* a note about the list, not an entry in it */
+    font-family: var(--font-accent);
+    font-size: 1.05rem;
+    font-weight: 500;
+    color: #8a7a6a;
+  }
+
+  .drill-resume__action {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* The deadline, written under the action it justifies. Setting an exam date
+     is the strongest buying signal in the product, so when she has given us
+     one it should be visible at the moment she decides whether to keep going. */
+  .drill-resume__countdown {
+    margin: 0;
+    text-align: center;
+    font-family: var(--font-accent);
+    font-size: 1.14rem;
+    color: #b06a58;
+    transform: rotate(-0.5deg);
+  }
+
+  body.dark-mode .drill-resume__countdown {
+    color: var(--primary-coral-light);
+  }
+
+  /* The CTA. The one thing on the sheet that is NOT messy — legibility of
+     the action beats the theme.
+
+     Flat, not gradient-and-glow. A soft gradient with a wide coloured halo and
+     a 16px radius is the default look of every template button on the web,
+     which is exactly why it reads as cheap next to hand-drawn ticks and washi
+     tape. This is a single solid ink, a tight radius, a hairline top highlight
+     for physical depth, and a shadow small enough to read as contact with the
+     paper rather than as a glow. */
+  .drill-resume__button {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 13px;
+    width: 100%;
+    padding: 17px 28px;
+    font-family: inherit;
+    font-size: 1.04rem;
+    font-weight: 650;
+    letter-spacing: 0.005em;
+    color: var(--text-white);
+    background: var(--primary-coral-hover);
+    border: none;
+    border-radius: 11px;
+    cursor: pointer;
+    overflow: hidden;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 1px 2px rgba(120, 60, 45, 0.2),
+      0 5px 14px rgba(196, 106, 90, 0.24);
+    transition:
+      background 0.18s ease,
+      transform 0.18s ease,
+      box-shadow 0.18s ease;
+  }
+
+  .drill-resume__button:hover {
+    background: var(--primary-coral-dark);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.22),
+      0 2px 4px rgba(120, 60, 45, 0.22),
+      0 10px 22px rgba(196, 106, 90, 0.3);
+  }
+
+  .drill-resume__button:active {
+    transform: translateY(0);
+    box-shadow:
+      inset 0 1px 2px rgba(80, 40, 30, 0.25),
+      0 1px 2px rgba(120, 60, 45, 0.2);
+  }
+
+  .drill-resume__button:focus-visible {
+    outline: 2px solid var(--primary-coral-dark);
+    outline-offset: 3px;
+  }
+
+  /* A thin ring, not a translucent white disc — the disc is the other half of
+     the template look. */
+  .drill-resume__play {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    height: 26px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    border: 1.5px solid rgba(255, 255, 255, 0.55);
+    background: transparent;
+  }
+
+  .drill-resume__play svg {
+    width: 12px;
+    height: 12px;
+    margin-left: 1.5px;   /* optically centres a triangle in a circle */
+  }
+
+  /* ── Dark mode: the same sheet under a desk lamp ────────────────────── */
+
+  body.dark-mode .drill-resume {
+    background-color: #262427;
+    border-color: rgba(255, 255, 255, 0.09);
+    box-shadow:
+      2px 3px 0 -1px #201f22,
+      3px 5px 0 -1px rgba(0, 0, 0, 0.4),
+      0 10px 28px rgba(0, 0, 0, 0.45);
+  }
+
+  body.dark-mode .drill-resume::before {
+    background: rgba(214, 200, 150, 0.28);
+    border-left-color: rgba(214, 200, 150, 0.3);
+    border-right-color: rgba(214, 200, 150, 0.3);
+  }
+
+  body.dark-mode .drill-resume::after {
+    background: rgba(232, 141, 125, 0.45);
+  }
+
+  body.dark-mode .drill-resume__eyebrow {
+    color: var(--primary-coral-light);
+    border-color: rgba(232, 141, 125, 0.5);
+  }
+
+  body.dark-mode .drill-resume__meta {
+    color: #a89c92;
+  }
+
+  body.dark-mode .drill-resume__topics-label {
+    color: #a7b6cf;
+  }
+
+  body.dark-mode .drill-resume__list,
+  body.dark-mode .drill-resume__line {
+    border-color: rgba(184, 165, 212, 0.13);
+  }
+
+  body.dark-mode .drill-resume__line {
+    color: #ece5db;
+  }
+
+  body.dark-mode .drill-resume__tick {
+    color: var(--primary-coral-light);
+  }
+
+  body.dark-mode .drill-resume__line--more {
+    color: #9a8f85;
+  }
+
+  body.dark-mode .drill-resume__button {
+    background: var(--dark-accent);
+    color: #17161a;
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 1px 2px rgba(0, 0, 0, 0.5),
+      0 5px 14px rgba(0, 0, 0, 0.42);
+  }
+
+  body.dark-mode .drill-resume__button:hover {
+    background: var(--dark-accent-light);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.28),
+      0 2px 4px rgba(0, 0, 0, 0.5),
+      0 10px 22px rgba(0, 0, 0, 0.5);
+  }
+
+  body.dark-mode .drill-resume__button:active {
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.4);
+  }
+
+  body.dark-mode .drill-resume__button:focus-visible {
+    outline-color: var(--dark-accent-light);
+  }
+
+  body.dark-mode .drill-resume__play {
+    border-color: rgba(23, 22, 26, 0.5);
+    background: transparent;
+  }
+
+  /* Straighten everything out for anyone who asked for less motion/mess.
+     The per-row tick angles are listed explicitly: their :nth-child selectors
+     out-specify a bare .drill-resume__tick, so without this the one element
+     that is deliberately scattered would be the only thing left crooked. */
+  @media (prefers-reduced-motion: reduce) {
+    .drill-resume,
+    .drill-resume__eyebrow,
+    .drill-resume__meta,
+    .drill-resume__topics-label,
+    .drill-resume__tick,
+    .drill-resume__line:nth-child(2n) .drill-resume__tick,
+    .drill-resume__line:nth-child(3n) .drill-resume__tick,
+    .drill-resume__line:nth-child(5n) .drill-resume__tick,
+    .drill-resume__countdown,
+    .drill-resume__button {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .drill-resume {
+      padding: 26px 16px 20px 30px;
+      gap: 14px;
+    }
+
+    .drill-resume::after {
+      left: 18px;
+    }
+
+    .drill-resume__button {
+      font-size: 1.02rem;
+      padding: 16px 20px;
+    }
+  }
+
   body.dark-mode .empty-cta-card {
     background: linear-gradient(135deg, rgba(184, 165, 212, 0.15) 0%, rgba(184, 165, 212, 0.08) 100%);
     border-color: rgba(184, 165, 212, 0.3);
@@ -2656,27 +3041,6 @@ body.dark-mode .nursing-icon {
   /* One-line tagline shown under the icon when the card is in its lean
      collapsed state. Gives just enough context for the CTA without
      bloating the card. */
-  .empty-cta-tagline {
-    margin: 0;
-    font-size: 13px;
-    line-height: 1.4;
-    color: #8a6f68;
-    font-weight: 500;
-    text-align: center;
-    max-width: 240px;
-  }
-
-  .empty-cta-tagline--record {
-    color: #6a7d59;
-  }
-
-  body.dark-mode .empty-cta-tagline {
-    color: #c9b4ad;
-  }
-
-  body.dark-mode .empty-cta-tagline--record {
-    color: #a8b896;
-  }
 
   /* Small label that appears above the Upload/Paste choice once the user
      has expanded the multi-step. Gives context for what the two buttons
@@ -2736,80 +3100,6 @@ body.dark-mode .nursing-icon {
   body.dark-mode .empty-cta-button.paste-notes-btn:hover {
     background: linear-gradient(135deg, #7a6da8 0%, #6b5b95 100%);
     box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-  }
-
-  /* Record-class CTA — warm sage so it sits between coral (upload) and
-     purple (paste) without competing with either. */
-  .empty-cta-button.record-class-btn {
-    background: linear-gradient(135deg, #93a87f 0%, #748a64 100%);
-    box-shadow: 0 4px 12px rgba(116, 138, 100, 0.3);
-  }
-
-  .empty-cta-button.record-class-btn:hover {
-    background: linear-gradient(135deg, #84996f 0%, #647855 100%);
-    box-shadow: 0 6px 16px rgba(116, 138, 100, 0.4);
-  }
-
-  body.dark-mode .empty-cta-button.record-class-btn {
-    background: linear-gradient(135deg, #748a64 0%, #5b6e4f 100%);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-  }
-
-  body.dark-mode .empty-cta-button.record-class-btn:hover {
-    background: linear-gradient(135deg, #84996f 0%, #748a64 100%);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-  }
-
-  /* Secondary card (live-class recording) — same shape as primary but with
-     a sage palette and slightly muted to signal "alternative path". */
-  .empty-cta-card.empty-cta-card--record {
-    background: linear-gradient(135deg, #f4f7ef 0%, #e6ede0 100%);
-    border-color: rgba(116, 138, 100, 0.28);
-    box-shadow: 0 4px 20px rgba(116, 138, 100, 0.1);
-    padding: 16px 28px 18px;
-    gap: 6px;
-  }
-
-  .empty-cta-card.empty-cta-card--record:hover {
-    background: linear-gradient(135deg, #edf2e8 0%, #dde7d4 100%);
-    border-color: rgba(116, 138, 100, 0.42);
-    box-shadow: 0 12px 28px rgba(116, 138, 100, 0.18);
-  }
-
-  /* Hide the yellow "tape" highlight on the secondary card — that flourish
-     belongs to the primary card only. */
-  .empty-cta-card.empty-cta-card--record::before {
-    display: none;
-  }
-
-  .empty-cta-icon.empty-cta-icon--record {
-    width: 38px;
-    height: 38px;
-    color: #748a64;
-  }
-
-  .empty-cta-title.empty-cta-title--sm {
-    font-size: 15px;
-    color: #4d5d3f;
-  }
-
-  body.dark-mode .empty-cta-card.empty-cta-card--record {
-    background: linear-gradient(135deg, #353a30 0%, #2b302a 100%);
-    border-color: rgba(116, 138, 100, 0.32);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
-  }
-
-  body.dark-mode .empty-cta-card.empty-cta-card--record:hover {
-    background: linear-gradient(135deg, #3d4338 0%, #333932 100%);
-    border-color: rgba(116, 138, 100, 0.5);
-  }
-
-  body.dark-mode .empty-cta-title.empty-cta-title--sm {
-    color: #b8c9a8;
-  }
-
-  body.dark-mode .empty-cta-icon.empty-cta-icon--record {
-    color: #93a87f;
   }
 
   /* Exam upload buttons row */
@@ -3699,6 +3989,71 @@ body.dark-mode .nursing-icon {
         rgba(253, 248, 243, 0) 100%);
   }
 
+  /* ── Composer stood down for a drill ────────────────────────────────
+     `.input-area` is fixed to the bottom edge because that is where a text
+     input belongs. The drill card is not an input — it is the only thing on
+     the surface — so the form stretches to the full height and centres it
+     instead of leaving it stranded at the bottom of an empty page.
+
+     The gradient fade goes with it (it exists to fade text scrolling under
+     a bottom bar), and pointer events pass through everywhere except the
+     card itself, so anything still rendered behind stays clickable. */
+  .input-area--drill {
+    top: 0;
+    align-items: stretch;   /* the sheet fills the height, it does not float */
+    justify-content: center;
+    padding: 88px 32px 40px;
+    background: none;
+    pointer-events: none;
+  }
+
+  /* A full sheet of paper, not a card sitting on one. The ruled lines run the
+     whole way down, and the content distributes over it the way it would on a
+     real page: heading at the top, working in the middle, the action at the
+     foot where you would sign it. */
+  /* A sheet of paper on the desk, not wall-to-wall stationery. Stretched to
+     the full width of the composer slot it was a 1000px letterbox with a
+     1000px button across it — the proportions of a banner ad, which is the
+     one thing the handwriting was there to avoid. Bounded, it reads as a
+     page: the subjects fill their lines instead of trailing off into empty
+     paper, and the CTA becomes a button again. */
+  .input-area--drill .drill-resume {
+    flex: 1;
+    max-width: 620px;
+    align-self: center;
+    min-height: 380px;
+    max-height: 100%;
+    pointer-events: auto;
+  }
+
+  /* On a short window the notes give up room before the sheet does: the page
+     can run out of lines, but the way back into the drill must never be the
+     thing pushed off it. */
+  .input-area--drill .drill-resume__topics {
+    min-height: 0;
+  }
+
+  .input-area--drill .drill-resume__list {
+    overflow: hidden;
+  }
+
+  /* The CTA signs off the sheet at its foot.
+
+     It used to be absolutely positioned at top: 50%, on the reasoning that
+     the true centre is where the eye lands and that a six-row list would
+     always stop above it. Six rows plus a heading do NOT stop above the
+     midpoint of a short sheet, so the button was printed straight over the
+     last two subjects and the countdown over the "+3 more". A centred
+     element cannot be made safe against content that grows toward it: back
+     in flow, where the notes push it down instead of disappearing under it.
+
+     It is still the first thing seen — it is the only saturated block on a
+     page of handwriting — and now it holds still as subjects accumulate. */
+  .input-area--drill .drill-resume__action {
+    margin-top: auto;
+    padding-top: 8px;
+  }
+
   /* Adjust input position when sidebar rail is shown (desktop) */
   .main-content.rail-shifted .input-area {
     left: 60px;
@@ -3961,28 +4316,6 @@ body.dark-mode .nursing-icon {
 
   .upload-button:hover:not(:disabled) svg {
     transform: scale(1.1);
-  }
-
-  /* Record-class button uses the same sage palette as the secondary
-     "Record a class" empty-state card, so users learn the two are the
-     same action. */
-  .upload-button.record-class-inline {
-    color: #748a64;
-    border-color: rgba(116, 138, 100, 0.28);
-  }
-
-  .upload-button.record-class-inline:hover:not(:disabled) {
-    color: #5b6e4f;
-    border-color: rgba(116, 138, 100, 0.5);
-  }
-
-  body.dark-mode .upload-button.record-class-inline {
-    color: #93a87f;
-    border-color: rgba(116, 138, 100, 0.32);
-  }
-
-  body.dark-mode .upload-button.record-class-inline:hover:not(:disabled) {
-    color: #b8c9a8;
   }
 
   /* ─────────────────────────────────────────────────────────────────────
@@ -4699,6 +5032,10 @@ body.dark-mode .nursing-icon {
       width: 100%;
     }
 
+    .input-area--drill {
+      padding: 72px 16px 28px;
+    }
+
     .input-wrapper-container {
       padding: 10px 14px;
       gap: 8px;
@@ -4815,7 +5152,6 @@ body.dark-mode .nursing-icon {
     color: #ffffff;
     font-weight: 600;
   }
-
 
   /* Chat Header */
   .chat-header {
@@ -5928,11 +6264,6 @@ body:not(.dark-mode) .file-error-toast-close:hover {
     border-radius: 18px;
   }
 
-  .empty-cta-icon {
-    width: 52px;
-    height: 52px;
-  }
-
   .empty-cta-title {
     font-size: 17px;
   }
@@ -6072,5 +6403,272 @@ body:not(.dark-mode) .file-error-toast-close:hover {
   .file-error-toast-content {
     padding: 10px 12px;
     gap: 8px;
+  }
+}
+
+/* ── Path chooser: two doors, drawn as peers ─────────────────────────────
+   The plan and the drill get the same card, the same weight and the same
+   size. Only the accent differs, and each path keeps its colour across both
+   themes so the drill is always "the lavender one" — the alternative, giving
+   each theme's primary to whichever card is on the left, means the two doors
+   swap identities when the lights go out.
+
+   Plan = coral, drill = lavender. Both already in the palette; nothing here
+   introduces a colour the app did not have. */
+.empty-chat-state--paths {
+  max-width: 880px;
+}
+
+.path-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+}
+
+.path-choice__title {
+  margin: 0 0 6px;
+  font-size: 1.55rem;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  text-align: center;
+  color: var(--text-primary);
+}
+
+.path-choice__sub {
+  margin: 0 0 28px;
+  font-size: 0.97rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.path-choice__cards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+  width: 100%;
+}
+
+.path-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 30px 26px 26px;
+  text-align: center;
+  background: var(--bg-paper);
+  border: 1.5px solid var(--card-accent-border);
+  border-radius: var(--radius-lg, 18px);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
+    border-color var(--transition-fast);
+}
+
+.path-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--card-accent);
+  box-shadow: 0 10px 28px var(--card-accent-glow);
+}
+
+.path-card--plan {
+  --card-accent: var(--primary-coral-hover);
+  --card-accent-strong: var(--primary-coral-dark);
+  --card-accent-border: rgba(232, 141, 125, 0.32);
+  --card-accent-soft: rgba(232, 141, 125, 0.12);
+  --card-accent-glow: rgba(196, 106, 90, 0.16);
+  --card-accent-ink: var(--text-white);
+}
+
+.path-card--drill {
+  --card-accent: #a894c9;
+  --card-accent-strong: #8f79b8;
+  --card-accent-border: rgba(184, 165, 212, 0.4);
+  --card-accent-soft: rgba(184, 165, 212, 0.16);
+  --card-accent-glow: rgba(140, 118, 180, 0.18);
+  --card-accent-ink: var(--text-white);
+}
+
+.path-card__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  border-radius: 50%;
+  background: var(--card-accent-soft);
+  color: var(--card-accent-strong);
+}
+
+.path-card__icon svg {
+  width: 42px;
+  height: 42px;
+}
+
+.path-card__title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin: 0;
+  font-size: 1.16rem;
+  font-weight: 700;
+  color: var(--card-accent-strong);
+}
+
+/* The rule under the title, drawn on the paragraph so there is no empty
+   element to keep aligned. */
+.path-card__desc {
+  margin: 0;
+  padding-top: 16px;
+  width: 100%;
+  border-top: 1px solid var(--card-accent-border);
+  font-size: 0.94rem;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.path-card__cta {
+  display: inline-flex;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 4px;
+  padding: 14px 22px;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 650;
+  color: var(--card-accent-ink);
+  background: var(--card-accent);
+  border: none;
+  /* 999px, not --radius-full: that token is 50%, which is a CIRCLE. On
+     anything wider than it is tall 50% renders an ellipse, which is what
+     this control was doing. Every other pill in the app hardcodes 999px. */
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+}
+
+.path-card__cta:hover {
+  background: var(--card-accent-strong);
+  transform: translateY(-1px);
+}
+
+.path-card__cta:focus-visible {
+  outline: 2px solid var(--card-accent-strong);
+  outline-offset: 3px;
+}
+
+/* Beside the title, not inside the button. In the button it cost ~50px of a
+   272px control, which pushed "Test my exam readiness" onto a second line and
+   left the two cards with CTAs of different heights. */
+.path-card__new {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  line-height: 1.6;
+  color: var(--card-accent-strong);
+  background: var(--card-accent-soft);
+  border-radius: 999px;
+}
+
+.path-card__note {
+  display: flex;
+  /* Top, not centre: the note wraps to two lines on a narrow card, and a
+     centred icon then floats beside the gap between them. */
+  align-items: flex-start;
+  justify-content: center;
+  gap: 7px;
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--text-muted);
+}
+
+.path-card__note svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--card-accent);
+}
+
+/* ── Dark: same two identities, lifted off the background ─────────────── */
+body.dark-mode .path-choice__title {
+  color: #ededed;
+}
+
+body.dark-mode .path-choice__sub {
+  color: #9ca3af;
+}
+
+body.dark-mode .path-card {
+  background: var(--dark-bg-elevated);
+}
+
+body.dark-mode .path-card--plan {
+  --card-accent: var(--primary-coral);
+  --card-accent-strong: var(--primary-coral-light);
+  --card-accent-border: rgba(232, 141, 125, 0.28);
+  --card-accent-soft: rgba(232, 141, 125, 0.14);
+  --card-accent-glow: rgba(0, 0, 0, 0.45);
+  --card-accent-ink: #241a17;
+}
+
+body.dark-mode .path-card--drill {
+  --card-accent: var(--dark-accent);
+  --card-accent-strong: var(--dark-accent-light);
+  --card-accent-border: rgba(184, 165, 212, 0.28);
+  --card-accent-soft: rgba(184, 165, 212, 0.14);
+  --card-accent-glow: rgba(0, 0, 0, 0.45);
+  --card-accent-ink: #17161a;
+}
+
+body.dark-mode .path-card__desc {
+  color: #a0a0a0;
+}
+
+body.dark-mode .path-card__note {
+  color: #8a8a8a;
+}
+
+body.dark-mode .path-card__new {
+  background: var(--card-accent-ink);
+  color: var(--card-accent-strong);
+}
+
+/* ── Narrow: the doors stack, still as peers ──────────────────────────── */
+@media (max-width: 720px) {
+  .path-choice__cards {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .path-choice__title {
+    font-size: 1.3rem;
+  }
+
+  .path-card {
+    padding: 24px 20px 20px;
+    gap: 12px;
+  }
+
+  .path-card__icon {
+    width: 62px;
+    height: 62px;
+  }
+
+  .path-card__icon svg {
+    width: 34px;
+    height: 34px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .path-card:hover,
+  .path-card__cta:hover {
+    transform: none;
   }
 }

@@ -177,7 +177,11 @@ const NodeTransition = ({
       const reviewCards = [];
       Object.entries(statuses).forEach(([idx, status]) => {
         if (status !== 'got_it' && content.cards[parseInt(idx)]) {
-          const front = content.cards[parseInt(idx)].front || '';
+          // String(): card text is LLM-generated and is not guaranteed to be
+          // one. An array has a .length but no .substring, so the unguarded
+          // version threw on exactly the cards ChatFlashcard crashed on. The
+          // same coercion is already applied where these are read below.
+          const front = String(content.cards[parseInt(idx)].front || '');
           reviewCards.push(front.length > 60 ? front.substring(0, 60) + '...' : front);
         }
       });
