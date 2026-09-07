@@ -1,0 +1,274 @@
+/* SchoolMarquee — rolling row of schools between the hero and the product showcase. */
+
+/* Sits inside the hero, directly under the social proof badges, so it carries no
+   background of its own — the hero's own ground shows through and the block reads
+   as a continuation of the badge line rather than as a separate band. */
+.school-marquee-section {
+  position: relative;
+  align-self: stretch;
+  width: 100%;
+  margin-top: 26px;
+  padding: 26px 0 4px;
+  overflow: hidden;
+}
+
+/* Fading hairlines instead of borders. A full-width 1px rule stops dead at both
+   ends and cuts the hero in two; a rule that dissolves before it reaches the edge
+   separates the block without drawing a line across the page. */
+.school-marquee-section::before,
+.school-marquee-section::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(232, 141, 125, 0.28) 22%,
+    rgba(232, 141, 125, 0.28) 78%,
+    transparent
+  );
+  pointer-events: none;
+}
+
+.school-marquee-section::before { top: 0; }
+.school-marquee-section::after  { bottom: 0; }
+
+.school-marquee-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* Deliberately quieter than a section heading. It is answering the badge above it,
+   not opening a new section, and the hero's h1 has to stay the loudest thing here. */
+.school-marquee-title {
+  margin: 0 0 4px;
+  text-align: center;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.school-marquee-subtitle {
+  margin: 0 0 18px;
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+/* The viewport for all three rows. The mask feathers both ends so chips enter and
+   leave the loop instead of being guillotined at the container edge. */
+.school-marquee {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(
+    to right, transparent 0, #000 14%, #000 86%, transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right, transparent 0, #000 14%, #000 86%, transparent 100%
+  );
+}
+
+.school-marquee-row {
+  overflow: hidden;
+}
+
+/* Rows two and three run the other way. Reversing the animation rather than
+   writing a second keyframe set keeps one definition of the travel distance. */
+.school-marquee-row.is-reversed .school-marquee-track {
+  animation-direction: reverse;
+}
+
+/* The row's schools are repeated MARQUEE_COPIES (3) times, so translating by
+   exactly one copy — 100/3% — lands the next copy where the last one started and
+   the seam never shows. That fraction and MARQUEE_COPIES are one contract. */
+.school-marquee-track {
+  display: flex;
+  width: max-content;
+  align-items: stretch;
+  animation: school-marquee-scroll var(--school-marquee-duration, 60s) linear infinite;
+  will-change: transform;
+}
+
+@keyframes school-marquee-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-33.3333%); }
+}
+
+/* Let a student stop the wall to read a name she thinks she recognised. Pausing
+   every row, not just the hovered one, so the other two do not slide away from
+   under the name she is reading. */
+.school-marquee:hover .school-marquee-track,
+.school-marquee:focus-within .school-marquee-track {
+  animation-play-state: paused;
+}
+
+.school-marquee-item {
+  flex: 0 0 auto;
+  padding: 0 8px;
+}
+
+.school-chip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px 10px 10px;
+  background: var(--bg-paper);
+  border: 1px solid rgba(232, 141, 125, 0.14);
+  border-radius: 999px;
+  box-shadow: var(--shadow-sm);
+  white-space: nowrap;
+}
+
+.school-chip-mark {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  overflow: hidden;
+  color: #fff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+/* A real logo gets a white plate in BOTH themes. School marks are drawn for a
+   light ground, so a transparent tile loses every white-on-transparent logo
+   against the cream section — and all of them again in dark mode. */
+.school-chip-mark.has-logo {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.school-chip-mark.has-logo .school-chip-initials {
+  display: none;
+}
+
+/* Absolute so the logo can sit over the monogram while it is still being measured,
+   without the tile resizing when it swaps in.
+
+   width/height MUST be explicit. An absolutely-positioned replaced element with
+   `width: auto` and four insets does not stretch to the inset box the way a div
+   does — it falls back to its intrinsic size, so every 128px favicon rendered at
+   128px and burst out of its 34px tile. Sizing the box and padding it inward keeps
+   `object-fit: contain` honest for any aspect ratio the school publishes. */
+.school-chip-logo {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  padding: 4px;
+  box-sizing: border-box;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity var(--transition-fast, 0.2s);
+}
+
+.school-chip-logo.is-visible {
+  opacity: 1;
+}
+
+.school-chip-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.school-marquee-note {
+  margin: 16px 0 0;
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  opacity: 0.8;
+}
+
+/* ---- Dark mode ---- */
+
+body.dark-mode .school-marquee-section::before,
+body.dark-mode .school-marquee-section::after {
+  background: linear-gradient(
+    to right,
+    transparent,
+    rgba(200, 180, 220, 0.22) 22%,
+    rgba(200, 180, 220, 0.22) 78%,
+    transparent
+  );
+}
+
+body.dark-mode .school-marquee-title {
+  color: #f0ece8;
+}
+
+body.dark-mode .school-marquee-subtitle {
+  color: #b8b2ad;
+}
+
+body.dark-mode .school-chip {
+  background: var(--dark-bg-elevated);
+  border-color: var(--dark-border);
+  box-shadow: none;
+}
+
+body.dark-mode .school-chip-name {
+  color: #ece7e2;
+}
+
+body.dark-mode .school-chip-mark.has-logo {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+body.dark-mode .school-marquee-note {
+  color: #8a8580;
+}
+
+/* ---- Responsive ---- */
+
+@media (max-width: 768px) {
+  .school-marquee-section { margin-top: 20px; padding: 20px 0 2px; }
+  .school-marquee-section::before,
+  .school-marquee-section::after { left: 6%; right: 6%; }
+  .school-marquee-title { font-size: 0.94rem; }
+  .school-marquee-subtitle { font-size: 0.75rem; margin-bottom: 14px; }
+  .school-marquee { gap: 8px; }
+  .school-marquee-item { padding: 0 5px; }
+  .school-chip { padding: 7px 13px 7px 7px; gap: 8px; }
+  .school-chip-mark { width: 26px; height: 26px; font-size: 0.58rem; }
+  .school-chip-name { font-size: 0.78rem; }
+  .school-marquee-note { margin-top: 18px; }
+}
+
+/* ---- Reduced motion ----
+   A continuously moving row is exactly what this setting exists to stop. Park the
+   track and hand the student a scrollable row instead, so no school is unreachable. */
+@media (prefers-reduced-motion: reduce) {
+  /* Each row scrolls on its own so a student can reach every school in it. */
+  .school-marquee {
+    overflow: visible;
+  }
+
+  .school-marquee-row {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .school-marquee-track {
+    animation: none;
+    width: max-content;
+  }
+
+  /* Without the animation the repeats are just the same names three times over. */
+  .school-marquee-track > [aria-hidden="true"] {
+    display: none;
+  }
+}

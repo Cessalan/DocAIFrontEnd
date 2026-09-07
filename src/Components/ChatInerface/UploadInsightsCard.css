@@ -1,0 +1,199 @@
+/* UploadInsightsCard — "here's what I found in your notes".
+   Colocated plain CSS, palette from src/index.css. Every surface gets its
+   body.dark-mode counterpart; dark mode is a class on <body>, not a media
+   query, so an unmatched rule shows a light card on a dark page. */
+
+.upload-insights {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 22px 20px 20px;
+  box-shadow: var(--shadow-sm);
+  max-width: 560px;
+}
+
+.upload-insights__eyebrow {
+  margin: 0 0 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-coral);
+}
+
+.upload-insights__headline {
+  margin: 0 0 4px;
+  font-size: 1.18rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+
+.upload-insights__sub {
+  margin: 0 0 18px;
+  font-size: 0.92rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* ── The map ──────────────────────────────────────────────── */
+
+.upload-insights__map {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 20px;
+}
+
+.upload-insights__band-title {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  margin: 0 0 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.upload-insights__dot {
+  font-size: 0.62rem;
+  line-height: 1;
+}
+
+.upload-insights__topics {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.upload-insights__topic {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-cream);
+  /* The band's colour lives on a left rule rather than a filled background:
+     three saturated blocks read as an alert, and the card is meant to read
+     as a plan. */
+  border-left: 3px solid var(--text-muted);
+}
+
+.upload-insights__band.is-high .upload-insights__topic { border-left-color: #e05c4b; }
+.upload-insights__band.is-review .upload-insights__topic { border-left-color: #e0a13c; }
+.upload-insights__band.is-foundation .upload-insights__topic { border-left-color: #5aa46f; }
+
+/* No-evidence mode: the topics we extracted, with nothing implied about them.
+   The left rule stays neutral — a red or amber one is a severity claim, and
+   this list exists precisely because we have no basis for one. */
+.upload-insights__topics.is-plain {
+  margin-top: 14px;
+}
+
+.upload-insights__topics.is-plain .upload-insights__topic {
+  border-left-color: var(--border-soft, var(--text-muted));
+}
+
+.upload-insights__topic-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.upload-insights__topic-reason {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+/* ── CTA ──────────────────────────────────────────────────── */
+
+.upload-insights__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 13px 18px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--gradient-primary);
+  color: var(--text-white);
+  font-family: inherit;
+  font-size: 0.97rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.upload-insights__cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md, 0 4px 16px rgba(100, 80, 60, 0.12));
+}
+
+.upload-insights__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.upload-insights__arrow {
+  transition: transform var(--transition-fast);
+}
+
+.upload-insights__cta:hover:not(:disabled) .upload-insights__arrow {
+  transform: translateX(3px);
+}
+
+/* ── Dark mode ────────────────────────────────────────────── */
+
+body.dark-mode .upload-insights {
+  background: var(--dark-bg-elevated);
+  border-color: var(--dark-border);
+  box-shadow: none;
+}
+
+body.dark-mode .upload-insights__eyebrow { color: var(--dark-accent-light); }
+body.dark-mode .upload-insights__headline { color: #f0f0f0; }
+body.dark-mode .upload-insights__sub { color: #b8b8b8; }
+body.dark-mode .upload-insights__band-title { color: #8f8f8f; }
+
+body.dark-mode .upload-insights__topic {
+  background: var(--dark-bg-secondary);
+}
+
+body.dark-mode .upload-insights__topic-name { color: #f0f0f0; }
+body.dark-mode .upload-insights__topic-reason { color: #b0b0b0; }
+
+body.dark-mode .upload-insights__cta {
+  background: var(--dark-accent);
+  color: #1a1a1a;
+}
+
+body.dark-mode .upload-insights__cta:hover:not(:disabled) {
+  background: var(--dark-accent-hover);
+}
+
+/* ── Small screens ────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .upload-insights {
+    padding: 18px 16px 16px;
+  }
+  .upload-insights__headline { font-size: 1.08rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .upload-insights__cta,
+  .upload-insights__arrow {
+    transition: none;
+  }
+  .upload-insights__cta:hover:not(:disabled) {
+    transform: none;
+  }
+}

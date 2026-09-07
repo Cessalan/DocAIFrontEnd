@@ -119,11 +119,11 @@ import WebSourcesPanel from './WebSourcesPanel';
 
 // Study Mode
 import StartStudyModal from '../StudyMode/StartStudyModal';
-import DiagnosticFlow from '../StudyMode/DiagnosticFlow';
 import { coerceDate, calendarDaysBetween } from '../StudyMode/studySchedule';
 // StudyModeContainer is lazy-loaded — see the code-splitting block below the imports.
 
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
+import { FUNNEL, startFunnel, logFunnelStep } from '../../Services/FunnelService';
 import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
 import DrillExamDate from '../ExamDrill/DrillExamDate';
@@ -210,7 +210,10 @@ const ChatInterface = ({
   // upgrade modal when the weekly bucket is empty; consume() charges one unit
   // when a generation actually completes. isPro / openUpgrade also gate the
   // free "one upload per chat" limit.
-  const { requireQuota, consume: consumeGeneration, isPro, openUpgrade } = useUsageLimit();
+  // `plansRemaining` / `remaining` are read only to stamp the funnel row: how
+  // much budget she had at the moment she uploaded is what turns "she saw a
+  // paywall" into "she hit the plan gate at 3/3 with 40 questions left".
+  const { requireQuota, consume: consumeGeneration, isPro, openUpgrade, plansRemaining, remaining } = useUsageLimit();
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
@@ -406,24 +409,46 @@ const ChatInterface = ({
 
   // Study mode state
   const [showStartStudyModal, setShowStartStudyModal] = useState(false);
-  // The pre-plan diagnostic. `diagnosticSession` holds the in-flight questions
-  // promise while the two screens run; `studyDiagnostic` holds the {topic: pct}
-  // result handed to the plan. Null in the second means "skipped or failed",
-  // which is the uniform-plan path.
-  const [diagnosticSession, setDiagnosticSession] = useState(null);
+  // {topic: pct} handed to the plan generator so it can tier topics into
+  // gap/shaky/solid. Null means "we know nothing", which is the planner's
+  // documented uniform-plan path.
+  //
+  // This used to come from a dedicated 5-question diagnostic screen. It is now
+  // DERIVED in PlanOnboarding from the quick check plus her past scores — same
+  // shape, same consumer, five fewer questions. See that file's `diagnostic`.
   const [studyDiagnostic, setStudyDiagnostic] = useState(null);
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [studyState, setStudyState] = useState(null);
   const [studyAutoStart, setStudyAutoStart] = useState(false);
   const [pendingStudyDocs, setPendingStudyDocs] = useState([]);
   const [pendingStudyTopics, setPendingStudyTopics] = useState([]);
-  // Set when PlanOnboarding confirms — its 3 questions augment the base
+  // Topics ranked by uploadPriority, carried from PlanOnboarding so the LOCKED
+  // plan preview can list them in the same order the insights card showed her.
+  // A student with plan quota left never uses these — she sees the real path.
+  const [pendingRankedTopics, setPendingRankedTopics] = useState([]);
+  // Set when PlanOnboarding confirms — its answers augment the base
   // userProfile.onboarding so /study/start fires with examDate / hardestTopics
-  // / prepStatus baked in. Falls back to userProfile.onboarding when null.
+  // baked in. Falls back to userProfile.onboarding when null.
   const [pendingStudyUserPreferences, setPendingStudyUserPreferences] = useState(null);
 
   // Pre-upload action selection (when user picks action before uploading)
   const [pendingStudyAction, setPendingStudyAction] = useState(null);
+
+
+
+  // Is the post-upload coach flow on screen? A `plan_onboarding` message
+  // exists from the moment she commits to a study plan until she confirms,
+  // at which point swapPlanOnboardingForActions replaces it — so its presence
+  // is exactly the span of the flow.
+  //
+  // While it runs, every step carries its own control (a CTA, a lesson button,
+  // an answer, a chip). A message box underneath invites her to type into a
+  // flow that is not listening to typing, so it is hidden until the flow
+  // hands back.
+  const isCoachFlowActive = useMemo(
+    () => chatMessages.some(m => m.type === 'plan_onboarding'),
+    [chatMessages]
+  );
 
   /**
  * activeQuizProgress structure:
@@ -906,11 +931,22 @@ const ChatInterface = ({
           // Lift the exam date onto the user profile so the (globally rendered)
           // upgrade modal can show exam-countdown urgency. Best-effort, write
           // only when it actually changed to avoid redundant updates.
-          if (chatData.examDate && currentUser?.uid &&
-              userProfile?.onboarding?.examDate !== chatData.examDate) {
-            updateUserProfile(currentUser.uid, { 'onboarding.examDate': chatData.examDate })
+          //
+          // ⚠️ Stored as an ISO STRING, deliberately. `chatData.examDate` is a
+          // Firestore Timestamp, and the consumer — daysUntilExam() in
+          // upgradeCopy.js — does `new Date(examDate)`. new Date(Timestamp) is
+          // Invalid Date, so writing the raw Timestamp here made the helper
+          // return null and every exam-urgency string in UpgradeModal fall
+          // through to the generic copy. The field was populated and useless.
+          const loadedExamIso = (() => {
+            const d = coerceDate(chatData.examDate);
+            return d && !Number.isNaN(d.getTime()) ? d.toISOString() : null;
+          })();
+          if (loadedExamIso && currentUser?.uid &&
+              userProfile?.onboarding?.examDate !== loadedExamIso) {
+            updateUserProfile(currentUser.uid, { 'onboarding.examDate': loadedExamIso })
               .then(() => setUserProfile?.(prev => prev
-                ? { ...prev, onboarding: { ...(prev.onboarding || {}), examDate: chatData.examDate } }
+                ? { ...prev, onboarding: { ...(prev.onboarding || {}), examDate: loadedExamIso } }
                 : prev))
               .catch(() => { /* non-critical */ });
           }
@@ -1263,7 +1299,7 @@ const ChatInterface = ({
             // rejected again. Drop the placeholder and open the upgrade modal.
             if (statusUpdate.code === "quota_exceeded") {
               setChatMessages(prev => prev.filter(msg => msg.id !== streamingMessageId));
-              openUpgrade('questions', { topic: currentChatTitleRef.current });
+              openUpgrade('questions', { topic: currentChatTitleRef.current, trigger: 'question_throttle_server' });
               return;
             }
 
@@ -2757,7 +2793,9 @@ const ChatInterface = ({
     // Free plan: one upload per chat. If this chat already has a file, block
     // the second upload and pitch Pro instead.
     if (!isPro && uploadedFilesListRef.current.length > 0) {
-      openUpgrade(null, { topic: currentChatTitleRef.current });
+      // trigger is what separates this HARD BLOCK from a voluntary badge
+      // tap in the funnel data — both used to arrive as openUpgrade(null).
+      openUpgrade(null, { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
       if (e.target) e.target.value = '';
       return;
     }
@@ -2783,6 +2821,23 @@ const ChatInterface = ({
       console.error('Failed to ensure chat exists:', error);
       return;
     }
+
+    // One funnel per upload attempt — not per session and not per user. A
+    // student who uploads three decks walks three funnels, and averaging them
+    // into one is how a 3-of-3 completion reads as 1-of-1. The context stamped
+    // here rides every subsequent row, so a single-row query can segment by
+    // entry point and by how much budget she had left when she started.
+    startFunnel({
+      entryPoint: window._pendingDrill ? 'drill'
+        : window._pendingStudyJourney ? 'study_journey'
+        : pendingStudyActionRef.current ? 'preselected_action'
+        : 'attach',
+      isFirstUpload: !userProfile?.hasCompletedFirstUpload,
+      fileCount: files.length,
+      plansRemaining: plansRemaining ?? null,
+      questionsRemaining: remaining ?? null,
+    });
+    logFunnelStep(FUNNEL.UPLOAD_STARTED);
 
     // Track files by name for UI updates
     const fileTracker = new Map();
@@ -3310,11 +3365,20 @@ const ChatInterface = ({
             type: 'plan_onboarding',
             content: update.message,
             topics: update.topics || [],
+            // The extractor's per-topic teaching points. The backend has always
+            // sent these on this event; nothing read them until the insights
+            // card needed something truthful to say about each topic.
+            insights: update.insights || [],
             filenames: update.filenames || [],
             fileCount: update.file_count || (update.filenames || []).length || 0,
             actions: update.actions || [],
             timestamp: Date.now()
           };
+
+          logFunnelStep(FUNNEL.UPLOAD_COMPLETED, {
+            topicsFound: (update.topics || []).length,
+            fileCount: update.file_count || (update.filenames || []).length || 0,
+          });
 
           // Idempotent add: if the Firestore listener already inserted this id
           // (race: addDoc cache-write fires onSnapshot before our setState commits),
@@ -3858,9 +3922,14 @@ const ChatInterface = ({
       .catch(err => console.error('❌ Failed to persist post-upload actions after plan onboarding:', err));
   };
 
-  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences, diagnosticPromise) => {
+  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences, diagnostic, rankedTopics = []) => {
     if (!planOnboardingMsg) return;
-    devLog('✅ PlanOnboarding confirm — running the diagnostic before the plan');
+    devLog('✅ PlanOnboarding confirm — straight to the plan', diagnostic);
+
+    // Carried so a quota-blocked student's locked preview lists her topics in
+    // the order the insights card already showed her, rather than re-deriving
+    // a second (possibly different) ranking downstream.
+    setPendingRankedTopics(rankedTopics || []);
 
     // Persist the user's exam-prep answers (test date + hardest topics)
     // onto the chat document so downstream UI — readiness countdown,
@@ -3892,6 +3961,35 @@ const ChatInterface = ({
       }
     }
 
+    // ── Also onto the USER document ──────────────────────────────────────
+    // The chat doc is the right home for a plan's own countdown, but it is
+    // the wrong scope for the paywall: UpgradeModal reads the exam date from
+    // `userProfile.onboarding.examDate` (see UsageContext.js:56), and until
+    // now NOTHING ever wrote that field from this flow.
+    //
+    // The consequence was that every exam-urgency string in the product —
+    // upgrade.bodyExam ("Your exam is {{when}} — don't let a question limit
+    // slow your final push"), bodyBlockedExam, bodyPlanReadyExam — was
+    // written, translated, and unreachable. The modal always fell through to
+    // the generic copy, for every student, however close her exam was.
+    //
+    // One write makes all of them live. Fire-and-forget: a failed analytics-
+    // grade write must never interrupt the plan she is waiting for.
+    if (currentUser?.uid && examDateValue && !Number.isNaN(examDateValue.getTime())) {
+      const examIso = examDateValue.toISOString();
+      updateUserProfile(currentUser.uid, { 'onboarding.examDate': examIso })
+        .then(() => {
+          // Mirror locally so the countdown is right on THIS session too.
+          // userProfile is only refetched on load, and the paywall she may see
+          // within the next five minutes reads from this object — which is the
+          // entire point: the plan gate can fire moments from here.
+          setUserProfile(prev => (prev
+            ? { ...prev, onboarding: { ...(prev.onboarding || {}), examDate: examIso } }
+            : prev));
+        })
+        .catch(err => console.error('Failed to persist exam date to user doc:', err));
+    }
+
     // Surface the exam date + hardest topics to the rest of the UI
     // immediately so the readiness countdown and downstream consumers
     // (e.g. the focused-review CTA) light up without waiting for a
@@ -3916,8 +4014,7 @@ const ChatInterface = ({
     // even if the user backs out of the modal.
     swapPlanOnboardingForActions(planOnboardingMsg);
 
-    // Open StartStudyModal in autoStart mode. It'll call start_study_journey
-    // which, on cache hit, returns the plan promise we pre-fired on Q3.
+    // Open StartStudyModal in autoStart mode; it calls start_study_journey.
     const docsForStudy = (planOnboardingMsg.filenames || []).map((filename, idx) => ({
       id: `doc-${idx}`,
       name: filename,
@@ -3927,19 +4024,12 @@ const ChatInterface = ({
     setPendingStudyTopics(planOnboardingMsg.topics || []);
     setPendingStudyUserPreferences(userPreferences || userProfile?.onboarding || {});
 
-    // Diagnostic first, plan second. Without a questions promise there is
-    // nothing to run — go straight to the plan rather than showing a screen
-    // that can only fail.
-    if (diagnosticPromise) {
-      setStudyDiagnostic(null);
-      setDiagnosticSession({
-        promise: diagnosticPromise,
-        userPreferences: userPreferences || userProfile?.onboarding || {},
-        examDate: examDateValue,
-      });
-    } else {
-      setShowStartStudyModal(true);
-    }
+    // Straight to the plan. There is no diagnostic SCREEN any more — the
+    // {topic: pct} map arrives already assembled from the quick check she
+    // just answered plus her past scores, so there is nothing left to ask.
+    // Null is fine and means the planner builds its uniform plan.
+    setStudyDiagnostic(diagnostic || null);
+    setShowStartStudyModal(true);
   };
 
   // ============================================
@@ -4255,7 +4345,9 @@ const ChatInterface = ({
   const openFileUploadDialog = () => {
     // Free plan: one upload per chat — pitch Pro instead of opening the picker.
     if (!isPro && uploadedFilesListRef.current.length > 0) {
-      openUpgrade(null, { topic: currentChatTitleRef.current });
+      // trigger is what separates this HARD BLOCK from a voluntary badge
+      // tap in the funnel data — both used to arrive as openUpgrade(null).
+      openUpgrade(null, { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
       return;
     }
     documentFileInputRef.current?.click();
@@ -4941,40 +5033,6 @@ const ChatInterface = ({
           topics={pendingQuizMessageData?.topics || []}
         />
 
-        {/* Pre-plan diagnostic → knowledge map. Takes over the viewport: it is
-            a moment in its own right, and framing it in a modal alongside the
-            chat would make six questions look like an interruption rather than
-            the start of something. */}
-        {diagnosticSession && (
-          <div className="diagnostic-takeover">
-            <DiagnosticFlow
-              chatId={currentChatID}
-              questionsPromise={diagnosticSession.promise}
-              userPreferences={diagnosticSession.userPreferences}
-              examName={currentExamData?.examName}
-              daysToExam={(() => {
-                // Reuse the schedule's date helpers rather than adding a
-                // second definition of "how many days is that" — the two
-                // would drift on timezone and midnight handling, and the
-                // student would see one countdown here and a different one
-                // on the plan.
-                const d = coerceDate(diagnosticSession.examDate);
-                return d ? calendarDaysBetween(new Date(), d) : null;
-              })()}
-              onDone={({ scores }) => {
-                setStudyDiagnostic(scores);
-                setDiagnosticSession(null);
-                setShowStartStudyModal(true);
-              }}
-              onSkip={() => {
-                setStudyDiagnostic(null);
-                setDiagnosticSession(null);
-                setShowStartStudyModal(true);
-              }}
-            />
-          </div>
-        )}
-
         {/* Start Study Journey Modal */}
         <StartStudyModal
           isOpen={showStartStudyModal}
@@ -4982,6 +5040,7 @@ const ChatInterface = ({
             setShowStartStudyModal(false);
             setPendingStudyDocs([]);
             setPendingStudyTopics([]);
+            setPendingRankedTopics([]);
             setPendingStudyUserPreferences(null);
           }}
           onStart={(newStudyState) => {
@@ -4992,11 +5051,13 @@ const ChatInterface = ({
             setShowStartStudyModal(false);
             setPendingStudyDocs([]);
             setPendingStudyTopics([]);
+            setPendingRankedTopics([]);
             setPendingStudyUserPreferences(null);
           }}
           chatId={currentChatID}
           uploadedDocs={pendingStudyDocs}
           topics={pendingStudyTopics}
+          rankedTopics={pendingRankedTopics}
           language={i18n?.language || 'en'}
           autoStart={true}
           userPreferences={pendingStudyUserPreferences || userProfile?.onboarding || {}}
@@ -5207,14 +5268,15 @@ const ChatInterface = ({
                     <div className="message-content">
                       <PlanOnboarding
                         topics={message.topics || []}
+                        insights={message.insights || []}
                         filenames={message.filenames || []}
                         fileCount={message.fileCount || (message.filenames || []).length || 0}
                         language={(i18n?.language || 'en').split('-')[0]}
                         chatId={currentChatID}
                         userOnboarding={userProfile?.onboarding || {}}
                         disabled={isSystemBusy}
-                        onConfirm={({ userPreferences, diagnosticPromise }) =>
-                          handlePlanOnboardingConfirm(message, userPreferences, diagnosticPromise)
+                        onConfirm={({ userPreferences, diagnostic, rankedTopics }) =>
+                          handlePlanOnboardingConfirm(message, userPreferences, diagnostic, rankedTopics)
                         }
                       />
                     </div>
@@ -5568,8 +5630,15 @@ const ChatInterface = ({
 
         {/* Pre-upload study options removed - single CTA card handles upload */}
 
-        {/* Input Area */}
-        <form className={`input-area${drillSummary ? ' input-area--drill' : ''}`} onSubmit={handleSendNewUserMessage}>
+        {/* Input Area.
+            Hidden — not unmounted — while the post-upload coach flow runs. The
+            form owns `documentFileInputRef`, which other paths still click
+            programmatically, and a display:none input clicks fine; unmounting
+            it would break uploads elsewhere. */}
+        <form
+          className={`input-area${drillSummary ? ' input-area--drill' : ''}${isCoachFlowActive ? ' input-area--hidden' : ''}`}
+          onSubmit={handleSendNewUserMessage}
+        >
           <input
             type="file"
             ref={documentFileInputRef}

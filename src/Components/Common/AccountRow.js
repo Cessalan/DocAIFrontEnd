@@ -29,7 +29,8 @@ const AccountRow = ({ user = {}, onOpenAccount }) => {
 
   const handleUpgrade = (e) => {
     e.stopPropagation(); // pill acts alone — don't also open the modal
-    openUpgrade();
+    // Voluntary: opened from the account row, nothing was blocked.
+    openUpgrade(null, { trigger: 'account_menu' });
   };
 
   return (

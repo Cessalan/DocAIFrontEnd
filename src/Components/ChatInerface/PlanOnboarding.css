@@ -1064,3 +1064,92 @@ body.dark-mode .plan-onboarding__prep-card {
   border-color: rgba(255, 255, 255, 0.14);
   color: #f0ebf5;
 }
+
+/* ==========================================================================
+   Split footer — optional question (focus step)
+   The skip is a real answer here, not an escape hatch: the insights card has
+   already named the topics we ranked highest, so "you choose for me" is a
+   legitimate choice. It stays visually secondary (below, quieter) so the
+   default path is still forward, but it is never hidden.
+   column-reverse keeps the primary button on top while letting the DOM order
+   put skip first, which is where a keyboard user expects the opt-out.
+   ========================================================================== */
+.plan-onboarding__footer--split {
+  flex-direction: column-reverse;
+}
+
+/* ==========================================================================
+   Content phases — insights and lesson
+   --------------------------------------------------------------------------
+   The sticky-note card above is right for the QUESTION panes: a small, tilted,
+   bordered surface holding a few chips. It is wrong for the two phases that
+   render a card of their own (UploadInsightsCard, and StudyLessonCard /
+   StudyQuizCard inside FirstLessonPane), because then the chrome nests — a
+   bordered, shadowed, rotated panel wrapped around another bordered, shadowed
+   panel. Two stacked backgrounds, and the rotation puts them a fraction of a
+   degree out of true with each other.
+
+   So for those phases this element stops being a card and becomes what it
+   actually is there: a plain positioning wrapper.
+
+   WIDTH: matched to the composer rather than to the 540px note. `.input-area`
+   is max-width 800 with 32px of side padding, so the visible input box is
+   736px — that is the line the eye reads the column against, so it is the
+   number to match, not the 800 container.
+   ========================================================================== */
+.plan-onboarding[data-phase="insights"],
+.plan-onboarding[data-phase="lesson"] {
+  /* A DEFINITE width, not a percentage — this is the whole trick.
+     `.message` is `display:flex; flex-direction:row`, so `.message-content` is
+     a flex item with no flex-grow: it shrink-wraps to its content. A child
+     asking for `width: 100%` therefore resolves against a parent that is
+     itself sized by that child, and the column ends up as wide as whatever
+     text happens to be inside it — the lesson body (long paragraphs) filled
+     736px while the completion screen ("Lesson complete!" and a button)
+     collapsed to about half that. Same CSS, two different widths, which is
+     what made it look broken only on the last screen.
+
+     736 is not arbitrary: `.message` is max-width 800 with 32px of side
+     padding, and so is `.input-area`. Both content boxes are 736, so this
+     lines the card up with the composer by construction. */
+  width: 736px;
+  max-width: 100%;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  /* The note's charm; a wrapper's defect — it would tilt the card inside. */
+  transform: none;
+  animation: none;
+}
+
+/* Let the inner cards use the full matched width instead of their own,
+   narrower standalone caps. */
+.plan-onboarding[data-phase="insights"] .upload-insights,
+.plan-onboarding[data-phase="lesson"] .first-lesson {
+  max-width: 100%;
+}
+
+/* The insights card supplies its own surface, so it no longer needs to sit
+   inside a second one — but it does still want to read as a card. */
+.plan-onboarding[data-phase="insights"] .upload-insights {
+  width: 100%;
+}
+
+/* `body.dark-mode .plan-onboarding` re-applies the note's shadow and outscores
+   a plain attribute selector on specificity, so the dark theme has to be told
+   separately — otherwise the wrapper is invisible in light mode and still
+   casts a drop shadow around nothing in dark. */
+body.dark-mode .plan-onboarding[data-phase="insights"],
+body.dark-mode .plan-onboarding[data-phase="lesson"] {
+  box-shadow: none;
+  border-color: transparent;
+}
+
+@media (max-width: 900px) {
+  .plan-onboarding[data-phase="insights"],
+  .plan-onboarding[data-phase="lesson"] {
+    max-width: 100%;
+  }
+}

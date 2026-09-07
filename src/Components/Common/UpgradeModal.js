@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { PLANS, startCheckout, openBillingPortal } from '../../config/billing';
 import { daysUntilExam } from './upgradeCopy';
 import { formatCountdown } from '../../Services/UsageService';
+import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './UpgradeModal.css';
 
@@ -175,7 +176,14 @@ const UpgradeModal = ({
   // Which meter opened this? The plan gate and the question throttle are
   // different promises, so they get different copy — telling someone who
   // wanted a new subject that they're "out of questions" reads as a bug.
-  const isPlanGate = reason === 'plans';
+  //
+  // 'plan_ready' is the same METER as 'plans' but a different MOMENT: she has
+  // just been shown the plan itself (LockedPlanPreview) and tapped to unlock
+  // it. She does not need to be told what she ran out of — she needs the
+  // sentence she is already halfway through finished. Selling the quota to
+  // someone looking at the outcome is the specific mistake being corrected.
+  const isPlanReady = reason === 'plan_ready';
+  const isPlanGate = reason === 'plans' || isPlanReady;
 
   // "Blocked" = actually out of budget on whichever meter fired. Opening the
   // modal proactively (badge tap with budget left) shows the marketing pitch.
@@ -193,7 +201,11 @@ const UpgradeModal = ({
   // Headline: interruption first when we actually blocked them, goal-based
   // aspiration when they opened this themselves.
   let title;
-  if (blocked && isPlanGate) {
+  if (isPlanReady) {
+    // She is looking at her plan. Continue that sentence; don't start a new
+    // one about limits.
+    title = t('upgrade.titlePlanReady', 'Your plan is ready.');
+  } else if (blocked && isPlanGate) {
     title = t('upgrade.titlePlanBlocked', "You've got more exams to prepare for.");
   } else if (blocked) {
     title = t('upgrade.titleBlocked', "Don't stop now. 🔥");
@@ -206,7 +218,11 @@ const UpgradeModal = ({
   }
 
   let subtitle;
-  if (isPlanGate) {
+  if (isPlanReady) {
+    subtitle = examSoon
+      ? t('upgrade.bodyPlanReadyExam', "Your exam is {{when}}. Unlock the full plan and work it in the order it's already sorted into.", { when: whenLabel })
+      : t('upgrade.bodyPlanReady', "Unlock the full plan and work it in the order it's already sorted into — hardest first, refreshers last.");
+  } else if (isPlanGate) {
     subtitle = blocked
       ? (examSoon
           ? t('upgrade.bodyPlanBlockedExam', "You've already started {{count}} study plans this month — and your exam is {{when}}. Give every course its own personalized plan with Pro.", { count: planLimit, when: whenLabel })
@@ -352,7 +368,18 @@ const UpgradeModal = ({
         <div className="upgrade-footer">
           <button
             className="upgrade-cta"
-            onClick={() => selected && startCheckout(selected.id, user)}
+            onClick={() => {
+              if (!selected) return;
+              // The last event we control. Everything after this happens on
+              // Stripe, so a funnel that stops at "paywall viewed" cannot tell
+              // a student who declined from one who bounced off checkout.
+              logFunnelStep(FUNNEL.CHECKOUT_STARTED, {
+                planId: selected.id,
+                interval: selected.interval,
+                paywallReason: reason || null,
+              });
+              startCheckout(selected.id, user);
+            }}
             disabled={!selected}
           >
             <span className="upgrade-cta-lock" aria-hidden="true"><IconLock /></span>

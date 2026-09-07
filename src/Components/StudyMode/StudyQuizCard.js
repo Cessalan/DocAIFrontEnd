@@ -90,7 +90,6 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const [reviewTransitionCount, setReviewTransitionCount] = useState(0);
   const [hasShownMilestone, setHasShownMilestone] = useState(false);
   const [waitingForNextQuestion, setWaitingForNextQuestion] = useState(false);
-  const startTimeRef = useRef(Date.now());
 
   // Rotating quiz loading messages
   const [quizMsgIndex, setQuizMsgIndex] = useState(0);
@@ -376,17 +375,11 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const allQuestionsReceived = !isStreaming || totalQuestions >= expectedTotal;
   const allCorrect = correctCount === totalQuestions && totalQuestions > 0 && allQuestionsReceived;
 
-  // Calculate XP earned - commented out to reduce distraction
-  // // Review mode: flat 5 XP for completing review
-  // // Normal mode: 10 XP per correct answer on first try
-  // const xpEarned = isReviewMode ? 5 : correctCount * 10;
-
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual questions received
   // This prevents milestone from triggering too early during streaming (e.g., 1/1 = 100% vs 1/12 = 8%)
   const milestoneTotal = expectedTotal || QUIZ_MILESTONE_MIN_SET;
   const minQuestionsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total
-  const isPerfect = correctCount === totalQuestions && Object.values(questionStatuses).every(s => s === 'correct');
   // Sets are 5 questions now. A 30% milestone would fire after 2, with the
   // completion celebration 3 questions later — two interruptions inside one
   // short node. Mid-set celebration only earns its place on longer sets.
@@ -451,11 +444,6 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const handleCompletionContinue = () => {
     setShowCompletionCelebration(false);
     if (onContinue) onContinue();
-  };
-
-  // Calculate time taken
-  const getTimeTaken = () => {
-    return Math.floor((Date.now() - startTimeRef.current) / 1000);
   };
 
   // Progress bar logic (same as flashcards):
@@ -1026,9 +1014,6 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
           ) : (
             <StudyCelebration
               type="complete"
-              /* xpEarned={xpEarned} */
-              timeSeconds={getTimeTaken()}
-              isPerfect={isPerfect}
               inline={true}
               onContinue={handleCompletionContinue}
             />

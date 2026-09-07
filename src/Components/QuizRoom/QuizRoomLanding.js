@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import BrainMascot from './BrainMascot';
 import { FlagStrip } from '../Common/CountryFlags';
+import SchoolMarquee from '../Common/SchoolMarquee';
 import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
 import { setPendingFiles } from '../../utils/pendingUploadStore';
 import './QuizRoomLanding.css';
@@ -883,9 +884,14 @@ const QuizRoomLanding = () => {
             <div className="social-proof-divider" />
             <div className="social-proof-badge">
               <FlagStrip ariaLabel={t('landing.badge2Countries', 'Students in the United States, Canada, the Philippines, Australia and South Africa')} />
-              <span className="badge-text">{t('landing.badge2', 'Used by 1,000+ nursing students')}</span>
+              <span className="badge-text">{t('landing.badge2', 'Used by thousands of nursing students')}</span>
             </div>
           </div>
+
+          {/* The schools those students actually come from — reads as the second
+              half of the badge line above it, so it sits inside the hero rather
+              than in a band of its own. */}
+          <SchoolMarquee />
 
           {/* Bottom motivational text */}
           <div className="landing-footer">

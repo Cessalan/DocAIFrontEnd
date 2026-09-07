@@ -11,9 +11,6 @@ import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
  * Can be inline (inside card) or overlay (full screen)
  *
  * @param {string} type - 'milestone' (30%) or 'complete' (100%)
- * @param {number} xpEarned - XP points earned
- * @param {number} timeSeconds - Time taken in seconds
- * @param {boolean} isPerfect - Whether user got 100% correct
  * @param {boolean} inline - If true, renders inside parent container instead of full screen
  * @param {number} correctCount - Number of correct answers (for context-aware messages)
  * @param {number} totalCount - Total number of items currently received (for context-aware messages)
@@ -22,9 +19,6 @@ import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
  */
 const StudyCelebration = ({
   type = 'milestone',
-  xpEarned = 25,
-  timeSeconds = 0,
-  isPerfect = false,
   inline = true,
   correctCount = 0,
   totalCount = 0,
@@ -33,7 +27,6 @@ const StudyCelebration = ({
 }) => {
   const { t } = useTranslation();
   const [showContent, setShowContent] = useState(false);
-  const [showStats, setShowStats] = useState(false);
 
   // Store a random index on mount to keep message consistent
   const [messageIndex] = useState(() => Math.floor(Math.random() * 4));
@@ -52,22 +45,11 @@ const StudyCelebration = ({
 
   const selectedMascot = mascots[mascotIndex % mascots.length];
 
-  // Stagger animation entrance
+  // Entrance
   useEffect(() => {
-    const timer1 = setTimeout(() => setShowContent(true), 100);
-    const timer2 = setTimeout(() => setShowStats(true), 400);
-    return () => {
-      clearTimeout(timer1);
-      clearTimeout(timer2);
-    };
+    const timer = setTimeout(() => setShowContent(true), 100);
+    return () => clearTimeout(timer);
   }, []);
-
-  // Format time as m:ss
-  const formatTime = (seconds) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-    return `${mins}:${secs.toString().padStart(2, '0')}`;
-  };
 
   // Calculate performance ratio for context-aware messages
   // This ratio determines the encouragement message shown:
@@ -169,41 +151,22 @@ const StudyCelebration = ({
           )}
         </div>
 
-        {/* Stats - only show on completion */}
-        {type === 'complete' && (
-          <div className={`celebration-stats ${showStats ? 'visible' : ''}`}>
-            {/* XP Card - commented out to reduce distraction */}
-            {/* <div className="stat-card xp-card">
-              <span className="stat-label">{t('study.totalXP', 'TOTAL XP')}</span>
-              <div className="stat-value">
-                <span className="stat-icon">⚡</span>
-                <span className="stat-number">{xpEarned}</span>
-              </div>
-            </div> */}
+        {/* No stat cards. The XP card had already been commented out as a
+            distraction; the two that remained were worse than a distraction
+            because they were not true:
 
-            {/* Perfect Score Card - only if 100% */}
-            {isPerfect && (
-              <div className="stat-card perfect-card">
-                <span className="stat-label">{t('study.perfect', 'PERFECT!')}</span>
-                <div className="stat-value">
-                  <span className="stat-icon">🎯</span>
-                  <span className="stat-number">100%</span>
-                </div>
-              </div>
-            )}
+              PERFECT! 100% — hardcoded `isPerfect` on lessons, where there is
+              nothing to score. Reading four pages was being reported back as a
+              perfect result, which devalues the badge on the quiz where it is
+              actually earned.
 
-            {/* Time Card */}
-            {timeSeconds > 0 && (
-              <div className="stat-card time-card">
-                <span className="stat-label">{t('study.speedy', 'SPEEDY')}</span>
-                <div className="stat-value">
-                  <span className="stat-icon">⏱️</span>
-                  <span className="stat-number">{formatTime(timeSeconds)}</span>
-                </div>
-              </div>
-            )}
-          </div>
-        )}
+              SPEEDY 10:11 — wall-clock since the card mounted, so it counts
+              time the student spent in another tab, and it is labelled SPEEDY
+              whatever it says.
+
+            What the student needs at the end of a lesson is the way onward,
+            and that is the button below. Real performance feedback lives in
+            the post-node readout, which is derived from her answers. */}
 
         {/* Continue button */}
         <button className="celebration-continue-btn" onClick={onContinue}>

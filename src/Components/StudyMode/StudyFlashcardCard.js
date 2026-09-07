@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
@@ -93,7 +93,6 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
   const [reviewTransitionCount, setReviewTransitionCount] = useState(0);
   const [hasShownMilestone, setHasShownMilestone] = useState(false);
   const [waitingForNextCard, setWaitingForNextCard] = useState(false);
-  const startTimeRef = useRef(Date.now());
 
   // Handle both new format { cards: [...] } and legacy format { front, back }
   const cards = useMemo(() => {
@@ -195,17 +194,11 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
   // Check if all cards are mastered
   const allMastered = masteredCount === totalCards;
 
-  // Calculate XP earned - commented out to reduce distraction
-  // // Review mode: flat 5 XP for completing review
-  // // Normal mode: 10 XP per mastered card
-  // const xpEarned = isReviewMode ? 5 : masteredCount * 10;
-
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual cards received
   // This prevents milestone from triggering too early during streaming (e.g., 1/1 = 100% vs 1/12 = 8%)
   const milestoneTotal = expectedTotal || CARD_MILESTONE_MIN_SET;
   const minCardsForMilestone = Math.ceil(milestoneTotal * 0.3); // 30% of expected total
-  const isPerfect = masteredCount === totalCards;
   // Sets are 5 cards now — a mid-set celebration after 2 would collide with
   // the completion one. Long sets only.
   const milestoneWorthShowing = milestoneTotal >= CARD_MILESTONE_MIN_SET;
@@ -240,11 +233,6 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
   const handleCompletionContinue = () => {
     setShowCompletionCelebration(false);
     if (onContinue) onContinue();
-  };
-
-  // Calculate time taken
-  const getTimeTaken = () => {
-    return Math.floor((Date.now() - startTimeRef.current) / 1000);
   };
 
   // Progress bar logic:
@@ -511,9 +499,6 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
-            /* xpEarned={xpEarned} */
-            timeSeconds={getTimeTaken()}
-            isPerfect={isPerfect}
             inline={true}
             onContinue={handleCompletionContinue}
           />

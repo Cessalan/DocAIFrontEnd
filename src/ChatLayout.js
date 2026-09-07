@@ -11,6 +11,7 @@ import { warm_up_FASTAPI } from "./Services/FastAPICalls";
 import OnboardingModal from "./Components/Onboarding/OnboardingModal";
 import ExamDebriefPrompt from "./Components/ExamDebrief/ExamDebriefPrompt";
 import DevExamDebriefPill from "./Components/ExamDebrief/DevExamDebriefPill";
+import DevUploadsPill from "./Components/Common/DevUploadsPill";
 import SelectionProvider from "./Components/Selection/useTextSelection";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
 import { getPendingFiles, clearPendingFiles } from "./utils/pendingUploadStore";
@@ -329,6 +330,10 @@ function ChatLayout() {
       {/* Dev-only: opens that conversation on demand. Renders null in a
           production build. */}
       {authUid && <DevExamDebriefPill />}
+
+      {/* Dev-only: download the source files attached to this session.
+          Covers study mode too, which renders inside ChatInterface. */}
+      {authUid && <DevUploadsPill chatId={selectedChatId} />}
     </div>
   );
 }

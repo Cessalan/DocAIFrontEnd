@@ -90,6 +90,74 @@ body.dark-mode {
   margin: 0;
   padding: 0;
 }
+/* ============================================
+   DOCUMENT SCROLLBAR
+
+   The app already dresses ~20 inner containers (.conversations-list, quiz bodies,
+   modal bodies) in an 8px coral bar, but the page's own scrollbar was never
+   styled — so every route rendered a chrome-default grey bar down the right edge
+   next to all that warm cream. These rules extend the same house treatment to the
+   document itself, so the two match.
+
+   `scrollbar-gutter: stable` keeps the track's width reserved whether or not the
+   page is currently long enough to scroll; without it, navigating between a short
+   route and a long one shifts the whole layout sideways by the bar's width.
+   ============================================ */
+
+html {
+  scrollbar-gutter: stable;
+  /* Firefox, which has no ::-webkit pseudo-elements. */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(232, 141, 125, 0.3) transparent;
+}
+
+html::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+html::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+html::-webkit-scrollbar-thumb {
+  background: rgba(232, 141, 125, 0.28);
+  border: 3px solid transparent;
+  /* Clip to the padding box so the transparent border reads as breathing room
+     around the thumb rather than as part of it — a 10px bar with a 4px pill. */
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+html::-webkit-scrollbar-thumb:hover {
+  background: rgba(232, 141, 125, 0.5);
+  background-clip: content-box;
+}
+
+/* Lavender in dark mode, matching --dark-accent.
+   The selector has to be `html:has(body.dark-mode)` and not `body.dark-mode`.
+   Both `scrollbar-color` and the ::-webkit-scrollbar pseudo-elements propagate
+   from the ROOT element to the viewport, and once <html> has claimed them —
+   which it does, three rules up — the viewport ignores whatever body says. A
+   `body.dark-mode` rule would silently style body's own scrollbar (body is not a
+   scroll container here, so: nothing) and leave the page bar coral on a dark
+   ground. In a browser without :has() the light bar simply stays, which is a
+   colour mismatch rather than a broken scrollbar. */
+html:has(body.dark-mode) {
+  scrollbar-color: rgba(200, 180, 220, 0.28) transparent;
+}
+
+html:has(body.dark-mode)::-webkit-scrollbar-thumb {
+  background: rgba(200, 180, 220, 0.25);
+  border: 3px solid transparent;
+  background-clip: content-box;
+  border-radius: 999px;
+}
+
+html:has(body.dark-mode)::-webkit-scrollbar-thumb:hover {
+  background: rgba(200, 180, 220, 0.45);
+  background-clip: content-box;
+}
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;

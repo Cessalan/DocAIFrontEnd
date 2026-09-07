@@ -101,6 +101,7 @@ Changing either side alone will break the UI in ways tests won't catch:
 
 - `QUIZ_QUESTIONS` / `FLASHCARD_CARDS` / `DIAGNOSTIC_QUESTIONS` in `StudyModeContainer.js` mirror `STUDY_QUIZ_QUESTIONS` / `STUDY_FLASHCARD_CARDS` / `STUDY_DIAGNOSTIC_QUESTIONS` in `NQBackEnd2/main.py`. Drift makes progress bars stall short or finish early.
 - The upload NDJSON stream's backend heartbeat interval vs the frontend's stall watchdog.
+- `PLAN_BUDGETS` / `TIER_UNITS` / `SPRINT_MAX_DAYS` / `FOCUS_MAX_DAYS` / `GAP_MAX_PCT` / `SOLID_MIN_PCT` in `StudyMode/planPreviewModel.js` mirror the same names in `NQBackEnd2/main.py` (`_plan_archetype`, `_apply_budget`, `_weight_path_by_diagnostic`, `_tier_for_score`). This is the worst drift in the list: the model computes the **locked plan preview shown just before the paywall**, so a mismatch quotes a student "14 study sessions", takes her money, and delivers 8.
 - Stripe prices in `src/config/billing.js` are **display only**; the authoritative price is in Stripe. `usage.tier` is flipped exclusively by the backend webhook.
 
 ## Root markdown files

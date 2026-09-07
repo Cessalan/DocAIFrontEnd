@@ -13,6 +13,9 @@ const resources = {
         titleCourse: "Ace your course exam",
         titleBlocked: "Don't stop now. 🔥",
         titlePlanBlocked: "You've got more exams to prepare for.",
+        // Opened from LockedPlanPreview: she is looking at her plan, so the
+        // copy finishes that sentence rather than starting one about limits.
+        titlePlanReady: "Your plan is ready.",
         body: "Master every topic, find your weak spots faster, and walk into your exam ready.",
         bodyBlocked: "You've reached your free practice limit. Upgrade to Pro and keep preparing for your exam.",
         bodyExam: "Your exam is {{when}} — don't let a question limit slow your final push.",
@@ -25,6 +28,8 @@ const resources = {
         nextPlanInline: "Continue free in {{time}} (next plan)",
         bodyPlan: "Pro gives every course you're taking its own plan — not just the first few.",
         bodyPlanBlocked: "You've already started {{count}} study plans this month. Give every course its own personalized plan with Pro.",
+        bodyPlanReady: "Unlock the full plan and work it in the order it's already sorted into — hardest first, refreshers last.",
+        bodyPlanReadyExam: "Your exam is {{when}}. Unlock the full plan and work it in the order it's already sorted into.",
         bodyPlanBlockedExam: "You've already started {{count}} study plans this month — and your exam is {{when}}. Give every course its own personalized plan with Pro.",
         // Context + momentum
         wereStudying: "You were practicing",
@@ -489,6 +494,77 @@ const resources = {
 
       // Plan Onboarding (3-question gate before study plan generation,
       // shown only on first upload for exam-prep students)
+      // ── Post-upload coach flow ────────────────────────────────────────
+      // Insights card → first lesson → quick check. These sit BEFORE any
+      // question is asked; see PlanOnboarding's header for why.
+      uploadInsights: {
+        eyebrow: "Your notes are ready",
+        headline_one: "I found 1 topic in your material.",
+        headline_other: "I found {{count}} topics in your material.",
+        subheadline_one: "One of them is worth starting with.",
+        subheadline_other: "{{count}} of them are worth starting with.",
+        // Shown when the extractor returned no coverage, so there is nothing to
+        // rank on. Makes no claim about which topic matters.
+        subheadlinePlain: "Here they are.",
+        bands: {
+          high: "Start here",
+          review: "Worth reviewing",
+          foundation: "Supporting material"
+        },
+        // Reasons. Each is a fact we can point at in HER DOCUMENT. Never a
+        // claim about the student — the past-score lines that used to live
+        // here quoted one subject's percentage under another's name; see the
+        // removal note in uploadPriority.js.
+        reasonMultiFile: "Covered across {{count}} of your files",
+        reasonHeavyCoverage: "Your notes go deepest here — {{count}} key points",
+        reasonCoverage_one: "{{count}} key point in your notes",
+        reasonCoverage_other: "{{count}} key points in your notes",
+        reasonPresent: "Covered in your notes",
+        cta: "Start with {{topic}}",
+        ctaGeneric: "Show me where to start",
+        emptyHeadline: "Your notes are in.",
+        emptySub: "I couldn't pull clean topics out of this one, so let's start from your exam date instead."
+      },
+
+      firstLesson: {
+        lessonEyebrow: "First lesson",
+        // Deliberately does NOT name the topic: the lesson card directly
+        // below has it as its title, and printing it twice cost two lines
+        // of the height that was pushing the CTA under the composer.
+        lessonSub: "Straight from your notes — the part that matters most.",
+        quickCheckEyebrow: "Quick check",
+        quickCheckSub: "Two questions to see if it stuck.",
+        unavailable: "I couldn't build that lesson just now — let's set up your plan and come back to it.",
+        continueToPlan: "Continue"
+      },
+
+      // Plan preview shown to a student who is out of plan quota, BEFORE the
+      // upgrade modal. Sells the outcome she is looking at, not the quota.
+      lockedPlan: {
+        eyebrow: "Your plan",
+        titleNoDate: "Your study plan is ready",
+        titleToday: "Your exam is today — your plan is ready",
+        titleTomorrow: "Your exam is tomorrow — your plan is ready",
+        titleDays: "{{days}} days until your exam",
+        tiers: {
+          gap: "Needs work",
+          shaky: "Review",
+          untested: "To cover",
+          solid: "Quick refresh"
+        },
+        scored: "· you scored {{percent}}%",
+        sessionCount_one: "{{count}} session",
+        sessionCount_other: "{{count}} sessions",
+        totalSessions_one: "{{count}} study session",
+        totalSessions_other: "{{count}} study sessions",
+        totalMinutes: "· about {{count}} min",
+        trimmed_one: "1 lower-priority topic left out to fit your exam date.",
+        trimmed_other: "{{count}} lower-priority topics left out to fit your exam date.",
+        gateCopy: "You've got a lot to learn — but not everything matters equally. This plan is ordered by what your exam is most likely to test and what you actually missed.",
+        cta: "Unlock my study plan",
+        later: "Not now"
+      },
+
       planOnboarding: {
         eyebrow: "Personalized plan",
         hookHeadline_one: "I've read your file on {{topics}}.",
@@ -507,6 +583,9 @@ const resources = {
         q1: {
           title: "When's the exam?",
           subtitle: "I'll size the plan to fit.",
+          // Asked AFTER the first lesson now, so it reads as an offer rather
+          // than as onboarding paperwork.
+          subtitleAfterValue: "Tell me and I'll build the rest of this around it.",
           options: {
             today: "Today",
             tomorrow: "Tomorrow",
@@ -519,23 +598,20 @@ const resources = {
         q2: {
           title: "Which feels hardest right now?",
           subtitle: "Pick up to 2 — I'll lead the plan there.",
+          // Optional now: the insights card has already named what we ranked
+          // highest, so this is refinement, not self-diagnosis.
+          titleOptional: "Anything you'd add?",
+          subtitleOptional: "I'm already starting with {{topic}}. Pick up to 2 more if something else worries you.",
+          skip: "Skip — you choose for me",
           counter_one: "{{count}}/2 selected",
           counter_other: "{{count}}/2 selected",
           noTopics: "No topics extracted yet — continue and we'll figure it out together."
-        },
-        q3: {
-          title: "And where are you in your prep?"
-        },
-        prepOptions: {
-          not_started: "Haven't started yet",
-          just_started: "Just getting started",
-          making_progress: "Making progress",
-          cramming: "Cramming"
         },
         confirm: {
           title: "Here's what I'll build for you.",
           summaryAria: "Plan summary",
           focusPrefix: "Focus:",
+          focusAuto: "Starting with {{topic}}",
           topicJoiner: ", ",
           cta: "Build my plan",
           edit: "Edit answers"
@@ -885,8 +961,13 @@ const resources = {
         logout: "Log out",
         // Social proof badges
         badge1: "Made with nurses",
-        badge2: "Used by 1,000+ nursing students",
+        badge2: "Used by thousands of nursing students",
         badge2Countries: "Students in the United States, Canada, the Philippines, Australia and South Africa",
+        // School marquee
+        schoolsTitle: "Used by students from {{count}}+ nursing schools",
+        schoolsSubtitle: "From community college ADN programs to university BSN and NP tracks",
+        schoolsListLabel: "A sample of the schools our students attend",
+        schoolsDisclaimer: "School names identify where our students study. No affiliation or endorsement is implied.",
         // Footer
         footerText: "Built for nursing students. Med-Surg, Pharm, Patho — not just NCLEX.",
         // Product showcase section
@@ -2022,6 +2103,7 @@ const resources = {
         titleCourse: "Cartonne à ton examen",
         titleBlocked: "N'arrête pas maintenant. 🔥",
         titlePlanBlocked: "Tu as d'autres examens à préparer.",
+        titlePlanReady: "Ton plan est prêt.",
         body: "Maîtrise chaque sujet, repère tes points faibles plus vite et arrive prêt(e) à ton examen.",
         bodyBlocked: "Tu as atteint ta limite de pratique gratuite. Passe en Pro et continue à préparer ton examen.",
         bodyExam: "Ton examen est {{when}} — ne laisse pas une limite de questions freiner ta dernière ligne droite.",
@@ -2034,6 +2116,8 @@ const resources = {
         nextPlanInline: "Continuer gratuitement dans {{time}} (prochain plan)",
         bodyPlan: "Pro donne à chaque cours que tu suis son propre plan — pas seulement aux premiers.",
         bodyPlanBlocked: "Tu as déjà créé {{count}} plans d'étude ce mois-ci. Donne à chaque cours son propre plan personnalisé avec Pro.",
+        bodyPlanReady: "Débloque le plan complet et suis-le dans l'ordre déjà établi — le plus dur d'abord, les rappels à la fin.",
+        bodyPlanReadyExam: "Ton examen est {{when}}. Débloque le plan complet et suis-le dans l'ordre déjà établi.",
         bodyPlanBlockedExam: "Tu as déjà créé {{count}} plans d'étude ce mois-ci — et ton examen est {{when}}. Donne à chaque cours son propre plan personnalisé avec Pro.",
         // Contexte + élan
         wereStudying: "Tu pratiquais",
@@ -2496,6 +2580,63 @@ const resources = {
 
       // Plan Onboarding (3-question gate before study plan generation,
       // shown only on first upload for exam-prep students)
+      uploadInsights: {
+        eyebrow: "Tes notes sont prêtes",
+        headline_one: "J'ai trouvé 1 sujet dans ton matériel.",
+        headline_other: "J'ai trouvé {{count}} sujets dans ton matériel.",
+        subheadline_one: "Il y en a un par lequel commencer.",
+        subheadline_other: "Il y en a {{count}} par lesquels commencer.",
+        subheadlinePlain: "Les voici.",
+        bands: {
+          high: "Commence ici",
+          review: "À revoir",
+          foundation: "Matériel de soutien"
+        },
+        reasonMultiFile: "Présent dans {{count}} de tes fichiers",
+        reasonHeavyCoverage: "Tes notes vont le plus loin ici — {{count}} points clés",
+        reasonCoverage_one: "{{count}} point clé dans tes notes",
+        reasonCoverage_other: "{{count}} points clés dans tes notes",
+        reasonPresent: "Couvert dans tes notes",
+        cta: "Commencer par {{topic}}",
+        ctaGeneric: "Montre-moi par où commencer",
+        emptyHeadline: "Tes notes sont arrivées.",
+        emptySub: "Je n'ai pas pu en extraire de sujets nets — partons plutôt de la date de ton examen."
+      },
+
+      firstLesson: {
+        lessonEyebrow: "Première leçon",
+        lessonSub: "Directement tiré de tes notes — l'essentiel.",
+        quickCheckEyebrow: "Petite vérification",
+        quickCheckSub: "Deux questions pour voir si ça tient.",
+        unavailable: "Je n'ai pas pu construire cette leçon — préparons ton plan et on y revient.",
+        continueToPlan: "Continuer"
+      },
+
+      lockedPlan: {
+        eyebrow: "Ton plan",
+        titleNoDate: "Ton plan d'étude est prêt",
+        titleToday: "Ton examen est aujourd'hui — ton plan est prêt",
+        titleTomorrow: "Ton examen est demain — ton plan est prêt",
+        titleDays: "{{days}} jours avant ton examen",
+        tiers: {
+          gap: "À travailler",
+          shaky: "À revoir",
+          untested: "À couvrir",
+          solid: "Rappel rapide"
+        },
+        scored: "· tu as eu {{percent}}%",
+        sessionCount_one: "{{count}} séance",
+        sessionCount_other: "{{count}} séances",
+        totalSessions_one: "{{count}} séance d'étude",
+        totalSessions_other: "{{count}} séances d'étude",
+        totalMinutes: "· environ {{count}} min",
+        trimmed_one: "1 sujet moins prioritaire écarté pour tenir avant ton examen.",
+        trimmed_other: "{{count}} sujets moins prioritaires écartés pour tenir avant ton examen.",
+        gateCopy: "Tu as beaucoup à apprendre — mais tout ne compte pas pareil. Ce plan est ordonné selon ce que ton examen risque le plus de tester et ce que tu as réellement raté.",
+        cta: "Débloquer mon plan",
+        later: "Plus tard"
+      },
+
       planOnboarding: {
         eyebrow: "Plan personnalisé",
         hookHeadline_one: "J'ai lu ton fichier sur {{topics}}.",
@@ -2512,6 +2653,7 @@ const resources = {
         q1: {
           title: "C'est quand l'examen ?",
           subtitle: "Je dimensionne le plan en conséquence.",
+          subtitleAfterValue: "Dis-le-moi et je construis la suite autour.",
           options: {
             today: "Aujourd'hui",
             tomorrow: "Demain",
@@ -2524,23 +2666,18 @@ const resources = {
         q2: {
           title: "Lequel te semble le plus difficile ?",
           subtitle: "Choisis-en jusqu'à 2 — je vais y concentrer le plan.",
+          titleOptional: "Tu veux ajouter quelque chose ?",
+          subtitleOptional: "Je commence déjà par {{topic}}. Choisis-en jusqu'à 2 autres si autre chose t'inquiète.",
+          skip: "Passer — choisis pour moi",
           counter_one: "{{count}}/2 sélectionné",
           counter_other: "{{count}}/2 sélectionnés",
           noTopics: "Aucun sujet extrait pour l'instant — continue et on s'en occupe ensemble."
-        },
-        q3: {
-          title: "Et où en es-tu dans ta préparation ?"
-        },
-        prepOptions: {
-          not_started: "Pas encore commencé",
-          just_started: "Je viens de commencer",
-          making_progress: "Je progresse",
-          cramming: "Je bûche"
         },
         confirm: {
           title: "Voici ce que je vais construire pour toi.",
           summaryAria: "Résumé du plan",
           focusPrefix: "Focus :",
+          focusAuto: "On commence par {{topic}}",
           topicJoiner: ", ",
           cta: "Construis mon plan",
           edit: "Modifier mes réponses"
@@ -2884,8 +3021,13 @@ const resources = {
         logout: "Déconnexion",
         // Social proof badges
         badge1: "Créé avec des infirmières",
-        badge2: "Utilisé par 1 000+ étudiants en soins infirmiers",
+        badge2: "Utilisé par des milliers d'étudiants en soins infirmiers",
         badge2Countries: "Étudiants aux États-Unis, au Canada, aux Philippines, en Australie et en Afrique du Sud",
+        // School marquee
+        schoolsTitle: "Utilisé par des étudiants de plus de {{count}} écoles de sciences infirmières",
+        schoolsSubtitle: "Des programmes collégiaux aux baccalauréats et aux formations de pratique avancée",
+        schoolsListLabel: "Un aperçu des écoles fréquentées par nos étudiants",
+        schoolsDisclaimer: "Les noms d'écoles indiquent où étudient nos utilisateurs. Aucune affiliation ni approbation n'est sous-entendue.",
         // Footer
         footerText: "Conçu pour les étudiants en soins infirmiers. Med-Surg, pharmaco, patho — pas seulement le NCLEX.",
         // Product showcase section

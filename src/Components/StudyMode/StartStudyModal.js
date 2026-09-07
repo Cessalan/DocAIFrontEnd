@@ -17,6 +17,8 @@ import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { formatNodeType, getStepTopicLabel } from './planFormatting';
 import { buildFirstBlock, isRealNode } from './firstBlock';
 import { getStudyNodeIcon } from './planNodeIcon';
+import LockedPlanPreview from './LockedPlanPreview';
+import { FUNNEL, logFunnelStep, logFunnelStepOnce, logPaywall } from '../../Services/FunnelService';
 import './StudyMode.css';
 
 const MASCOTS = [BrainMascot, BookMascot, PillMascot, CoffeeCupMascot, MatchaCupMascot];
@@ -41,13 +43,17 @@ const StartStudyModal = ({
   // {topic: percent} from the pre-plan diagnostic, or null when she skipped it
   // (or the diagnostic failed). Null produces the old uniform plan, which is
   // why nothing else in this component needs to know whether it ran.
-  diagnostic = null
+  diagnostic = null,
+  // Ranked topics from the upload (see uploadPriority). Only used to build the
+  // LOCKED preview, which cannot generate a real path — a student with quota
+  // left never touches this and sees her actual plan instead.
+  rankedTopics = []
 }) => {
   const { t } = useTranslation();
-  const { requirePlanQuota, consumePlan, openUpgrade } = useUsageLimit();
+  const { canCreatePlan, requirePlanQuota, consumePlan, openUpgrade } = useUsageLimit();
 
   // ── Phase machine ─────────────────────────────────────────
-  // 'idle' | 'loading' | 'plan_preview' | 'starting' | 'done'
+  // 'idle' | 'loading' | 'plan_preview' | 'locked_preview' | 'starting' | 'done'
   const [phase, setPhase] = useState('idle');
 
   // Plan revealed to user while session save is in flight
@@ -162,11 +168,24 @@ const StartStudyModal = ({
   // mode on next visit (see ChatInterface.js:713). If the user closes the
   // modal during plan_preview, no Firestore mutation should have happened.
   const handleStartJourney = async () => {
-    // Plan gate BEFORE generation — a study path plus its first node is the
-    // most expensive call in the product, so a blocked user must never trigger
-    // it. requirePlanQuota opens the upgrade modal itself when it returns false.
-    if (!requirePlanQuota()) {
-      onClose && onClose();
+    // ── The plan gate, relocated ──────────────────────────────────────
+    // A study path plus its first node is the most expensive call in the
+    // product, so a blocked student still must not trigger it. What changed
+    // is what she gets instead: she used to be handed an upgrade modal
+    // announcing that she had used her three plans — a screen about our
+    // accounting, shown to someone who had just answered a questionnaire and
+    // sat a diagnostic and received nothing for either.
+    //
+    // Now she is shown the plan those answers earned, derived rather than
+    // generated (see LockedPlanPreview), and asked to unlock it. Same limit,
+    // same call avoided; the ask is about her exam instead of our quota.
+    //
+    // NOTE this reads the live flag directly rather than calling
+    // requirePlanQuota(), because requirePlanQuota opens the upgrade modal as
+    // a side effect — which is exactly the screen we are deferring.
+    if (!canCreatePlan) {
+      logPaywall('plans', 'plan_preview', { deferred: true });
+      setPhase('locked_preview');
       return;
     }
 
@@ -188,11 +207,12 @@ const StartStudyModal = ({
       console.error('Error starting study journey via /study/start:', err);
       // Server-side plan gate fired (client check was stale or bypassed).
       // Don't retry through the fallback — it enforces the same limit and
-      // would just burn another round trip.
+      // would just burn another round trip. Route to the locked preview for
+      // the same reason the client-side check does: she gets the plan on
+      // screen before the ask, not a quota notice instead of one.
       if (err?.code === 'plan_quota_exceeded') {
-        openUpgrade('plans');
-        setPhase('idle');
-        onClose && onClose();
+        logPaywall('plans', 'plan_preview', { deferred: true, source: 'server' });
+        setPhase('locked_preview');
         return;
       }
       // Fallback to legacy two-call flow if the streaming endpoint fails for any reason.
@@ -215,6 +235,14 @@ const StartStudyModal = ({
   // keeps the preview phase side-effect-free so a close is always recoverable.
   const handleStartFromPreview = async () => {
     if (!pathResult) return;
+    // Re-check at the commit point. The pre-generation check has already
+    // passed for anyone who reaches here, so this only fires in a race (a
+    // plan started in another tab while this preview was open). Keeping it
+    // means the meter cannot be walked past by holding a preview open.
+    if (!requirePlanQuota()) {
+      logPaywall('plans', 'plan_preview_commit');
+      return;
+    }
     setPhase('starting');
     try {
       const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
@@ -222,6 +250,10 @@ const StartStudyModal = ({
       // Charge the plan only once it actually exists. Abandoning the preview
       // costs nothing, which is what keeps the preview side-effect-free.
       consumePlan();
+      logFunnelStep(FUNNEL.PLAN_STARTED, {
+        nodeCount: pathResult?.nodes?.length || 0,
+        archetype: pathResult?.archetype || null,
+      });
       setPhase('done');
       if (onStart) onStart(studyState);
     } catch (err) {
@@ -255,6 +287,18 @@ const StartStudyModal = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, phase]);
 
+  // The unlocked preview counts as a preview view too. Without this the
+  // funnel would only ever see the blocked half, and "preview → started"
+  // would have no denominator to compare the paywall against.
+  useEffect(() => {
+    if (phase !== 'plan_preview' || !pathResult) return;
+    logFunnelStepOnce(FUNNEL.PLAN_PREVIEW_VIEWED, {
+      locked: false,
+      nodeCount: pathResult?.nodes?.length || 0,
+      archetype: pathResult?.archetype || null,
+    });
+  }, [phase, pathResult]);
+
   // Auto-start
   useEffect(() => {
     if (isOpen && autoStart && !hasAutoStarted && phase === 'idle' && uploadedDocs.length > 0) {
@@ -278,7 +322,7 @@ const StartStudyModal = ({
         {/* Close — available while idle, generating, or previewing the plan.
             Hidden during 'starting'/'done' since createStudySession is mid-flight
             and a close there would be ambiguous (commit or abandon?). */}
-        {(phase === 'idle' || phase === 'loading' || phase === 'plan_preview') && (
+        {(phase === 'idle' || phase === 'loading' || phase === 'plan_preview' || phase === 'locked_preview') && (
           <button
             className="study-modal-close"
             onClick={safeClose}
@@ -354,6 +398,21 @@ const StartStudyModal = ({
             chatId={chatId}
             onStart={handleStartFromPreview}
             t={t}
+          />
+        )}
+
+        {/* ── LOCKED PREVIEW ── out of plan quota. She sees the plan she
+             earned, then the ask. Nothing is generated and nothing is
+             written; closing here costs her nothing and costs us nothing. */}
+        {phase === 'locked_preview' && (
+          <LockedPlanPreview
+            topics={rankedTopics.length > 0 ? rankedTopics : topics}
+            diagnostic={diagnostic}
+            daysToExam={
+              userPreferences?.examDaysAway ?? null
+            }
+            onUnlock={() => openUpgrade('plan_ready', { topic: topics[0] || null, trigger: 'plan_ready', reachedStep: 'plan_preview' })}
+            onClose={safeClose}
           />
         )}
 

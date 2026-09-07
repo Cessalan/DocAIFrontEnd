@@ -1,0 +1,259 @@
+/* FirstLessonPane — the lesson + quick check that now sit BEFORE the
+   questionnaire. The cards inside are StudyLessonCard / StudyQuizCard, which
+   were built for the full-height study panel; the block at the bottom of this
+   file re-fits them to a chat message. */
+
+.first-lesson {
+  max-width: 620px;
+}
+
+.first-lesson__header {
+  margin-bottom: 10px;
+}
+
+.first-lesson__eyebrow {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--primary-coral);
+}
+
+.first-lesson__sub {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+/* ── Failure state ────────────────────────────────────────── */
+/* Generation failed or the server refused on quota. This is a way forward,
+   not an error dialog — the next step does not need this content. */
+
+.first-lesson--error {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  box-shadow: var(--shadow-sm);
+}
+
+.first-lesson__error-text {
+  margin: 0 0 14px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.first-lesson__skip {
+  padding: 11px 18px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--glass-border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transition-fast), color var(--transition-fast);
+}
+
+.first-lesson__skip:hover {
+  background: var(--bg-warm);
+  color: var(--text-primary);
+}
+
+.first-lesson__skip--primary {
+  border: none;
+  background: var(--gradient-primary);
+  color: var(--text-white);
+}
+
+.first-lesson__skip--primary:hover {
+  color: var(--text-white);
+  filter: brightness(1.04);
+}
+
+/* ── Dark mode ────────────────────────────────────────────── */
+
+body.dark-mode .first-lesson__eyebrow { color: var(--dark-accent-light); }
+body.dark-mode .first-lesson__sub { color: #b8b8b8; }
+
+body.dark-mode .first-lesson--error {
+  background: var(--dark-bg-elevated);
+  border-color: var(--dark-border);
+  box-shadow: none;
+}
+
+body.dark-mode .first-lesson__error-text { color: #b8b8b8; }
+
+body.dark-mode .first-lesson__skip {
+  border-color: var(--dark-border);
+  color: #b8b8b8;
+}
+
+body.dark-mode .first-lesson__skip:hover {
+  background: var(--dark-bg-tertiary);
+  color: #f0f0f0;
+}
+
+body.dark-mode .first-lesson__skip--primary {
+  background: var(--dark-accent);
+  color: #1a1a1a;
+}
+
+body.dark-mode .first-lesson__skip--primary:hover {
+  color: #1a1a1a;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .first-lesson__skip { transition: none; }
+}
+
+/* ==========================================================================
+   Fitting the study cards into a chat message
+   --------------------------------------------------------------------------
+   StudyLessonCard and StudyQuizCard were built for the study panel, where the
+   card owns the viewport: 900px wide, 17px/1.8 body copy, decorative tape
+   strips hanging off the top edge, and a footer that can sit wherever it
+   lands because nothing is underneath it.
+
+   Dropped into the chat transcript those defaults break in one way that
+   matters and several that are merely loud:
+
+     THE BUG — the card grew taller than the space between the last message
+     and the composer, so "Got it!" rendered *under* the message box. The one
+     control that advances the flow was the one thing you could not see. Same
+     failure the UpgradeModal footer was split out to fix, and the same fix:
+     the body scrolls, the CTA never does.
+
+     THE NOISE — tape strips, a 2px border, an elevated shadow and a scale-in
+     animation all say "standalone card". Inside a transcript that reads as a
+     foreign object pasted into the conversation rather than as the assistant's
+     own turn.
+
+   `.study-mode-focused` already established this pattern for the other
+   container that borrows these cards; this is the chat's version of it. Rules
+   are scoped under `.first-lesson` so the study panel is untouched.
+   ========================================================================== */
+
+.first-lesson .study-step-card {
+  /* Column layout so header, content and footer stack predictably. Nothing
+     here is height-capped — see the note on .study-card-content below. */
+  display: flex;
+  flex-direction: column;
+  max-width: 100%;
+  /* So the 1px border sits inside the 736px and the card lines up with the
+     composer exactly, rather than overhanging it by a pixel on each side. */
+  box-sizing: border-box;
+  border-width: 1px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  /* The slide-in scale reads as a modal opening. A chat message should just
+     be there, the way every other message in the transcript is. */
+  animation: none;
+}
+
+/* Tape strips belong on a card pinned to a study wall, not on a chat turn. */
+.first-lesson .study-step-card::before,
+.first-lesson .study-step-card::after {
+  display: none;
+}
+
+.first-lesson .study-card-header {
+  flex-shrink: 0;
+  padding: 14px 18px 10px;
+}
+
+.first-lesson .study-card-title {
+  font-size: 17px;
+  line-height: 1.35;
+}
+
+/* No close affordance in the transcript. There is nowhere to close *to* — and
+   because onExit is wired to "skip to the quick check", an X here silently
+   throws away the lesson the student came for. */
+.first-lesson .study-card-close-btn {
+  display: none;
+}
+
+/* NOT capped, and not scrollable.
+
+   This started life as `max-height: 320px; overflow-y: auto`, to stop the card
+   growing past the composer and hiding its own CTA. That was solving the
+   symptom. The cap then cut off a SATA question at option B behind a
+   scrollbar, which is worse than the problem it was fixing — a student cannot
+   answer what she cannot see, and a quiz is not something you skim.
+
+   The actual fix was upstream: the composer is now hidden for the whole
+   coach flow (see `.input-area--hidden` in ChatInterface.css), so there is
+   nothing underneath for the card to collide with. With that gone the card
+   can simply be as tall as its content and the TRANSCRIPT scrolls — which is
+   what a chat does, and what every other long message in it already does.
+
+   Do not reintroduce an inner scroll here. Two nested scroll regions in a
+   chat message is how the CTA got lost the first time. */
+.first-lesson .study-card-content {
+  flex: 0 0 auto;
+  padding: 4px 18px 14px;
+}
+
+/* 350px was sized around three stat cards. With those gone it is message,
+   mascot and button, and the leftover height reads as an empty green box. */
+.first-lesson .study-celebration-inline {
+  min-height: 250px;
+}
+
+/* Nothing to pin against once the celebration owns the card — the CONTINUE
+   button is inside it, and the lesson's own footer is not rendered. */
+.first-lesson .study-step-card:has(.study-celebration-inline) .study-card-footer {
+  display: none;
+}
+
+/* Chat body copy, not study-panel body copy. */
+.first-lesson .study-lesson-page-body,
+.first-lesson .study-lesson-body {
+  font-size: 15px;
+  line-height: 1.65;
+  margin-bottom: 14px;
+}
+
+.first-lesson .study-lesson-page-title {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.first-lesson .study-lesson-highlight {
+  padding: 12px 14px;
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.first-lesson .study-progress-bar-container {
+  width: calc(100% - 36px);
+  margin: 8px 18px 12px;
+  height: 7px;
+}
+
+.first-lesson .study-card-footer {
+  flex-shrink: 0;
+  padding: 10px 18px 14px;
+  /* Divider between the content and the controls that act on it. */
+  border-top: 1px solid rgba(100, 100, 100, 0.08);
+}
+
+.first-lesson .study-continue-btn {
+  padding: 11px 24px;
+  font-size: 15px;
+}
+
+body.dark-mode .first-lesson .study-card-footer {
+  border-top-color: var(--dark-border);
+}
+
+@media (max-width: 600px) {
+  .first-lesson .study-card-content { padding: 4px 14px 12px; }
+  .first-lesson .study-card-header { padding: 12px 14px 8px; }
+  .first-lesson .study-card-footer { padding: 10px 14px 12px; }
+}

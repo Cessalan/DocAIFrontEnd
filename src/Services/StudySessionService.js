@@ -1518,3 +1518,70 @@ export default {
   appendPhase2,
   saveMindmapProgress
 };
+
+/**
+ * Every topic this student has ever been scored on, merged across sessions.
+ *
+ * ⚠ CURRENTLY UNUSED — kept, but do not wire it back up as it stands.
+ *
+ * Its only caller was the post-upload insights card. Removed 2026-09-06: the
+ * card matched these merged keys with findMatchingTopicKey, which paired
+ * "Acute Coronary Syndrome" with "Definition and Characteristics of Acute
+ * Respiratory Distress Syndrome (ARDS)" on the shared words "acute" and
+ * "syndrome" and told the student she had averaged 56% on cardiology. The
+ * full case is in Components/ChatInerface/uploadPriority.js.
+ *
+ * The merge below is not the bug — the bug is what the caller did with a
+ * fuzzy match. Anything reading this again needs an exact-match rule of its
+ * own before it quotes a number at anybody.
+ *
+ * WHY ACROSS SESSIONS
+ *
+ * `getStudyPerformance` is keyed by chat, which is right for a plan's own
+ * readiness maths — that plan's numbers should be about that plan. But the
+ * post-upload insights card asks a different question: "what do we already
+ * know about HER?" A student on her fourth deck has three sessions of
+ * evidence sitting in sibling documents, and reading only the new chat's
+ * record (which is empty, because the chat is seconds old) throws all of it
+ * away and reduces the card to heuristics.
+ *
+ * That evidence is the only thing on the card that lets it say a true
+ * sentence about the student rather than about the document, so it is worth
+ * one extra query on the upload path.
+ *
+ * Keys are collapsed with `baseTopicName` — the same rule the analytics panel
+ * uses — so "Cardiac - Mini-Test" and "Cardiac - Drill" are one subject and
+ * not two half-populated ones. Callers match against these keys with
+ * findMatchingTopicKey, which absorbs the remaining label drift.
+ *
+ * Returns {} rather than null on any failure: an empty record and a failed
+ * read produce the same card, and a rejected promise here would take down an
+ * upload over a missing analytics nicety.
+ */
+export const getAggregateTopicPerformance = async () => {
+  try {
+    const userId = auth.currentUser?.uid;
+    if (!userId) return {};
+
+    const snap = await getDocs(collection(db, 'users', userId, 'studyPerformance'));
+    const merged = {};
+
+    snap.forEach((docSnap) => {
+      const topics = docSnap.data()?.topics || {};
+      Object.entries(topics).forEach(([key, tp]) => {
+        const total = tp?.questionsTotal || 0;
+        if (!total) return;
+        const name = baseTopicName(key);
+        const acc = merged[name] || { correct: 0, total: 0 };
+        acc.correct += tp?.questionsCorrect || 0;
+        acc.total += total;
+        merged[name] = acc;
+      });
+    });
+
+    return merged;
+  } catch (error) {
+    console.error('Error reading aggregate topic performance:', error);
+    return {};
+  }
+};

@@ -25,6 +25,8 @@ import {
   consumePlan as consumePlanUnit,
   derivePlanQuota,
 } from '../../Services/UsageService';
+import { logPaywall, logFunnelStep, FUNNEL } from '../../Services/FunnelService';
+import { daysUntilExam } from '../../Components/Common/upgradeCopy';
 import UpgradeModal from '../../Components/Common/UpgradeModal';
 import UsageBadge from '../../Components/Common/UsageBadge';
 import { cleanTopicLabel } from '../../Components/Common/upgradeCopy';
@@ -87,6 +89,81 @@ export function UsageProvider({ children }) {
   // Set only by simulateLimit(), which is itself a no-op in production builds.
   const [devSim, setDevSim] = useState(null);
 
+  /* ══════════════════════════════════════════════════════════════════════
+     PAYWALL VIEW INSTRUMENTATION
+
+     Every route to the modal ends at setShowUpgrade(true) — requireQuota,
+     requirePlanQuota, openUpgrade, the badge tap and simulateLimit. Logging
+     HERE rather than at each call site is what makes the count trustworthy:
+     a new gate added later is instrumented by construction, and no site can
+     forget to report itself.
+
+     Why this had to exist: until now the product emitted nothing when a
+     paywall opened. We could see that ~14 people ever reached Stripe, but not
+     how many were ever ASKED — and those two numbers imply opposite fixes. If
+     hundreds saw a wall and 14 clicked, the copy is wrong. If twenty saw one,
+     the gates simply never fire. Nobody could tell which.
+
+     `trigger` (HOW it opened) is recorded separately from `reason` (WHICH copy
+     it showed), because they are not the same question and today they collide:
+     the upload gate and a voluntary badge tap both call openUpgrade(null, …),
+     so in the old world they were indistinguishable — one is a wall, the other
+     is a person volunteering to buy. Grouping those together would have made
+     the numbers actively misleading.
+
+     `blocked` separates a WALL from a BROWSE: opening the modal with budget
+     left is a pull signal, and mixing it into the wall count inflates the
+     denominator of every conversion rate below it.
+     ══════════════════════════════════════════════════════════════════════ */
+
+  // True while the modal is up, so a second blocked attempt against an
+  // already-open paywall does not count as a second view. Re-opening it later
+  // does — those are two separate asks.
+  const paywallOpenRef = useRef(false);
+
+  const recordPaywallView = useCallback((trigger, reason, ctx) => {
+    try {
+      if (paywallOpenRef.current) return;      // already on screen
+      paywallOpenRef.current = true;
+
+      const liveQ = deriveQuota(usageRef.current, Date.now());
+      const liveP = derivePlanQuota(planUsageRef.current, usageRef.current?.tier, Date.now());
+
+      // A Pro account opening this sees the manage-subscription screen. That
+      // is a billing surface, not a paywall, and counting it would pollute
+      // every rate computed from this collection.
+      if (liveQ.isPro) return;
+
+      const blocked = reason === 'plans' || reason === 'plan_ready'
+        ? liveP.remaining <= 0
+        : liveQ.remaining <= 0;
+
+      logPaywall(reason || 'none', ctx?.reachedStep || null, {
+        trigger: trigger || 'manual',
+        blocked,
+        tier: liveQ.tier,
+        questionsUsed: liveQ.used,
+        questionsLimit: liveQ.limit,
+        questionsRemaining: liveQ.remaining,
+        msUntilReset: liveQ.msUntilReset,
+        plansUsed: liveP.used,
+        planLimit: liveP.limit,
+        plansRemaining: liveP.remaining,
+        planMsUntilReset: liveP.msUntilReset,
+        topic: cleanTopicLabel(ctx?.topic) || null,
+        studyGoal: studyGoal || null,
+        // Now that the exam date is stored as a parseable ISO string, this is
+        // the field that says whether urgency copy was even available.
+        examDaysAway: daysUntilExam(examDate),
+        // Which surface she was on. /c/{chatId} in practice, so it doubles as
+        // a chat correlation key without threading chatId through the context.
+        path: typeof window !== 'undefined' ? window.location?.pathname || null : null,
+      });
+    } catch {
+      /* never let instrumentation break a paywall */
+    }
+  }, [studyGoal, examDate]);
+
   // Fetch quota whenever the signed-in user changes.
   const refresh = useCallback(async () => {
     if (!uid) {
@@ -130,11 +207,12 @@ export function UsageProvider({ children }) {
   const requireQuota = useCallback((ctx = null) => {
     const live = deriveQuota(usageRef.current, Date.now());
     if (live.canGenerate) return true;
+    recordPaywallView('question_throttle', 'questions', ctx);
     setUpgradeReason('questions');
     setUpgradeTopic(cleanTopicLabel(ctx?.topic));
     setShowUpgrade(true);
     return false;
-  }, []);
+  }, [recordPaywallView]);
 
   // Plan gate — call BEFORE generating a new study plan. Generating a path
   // plus its first node is the most expensive call in the product, so this
@@ -142,11 +220,12 @@ export function UsageProvider({ children }) {
   const requirePlanQuota = useCallback((ctx = null) => {
     const live = derivePlanQuota(planUsageRef.current, usageRef.current?.tier, Date.now());
     if (live.canCreatePlan) return true;
+    recordPaywallView('plan_quota', 'plans', ctx);
     setUpgradeReason('plans');
     setUpgradeTopic(cleanTopicLabel(ctx?.topic));
     setShowUpgrade(true);
     return false;
-  }, []);
+  }, [recordPaywallView]);
 
   /**
    * Dev-only: open the upgrade modal exactly as a blocked FREE user sees it —
@@ -212,13 +291,24 @@ export function UsageProvider({ children }) {
     planMsUntilReset: planQuota.msUntilReset,
     requirePlanQuota,
     consumePlan,
+    /**
+     * Open the modal directly.
+     *
+     * `ctx.trigger` says WHAT opened it and should be passed by every caller.
+     * Without it the upload gate (a hard block) and a badge tap (someone
+     * volunteering to buy) both arrive as `openUpgrade(null, {topic})` and are
+     * indistinguishable in the data — which is how you end up computing a
+     * conversion rate over two populations that have nothing in common.
+     */
     openUpgrade: (reason = null, ctx = null) => {
-      setUpgradeReason(typeof reason === 'string' ? reason : null);
+      const normalizedReason = typeof reason === 'string' ? reason : null;
+      recordPaywallView(ctx?.trigger || normalizedReason || 'manual', normalizedReason, ctx);
+      setUpgradeReason(normalizedReason);
       setUpgradeTopic(cleanTopicLabel(ctx?.topic));
       setShowUpgrade(true);
     },
     simulateLimit,
-  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan, simulateLimit]);
+  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan, simulateLimit, recordPaywallView]);
 
   return (
     <UsageContext.Provider value={value}>
@@ -229,7 +319,13 @@ export function UsageProvider({ children }) {
           remaining={quota.remaining}
           limit={quota.limit}
           msUntilReset={quota.msUntilReset}
-          onClick={() => { setUpgradeReason(null); setUpgradeTopic(null); setShowUpgrade(true); }}
+          onClick={() => {
+            // Nobody blocked her — she tapped the meter and asked to see the
+            // offer. Two of the traceable checkout-openers arrived this way,
+            // so pull is a real channel and must not be filed under "wall".
+            recordPaywallView('badge', null, null);
+            setUpgradeReason(null); setUpgradeTopic(null); setShowUpgrade(true);
+          }}
         />
       )}
       <UpgradeModal
@@ -239,7 +335,13 @@ export function UsageProvider({ children }) {
         // manage-subscription branch instead — i.e. never the screen being
         // reviewed. Only the modal's props are faked; the real tier is intact.
         isPro={devSim ? false : quota.isPro}
-        onClose={() => { setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setDevSim(null); }}
+        onClose={() => {
+          if (paywallOpenRef.current) {
+            paywallOpenRef.current = false;
+            if (!quota.isPro) logFunnelStep(FUNNEL.PAYWALL_DISMISSED, { reason: upgradeReason || 'none' });
+          }
+          setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setDevSim(null);
+        }}
         reason={upgradeReason}
         topic={upgradeTopic}
         limit={quota.limit}

@@ -188,6 +188,81 @@ const GetFileMetadataByName = async (chatId, filename) => {
   return result;
 };
 
+/**
+ * Every source file a student attached to one session, for the dev uploads pill.
+ *
+ * TWO SOURCES, ON PURPOSE
+ *
+ * `chats/{id}/uploads` is written by the CLIENT after the upload stream
+ * returns (see SaveFileMetaData's caller in ChatInterface). Any upload where
+ * the tab was closed mid-stream, or where that write threw, leaves a file
+ * sitting in Storage with no Firestore row — which is exactly the broken
+ * session you most want to pull the file from. So Storage is listed too and
+ * merged in by filename, with Firestore winning where both have a row because
+ * only it carries wordCount and uploadedAt.
+ *
+ * Storage-only rows are flagged `orphan` so the caller can show that the
+ * metadata write is what failed, not the upload.
+ *
+ * Dev tooling: this is not called from any production surface.
+ *
+ * @param {string} chatId
+ * @returns {Promise<Array<{id, name, size, downloadURL, wordCount, uploadedAt, orphan}>>}
+ */
+const GetChatUploads = async (chatId) => {
+  if (!chatId) return [];
+  const byName = new Map();
+
+  try {
+    const snap = await getDocs(collection(db, "chats", chatId, "uploads"));
+    snap.forEach((d) => {
+      const data = d.data() || {};
+      const name = data.name || d.id;
+      byName.set(name, {
+        id: d.id,
+        name,
+        size: data.size ?? null,
+        downloadURL: data.downloadURL || null,
+        wordCount: data.wordCount ?? null,
+        // serverTimestamp() until the write lands, so tolerate both shapes.
+        uploadedAt: data.uploadedAt?.toMillis?.() ?? data.uploadedAt ?? null,
+        orphan: false,
+      });
+    });
+  } catch (e) {
+    devLog("GetChatUploads: Firestore read failed", e);
+  }
+
+  try {
+    const listing = await listAll(ref(storage, `chats/${chatId}/uploads`));
+    await Promise.all(listing.items.map(async (item) => {
+      if (byName.has(item.name)) return;
+      try {
+        const [url, meta] = await Promise.all([
+          getDownloadURL(item),
+          getMetadata(item).catch(() => null),
+        ]);
+        byName.set(item.name, {
+          id: item.fullPath,
+          name: item.name,
+          size: meta?.size ?? null,
+          downloadURL: url,
+          wordCount: null,
+          uploadedAt: meta?.timeCreated ? Date.parse(meta.timeCreated) : null,
+          orphan: true,
+        });
+      } catch (e) {
+        devLog("GetChatUploads: could not resolve", item.fullPath, e);
+      }
+    }));
+  } catch (e) {
+    // Storage rules may forbid listing; the Firestore rows are still useful.
+    devLog("GetChatUploads: Storage list failed", e);
+  }
+
+  return [...byName.values()].sort((a, b) => (a.uploadedAt || 0) - (b.uploadedAt || 0));
+};
+
 export const UpdateQuizAnswer = async (chatId, messageId, questionText, userSelection) => {
   try {
     devLog("Attempting to update quiz answer:", { chatId, messageId, questionText });
@@ -775,4 +850,4 @@ export const SavePostUploadSelection = async (chatId, messageId, actionId) => {
   }
 };
 
-export { AppendToChat, SaveFileMetaData, GetFileMetadataByName };
+export { AppendToChat, SaveFileMetaData, GetFileMetadataByName, GetChatUploads };

@@ -45,10 +45,24 @@ service cloud.firestore {
       }
     }
 
+    // Conversion funnel log. Append-only for the same reason billingEvents is:
+    // it is evidence. A funnel a client can rewrite cannot be used to decide
+    // where the paywall goes, which is the only thing it is collected for.
+    // Rows are written unauthenticated-tolerant (a logged-out landing-page
+    // upload is a real step), so create stays open; edits and deletes do not.
+    match /funnelEvents/{eventId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if false;
+    }
+
     // Every other collection: unchanged (open) — deliberately identical to
     // the previous rules so nothing else changes behavior.
+    // NOTE: rules OR together, so this open rule would hand write access back
+    // to funnelEvents unless that collection is excluded here — the same
+    // subtlety documented on billingEvents above.
     match /{collection}/{docPath=**} {
-      allow read, write: if collection != 'users';
+      allow read, write: if collection != 'users' && collection != 'funnelEvents';
     }
   }
 }

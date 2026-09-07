@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
@@ -10,15 +10,19 @@ import { playCelebrationSound, playCorrectSound } from '../../utils/soundEffects
  *
  * @param {Object} content - Lesson content { title, pages: [{ title, content, highlight }] }
  *                          OR legacy format { title, body, keyPoints }
- * @param {boolean} isReviewMode - If true, this is a review of completed content (only 5 XP)
+ * @param {boolean} isReviewMode - If true, this is a review of completed content
+ * @param {boolean} skipCelebration - Finish the last page straight into onContinue,
+ *   with no celebration screen. Set by the post-upload coach flow, where the
+ *   lesson is one step of a sequence and a full-screen "Lesson complete!" is a
+ *   dead click between the teaching and the questions that follow it. In study
+ *   mode the celebration is the reward for finishing a node, so it stays.
  * @param {Function} onContinue - Callback when user completes all pages
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) => {
+const StudyLessonCard = ({ content, isReviewMode = false, skipCelebration = false, onContinue, onExit }) => {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
-  const startTimeRef = useRef(Date.now());
 
   // Handle both new multi-page format and legacy format
   const isMultiPage = content?.pages && Array.isArray(content.pages);
@@ -40,16 +44,6 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
 
   // Legacy format fallback
   const { title, body, keyPoints = [] } = content || {};
-
-  // Calculate time taken
-  const getTimeTaken = () => {
-    return Math.floor((Date.now() - startTimeRef.current) / 1000);
-  };
-
-  // XP for lessons - commented out to reduce distraction
-  // // Review mode: flat 5 XP for completing review
-  // // Normal mode: 5 XP per page read
-  // const xpEarned = isReviewMode ? 5 : totalPages * 5;
 
   // Book icon for lesson
   const LessonIcon = () => (
@@ -94,6 +88,9 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
       setCurrentPage(prev => prev + 1);
     } else if (isMultiPage && isStreaming) {
       // Last received page but more still coming — no-op (button is disabled).
+    } else if (skipCelebration) {
+      // Sequenced inside a longer flow — hand straight on.
+      if (onContinue) onContinue();
     } else {
       // Show celebration instead of immediately continuing
       setShowCelebration(true);
@@ -188,9 +185,6 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
           <div className="study-card-content">
             <StudyCelebration
               type="complete"
-              /* xpEarned={xpEarned} */
-              timeSeconds={getTimeTaken()}
-              isPerfect={true}
               inline={true}
               onContinue={handleCelebrationContinue}
             />
@@ -292,9 +286,6 @@ const StudyLessonCard = ({ content, isReviewMode = false, onContinue, onExit }) 
         <div className="study-card-content">
           <StudyCelebration
             type="complete"
-            /* xpEarned={xpEarned} */
-            timeSeconds={getTimeTaken()}
-            isPerfect={true}
             inline={true}
             onContinue={handleCelebrationContinue}
           />

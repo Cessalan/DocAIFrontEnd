@@ -2707,7 +2707,7 @@
   color: var(--primary-coral);
 }
 
-/* Country flags beside the "1,000+ students" claim. Spaced rather than
+/* Country flags beside the "thousands of students" claim. Spaced rather than
    overlapped: five different flags at 19px are already hard to tell apart, and
    stacking them the way avatar groups do costs the recognition this is for. */
 .flag-strip {

@@ -39,7 +39,8 @@ const AccountModal = ({ isOpen, onClose, user = {} }) => {
 
   const handleUpgrade = () => {
     onClose();       // don't stack modals — the provider renders UpgradeModal
-    openUpgrade();
+    // Voluntary: opened from the account screen, nothing was blocked.
+    openUpgrade(null, { trigger: 'account_menu' });
   };
 
   const initial = (user.displayName || user.email || '?').charAt(0).toUpperCase();

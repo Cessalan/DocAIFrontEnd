@@ -3963,6 +3963,22 @@ body.dark-mode .nursing-icon {
   /* ============================================
    INPUT AREA - Clean, minimal warm style
    ============================================ */
+  /* Hidden for the duration of the post-upload coach flow (insights → first
+     lesson → quick check → exam date). Every step there has its own control,
+     and a message box under them reads as "you can type instead", which is
+     both untrue and the fastest way to lose someone mid-flow.
+
+     display:none rather than unmounting the form: it holds the hidden file
+     input that other paths click programmatically, and that still works while
+     the form is not displayed. Also removes the thing the cards used to
+     collide with, which is why they no longer need an inner scrollbar —
+     see FirstLessonPane.css. */
+  /* Doubled class so it wins on specificity regardless of source order —
+     `.input-area { display: flex }` is defined just below this. */
+  .input-area.input-area--hidden {
+    display: none;
+  }
+
   .input-area {
     display: flex;
     align-items: flex-end;
