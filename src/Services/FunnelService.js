@@ -57,6 +57,18 @@ const COLLECTION = "funnelEvents";
 export const FUNNEL = Object.freeze({
   UPLOAD_STARTED: 'upload_started',
   UPLOAD_COMPLETED: 'upload_completed',
+  // Course intelligence. The context form runs alongside the upload rather
+  // than in front of it, so CONTEXT_SHOWN and UPLOAD_STARTED land within a
+  // second of each other — the gap worth watching is SHOWN -> SUBMITTED, and
+  // SKIPPED is a legitimate outcome rather than a drop.
+  COURSE_CONTEXT_SHOWN: 'course_context_shown',
+  COURSE_CONTEXT_SUBMITTED: 'course_context_submitted',
+  COURSE_CONTEXT_SKIPPED: 'course_context_skipped',
+  INTELLIGENCE_STARTED: 'intelligence_started',
+  INTELLIGENCE_COMPLETED: 'intelligence_completed',
+  INTELLIGENCE_FAILED: 'intelligence_failed',
+  REPORT_VIEWED: 'report_viewed',
+  REVEAL_VIEWED: 'reveal_viewed',
   INSIGHTS_VIEWED: 'insights_viewed',
   FIRST_LESSON_STARTED: 'first_lesson_started',
   FIRST_LESSON_COMPLETED: 'first_lesson_completed',

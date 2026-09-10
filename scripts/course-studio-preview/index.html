@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>NurseQuizAI · study plan preview</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&family=Outfit:wght@400;500;600;700&family=Patrick+Hand&display=swap">
+<link rel="stylesheet" href="/Preview.css">
+<style>
+.preview-controls{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 22px;border-bottom:1px solid var(--glass-border);font-size:12px;color:var(--text-secondary)}
+.preview-controls>div{display:flex;flex-wrap:wrap;gap:6px}
+.preview-controls button,.preview-handoff button{font:inherit;cursor:pointer;background:transparent;border:1px solid var(--glass-border);padding:7px 11px;border-radius:var(--radius-sm);color:inherit}
+.preview-controls button[aria-pressed=true]{color:var(--primary-coral-dark);background:var(--bg-warm);border-color:var(--primary-coral)}
+.preview-main{width:min(560px,calc(100% - 32px));margin:28px auto 60px;transition:width .2s}
+.preview-main.preview-mobile{width:375px;max-width:calc(100% - 24px)}
+.preview-intro{display:flex;justify-content:space-between;align-items:center;margin:0 3px 18px}
+.preview-intro>span{font:22px var(--font-handwritten);color:var(--primary-coral)}
+.preview-intro p{font-size:12px;color:var(--text-secondary);margin:0}
+.preview-handoff{margin-top:20px;padding:18px;border:1px solid var(--glass-border);border-radius:var(--radius-md);font-size:13px;overflow-wrap:anywhere;background:var(--bg-cream)}
+body.dark-mode .preview-controls{border-color:var(--dark-border);color:#b0b0b0}
+body.dark-mode .preview-controls button{border-color:var(--dark-border-accent)}
+body.dark-mode .preview-controls button[aria-pressed=true]{background:var(--dark-accent-muted);color:var(--dark-accent-light);border-color:var(--dark-accent)}
+body.dark-mode .preview-intro>span{color:var(--dark-accent)}
+body.dark-mode .preview-intro p{color:#b0b0b0}
+body.dark-mode .preview-handoff{background:var(--dark-bg-secondary);border-color:var(--dark-border-accent);color:#e8e8e8}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:600px){.preview-controls{padding:12px;flex-wrap:wrap}.preview-main{margin-top:20px}}
+@media(prefers-reduced-motion:reduce){.preview-main{transition:none}}
+</style></head><body><div id="root"></div><script src="/Preview.js"></script></body></html>

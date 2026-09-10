@@ -47,7 +47,13 @@ const StartStudyModal = ({
   // Ranked topics from the upload (see uploadPriority). Only used to build the
   // LOCKED preview, which cannot generate a real path — a student with quota
   // left never touches this and sees her actual plan instead.
-  rankedTopics = []
+  rankedTopics = [],
+  // What she told us about her class, and what the investigation found. Both
+  // go to the backend untouched: `courseIntelligence` is what puts the plan in
+  // priority order rather than in the order of her slide deck, and the reveal
+  // has already promised her which topic comes first.
+  courseContext = null,
+  courseIntelligence = null
 }) => {
   const { t } = useTranslation();
   const { canCreatePlan, requirePlanQuota, consumePlan, openUpgrade } = useUsageLimit();
@@ -110,9 +116,11 @@ const StartStudyModal = ({
         case 'focus':
           return {
             key: 'focus',
-            text: t('study.thinkHardest', 'Putting {{topics}} first — you said it’s the hardest', {
-              topics: (e.hardest || []).join(' and '),
-            }),
+            text: e.source === 'diagnostic'
+              ? t('courseStudio.basedOnAnswers')
+              : t('study.thinkHardest', 'Putting {{topics}} first — you said it’s the hardest', {
+                topics: (e.hardest || []).join(' and '),
+              }),
           };
         case 'building':
           return { key: 'building', text: t('study.thinkBuilding', 'Building your steps…') };
@@ -196,7 +204,10 @@ const StartStudyModal = ({
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
 
     try {
-      const { planPromise } = start_study_journey(chatId, uploadIds, userPreferences, language, diagnostic);
+      const { planPromise } = start_study_journey(
+        chatId, uploadIds, userPreferences, language, diagnostic,
+        { courseContext, courseIntelligence }
+      );
       const path = await planPromise;
 
       if (!path?.nodes?.length) throw new Error('Failed to generate study path');
@@ -217,7 +228,10 @@ const StartStudyModal = ({
       }
       // Fallback to legacy two-call flow if the streaming endpoint fails for any reason.
       try {
-        const path = await plan_study_path(chatId, uploadIds, userPreferences, language, diagnostic);
+        const path = await plan_study_path(
+          chatId, uploadIds, userPreferences, language, diagnostic,
+          { courseContext, courseIntelligence }
+        );
         if (!path?.nodes?.length) throw new Error('Failed to generate study path');
         setPathResult(path);
         setPhase('plan_preview');
@@ -345,7 +359,8 @@ const StartStudyModal = ({
             <div className="study-modal-mascot">
               <MascotComponent size={80} isActive={true} />
             </div>
-            <h2 className="study-modal-title">{t('study.preparingJourney', 'Preparing Your Journey')}</h2>
+            <h2 className="study-modal-title">{courseIntelligence ? t('courseStudio.preparingPlan') : t('study.preparingJourney', 'Preparing Your Journey')}</h2>
+            {courseIntelligence && <p className="study-modal-description">{t('courseStudio.planSubtitle')}</p>}
 
             {thinking.length > 0 ? (
               <ul className="study-modal-thinking">
@@ -395,6 +410,7 @@ const StartStudyModal = ({
         {phase === 'plan_preview' && pathResult && (
           <PlanPreviewPane
             pathResult={pathResult}
+            calibrated={Boolean(courseIntelligence && diagnostic)}
             chatId={chatId}
             onStart={handleStartFromPreview}
             t={t}
@@ -552,7 +568,7 @@ const NODE_TYPE_META = {
   exam:      { icon: '📝', actionEn: 'practice exam on', actionFr: 'un examen blanc sur' }
 };
 
-const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
+const PlanPreviewPane = ({ pathResult, chatId, onStart, t, calibrated = false }) => {
   // The session persists the first block, not the whole path — so the preview
   // has to quote the block. Showing "17 steps · 58 min" over a plan that saves
   // 6 of them for later is both an over-ask and a promise we don't keep.
@@ -630,7 +646,7 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
         <p className="study-modal-plan-shape">{shapeNote}</p>
       )}
 
-      {firstNode && (
+      {firstNode && !calibrated && (
         <p className="study-modal-plan-pitch">
           {t('study.planPitch', "We'll start with a quick {{action}} {{label}} — just to see where you're at.", {
             action,
@@ -665,9 +681,13 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
                 </span>
               </span>
               {isFirst && (
-                <span className="study-modal-plan-badge">
+                <button type="button" className="study-modal-start study-modal-start--inline" onClick={onStart}
+                  aria-label={calibrated ? t('courseStudio.planStart') : t('study.letsGo', "Let's go")}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                    <polygon points="5 3 19 12 5 21 5 3" />
+                  </svg>
                   {t('study.planFirstBadge', 'Start here')}
-                </span>
+                </button>
               )}
             </li>
           );
@@ -708,12 +728,6 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t }) => {
         )}
       </div>
 
-      <button className="study-modal-start" onClick={onStart}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <polygon points="5 3 19 12 5 21 5 3" />
-        </svg>
-        {t('study.letsGo', "Let's go")}
-      </button>
     </div>
   );
 };

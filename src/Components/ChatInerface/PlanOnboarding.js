@@ -1,75 +1,36 @@
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CalendarIcon } from './PlanOnboardingIcons';
-import PlanDatePicker from './PlanDatePicker';
+import DatePicker from '../Common/DatePicker';
 import UploadInsightsCard from './UploadInsightsCard';
 import FirstLessonPane from './FirstLessonPane';
+import CourseContextForm from '../CourseIntelligence/CourseContextForm';
+import { CourseUploadWelcome } from '../CourseIntelligence/CourseExamWelcome';
+import CourseIntelligenceTimeline from '../CourseIntelligence/CourseIntelligenceTimeline';
+import CourseStudyBrief from '../CourseIntelligence/CourseStudyBrief';
+import {
+  initialTimeline,
+  reduceTimeline,
+  normalizeReport,
+  leadTopics,
+  plannerTopics,
+} from '../CourseIntelligence/courseIntelligenceModel';
+import { calibrationQuestions } from '../CourseIntelligence/courseCalibrationModel';
+import { run_course_intelligence } from '../../Services/CourseIntelligenceService';
 import { rankUploadTopics } from './uploadPriority';
 import { EXAM_DATE_CHOICES, resolveExamDate } from '../../Services/examDateChoices';
 import { FUNNEL, logFunnelStep, logFunnelStepOnce, enrichFunnel } from '../../Services/FunnelService';
+import { devLog } from '../../Services/devLogger';
 import './PlanOnboarding.css';
 
 /**
- * PlanOnboarding — the post-upload coach flow.
+ * Owns upload readiness and the intelligence request. The course brief handles
+ * the diagnostic and its animated result in one surface, then hands measured
+ * scores beside the untouched report to the existing plan launcher.
  *
- * WHAT CHANGED, AND WHY
- * ─────────────────────
- * This used to be three questions between the upload and any generated
- * content: exam date, hardest topics, prep status, then a diagnostic, then a
- * plan. Measured across 3,208 uploads, 26.6% of students answered the first
- * question. The other 73% were asked to configure a tutor before it had done
- * anything for them.
- *
- * The order is now inverted, and the sequence is deliberately SHORT:
- *
- *     insights → first lesson → quick check → exam date → plan
- *
- * Everything that costs her something sits behind something that gave her
- * something, and nothing sits in between that does neither.
- *
- * WHAT WAS REMOVED, AND WHY EACH ONE
- * ──────────────────────────────────
- * The first version of this reordering kept every old ask and added the new
- * value screens on top, which made a 5-screen flow into a 9-screen one. A
- * longer path to the same paywall converts worse no matter how good the
- * screens are, so three steps came back out:
- *
- *   PREP STATUS ("where are you in your prep?") — was written into
- *   userPreferences and read by nothing, in either repo. The diagnostic
- *   measures the same thing by observation instead of self-report.
- *
- *   HARDEST TOPICS ("anything you'd add?") — the weakest of the three signals
- *   and the only one that asked the student to do the product's job. We now
- *   take `hardestTopics` from the upload ranking instead (see uploadPriority),
- *   which reads the coverage in her own document rather than asking her to
- *   guess. The plan generator still receives the field, so the focus
- *   archetype is unaffected.
- *
- *   CONFIRM ("here's what I'll build for you") — a summary of two answers she
- *   had just given, one screen earlier, with nothing destructive behind it.
- *   A confirmation step earns its place when the next action is expensive or
- *   irreversible; this one only added a click.
- *
- *   THE DIAGNOSTIC (5 more questions) — the largest cut. It asked her a second
- *   set of questions about the same uploaded material she had just been
- *   questioned on by the quick check, two screens earlier. Seven questions to
- *   reach a plan.
- *
- *   Its output was never the questions, it was a {topic: percent} map for the
- *   planner to tier on, and we can build that from evidence we already hold —
- *   see `diagnostic` below. Note the old diagnostic was 5 questions spread
- *   "breadth-first across all major topics", i.e. roughly ONE question per
- *   topic; the quick check gives two on the topic it covers. Per-topic this
- *   is not thinner evidence, it is thicker.
- *
- * WHERE THE PAYWALL WENT
- * ──────────────────────
- * It used to fire here, on the prep-status tap. A student at 3/3 plans
- * answered three questions and received nothing — the single most productive
- * paywall in the product, and also the one that sold a quota rather than an
- * outcome. This component no longer checks the plan gate at all. The check now
- * happens in StartStudyModal, AFTER her plan is on screen. See that file's
- * `handleStartFromPreview`.
+ * Research failure retains the insights -> lesson/check -> date fallback.
+ * A skipped diagnostic leaves scores null; course priority then sets the order.
+ * Plan generation and quota enforcement remain in StartStudyModal.
  */
 
 const EXAM_OPTIONS = EXAM_DATE_CHOICES;
@@ -88,61 +49,83 @@ const PlanOnboarding = ({
   chatId,
   userOnboarding = {},
   disabled = false,
+  autoInvestigate = false,
+  // False while the upload stream is still running. The intelligence run is
+  // held until this flips, because the backend reads her file insights from
+  // the session and a run fired early would investigate an empty upload.
+  materialsReady = true,
+  uploadFailed = false,
+  // Persisted context from an earlier visit to this card, so a reload does
+  // not ask her the same four questions again.
+  savedCourseContext = null,
+  onCourseContext,
   onConfirm
 }) => {
   const { t } = useTranslation();
 
   // ── State ────────────────────────────────────────────────────────────
-  const [phase, setPhase] = useState('insights');
+  const [phase, setPhase] = useState(() => {
+    return autoInvestigate || savedCourseContext ? 'intelligence' : 'context';
+  });
   const [examKey, setExamKey] = useState(null);
   const [customDate, setCustomDate] = useState('');
   const [quickCheckResult, setQuickCheckResult] = useState(null);
   const dateAnchorRef = useRef(null);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
+  // ── Course intelligence ──────────────────────────────────────────────
+  const [courseContext, setCourseContext] = useState(savedCourseContext || null);
+  const [timeline, setTimeline] = useState(initialTimeline);
+  const [report, setReport] = useState(null);
+  const [previewReport, setPreviewReport] = useState(null);
+  const [seedQuiz, setSeedQuiz] = useState(null);
+  const [intelligenceFailed, setIntelligenceFailed] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState(0);
+  const runRef = useRef(null);
+  const startedRef = useRef(false);
+  // The backend's own payload, kept beside the normalized one. /study/start
+  // reads `study_strategy.ordered_topics` and `priority_topics` in their
+  // original shape, and normalizeReport deliberately renames things for the
+  // UI — handing the renamed version back would silently produce an unordered
+  // plan, which is the failure this whole feature exists to prevent.
+  const rawReportRef = useRef(null);
 
-  // The topic the first lesson is built on, and the topics the plan leads
-  // with. Ranked here as well as inside UploadInsightsCard so the lesson opens
-  // on the SAME topic the card just promised — recomputing from the same
-  // inputs is cheap and pure, and threading it through as state would let the
-  // two drift.
+  // Dates belong to this course. A profile date may refer to another exam;
+  // only an explicit choice saved in this course's context is reused here.
+  // The fallback date chips pass their choice directly to confirm().
+  const resolvedExam = useMemo(() => {
+    const iso = courseContext?.examDate || null;
+    if (!iso) return { iso: null, daysAway: null };
+    const date = new Date(`${String(iso).slice(0, 10)}T00:00:00`);
+    if (Number.isNaN(date.getTime())) return { iso: null, daysAway: null };
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const daysAway = Math.round((date.getTime() - today.getTime()) / 86400000);
+    return { iso: date.toISOString(), daysAway };
+  }, [courseContext]);
+
+  // The topic the fallback lesson is built on, and the topics the plan leads
+  // with when there is no report. Ranked here as well as inside
+  // UploadInsightsCard so the lesson opens on the SAME topic the card just
+  // promised — recomputing from the same inputs is cheap and pure, and
+  // threading it through as state would let the two drift.
   const ranked = useMemo(
     () => rankUploadTopics({ topics, insights, max: 6 }),
     [topics, insights]
   );
   const leadTopic = ranked.top?.topic || topics[0] || null;
 
-  // Replaces the question we removed. These are the topics the card already
-  // showed her under "Start here", so the plan leads where the evidence points
-  // and where she was told it would.
-  const autoHardestTopics = useMemo(
-    () => ranked.topics.slice(0, AUTO_FOCUS_TOPICS).map(r => r.topic).filter(Boolean),
-    [ranked]
-  );
+  // Replaces the question we removed. The report's order wins when we have
+  // one, because it read her exam description; the upload ranking is the
+  // fallback and reads only coverage.
+  const autoHardestTopics = useMemo(() => {
+    const fromReport = leadTopics(report, AUTO_FOCUS_TOPICS);
+    if (fromReport.length > 0) return fromReport;
+    return ranked.topics.slice(0, AUTO_FOCUS_TOPICS).map(r => r.topic).filter(Boolean);
+  }, [report, ranked]);
 
-  /**
-   * The {topic: percent} map the planner tiers on — assembled instead of asked.
-   *
-   * ONE source: THE QUICK CHECK. It is about this specific material, it just
-   * happened, and the topic label is this upload's own, so the planner gets an
-   * exact match rather than loose matching across two label sets.
-   *
-   * It used to be two. The second was her stored past accuracy, surfaced by
-   * uploadPriority as `ranked.topics[].percent` — dropped 2026-09-06 because
-   * the label matching behind it put an ARDS score on Acute Coronary Syndrome
-   * (the full case is in uploadPriority's header). It tiered plans on a number
-   * belonging to a different subject, which is worse than tiering on none:
-   * a wrong percent moves a topic to `gap` or `solid` with confidence, where
-   * absence at least lands it in the honest middle.
-   *
-   * Topics with no score stay ABSENT rather than being given a number. Absent
-   * means `untested` to the planner (2 nodes, mid-order); a fabricated 0 would
-   * mean `gap` (5 nodes, front of the plan) and would rearrange her whole plan
-   * around a subject nobody ever tested her on.
-   *
-   * Null when we know nothing at all — the planner's documented "no diagnostic"
-   * path, which produces the uniform plan.
-   */
+  // Legacy fallback lesson results. The intelligence path receives its measured
+  // diagnostic directly from CourseStudyBrief at confirmation.
   const diagnostic = useMemo(() => {
     const scores = {};
     if (quickCheckResult?.topic && quickCheckResult.percent !== null && quickCheckResult.percent !== undefined) {
@@ -155,7 +138,113 @@ const PlanOnboarding = ({
     if (phase === 'examdate') logFunnelStepOnce(FUNNEL.EXAM_DATE_STARTED);
   }, [phase]);
 
+  // ── The intelligence run ─────────────────────────────────────────────
+  //
+  // Fires once, and only once her materials are actually in. The guard is a
+  // ref rather than state because a re-render between the two conditions
+  // would otherwise start a second stream — three web searches, billed
+  // twice, for one upload.
+  useEffect(() => {
+    if (phase !== 'intelligence') return undefined;
+    if (!materialsReady || startedRef.current || !chatId) return undefined;
+
+    startedRef.current = true;
+    let cancelled = false;
+    let revealTimer;
+    logFunnelStep(FUNNEL.INTELLIGENCE_STARTED, {
+      hasSchool: Boolean(courseContext?.school),
+      hasCourse: Boolean(courseContext?.courseCode || courseContext?.courseName),
+      hasProfessor: Boolean(courseContext?.professor),
+      hasExamDescription: Boolean(courseContext?.examDescription),
+    });
+
+    const run = run_course_intelligence({
+      chatId,
+      materialsOnly: autoInvestigate,
+      courseContext: courseContext || {},
+      language,
+      onEvent: (event) => {
+        if (cancelled) return;
+        setTimeline(prev => reduceTimeline(prev, event));
+        if (event.status === 'course_question_ready') {
+          const preview = normalizeReport(event.report);
+          const questions = preview ? calibrationQuestions(event, plannerTopics(preview)) : [];
+          if (questions.length >= 2) {
+            setPreviewReport(preview);
+            setSeedQuiz({ questions });
+            // A student can start before optional research finishes.
+            if (!rawReportRef.current) rawReportRef.current = event.report;
+          }
+        }
+      },
+    });
+    runRef.current = run;
+
+    run.promise
+      .then((raw) => {
+        if (cancelled) return;
+        const normalized = normalizeReport(raw) || normalizeReport(rawReportRef.current);
+        if (!normalized) {
+          devLog('🔎 Course intelligence returned nothing usable — falling back');
+          setIntelligenceFailed(true);
+          setPhase(autoInvestigate ? 'retry' : 'insights');
+          logFunnelStep(FUNNEL.INTELLIGENCE_FAILED, { reason: 'empty_report' });
+          return;
+        }
+        rawReportRef.current = raw || rawReportRef.current;
+        setReport(normalized);
+        logFunnelStep(FUNNEL.INTELLIGENCE_COMPLETED, {
+          researchRan: normalized.researchRan,
+          priorityCount: normalized.priorityTopics.length,
+          elapsedMs: normalized.elapsedMs,
+        });
+        // A short beat so the last checkmark is visibly a checkmark before
+        // the card swaps. Without it the timeline's final state is never seen.
+        revealTimer = setTimeout(() => { if (!cancelled) setPhase('report'); }, 220);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setTimeline(prev => ({ ...prev, failed: true }));
+        if (rawReportRef.current) {
+          setReport(normalizeReport(rawReportRef.current));
+          setPhase('report');
+          return;
+        }
+        console.error('❌ Course intelligence failed:', error);
+        logFunnelStep(FUNNEL.INTELLIGENCE_FAILED, { reason: error?.message || 'stream_error' });
+        // Not a dead end. She drops into the flow this card had before the
+        // investigation existed, and still gets a plan.
+        setIntelligenceFailed(true);
+        setPhase(autoInvestigate ? 'retry' : 'insights');
+      });
+
+    return () => {
+      cancelled = true;
+      clearTimeout(revealTimer);
+      run.abort();
+      // A StrictMode setup/cleanup cycle must leave the next setup runnable.
+      startedRef.current = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, materialsReady, chatId, retryAttempt]);
+
+  // The upload itself died. There is nothing to investigate and nothing to
+  // teach from, so go straight to the exam date and let the planner work from
+  // whatever it can reach.
+  useEffect(() => {
+    if (uploadFailed && (phase === 'welcome' || phase === 'context' || phase === 'intelligence')) {
+      setIntelligenceFailed(true);
+      setPhase('examdate');
+    }
+  }, [uploadFailed, phase]);
+
   // ── Phase transitions ────────────────────────────────────────────────
+
+  const handleContextSubmit = useCallback((context) => {
+    setCourseContext(context);
+    onCourseContext && onCourseContext(context);
+    setPhase('intelligence');
+  }, [onCourseContext]);
 
   const handleInsightsContinue = () => {
     // No lead topic means the upload produced nothing to teach from. Skip
@@ -169,14 +258,74 @@ const PlanOnboarding = ({
   };
 
   /**
-   * The exam-date tap is now the last step: it answers the question, fires the
-   * diagnostic, and hands off in one action.
+   * Hand off to the plan.
+   *
+   * Everything the planner needs is assembled here in one place: the exam
+   * date, the focus topics, the diagnostic (null when the check is skipped),
+   * and the report itself, which the backend turns into a topic order and a
+   * prompt brief.
+   */
+  const confirm = useCallback((examIso, examDaysAway, examChoiceKey, calibration = null) => {
+    const prefs = {
+      ...userOnboarding,
+      examDate: examIso ?? null,
+      examDaysAway: examDaysAway ?? null,
+      examChoiceKey: examChoiceKey ?? null,
+      hardestTopics: calibration ? calibration.focusTopics : autoHardestTopics,
+      focusSource: calibration?.diagnostic ? 'diagnostic' : report ? 'course' : 'self_report',
+    };
+
+    if (!calibration) logFunnelStep(FUNNEL.DIAGNOSTIC_COMPLETED, {
+      derived: true,
+      scoredTopics: diagnostic ? Object.keys(diagnostic).length : 0,
+      viaIntelligence: Boolean(report),
+      fellBack: intelligenceFailed,
+    });
+
+    onConfirm && onConfirm({
+      userPreferences: prefs,
+      diagnostic: calibration ? calibration.diagnostic : diagnostic,
+      rankedTopics: calibration ? calibration.rankedTopics : ranked.topics,
+      quickCheckResult,
+      courseContext: calibration?.courseContext || courseContext,
+      // The raw-shaped report the backend expects back on /study/start. It is
+      // carried rather than re-fetched: the run cost three web searches and
+      // an LLM pass, and re-deriving it would spend them twice.
+      courseIntelligence: rawReportRef.current,
+      courseIntelligenceReport: report,
+    });
+  }, [
+    userOnboarding, autoHardestTopics, diagnostic, ranked,
+    quickCheckResult, courseContext, report, intelligenceFailed, onConfirm,
+  ]);
+
+  const handleBriefStart = useCallback((calibration) => {
+    if (calibration && Object.prototype.hasOwnProperty.call(calibration, 'examDate')) {
+      const next = { ...(courseContext || {}), examDate: calibration.examDate, examDatePromptAnswered: true };
+      const chosen = calibration.examDate ? resolveExamDate('custom', calibration.examDate) : null;
+      setCourseContext(next);
+      onCourseContext?.(next);
+      confirm(chosen?.iso ?? null, chosen?.daysAway ?? null, chosen ? 'custom' : null, { ...calibration, courseContext: next });
+      setPhase('report');
+      return;
+    }
+    confirm(resolvedExam.iso, resolvedExam.daysAway, courseContext?.examDate ? 'custom' : null, calibration);
+    setPhase('report');
+  }, [confirm, resolvedExam, courseContext, onCourseContext]);
+
+  const handleBriefDate = useCallback((examDate) => {
+    const next = { ...(courseContext || {}), examDate };
+    setCourseContext(next);
+    onCourseContext?.(next);
+  }, [courseContext, onCourseContext]);
+
+  /**
+   * The fallback exam-date screen.
    *
    * The date is resolved from the tapped `key` rather than from state, because
    * `setExamKey` has not flushed yet when this runs — reading the derived state
    * here would build preferences from the PREVIOUS selection (null on the
-   * first tap), which is how the pre-fired diagnostic used to be handed an
-   * examDate of null.
+   * first tap).
    *
    * resolveExamDate is the shared helper the drill also uses; duplicating the
    * offset arithmetic locally is exactly how two surfaces end up disagreeing
@@ -185,40 +334,17 @@ const PlanOnboarding = ({
   const advanceFromDate = useCallback((key, customDateStr = null) => {
     const info = resolveExamDate(key, customDateStr);
 
-    const prefs = {
-      ...userOnboarding,
-      examDate: info?.iso ?? null,
-      examDaysAway: info?.daysAway ?? null,
-      examChoiceKey: key,
-      hardestTopics: autoHardestTopics,
-    };
-
     logFunnelStep(FUNNEL.EXAM_DATE_COMPLETED, {
       examChoiceKey: key,
       daysAway: info?.daysAway ?? null,
     });
     enrichFunnel({ examChoiceKey: key, examDaysAway: info?.daysAway ?? null });
 
-    // Nothing is pre-fired here any more. There is no second quiz to warm up,
-    // and the plan itself is generated by StartStudyModal on autoStart.
-    //
-    // Note also what is NOT here: the plan-quota check. Blocking a student at
-    // this point is what the redesign exists to stop.
-    logFunnelStep(FUNNEL.DIAGNOSTIC_COMPLETED, {
-      derived: true,
-      scoredTopics: diagnostic ? Object.keys(diagnostic).length : 0,
-    });
-
     // 220ms beat lets the chip animate to its selected state before handing off.
     setTimeout(() => {
-      onConfirm && onConfirm({
-        userPreferences: prefs,
-        diagnostic,
-        rankedTopics: ranked.topics,
-        quickCheckResult,
-      });
+      confirm(info?.iso ?? null, info?.daysAway ?? null, key);
     }, 220);
-  }, [userOnboarding, autoHardestTopics, ranked, quickCheckResult, diagnostic, onConfirm]);
+  }, [confirm]);
 
   const handleExamChip = (key) => {
     if (disabled) return;
@@ -249,9 +375,70 @@ const PlanOnboarding = ({
     return d.toLocaleDateString(locale, { month: 'short', day: 'numeric', year: 'numeric' });
   }, [customDate, language]);
 
+  // Skipping the research mid-run keeps whatever the timeline already
+  // reported and moves on. The stream is aborted so we stop paying for
+  // searches she has said she does not want to wait for.
+  const handleSkipResearch = useCallback(() => {
+    if (runRef.current) runRef.current.abort();
+    setIntelligenceFailed(true);
+    setPhase(leadTopic ? 'insights' : 'examdate');
+  }, [leadTopic]);
+
   // ── Render ───────────────────────────────────────────────────────────
   return (
     <div className="plan-onboarding" data-phase={phase}>
+      {phase === 'context' && (
+        <CourseContextForm
+          language={language}
+          fileCount={fileCount}
+          uploading={!materialsReady}
+          filenames={filenames}
+          disabled={disabled}
+          initialValues={courseContext || {}}
+          onSubmit={context => handleContextSubmit({ ...courseContext, ...context })}
+          onSkip={context => handleContextSubmit({ ...courseContext, ...context })}
+        />
+      )}
+
+      {(phase === 'intelligence' || phase === 'retry') && !seedQuiz && (autoInvestigate ?
+        <CourseUploadWelcome materialsReady={materialsReady} failed={phase === 'retry'} onRetry={() => {
+          setTimeline(initialTimeline()); setIntelligenceFailed(false); setRetryAttempt(attempt => attempt + 1); setPhase('intelligence');
+        }} /> :
+        <CourseIntelligenceTimeline
+          timeline={timeline}
+          context={courseContext || {}}
+          filenames={filenames}
+          materialsReady={materialsReady}
+          failed={phase === 'retry'}
+          onRetry={() => {
+            setTimeline(initialTimeline());
+            setIntelligenceFailed(false);
+            setRetryAttempt(attempt => attempt + 1);
+            setPhase('intelligence');
+          }}
+          onAddContext={autoInvestigate && !materialsReady ? () => setPhase('context') : undefined}
+          onSkip={handleSkipResearch}
+        />
+      )}
+
+      {(phase === 'report' || (phase === 'intelligence' && seedQuiz)) && (
+        <CourseStudyBrief
+          timeline={timeline}
+          report={report || previewReport}
+          initialQuiz={seedQuiz}
+          initialPhase={autoInvestigate || seedQuiz ? 'check' : 'brief'}
+          streamlined={autoInvestigate}
+          chatId={chatId}
+          filenames={filenames}
+          daysToExam={resolvedExam.daysAway}
+          examDate={resolvedExam.iso}
+          language={language}
+          disabled={disabled}
+          onExamDate={handleBriefDate}
+          onStart={handleBriefStart}
+        />
+      )}
+
       {phase === 'insights' && (
         <UploadInsightsCard
           topics={topics}
@@ -278,9 +465,13 @@ const PlanOnboarding = ({
             <h3 className="plan-onboarding__question" id="po-q1-title">
               {t('planOnboarding.q1.title')}
             </h3>
-            {/* She has just been taught something, so this is an offer to fit
+            {/* She has just been shown something, so this is an offer to fit
                 it to her calendar — not an explanation of why we need data. */}
-            <p className="plan-onboarding__sub">{t('planOnboarding.q1.subtitleAfterValue')}</p>
+            <p className="plan-onboarding__sub">
+              {report
+                ? t('planOnboarding.q1.subtitleAfterReport', 'One last thing, and I can size the plan exactly.')
+                : t('planOnboarding.q1.subtitleAfterValue')}
+            </p>
           </header>
 
           <div className="plan-onboarding__chips" role="radiogroup" aria-labelledby="po-q1-title">
@@ -314,7 +505,7 @@ const PlanOnboarding = ({
               <span>{customDateLabel || t('planOnboarding.q1.pickDate')}</span>
             </button>
             {showDatePicker && (
-              <PlanDatePicker
+              <DatePicker
                 value={customDate}
                 onChange={handleCustomDate}
                 minDate={new Date()}

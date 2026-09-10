@@ -1,0 +1,46 @@
+.cs-source-tabs { margin-top: 20px; border: 1px solid var(--ci-border); border-radius: 14px; overflow: hidden; background: var(--ci-surface-soft); }
+.cs-source-tablist { display: flex; gap: 4px; padding: 6px; border-bottom: 1px solid var(--ci-border); }
+.cs-source-tablist button { position: relative; display: flex; align-items: center; justify-content: center; gap: 7px; flex: 1; min-width: 0; overflow: hidden; padding: 10px 8px; border: 0; border-radius: 8px; background: transparent; color: var(--ci-text-muted); font: inherit; font-size: 12px; font-weight: 600; cursor: pointer; transition: background .18s, color .18s; }
+.cs-source-tablist button[aria-selected="true"] { background: var(--ci-accent-soft); color: var(--ci-accent); }
+.cs-source-tablist button > span { font-size: 10px; opacity: .75; }
+.cs-source-tablist button > svg { flex-shrink: 0; }
+.cs-source-tablist button:focus-visible, .cs-source-tabpanel:focus-visible { outline: 2px solid var(--ci-accent); outline-offset: -2px; }
+.cs-web-tab::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: linear-gradient(110deg, transparent 20%, var(--ci-accent-soft), transparent 80%); animation: cs-tab-arrival 1.2s ease-out both; }
+.cs-source-tabpanel { padding: 2px 14px; }
+.cs-source-tabpanel[hidden] { display: none; }
+.cs-document-list, .cs-web-source-list { list-style: none; margin: 0; padding: 0; }
+.cs-document-list li { display: flex; align-items: flex-start; gap: 9px; padding: 13px 0; }
+.cs-document-list li > svg { color: var(--ci-accent); flex-shrink: 0; margin-top: 2px; }
+.cs-document-list li > div { min-width: 0; }
+.cs-document-list strong { display: block; font-size: 12px; color: var(--ci-text); font-weight: 500; overflow-wrap: anywhere; }
+.cs-document-list li span { display: block; margin-top: 4px; font-size: 11px; line-height: 1.5; color: var(--ci-text-muted); }
+.cs-document-list li + li, .cs-web-source-list li + li { border-top: 1px solid var(--ci-border); }
+.cs-web-source-list li { padding: 12px 0; }
+.cs-web-source-list a { display: flex; justify-content: space-between; gap: 8px; color: var(--ci-accent); text-decoration: none; font-size: 12px; }
+.cs-web-source-list a:hover { text-decoration: underline; }
+.cs-web-source-list a strong { font-weight: 600; }
+.cs-web-source-host { display: block; font-size: 10px; color: var(--ci-text-muted); margin-top: 3px; }
+.cs-web-source-list p { margin: 5px 0 0; font-size: 11px; line-height: 1.5; color: var(--ci-text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cs-source-empty, .cs-source-exam { font-size: 11px; line-height: 1.5; color: var(--ci-text-muted); }
+.cs-source-exam strong { display: block; color: var(--ci-text); margin-bottom: 3px; }
+@keyframes cs-tab-arrival { from { transform: translateX(-110%); } to { transform: translateX(110%); } }
+@media (prefers-reduced-motion: reduce) { .cs-web-tab::after { animation: none; display: none; } .cs-source-tablist button { transition: none; } }
+.cs-view-all { display: flex; align-items: center; justify-content: space-between; gap: 12px; width: 100%; padding: 12px 0; background: none; border: 0; border-top: 1px solid var(--ci-border); color: var(--ci-accent); font: inherit; font-size: 12px; cursor: pointer; }
+.cs-source-tabpanel .cs-document-list li span { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cs-source-drawer { position: fixed; inset: 0 0 0 auto; margin: 0; width: min(460px, 100vw); height: 100dvh; max-width: 100vw; max-height: 100dvh; padding: 0; border: 0; border-left: 1px solid var(--ci-border); background: var(--ci-surface); color: var(--ci-text); font: inherit; box-shadow: -12px 0 40px #0002; }
+.cs-source-drawer[open] { display: flex; flex-direction: column; animation: cs-drawer-in .22s ease-out; }
+.cs-source-drawer::backdrop { background: #0005; backdrop-filter: blur(3px); }
+.cs-source-drawer > header { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 18px 22px; border-bottom: 1px solid var(--ci-border); }
+.cs-source-drawer h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.cs-source-drawer > header button { width: 36px; height: 36px; border: 1px solid var(--ci-border); border-radius: 50%; background: var(--ci-surface-soft); color: var(--ci-text); font-size: 23px; cursor: pointer; }
+.cs-source-drawer-content { min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 0 22px 22px; scrollbar-width: thin; }
+.cs-source-drawer .cs-web-source-list p { display: block; overflow: visible; }
+.cs-source-drawer .cs-web-source-list a { font-size: 14px; }
+.cs-source-drawer .cs-web-source-list p, .cs-source-drawer .cs-document-list li span { font-size: 13px; }
+@keyframes cs-drawer-in { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+@media (max-width: 600px) {
+  .cs-source-drawer { inset: auto 0 0; width: 100%; height: 80dvh; border-left: 0; border-top: 1px solid var(--ci-border); border-radius: 20px 20px 0 0; padding-bottom: env(safe-area-inset-bottom); }
+  .cs-source-drawer[open] { animation-name: cs-sheet-in; }
+  @keyframes cs-sheet-in { from { transform: translateY(25px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+}
+@media (prefers-reduced-motion: reduce) { .cs-source-drawer[open] { animation: none; } }

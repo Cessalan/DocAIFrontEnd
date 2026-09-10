@@ -1,0 +1,257 @@
+@import './CourseIntelligence.css';
+
+/* ==========================================================================
+   CourseIntelligenceTimeline — the investigation, live.
+
+   Motion budget: the pulse, the bar, the per-step spinner, and a 70ms
+   stagger on entry. That is the whole list, and it is short on purpose —
+   a screen with six things moving reads as a loading screen trying too hard,
+   which is the exact impression this flow cannot afford.
+
+   All of it is disabled under prefers-reduced-motion by the shared
+   stylesheet.
+   ========================================================================== */
+
+.ci-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 20px 18px;
+  background: var(--ci-surface);
+  border: 2px solid var(--ci-border);
+  border-radius: var(--ci-radius-lg);
+  box-shadow: var(--ci-shadow);
+  animation: ci-card-in 0.45s var(--ci-wobble);
+}
+
+.ci-timeline__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+}
+
+.ci-timeline__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--ci-text);
+}
+
+.ci-timeline__subject {
+  margin: 0;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ci-accent);
+}
+
+/* Three dots breathing out of phase. Reads as thinking rather than loading. */
+.ci-timeline__pulse {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 18px;
+}
+
+.ci-timeline__pulse span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ci-accent);
+  animation: ci-pulse 1.3s ease-in-out infinite;
+}
+
+.ci-timeline__pulse span:nth-child(2) { animation-delay: 0.18s; }
+.ci-timeline__pulse span:nth-child(3) { animation-delay: 0.36s; }
+
+@keyframes ci-pulse {
+  0%, 100% { opacity: 0.3; transform: scale(0.8); }
+  50%      { opacity: 1;   transform: scale(1.15); }
+}
+
+.ci-timeline__bar {
+  position: relative;
+  height: 5px;
+  background: var(--ci-surface-inset);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.ci-timeline__bar-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #e88d7d 0%, #f4a896 100%);
+  /* Slow easing so a jump from 18% to 72% reads as travel rather than a cut.
+     The value itself is always a real one from the backend. */
+  transition: width 0.7s var(--ci-ease);
+}
+
+body.dark-mode .ci-timeline__bar-fill {
+  background: linear-gradient(90deg, #b8a5d4 0%, #d4c8e8 100%);
+}
+
+/* ── Steps ─────────────────────────────────────────────────────────── */
+
+.ci-timeline__steps {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ci-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 7px 4px;
+  border-radius: var(--ci-radius-sm);
+  opacity: 0;
+  animation: ci-step-in 0.4s var(--ci-ease) forwards;
+}
+
+@keyframes ci-step-in {
+  from { opacity: 0; transform: translateX(-6px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+
+.ci-step__marker {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--ci-border);
+  background: var(--ci-surface-inset);
+  color: var(--ci-text-soft);
+  transition: all 0.35s var(--ci-ease);
+}
+
+.ci-step__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  padding-top: 2px;
+}
+
+.ci-step__label {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--ci-text-muted);
+  transition: color 0.3s var(--ci-ease);
+}
+
+.ci-step__detail {
+  font-size: 12px;
+  line-height: 1.35;
+  color: var(--ci-text-soft);
+  animation: ci-detail-in 0.35s var(--ci-ease);
+}
+
+@keyframes ci-detail-in {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Pending stays quiet: a step that has not happened must not look like one
+   that has. */
+.ci-step.is-pending .ci-step__marker { opacity: 0.45; }
+.ci-step.is-pending .ci-step__label  { opacity: 0.55; }
+
+.ci-step.is-running .ci-step__marker {
+  color: var(--ci-accent);
+  border-color: var(--ci-border-strong);
+  background: var(--ci-accent-soft);
+}
+
+.ci-step.is-running .ci-step__label {
+  color: var(--ci-text);
+}
+
+.ci-step__spin {
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid transparent;
+  border-top-color: var(--ci-accent);
+  animation: ci-spin 0.9s linear infinite;
+}
+
+@keyframes ci-spin {
+  to { transform: rotate(360deg); }
+}
+
+.ci-step.is-done .ci-step__marker {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #7fc98f 0%, #9ad9a8 100%);
+  animation: ci-check-pop 0.4s var(--ci-wobble);
+}
+
+@keyframes ci-check-pop {
+  0%   { transform: scale(0.7); }
+  60%  { transform: scale(1.12); }
+  100% { transform: scale(1); }
+}
+
+.ci-step.is-done .ci-step__label {
+  color: var(--ci-text);
+}
+
+/* Empty is neither success nor failure: the step ran and had nothing to
+   report, and the copy says which. Muted, not red. */
+.ci-step.is-empty .ci-step__marker,
+.ci-step.is-failed .ci-step__marker {
+  color: var(--ci-text-soft);
+  border-style: dashed;
+}
+
+.ci-step.is-empty .ci-step__label,
+.ci-step.is-failed .ci-step__label {
+  color: var(--ci-text-soft);
+}
+
+.ci-timeline__slow {
+  margin: 0;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ci-text-muted);
+  background: var(--ci-surface-soft);
+  border-radius: var(--ci-radius-sm);
+  animation: ci-detail-in 0.4s var(--ci-ease);
+}
+
+.ci-timeline__escape {
+  align-self: center;
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ci-text-muted);
+  background: transparent;
+  border: 1.5px solid var(--ci-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--ci-ease);
+}
+
+.ci-timeline__escape:hover {
+  color: var(--ci-text);
+  border-color: var(--ci-border-strong);
+}
+
+@media (max-width: 560px) {
+  .ci-timeline {
+    padding: 16px 14px;
+  }
+
+  .ci-step__label  { font-size: 13px; }
+  .ci-step__detail { font-size: 11.5px; }
+}

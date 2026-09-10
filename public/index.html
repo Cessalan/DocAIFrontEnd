@@ -701,6 +701,40 @@
         /* ============================================
            CTA BUTTON - Warm, friendly
            ============================================ */
+
+        /* Landing-page hub. The homepage carries almost all of the site's
+           authority and, until now, linked to none of the pages that rank —
+           so every SEO page was an orphan reachable only from the sitemap. */
+        .seo-hub {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 14px;
+            justify-content: center;
+            max-width: 720px;
+            margin: 24px auto 0;
+        }
+        .seo-hub a {
+            font-size: 0.9rem;
+            color: var(--seo-text-primary);
+            text-decoration: none;
+            border: 1px solid rgba(60, 60, 60, 0.18);
+            border-radius: 100px;
+            padding: 8px 16px;
+            transition: all var(--seo-transition);
+        }
+        .seo-hub a:hover {
+            border-color: var(--seo-primary);
+            color: var(--seo-primary);
+        }
+        body.dark-mode .seo-hub a {
+            color: rgba(255, 255, 255, 0.82);
+            border-color: rgba(255, 255, 255, 0.18);
+        }
+        body.dark-mode .seo-hub a:hover {
+            border-color: var(--dark-accent, #b8a5d4);
+            color: var(--dark-accent, #b8a5d4);
+        }
+
         .seo-cta {
             display: inline-flex;
             align-items: center;
@@ -1483,6 +1517,14 @@
                     Explore our blog for expert study tips, pharmacology guides, and NCLEX preparation strategies.
                 </p>
                 <a href="/blog" class="seo-cta">Read Our Blog</a>
+                <nav class="seo-hub" aria-label="NCLEX study guides">
+                    <a href="/best-ai-study-tool-nclex">Best AI Study Tool for NCLEX</a>
+                    <a href="/nclex-question-generator">NCLEX Question Generator</a>
+                    <a href="/free-ai-for-nursing-students">Free AI for Nursing Students</a>
+                    <a href="/sata-questions-nclex">SATA Questions Guide</a>
+                    <a href="/nclex-next-gen-guide">Next-Gen NCLEX Guide</a>
+                    <a href="/clinical-judgment-nclex">Clinical Judgment Model</a>
+                </nav>
             </section>
 
             <footer class="seo-footer" data-lang="en">
@@ -1647,6 +1689,14 @@
                     préparation au NCLEX.
                 </p>
                 <a href="/blog" class="seo-cta">Lire notre blog</a>
+                <nav class="seo-hub" aria-label="Guides d'étude NCLEX">
+                    <a href="/best-ai-study-tool-nclex">Meilleur outil d'IA pour le NCLEX</a>
+                    <a href="/nclex-question-generator">Générateur de questions NCLEX</a>
+                    <a href="/free-ai-for-nursing-students">IA gratuite pour étudiantes en soins infirmiers</a>
+                    <a href="/sata-questions-nclex">Guide des questions SATA</a>
+                    <a href="/nclex-next-gen-guide">Guide du NCLEX nouvelle génération</a>
+                    <a href="/clinical-judgment-nclex">Modèle de jugement clinique</a>
+                </nav>
             </section>
 
             <footer class="seo-footer">

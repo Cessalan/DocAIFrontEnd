@@ -79,6 +79,36 @@ await consumeGeneration(units);
 
 This is a **client-side gate only** and is bypassable; real enforcement has to live in NQBackEnd2. A second, mostly-superseded meter tracks study plans per 30 days.
 
+### Course intelligence (upload → plan)
+
+A study-plan upload no longer goes straight from files to a generated plan. The
+flow is `context form → live investigation → report → reveal → plan`, all inside
+the `plan_onboarding` chat message:
+
+- **The card is created at upload START**, not at `post_upload_message`. The
+  four-field course form (school, course, professor, exam description, exam
+  date) runs *concurrently* with document processing, which is what keeps it
+  from being a pre-value question screen. `post_upload_message` then fills the
+  same message in place — the id is held in `planOnboardingIdRef`.
+- `POST /study/course-intelligence` streams the investigation: three concurrent
+  Claude web-search passes (course, instructor, public resources) on Haiku 4.5,
+  plus exam analysis and concept mapping on Sonnet. Roughly 20s end to end.
+  `COURSE_RESEARCH_ENABLED=0` turns the web passes off and the run completes
+  from her materials alone — a supported path, not a degraded one.
+- **Everything carries a confidence**: `verified` (her upload, or an official
+  page we cited), `public` (a credible public source we cited), `inference` (a
+  pattern we noticed). `normalizeReport` may demote or drop; it may never
+  promote. A researched section that cites nothing is DROPPED, not softened,
+  and the instructor schema has no field capable of holding a personality or
+  difficulty claim.
+- The report's `study_strategy.ordered_topics` is what the planner builds from,
+  which is what stops a plan following the order of the uploaded PowerPoint.
+  `_order_units_by_priority` applies it, and only when there is no diagnostic —
+  a measured gap outranks a predicted one.
+- If any of this fails, `PlanOnboarding` falls back to the previous flow
+  (`insights → first lesson → quick check → exam date`) intact, including the
+  derived diagnostic. That fallback is covered by most of `PlanOnboarding.test.js`.
+
 ### Study mode
 
 `StudyModeContainer` orchestrates: a plan is a list of nodes (`lesson`, `quiz`, `flashcard`, `mindmap`, `audio`, `exam`, plus non-node `banner` headers). Only the *first block* of the planner's output goes live (`firstBlock.js`); the rest is held in reserve and appended later, because a plan the student can finish is the point.
@@ -102,6 +132,8 @@ Changing either side alone will break the UI in ways tests won't catch:
 - `QUIZ_QUESTIONS` / `FLASHCARD_CARDS` / `DIAGNOSTIC_QUESTIONS` in `StudyModeContainer.js` mirror `STUDY_QUIZ_QUESTIONS` / `STUDY_FLASHCARD_CARDS` / `STUDY_DIAGNOSTIC_QUESTIONS` in `NQBackEnd2/main.py`. Drift makes progress bars stall short or finish early.
 - The upload NDJSON stream's backend heartbeat interval vs the frontend's stall watchdog.
 - `PLAN_BUDGETS` / `TIER_UNITS` / `SPRINT_MAX_DAYS` / `FOCUS_MAX_DAYS` / `GAP_MAX_PCT` / `SOLID_MIN_PCT` in `StudyMode/planPreviewModel.js` mirror the same names in `NQBackEnd2/main.py` (`_plan_archetype`, `_apply_budget`, `_weight_path_by_diagnostic`, `_tier_for_score`). This is the worst drift in the list: the model computes the **locked plan preview shown just before the paywall**, so a mismatch quotes a student "14 study sessions", takes her money, and delivers 8.
+- `PRIORITY_WEIGHTS` and the `CONFIDENCE` values in `CourseIntelligence/courseIntelligenceModel.js` mirror the same names in `NQBackEnd2/services/course_intelligence.py`. The weights decide which topic the report names as the starting point; if the two sides disagree, the reveal promises one topic and the plan opens on another. A confidence value defined on one side only renders as an unstyled badge.
+- The course-intelligence SSE heartbeat: `COURSE_INTELLIGENCE_HEARTBEAT_S` in `NQBackEnd2/main.py` (10s) against `CI_STALL_MS` in `Services/CourseIntelligenceService.js` (45s). Three web searches run concurrently server-side and can be silent for 30s, so the heartbeat is the only thing distinguishing a slow search from a dead backend. Same class of contract as the upload stream above.
 - Stripe prices in `src/config/billing.js` are **display only**; the authoritative price is in Stripe. `usage.tier` is flipped exclusively by the backend webhook.
 
 ## Root markdown files

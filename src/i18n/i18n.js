@@ -2,10 +2,131 @@
 import i18n from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import LanguageDetector from 'i18next-browser-languagedetector';
+import { courseStudioEn, courseStudioFr } from '../Components/CourseIntelligence/courseStudioCopy';
 
 const resources = {
   en: {
     translation: {
+      courseStudio: courseStudioEn,
+      // NCLEX — the standalone prep surface (src/Components/Nclex).
+      // Every string here also exists in the fr tree below; a missing French
+      // key silently falls back to English, which reads as a bug to a
+      // French-speaking student rather than as a graceful default.
+      nclex: {
+        brandTag: "NCLEX",
+        kicker: "NCLEX preparation",
+        buildingTitle: "We’re building your NCLEX profile.",
+        buildingBody: "You’ve answered {{n}} of {{target}}. Keep going — we’re looking for patterns in what you know, where you hesitate, and what needs attention.",
+        ofQuestions: "{{n}} of {{target}} questions",
+        continueCheck: "Continue readiness check",
+        measuringTitle: "What we’re measuring",
+        sigGathering: "Gathering data",
+        sigRecorded: "{{count}} recorded",
+        sig: {
+          knowledge: "Knowledge",
+          confidence: "Confidence",
+          areas: "Content areas",
+          formats: "Question formats"
+        },
+        yourExam: "Your exam",
+        eightAreas: "8 content areas",
+        nAnswered: "{{n}} answered",
+        selectBest: "Select the best answer.",
+        howConfident: "How confident are you?",
+        checkAnswer: "Check answer",
+        correctV: "Correct",
+        notQuite: "Not quite",
+        conf: {
+          not_sure: "Not sure",
+          pretty_sure: "Pretty sure",
+          very_sure: "Very sure"
+        },
+        backPrep: "NCLEX Prep",
+        scoresInto: "Scores into",
+        and: "and",
+        aboutShare: "about {{min}}–{{max}}% of your exam.",
+        whereStart: "Where should I start?",
+        whereStartBody: "Answer a few questions and we’ll identify what to focus on.",
+        nQuestions: "{{n}} questions",
+        aboutMin: "about {{n}} min",
+        findStart: "Find my starting point",
+        orChooseArea: "Or choose an area",
+        coldTitleA: "Find out what to",
+        coldTitleMark: "focus on first",
+        readinessCheck: "Readiness check",
+        heroCardTitle: "Get a personalized starting point.",
+        heroCardBody: "A short check across the whole blueprint, in the formats your exam actually uses.",
+        check1: "25 questions",
+        check2: "Every content area",
+        check3: "Personalized results — not a score",
+        startCheck: "Start my check",
+        alreadyKnow: "Already know what you need?",
+        coldTitle: "Find out what you would fail on today.",
+        coldSub: "Answer questions. We’ll find your weak areas and tell you exactly what to study next.",
+        recommended: "Recommended",
+        optional: "If you already know",
+        door1Title: "Readiness check",
+        door1Body: "25 questions across all eight content areas, in the formats your exam actually uses. Ends with a breakdown of where you stand — not a score.",
+        door1Cta: "Start the check →",
+        door2Title: "Practice by subject",
+        door2Body: "Go straight to pharmacology, peds, mental health or any other subject. Everything you answer still feeds the readiness picture.",
+        door2Cta: "Practice by subject →",
+        whereYouStand: "Where you stand",
+        estReadiness: "Estimated readiness",
+        blueprintTitle: "Your exam, by content area",
+        blueprintNote: "Percentages are the share of the real NCLEX each area carries.",
+        ofExam: "of the exam",
+        notMeasured: "Not measured",
+        formatsTitle: "By question format",
+        formatsNote: "The gap between these is usually bigger than the gap between subjects.",
+        notEnoughYet: "Not enough yet",
+        needFive: "need 5",
+        needMore: "need more",
+        answered: "answered",
+        correct: "correct",
+        correctLower: "correct",
+        partial: "partial",
+        subjectsTitle: "Practice by subject",
+        areas: "areas",
+        conceptsTitle: "Still getting these wrong",
+        conceptsNote: "Named from your own missed questions.",
+        areasTitle: "Areas to practice",
+        areasNote: "Five answers in an area before it gets a verdict.",
+        practiceArea: "Practice",
+        practiceSubject: "Practice {{subject}}",
+        practiceSubjectSub: "10 questions, weighted to your weakest areas",
+        back: "All subjects",
+        backHome: "Back to your readiness",
+        leave: "Leave session",
+        unknownSubject: "That subject does not exist.",
+        loading: "Reading your progress…",
+        writing: "Writing your next question…",
+        genFailed: "That question didn't come through. Try again.",
+        retry: "Try again",
+        quota: "You have used your free questions for now.",
+        questionN: "Question {{n}} of {{total}}",
+        nextQuestion: "Next question",
+        seeResults: "See your results",
+        sessionDone: "Session complete",
+        sessionNote: "Everything here is folded into your readiness picture.",
+        confidentMiss: "You were sure about {{n}} of the ones you missed. Those are the ones that cost people the exam — you do not go back and review what you think you know.",
+        partialCount: "{{n}} partly right",
+        thisSession: "This session, by format",
+        examDateLabel: "Your NCLEX date",
+        addDate: "+ Add your exam date",
+        changeDate: "Change your exam date",
+        daysToExam: "days to your exam",
+        dayToExam: "day to your exam",
+        save: "Save",
+        v: {
+          solid: "Strong",
+          provisional: "Looks strong",
+          improving: "Improving",
+          gap: "Needs work",
+          untested: "Not measured"
+        }
+      },
+
       // Upgrade / monetization modal
       upgrade: {
         title: "Study without limits",
@@ -565,6 +686,185 @@ const resources = {
         later: "Not now"
       },
 
+      // ══════════════════════════════════════════════════════════════
+      // COURSE INTELLIGENCE
+      // The investigation that runs between the upload and the plan.
+      //
+      // COPY RULES, and they are not stylistic:
+      //   verified  states a fact she can check   ("Named in your exam description")
+      //   public    attributes a source           ("Publicly available information indicates")
+      //   inference hedges, always                ("appears repeatedly across")
+      // Nothing here may predict an exam or characterise a professor. See
+      // CourseIntelligenceReport.js for why.
+      // ══════════════════════════════════════════════════════════════
+      courseContext: {
+        eyebrow: "While I read your files",
+        title: "Tell me about this class",
+        sub: "The more I know, the more specific your plan gets. Every field is optional.",
+        subUploading: "Your files are processing. Answer while you wait and I can look up your actual course.",
+        school: {
+          label: "School",
+          placeholder: "McGill University",
+          hint: "Lets me find your real course page"
+        },
+        course: {
+          label: "Course",
+          placeholder: "NURS 234 - Pharmacology",
+          hint: "Code, name, or both"
+        },
+        professor: {
+          label: "Professor",
+          placeholder: "Dr. Jane Smith",
+          // States the limit before she types the name. We look up public
+          // academic profiles and nothing else.
+          hint: "I look up public academic profiles only"
+        },
+        exam: {
+          label: "What is the exam?",
+          placeholder: "Midterm covering cardiovascular medications, diuretics and endocrine drugs. Multiple choice.",
+          hint: "This is the strongest signal I have — write it how your professor said it"
+        },
+        dateLabel: "Exam date",
+        pickDate: "Pick a date",
+        promiseFull: "I'll research your course, your instructor's public profile, and public resources, then build the plan around your exam.",
+        promisePartial: "I'll use this alongside your uploaded material to prioritise what matters.",
+        promiseNone: "Leave it blank and I build everything from your uploaded material.",
+        cta: "Investigate my course",
+        ctaEmpty: "Use my materials only",
+        skip: "Skip"
+      },
+
+      courseIntel: {
+        confidence: {
+          verified: "Verified",
+          public: "Public source",
+          inference: "Inferred"
+        },
+        moreSources: "+{{count}} more",
+        timeline: {
+          title: "Building your course intelligence",
+          progressAria: "Investigating your course",
+          slow: "Still searching. Public course pages can be slow to answer — your materials are already analysed.",
+          escape: "Skip the research and build my plan"
+        },
+        steps: {
+          course_context_received: {
+            label: "Understanding your course",
+            running: "",
+            empty: "Working from your materials",
+            materialsOnly: "Working from your materials"
+          },
+          materials_analyzed: {
+            label: "Reading your uploaded materials",
+            running: "Pulling out topics and key points...",
+            empty: "No clean topics came out of these files",
+            done: "Found {{topics}} topics across {{files}} files"
+          },
+          course_research: {
+            label: "Researching your academic context",
+            running: "Looking for publicly available information about your course...",
+            empty: "No public page found for this course",
+            done: "Found {{count}} public sources",
+            doneObjectives: "{{count}} published learning objectives"
+          },
+          professor_research: {
+            label: "Understanding your instructor",
+            running: "Searching publicly available professional and academic information...",
+            empty: "No public academic profile found",
+            done: "Public academic profile found",
+            doneTitle: "Public profile found: {{title}}"
+          },
+          academic_resources_research: {
+            label: "Looking for relevant course resources",
+            running: "Searching publicly available practice materials and academic resources...",
+            empty: "Nothing public worth linking to",
+            done: "{{count}} public resources"
+          },
+          exam_analysis: {
+            label: "Analyzing your exam",
+            running: "Identifying topics, objectives and likely question styles...",
+            empty: "No exam description given",
+            done: "{{count}} subject areas named in your description"
+          },
+          concept_mapping: {
+            label: "Connecting everything",
+            running: "Comparing your exam description with your course materials...",
+            empty: "Not enough material to connect",
+            done: "{{count}} topics scored against your exam"
+          },
+          study_strategy: {
+            label: "Creating your personalized study strategy",
+            running: "Deciding what you should learn first...",
+            empty: "Nothing to order yet",
+            done: "Order decided",
+            doneStart: "Starting point: {{topic}}"
+          }
+        },
+        report: {
+          eyebrow: "I investigated your course",
+          titleMaterialsOnly: "What your material is about",
+          focusTitle: "Your course focuses on",
+          materialsFoot: "Counted across {{topics}} topics in {{files}} of your files.",
+          examTitle: "Your upcoming exam",
+          examLead: "Based on your description:",
+          examCoverage: "Primary coverage",
+          examFormat: "Expected format",
+          // Said out loud, because a report that lists only what it knows
+          // invites the reader to assume it knows the rest.
+          examUnstated: "Your description doesn't say: {{items}}.",
+          courseTitle: "Your course, publicly",
+          objectives: "Published learning objectives",
+          instructorTitle: "Instructor context",
+          instructorLead: "Publicly available information indicates:",
+          instructorSpecialty: "Professional experience in {{areas}}",
+          instructorResearch: "Research interests: {{areas}}",
+          instructorCaveat: "Useful background only. Your uploaded material remains the basis for your plan.",
+          resourcesTitle: "Public resources worth knowing about",
+          priorityTitle: "What deserves your attention",
+          priorityLead: "Ranked by how your exam description lines up with your own materials.",
+          handoff: "Your plan will start with {{topic}}.",
+          cta: "Show me my plan",
+          empty: {
+            not_found: "I couldn't find reliable public information specific to this course, so I'm building your plan from your materials and your exam description.",
+            no_course_named: "You didn't name a school or course, so this comes from your uploaded materials and your exam description.",
+            disabled: "Public research is off right now, so this comes from your uploaded materials and your exam description."
+          }
+        },
+        reveal: {
+          eyebrow: "Ready",
+          title: "I know enough to build your plan.",
+          subResearched: "I read your materials, your course information, your exam description, and the public academic context I could verify.",
+          subMaterials: "I read your materials and your exam description, and built the order around them.",
+          priority: {
+            exam: "Topics most relevant to your exam",
+            materials: "Concepts emphasised in your materials",
+            connections: "Relationships between concepts",
+            clinical: "Clinical application and nursing judgement",
+            highvalue: "The highest-value topics first"
+          },
+          statTopics_one: "topic",
+          statTopics_other: "topics",
+          statTime: "estimated study time",
+          statExam: "exam",
+          minutes: "{{count}} min",
+          hours_one: "{{count}}h",
+          hours_other: "{{count}}h",
+          trimmed_one: "1 lower-priority topic deferred to fit your exam date.",
+          trimmed_other: "{{count}} lower-priority topics deferred to fit your exam date.",
+          startEyebrow: "Recommended starting point",
+          startWhy: "Why start here?",
+          reason: {
+            exam: "It's named in your exam description",
+            emphasis: "Your materials cover it most heavily",
+            unlocks: "It connects to several of your other topics",
+            clinical: "It carries important clinical safety decisions"
+          },
+          cta: "Build my study plan",
+          ctaTopic: "Start with {{topic}}",
+          back: "See the findings again"
+        }
+      },
+
       planOnboarding: {
         eyebrow: "Personalized plan",
         hookHeadline_one: "I've read your file on {{topics}}.",
@@ -586,6 +886,9 @@ const resources = {
           // Asked AFTER the first lesson now, so it reads as an offer rather
           // than as onboarding paperwork.
           subtitleAfterValue: "Tell me and I'll build the rest of this around it.",
+          // Asked after the intelligence report rather than after a lesson:
+          // she has just seen what we found, so this is the last input.
+          subtitleAfterReport: "One last thing, and I can size the plan exactly.",
           options: {
             today: "Today",
             tomorrow: "Tomorrow",
@@ -2096,6 +2399,123 @@ const resources = {
 
   fr: {
     translation: {
+      courseStudio: courseStudioFr,
+      // NCLEX — surface autonome de préparation (src/Components/Nclex).
+      nclex: {
+        brandTag: "NCLEX",
+        kicker: "Préparation au NCLEX",
+        buildingTitle: "On construit ton profil NCLEX.",
+        buildingBody: "Tu as répondu à {{n}} sur {{target}}. Continue — on cherche des tendances : ce que tu maîtrises, où tu hésites, et ce qui demande du travail.",
+        ofQuestions: "{{n}} sur {{target}} questions",
+        continueCheck: "Continuer le bilan",
+        measuringTitle: "Ce qu’on mesure",
+        sigGathering: "Collecte en cours",
+        sigRecorded: "{{count}} enregistrées",
+        sig: {
+          knowledge: "Connaissances",
+          confidence: "Confiance",
+          areas: "Domaines",
+          formats: "Formats de question"
+        },
+        yourExam: "Ton examen",
+        eightAreas: "8 domaines",
+        nAnswered: "{{n}} répondues",
+        selectBest: "Choisis la meilleure réponse.",
+        howConfident: "À quel point es-tu sûre ?",
+        checkAnswer: "Vérifier ma réponse",
+        correctV: "Correct",
+        notQuite: "Pas tout à fait",
+        conf: {
+          not_sure: "Pas sûre",
+          pretty_sure: "Assez sûre",
+          very_sure: "Très sûre"
+        },
+        backPrep: "Prépa NCLEX",
+        scoresInto: "Compte pour",
+        and: "et",
+        aboutShare: "environ {{min}}–{{max}} % de ton examen.",
+        whereStart: "Par où commencer ?",
+        whereStartBody: "Réponds à quelques questions et on identifie sur quoi te concentrer.",
+        nQuestions: "{{n}} questions",
+        aboutMin: "environ {{n}} min",
+        findStart: "Trouver mon point de départ",
+        orChooseArea: "Ou choisis un domaine",
+        coldTitleA: "Découvre par où",
+        coldTitleMark: "commencer",
+        readinessCheck: "Bilan de préparation",
+        heroCardTitle: "Obtiens un point de départ personnalisé.",
+        heroCardBody: "Un bilan court sur tout le programme, dans les formats que ton examen utilise vraiment.",
+        check1: "25 questions",
+        check2: "Tous les domaines",
+        check3: "Résultats personnalisés — pas une note",
+        startCheck: "Commencer mon bilan",
+        alreadyKnow: "Tu sais déjà ce qu’il te faut ?",
+        coldTitle: "Découvre ce que tu raterais aujourd’hui.",
+        coldSub: "Réponds aux questions. On trouve tes points faibles et on te dit exactement quoi étudier ensuite.",
+        recommended: "Recommandé",
+        optional: "Si tu sais déjà",
+        door1Title: "Bilan de préparation",
+        door1Body: "25 questions couvrant les huit domaines, dans les formats que ton examen utilise vraiment. Se termine par un bilan de ta situation — pas par une note.",
+        door1Cta: "Commencer le bilan →",
+        door2Title: "Pratiquer par matière",
+        door2Body: "Va directement en pharmacologie, pédiatrie, santé mentale ou toute autre matière. Tout ce que tu réponds alimente ton bilan.",
+        door2Cta: "Pratiquer par matière →",
+        whereYouStand: "Où tu en es",
+        estReadiness: "Préparation estimée",
+        blueprintTitle: "Ton examen, par domaine",
+        blueprintNote: "Les pourcentages représentent la part réelle du NCLEX que chaque domaine occupe.",
+        ofExam: "de l’examen",
+        notMeasured: "Non mesuré",
+        formatsTitle: "Par format de question",
+        formatsNote: "L’écart entre ces formats est souvent plus grand qu’entre les matières.",
+        notEnoughYet: "Pas encore assez",
+        needFive: "il en faut 5",
+        needMore: "il en faut plus",
+        answered: "répondues",
+        correct: "correctes",
+        correctLower: "correctes",
+        partial: "partielles",
+        subjectsTitle: "Pratiquer par matière",
+        areas: "domaines",
+        conceptsTitle: "Encore manquées",
+        conceptsNote: "Tirées de tes propres questions ratées.",
+        areasTitle: "Domaines à pratiquer",
+        areasNote: "Cinq réponses dans un domaine avant d’obtenir un verdict.",
+        practiceArea: "Pratiquer",
+        practiceSubject: "Pratiquer {{subject}}",
+        practiceSubjectSub: "10 questions, pondérées selon tes points faibles",
+        back: "Toutes les matières",
+        backHome: "Retour à ton bilan",
+        leave: "Quitter la session",
+        unknownSubject: "Cette matière n’existe pas.",
+        loading: "Lecture de ta progression…",
+        writing: "Rédaction de ta prochaine question…",
+        genFailed: "Cette question n’est pas arrivée. Réessaie.",
+        retry: "Réessayer",
+        quota: "Tu as utilisé tes questions gratuites pour le moment.",
+        questionN: "Question {{n}} sur {{total}}",
+        nextQuestion: "Question suivante",
+        seeResults: "Voir tes résultats",
+        sessionDone: "Session terminée",
+        sessionNote: "Tout ceci est intégré à ton bilan de préparation.",
+        confidentMiss: "Tu étais sûre pour {{n}} des questions ratées. Ce sont celles qui font échouer — on ne révise pas ce qu’on croit déjà savoir.",
+        partialCount: "{{n}} en partie justes",
+        thisSession: "Cette session, par format",
+        examDateLabel: "Ta date de NCLEX",
+        addDate: "+ Ajoute ta date d’examen",
+        changeDate: "Modifier ta date d’examen",
+        daysToExam: "jours avant ton examen",
+        dayToExam: "jour avant ton examen",
+        save: "Enregistrer",
+        v: {
+          solid: "Solide",
+          provisional: "Semble solide",
+          improving: "En progrès",
+          gap: "À travailler",
+          untested: "Non mesuré"
+        }
+      },
+
       // Upgrade / monetization modal
       upgrade: {
         title: "Étudie sans limites",
@@ -2143,7 +2563,7 @@ const resources = {
         // Prix + CTA
         perMonth: "/ mois",
         cancelAnytime: "Annule à tout moment. Sans engagement.",
-        // Le symbole est écrit en toutes lettres ici : "$50" se dit "50 $ US".
+        // Le symbole est écrit en toutes lettres ici : "$83.07" se dit "83,07 $ US".
         billedYearly: "Facturé {{amount}} $ US par année. Annule à tout moment.",
         savePct: "Économise {{pct}} %",
         withAnnual: "avec l'annuel",
@@ -2635,6 +3055,170 @@ const resources = {
         gateCopy: "Tu as beaucoup à apprendre — mais tout ne compte pas pareil. Ce plan est ordonné selon ce que ton examen risque le plus de tester et ce que tu as réellement raté.",
         cta: "Débloquer mon plan",
         later: "Plus tard"
+      },
+
+      courseContext: {
+        eyebrow: "Pendant que je lis tes fichiers",
+        title: "Parle-moi de ce cours",
+        sub: "Plus j'en sais, plus ton plan sera précis. Chaque champ est facultatif.",
+        subUploading: "Tes fichiers sont en cours de traitement. Réponds pendant ce temps et je pourrai retrouver ton vrai cours.",
+        school: {
+          label: "Établissement",
+          placeholder: "Université McGill",
+          hint: "Me permet de retrouver la page officielle de ton cours"
+        },
+        course: {
+          label: "Cours",
+          placeholder: "NURS 234 - Pharmacologie",
+          hint: "Le code, le nom, ou les deux"
+        },
+        professor: {
+          label: "Professeur",
+          placeholder: "Dre Jane Smith",
+          hint: "Je consulte uniquement les profils académiques publics"
+        },
+        exam: {
+          label: "C'est quel examen ?",
+          placeholder: "Examen de mi-session sur les médicaments cardiovasculaires, les diurétiques et les médicaments endocriniens. Choix multiples.",
+          hint: "C'est mon signal le plus fort — écris-le comme ton professeur l'a dit"
+        },
+        dateLabel: "Date de l'examen",
+        pickDate: "Choisir une date",
+        promiseFull: "Je vais rechercher ton cours, le profil public de ton enseignant et les ressources publiques, puis construire le plan autour de ton examen.",
+        promisePartial: "Je vais m'en servir avec tes documents pour prioriser ce qui compte.",
+        promiseNone: "Laisse vide et je construis tout à partir de tes documents.",
+        cta: "Enquêter sur mon cours",
+        ctaEmpty: "Utiliser seulement mes documents",
+        skip: "Passer"
+      },
+
+      courseIntel: {
+        confidence: {
+          verified: "Vérifié",
+          public: "Source publique",
+          inference: "Déduit"
+        },
+        moreSources: "+{{count}} de plus",
+        timeline: {
+          title: "Je construis l'intelligence de ton cours",
+          progressAria: "Enquête sur ton cours",
+          slow: "Je cherche encore. Les pages de cours publiques répondent parfois lentement — tes documents sont déjà analysés.",
+          escape: "Passer la recherche et construire mon plan"
+        },
+        steps: {
+          course_context_received: {
+            label: "Je comprends ton cours",
+            running: "",
+            empty: "Je travaille à partir de tes documents",
+            materialsOnly: "Je travaille à partir de tes documents"
+          },
+          materials_analyzed: {
+            label: "Je lis tes documents",
+            running: "J'en extrais les sujets et les points clés...",
+            empty: "Aucun sujet clair n'est ressorti de ces fichiers",
+            done: "{{topics}} sujets trouvés dans {{files}} fichiers"
+          },
+          course_research: {
+            label: "Je recherche ton contexte académique",
+            running: "Je cherche des informations publiques sur ton cours...",
+            empty: "Aucune page publique trouvée pour ce cours",
+            done: "{{count}} sources publiques trouvées",
+            doneObjectives: "{{count}} objectifs d'apprentissage publiés"
+          },
+          professor_research: {
+            label: "Je situe ton enseignant",
+            running: "Je cherche des informations professionnelles et académiques publiques...",
+            empty: "Aucun profil académique public trouvé",
+            done: "Profil académique public trouvé",
+            doneTitle: "Profil public trouvé : {{title}}"
+          },
+          academic_resources_research: {
+            label: "Je cherche des ressources pertinentes",
+            running: "Je cherche des exercices et ressources académiques publics...",
+            empty: "Rien de public qui mérite un lien",
+            done: "{{count}} ressources publiques"
+          },
+          exam_analysis: {
+            label: "J'analyse ton examen",
+            running: "J'identifie les sujets, les objectifs et les styles de questions probables...",
+            empty: "Aucune description d'examen fournie",
+            done: "{{count}} domaines nommés dans ta description"
+          },
+          concept_mapping: {
+            label: "Je relie le tout",
+            running: "Je compare ta description d'examen à tes documents de cours...",
+            empty: "Pas assez de matière pour relier",
+            done: "{{count}} sujets évalués par rapport à ton examen"
+          },
+          study_strategy: {
+            label: "Je crée ta stratégie d'étude",
+            running: "Je décide par quoi tu devrais commencer...",
+            empty: "Rien à ordonner pour l'instant",
+            done: "Ordre décidé",
+            doneStart: "Point de départ : {{topic}}"
+          }
+        },
+        report: {
+          eyebrow: "J'ai enquêté sur ton cours",
+          titleMaterialsOnly: "Ce que contient ton document",
+          focusTitle: "Ton cours porte surtout sur",
+          materialsFoot: "Compté sur {{topics}} sujets dans {{files}} de tes fichiers.",
+          examTitle: "Ton prochain examen",
+          examLead: "D'après ta description :",
+          examCoverage: "Couverture principale",
+          examFormat: "Format attendu",
+          examUnstated: "Ta description ne dit pas : {{items}}.",
+          courseTitle: "Ton cours, publiquement",
+          objectives: "Objectifs d'apprentissage publiés",
+          instructorTitle: "Contexte de l'enseignant",
+          instructorLead: "Les informations publiques indiquent :",
+          instructorSpecialty: "Expérience professionnelle en {{areas}}",
+          instructorResearch: "Intérêts de recherche : {{areas}}",
+          instructorCaveat: "Contexte utile seulement. Tes documents restent la base de ton plan.",
+          resourcesTitle: "Ressources publiques à connaître",
+          priorityTitle: "Ce qui mérite ton attention",
+          priorityLead: "Classé selon la correspondance entre ta description d'examen et tes propres documents.",
+          handoff: "Ton plan commencera par {{topic}}.",
+          cta: "Montre-moi mon plan",
+          empty: {
+            not_found: "Je n'ai pas trouvé d'information publique fiable propre à ce cours, alors je construis ton plan à partir de tes documents et de ta description d'examen.",
+            no_course_named: "Tu n'as pas nommé d'établissement ni de cours, alors tout vient de tes documents et de ta description d'examen.",
+            disabled: "La recherche publique est désactivée pour l'instant, alors tout vient de tes documents et de ta description d'examen."
+          }
+        },
+        reveal: {
+          eyebrow: "Prêt",
+          title: "J'en sais assez pour construire ton plan.",
+          subResearched: "J'ai lu tes documents, les informations sur ton cours, ta description d'examen et le contexte académique public que j'ai pu vérifier.",
+          subMaterials: "J'ai lu tes documents et ta description d'examen, et j'ai construit l'ordre autour d'eux.",
+          priority: {
+            exam: "Les sujets les plus liés à ton examen",
+            materials: "Les concepts les plus présents dans tes documents",
+            connections: "Les liens entre les concepts",
+            clinical: "L'application clinique et le jugement infirmier",
+            highvalue: "Les sujets à plus forte valeur en premier"
+          },
+          statTopics_one: "sujet",
+          statTopics_other: "sujets",
+          statTime: "temps d'étude estimé",
+          statExam: "examen",
+          minutes: "{{count}} min",
+          hours_one: "{{count}} h",
+          hours_other: "{{count}} h",
+          trimmed_one: "1 sujet moins prioritaire reporté pour tenir avant ton examen.",
+          trimmed_other: "{{count}} sujets moins prioritaires reportés pour tenir avant ton examen.",
+          startEyebrow: "Point de départ recommandé",
+          startWhy: "Pourquoi commencer ici ?",
+          reason: {
+            exam: "Il est nommé dans ta description d'examen",
+            emphasis: "Tes documents le couvrent le plus",
+            unlocks: "Il est relié à plusieurs de tes autres sujets",
+            clinical: "Il porte des décisions cliniques de sécurité importantes"
+          },
+          cta: "Construire mon plan d'étude",
+          ctaTopic: "Commencer par {{topic}}",
+          back: "Revoir les résultats"
+        }
       },
 
       planOnboarding: {

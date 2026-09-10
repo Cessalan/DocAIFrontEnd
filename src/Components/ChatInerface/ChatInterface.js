@@ -413,9 +413,8 @@ const ChatInterface = ({
   // gap/shaky/solid. Null means "we know nothing", which is the planner's
   // documented uniform-plan path.
   //
-  // This used to come from a dedicated 5-question diagnostic screen. It is now
-  // DERIVED in PlanOnboarding from the quick check plus her past scores — same
-  // shape, same consumer, five fewer questions. See that file's `diagnostic`.
+  // CourseStudyBrief supplies first-attempt answers from its optional check.
+  // The fallback onboarding can still derive a baseline from existing scores.
   const [studyDiagnostic, setStudyDiagnostic] = useState(null);
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [studyState, setStudyState] = useState(null);
@@ -430,6 +429,11 @@ const ChatInterface = ({
   // userProfile.onboarding so /study/start fires with examDate / hardestTopics
   // baked in. Falls back to userProfile.onboarding when null.
   const [pendingStudyUserPreferences, setPendingStudyUserPreferences] = useState(null);
+  // What she told us about her class, and what the investigation found.
+  // Both ride through to /study/start: the report gives the planner its topic
+  // ORDER, which is the thing that stops a plan following her slide deck.
+  const [pendingCourseIntelligence, setPendingCourseIntelligence] = useState(null);
+  const [pendingCourseContext, setPendingCourseContext] = useState(null);
 
   // Pre-upload action selection (when user picks action before uploading)
   const [pendingStudyAction, setPendingStudyAction] = useState(null);
@@ -506,6 +510,9 @@ const ChatInterface = ({
   const lastUserMessageRef = useRef(null); // Track last user message for scrolling
   // Track upload message ID for synchronous updates
   const uploadMessageIdRef = useRef(null);
+  // Id of the coach card created at upload start, so `post_upload_message` can
+  // fill it in rather than appending a second one. Cleared once used.
+  const planOnboardingIdRef = useRef(null);
   // 🆕 Track insights accumulation to avoid race conditions
   const uploadInsightsAccumulatorRef = useRef([]);
   // Track the latest requested chat ID to prevent stale async responses
@@ -917,6 +924,11 @@ const ChatInterface = ({
         // examName separately (so the PlanOnboarding case doesn't render
         // an empty header). hardestTopics is included so a chat reload
         // can re-prefill the focus prompt without re-asking.
+        // What she told us about her class on a previous visit. Restoring it
+        // is the difference between a reload and being asked the same four
+        // questions again.
+        setPendingCourseContext(chatData.courseContext || null);
+
         const hydratedHardestTopics = Array.isArray(chatData.hardestTopics)
           ? chatData.hardestTopics.filter(Boolean)
           : [];
@@ -2879,6 +2891,39 @@ const ChatInterface = ({
     devLog(`📦 Created loading message BEFORE upload: ${loadingMsgId}`);
     devLog(`   File count: ${files.length}`);
 
+    // ========================================
+    // DOCUMENT-TO-QUESTION — visible DURING the upload
+    // ========================================
+    // A study-plan upload opens the transformation immediately, with optional
+    // course details while parsing runs. The card is filled in later, in
+    // place, when `post_upload_message` arrives with the topics.
+    //
+    // Only for the study-journey entry point. A drill or a plain attach has no
+    // plan to build and must not be asked anything.
+    if (window._pendingStudyJourney) {
+      const earlyOnboardId = `plan-onboarding-${Date.now()}`;
+      planOnboardingIdRef.current = earlyOnboardId;
+      setChatMessages(prev => ([
+        ...prev,
+        {
+          id: earlyOnboardId,
+          uploadMessageId: loadingMsgId,
+          role: 'assistant',
+          type: 'plan_onboarding',
+          content: '',
+          topics: [],
+          insights: [],
+          filenames: files.map(f => f.name),
+          fileCount: files.length,
+          actions: [],
+          // The timeline's "reading your materials" step stays running until
+          // this flips, and the intelligence run is held until then too.
+          materialsReady: false,
+          timestamp: Date.now()
+        }
+      ]));
+    }
+
     setLoadingState('fileUpload', true);
 
     try {
@@ -2945,6 +2990,17 @@ const ChatInterface = ({
             ? { ...msg, isLoading: false, error: true, errorCode: error.code }
             : msg
         ));
+      }
+      // Tell the coach card too. Without this it waits forever for materials
+      // that are never coming, showing a timeline that cannot finish.
+      const strandedOnboardId = planOnboardingIdRef.current;
+      if (strandedOnboardId) {
+        setChatMessages(prev => prev.map(msg =>
+          msg.id === strandedOnboardId && msg.type === 'plan_onboarding'
+            ? { ...msg, uploadFailed: true, materialsReady: true }
+            : msg
+        ));
+        planOnboardingIdRef.current = null;
       }
       uploadMessageIdRef.current = null;
       uploadInsightsAccumulatorRef.current = [];
@@ -3358,7 +3414,10 @@ const ChatInterface = ({
               .catch(err => console.error('❌ Failed to mark first upload:', err));
           }
 
-          const planOnboardMsgId = `plan-onboarding-${Date.now()}`;
+          // Reuse the card created at upload start when there is one: she may
+          // be mid-sentence in the exam-description box, and replacing the
+          // message would throw that away and restart the flow underneath her.
+          const planOnboardMsgId = planOnboardingIdRef.current || `plan-onboarding-${Date.now()}`;
           const planOnboardMsg = {
             id: planOnboardMsgId,
             role: 'assistant',
@@ -3372,8 +3431,12 @@ const ChatInterface = ({
             filenames: update.filenames || [],
             fileCount: update.file_count || (update.filenames || []).length || 0,
             actions: update.actions || [],
+            // Her documents are in the session now, so the investigation can
+            // read them. This is the flag the intelligence run waits on.
+            materialsReady: true,
             timestamp: Date.now()
           };
+          planOnboardingIdRef.current = null;
 
           logFunnelStep(FUNNEL.UPLOAD_COMPLETED, {
             topicsFound: (update.topics || []).length,
@@ -3384,7 +3447,12 @@ const ChatInterface = ({
           // (race: addDoc cache-write fires onSnapshot before our setState commits),
           // skip the local append so we don't end up with two cards.
           setChatMessages(prev => {
-            if (prev.some(m => m.id === planOnboardMsgId)) return prev;
+            // Upsert. The early card carries the student's half-typed course
+            // context in its own state, so this merges the upload's topics in
+            // rather than swapping the element and remounting the form.
+            if (prev.some(m => m.id === planOnboardMsgId)) {
+              return prev.map(m => (m.id === planOnboardMsgId ? { ...m, ...planOnboardMsg } : m));
+            }
             return [...prev, planOnboardMsg];
           });
           AppendToChat(chatId, planOnboardMsg)
@@ -3922,7 +3990,24 @@ const ChatInterface = ({
       .catch(err => console.error('❌ Failed to persist post-upload actions after plan onboarding:', err));
   };
 
-  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences, diagnostic, rankedTopics = []) => {
+  /**
+   * Persist the course context the moment she submits it, not at confirm.
+   *
+   * The investigation that follows takes tens of seconds and she may close the
+   * tab during it. Saving now means a reload resumes with her answers instead
+   * of asking again, and it is also the only copy: the card that holds them
+   * lives in local state until the upload completes.
+   */
+  const handleCourseContext = useCallback((context) => {
+    setPendingCourseContext(context || null);
+    if (!currentChatID || !context) return;
+    updateDoc(doc(db, "chats", currentChatID), {
+      courseContext: context,
+      updatedAt: serverTimestamp(),
+    }).catch(err => console.error('Failed to persist course context:', err));
+  }, [currentChatID]);
+
+  const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences, diagnostic, rankedTopics = [], extras = {}) => {
     if (!planOnboardingMsg) return;
     devLog('✅ PlanOnboarding confirm — straight to the plan', diagnostic);
 
@@ -4024,11 +4109,29 @@ const ChatInterface = ({
     setPendingStudyTopics(planOnboardingMsg.topics || []);
     setPendingStudyUserPreferences(userPreferences || userProfile?.onboarding || {});
 
-    // Straight to the plan. There is no diagnostic SCREEN any more — the
-    // {topic: pct} map arrives already assembled from the quick check she
-    // just answered plus her past scores, so there is nothing left to ask.
-    // Null is fine and means the planner builds its uniform plan.
+    // The course brief or fallback check has already collected first-attempt
+    // answers. Null means skipped: the planner retains the course order.
     setStudyDiagnostic(diagnostic || null);
+
+    // The investigation's own payload, handed to /study/start. It is what
+    // orders the plan: without it the backend falls back to the arbitrary
+    // set() ordering of her upload's topics, which is the order of her slide
+    // deck. Null is a supported input and reproduces the old behaviour.
+    setPendingCourseIntelligence(extras.courseIntelligence || null);
+    if (extras.courseContext) setPendingCourseContext(extras.courseContext);
+
+    // Persist the report beside the chat so a returning student's plan surface
+    // can explain itself without re-running three web searches.
+    if (currentChatID && extras.courseIntelligence) {
+      updateDoc(doc(db, "chats", currentChatID), {
+        courseIntelligence: extras.courseIntelligence,
+        courseContext: extras.courseContext || pendingCourseContext || null,
+        studyDiagnostic: diagnostic || null,
+        focusSource: userPreferences?.focusSource || 'course',
+        updatedAt: serverTimestamp(),
+      }).catch(err => console.error('Failed to persist course intelligence:', err));
+    }
+
     setShowStartStudyModal(true);
   };
 
@@ -5062,6 +5165,8 @@ const ChatInterface = ({
           autoStart={true}
           userPreferences={pendingStudyUserPreferences || userProfile?.onboarding || {}}
           diagnostic={studyDiagnostic}
+          courseContext={pendingCourseContext}
+          courseIntelligence={pendingCourseIntelligence}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
@@ -5155,6 +5260,11 @@ const ChatInterface = ({
               // Hidden once complete AND post_upload_actions exists (to avoid redundancy)
               // ============================================
               if (message.type === 'upload_loading') {
+                // The linked onboarding card owns progress for this upload.
+                // Keep upload failures visible and other uploads unaffected.
+                if (!message.error && chatMessages.some(msg =>
+                  msg.type === 'plan_onboarding' && msg.uploadMessageId === message.id && !msg.uploadFailed
+                )) return null;
                 // Hide completed LoadingMessageBox if PostUploadActions or FirstUploadWowCard exists
                 // This avoids showing redundant info after the friendly action message appears
                 // (never hide an errored box — the user must see the failure)
@@ -5267,6 +5377,7 @@ const ChatInterface = ({
                   <div key={message.id} className="message ai-message">
                     <div className="message-content">
                       <PlanOnboarding
+                        autoInvestigate
                         topics={message.topics || []}
                         insights={message.insights || []}
                         filenames={message.filenames || []}
@@ -5274,9 +5385,20 @@ const ChatInterface = ({
                         language={(i18n?.language || 'en').split('-')[0]}
                         chatId={currentChatID}
                         userOnboarding={userProfile?.onboarding || {}}
-                        disabled={isSystemBusy}
-                        onConfirm={({ userPreferences, diagnostic, rankedTopics }) =>
-                          handlePlanOnboardingConfirm(message, userPreferences, diagnostic, rankedTopics)
+                        disabled={isAiTyping || isStreaming || isQuizGeneratingRef.current || loadingStates.quiz || loadingStates.summary || loadingStates.scenario}
+                        // A card restored from Firestore predates this field
+                        // and is, by definition, past its upload — so absent
+                        // means ready. Only the card created at upload start
+                        // sets it false.
+                        materialsReady={message.materialsReady !== false}
+                        uploadFailed={Boolean(message.uploadFailed)}
+                        savedCourseContext={pendingCourseContext}
+                        onCourseContext={handleCourseContext}
+                        onConfirm={({ userPreferences, diagnostic, rankedTopics, courseContext, courseIntelligence }) =>
+                          handlePlanOnboardingConfirm(message, userPreferences, diagnostic, rankedTopics, {
+                            courseContext,
+                            courseIntelligence,
+                          })
                         }
                       />
                     </div>
@@ -5604,7 +5726,7 @@ const ChatInterface = ({
 
 
           {/* Scroll to Bottom Button */}
-          {showScrollButton && isInitialLoadComplete && (
+          {showScrollButton && isInitialLoadComplete && !isStudyMode && !showStartStudyModal && !chatMessages.some(message => message.type === 'plan_onboarding') && (
             <button
               className="scroll-to-bottom-btn"
               onClick={() => scrollToBottom('smooth')}

@@ -17,6 +17,70 @@ import {
 } from '../../Services/StudyReminderService';
 import './StudyMode.css';
 
+const ReadinessGain = ({ value, label }) => {
+  const [displayed, setDisplayed] = useState(() => (
+    window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ? value : 0
+  ));
+  const current = useRef(displayed);
+
+  useEffect(() => {
+    const motion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+    let frame;
+    let started;
+    const from = current.current;
+    const update = (next) => {
+      current.current = next;
+      setDisplayed(next);
+    };
+    const finish = () => {
+      cancelAnimationFrame(frame);
+      update(value);
+    };
+    const tick = (time) => {
+      if (started === undefined) started = time;
+      const progress = Math.min((time - started) / 1100, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      update(progress === 1 ? value : Math.floor(from + (value - from) * eased));
+      if (progress < 1) frame = requestAnimationFrame(tick);
+    };
+    const onMotionChange = (event) => { if (event.matches) finish(); };
+    if (motion?.matches) finish();
+    else frame = requestAnimationFrame(tick);
+    motion?.addEventListener?.('change', onMotionChange);
+    return () => {
+      cancelAnimationFrame(frame);
+      motion?.removeEventListener?.('change', onMotionChange);
+    };
+  }, [value]);
+
+  return (
+    <span className="nt2-score-line__delta">
+      <span aria-hidden="true">
+        ↑ <span className="nt2-score-line__counter" style={{ minWidth: `${String(value).length}ch` }}>{displayed}</span>% {label}
+      </span>
+      <span className="sr-only">↑ {value}% {label}</span>
+    </span>
+  );
+};
+
+const InsightSkeleton = ({ label, loadingText }) => (
+  <div className="nt2-insight__skeleton" role="status" aria-busy="true">
+    <div className="nt4-takeaway" aria-hidden="true">
+      <span className="nt4-takeaway__label">{label}</span>
+      <div className="nt2-insight__skeleton-lines">
+        <span className="nt2-insight__bar" />
+        <span className="nt2-insight__bar" />
+        <span className="nt2-insight__bar nt2-insight__bar--short" />
+      </div>
+    </div>
+    <div className="nt2-insight__skeleton-chips" aria-hidden="true">
+      <span className="nt2-insight__bar nt2-insight__bar--chip" />
+      <span className="nt2-insight__bar nt2-insight__bar--chip" />
+    </div>
+    <span className="sr-only">{loadingText}</span>
+  </div>
+);
+
 // Truncate long topic names per spec (40 chars + ellipsis)
 const truncateTopic = (s, max = 40) => {
   if (!s) return '';
@@ -982,13 +1046,10 @@ const NodeTransition = ({
           {(debriefLoading || debrief?.note) && (
             <div className="nt2-insight nt2-insight--light">
               {debriefLoading ? (
-                <div className="nt2-insight__skeleton" aria-live="polite" aria-busy="true">
-                  <span className="nt2-insight__bar nt2-insight__bar--head" />
-                  <span className="nt2-insight__bar" />
-                  <span className="sr-only">
-                    {t('transition.noteLoading', 'Looking at what this covered for you…')}
-                  </span>
-                </div>
+                <InsightSkeleton
+                  label={t('transition.noticedLead', 'What I noticed')}
+                  loadingText={t('transition.noteLoading', 'Looking at what this covered for you…')}
+                />
               ) : (
                 <>
                   {/* Same one-line shape as the scored screen's takeaway.
@@ -1327,9 +1388,11 @@ const NodeTransition = ({
             <span className="nt2-score-line__sep">·</span>
             <span className="nt2-score-line__tail">{readout?.caption}</span>
             {showReadinessDelta && (
-              <span className="nt2-score-line__delta">
-                ↑ {readinessDelta}% {t('transition.closerToReady', 'closer to ready')}
-              </span>
+              <ReadinessGain
+                key={node?.id}
+                value={readinessDelta}
+                label={t('transition.closerToReady', 'closer to ready')}
+              />
             )}
           </p>
 
@@ -1366,14 +1429,10 @@ const NodeTransition = ({
             <div className="nt2-divider" />
             <div className="nt2-insight">
               {debriefLoading ? (
-                <div className="nt2-insight__skeleton" aria-live="polite" aria-busy="true">
-                  <span className="nt2-insight__bar nt2-insight__bar--head" />
-                  <span className="nt2-insight__bar" />
-                  <span className="nt2-insight__bar nt2-insight__bar--short" />
-                  <span className="sr-only">
-                    {t('transition.insightLoading', 'Looking at how you answered…')}
-                  </span>
-                </div>
+                <InsightSkeleton
+                  label={t('transition.noticedLead', 'What I noticed')}
+                  loadingText={t('transition.insightLoading', 'Looking at how you answered…')}
+                />
               ) : experimentConfirmed ? (
                 <div className="nt2-insight__confirm">
                   <p className="nt2-insight__eureka">

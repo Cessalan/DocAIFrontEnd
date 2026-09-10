@@ -394,22 +394,12 @@ function escapeJson(str) {
 // Firebase hosting (same pattern as blog posts)
 // ============================================
 function generateLandingPages(jsPath, cssPath) {
-  const pages = [
-    {
-      dir: 'nclex-question-generator',
-      canonical: 'https://nursequizai.com/nclex-question-generator',
-      title: 'Free AI NCLEX Question Generator | NurseQuizAI',
-      description: 'Generate unlimited NCLEX-style practice questions from your own nursing notes in seconds. Supports NGN, SATA, pharmacology, and more. Free to start — no credit card required.',
-      keywords: 'ai nclex question generator, nclex question generator, nclex practice question generator, free nclex question generator, nclex quiz generator, ai nursing questions, ngn question generator',
-    },
-    {
-      dir: 'ai-nclex-question-generator',
-      canonical: 'https://nursequizai.com/ai-nclex-question-generator',
-      title: 'Free AI NCLEX Question Generator | NurseQuizAI',
-      description: 'Generate unlimited NCLEX-style practice questions from your own nursing notes in seconds. Supports NGN, SATA, pharmacology, and more. Free to start — no credit card required.',
-      keywords: 'ai nclex question generator, nclex question generator, free nclex question generator, nclex quiz generator, ai nursing questions',
-    },
-  ];
+  // Both NCLEX-generator paths used to be emitted here as SPA shells, which is
+  // why they never ranked: Google saw an empty #root and a noscript block. They
+  // are now hand-authored static HTML in public/ (nclex-question-generator.html),
+  // and /ai-nclex-question-generator 301s to it from firebase.json. Anything added
+  // back to this list must NOT collide with a file of the same name in public/.
+  const pages = [];
 
   for (const page of pages) {
     const html = `<!DOCTYPE html>

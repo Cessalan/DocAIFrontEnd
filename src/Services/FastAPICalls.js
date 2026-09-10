@@ -803,7 +803,7 @@ export const speech_to_text = async (audioBlob) => {
  *   ]
  * }
  */
-export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}, language = 'en', diagnostic = null) => {
+export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}, language = 'en', diagnostic = null, options = {}) => {
   const requestBody = JSON.stringify({
     chat_id: chat_id,
     upload_ids: upload_ids,
@@ -812,7 +812,12 @@ export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}
     // {topic: percent} from the pre-plan diagnostic, or null when she skipped
     // it. Null reproduces the old uniform plan exactly — same code path on the
     // backend, not a second one.
-    diagnostic: diagnostic
+    diagnostic: diagnostic,
+    // The course-intelligence report, verbatim. It sets the plan's topic
+    // ORDER server-side; null reproduces the pre-feature behaviour, same as
+    // a null diagnostic does.
+    courseContext: options.courseContext || null,
+    courseIntelligence: options.courseIntelligence || null
   });
 
   try {
@@ -926,7 +931,7 @@ export const clear_in_flight_study_journey = (chat_id) => {
  *   as soon as the backend emits `plan_ready` — well before first-node generation
  *   finishes. The first-node content lands in _studyPrefetchCache as a side effect.
  */
-export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, language = 'en', diagnostic = null) => {
+export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, language = 'en', diagnostic = null, options = {}) => {
   // Reuse an in-flight stream for the same chat_id. This lets us "pre-fire"
   // the journey while the upload tail is still running and have StartStudyModal
   // pick up the same plan promise when the user actually clicks Begin Journey.
@@ -960,7 +965,12 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
     upload_ids,
     language,
     userPreferences: user_preferences,
-    diagnostic
+    diagnostic,
+    // See plan_study_path above — the two endpoints must be handed identical
+    // inputs or the fallback produces a differently ordered plan than the one
+    // the reveal just promised.
+    courseContext: options.courseContext || null,
+    courseIntelligence: options.courseIntelligence || null
   });
 
   const settleFirstNode = (value) => {
@@ -1169,12 +1179,13 @@ export const narrate_study_map = async (
   }
 };
 
-export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en', user_preferences = {}) => {
+export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en', user_preferences = {}, options = {}) => {
   try {
     devLog("🔬 Requesting diagnostic...");
     const response = await fetch(`${FAST_API_BASE}/study/diagnostic-quiz`, {
       method: "POST",
       headers: header,
+      signal: options.signal,
       body: JSON.stringify({
         chat_id,
         upload_ids,
@@ -1183,7 +1194,8 @@ export const plan_diagnostic_quiz = async (chat_id, upload_ids, language = 'en',
         // Verify what she told us was hardest instead of taking her word for
         // it. When the result contradicts the self-report, that contradiction
         // is the most valuable thing the diagnostic produces.
-        hardestTopics: user_preferences?.hardestTopics || []
+        hardestTopics: user_preferences?.hardestTopics || [],
+        priorityTopics: options.priorityTopics || []
       })
     });
 

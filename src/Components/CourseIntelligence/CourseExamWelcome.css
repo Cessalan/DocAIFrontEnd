@@ -1,0 +1,104 @@
+@import './CourseStudio.css';
+
+.cs-exam-welcome { padding: 24px; text-align: center; }
+.cs-exam-welcome__title { margin: 12px 0 20px; font-size: 25px; line-height: 1.35; word-break: normal; overflow-wrap: normal; }
+.cs-exam-welcome__line { display: block; }
+.cs-exam-welcome__line + .cs-exam-welcome__line { color: var(--ci-accent); }
+.cs-exam-welcome__letter { opacity: 0; animation: cs-welcome-type .001s linear forwards; }
+.cs-exam-welcome__calendar { position: relative; padding: 0; margin: 0 auto; border: 0; min-width: 0; max-width: 304px; }
+.cs-exam-welcome__calendar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: 16px 18px 16px 17px;
+  pointer-events: none;
+  opacity: 0;
+  background: linear-gradient(110deg, transparent 40%, var(--ci-accent-soft) 48%, rgba(255, 255, 255, .32) 50%, transparent 59%);
+  background-size: 250% 100%;
+  animation: cs-calendar-arrive .7s cubic-bezier(.2, .65, .3, 1) 1.4s both;
+}
+.dark-mode .cs-exam-welcome__calendar::after {
+  background-image: linear-gradient(110deg, transparent 40%, var(--ci-accent-soft) 48%, rgba(255, 255, 255, .07) 50%, transparent 59%);
+}
+.cs-exam-welcome.is-selected .cs-exam-welcome__calendar::after { display: none; }
+@keyframes cs-calendar-arrive {
+  0% { background-position: 100% 50%; opacity: 0; }
+  15% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { background-position: 0 50%; opacity: 0; }
+}
+.cs-shell.cs-exam-welcome .nq-datepicker--inline {
+  position: static;
+  width: 100%;
+  box-sizing: border-box;
+  transform: none;
+  animation: none;
+  box-shadow: none;
+  background: var(--ci-surface-inset);
+  border: 1px solid var(--ci-border);
+  color: var(--ci-text);
+  --po-text: var(--ci-text);
+  --po-accent-coral: var(--ci-accent);
+}
+.cs-exam-welcome .nq-datepicker--inline .nq-datepicker__nav {
+  background: var(--ci-accent-soft);
+  color: var(--ci-accent);
+  border-color: var(--ci-border);
+  box-shadow: none;
+}
+.cs-exam-welcome .nq-datepicker--inline .nq-datepicker__day.is-today {
+  border-color: var(--ci-accent);
+  color: var(--ci-accent);
+}
+.cs-exam-welcome .nq-datepicker--inline .nq-datepicker__day:hover:not(:disabled) {
+  background: var(--ci-accent-soft);
+  border-color: var(--ci-accent);
+}
+.cs-exam-welcome__footer { margin-top: 16px; min-height: 24px; display: grid; place-items: center; }
+.cs-exam-welcome__skip { font-size: 13px; }
+.cs-exam-welcome__confirmed { margin: 0; font-size: 13px; font-weight: 500; color: var(--ci-accent); animation: cs-welcome-confirm .22s ease-out both; }
+.cs-exam-welcome.is-selected .cs-exam-welcome__letter { opacity: 1; animation: none; }
+.cs-exam-welcome.is-selected .nq-datepicker--inline .nq-datepicker__day.is-selected {
+  position: relative;
+  z-index: 1;
+  opacity: 1;
+  background: var(--ci-accent);
+  color: var(--ci-surface);
+  border-color: var(--ci-accent);
+  box-shadow: 0 0 0 5px var(--ci-accent-soft), 0 0 22px var(--ci-accent-soft);
+  animation: cs-welcome-date-glow .64s cubic-bezier(.22, 1, .36, 1) both;
+}
+.cs-exam-welcome.is-selected .nq-datepicker__day.is-selected::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border: 1px solid var(--ci-accent);
+  border-radius: inherit;
+  pointer-events: none;
+  animation: cs-welcome-date-ring .64s ease-out both;
+}
+.cs-shell.cs-exam-welcome.is-leaving { pointer-events: none; animation: cs-welcome-exit .22s ease-in both; }
+@keyframes cs-welcome-date-glow {
+  0% { transform: scale(.94); box-shadow: 0 0 0 0 var(--ci-accent-soft); }
+  45% { transform: scale(1.09); box-shadow: 0 0 0 8px var(--ci-accent-soft), 0 0 28px var(--ci-accent-soft); }
+  100% { transform: scale(1); }
+}
+@keyframes cs-welcome-date-ring { from { transform: scale(.9); opacity: .65; } to { transform: scale(1.6); opacity: 0; } }
+@keyframes cs-welcome-confirm { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cs-welcome-exit { to { opacity: 0; transform: translateY(-6px) scale(.99); } }
+@keyframes cs-welcome-type { to { opacity: 1; } }
+.cs-upload-welcome { padding: 32px 24px; }
+.cs-upload-welcome__shimmer { height: 3px; max-width: 180px; margin: 26px auto 18px; border-radius: 3px; background: linear-gradient(110deg, var(--ci-border) 35%, var(--ci-accent-soft) 48%, var(--ci-accent) 50%, var(--ci-border) 65%); background-size: 250% 100%; animation: cs-upload-sheen 2.4s ease-in-out infinite; }
+.cs-upload-welcome__shimmer.is-stopped { animation: none; }
+.cs-upload-welcome__status { color: var(--ci-text-muted); font-size: 12px; margin: 0; }
+.cs-upload-welcome .cs-button { margin: 20px auto 0; }
+@keyframes cs-upload-sheen { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) {
+  .cs-exam-welcome__letter { opacity: 1; }
+  .cs-exam-welcome__calendar::after { display: none; }
+}
+@media (max-width: 480px) {
+  .cs-exam-welcome { padding: 20px 16px; }
+  .cs-exam-welcome__title { font-size: 22px; }
+}

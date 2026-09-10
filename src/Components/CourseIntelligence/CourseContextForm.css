@@ -1,0 +1,289 @@
+@import './CourseIntelligence.css';
+
+/* ==========================================================================
+   CourseContextForm — asked during the upload, never in front of it.
+
+   Layout intent: a two-column grid on desktop that collapses to one column
+   on narrow screens, so the four fields read as one short card rather than a
+   form. Every hint sits under its field because the hint is the trade — it
+   says what the answer buys — and a hint she has to hunt for is a field with
+   no reason attached.
+   ========================================================================== */
+
+.course-context {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 20px 20px 16px;
+  background: var(--ci-surface);
+  border: 2px solid var(--ci-border);
+  border-radius: var(--ci-radius-lg);
+  box-shadow: var(--ci-shadow);
+  transform: rotate(-0.25deg);
+  animation: ci-card-in 0.45s var(--ci-wobble);
+}
+
+@keyframes ci-card-in {
+  from { opacity: 0; transform: translateY(10px) rotate(-1deg) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) rotate(-0.25deg) scale(1); }
+}
+
+.course-context__header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.course-context__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--ci-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.course-context__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--ci-text);
+}
+
+.course-context__sub {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ci-text-muted);
+}
+
+.course-context__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.course-context__field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.course-context__field--wide {
+  grid-column: 1 / -1;
+}
+
+.course-context__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ci-text);
+}
+
+.course-context__label svg {
+  color: var(--ci-accent);
+  flex-shrink: 0;
+}
+
+.course-context__input {
+  width: 100%;
+  padding: 9px 11px;
+  font-family: inherit;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--ci-text);
+  background: var(--ci-surface-inset);
+  border: 1.5px solid var(--ci-border);
+  border-radius: var(--ci-radius-sm);
+  outline: none;
+  transition: border-color var(--ci-ease), box-shadow var(--ci-ease);
+}
+
+.course-context__input::placeholder {
+  color: var(--ci-text-soft);
+}
+
+.course-context__input:focus {
+  border-color: var(--ci-border-strong);
+  box-shadow: 0 0 0 3px var(--ci-accent-soft);
+}
+
+.course-context__input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.course-context__input--area {
+  resize: vertical;
+  min-height: 68px;
+}
+
+.course-context__hint {
+  font-size: 11.5px;
+  line-height: 1.35;
+  color: var(--ci-text-soft);
+}
+
+/* ── Exam date ─────────────────────────────────────────────────────── */
+
+.course-context__date-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.course-context__date-label {
+  font-size: 12px;
+  font-weight: 650;
+  color: var(--ci-text);
+}
+
+.course-context__date-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--ci-text-muted);
+  background: var(--ci-surface-inset);
+  border: 1.5px solid var(--ci-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: all var(--ci-ease);
+}
+
+.course-context__date-chip:hover:not(:disabled) {
+  border-color: var(--ci-border-strong);
+  color: var(--ci-text);
+}
+
+.course-context__date-chip.is-set {
+  color: var(--ci-accent);
+  border-color: var(--ci-border-strong);
+  background: var(--ci-accent-soft);
+}
+
+.course-context__date-chip:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* ── The trade, stated ─────────────────────────────────────────────── */
+
+.course-context__promise {
+  margin: 0;
+  padding: 9px 12px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ci-text-muted);
+  background: var(--ci-surface-soft);
+  border-left: 3px solid var(--ci-accent);
+  border-radius: 0 var(--ci-radius-sm) var(--ci-radius-sm) 0;
+}
+
+/* ── Actions ───────────────────────────────────────────────────────── */
+
+.course-context__actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.course-context__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  flex: 1;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #e88d7d 0%, #f4a896 100%);
+  border: none;
+  border-radius: var(--ci-radius-md);
+  box-shadow: 2px 2px 0 rgba(60, 60, 60, 0.12);
+  cursor: pointer;
+  transition: transform var(--ci-wobble), box-shadow var(--ci-ease), opacity var(--ci-ease);
+}
+
+.course-context__cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 3px 4px 0 rgba(60, 60, 60, 0.14);
+}
+
+.course-context__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.course-context__arrow {
+  transition: transform var(--ci-ease);
+}
+
+.course-context__cta:hover:not(:disabled) .course-context__arrow {
+  transform: translateX(3px);
+}
+
+/* Skip is a real button, sized to be clickable. A skip hidden as a 10px link
+   under a large CTA is a dark pattern with extra steps, and this form's whole
+   claim is that nothing here blocks. */
+.course-context__skip {
+  padding: 11px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ci-text-muted);
+  background: transparent;
+  border: 1.5px solid var(--ci-border);
+  border-radius: var(--ci-radius-md);
+  cursor: pointer;
+  transition: all var(--ci-ease);
+}
+
+.course-context__skip:hover:not(:disabled) {
+  color: var(--ci-text);
+  border-color: var(--ci-border-strong);
+}
+
+.course-context__skip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+body.dark-mode .course-context__cta {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  color: #2a2a2a;
+}
+
+@media (max-width: 560px) {
+  .course-context {
+    padding: 16px 14px 14px;
+    transform: none;
+  }
+
+  .course-context__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .course-context__actions {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .course-context__cta,
+  .course-context__skip {
+    width: 100%;
+  }
+}

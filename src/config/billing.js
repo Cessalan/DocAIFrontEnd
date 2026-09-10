@@ -19,12 +19,12 @@ export const PLANS = [
   {
     id: 'annual',
     name: 'Annual',
-    amount: 50,              // US$/year — display only; MUST match the Stripe price
+    amount: 83.07,           // US$/year — display only; MUST match the Stripe price
     currency: 'USD',
     symbol: '$',             // shown before the amount (French copy renders "$ US" via i18n)
     interval: 'year',
-    perMonth: 4.17,          // 50 / 12, for the "$4.17/mo" subtitle
-    savePct: 50,             // vs paying monthly (8.33*12 = 99.96 → 50 = ~50% off)
+    perMonth: 6.92,          // 83.07 / 12, for the "$6.92/mo" subtitle
+    savePct: 48,             // vs paying monthly (13.34*12 = 160.08 → 83.07 = ~48% off)
     recommended: true,
     // Fill these from your Stripe dashboard once created:
     stripePriceId: process.env.REACT_APP_STRIPE_PRICE_ANNUAL || '',
@@ -33,11 +33,11 @@ export const PLANS = [
   {
     id: 'monthly',
     name: 'Monthly',
-    amount: 8.33,            // US$/month — display only; MUST match the Stripe price
+    amount: 13.34,           // US$/month — display only; MUST match the Stripe price
     currency: 'USD',
     symbol: '$',
     interval: 'month',
-    perMonth: 8.33,
+    perMonth: 13.34,
     recommended: false,
     stripePriceId: process.env.REACT_APP_STRIPE_PRICE_MONTHLY || '',
     paymentLink: process.env.REACT_APP_STRIPE_LINK_MONTHLY || '',

@@ -1,0 +1,152 @@
+/* ==========================================================================
+   COURSE INTELLIGENCE — shared tokens.
+
+   Imported by every surface in this folder so the form, the timeline, the
+   report and the reveal read as one system rather than four cards that
+   happen to follow each other.
+
+   Design system: matches PlanOnboarding / UploadInsightsCard —
+   sticky-note pastels, warm grays, organic radii, 2D offset shadows.
+   Colors resolve from src/index.css variables where one already exists;
+   the locals below are the ones this flow adds.
+
+   THE CONFIDENCE PALETTE IS LOAD-BEARING
+   --------------------------------------
+   Purple, blue and amber are not decoration: they are the only visible
+   difference between something we verified, something we read on a public
+   page, and something we inferred. Every one of the three must stay
+   distinguishable in dark mode and at the smallest badge size, and none of
+   them may be reused for an unrelated state elsewhere in this flow.
+   ========================================================================== */
+
+.cs-shell,
+.course-context,
+.ci-timeline,
+.ci-report,
+.ci-reveal {
+  --ci-surface:        #ffffff;
+  --ci-surface-soft:   #fef9f5;
+  --ci-surface-inset:  #fbf6f2;
+  --ci-border:         rgba(100, 100, 100, 0.15);
+  --ci-border-strong:  rgba(232, 141, 125, 0.55);
+
+  --ci-text:           #3d3d3d;
+  --ci-text-muted:     #6b6b6b;
+  --ci-text-soft:      #9a9a9a;
+
+  --ci-accent:         #d97a6a;
+  --ci-accent-soft:    rgba(232, 141, 125, 0.12);
+
+  /* Confidence — see the note above before changing any of these. */
+  --ci-verified:       #8b6db5;
+  --ci-verified-soft:  rgba(139, 109, 181, 0.12);
+  --ci-public:         #4a90b8;
+  --ci-public-soft:    rgba(74, 144, 184, 0.12);
+  --ci-inference:      #c08a2e;
+  --ci-inference-soft: rgba(192, 138, 46, 0.14);
+
+  --ci-radius-lg:      18px 22px 18px 20px;
+  --ci-radius-md:      12px 14px 12px 13px;
+  --ci-radius-sm:      10px 12px 10px 11px;
+
+  --ci-shadow:         3px 3px 0 rgba(60, 60, 60, 0.08), 0 4px 12px rgba(0, 0, 0, 0.06);
+  --ci-shadow-hover:   4px 4px 0 rgba(60, 60, 60, 0.1),  0 8px 20px rgba(0, 0, 0, 0.1);
+
+  --ci-wobble:         cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ci-ease:           cubic-bezier(0.4, 0, 0.2, 1);
+
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 560px;
+  margin: 0 auto;
+  color: var(--ci-text);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.cs-shell *,
+.course-context *,
+.ci-timeline *,
+.ci-report *,
+.ci-reveal * {
+  box-sizing: border-box;
+}
+
+/* Dark mode is a `dark-mode` class on <body> observed via MutationObserver;
+   every new surface needs its own block. Lavender accent, per index.css. */
+body.dark-mode .cs-shell,
+body.dark-mode .course-context,
+body.dark-mode .ci-timeline,
+body.dark-mode .ci-report,
+body.dark-mode .ci-reveal {
+  --ci-surface:        var(--dark-bg-secondary, #2f2f2f);
+  --ci-surface-soft:   var(--dark-bg-elevated, #262626);
+  --ci-surface-inset:  rgba(255, 255, 255, 0.04);
+  --ci-border:         var(--dark-border, rgba(255, 255, 255, 0.08));
+  --ci-border-strong:  var(--dark-border-accent, rgba(200, 180, 220, 0.25));
+
+  --ci-text:           #e8e8e8;
+  --ci-text-muted:     #b0b0b0;
+  --ci-text-soft:      #8a8a8a;
+
+  --ci-accent:         var(--dark-accent, #b8a5d4);
+  --ci-accent-soft:    rgba(184, 165, 212, 0.16);
+
+  --ci-verified:       #c8b4e0;
+  --ci-verified-soft:  rgba(200, 180, 224, 0.16);
+  --ci-public:         #8ec5e0;
+  --ci-public-soft:    rgba(142, 197, 224, 0.16);
+  --ci-inference:      #e6c169;
+  --ci-inference-soft: rgba(230, 193, 105, 0.16);
+
+  --ci-shadow:         3px 3px 0 rgba(0, 0, 0, 0.3), 0 4px 12px rgba(0, 0, 0, 0.35);
+  --ci-shadow-hover:   4px 4px 0 rgba(0, 0, 0, 0.35), 0 8px 20px rgba(0, 0, 0, 0.45);
+}
+
+/* ── Confidence badge ─────────────────────────────────────────────── */
+
+.ci-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ci-badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.ci-badge--verified  { color: var(--ci-verified);  background: var(--ci-verified-soft); }
+.ci-badge--public    { color: var(--ci-public);    background: var(--ci-public-soft); }
+.ci-badge--inference { color: var(--ci-inference); background: var(--ci-inference-soft); }
+
+/* Evidence lines are tinted by the same three colours, so a student can tell
+   a counted fact from a pattern without reading the badge. */
+.is-verified  { --ci-evidence: var(--ci-verified); }
+.is-public    { --ci-evidence: var(--ci-public); }
+.is-inference { --ci-evidence: var(--ci-inference); }
+
+@media (prefers-reduced-motion: reduce) {
+  .course-context,
+  .ci-timeline,
+  .ci-report,
+  .ci-reveal,
+  .course-context *,
+  .ci-timeline *,
+  .ci-report *,
+  .ci-reveal * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

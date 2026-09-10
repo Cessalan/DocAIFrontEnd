@@ -22,6 +22,12 @@ const PublicQuizView = lazy(() => import("./Components/PublicQuiz/PublicQuizView
 const BlogList = lazy(() => import("./Components/Blog/BlogList"));
 const BlogPost = lazy(() => import("./Components/Blog/BlogPost"));
 const NclexQuestionGenerator = lazy(() => import("./Components/LandingPages/NclexQuestionGenerator"));
+// NCLEX is its own surface, not a view inside ChatLayout: there is no chat,
+// no sidebar and no upload in it, because a candidate who has graduated has
+// no documents to talk about. It shares the adaptive modules, not the shell.
+const NclexHome = lazy(() => import("./Components/Nclex/NclexHome"));
+const NclexSubject = lazy(() => import("./Components/Nclex/NclexSubject"));
+const NclexPractice = lazy(() => import("./Components/Nclex/NclexPractice"));
 const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmin"));
 const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
 const ConversationReader = lazy(() => import("./Components/Admin/ConversationReader"));
@@ -89,6 +95,36 @@ function App() {
         {isDev && (
           <Route path="/admin/conversations" element={<ConversationReader />} />
         )}
+
+        {/* ── NCLEX ────────────────────────────────────────────────────
+            A standalone product surface. Protected like the rest of the app,
+            but rendered outside ChatLayout — the readiness dashboard, the
+            subject grid and the practice loop each own the full width, and a
+            conversation rail beside them would be furniture. */}
+        <Route
+          path="/nclex"
+          element={
+            <ProtectedRoute>
+              <NclexHome />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/nclex/subject/:subjectId"
+          element={
+            <ProtectedRoute>
+              <NclexSubject />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/nclex/practice"
+          element={
+            <ProtectedRoute>
+              <NclexPractice />
+            </ProtectedRoute>
+          }
+        />
 
         {/* Home - Redirect to chat */}
         <Route

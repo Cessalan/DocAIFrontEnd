@@ -1055,7 +1055,7 @@ body.dark-mode .drill-date__chip:hover:not(:disabled) {
 }
 
 /* The calendar chip. Same control as plan onboarding's "Pick a date" — it
-   opens PlanDatePicker, which portals itself next to this anchor. */
+   opens the shared DatePicker, which portals itself next to this anchor. */
 .drill-date__chip--date {
   display: inline-flex;
   align-items: center;

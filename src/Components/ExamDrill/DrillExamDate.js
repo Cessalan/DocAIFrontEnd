@@ -1,7 +1,7 @@
 import React, { useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { EXAM_DATE_CHOICES } from '../../Services/examDateChoices';
-import PlanDatePicker from '../ChatInerface/PlanDatePicker';
+import DatePicker from '../Common/DatePicker';
 import { CalendarIcon } from '../ChatInerface/PlanOnboardingIcons';
 // Imported here, not only by the drill page: this now also renders inside the
 // chat during a drill upload, where ExamDrill.css would otherwise never load.
@@ -24,7 +24,8 @@ import './ExamDrill.css';
  * ──────────────────────────────────────────────────
  * The quick choices come from Services/examDateChoices (shared, so the two
  * surfaces cannot drift into different countdowns) and the calendar is
- * PlanDatePicker — the same popover the study plan uses. Two pickers for one
+ * DatePicker — the shared popover (Common/DatePicker), same one the study
+ * plan uses. Two pickers for one
  * question is two things to keep in sync and two things a student has to learn
  * twice; the only difference here is the surrounding chrome, which is the
  * drill's plain exam-room styling rather than the onboarding card's.
@@ -114,7 +115,7 @@ const DrillExamDate = ({ onSubmit, onSkip, language = 'en' }) => {
         </button>
 
         {showPicker && (
-          <PlanDatePicker
+          <DatePicker
             value={customDate}
             onChange={handleCustomDate}
             minDate={new Date()}

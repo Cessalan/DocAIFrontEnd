@@ -1,0 +1,1754 @@
+/* ══════════════════════════════════════════════════════════════════════
+   NCLEX — a standalone surface inside the app's own skin.
+
+   BRANDING: every colour here comes from the tokens in src/index.css.
+   Coral (--primary-coral) in light, lavender (--dark-accent) in dark, warm
+   cream grounds, warm-tinted shadows. Nothing new is invented; what is new
+   is the RESTRAINT — this surface is read by someone deciding whether to
+   trust a diagnosis, so it spends its accent in one place per screen and
+   leaves the rest quiet.
+
+   TYPE: the app's own voice, which index.css calls "warm notebook" — Kalam /
+   Patrick Hand for section headings, the real highlighter-marker effect from
+   the landing page, dashed rules. The first version of this file used
+   Fraunces, which is a magazine serif: correct for a consulting report and
+   wrong for a product a student grinds through at 1am. Headings are
+   handwritten; the VERDICT itself stays in Outfit, because the one place
+   this surface must sound certain rather than friendly is when it tells her
+   what she would fail.
+
+   The five verdict states reuse the colours LockedPlanPreview already
+   established, so a student who has seen a study plan reads this grid with
+   no relearning. `provisional` deliberately does NOT introduce a fifth hue:
+   it is solid's green, hollowed out. Same direction, less certainty — and
+   that reads instantly without a legend.
+   ══════════════════════════════════════════════════════════════════════ */
+
+.nq {
+  --nq-solid: #5aa46f;
+  --nq-improving: #e0a13c;
+  --nq-gap: #e05c4b;
+  --nq-untested: #a8a29a;
+
+  --nq-ink: var(--text-primary);
+  --nq-ink-soft: var(--text-secondary);
+  --nq-muted: var(--text-muted);
+  --nq-accent: var(--primary-coral);
+  --nq-surface: var(--bg-paper);
+  --nq-surface-alt: var(--bg-cream);
+  --nq-hairline: rgba(100, 80, 60, 0.1);
+  --nq-hairline-soft: rgba(100, 80, 60, 0.06);
+
+  min-height: 100vh;
+  background:
+    radial-gradient(1100px 520px at 50% -10%, rgba(232, 141, 125, 0.07), transparent 70%),
+    var(--bg-warm);
+  color: var(--nq-ink);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+body.dark-mode .nq {
+  --nq-solid: #7cc492;
+  --nq-improving: #e8bb6a;
+  --nq-gap: #f0796a;
+  --nq-untested: #7a7a7a;
+
+  --nq-ink: #ececec;
+  --nq-ink-soft: #bdbdbd;
+  --nq-muted: #8a8a8a;
+  --nq-accent: var(--dark-accent);
+  --nq-surface: var(--dark-bg-elevated);
+  --nq-surface-alt: var(--dark-bg-secondary);
+  --nq-hairline: rgba(255, 255, 255, 0.08);
+  --nq-hairline-soft: rgba(255, 255, 255, 0.05);
+
+  background:
+    radial-gradient(1100px 520px at 50% -10%, rgba(184, 165, 212, 0.09), transparent 70%),
+    var(--dark-bg-primary);
+}
+
+.nq-wrap {
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 0 26px 96px;
+}
+
+/* ── Top bar ──────────────────────────────────────────────────────────── */
+
+.nq-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  max-width: 1060px;
+  margin: 0 auto;
+  padding: 26px 26px 18px;
+}
+
+.nq-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 600;
+  font-size: 0.98rem;
+  color: var(--nq-ink);
+  text-decoration: none;
+  letter-spacing: -0.01em;
+}
+
+.nq-brand-logo { width: 26px; height: 26px; flex: none; }
+
+.nq-brand span {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--nq-accent);
+  padding-left: 10px;
+  margin-left: 2px;
+  border-left: 1px solid var(--nq-hairline);
+}
+
+.nq-topbar-right { display: inline-flex; align-items: center; gap: 14px; }
+
+/* The countdown is the only place on this surface allowed to be loud. */
+.nq-countdown {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  padding: 7px 13px;
+  border-radius: var(--radius-full, 999px);
+  border-radius: 999px;
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  font-size: 0.82rem;
+  color: var(--nq-ink-soft);
+  box-shadow: var(--shadow-sm);
+}
+
+.nq-countdown b {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--nq-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-countdown.is-urgent b { color: var(--nq-gap); }
+
+.nq-datelink {
+  background: none;
+  border: 1px dashed var(--nq-hairline);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-family: inherit;
+  font-size: 0.82rem;
+  color: var(--nq-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.nq-datelink:hover { color: var(--nq-accent); border-color: var(--nq-accent); }
+
+/* ── Shared type ──────────────────────────────────────────────────────── */
+
+.nq-eyebrow {
+  font-size: 0.71rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--nq-accent);
+  margin: 0 0 10px;
+}
+
+.nq-eyebrow.is-quiet { color: var(--nq-muted); }
+
+.nq-h2 {
+  font-family: var(--font-handwritten);
+  font-size: 1.58rem;
+  font-weight: 600;
+  line-height: 1.24;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--nq-ink);
+  text-wrap: balance;
+}
+
+.nq-section { margin-top: 58px; }
+
+.nq-section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 20px;
+  padding-bottom: 13px;
+  border-bottom: 1px solid var(--nq-hairline);
+}
+
+.nq-section-note {
+  font-size: 0.83rem;
+  color: var(--nq-muted);
+  margin: 0;
+  text-align: right;
+  max-width: 30ch;
+}
+
+/* ── The verdict — the hero, and the thing the product is judged on ───── */
+
+.nq-verdict {
+  position: relative;
+  margin-top: 26px;
+  padding: 40px 40px 34px;
+  border-radius: var(--radius-2xl);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+/* A single hairline of accent along the top edge — the one flourish. */
+.nq-verdict::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 3px;
+  background: var(--gradient-primary);
+}
+
+body.dark-mode .nq-verdict::before {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+}
+
+.nq-verdict-headline {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  font-size: clamp(1.55rem, 3.4vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.022em;
+  margin: 0 0 14px;
+  color: var(--nq-ink);
+  text-wrap: balance;
+  max-width: 20ch;
+}
+
+.nq-verdict-detail {
+  font-size: 1.01rem;
+  line-height: 1.6;
+  color: var(--nq-ink-soft);
+  margin: 0;
+  max-width: 54ch;
+}
+
+.nq-verdict-evidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 20px;
+  font-size: 0.78rem;
+  color: var(--nq-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-verdict-evidence::before {
+  content: '';
+  width: 14px;
+  height: 1px;
+  background: var(--nq-muted);
+  opacity: 0.6;
+}
+
+/* Readiness dial — deliberately small. The sentence is the product; the
+   number is supporting evidence and must never outrank it visually. */
+.nq-verdict-body {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 38px;
+}
+
+.nq-verdict-main { flex: 1 1 auto; min-width: 0; }
+
+.nq-readiness {
+  flex: 0 0 auto;
+  text-align: right;
+  padding-left: 30px;
+  border-left: 1px solid var(--nq-hairline-soft);
+}
+
+.nq-readiness-num {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  font-size: 2.6rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  font-variant-numeric: tabular-nums;
+  color: var(--nq-ink);
+  display: block;
+}
+
+.nq-readiness-label {
+  display: block;
+  margin-top: 8px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--nq-muted);
+}
+
+.nq-readiness-band {
+  display: inline-block;
+  margin-top: 11px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  background: var(--nq-surface-alt);
+  color: var(--nq-ink-soft);
+  border: 1px solid var(--nq-hairline);
+}
+
+.nq-readiness-band.is-strong { color: var(--nq-solid); border-color: currentColor; }
+.nq-readiness-band.is-building { color: var(--nq-improving); border-color: currentColor; }
+.nq-readiness-band.is-early { color: var(--nq-improving); border-color: currentColor; }
+.nq-readiness-band.is-atrisk { color: var(--nq-gap); border-color: currentColor; }
+
+/* ── Next action ──────────────────────────────────────────────────────── */
+
+.nq-action {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  width: 100%;
+  margin-top: 26px;
+  padding: 20px 24px;
+  border: 0;
+  border-radius: var(--radius-xl);
+  background: var(--gradient-primary);
+  color: #fff;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 10px 28px -14px rgba(232, 141, 125, 0.75);
+  transition: var(--transition-normal);
+}
+
+body.dark-mode .nq-action {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  color: #241f2b;
+  box-shadow: 0 10px 28px -14px rgba(184, 165, 212, 0.6);
+}
+
+.nq-action:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -14px rgba(232, 141, 125, 0.85); }
+body.dark-mode .nq-action:hover { box-shadow: 0 16px 34px -14px rgba(184, 165, 212, 0.7); }
+.nq-action:active { transform: translateY(0); }
+
+.nq-action-label { font-size: 1.06rem; font-weight: 600; letter-spacing: -0.01em; display: block; }
+.nq-action-sub { font-size: 0.86rem; opacity: 0.9; display: block; margin-top: 3px; }
+.nq-action-arrow { font-size: 1.25rem; flex: 0 0 auto; transition: var(--transition-fast); }
+.nq-action:hover .nq-action-arrow { transform: translateX(4px); }
+
+/* ── Two doors (cold start) ───────────────────────────────────────────── */
+
+.nq-doors { display: grid; grid-template-columns: 1.25fr 1fr; gap: 18px; margin-top: 26px; }
+
+.nq-door {
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  padding: 30px 28px;
+  border-radius: var(--radius-2xl);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  box-shadow: var(--shadow-md);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.nq-door:hover { transform: translateY(-3px); box-shadow: var(--shadow-lg); border-color: var(--nq-accent); }
+
+.nq-door.is-primary { border-color: var(--nq-accent); }
+
+.nq-door h3 {
+  font-family: var(--font-handwritten);
+  font-size: 1.34rem;
+  font-weight: 600;
+  letter-spacing: -0.018em;
+  margin: 0;
+  color: var(--nq-ink);
+}
+
+.nq-door p { margin: 0; font-size: 0.93rem; line-height: 1.55; color: var(--nq-ink-soft); }
+
+.nq-door-cta {
+  margin-top: 6px;
+  font-size: 0.89rem;
+  font-weight: 600;
+  color: var(--nq-accent);
+}
+
+/* ── Cold start ───────────────────────────────────────────────────────────
+   The first version of this screen showed two equal doors and then eight
+   "Not measured" rows. Two problems. Equal doors make the student choose
+   before the product has told her anything, and the differentiator is that
+   she should NOT have to choose. And a blueprint grid with nothing in it is
+   eight rows of the product admitting it knows nothing about her.
+
+   So: one focal point, one card, one button — and the grid does not appear
+   until it has something to say. `Practice by subject` stays available as a
+   quiet second option for the student who already knows, which is the
+   minority this page should not be organised around.
+   ───────────────────────────────────────────────────────────────────────── */
+
+.nq-cold {
+  max-width: 620px;
+  margin: 0 auto;
+  padding: 22px 0 8px;
+  text-align: center;
+}
+
+.nq-cold .nq-eyebrow { margin-bottom: 26px; }
+
+.nq-cold-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 78px;
+  height: 78px;
+  margin-bottom: 22px;
+  color: var(--nq-accent);
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 40%, rgba(232, 141, 125, 0.22), rgba(232, 141, 125, 0.06) 70%);
+  animation: nqBreathe 4.5s ease-in-out infinite;
+}
+
+body.dark-mode .nq-cold-icon {
+  background: radial-gradient(circle at 50% 40%, rgba(184, 165, 212, 0.26), rgba(184, 165, 212, 0.07) 70%);
+}
+
+.nq-cold-icon svg { width: 34px; height: 34px; }
+
+@keyframes nqBreathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.045); }
+}
+
+.nq-cold-title {
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.85rem, 4.6vw, 2.6rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 0 0 16px;
+  color: var(--nq-ink);
+  text-wrap: balance;
+}
+
+/* The landing page's highlighter marker, reused verbatim so the two surfaces
+   read as the same product rather than as two apps that share a logo. */
+.nq-mark {
+  position: relative;
+  z-index: 0;
+  white-space: nowrap;
+}
+
+.nq-mark::before {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: -3px;
+  right: -3px;
+  height: 38%;
+  background: linear-gradient(
+    90deg,
+    rgba(255, 235, 122, 0.55) 0%,
+    rgba(255, 235, 122, 0.7) 20%,
+    rgba(255, 235, 122, 0.65) 80%,
+    rgba(255, 235, 122, 0.5) 100%
+  );
+  z-index: -1;
+  transform: rotate(-0.5deg) skewX(-2deg);
+  border-radius: 2px 4px 3px 2px;
+}
+
+body.dark-mode .nq-mark::before {
+  background: linear-gradient(
+    90deg,
+    rgba(232, 141, 125, 0.22) 0%,
+    rgba(232, 141, 125, 0.32) 20%,
+    rgba(232, 141, 125, 0.28) 80%,
+    rgba(232, 141, 125, 0.2) 100%
+  );
+}
+
+.nq-cold-sub {
+  font-size: 1.03rem;
+  line-height: 1.62;
+  color: var(--nq-ink-soft);
+  margin: 0 auto;
+  max-width: 46ch;
+}
+
+/* ── The one card ─────────────────────────────────────────────────────── */
+
+.nq-hero-card {
+  position: relative;
+  margin: 38px auto 0;
+  max-width: 460px;
+  padding: 34px 32px 28px;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--nq-surface-alt) 100%);
+  border: 1px solid rgba(232, 141, 125, 0.28);
+  box-shadow: var(--shadow-lg);
+  text-align: left;
+  overflow: hidden;
+}
+
+body.dark-mode .nq-hero-card {
+  border-color: rgba(184, 165, 212, 0.3);
+  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--dark-bg-secondary) 100%);
+}
+
+.nq-hero-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--gradient-primary);
+}
+
+body.dark-mode .nq-hero-card::before {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+}
+
+.nq-hero-card-kicker {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.nq-hero-card-kicker em {
+  display: inline-flex;
+  width: 21px;
+  height: 21px;
+  color: var(--nq-accent);
+}
+
+.nq-hero-card-kicker span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--nq-accent);
+}
+
+.nq-hero-card h2 {
+  font-family: var(--font-handwritten);
+  font-size: 1.5rem;
+  font-weight: 700;
+  line-height: 1.24;
+  margin: 0 0 10px;
+  color: var(--nq-ink);
+}
+
+.nq-hero-card > p {
+  margin: 0 0 20px;
+  font-size: 0.97rem;
+  line-height: 1.58;
+  color: var(--nq-ink-soft);
+}
+
+.nq-checks {
+  list-style: none;
+  margin: 0 0 24px;
+  padding: 0 0 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+  border-bottom: 1px dashed rgba(232, 141, 125, 0.28);
+}
+
+body.dark-mode .nq-checks { border-bottom-color: rgba(184, 165, 212, 0.25); }
+
+.nq-checks li {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  font-size: 0.93rem;
+  color: var(--nq-ink);
+}
+
+.nq-checks li::before {
+  content: '✓';
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: rgba(90, 164, 111, 0.15);
+  color: var(--nq-solid);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+/* The one primary button on a cold page. Full width so there is no doubt. */
+.nq-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 15px 20px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--gradient-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 1.02rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 24px -12px rgba(232, 141, 125, 0.85);
+  transition: var(--transition-normal);
+}
+
+body.dark-mode .nq-cta {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  color: #241f2b;
+  box-shadow: 0 10px 24px -12px rgba(184, 165, 212, 0.7);
+}
+
+.nq-cta:hover { transform: translateY(-2px); box-shadow: 0 16px 30px -12px rgba(232, 141, 125, 0.9); }
+.nq-cta:active { transform: translateY(0); }
+.nq-cta span { transition: var(--transition-fast); }
+.nq-cta:hover span { transform: translateX(3px); }
+
+/* ── The quiet second option ──────────────────────────────────────────── */
+
+.nq-secondary {
+  margin: 34px auto 0;
+  text-align: center;
+}
+
+.nq-secondary p {
+  margin: 0 0 8px;
+  font-family: var(--font-accent);
+  font-size: 1.18rem;
+  color: var(--nq-muted);
+}
+
+.nq-secondary button {
+  background: none;
+  border: 0;
+  padding: 4px 2px;
+  font-family: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--nq-accent);
+  cursor: pointer;
+  border-bottom: 1.5px solid transparent;
+  transition: var(--transition-fast);
+}
+
+.nq-secondary button:hover { border-bottom-color: var(--nq-accent); }
+
+@media (max-width: 620px) {
+  .nq-hero-card { padding: 26px 21px 22px; border-radius: var(--radius-lg); }
+  .nq-cold { padding-top: 8px; }
+}
+
+/* ── Building ─────────────────────────────────────────────────
+
+   The state between her first answer and a real verdict. Its whole job is to
+   show the engine working, so the dot is the load-bearing element: filled
+   means we have something, hollow means we are still gathering. Nothing here
+   states a result, because at answer three there isn't one.
+   ─────────────────────────────────────────────────────────────── */
+
+.nq-build-progress { margin-top: 26px; max-width: 460px; }
+
+.nq-build-count {
+  display: block;
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--nq-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-signals {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.nq-signal {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  border-radius: var(--radius-lg);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+}
+
+.nq-signal-dot {
+  flex: none;
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  border-radius: 50%;
+  border: 1.5px solid var(--nq-untested);
+  background: transparent;
+  transition: var(--transition-fast);
+}
+
+.nq-signal.is-on .nq-signal-dot,
+.nq-check-row.is-on .nq-signal-dot {
+  background: var(--nq-accent);
+  border-color: var(--nq-accent);
+  box-shadow: 0 0 0 3px rgba(232, 141, 125, 0.16);
+}
+
+body.dark-mode .nq-signal.is-on .nq-signal-dot,
+body.dark-mode .nq-check-row.is-on .nq-signal-dot {
+  box-shadow: 0 0 0 3px rgba(184, 165, 212, 0.2);
+}
+
+.nq-signal-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.nq-signal-name {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--nq-ink);
+}
+
+.nq-signal-state {
+  font-size: 0.79rem;
+  color: var(--nq-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-signal.is-on .nq-signal-state { color: var(--nq-accent); font-weight: 500; }
+
+/* ── Blueprint as a checklist ────────────────────────────────── */
+
+.nq-checklist { display: flex; flex-direction: column; }
+
+.nq-check-row {
+  display: grid;
+  grid-template-columns: 9px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 12px 4px;
+  border-bottom: 1px solid var(--nq-hairline-soft);
+}
+
+.nq-check-row:first-child { border-top: 1px solid var(--nq-hairline-soft); }
+
+.nq-check-row .nq-signal-dot { margin-top: 0; }
+
+.nq-check-label {
+  font-size: 0.93rem;
+  color: var(--nq-ink-soft);
+}
+
+.nq-check-row.is-on .nq-check-label { color: var(--nq-ink); font-weight: 500; }
+
+.nq-check-count {
+  font-size: 0.79rem;
+  color: var(--nq-accent);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* ── Blueprint rows ───────────────────────────────────────────────────── */
+
+.nq-blueprint { display: flex; flex-direction: column; }
+
+.nq-bp-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 150px 108px;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--nq-hairline-soft);
+}
+
+.nq-bp-row:first-child { border-top: 1px solid var(--nq-hairline-soft); }
+
+.nq-bp-name { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.nq-bp-label {
+  font-size: 0.95rem;
+  font-weight: 500;
+  color: var(--nq-ink);
+  letter-spacing: -0.008em;
+}
+
+.nq-bp-weight {
+  font-size: 0.75rem;
+  color: var(--nq-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-bp-track {
+  position: relative;
+  height: 7px;
+  border-radius: 999px;
+  background: var(--nq-surface-alt);
+  overflow: hidden;
+}
+
+body.dark-mode .nq-bp-track { background: rgba(255, 255, 255, 0.07); }
+
+.nq-bp-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 999px;
+  background: var(--nq-untested);
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nq-bp-fill.is-solid { background: var(--nq-solid); }
+.nq-bp-fill.is-improving { background: var(--nq-improving); }
+.nq-bp-fill.is-gap { background: var(--nq-gap); }
+
+/* Provisional: solid's colour, hollowed. Same direction, less certainty. */
+.nq-bp-fill.is-provisional {
+  background: repeating-linear-gradient(
+    90deg,
+    var(--nq-solid) 0 5px,
+    transparent 5px 10px
+  );
+}
+
+.nq-bp-verdict {
+  text-align: right;
+  white-space: nowrap;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--nq-muted);
+}
+
+.nq-bp-verdict.is-solid { color: var(--nq-solid); }
+.nq-bp-verdict.is-provisional { color: var(--nq-solid); }
+.nq-bp-verdict.is-improving { color: var(--nq-improving); }
+.nq-bp-verdict.is-gap { color: var(--nq-gap); }
+
+.nq-bp-untested {
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--nq-muted);
+  text-align: right;
+  white-space: nowrap;
+}
+
+/* An untested row used to render an empty track, which reads as broken rather
+   than as unmeasured. A dashed rail says "nothing here yet" out loud. */
+.nq-bp-track.is-empty {
+  background: transparent;
+  border-top: 2px dashed var(--nq-hairline);
+  height: 0;
+}
+
+/* ── Subject grid ─────────────────────────────────────────────────────── */
+
+.nq-subjects {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(246px, 1fr));
+  gap: 15px;
+}
+
+.nq-subject {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 22px 21px 19px;
+  border-radius: var(--radius-xl);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.nq-subject::after {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 2px;
+  background: var(--nq-untested);
+  opacity: 0.55;
+}
+
+.nq-subject.is-solid::after { background: var(--nq-solid); }
+.nq-subject.is-provisional::after { background: var(--nq-solid); opacity: 0.4; }
+.nq-subject.is-improving::after { background: var(--nq-improving); }
+.nq-subject.is-gap::after { background: var(--nq-gap); }
+
+.nq-subject:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--shadow-md);
+  border-color: var(--nq-accent);
+}
+
+.nq-subject h3 {
+  font-family: var(--font-handwritten);
+  font-size: 1.14rem;
+  font-weight: 600;
+  letter-spacing: -0.015em;
+  margin: 0;
+  color: var(--nq-ink);
+}
+
+.nq-subject p {
+  margin: 0;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--nq-ink-soft);
+  flex: 1 1 auto;
+}
+
+.nq-subject-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 3px;
+  font-size: 0.79rem;
+}
+
+.nq-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.73rem;
+  font-weight: 600;
+  background: var(--nq-surface-alt);
+  color: var(--nq-muted);
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+body.dark-mode .nq-pill { background: rgba(255, 255, 255, 0.06); }
+
+.nq-pill.is-solid { color: var(--nq-solid); border-color: currentColor; background: transparent; }
+.nq-pill.is-provisional { color: var(--nq-solid); border-style: dashed; border-color: currentColor; background: transparent; }
+.nq-pill.is-improving { color: var(--nq-improving); border-color: currentColor; background: transparent; }
+.nq-pill.is-gap { color: var(--nq-gap); border-color: currentColor; background: transparent; }
+
+.nq-subject-count { color: var(--nq-muted); font-variant-numeric: tabular-nums; }
+
+/* ── Concept list ─────────────────────────────────────────────────────── */
+
+.nq-concepts { display: flex; flex-direction: column; gap: 9px; }
+
+.nq-concept {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 13px 17px;
+  border-radius: var(--radius-md);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline-soft);
+  border-left: 3px solid var(--nq-gap);
+}
+
+.nq-concept-label {
+  font-size: 0.92rem;
+  color: var(--nq-ink);
+  font-weight: 500;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.nq-concept-score {
+  flex: 0 0 auto;
+  font-size: 0.8rem;
+  color: var(--nq-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Formats strip ────────────────────────────────────────────────────── */
+
+.nq-formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
+
+.nq-format {
+  padding: 18px 20px;
+  border-radius: var(--radius-lg);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.nq-format-name { font-size: 0.83rem; font-weight: 600; color: var(--nq-ink-soft); }
+
+.nq-format-num {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: -0.028em;
+  font-variant-numeric: tabular-nums;
+  color: var(--nq-ink);
+}
+
+.nq-format-num.is-thin { font-size: 1rem; color: var(--nq-muted); font-family: 'Outfit', sans-serif; font-weight: 500; }
+.nq-format-meta { font-size: 0.76rem; color: var(--nq-muted); font-variant-numeric: tabular-nums; }
+
+/* ── Subject page ─────────────────────────────────────────────────────── */
+
+.nq-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin: 8px 0 22px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.86rem;
+  color: var(--nq-muted);
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.nq-back:hover { color: var(--nq-accent); }
+
+.nq-subject-hero { margin-bottom: 34px; }
+
+.nq-subject-title {
+  font-family: var(--font-handwritten);
+  font-size: clamp(1.9rem, 4.4vw, 2.6rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.028em;
+  margin: 0 0 12px;
+  color: var(--nq-ink);
+}
+
+.nq-subject-blurb {
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--nq-ink-soft);
+  margin: 0;
+  max-width: 58ch;
+}
+
+.nq-subject-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+/* ── Subject page, centred ────────────────────────────────────────────────
+   The first version was a left-aligned table: six rows each repeating "Not
+   measured" and a "Practice" button. It read as a settings screen, and the
+   repetition made the page look like it was saying six things when it was
+   saying one. Same shape as the cold home page now — one question, one card,
+   one button, then the areas as a scannable grid. ─────────────────────── */
+
+.nq-subject-page { max-width: 640px; margin: 0 auto; text-align: center; }
+
+.nq-subject-page .nq-subject-title {
+  font-size: clamp(1.7rem, 4vw, 2.3rem);
+  letter-spacing: 0.02em;
+  margin-bottom: 14px;
+}
+
+.nq-subject-page .nq-subject-blurb {
+  margin: 0 auto;
+  max-width: 42ch;
+  font-size: 1.02rem;
+}
+
+/* The blueprint line. One honest sentence instead of three competing pills —
+   and it is the thing a generic question bank's subject page cannot say. */
+.nq-subject-share {
+  margin: 16px auto 0;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: var(--nq-muted);
+  max-width: 44ch;
+}
+
+.nq-subject-share b { color: var(--nq-ink-soft); font-weight: 600; }
+
+.nq-subject-standing {
+  display: inline-flex;
+  margin: 18px auto 0;
+}
+
+/* ── "Where should I start?" ──────────────────────────────────────────── */
+
+.nq-start-card {
+  position: relative;
+  margin: 34px auto 0;
+  max-width: 470px;
+  padding: 30px 30px 26px;
+  border-radius: var(--radius-2xl);
+  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--nq-surface-alt) 100%);
+  border: 1px solid rgba(232, 141, 125, 0.28);
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+}
+
+body.dark-mode .nq-start-card {
+  border-color: rgba(184, 165, 212, 0.3);
+  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--dark-bg-secondary) 100%);
+}
+
+.nq-start-card::before {
+  content: '';
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: var(--gradient-primary);
+}
+
+body.dark-mode .nq-start-card::before {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+}
+
+.nq-start-card h2 {
+  font-family: var(--font-handwritten);
+  font-size: 1.42rem;
+  font-weight: 700;
+  line-height: 1.24;
+  margin: 0 0 11px;
+  color: var(--nq-ink);
+}
+
+.nq-start-card > p {
+  margin: 0 0 18px;
+  font-size: 0.96rem;
+  line-height: 1.58;
+  color: var(--nq-ink-soft);
+  max-width: 34ch;
+  margin-inline: auto;
+}
+
+.nq-start-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: rgba(232, 141, 125, 0.1);
+  font-size: 0.81rem;
+  font-weight: 600;
+  color: var(--nq-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+body.dark-mode .nq-start-meta { background: rgba(184, 165, 212, 0.14); }
+
+/* ── "Or choose an area" ──────────────────────────────────────────────── */
+
+.nq-or {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 44px 0 22px;
+}
+
+.nq-or::before,
+.nq-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px dashed var(--nq-hairline);
+}
+
+.nq-or span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--nq-muted);
+  white-space: nowrap;
+}
+
+/* 260px lands at three across on desktop, so the six areas of a typical
+   subject fill two clean rows. At 215px they fitted four and the last row
+   held two orphans — and tiles that wide read as chips rather than as
+   destinations. */
+.nq-area-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+  max-width: 860px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.nq-area-tile {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 15px 16px;
+  border-radius: var(--radius-lg);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-normal);
+}
+
+.nq-area-tile:hover {
+  transform: translateY(-2px);
+  border-color: var(--nq-accent);
+  box-shadow: var(--shadow-md);
+}
+
+.nq-area-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 11px;
+  background: rgba(232, 141, 125, 0.1);
+  color: var(--nq-accent);
+  transition: var(--transition-fast);
+}
+
+.nq-area-icon svg { width: 19px; height: 19px; }
+
+body.dark-mode .nq-area-icon { background: rgba(184, 165, 212, 0.14); }
+
+/* The plate warms on hover so the whole tile reads as one target. */
+.nq-area-tile:hover .nq-area-icon { background: rgba(232, 141, 125, 0.2); }
+body.dark-mode .nq-area-tile:hover .nq-area-icon { background: rgba(184, 165, 212, 0.24); }
+
+.nq-area-body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+
+.nq-area-title {
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: var(--nq-ink);
+  line-height: 1.3;
+}
+
+/* Only says something when there IS something to say. An untested area shows
+   no status line at all rather than six repetitions of "Not measured". */
+.nq-area-status {
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-area-status.is-solid { color: var(--nq-solid); }
+.nq-area-status.is-provisional { color: var(--nq-solid); }
+.nq-area-status.is-improving { color: var(--nq-improving); }
+.nq-area-status.is-gap { color: var(--nq-gap); }
+
+@media (max-width: 620px) {
+  .nq-start-card { padding: 24px 20px 21px; border-radius: var(--radius-lg); }
+  .nq-area-grid { grid-template-columns: 1fr; }
+}
+
+.nq-areas { display: flex; flex-direction: column; }
+
+.nq-area {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  align-items: center;
+  gap: 18px;
+  padding: 15px 4px;
+  border-bottom: 1px solid var(--nq-hairline-soft);
+}
+
+.nq-area:first-child { border-top: 1px solid var(--nq-hairline-soft); }
+
+.nq-area-name { font-size: 0.96rem; color: var(--nq-ink); font-weight: 500; }
+.nq-area-count { font-size: 0.79rem; color: var(--nq-muted); font-variant-numeric: tabular-nums; }
+
+.nq-area-go {
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--nq-hairline);
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--nq-ink-soft);
+  cursor: pointer;
+  transition: var(--transition-fast);
+  white-space: nowrap;
+}
+
+.nq-area-go:hover { border-color: var(--nq-accent); color: var(--nq-accent); }
+
+/* ── Practice session ───────────────────────────────────────────
+
+   The whole screen is one column at a reading measure. The first version let
+   the question and its options run the full 1060px shell, which turned four
+   answers into two ragged rows of inline text — they read as a paragraph, not
+   as choices.
+
+   Order on the page is the order of the task: progress, then orientation,
+   then the question, then the options, then — only once she has chosen — how
+   sure she is, then the commit.
+   ─────────────────────────────────────────────────────────────── */
+
+.nq-practice-head {
+  max-width: 680px;
+  margin: 0 auto 26px;
+}
+
+.nq-practice-count {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+  color: var(--nq-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.nq-progress {
+  height: 5px;
+  border-radius: 999px;
+  background: rgba(232, 141, 125, 0.14);
+  overflow: hidden;
+}
+
+body.dark-mode .nq-progress { background: rgba(184, 165, 212, 0.16); }
+
+.nq-progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--gradient-primary);
+  transition: width 0.45s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dark-mode .nq-progress-fill {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+}
+
+/* Orientation, not headline. She is here to read the question. */
+.nq-practice-meta {
+  margin: 11px 0 0;
+  font-size: 0.83rem;
+  font-style: italic;
+  color: var(--nq-muted);
+}
+
+/* ── The question card ─────────────────────────────────────── */
+
+.nq-question {
+  max-width: 680px;
+  margin: 0 auto;
+  padding: 34px 34px 30px;
+  border-radius: var(--radius-2xl);
+  background: var(--nq-surface);
+  border: 1px solid var(--nq-hairline);
+  box-shadow: var(--shadow-md);
+}
+
+.nq-mcq-stem {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  font-size: 1.24rem;
+  font-weight: 600;
+  line-height: 1.5;
+  letter-spacing: -0.008em;
+  margin: 0 0 8px;
+  color: var(--nq-ink);
+  text-wrap: pretty;
+}
+
+.nq-mcq-hint {
+  margin: 0 0 22px;
+  font-size: 0.85rem;
+  color: var(--nq-muted);
+}
+
+/* ── Options ────────────────────────────────────────────── */
+
+.nq-options { display: flex; flex-direction: column; gap: 10px; }
+
+.nq-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  width: 100%;
+  padding: 15px 17px;
+  border-radius: var(--radius-lg);
+  border: 1.5px solid var(--nq-hairline);
+  background: var(--nq-surface-alt);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+body.dark-mode .nq-option { background: rgba(255, 255, 255, 0.03); }
+
+.nq-option:hover:not(:disabled) {
+  border-color: var(--nq-accent);
+  background: var(--nq-surface);
+  transform: translateY(-1px);
+}
+
+.nq-option:disabled { cursor: default; }
+
+.nq-option-letter {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 27px;
+  height: 27px;
+  border-radius: 50%;
+  border: 1.5px solid var(--nq-hairline);
+  background: var(--nq-surface);
+  font-size: 0.79rem;
+  font-weight: 700;
+  color: var(--nq-muted);
+  transition: var(--transition-fast);
+}
+
+body.dark-mode .nq-option-letter { background: rgba(255, 255, 255, 0.06); }
+
+.nq-option-text {
+  font-size: 0.97rem;
+  line-height: 1.5;
+  color: var(--nq-ink);
+  padding-top: 2px;
+}
+
+/* Chosen, not yet committed — the state that has to read clearly, because
+   the whole point of this screen is that she can still change her mind. */
+.nq-option.is-picked {
+  border-color: var(--nq-accent);
+  background: rgba(232, 141, 125, 0.09);
+}
+
+body.dark-mode .nq-option.is-picked { background: rgba(184, 165, 212, 0.14); }
+
+.nq-option.is-picked .nq-option-letter {
+  background: var(--nq-accent);
+  border-color: var(--nq-accent);
+  color: #fff;
+}
+
+body.dark-mode .nq-option.is-picked .nq-option-letter { color: #241f2b; }
+
+/* After the commit. */
+.nq-option.is-revealed { opacity: 0.62; }
+
+.nq-option.is-revealed.is-correct,
+.nq-option.is-revealed.is-wrong { opacity: 1; }
+
+.nq-option.is-correct {
+  border-color: var(--nq-solid);
+  background: rgba(90, 164, 111, 0.1);
+}
+
+.nq-option.is-correct .nq-option-letter {
+  background: var(--nq-solid);
+  border-color: var(--nq-solid);
+  color: #fff;
+}
+
+.nq-option.is-wrong {
+  border-color: var(--nq-gap);
+  background: rgba(224, 92, 75, 0.09);
+}
+
+.nq-option.is-wrong .nq-option-letter {
+  background: var(--nq-gap);
+  border-color: var(--nq-gap);
+  color: #fff;
+}
+
+/* ── Confidence, after the choice ────────────────────────────────
+
+   Three equal cards rather than three pills. The marks are a progression —
+   open question, half filled, resolved check — so the row reads as a SCALE
+   at a glance, which a row of same-shaped pills never does however it is
+   labelled.
+
+   It stays optional, so nothing here is pre-selected and nothing blocks the
+   commit below it.
+   ─────────────────────────────────────────────────────────────── */
+
+.nq-confidence {
+  margin-top: 22px;
+  padding: 14px 16px 13px;
+  border-radius: var(--radius-lg);
+  background: var(--nq-surface-alt);
+  border: 1px dashed var(--nq-hairline);
+  animation: nqRise 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+body.dark-mode .nq-confidence { background: rgba(255, 255, 255, 0.03); }
+
+@keyframes nqRise {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.nq-confidence-ask {
+  display: block;
+  margin-bottom: 10px;
+  font-size: 0.84rem;
+  color: var(--nq-muted);
+}
+
+.nq-confidence-scale {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.nq-conf-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 8px 9px;
+  border-radius: var(--radius-md);
+  border: 1.5px solid var(--nq-hairline);
+  background: var(--nq-surface);
+  font-family: inherit;
+  cursor: pointer;
+  transition: var(--transition-fast);
+}
+
+.nq-conf-mark {
+  display: inline-flex;
+  width: 20px;
+  height: 20px;
+  color: var(--nq-muted);
+  transition: var(--transition-fast);
+}
+
+.nq-conf-label {
+  font-size: 0.79rem;
+  font-weight: 500;
+  color: var(--nq-ink-soft);
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.nq-conf-card:hover {
+  border-color: var(--nq-accent);
+  transform: translateY(-2px);
+}
+
+.nq-conf-card:hover .nq-conf-mark { color: var(--nq-accent); }
+
+.nq-conf-card.is-on {
+  border-color: var(--nq-accent);
+  background: rgba(232, 141, 125, 0.15);
+  box-shadow:
+    0 0 0 3px rgba(232, 141, 125, 0.15),
+    0 4px 12px -6px rgba(232, 141, 125, 0.55);
+}
+
+body.dark-mode .nq-conf-card.is-on {
+  background: rgba(184, 165, 212, 0.2);
+  box-shadow:
+    0 0 0 3px rgba(184, 165, 212, 0.18),
+    0 4px 12px -6px rgba(184, 165, 212, 0.5);
+}
+
+.nq-conf-card.is-on .nq-conf-mark { color: var(--nq-accent); transform: scale(1.08); }
+
+/* Colour AND weight, so the choice still reads if colour is unavailable. */
+.nq-conf-card.is-on .nq-conf-label { color: var(--nq-accent); font-weight: 700; }
+
+/* ── Commit ─────────────────────────────────────────────── */
+
+.nq-mcq-actions { display: flex; justify-content: flex-end; margin-top: 24px; }
+
+.nq-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  padding: 13px 26px;
+  border: 0;
+  border-radius: var(--radius-lg);
+  background: var(--gradient-primary);
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.98rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 8px 20px -10px rgba(232, 141, 125, 0.85);
+  transition: var(--transition-normal);
+}
+
+body.dark-mode .nq-check {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  color: #241f2b;
+  box-shadow: 0 8px 20px -10px rgba(184, 165, 212, 0.7);
+}
+
+.nq-check:hover:not(:disabled) { transform: translateY(-2px); }
+.nq-check:active:not(:disabled) { transform: translateY(0); }
+
+/* Disabled says "not yet", not "broken" — it stays legible so the student can
+   see what she is being asked to do first. */
+.nq-check:disabled {
+  background: var(--nq-surface-alt);
+  color: var(--nq-muted);
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+body.dark-mode .nq-check:disabled {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--nq-muted);
+}
+
+/* ── Reveal ─────────────────────────────────────────────── */
+
+.nq-verdict-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 22px;
+  padding: 15px 18px;
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--nq-solid);
+  background: rgba(90, 164, 111, 0.1);
+  animation: nqRise 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.nq-verdict-strip.is-wrong {
+  border-left-color: var(--nq-gap);
+  background: rgba(224, 92, 75, 0.09);
+}
+
+.nq-verdict-label {
+  font-size: 0.83rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--nq-solid);
+}
+
+.nq-verdict-strip.is-wrong .nq-verdict-label { color: var(--nq-gap); }
+
+.nq-verdict-blurb { font-size: 0.94rem; line-height: 1.55; color: var(--nq-ink); }
+
+.nq-rationale { margin-top: 14px; }
+
+.nq-rationale-toggle {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: var(--nq-accent);
+  cursor: pointer;
+  border-bottom: 1.5px solid transparent;
+}
+
+.nq-rationale-toggle:hover { border-bottom-color: var(--nq-accent); }
+
+.nq-rationale-text {
+  margin-top: 11px;
+  font-size: 0.93rem;
+  line-height: 1.66;
+  color: var(--nq-ink-soft);
+}
+
+.nq-rationale-text p { margin: 0 0 9px; }
+.nq-rationale-text :last-child { margin-bottom: 0; }
+
+/* The session's Next control sits under the card, at the same measure. */
+.nq-question + .nq-action { max-width: 680px; margin-left: auto; margin-right: auto; }
+
+@media (max-width: 620px) {
+  .nq-question { padding: 22px 18px 20px; border-radius: var(--radius-lg); }
+  .nq-conf-label { font-size: 0.76rem; }
+  .nq-mcq-actions { justify-content: stretch; }
+  .nq-check { width: 100%; justify-content: center; }
+}
+
+/* ── Empty / loading ──────────────────────────────────────────────────── */
+
+.nq-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: var(--nq-muted);
+  font-size: 0.92rem;
+}
+
+.nq-empty {
+  padding: 26px 24px;
+  border-radius: var(--radius-lg);
+  background: var(--nq-surface-alt);
+  border: 1px dashed var(--nq-hairline);
+  color: var(--nq-ink-soft);
+  font-size: 0.92rem;
+  line-height: 1.6;
+}
+
+/* Accessibility: every interactive element keeps a visible focus ring. */
+.nq button:focus-visible,
+.nq a:focus-visible {
+  outline: 2px solid var(--nq-accent);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .nq *, .nq *::before, .nq *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}
+
+/* ── Responsive ───────────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .nq-doors { grid-template-columns: 1fr; }
+  .nq-verdict-body { flex-direction: column; gap: 26px; }
+  .nq-readiness {
+    text-align: left;
+    padding-left: 0;
+    padding-top: 22px;
+    border-left: 0;
+    border-top: 1px solid var(--nq-hairline-soft);
+    width: 100%;
+  }
+}
+
+@media (max-width: 620px) {
+  .nq-wrap { padding: 0 18px 72px; }
+  .nq-topbar { padding: 16px 18px; flex-wrap: wrap; }
+  .nq-verdict { padding: 28px 22px 24px; border-radius: var(--radius-lg); }
+  .nq-bp-row { grid-template-columns: minmax(0, 1fr) 104px; row-gap: 9px; }
+  .nq-bp-track { grid-column: 1 / -1; order: 3; }
+  .nq-section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
+  .nq-section-note { text-align: left; }
+}

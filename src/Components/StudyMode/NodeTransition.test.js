@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '../../i18n/i18n';
 import NodeTransition from './NodeTransition';
 import { get_node_debrief } from '../../Services/FastAPICalls';
@@ -199,5 +199,46 @@ describe('NodeTransition — the post-node readout', () => {
     expect(screen.queryByText('Your next step is:')).toBeNull();
     expect(screen.queryByText('Your next recap is ready:')).toBeNull();
     expect(screen.queryByText('Or tell the coach what you want')).toBeNull();
+  });
+});
+
+describe('readiness increase animation', () => {
+  const originalMatchMedia = window.matchMedia;
+  afterEach(() => {
+    window.matchMedia = originalMatchMedia;
+    jest.restoreAllMocks();
+  });
+
+  test('counts through intermediate percentages and stops at the actual increase', () => {
+    window.matchMedia = jest.fn(() => ({ matches: false }));
+    let nextFrame;
+    const request = jest.spyOn(window, 'requestAnimationFrame').mockImplementation((callback) => {
+      nextFrame = callback;
+      return 1;
+    });
+    const cancel = jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
+    get_node_debrief.mockReturnValue(new Promise(() => {}));
+    const { unmount } = setup({ examDate: new Date('2030-01-01'), readinessDelta: 31 });
+    const counter = screen.getByText('0', { selector: '.nt2-score-line__counter' });
+    expect(counter).toHaveTextContent('0');
+    act(() => nextFrame(0));
+    act(() => nextFrame(550));
+    expect(Number(counter.textContent)).toBeGreaterThan(0);
+    expect(Number(counter.textContent)).toBeLessThan(31);
+    act(() => nextFrame(1100));
+    expect(counter).toHaveTextContent('31');
+    expect(request).toHaveBeenCalledTimes(3);
+    unmount();
+    expect(cancel).toHaveBeenCalledWith(1);
+  });
+
+  test('shows the final percentage immediately when reduced motion is preferred', () => {
+    window.matchMedia = jest.fn(() => ({ matches: true }));
+    const request = jest.spyOn(window, 'requestAnimationFrame');
+    get_node_debrief.mockReturnValue(new Promise(() => {}));
+    const { unmount } = setup({ examDate: new Date('2030-01-01'), readinessDelta: 31 });
+    expect(screen.getByText('31', { selector: '.nt2-score-line__counter' })).toBeInTheDocument();
+    expect(request).not.toHaveBeenCalled();
+    unmount();
   });
 });

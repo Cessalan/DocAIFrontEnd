@@ -235,226 +235,12 @@
   color: #b95644;
 }
 
-/* ==========================================================================
-   PlanDatePicker — sticky-note styled calendar popover
+/* The calendar popover that used to live here now ships with the shared
+   component that owns it: src/Components/Common/DatePicker.{js,css}.
+   It was only ever styled here by accident of CRA bundling every imported
+   stylesheet globally — ExamDrill rendered the same picker with no rules of
+   its own and looked correct purely because this file happened to load. */
 
-   Rendered into document.body via a React portal because the parent card
-   has transform:rotate (creates a stacking context), which would otherwise
-   trap the popover beneath the chat input. Positioned with position:fixed
-   against the trigger button's bounding rect (top/left set inline by JS).
-   ========================================================================== */
-.plan-datepicker {
-  position: fixed;
-  z-index: 9999;
-  /* width set inline by JS so the layout calc and the rendered width agree */
-  padding: 14px 14px 12px;
-  background: #ffffff;
-  border: 2px solid var(--po-border);
-  border-radius: 16px 18px 16px 17px;
-  box-shadow: 4px 4px 0 rgba(60, 60, 60, 0.1),
-              0 12px 28px rgba(0, 0, 0, 0.18),
-              0 4px 10px rgba(0, 0, 0, 0.08);
-  transform: rotate(-0.4deg);
-  transform-origin: top left;
-  animation: po-card-in 0.32s var(--po-wobble);
-  color: var(--po-text);
-  user-select: none;
-
-  /* Local copies of the design-system vars — needed because the popover is
-     portaled outside the .plan-onboarding wrapper that originally defined them. */
-  --sticky-coral:    linear-gradient(135deg, #ffd6cc 0%, #ffe4d9 100%);
-  --po-text:         #3d3d3d;
-  --po-text-muted:   #6b6b6b;
-  --po-text-soft:    #9a9a9a;
-  --po-border:       rgba(100, 100, 100, 0.15);
-  --po-accent-coral: #d97a6a;
-  --po-accent-soft:  rgba(232, 141, 125, 0.4);
-  --po-wobble:       cubic-bezier(0.68, -0.55, 0.265, 1.55);
-  --po-ease:         cubic-bezier(0.4, 0, 0.2, 1);
-}
-
-.plan-datepicker__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
-
-.plan-datepicker__month {
-  flex: 1;
-  text-align: center;
-  font-size: 14.5px;
-  font-weight: 700;
-  letter-spacing: -0.1px;
-  color: var(--po-text);
-  text-transform: capitalize;
-}
-
-.plan-datepicker__nav {
-  width: 30px;
-  height: 30px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--sticky-coral);
-  color: #8b3d2e;
-  border: 1.5px solid var(--po-accent-soft);
-  border-radius: 9px 11px 9px 10px;
-  font-size: 18px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.25s var(--po-wobble);
-  box-shadow: 1.5px 1.5px 0 rgba(60, 60, 60, 0.08);
-}
-
-.plan-datepicker__nav:hover:not(:disabled) {
-  transform: translateY(-2px) scale(1.05);
-  border-color: var(--po-accent-coral);
-  box-shadow: 2.5px 2.5px 0 rgba(60, 60, 60, 0.12);
-}
-
-.plan-datepicker__nav:active:not(:disabled) {
-  transform: translateY(0) scale(0.96);
-  box-shadow: 1px 1px 0 rgba(60, 60, 60, 0.08);
-}
-
-.plan-datepicker__nav:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
-  box-shadow: none;
-}
-
-.plan-datepicker__weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-  margin-bottom: 6px;
-  padding: 0 2px;
-}
-
-.plan-datepicker__weekday {
-  text-align: center;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  color: var(--po-text-soft);
-  text-transform: uppercase;
-}
-
-.plan-datepicker__grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 3px;
-}
-
-.plan-datepicker__day {
-  aspect-ratio: 1;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  border: 1.5px solid transparent;
-  border-radius: 8px 10px 8px 9px;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--po-text);
-  cursor: pointer;
-  transition: all 0.2s var(--po-ease);
-  padding: 0;
-  line-height: 1;
-}
-
-.plan-datepicker__day:hover:not(:disabled) {
-  background: rgba(232, 141, 125, 0.14);
-  border-color: var(--po-accent-soft);
-  transform: scale(1.06);
-}
-
-.plan-datepicker__day.is-outside {
-  color: rgba(154, 154, 154, 0.45);
-  font-weight: 500;
-}
-
-.plan-datepicker__day.is-today {
-  border-color: var(--po-accent-coral);
-  color: var(--po-accent-coral);
-  font-weight: 700;
-}
-
-.plan-datepicker__day.is-selected,
-.plan-datepicker__day.is-selected:hover {
-  background: var(--sticky-coral);
-  border-color: var(--po-accent-coral);
-  color: #5b2a20;
-  transform: scale(1.05);
-  box-shadow: 1.5px 1.5px 0 rgba(60, 60, 60, 0.1);
-}
-
-.plan-datepicker__day.is-disabled {
-  opacity: 0.32;
-  cursor: not-allowed;
-  text-decoration: line-through;
-  text-decoration-color: rgba(154, 154, 154, 0.6);
-}
-
-.plan-datepicker__day.is-disabled:hover {
-  background: transparent;
-  border-color: transparent;
-  transform: none;
-}
-
-.plan-datepicker__day:focus-visible {
-  outline: none;
-  box-shadow: 0 0 0 2px rgba(232, 141, 125, 0.6);
-}
-
-/* ── Dark mode ─────────────────────────────────────────────────────── */
-body.dark-mode .plan-datepicker {
-  background: #2b2834;
-  border-color: rgba(255, 255, 255, 0.1);
-  color: var(--po-text);
-  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.55);
-}
-
-body.dark-mode .plan-datepicker__month { color: #f0ebf5; }
-body.dark-mode .plan-datepicker__weekday { color: #8a8290; }
-
-body.dark-mode .plan-datepicker__nav {
-  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
-  color: #5b2a20;
-  border-color: rgba(232, 141, 125, 0.6);
-}
-
-body.dark-mode .plan-datepicker__day {
-  color: #e8e2ef;
-}
-
-body.dark-mode .plan-datepicker__day:hover:not(:disabled) {
-  background: rgba(232, 141, 125, 0.22);
-  border-color: rgba(232, 141, 125, 0.5);
-}
-
-body.dark-mode .plan-datepicker__day.is-outside {
-  color: rgba(168, 159, 176, 0.4);
-}
-
-body.dark-mode .plan-datepicker__day.is-today {
-  border-color: #f5c4b8;
-  color: #ffd4c9;
-}
-
-body.dark-mode .plan-datepicker__day.is-selected,
-body.dark-mode .plan-datepicker__day.is-selected:hover {
-  background: linear-gradient(135deg, #f5c4b8 0%, #ffd4c9 100%);
-  color: #1f1f1f;
-  border-color: #f5c4b8;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .plan-datepicker { animation: none; transform: rotate(-0.4deg); }
-  .plan-datepicker__day,
-  .plan-datepicker__nav { transition-duration: 0.01ms !important; }
-}
 
 .plan-onboarding__helper {
   margin: 4px 0 0;
@@ -1097,6 +883,12 @@ body.dark-mode .plan-onboarding__prep-card {
    736px — that is the line the eye reads the column against, so it is the
    number to match, not the 800 container.
    ========================================================================== */
+.plan-onboarding[data-phase="welcome"],
+.plan-onboarding[data-phase="retry"],
+.plan-onboarding[data-phase="context"],
+.plan-onboarding[data-phase="intelligence"],
+.plan-onboarding[data-phase="report"],
+.plan-onboarding[data-phase="reveal"],
 .plan-onboarding[data-phase="insights"],
 .plan-onboarding[data-phase="lesson"] {
   /* A DEFINITE width, not a percentage — this is the whole trick.
@@ -1131,6 +923,18 @@ body.dark-mode .plan-onboarding__prep-card {
   max-width: 100%;
 }
 
+/* The course-intelligence cards KEEP their own 560px cap and centre inside the
+   736px column. They are read top-to-bottom as prose and lists — a report
+   stretched to the full composer width puts 90 characters on a line, which is
+   past the point where the eye loses its place between rows. */
+.plan-onboarding .course-context,
+.plan-onboarding .ci-timeline,
+.plan-onboarding .ci-report,
+.plan-onboarding .ci-reveal {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 /* The insights card supplies its own surface, so it no longer needs to sit
    inside a second one — but it does still want to read as a card. */
 .plan-onboarding[data-phase="insights"] .upload-insights {
@@ -1141,6 +945,12 @@ body.dark-mode .plan-onboarding__prep-card {
    a plain attribute selector on specificity, so the dark theme has to be told
    separately — otherwise the wrapper is invisible in light mode and still
    casts a drop shadow around nothing in dark. */
+body.dark-mode .plan-onboarding[data-phase="welcome"],
+body.dark-mode .plan-onboarding[data-phase="retry"],
+body.dark-mode .plan-onboarding[data-phase="context"],
+body.dark-mode .plan-onboarding[data-phase="intelligence"],
+body.dark-mode .plan-onboarding[data-phase="report"],
+body.dark-mode .plan-onboarding[data-phase="reveal"],
 body.dark-mode .plan-onboarding[data-phase="insights"],
 body.dark-mode .plan-onboarding[data-phase="lesson"] {
   box-shadow: none;
@@ -1148,6 +958,12 @@ body.dark-mode .plan-onboarding[data-phase="lesson"] {
 }
 
 @media (max-width: 900px) {
+  .plan-onboarding[data-phase="welcome"],
+  .plan-onboarding[data-phase="retry"],
+  .plan-onboarding[data-phase="context"],
+  .plan-onboarding[data-phase="intelligence"],
+  .plan-onboarding[data-phase="report"],
+  .plan-onboarding[data-phase="reveal"],
   .plan-onboarding[data-phase="insights"],
   .plan-onboarding[data-phase="lesson"] {
     max-width: 100%;

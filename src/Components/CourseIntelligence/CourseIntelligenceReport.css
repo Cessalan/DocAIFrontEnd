@@ -1,0 +1,424 @@
+@import './CourseIntelligence.css';
+
+/* ==========================================================================
+   CourseIntelligenceReport — the findings.
+
+   The reveal is staggered: blocks fade up in sequence so the card reads as
+   something being handed over rather than something that was already there.
+   The stagger is CSS-only and capped, because the last block on a long report
+   must not wait a second and a half to appear.
+   ========================================================================== */
+
+.ci-report {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 22px 20px 18px;
+  background: var(--ci-surface);
+  border: 2px solid var(--ci-border);
+  border-radius: var(--ci-radius-lg);
+  box-shadow: var(--ci-shadow);
+  animation: ci-card-in 0.5s var(--ci-wobble);
+}
+
+.ci-report__header {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-bottom: 12px;
+  border-bottom: 1.5px dashed var(--ci-border);
+}
+
+.ci-report__eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ci-accent);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.ci-report__title {
+  margin: 0;
+  font-size: 19px;
+  font-weight: 750;
+  line-height: 1.25;
+  color: var(--ci-text);
+}
+
+.ci-report__school {
+  margin: 0;
+  font-size: 13px;
+  color: var(--ci-text-muted);
+}
+
+/* ── Blocks ────────────────────────────────────────────────────────── */
+
+.ci-block {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 13px 14px;
+  background: var(--ci-surface-soft);
+  border-radius: var(--ci-radius-md);
+  opacity: 0;
+  animation: ci-block-in 0.45s var(--ci-ease) forwards;
+}
+
+.ci-block:nth-of-type(1) { animation-delay: 0.05s; }
+.ci-block:nth-of-type(2) { animation-delay: 0.15s; }
+.ci-block:nth-of-type(3) { animation-delay: 0.25s; }
+.ci-block:nth-of-type(4) { animation-delay: 0.35s; }
+.ci-block:nth-of-type(n+5) { animation-delay: 0.45s; }
+
+@keyframes ci-block-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.ci-block__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--ci-text);
+}
+
+.ci-block__title svg {
+  color: var(--ci-accent);
+  flex-shrink: 0;
+}
+
+.ci-block__lead {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ci-text);
+}
+
+.ci-block__meta {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--ci-text-muted);
+}
+
+.ci-block__text {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ci-text-muted);
+}
+
+.ci-block__subhead {
+  margin: 4px 0 0;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ci-text-soft);
+}
+
+.ci-block__foot {
+  margin: 2px 0 0;
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ci-text-soft);
+}
+
+.ci-block__foot--muted {
+  font-style: italic;
+}
+
+.ci-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding-left: 16px;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--ci-text-muted);
+}
+
+/* ── Focus (top three topics) ──────────────────────────────────────── */
+
+.ci-focus {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: ci-focus;
+}
+
+.ci-focus__item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ci-focus__rank {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--ci-text-muted);
+  background: var(--ci-surface-inset);
+  border: 1.5px solid var(--ci-border);
+}
+
+.ci-focus__item.is-focus .ci-focus__rank {
+  color: #ffffff;
+  border-color: transparent;
+  background: linear-gradient(135deg, #e88d7d 0%, #f4a896 100%);
+}
+
+body.dark-mode .ci-focus__item.is-focus .ci-focus__rank {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  color: #2a2a2a;
+}
+
+.ci-focus__body {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.ci-focus__topic {
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ci-text);
+}
+
+/* The tint is the confidence. A verified reason and an inferred one must not
+   look identical, because the student's trust in the first is what pays for
+   the second. */
+.ci-focus__reason {
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ci-text-muted);
+  padding-left: 8px;
+  border-left: 2px solid var(--ci-evidence, var(--ci-border));
+}
+
+/* ── Priority list ─────────────────────────────────────────────────── */
+
+.ci-block--priority {
+  background: var(--ci-inference-soft);
+}
+
+.ci-priority {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ci-priority__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.ci-priority__score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 22px;
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ci-inference);
+  background: var(--ci-surface);
+  border: 1.5px solid var(--ci-inference);
+}
+
+.ci-priority__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.ci-priority__topic {
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--ci-text);
+}
+
+.ci-priority__evidence {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ci-text-muted);
+  padding-left: 8px;
+  border-left: 2px solid var(--ci-evidence, var(--ci-border));
+}
+
+/* ── Citations ─────────────────────────────────────────────────────── */
+
+.ci-cites {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin: 4px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ci-cites__link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--ci-public);
+  background: var(--ci-public-soft);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: opacity var(--ci-ease);
+}
+
+.ci-cites__link:hover {
+  opacity: 0.8;
+  text-decoration: underline;
+}
+
+.ci-cites__more {
+  font-size: 11px;
+  color: var(--ci-text-soft);
+}
+
+/* ── Resources ─────────────────────────────────────────────────────── */
+
+.ci-resources {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ci-resources__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ci-resources__item a {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  text-decoration: none;
+  flex-wrap: wrap;
+}
+
+.ci-resources__title {
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--ci-public);
+}
+
+.ci-resources__item a:hover .ci-resources__title {
+  text-decoration: underline;
+}
+
+.ci-resources__host {
+  font-size: 11px;
+  color: var(--ci-text-soft);
+}
+
+.ci-resources__why {
+  font-size: 11.5px;
+  line-height: 1.4;
+  color: var(--ci-text-muted);
+}
+
+/* ── Empty research and handoff ────────────────────────────────────── */
+
+/* Not an error, and styled so nobody mistakes it for one: no red, no icon,
+   no border. It is a sentence about where the plan comes from. */
+.ci-report__empty {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: var(--ci-text-muted);
+  font-style: italic;
+}
+
+.ci-report__handoff {
+  margin: 0;
+  font-size: 13.5px;
+  font-weight: 650;
+  color: var(--ci-text);
+}
+
+.ci-report__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 12px 18px;
+  font-family: inherit;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: #ffffff;
+  background: linear-gradient(135deg, #e88d7d 0%, #f4a896 100%);
+  border: none;
+  border-radius: var(--ci-radius-md);
+  box-shadow: 2px 2px 0 rgba(60, 60, 60, 0.12);
+  cursor: pointer;
+  transition: transform var(--ci-wobble), box-shadow var(--ci-ease);
+}
+
+.ci-report__cta:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 3px 4px 0 rgba(60, 60, 60, 0.14);
+}
+
+.ci-report__cta:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ci-report__arrow {
+  transition: transform var(--ci-ease);
+}
+
+.ci-report__cta:hover:not(:disabled) .ci-report__arrow {
+  transform: translateX(3px);
+}
+
+body.dark-mode .ci-report__cta {
+  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  color: #2a2a2a;
+}
+
+@media (max-width: 560px) {
+  .ci-report {
+    padding: 18px 14px 14px;
+  }
+
+  .ci-report__title { font-size: 17px; }
+  .ci-block { padding: 11px 12px; }
+}
