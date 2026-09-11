@@ -1,0 +1,38 @@
+.practice-entry {
+  --entry-bg:var(--bg-paper,#fffef9); --entry-ink:var(--text-primary,#3d3d3d);
+  --entry-muted:var(--text-secondary,#6b6b6b); --entry-accent:var(--primary-coral,#e88d7d);
+  --entry-soft:rgba(232,141,125,.10); --entry-border:rgba(160,112,96,.17); --entry-button-ink:#34221d;
+  box-sizing:border-box; position:relative; width:460px; max-width:100%; padding:26px 22px 22px; margin-top:10px; border:1px solid var(--entry-border);
+  border-radius:16px 20px 18px 14px; background:var(--entry-bg); color:var(--entry-ink); font-family:inherit;
+  box-shadow:0 3px 14px rgba(40,30,20,.035);
+}
+body.dark-mode .practice-entry,[data-theme="dark"] .practice-entry,.dark .practice-entry {
+  --entry-bg:var(--dark-bg-elevated,#262626); --entry-ink:#eeeaf2; --entry-muted:#b1aab9;
+  --entry-accent:var(--dark-accent,#b8a5d4); --entry-soft:var(--dark-accent-muted,rgba(200,180,220,.15));
+  --entry-border:var(--dark-border-accent,rgba(200,180,220,.25)); --entry-button-ink:#241e2e;
+  box-shadow:none;
+}
+.practice-entry * { box-sizing:border-box; }
+.practice-entry::before { content:''; position:absolute; top:-7px; right:34px; width:58px; height:16px; transform:rotate(5deg); background:var(--entry-soft); border:1px solid var(--entry-border); border-radius:2px; pointer-events:none; }
+.practice-entry-heading { display:flex; align-items:center; gap:14px; min-width:0; }
+.practice-entry-heading>div { min-width:0; }
+.practice-entry-icon { display:grid; place-items:center; width:42px; height:46px; border-radius:8px 10px 8px 11px; background:var(--entry-soft); color:var(--entry-accent); flex-shrink:0; transform:rotate(-5deg); }
+.practice-entry-icon svg { width:25px; height:25px; }
+.practice-entry .practice-entry-kicker { display:block; font-family:var(--font-handwritten,'Kalam',cursive); font-size:14px; font-weight:400; letter-spacing:0; color:var(--entry-muted); margin-bottom:4px; }
+.practice-entry .practice-entry-heading h3 { color:var(--entry-ink); font:500 17px/1.4 'Outfit',sans-serif; letter-spacing:-.2px; margin:0; overflow-wrap:anywhere; }
+.practice-entry .practice-entry-detail { color:var(--entry-muted); font-size:13px; line-height:1.5; margin:18px 0; }
+.practice-entry .practice-entry-preview { margin:16px 0 0; padding-left:12px; border-left:2px solid var(--entry-accent); color:var(--entry-ink); font-size:14px; line-height:1.5; display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.practice-entry-progress { display:flex; align-items:center; gap:12px; margin-bottom:18px; color:var(--entry-muted); font-size:12px; }
+.practice-entry-track { height:4px; border-radius:4px; background:var(--entry-soft); overflow:hidden; flex:1; }
+.practice-entry-track>span { display:block; height:100%; background:var(--entry-accent); border-radius:inherit; }
+.practice-entry-footer { display:flex; justify-content:space-between; align-items:center; gap:12px; padding-top:16px; border-top:1px solid var(--entry-border); }
+.practice-entry-footer>span { font-size:12px; color:var(--entry-muted); }
+.practice-entry .practice-entry-footer button { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:11px 15px; border:0; border-radius:10px; background:var(--entry-accent); color:var(--entry-button-ink); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap; min-height:42px; transition:filter .15s; }
+.practice-entry-footer button svg { height:16px; width:16px; }
+.practice-entry .practice-entry-footer button { position:relative; overflow:hidden; isolation:isolate; }
+.practice-entry-footer button::after { content:''; position:absolute; inset:-40% -30%; background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.14) 50%,transparent 62%); transform:translateX(-110%); pointer-events:none; }
+@media(hover:hover) { .practice-entry-footer button:hover::after { animation:practice-button-sheen 1.5s ease-out 1; } }
+@keyframes practice-button-sheen { to { transform:translateX(110%); } }
+@media(prefers-reduced-motion:reduce) { .practice-entry-footer button:hover::after { animation:none; } }
+.practice-entry-footer button:focus-visible { outline:2px solid var(--entry-accent); outline-offset:4px; }
+@media(max-width:480px) { .practice-entry { padding:18px; } .practice-entry-footer { flex-wrap:wrap; } }

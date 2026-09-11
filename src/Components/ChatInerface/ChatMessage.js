@@ -2,6 +2,7 @@ import React, { useMemo, useState, useEffect, useCallback, useRef } from 'react'
 import ReactMarkDown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatQuizStream from "./ChatQuizStream";
+import PracticeLaunchCard from './PracticeLaunchCard';
 import ChatFlashcard from "./ChatFlashcard";
 import FlashcardResults from "./FlashcardResults";
 import SummaryDisplay from "./ChatSummary";
@@ -211,6 +212,7 @@ const ChatMessage = ({
   onRetryMessage,
   onMessageRated,
   onQuizExtended,
+  onOpenPractice,
   onDeleteMessage,
   onEditMessage,
   viewAllChatsMode = false
@@ -553,7 +555,7 @@ const ChatMessage = ({
         {/* Only render when type is explicitly 'quiz' to prevent duplicate quiz renders */}
         {isAI && message.type === 'quiz' && (
           <div className="message-text">
-            <ChatQuizStream
+            {onOpenPractice ? <PracticeLaunchCard message={message} questions={parsedQuizData || []} onOpen={onOpenPractice} /> : <ChatQuizStream
               quizData={parsedQuizData || []}
               messageId={message.id}
               isStreaming={message.isStreaming}
@@ -576,7 +578,7 @@ const ChatMessage = ({
                   ? (questions) => onQuizExtended(message.id, questions)
                   : undefined
               }
-            />
+            />}
             {process.env.NODE_ENV === 'development' && (
               <DevCopyJsonButton quizData={parsedQuizData || []} />
             )}

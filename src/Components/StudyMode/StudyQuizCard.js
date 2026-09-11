@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
 import SATAQuestion from '../ChatInerface/SATAQuestion';
+import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound } from '../../utils/soundEffects';
 import useGlossary from '../Glossary/useGlossary';
 import parseRationaleOptions from '../../utils/parseRationale';
@@ -24,7 +25,7 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
    rewards — the completion celebration is only a couple of items away. */
 const QUIZ_MILESTONE_MIN_SET = 8;
 
-const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit }) => {
+const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint }) => {
   const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -38,9 +39,9 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const totalQuestions = questions.length;
 
   // UI state
-  const [selectedIndex, setSelectedIndex] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(savedProgress?.selectedIndex ?? null);
+  const [showFeedback, setShowFeedback] = useState(savedProgress?.showFeedback || false);
+  const [isCorrect, setIsCorrect] = useState(savedProgress?.isCorrect || false);
 
   // Per-question rationale state — keyed by question index, NOT queue position,
   // so a later re-shuffle doesn't lose previously-fetched HTML. Each entry:
@@ -57,7 +58,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const [isStreamingMessage, setIsStreamingMessage] = useState(false);
 
   // Question queue (like flashcard queue)
-  const [questionQueue, setQuestionQueue] = useState([]);
+  const [questionQueue, setQuestionQueue] = useState(savedProgress?.questionQueue || []);
   const [queueIndex, setQueueIndex] = useState(() =>
     savedProgress?.queueIndex || 0
   );
@@ -119,6 +120,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
     const finalize = () => {
       console.warn('⏱️ Exiting waitingForNextQuestion — finalizing quiz with available questions');
       setWaitingForNextQuestion(false);
+      if (practiceMode) return;
 
       // Replicate end-of-queue logic from handleNextQuestion:
       // Check if any questions were answered incorrectly → start review round
@@ -153,14 +155,24 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
     }
 
     // Case 2: streaming still going — give it 15 more seconds then bail
+    if (practiceMode) return;
     const timeout = setTimeout(finalize, 15_000);
     return () => clearTimeout(timeout);
-  }, [waitingForNextQuestion, isStreaming]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [waitingForNextQuestion, isStreaming, practiceMode]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Restore from saved progress OR initialize fresh queue
   // Also handle streaming: update queue as new questions arrive
   useEffect(() => {
     if (totalQuestions === 0) return;
+
+    if (practiceMode && hasRestoredProgress && !isReviewRound) {
+      if (questionQueue.length !== totalQuestions) setQuestionQueue(questions.map((_, i) => i));
+      if (waitingForNextQuestion && totalQuestions > queueIndex + 1) {
+        setWaitingForNextQuestion(false);
+        setQueueIndex(queueIndex + 1);
+      }
+      return;
+    }
 
     // In viewOnly mode, always use a simple sequential queue for all questions
     if (viewOnly) {
@@ -217,11 +229,25 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
         }
       }
     }
-  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex, isReviewRound, viewOnly]);
+  }, [savedProgress, questions, totalQuestions, questionQueue.length, hasRestoredProgress, waitingForNextQuestion, queueIndex, isReviewRound, viewOnly, practiceMode]);
 
   // Current question from queue
   const currentQueuePosition = questionQueue[queueIndex];
   const currentQuestion = questions[currentQueuePosition] || {};
+  const snapshotCallback = useRef(onSnapshot);
+  const contextCallback = useRef(onQuestionContext);
+  snapshotCallback.current = onSnapshot;
+  contextCallback.current = onQuestionContext;
+  useEffect(() => {
+    if (currentQueuePosition === undefined) return;
+    contextCallback.current?.({ question: currentQuestion, questionIndex: currentQueuePosition,
+      selectedIndex, showFeedback, isCorrect });
+  }, [currentQuestion, currentQueuePosition, selectedIndex, showFeedback, isCorrect]);
+  useEffect(() => {
+    if (!questionQueue.length) return;
+    snapshotCallback.current?.({ questionQueue, queueIndex, questionStatuses, firstAttemptStatuses,
+      isReviewRound, selectedIndex, showFeedback, isCorrect });
+  }, [questionQueue, queueIndex, questionStatuses, firstAttemptStatuses, isReviewRound, selectedIndex, showFeedback, isCorrect]);
   // Pull both the legacy full-rationale HTML and the new one-sentence blurb.
   // - rationale: only present on legacy saved questions or after a Learn-more
   //   fetch; new generations leave this empty.
@@ -234,6 +260,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   // ~39% of students ever saw, and MCQ is the format they're already good at.
   // Missing questionType still means MCQ, which keeps every saved quiz working.
   const isSata = currentQuestion.questionType === 'sata';
+  const isCaseStudy = ['casestudy', 'ordering', 'bowtie'].includes(currentQuestion.questionType);
   const rationale = currentQuestion.rationale || currentQuestion.justification || '';
   const correctBlurb = currentQuestion.correctBlurb || currentQuestion.correct_blurb || '';
 
@@ -383,7 +410,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   // Sets are 5 questions now. A 30% milestone would fire after 2, with the
   // completion celebration 3 questions later — two interruptions inside one
   // short node. Mid-set celebration only earns its place on longer sets.
-  const milestoneWorthShowing = milestoneTotal >= QUIZ_MILESTONE_MIN_SET;
+  const milestoneWorthShowing = !practiceMode && milestoneTotal >= QUIZ_MILESTONE_MIN_SET;
 
   // Trigger milestone celebration at 30% (long sets only)
   useEffect(() => {
@@ -729,6 +756,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
 
     if (onAnswer) {
       onAnswer({
+        ...answerData,
         selectedIndex: null,
         questionType: answerData?.questionType || 'sata',
         isCorrect: correct,
@@ -749,6 +777,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
 
   const handleDontKnow = () => {
     if (showFeedback) return;
+    if (practiceMode && onHint) { onHint(); return; }
 
     // Pick a random encouraging message
     const messages = t('study.dontKnowMessages', { returnObjects: true });
@@ -818,7 +847,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
       // it doesn't drill), so that invariant doesn't hold: reaching the end
       // with a single wrong answer would fall through to nothing and strand
       // the student on the last question with no button.
-      if (isDiagnostic) {
+      if (isDiagnostic || practiceMode) {
         setShowCompletionCelebration(true);
         playCelebrationSound();
         return;
@@ -954,7 +983,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
         <h2 className="study-card-title">
           {isDiagnostic
             ? t('study.calibrationTitle', 'Quick calibration')
-            : t('study.quickCheck', 'Quick Check')}
+            : practiceMode ? `${t('quiz.questionNumber', 'Question')} ${queueIndex + 1} / ${expectedTotal}` : t('study.quickCheck', 'Quick Check')}
         </h2>
         {onExit && (
           <button className="study-card-close-btn" onClick={onExit} title={t('study.close', 'Close')}>
@@ -1043,14 +1072,14 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
       ) : !viewOnly && ((isStreaming && totalQuestions === 0) || waitingForNextQuestion) ? (
         // Show loading state while waiting for first question or next question to stream in
         <div className="study-card-content">
-          <div className="study-streaming-loading">
+          {renderLoading ? renderLoading() : <div className="study-streaming-loading">
             <div className="study-loading-spinner" />
             <p className="study-loading-text" key={quizMsgIndex}>
               {quizMsgArray.length > 0
                 ? quizMsgArray[quizMsgIndex]
                 : t('study.generatingQuestions', 'Generating questions...')}
             </p>
-          </div>
+          </div>}
         </div>
       ) : (
         <>
@@ -1124,7 +1153,13 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
               </div>
             )}
 
-            {isSata ? (
+            {isCaseStudy ? (
+              <CaseStudyQuestion key={`${currentQueuePosition}-${isReviewRound}`}
+                quiz={currentQuestion} quizIndex={queueIndex} totalQuestions={expectedTotal || totalQuestions}
+                previousAnswer={practiceMode ? currentQuestion.userSelection : null}
+                onAnswerSelect={handleComplexAnswer} onNext={handleNextQuestion}
+                isLastQuestion={queueIndex >= questionQueue.length - 1} inModal={false} />
+            ) : isSata ? (
               /* SATA renders its whole question — stem, multi-select options,
                  submit and feedback — so it replaces the MCQ body rather than
                  slotting into it. Same component the exam card uses, so the
@@ -1132,10 +1167,12 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
                  queue position, which advances on every step (including the
                  review round), giving the component a fresh key each time. */
               <SATAQuestion
+                key={`${currentQueuePosition}-${isReviewRound}`}
                 quiz={currentQuestion}
                 quizIndex={queueIndex}
                 totalQuestions={expectedTotal || totalQuestions}
                 onAnswerSelect={handleComplexAnswer}
+                previousAnswer={practiceMode ? currentQuestion.userSelection : null}
                 onNext={handleNextQuestion}
                 isLastQuestion={queueIndex >= questionQueue.length - 1}
                 inModal={false}
@@ -1146,7 +1183,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
             <p className="study-quiz-question">{question || 'Loading question...'}</p>
 
             {/* DEV MODE: Show correct answer for testing */}
-            {process.env.NODE_ENV === 'development' && (
+            {!practiceMode && process.env.NODE_ENV === 'development' && (
               <div style={{
                 background: '#fef3c7',
                 border: '1px dashed #f59e0b',

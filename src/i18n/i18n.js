@@ -8,6 +8,10 @@ const resources = {
   en: {
     translation: {
       courseStudio: courseStudioEn,
+      'practiceEntry.note': 'a little practice on…',
+      'practiceEntry.fromQuestions': 'From your questions',
+      'practiceEntry.help': 'A hint if you need one',
+      practiceEntry: { label: 'Quiz practice', title: 'A little practice, a clearer mind', ready_one: '{{count}} question ready', ready_other: '{{count}} questions ready', tutor: 'Tutor included', preparing: 'Preparing your questions…', progress: 'Questions answered', saved: 'Your place is saved', pace: 'At your own pace', start: 'Start practice', resume: 'Resume practice', open: 'Open practice', review: 'Review practice' },
       // NCLEX — the standalone prep surface (src/Components/Nclex).
       // Every string here also exists in the fr tree below; a missing French
       // key silently falls back to English, which reads as a bug to a
@@ -2402,6 +2406,10 @@ const resources = {
   fr: {
     translation: {
       courseStudio: courseStudioFr,
+      'practiceEntry.note': 'un peu de pratique sur…',
+      'practiceEntry.fromQuestions': 'À partir de tes questions',
+      'practiceEntry.help': 'Un indice si tu en as besoin',
+      practiceEntry: { label: 'Quiz d’entraînement', title: 'Un peu de pratique pour y voir plus clair', ready_one: '{{count}} question prête', ready_other: '{{count}} questions prêtes', tutor: 'Tuteur inclus', preparing: 'Préparation des questions…', progress: 'Questions répondues', saved: 'Ta progression est sauvegardée', pace: 'À ton rythme', start: 'Commencer', resume: 'Reprendre', open: 'Ouvrir le quiz', review: 'Revoir le quiz' },
       // NCLEX — surface autonome de préparation (src/Components/Nclex).
       nclex: {
         brandTag: "NCLEX",

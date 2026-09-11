@@ -20,6 +20,8 @@ import {
 
 // Components
 import ChatMessage from './ChatMessage';
+import FocusedQuiz from './FocusedQuiz';
+import ChatSendButton from './ChatSendButton';
 import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
@@ -213,7 +215,7 @@ const ChatInterface = ({
   // `plansRemaining` / `remaining` are read only to stamp the funnel row: how
   // much budget she had at the moment she uploaded is what turns "she saw a
   // paywall" into "she hit the plan gate at 3/3 with 40 questions left".
-  const { requireQuota, consume: consumeGeneration, isPro, openUpgrade, plansRemaining, remaining } = useUsageLimit();
+  const { requireQuota, consume: consumeGeneration, refresh: refreshQuota, isPro, openUpgrade, plansRemaining, remaining } = useUsageLimit();
 
   // Add this as the FIRST useEffect in ChatInterface
   useEffect(() => {
@@ -229,7 +231,14 @@ const ChatInterface = ({
   // Core chat state
   const [currentChatID, setChatId] = useState(chatId);
   const [currentChatTitle, setChatTitle] = useState('');
+  const [practiceOwner, setPracticeOwner] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
+  const [focusedQuizId, setFocusedQuizId] = useState(null);
+  const [practiceOrigin, setPracticeOrigin] = useState(null);
+  const copiedPracticeChat = useRef(null);
+  const [quizFocused, setQuizFocused] = useState(false);
+  const autoOpenedQuizzes = useRef(new Set());
+  const chatScrollBeforeQuiz = useRef(0);
   const [isGameChat, setIsGameChat] = useState(false);
   const [gameState, setGameState] = useState(null);
 
@@ -499,6 +508,31 @@ const ChatInterface = ({
   // ============================================
   const messagesEndRef = useRef(null);
   const messagesContainerRef = useRef(null);
+  const openFocusedQuiz = useCallback((id, origin = null) => {
+    setPracticeOrigin(origin);
+    chatScrollBeforeQuiz.current = messagesContainerRef.current?.scrollTop || 0;
+    setFocusedQuizId(id);
+    setQuizFocused(true);
+  }, []);
+  const closeFocusedQuiz = useCallback(() => {
+    setQuizFocused(false);
+    requestAnimationFrame(() => {
+      if (messagesContainerRef.current) messagesContainerRef.current.scrollTop = chatScrollBeforeQuiz.current;
+    });
+  }, []);
+  useEffect(() => {
+    setFocusedQuizId(null); setQuizFocused(false); autoOpenedQuizzes.current.clear();
+  }, [currentChatID]);
+  useEffect(() => {
+    if (copiedPracticeChat.current === currentChatID) {
+      const copiedQuiz = chatMessages.find(message => message.type === 'quiz');
+      if (copiedQuiz) { copiedPracticeChat.current = null; openFocusedQuiz(copiedQuiz.id); }
+      return;
+    }
+    if (viewAllChatsMode || isStudyMode) return;
+    const generating = chatMessages.find(m => m.type === 'quiz' && m.isStreaming && !autoOpenedQuizzes.current.has(m.id));
+    if (generating) { autoOpenedQuizzes.current.add(generating.id); openFocusedQuiz(generating.id); }
+  }, [chatMessages, currentChatID, viewAllChatsMode, isStudyMode, openFocusedQuiz]);
   const documentFileInputRef = useRef(null);
   const textareaRef = useRef(null); // Premium textarea ref for auto-resize
   const isQuizGeneratingRef = useRef(false);
@@ -869,6 +903,7 @@ const ChatInterface = ({
 
     // Update chat ID
     setChatId(chatId);
+    setPracticeOwner(null);
 
     // Reset scroll and loading flags
     hasInitiallyScrolledRef.current = false;
@@ -910,6 +945,7 @@ const ChatInterface = ({
       }
       if (docSnapshot.exists()) {
         const chatData = docSnapshot.data();
+        setPracticeOwner({ chatId, uid: chatData.userId });
         setChatTitle(chatData.title);
         // Check if this is a game-type chat
         const isGame = chatData.type === 'game';
@@ -1552,6 +1588,9 @@ const ChatInterface = ({
                   type: 'quiz',
                   content: statusUpdate.message,
                   quizData: [],
+                  requestedTotal: statusUpdate.requested_total,
+                  quizTopic: statusUpdate.quiz_topic,
+                  practice: { settings: statusUpdate.quiz_settings },
                   expectedTotal: statusUpdate.total || 4,
                   generatingCurrent: statusUpdate.current || 0,
                   isStreaming: true,
@@ -1570,6 +1609,9 @@ const ChatInterface = ({
                       // IMPORTANT: Preserve existing quizData if questions already arrived
                       // (handles race condition where quiz_question arrives before quiz_generating)
                       quizData: msg.quizData || [],
+                      requestedTotal: statusUpdate.requested_total || msg.requestedTotal,
+                      quizTopic: statusUpdate.quiz_topic || msg.quizTopic,
+                      practice: { ...msg.practice, settings: statusUpdate.quiz_settings || msg.practice?.settings },
                       expectedTotal: statusUpdate.total || 4,
                       generatingCurrent: statusUpdate.current || 0,
                       isStreaming: true
@@ -1629,10 +1671,11 @@ const ChatInterface = ({
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
 
-            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId);
+            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, statusUpdate);
             setStreamingStatus(null);
             // Charge per question: a 3-question quiz costs 3, a 20-question quiz costs 20.
-            consumeGeneration(statusUpdate.quiz_data?.length || 1);
+            if (statusUpdate.quota_charged) refreshQuota();
+            else consumeGeneration(statusUpdate.quiz_data?.length || 1);
             return;
           }
 
@@ -2432,7 +2475,7 @@ const ChatInterface = ({
     }
   }, [activeQuizId]); // Important: Add activeQuizId to dependencies
 
-  const handleQuizComplete = async (quizData, messageId, chatId) => {
+  const handleQuizComplete = async (quizData, messageId, chatId, metadata = {}) => {
     devLog("✅ Quiz complete, finalizing message");
     devLog("Backend sent", quizData?.length, "questions");
     setStreamingStatus(null);
@@ -2483,6 +2526,9 @@ const ChatInterface = ({
             ...msg,
             type: 'quiz',
             quizData: mergedQuizData,
+            requestedTotal: metadata.requested_total || msg.requestedTotal || mergedQuizData.length,
+            quizTopic: metadata.quiz_topic || msg.quizTopic || '',
+            practice: { ...msg.practice, settings: metadata.quiz_settings || msg.practice?.settings || {} },
             content: currentLanguage === 'fr' ? `Voici votre quiz (${quizData.length} questions)` : `Here's your quiz (${quizData.length} questions)`,
             isStreaming: false,
             timestamp: new Date()
@@ -2511,6 +2557,9 @@ const ChatInterface = ({
       role: 'assistant',
       type: 'quiz',
       quizData: mergedQuizData,
+      requestedTotal: metadata.requested_total || mergedQuizData.length,
+      quizTopic: metadata.quiz_topic || '',
+      practice: { settings: metadata.quiz_settings || {} },
       content: currentLanguage === 'fr' ? `Votre quiz (${quizData.length} questions)` : `Your quiz (${quizData.length} questions)`,
       isStreaming: false,
       timestamp: new Date()
@@ -4697,7 +4746,15 @@ const ChatInterface = ({
   }, [chatMessages]);
 
   return (
-    <div style={{ display: 'flex', height: '100vh' }}>
+    <div style={{ display: 'flex', height: '100vh', position: 'relative', flex: 1, minWidth: 0 }}>
+      {focusedQuizId && chatMessages.some(m => m.id === focusedQuizId) && (
+        <FocusedQuiz key={`${currentChatID}-${focusedQuizId}`} chatId={currentChatID}
+          readOnly={!currentUser?.uid || (practiceOwner?.chatId === currentChatID ? practiceOwner.uid !== currentUser.uid : viewAllChatsMode)}
+          onCopyCreated={id => { copiedPracticeChat.current = id; closeFocusedQuiz(); onChatSelected(id); }}
+          message={chatMessages.find(m => m.id === focusedQuizId)} visible={quizFocused && !isStudyMode} launchOrigin={practiceOrigin}
+          onPracticeChange={practice => setChatMessages(previous => previous.map(message => message.id === focusedQuizId ? { ...message, practice } : message))}
+          onExit={closeFocusedQuiz} />
+      )}
       <ProgressDashboard />
 
       {/* Welcome-back Toast — shows when user returns after 30s+ away.
@@ -4751,6 +4808,8 @@ const ChatInterface = ({
       <div
         className="chat-container"
         style={{ display: isStudyMode ? 'none' : undefined }}
+        inert={quizFocused ? true : undefined}
+        aria-hidden={quizFocused ? true : undefined}
       >
         {/* File Error Toast */}
         {fileErrorToast && (
@@ -5607,6 +5666,7 @@ const ChatInterface = ({
                       isActiveQuiz={message.id === activeQuizId}
                       onMessageRated={handleMessageRated}
                       onQuizExtended={handleQuizExtended}
+                      onOpenPractice={openFocusedQuiz}
                       onSendMessage={stableHandleSendMessage}
                       onRetryMessage={handleRetryMessage}
                       onDeleteMessage={handleDeleteMessage}
@@ -6044,23 +6104,7 @@ const ChatInterface = ({
                   </button>
                 ) : (
                   // Send button when not streaming
-                  <button type="submit"
-                    className={`send-button-icon ${isSystemBusy ? 'send-button-busy' : ''}`}
-                    disabled={!userInputText.trim() || isSystemBusy}
-                    title={t('chat.send')}>
-                    {isSystemBusy ? (
-                      <div className="pulsing-dots">
-                        <span></span>
-                        <span></span>
-                        <span></span>
-                      </div>
-                    ) : (
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                      </svg>
-                    )}
-                  </button>
+                  <ChatSendButton disabled={!userInputText.trim()} busy={isSystemBusy} label={t('chat.send')} />
                 )}
               </div>
             </div>
