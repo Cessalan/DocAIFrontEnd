@@ -6465,6 +6465,14 @@ body:not(.dark-mode) .file-error-toast-close:hover {
   width: 100%;
 }
 
+/* One door. 430px is the width the plan card already had as one of two
+   columns in an 880px shell, so demoting the drill does not resize the card
+   the student was looking at — it only removes what sat beside it. */
+.path-choice__cards--solo {
+  grid-template-columns: minmax(0, 430px);
+  justify-content: center;
+}
+
 .path-card {
   display: flex;
   flex-direction: column;
@@ -6611,6 +6619,85 @@ body:not(.dark-mode) .file-error-toast-close:hover {
   color: var(--card-accent);
 }
 
+/* ── The drill, as a secondary pill ───────────────────────────────────
+   Outlined rather than filled: the plan CTA above it is the only solid
+   button on this screen, which is what makes it read as the default. The
+   pill still carries the drill's lavender so the identity survives the
+   demotion, and it inherits those tokens from .path-card--drill rather
+   than restating them. */
+.path-drill-pill {
+  --card-accent: #a894c9;
+  --card-accent-strong: #8f79b8;
+  --card-accent-border: rgba(184, 165, 212, 0.4);
+  --card-accent-soft: rgba(184, 165, 212, 0.16);
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin: 18px auto 0;
+  padding: 9px 18px 9px 12px;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--card-accent-strong);
+  background: var(--bg-paper);
+  border: 1.5px solid var(--card-accent-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background var(--transition-fast), border-color var(--transition-fast),
+    transform var(--transition-fast);
+}
+
+.path-drill-pill:hover {
+  background: var(--card-accent-soft);
+  border-color: var(--card-accent);
+  transform: translateY(-1px);
+}
+
+.path-drill-pill:focus-visible {
+  outline: 2px solid var(--card-accent-strong);
+  outline-offset: 3px;
+}
+
+.path-drill-pill__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--card-accent-soft);
+  color: var(--card-accent-strong);
+}
+
+.path-drill-pill__icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.path-drill-pill__new {
+  padding: 2px 7px;
+  font-size: 0.54rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  line-height: 1.6;
+  color: var(--card-accent-strong);
+  background: var(--card-accent-soft);
+  border-radius: 999px;
+}
+
+.path-drill-pill__arrow {
+  flex-shrink: 0;
+  opacity: 0.75;
+}
+
+.path-drill-pill__note {
+  margin: 8px 0 0;
+  font-size: 0.79rem;
+  text-align: center;
+  color: var(--text-muted);
+}
+
 /* ── Dark: same two identities, lifted off the background ─────────────── */
 body.dark-mode .path-choice__title {
   color: #ededed;
@@ -6655,11 +6742,43 @@ body.dark-mode .path-card__new {
   color: var(--card-accent-strong);
 }
 
+body.dark-mode .path-drill-pill {
+  --card-accent: var(--dark-accent);
+  --card-accent-strong: var(--dark-accent-light);
+  --card-accent-border: rgba(184, 165, 212, 0.28);
+  --card-accent-soft: rgba(184, 165, 212, 0.14);
+  background: var(--dark-bg-elevated);
+}
+
+body.dark-mode .path-drill-pill__new {
+  background: rgba(184, 165, 212, 0.2);
+}
+
+body.dark-mode .path-drill-pill__note {
+  color: #8a8a8a;
+}
+
 /* ── Narrow: the doors stack, still as peers ──────────────────────────── */
 @media (max-width: 720px) {
   .path-choice__cards {
     grid-template-columns: minmax(0, 1fr);
     gap: 14px;
+  }
+
+  .path-choice__cards--solo {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .path-drill-pill {
+    max-width: 100%;
+  }
+
+  .path-drill-pill__label {
+    /* The label is the only part worth truncating if the pill runs out of
+       room; the icon and badge are what make it recognisable. */
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .path-choice__title {
@@ -6684,7 +6803,8 @@ body.dark-mode .path-card__new {
 
 @media (prefers-reduced-motion: reduce) {
   .path-card:hover,
-  .path-card__cta:hover {
+  .path-card__cta:hover,
+  .path-drill-pill:hover {
     transform: none;
   }
 }

@@ -4,6 +4,7 @@ import { handleCreateUserWithEmailAndPassword, handleSignInWithGoogleAccount, ha
 import { useAuth } from "../../Contexts/AuthContext/AuthContext";
 import { auth } from "../../Firebase/config";
 import { hasPendingFiles } from '../../utils/pendingUploadStore';
+import { safeReturnTo } from '../../utils/safeReturnTo';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 
@@ -30,8 +31,11 @@ const Signup = () => {
   // Theme
   const [isDarkMode] = useDarkMode();
 
-  // Get redirect parameters - support both search params and location state
-  const returnTo = location.state?.returnTo || searchParams.get('returnTo');
+  // Get redirect parameters - support both search params and location state.
+  // The search-param form is how the static SEO landing pages in public/ hand
+  // off intent (e.g. /signup?returnTo=/nclex), so it is attacker-controllable
+  // and must be sanitised before it ever reaches navigate().
+  const returnTo = safeReturnTo(location.state?.returnTo || searchParams.get('returnTo'));
   const returnMessage = location.state?.message;
   const prompt = searchParams.get('prompt');
   const quizTopic = searchParams.get('quizTopic');
@@ -131,7 +135,7 @@ const Signup = () => {
       setError('');
       setLoading(true);
       await handleSignInWithGoogleAccount();
-      navigate('/c');
+      navigate(returnTo || '/c');
     } catch (error) {
       console.error("Error signing in with Google:", error);
       setError(error.message);
@@ -146,7 +150,7 @@ const Signup = () => {
       setError('');
       setLoading(true);
       await handleSignInWithAppleAccount();
-      navigate('/c');
+      navigate(returnTo || '/c');
     }catch(error){
       console.error("Error signing in with Apple:", error);
       setError(error.message);
@@ -269,7 +273,7 @@ const Signup = () => {
 
         <div className="login-links">
           <p>
-            {t("signup.haveAccount")} <Link to="/login">{t("signup.login")} </Link>
+            {t("signup.haveAccount")} <Link to={returnTo ? `/login?returnTo=${encodeURIComponent(returnTo)}` : "/login"}>{t("signup.login")} </Link>
           </p>
         </div>
       </div>

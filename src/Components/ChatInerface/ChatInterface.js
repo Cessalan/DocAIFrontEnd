@@ -4876,15 +4876,26 @@ const ChatInterface = ({
             landing card. The countdown still surfaces inside StudyMode. */}
         {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData?.examName && (
           <div className="empty-chat-state empty-chat-state--paths">
-            {/* ── Two doors, shown as peers ──────────────────────────────
+            {/* ── One door, plus a quieter second one ─────────────────────
                 The plan is for a student who wants to be TAUGHT; the drill
-                is for one who wants to be TESTED. They used to be stacked —
-                a card for the plan, then a tagline and a quiet outlined
-                button underneath — which reads as a primary action with an
-                afterthought below it. In the production data the tested path
-                is what every paying user actually did (7x the exams, almost
-                none of the lessons), so it is not an afterthought and should
-                not be drawn as one.
+                is for one who wants to be TESTED.
+
+                These were drawn as peers — two cards, same size, same weight —
+                on the reasoning that paying users overwhelmingly took the
+                tested path (7x the exams, almost none of the lessons). That
+                reasoning conflated two populations. The users measured were
+                already inside a plan, taking its exams; the students at THIS
+                screen have uploaded nothing yet and cannot tell the two doors
+                apart, and only ~12% of them pick the drill. Asking a stranger
+                to choose between two unfamiliar things is the cost, and the
+                plan is the surface the rest of the product is built on.
+
+                So: plan as the door, drill as a pill beneath it. The drill
+                keeps its icon, its lavender identity and its NEW badge. It is
+                quieter, not hidden — and the same choice is offered again,
+                better-timed, once the plan is finished (BlockCompleteCard),
+                where "what did I still miss" is a question she can actually
+                answer.
 
                 Both doors still go through an upload: neither is worth
                 anything until the questions come from HER material. */}
@@ -4897,7 +4908,7 @@ const ChatInterface = ({
                   {t('chat.pathSub', "Choose your path. We'll meet you where you are.")}
                 </p>
 
-                <div className="path-choice__cards">
+                <div className="path-choice__cards path-choice__cards--solo">
                   <article className="path-card path-card--plan">
                     <div className="path-card__icon">
                       <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
@@ -4939,42 +4950,40 @@ const ChatInterface = ({
                     </p>
                   </article>
 
-                  <article className="path-card path-card--drill">
-                    <div className="path-card__icon">
-                      <DrillTargetIcon aria-hidden="true" />
-                    </div>
-                    <h3 className="path-card__title">
-                      {t('chat.drillCardTitle', 'Find my weak spots')}
-                      <span className="path-card__new">{t('chat.newBadge', 'New')}</span>
-                    </h3>
-                    <p className="path-card__desc">
-                      {t('chat.drillCardDesc', 'Get challenged with difficult questions from your notes and see what you need to work on.')}
-                    </p>
-                    <button
-                      className="path-card__cta"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        window._pendingDrill = true;
-                        documentFileInputRef.current?.click();
-                      }}
-                    >
-                      {t('chat.drillCardCta', 'Test my exam readiness')}
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                          <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                    </button>
-                    <p className="path-card__note">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-                           strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
-                        <polygon points="13 2 4 14 11 14 10 22 19 10 12 10 13 2" />
-                      </svg>
-                      {t('chat.drillCardNote', 'Best for quick assessment and exam readiness')}
-                    </p>
-                  </article>
                 </div>
+
+                {/* The drill, demoted from co-equal card to a secondary pill.
+                    Two cards of identical weight made the student choose
+                    between two things she could not yet tell apart, and the
+                    plan is the path the product is actually built around. The
+                    drill keeps its icon, its lavender identity and its badge —
+                    it is quieter, not hidden. */}
+                <button
+                  className="path-drill-pill"
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    window._pendingDrill = true;
+                    documentFileInputRef.current?.click();
+                  }}
+                >
+                  <span className="path-drill-pill__icon" aria-hidden="true">
+                    <DrillTargetIcon />
+                  </span>
+                  <span className="path-drill-pill__label">
+                    {t('chat.drillCardTitle', 'Find my weak spots')}
+                  </span>
+                  <span className="path-drill-pill__new">{t('chat.newBadge', 'New')}</span>
+                  <svg className="path-drill-pill__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"
+                       aria-hidden="true">
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="12 5 19 12 12 19" />
+                  </svg>
+                </button>
+                <p className="path-drill-pill__note">
+                  {t('chat.drillCardNote', "Best once you've studied, to find what didn't stick")}
+                </p>
               </div>
             ) : (
               /* Expanded: the plan door asks HOW the notes arrive. Unchanged

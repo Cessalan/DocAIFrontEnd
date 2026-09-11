@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { Navigate, Link, useLocation, useNavigate } from "react-router-dom";
+import { Navigate, Link, useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { handleSignInWithEMailAndPassword,handleSignInWithGoogleAccount, handleSignInWithAppleAccount } from "../../Firebase/auth";
 import { useAuth } from "../../Contexts/AuthContext/AuthContext";
+import { safeReturnTo } from '../../utils/safeReturnTo';
 import ThemeToggle, { useDarkMode } from '../Common/ThemeToggle';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import './AuthPage.css'
@@ -30,7 +31,11 @@ const Login = () => {
   // Get location for return redirect
   const location = useLocation();
   const navigate = useNavigate();
-  const returnTo = location.state?.returnTo;
+  const [searchParams] = useSearchParams();
+  // Also accept ?returnTo= so the static SEO landing pages in public/ can hand
+  // off intent (e.g. /login?returnTo=/nclex). Sanitised: the value arrives from
+  // a URL anyone can craft, so it must never reach navigate() unchecked.
+  const returnTo = safeReturnTo(location.state?.returnTo || searchParams.get('returnTo'));
   const returnMessage = location.state?.message;
 
   // translation
@@ -54,7 +59,7 @@ const Login = () => {
        await handleSignInWithEMailAndPassword(email, password);
 
        // Navigate to the chat interface after successful login
-       navigate('/c');
+       navigate(returnTo || '/c');
      
       }catch(error)
       {
@@ -75,7 +80,7 @@ const Login = () => {
       await handleSignInWithGoogleAccount();
 
       // Navigate to the chat interface after successful login
-      navigate('/c');
+      navigate(returnTo || '/c');
 
     }catch(error){
       console.error("Error signing in with Google:", error);
@@ -92,7 +97,7 @@ const Login = () => {
       setError('');
       setLoading(true);
       await handleSignInWithAppleAccount();
-      navigate('/c');
+      navigate(returnTo || '/c');
     }catch(error){
       console.error("Error signing in with Apple:", error);
       setError(error.message);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import BrainMascot from './BrainMascot';
@@ -125,6 +125,7 @@ const AnimatedCounter = ({ target, duration = 2000, suffix = '%', onComplete }) 
 const QuizRoomLanding = () => {
   const { t, i18n } = useTranslation();
   const navigate = useNavigate();
+  const location = useLocation();
   const { currentUser } = useAuth();
   const [pressedCard, setPressedCard] = useState(null);
   const [hoveredCard, setHoveredCard] = useState(null);
@@ -392,6 +393,15 @@ const QuizRoomLanding = () => {
       }
     });
   };
+
+  /* ProtectedRoute renders this landing in place rather than redirecting, so
+     when a logged-out visitor asks for a protected surface the URL still says
+     where they wanted to go (/nclex, /nclex/practice?format=sata, ...). Carry
+     that through auth, otherwise the NCLEX landing pages send traffic to a
+     signup that lands everyone back on /c and the intent is silently lost.
+     Null at "/" so the ordinary homepage keeps its existing behaviour. */
+  const attemptedRoute =
+    location.pathname !== '/' ? `${location.pathname}${location.search}` : null;
 
   // Called when user clicks "Sign Up" in the prompt
   const handleSignupFromPrompt = async () => {
@@ -701,8 +711,8 @@ const QuizRoomLanding = () => {
               <button
                 type="button"
                 className="auth-header-btn login-btn"
-                onClick={() => handleDelayedNavigation(() => navigate('/login'))}
-                onTouchEnd={(e) => { e.preventDefault(); handleDelayedNavigation(() => navigate('/login')); }}
+                onClick={() => handleDelayedNavigation(() => navigate('/login', attemptedRoute ? { state: { returnTo: attemptedRoute } } : undefined))}
+                onTouchEnd={(e) => { e.preventDefault(); handleDelayedNavigation(() => navigate('/login', attemptedRoute ? { state: { returnTo: attemptedRoute } } : undefined)); }}
                 onMouseEnter={() => handleCardHover('login')}
                 onMouseLeave={handleCardHoverEnd}
               >
@@ -711,8 +721,8 @@ const QuizRoomLanding = () => {
               <button
                 type="button"
                 className="auth-header-btn signup-btn"
-                onClick={() => handleDelayedNavigation(() => navigate('/signup'))}
-                onTouchEnd={(e) => { e.preventDefault(); handleDelayedNavigation(() => navigate('/signup')); }}
+                onClick={() => handleDelayedNavigation(() => navigate('/signup', attemptedRoute ? { state: { returnTo: attemptedRoute } } : undefined))}
+                onTouchEnd={(e) => { e.preventDefault(); handleDelayedNavigation(() => navigate('/signup', attemptedRoute ? { state: { returnTo: attemptedRoute } } : undefined)); }}
                 onMouseEnter={() => handleCardHover('signup')}
                 onMouseLeave={handleCardHoverEnd}
               >

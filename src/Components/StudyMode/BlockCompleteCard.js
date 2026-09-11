@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import DrillTargetIcon from '../ExamDrill/DrillTargetIcon';
 
 /**
  * BlockCompleteCard — the ending a study plan never used to have.
@@ -14,11 +15,20 @@ import { useTranslation } from 'react-i18next';
  * extending costs no generation and charges no quota — the student is choosing
  * to continue, not being sold to mid-stride.
  *
+ * Under both of those sits the drill. Offering it HERE is the point: at the
+ * empty-chat door "test my exam readiness" is an abstract choice made by
+ * someone who has uploaded nothing, and ~12% take it. After a finished block
+ * the same offer answers a question she can actually ask — what did I still
+ * miss — and the drill seeds its coverage from the plan's own topics, so it
+ * costs no upload and no generation.
+ *
  * @param {number} completedCount Nodes in the block they just finished.
  * @param {number} reserveCount   Nodes waiting. 0 means the whole path is done.
  * @param {Function} onExtend     Async; moves the next block onto the plan.
+ * @param {Function} onDrillGaps  Opens the drill on this chat. Optional — the
+ *                                card renders without it, as it did before.
  */
-const BlockCompleteCard = ({ completedCount, reserveCount = 0, onExtend }) => {
+const BlockCompleteCard = ({ completedCount, reserveCount = 0, onExtend, onDrillGaps }) => {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(false);
@@ -71,6 +81,24 @@ const BlockCompleteCard = ({ completedCount, reserveCount = 0, onExtend }) => {
         </>
       ) : (
         <p className="block-complete-body">{t('study.blockAllDone')}</p>
+      )}
+
+      {onDrillGaps && (
+        <>
+          <button
+            type="button"
+            className="block-complete-drill"
+            onClick={onDrillGaps}
+          >
+            <span className="block-complete-drill__icon" aria-hidden="true">
+              <DrillTargetIcon />
+            </span>
+            {t('study.blockDrillCta', 'Find my remaining gaps')}
+          </button>
+          <p className="block-complete-drill__note">
+            {t('study.blockDrillNote', 'A short drill on everything you just covered')}
+          </p>
+        </>
       )}
     </div>
   );

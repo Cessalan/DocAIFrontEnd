@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { generationUnits } from '../../Services/UsageService';
@@ -107,6 +108,7 @@ const StudyModeContainer = ({
   autoStart = false // Auto-launch the first node
 }) => {
   const { t, i18n } = useTranslation();
+  const navigate = useNavigate();
   const language = (i18n.language || 'en').split('-')[0].toLowerCase();
   const { userProfile } = useAuth() || {};
 
@@ -1312,6 +1314,17 @@ const StudyModeContainer = ({
     setTimeout(() => setPathUpdateToast(null), 3500);
   }, [chatId]);
 
+  /* The drill, offered at the one moment it answers a question she can ask.
+     At the empty-chat door "test my readiness" is abstract — she has uploaded
+     nothing and has no idea what she knows. Here she has just finished a
+     block, the plan's topics are on the chat, and "what did I still miss" is
+     concrete. /drill/:chatId seeds its coverage map from those same topics,
+     so no upload and no new generation is needed. */
+  const handleDrillGaps = useCallback(() => {
+    if (!chatId) return;
+    navigate(`/drill/${chatId}`);
+  }, [chatId, navigate]);
+
   const handleStartPhase2 = useCallback(async () => {
     setIsGeneratingPhase2(true);
 
@@ -1851,6 +1864,7 @@ const StudyModeContainer = ({
           isGeneratingPhase2={isGeneratingPhase2}
           onStartPhase2={handleStartPhase2}
           onExtendBlock={handleExtendBlock}
+          onDrillGaps={handleDrillGaps}
           isDev={isDev}
         />
 

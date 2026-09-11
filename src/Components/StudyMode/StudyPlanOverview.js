@@ -410,6 +410,7 @@ const StudyPlanOverview = ({
   isGeneratingPhase2 = false,
   onStartPhase2,
   onExtendBlock,
+  onDrillGaps,
   isDev = false
 }) => {
   const { t, i18n } = useTranslation();
@@ -1056,6 +1057,7 @@ const StudyPlanOverview = ({
           completedCount={completedCount}
           reserveCount={reserveCount}
           onExtend={onExtendBlock}
+          onDrillGaps={onDrillGaps}
         />
       )}
 

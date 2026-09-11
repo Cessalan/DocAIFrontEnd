@@ -14188,9 +14188,84 @@ body.dark-mode .block-complete-body {
   color: #c0392b;
 }
 
+/* The drill, offered after the ending rather than at the front door. Drawn
+   in the drill's own lavender and outlined, so it sits clearly below the
+   coral "continue the plan" CTA instead of competing with it — the same
+   demotion the empty-chat door now uses (.path-drill-pill). */
+.block-complete-drill {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  margin-top: 14px;
+  padding: 9px 18px 9px 11px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #8f79b8;
+  background: var(--bg-paper, #fffef9);
+  border: 1.5px solid rgba(184, 165, 212, 0.4);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+}
+
+.block-complete-drill:hover {
+  background: rgba(184, 165, 212, 0.14);
+  border-color: #a894c9;
+  transform: translateY(-1px);
+}
+
+.block-complete-drill:focus-visible {
+  outline: 2px solid #8f79b8;
+  outline-offset: 3px;
+}
+
+.block-complete-drill__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(184, 165, 212, 0.16);
+  color: #8f79b8;
+}
+
+.block-complete-drill__icon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.block-complete-drill__note {
+  margin: 7px 0 0;
+  font-size: 12.5px;
+  color: var(--text-muted, #9a9a9a);
+}
+
+body.dark-mode .block-complete-drill {
+  color: var(--dark-accent-light, #c9b8e0);
+  background: transparent;
+  border-color: rgba(184, 165, 212, 0.28);
+}
+
+body.dark-mode .block-complete-drill:hover {
+  background: rgba(184, 165, 212, 0.12);
+}
+
+body.dark-mode .block-complete-drill__icon {
+  color: var(--dark-accent-light, #c9b8e0);
+  background: rgba(184, 165, 212, 0.16);
+}
+
+body.dark-mode .block-complete-drill__note {
+  color: rgba(255, 255, 255, 0.45);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .block-complete-cta { transition: none; }
   .block-complete-cta:hover:not(:disabled) { transform: none; }
+  .block-complete-drill { transition: none; }
+  .block-complete-drill:hover { transform: none; }
 }
 
 /* ── "See how you're doing" — the overview's only route into the insights
