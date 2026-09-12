@@ -54,6 +54,25 @@ async function persistAcquisition(uid) {
     if (!snap.exists()) tx.set(ref, context);
   });
 }
+export function clipResultNote(text) {
+  const cleaned = String(text || '').replace(/\s+/g, ' ').trim();
+  if (!cleaned) return '';
+  const parts = cleaned.match(/[^.!?]+[.!?]+(?:\s|$)|[^.!?]+$/g) || [cleaned];
+  return parts.slice(0, 2).join('').trim();
+}
+export async function fetchResultNote(payload) {
+  const { API_BASE_URL } = await import('./config');
+  const response = await fetch(`${API_BASE_URL}/seo/result-note`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  });
+  if (!response.ok) return null;
+  const data = await response.json();
+  const note = clipResultNote(data?.note);
+  return note || null;
+}
+
 export async function loadSavedProduct(slug) {
   const [{ auth, db }, { doc, getDoc }] = await Promise.all([import('../Firebase/config'), import('firebase/firestore')]);
   if (!auth.currentUser) return null;

@@ -1,13 +1,15 @@
 import React from 'react';
-import { render, screen, fireEvent, within } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import SeoMiniProduct, { Diagnostic } from './SeoMiniProduct';
 import catalog from './catalog.json';
-import { loadSavedProduct, readLocal, writeLocal } from '../../Services/SeoMiniProductService';
+import { fetchResultNote, loadSavedProduct, readLocal, writeLocal } from '../../Services/SeoMiniProductService';
 jest.mock('react-router-dom', () => ({ MemoryRouter: ({ children }) => <>{children}</>, Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>, useNavigate: () => jest.fn() }), { virtual: true });
-jest.mock('../../Services/SeoMiniProductService', () => ({ trackSeo: jest.fn(), readLocal: jest.fn(), writeLocal: jest.fn(), continueSeo: jest.fn(), loadSavedProduct: jest.fn().mockResolvedValue(null) }));
+jest.mock('../../Services/SeoMiniProductService', () => ({ trackSeo: jest.fn(), readLocal: jest.fn(), writeLocal: jest.fn(), continueSeo: jest.fn(), loadSavedProduct: jest.fn().mockResolvedValue(null), fetchResultNote: jest.fn().mockResolvedValue(null) }));
 beforeEach(() => {
   loadSavedProduct.mockResolvedValue(null);
+  fetchResultNote.mockReset();
+  fetchResultNote.mockResolvedValue(null);
   readLocal.mockReset();
   writeLocal.mockClear();
 });
@@ -57,7 +59,7 @@ test('a page bank serves a sized set, remembers it, and "keep going" brings unse
   expect(new Set(firstIds).size).toBe(6);
   expect(writeLocal).toHaveBeenCalledWith('seen:cardiac-nclex-questions', expect.objectContaining({ ids: expect.arrayContaining(firstIds), lastSet: expect.arrayContaining(firstIds) }));
   expect(screen.queryByText('Strongest signal')).not.toBeInTheDocument();
-  expect(screen.getByRole('button', { name: /Practice my weak areas/ })).toBeVisible();
+  expect(screen.getByRole('button', { name: /Practice my weak areas|Keep building in NurseQuiz/ })).toBeVisible();
   expect(screen.getByRole('button', { name: /Next 4 questions/ })).toBeVisible();
   fireEvent.click(screen.getByRole('button', { name: /Next 4 questions/ }));
   const secondIds = completeSet(bank, 4);
@@ -86,6 +88,35 @@ test('the hero CTA opens the quiz instead of scrolling to a second start button'
   expect(bank.some(q => q.stem === stem)).toBe(true);
   completeSet(bank, 6, within(dialog));
   expect(within(dialog).getByRole('button', { name: /Practice my weak areas|Keep building in NurseQuiz/ })).toBeVisible();
+});
+test('a finished set keeps the original takeaway when the tutor note is unavailable', async () => {
+  fetchResultNote.mockResolvedValue(null);
+  const page = catalog.pages.find(p => p.slug === 'hesi-a2-practice-test');
+  const q = catalog.questions[0];
+  render(<MemoryRouter><Diagnostic page={page} initialQuestions={[q]} /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: /Start practice/ }));
+  fireEvent.click(screen.getByLabelText(/1\/8/));
+  fireEvent.click(screen.getByRole('button', { name: /Check my answer/ }));
+  fireEvent.click(screen.getByRole('button', { name: /See my takeaways/ }));
+  expect(screen.getByText('one useful takeaway')).toBeVisible();
+  expect(screen.getByText('This set held. A longer session will tell you if it was a pattern or a lucky pass.')).toBeVisible();
+  expect(screen.queryByText('a note for you')).not.toBeInTheDocument();
+  await waitFor(() => expect(fetchResultNote).toHaveBeenCalled());
+});
+test('a finished set replaces the takeaway with the tutor note', async () => {
+  fetchResultNote.mockResolvedValue('You held the circulation path. Look once more at medication safety, then try another short set.');
+  const page = catalog.pages.find(p => p.slug === 'hesi-a2-practice-test');
+  const q = catalog.questions[0];
+  render(<MemoryRouter><Diagnostic page={page} initialQuestions={[q]} /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: /Start practice/ }));
+  fireEvent.click(screen.getByLabelText(/1\/8/));
+  fireEvent.click(screen.getByRole('button', { name: /Check my answer/ }));
+  fireEvent.click(screen.getByRole('button', { name: /See my takeaways/ }));
+  await waitFor(() => expect(screen.getByText(/You held the circulation path/)).toBeVisible());
+  expect(fetchResultNote).toHaveBeenCalledWith(expect.objectContaining({
+    title: page.title,
+    items: [expect.objectContaining({ concept: q.concept, correct: true })]
+  }));
 });
 test('coverage lists unique concepts, not question stems', () => {
   const page = catalog.pages.find(p => p.slug === 'pharmacology-nclex-questions');

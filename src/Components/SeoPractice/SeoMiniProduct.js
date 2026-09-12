@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import catalog from './catalog.json';
 import { experienceFor, guideNotes } from './content';
 import { bankFor, coverageTopics, createPlan, dateKey, diagnostic, faqs, grade, pickSet, subjects, unseenCount } from './model';
-import { continueSeo, loadSavedProduct, readLocal, trackSeo, writeLocal } from '../../Services/SeoMiniProductService';
+import { continueSeo, fetchResultNote, loadSavedProduct, readLocal, trackSeo, writeLocal } from '../../Services/SeoMiniProductService';
 import { paperContour } from '../ChatInerface/paperTransition';
 import './SeoMiniProduct.css';
 
@@ -213,7 +213,7 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
     if (!size) return [...available];
     return pickSet(available, size, (readLocal(seenKey)?.ids) || []);
   });
-  const [position, setPosition] = useState(0), [selected, setSelected] = useState([]), [answers, setAnswers] = useState({}), [finished, setFinished] = useState(false), [retry, setRetry] = useState(false);
+  const [position, setPosition] = useState(0), [selected, setSelected] = useState([]), [answers, setAnswers] = useState({}), [finished, setFinished] = useState(false), [retry, setRetry] = useState(false), [note, setNote] = useState('');
   const trackedStart = useRef(false);
   const prompt = useRef(null);
   const q = questions[position];
@@ -224,6 +224,23 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
   const setLength = size ? Math.min(size, pool.length) : pool.length;
   const remaining = size ? unseenCount(pool, seen) : 0;
   useEffect(() => { if (q) prompt.current?.focus({ preventScroll: true }); }, [q]);
+  useEffect(() => {
+    if (!finished || !result.total) return;
+    let live = true;
+    fetchResultNote({
+      title: page.title,
+      cluster: page.cluster,
+      compact,
+      retry,
+      items: questions.map(item => ({
+        concept: item.concept,
+        section: item.section,
+        correct: grade(item, answers[item.id] || []),
+        why: item.why
+      }))
+    }).then(text => { if (live && text) setNote(text); }).catch(() => {});
+    return () => { live = false; };
+  }, [finished, result.total, questions, answers, page, compact, retry]);
   useEffect(() => {
     if (!autoStart || trackedStart.current || !questions.length) return;
     trackedStart.current = true;
@@ -238,7 +255,7 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
     const pickSize = fresh && remainingNow > 0 ? Math.min(size, remainingNow) : size;
     const pickSeen = remainingNow === 0 ? lastSet : seen;
     const set = isRetry ? list : pickSet(list, pickSize, pickSeen);
-    setQuestions(set); setPosition(0); setSelected([]); setAnswers({}); setFinished(false); setRetry(isRetry);
+    setQuestions(set); setPosition(0); setSelected([]); setAnswers({}); setFinished(false); setRetry(isRetry); setNote('');
     trackSeo('seo_mini_product_started', page, { questionCount: set.length, isRetry, fresh });
   }
   function next() {
@@ -269,9 +286,9 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
       <div className="seo-result-hero">
         <div className="seo-score-ring" style={{ '--score': `${result.percentage * 3.6}deg` }}><div><strong>{result.percentage}%</strong><span>{result.band}</span></div></div>
         <div>
-          <span className="seo-hand">one useful takeaway</span>
+          <span className="seo-hand">{note ? 'a note for you' : 'one useful takeaway'}</span>
           <h2>{result.correct}/{result.total} correct{retry ? ' on this retry' : compact ? ' after reviewing' : ' on your first pass'}.</h2>
-          <p>{takeaway}</p>
+          {note ? <div className="seo-result-note">{note.split(/\n{2,}/).map(paragraph => <p key={paragraph}>{paragraph}</p>)}</div> : <p>{takeaway}</p>}
         </div>
       </div>
       {!allCorrect && (result.needsWork || result.missed.length > 0) && <div className="seo-result-next">
