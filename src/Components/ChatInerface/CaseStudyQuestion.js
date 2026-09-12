@@ -28,7 +28,6 @@ import {
   closestCenter,
   KeyboardSensor,
   PointerSensor,
-  TouchSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
@@ -56,6 +55,12 @@ const TAB_KEYS = {
 // ============================================
 // ICON COMPONENTS
 // ============================================
+
+function ChartIcon({ kind }) {
+  return <svg className="case-chart-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    {kind === 'observations' ? <><path d="M3 12h4l3-7 4 14 3-7h4" /><path d="M4 5V4h3M17 20h3v-1" /></> : kind === 'file' ? <><path d="M9 4H6a2 2 0 0 0-2 2v14h16V6a2 2 0 0 0-2-2h-3" /><rect x="9" y="2" width="6" height="4" rx="1" /><path d="M9 12h6M12 9v6" /></> : <><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9l-6-6Z" /><path d="M14 3v6h6M8 13h8M8 17h5" /></>}
+  </svg>;
+}
 
 function DragHandleIcon() {
   return (
@@ -98,7 +103,7 @@ function ExpandIcon() {
 // SORTABLE ITEM COMPONENT
 // ============================================
 
-function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectPosition }) {
+function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectPosition, onMove, total, t }) {
   const {
     attributes,
     listeners,
@@ -112,7 +117,7 @@ function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectP
   const style = {
     transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
     transition,
-    opacity: isDragging ? 0.5 : 1,
+    opacity: 1,
     zIndex: isDragging ? 1000 : 1,
   };
 
@@ -127,15 +132,15 @@ function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectP
       ref={setNodeRef}
       style={style}
       className={itemClass}
-      {...attributes}
-      {...listeners}
     >
-      <span className="drag-handle">
-        <DragHandleIcon />
-      </span>
-      {/* Index number removed as per user request */}
+      <span className="case-priority-number">{index + 1}</span>
+      <button type="button" className="drag-handle" {...attributes} {...listeners} disabled={isRevealed} aria-label={t('caseStudy.moveAction', 'Drag action {{number}}', { number: index + 1 })}><DragHandleIcon /></button>
       <span className="drag-item-text">{item.text}</span>
 
+      {!isRevealed && <div className="case-move-controls">
+        <button type="button" disabled={index === 0} onClick={() => onMove(index, -1)} aria-label={t('caseStudy.moveUp', 'Move action {{number}} up', { number: index + 1 })}>↑</button>
+        <button type="button" disabled={index === total - 1} onClick={() => onMove(index, 1)} aria-label={t('caseStudy.moveDown', 'Move action {{number}} down', { number: index + 1 })}>↓</button>
+      </div>}
       {isRevealed && (
         <span className={`drag-item-status ${isCorrectPosition ? 'correct' : 'incorrect'}`}>
           {isCorrectPosition ? <CheckmarkIcon /> : <XMarkIcon />}
@@ -144,7 +149,7 @@ function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectP
 
       {isRevealed && !isCorrectPosition && correctPosition !== undefined && (
         <span className="drag-item-correct-pos">
-          (Should be #{correctPosition + 1})
+          {t('caseStudy.expectedPosition', 'Expected #{{number}}', { number: correctPosition + 1 })}
         </span>
       )}
     </div>
@@ -166,7 +171,9 @@ function CaseStudyQuestion({
   inModal = false,
   reviewMode = false,
   previousAnswer = null,
-  onOpenModal
+  onOpenModal,
+  tutorPanel,
+  onOpenTutor
 }) {
   const { t } = useTranslation();
 
@@ -178,9 +185,11 @@ function CaseStudyQuestion({
   // ----------------------------------------
 
   // Active tab in case study
-  const [activeTab, setActiveTab] = useState(TAB_KEYS.NURSES_NOTES);
+
 
   // Drag items (order can change)
+  const [activeTab, setActiveTab] = useState(TAB_KEYS.NURSES_NOTES);
+  const [mobileView, setMobileView] = useState('chart');
   const [items, setItems] = useState([]);
 
   // Track if answer has been submitted
@@ -272,15 +281,6 @@ function CaseStudyQuestion({
     return { width: `${((quizIndex + 1) / totalQuestions) * 100}%` };
   }, [quizIndex, totalQuestions]);
 
-  // Check if user has reordered (can submit)
-  const hasReordered = useMemo(() => {
-    if (!normalizedOptions || items.length === 0) return false;
-
-    const initialIds = normalizedOptions.map(item => item.id);
-    const currentIds = items.map(item => item.id);
-    return JSON.stringify(initialIds) !== JSON.stringify(currentIds);
-  }, [normalizedOptions, items]);
-
   // Memoize item IDs for SortableContext
   const itemIds = useMemo(() => items.map(item => item.id), [items]);
 
@@ -331,7 +331,7 @@ function CaseStudyQuestion({
       setScoreResult(null);
     }
     // Reset to first available tab
-    setActiveTab(availableTabs[0] || TAB_KEYS.NURSES_NOTES);
+
   }, [quizId, quiz?.options, previousAnswer, normalizedOptions, availableTabs]);
 
   // ----------------------------------------
@@ -478,66 +478,35 @@ function CaseStudyQuestion({
           </div>
         )}
 
-        {/* Case Study Tabs — only render tabs that have content */}
-        {quiz.caseStudy && availableTabs.length > 0 && (
-          <div className="case-study-tabs-container">
-            {/* Show tab bar only when there are 2+ tabs; single tab renders content directly */}
-            {availableTabs.length > 1 && (
-              <div className="case-study-tabs">
-                {availableTabs.includes(TAB_KEYS.NURSES_NOTES) && (
-                  <button
-                    className={`case-study-tab ${activeTab === TAB_KEYS.NURSES_NOTES ? 'active' : ''}`}
-                    onClick={() => setActiveTab(TAB_KEYS.NURSES_NOTES)}
-                    type="button"
-                  >
-                    {t('caseStudy.nursesNotes', "Nurses' Notes")}
-                  </button>
-                )}
-                {availableTabs.includes(TAB_KEYS.VITAL_SIGNS) && (
-                  <button
-                    className={`case-study-tab ${activeTab === TAB_KEYS.VITAL_SIGNS ? 'active' : ''}`}
-                    onClick={() => setActiveTab(TAB_KEYS.VITAL_SIGNS)}
-                    type="button"
-                  >
-                    {t('caseStudy.vitalSigns', 'Vital Signs')}
-                  </button>
-                )}
-                {availableTabs.includes(TAB_KEYS.LAB_RESULTS) && (
-                  <button
-                    className={`case-study-tab ${activeTab === TAB_KEYS.LAB_RESULTS ? 'active' : ''}`}
-                    onClick={() => setActiveTab(TAB_KEYS.LAB_RESULTS)}
-                    type="button"
-                  >
-                    {t('caseStudy.labResults', 'Laboratory Results')}
-                  </button>
-                )}
-              </div>
-            )}
-
-            <div className="case-study-tab-content">
-              {getTabContent(activeTab) ? (
-                <div
-                  className="tab-content-inner"
-                  dangerouslySetInnerHTML={{ __html: getTabContent(activeTab) }}
-                />
-              ) : (
-                <p className="tab-content-empty">
-                  {t('caseStudy.noData', 'No data available for this tab.')}
-                </p>
-              )}
-            </div>
+        <div className="case-mobile-switch" aria-label="Case view"><button type="button" aria-pressed={mobileView === 'chart'} onClick={() => setMobileView('chart')}>{t('caseStudy.patientFile', 'Patient chart')}</button><button type="button" aria-pressed={mobileView === 'answer'} onClick={() => setMobileView('answer')}>{t('caseStudy.yourDecision', 'Your answer')}</button></div>
+        <div className={`case-split-layout case-view-${mobileView}`}>
+        <div className="case-reference-pane">
+        {tutorPanel || <section className="case-patient-file" aria-label={t('caseStudy.patientFile', 'Patient file')}>
+          <div className="case-file-label"><span className="case-file-heading"><ChartIcon kind="file" />{t('caseStudy.patientFile', 'Patient chart')}</span>{onOpenTutor && <button type="button" onClick={onOpenTutor}>{t('caseStudy.askTutor', 'Ask your tutor')} ↗</button>}</div>
+          <div className="case-chart-tabs" role="tablist" aria-label="Patient chart">
+            {[{ key: TAB_KEYS.NURSES_NOTES, label: t('caseStudy.nursesNotes', 'Notes') }, { key: 'observations', label: t('caseStudy.vitalsAndLabs', 'Vitals & labs') }].map(tab => <button type="button" role="tab" aria-selected={activeTab === tab.key} key={tab.key} onClick={() => setActiveTab(tab.key)}><ChartIcon kind={tab.key} />{tab.label}</button>)}
           </div>
-        )}
-
+          <div className="case-chart-text case-chart-scroll" role="tabpanel" tabIndex={0} key={activeTab}>
+            {(activeTab === TAB_KEYS.NURSES_NOTES ? [TAB_KEYS.NURSES_NOTES] : [TAB_KEYS.VITAL_SIGNS, TAB_KEYS.LAB_RESULTS]).filter(key => availableTabs.includes(key)).map(key => <section key={key}>
+              {activeTab !== TAB_KEYS.NURSES_NOTES && <h3>{key === TAB_KEYS.VITAL_SIGNS ? t('caseStudy.vitalSigns', 'Vital signs') : t('caseStudy.labResults', 'Lab results')}</h3>}
+              <div dangerouslySetInnerHTML={{ __html: getTabContent(key) || '' }} />
+            </section>)}
+            {!(activeTab === TAB_KEYS.NURSES_NOTES ? availableTabs.includes(TAB_KEYS.NURSES_NOTES) : availableTabs.some(key => key !== TAB_KEYS.NURSES_NOTES)) && <p>{t('caseStudy.noRecordedData', 'No information recorded here.')}</p>}
+          </div>
+        </section>}
+        {tutorPanel && <p className="case-chart-return-note">{t('caseStudy.closeTutorForChart', 'Close the tutor to return to your patient chart.')}</p>}
+        </div>
+        <div className="case-answer-pane">
         {/* Question Text */}
         <div className="case-study-question">
+          <span className="case-task-label">{t('caseStudy.yourDecision', 'Your decision')}</span>
           {quiz.question}
         </div>
 
         {/* Instructions */}
         {!revealed && (
           <div className="case-study-hint">
-            {t('caseStudy.dragHint', 'Drag and drop to arrange in the correct order')}
+            {t('caseStudy.orderInstructions', 'Place the first action at the top. Drag the handle or use the arrows.')}
           </div>
         )}
 
@@ -561,6 +530,9 @@ function CaseStudyQuestion({
                     item={item}
                     index={index}
                     isRevealed={revealed}
+                    t={t}
+                    total={items.length}
+                    onMove={(position, direction) => setItems(current => arrayMove(current, position, position + direction))}
                     correctPosition={feedback.correctPosition}
                     isCorrectPosition={feedback.isCorrectPosition}
                   />
@@ -573,9 +545,9 @@ function CaseStudyQuestion({
         {/* Submit Button */}
         {!revealed && !reviewMode && (
           <button
-            className={`case-study-submit-btn ${hasReordered ? 'enabled' : 'disabled'}`}
+            className="case-study-submit-btn enabled"
             onClick={handleSubmit}
-            disabled={!hasReordered}
+            disabled={!items.length}
             type="button"
           >
             {t('caseStudy.submitOrder', 'Submit Order')}
@@ -612,18 +584,20 @@ function CaseStudyQuestion({
 
             {/* Show correct order if not fully correct */}
             {!scoreResult.isFullyCorrect && (
-              <div className="correct-order-section">
+              <div className="case-order-comparison">
+                <section><p className="correct-order-label">{t('caseStudy.yourOrder', 'Your order')}</p><ol className="correct-order-list">{items.map(item => <li key={item.id} className="correct-order-item">{item.text}</li>)}</ol></section>
+              <section className="correct-order-section">
                 <p className="correct-order-label">
                   {t('caseStudy.correctOrder', 'Correct Order:')}
                 </p>
                 <ol className="correct-order-list">
-                  {quiz.correctOrder.map((item, index) => (
-                    <li key={item.id} className="correct-order-item">
-                      {item.text}
+                  {correctOrder.map(id => (
+                    <li key={id} className="correct-order-item">
+                      {normalizedOptions.find(item => item.id === id)?.text || id}
                     </li>
                   ))}
                 </ol>
-              </div>
+              </section></div>
             )}
 
             {/* Justification */}
@@ -654,6 +628,7 @@ function CaseStudyQuestion({
             }
           </button>
         )}
+        </div></div>
       </div>
       {glossaryPopover}
     </div>

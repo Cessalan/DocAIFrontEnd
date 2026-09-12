@@ -32,6 +32,10 @@ export async function askPracticeTutor(body, signal) {
   return (await check(await fetch(`${API_BASE_URL}/quiz/tutor`, { method: 'POST', headers: await headers(), body: JSON.stringify(body), signal }))).json();
 }
 
+export async function completePractice(body) {
+  return (await check(await fetch(`${API_BASE_URL}/quiz/debrief`, { method: 'POST', headers: await headers(), body: JSON.stringify(body) }))).json();
+}
+
 export async function streamPracticeBatch(body, onQuestion, signal) {
   const response = await check(await fetch(`${API_BASE_URL}/quiz/practice-stream`, { method: 'POST', headers: await headers(), body: JSON.stringify(body), signal }));
   const reader = response.body.getReader(), decoder = new TextDecoder();

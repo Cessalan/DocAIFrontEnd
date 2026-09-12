@@ -25,7 +25,7 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
    rewards — the completion celebration is only a couple of items away. */
 const QUIZ_MILESTONE_MIN_SET = 8;
 
-const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint }) => {
+const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor }) => {
   const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -1155,6 +1155,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
 
             {isCaseStudy ? (
               <CaseStudyQuestion key={`${currentQueuePosition}-${isReviewRound}`}
+                tutorPanel={caseStudyTutor} onOpenTutor={onCaseTutor}
                 quiz={currentQuestion} quizIndex={queueIndex} totalQuestions={expectedTotal || totalQuestions}
                 previousAnswer={practiceMode ? currentQuestion.userSelection : null}
                 onAnswerSelect={handleComplexAnswer} onNext={handleNextQuestion}

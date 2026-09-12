@@ -9,6 +9,7 @@ document.body.classList.toggle('dark-mode', new URLSearchParams(window.location.
 function Preview() {
   const [open, setOpen] = useState(false);
   const [origin, setOrigin] = useState(null);
+  const [debrief, setDebrief] = useState(null);
   const [message, setMessage] = useState({ id: 'preview', role: 'assistant', type: 'quiz', quizTopic: 'Your course practice', expectedTotal: 2,
     quizData: [{ question: 'Which approach helps you check your understanding of a topic before moving on to the next part of your course?', questionType: 'mcq', options: ['Explain the concept in your own words and identify any gaps in your understanding', 'Skip every unfamiliar term and move straight to the next topic', 'Read the same paragraph without checking whether you can explain it', 'Memorize the page layout without considering how the ideas connect'], correctIndex: 0, correctBlurb: 'Explaining a concept helps reveal gaps in understanding.' },
       { question: 'What should you do when part of an explanation is unclear?', questionType: 'mcq', options: ['Ask a focused follow-up question', 'Move on without checking'], correctIndex: 0 }] });
@@ -17,8 +18,20 @@ function Preview() {
       <p style={{ fontSize: 13 }}>Local UI preview · Sample content · No account or API calls</p>
       <h1>Your conversation</h1>
       <ChatMessage message={message} onOpenPractice={(id, bounds) => { setOrigin(bounds); setOpen(true); }} />
+      {debrief && <ChatMessage message={debrief} />}
     </div>
-    <FocusedQuiz message={message} chatId="preview" visible={open} launchOrigin={origin} onExit={() => setOpen(false)} onPracticeChange={practice => setMessage(previous => ({ ...previous, practice }))} />
+    <FocusedQuiz message={message} chatId="preview" visible={open} launchOrigin={origin} onExit={() => setOpen(false)} onPracticeChange={practice => setMessage(previous => ({ ...previous, practice }))}
+      onSessionComplete={async ({ saved }) => {
+        await saved;
+        const first = message.practice?.firstAnswers || message.practice?.answers || {};
+        const score = Object.values(first).filter(answer => answer.isCorrect).length;
+        const missed = message.quizData.findIndex((q, index) => first[index]?.isCorrect === false);
+        const index = Math.max(0, missed);
+        setDebrief({ id:'sample-debrief', role:'assistant', type:'practice_debrief',
+          content:`**${score}/2 correct on your first attempt.**\n\n${missed >= 0 ? `${score ? '- **Good:** You finished the practice.\n' : ''}- **Review:** One study decision needs another look.\n- **Next time:** First name what the question asks you to decide.` : '- **Good:** You got every answer right.\n- **Review:** Keep this reasoning fresh.\n- **Next time:** Explain why one wrong option does not fit.'}`,
+          reviewLabel:missed >= 0 ? 'Review my mistake' : 'Consolidate this', reviewQuestion:message.quizData[index].question,
+          reviewAnswer:message.quizData[index].options[first[index]?.selectedIndex], reviewFeedback:message.quizData[index].correctBlurb });
+      }} />
   </main>;
 }
 createRoot(document.getElementById('root')).render(<Preview />);

@@ -4,6 +4,7 @@ export function useTranslation() { return { i18n: { language: 'en' }, t: (key, f
 const quota = { isPro: false, remaining: 0, refresh() {}, openUpgrade() {} };
 export function useUsageLimit() { return quota; }
 export const savePractice = async () => {};
+export const completePractice = async () => ({});
 export const copyPracticeToOwnChat = async () => 'preview-copy';
 export const streamPracticeBatch = async () => {};
 export const extend_quiz_stream = async () => {};

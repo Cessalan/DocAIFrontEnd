@@ -11,7 +11,7 @@ async function main() {
     loader: { '.js': 'jsx', '.svg': 'dataurl', '.png': 'dataurl', '.jpg': 'dataurl', '.mp3': 'dataurl', '.wav': 'dataurl', '.gif': 'dataurl' },
     plugins: [{ name: 'inert-preview', setup(build) {
       build.onResolve({ filter: /(?:react-i18next|UsageContext\/UsageContext|Services\/(?:PracticeService|FastAPICalls|devLogger)|utils\/soundEffects)$/ }, () => ({ path: mocks }));
-      build.onResolve({ filter: /(?:ChatFlashcard|FlashcardResults|ChatSummary|ChatScenario|ChatStudySheet|MessageRating|QuizLoading|StreamingLogo|StaticLogo|DiagramAwarePre|useArtifactEngagement)$/ }, () => ({ path: mocks }));
+      build.onResolve({ filter: /(?:FlashcardPractice|ChatFlashcard|FlashcardResults|ChatSummary|ChatScenario|ChatStudySheet|MessageRating|QuizLoading|StreamingLogo|StaticLogo|DiagramAwarePre|useArtifactEngagement)$/ }, () => ({ path: mocks }));
       build.onResolve({ filter: /Glossary\/useGlossary$/ }, () => ({ path: 'glossary', namespace: 'mock-glossary' }));
       build.onLoad({ filter: /.*/, namespace: 'mock-glossary' }, () => ({ contents: `export { useGlossary as default } from ${JSON.stringify(mocks)};`, resolveDir: root }));
     }}]

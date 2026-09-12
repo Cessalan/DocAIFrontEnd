@@ -3,14 +3,13 @@ import ReactMarkDown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatQuizStream from "./ChatQuizStream";
 import PracticeLaunchCard from './PracticeLaunchCard';
-import ChatFlashcard from "./ChatFlashcard";
-import FlashcardResults from "./FlashcardResults";
+import PracticeDebrief from './PracticeDebrief';
+import FlashcardPractice from './FlashcardPractice';
 import SummaryDisplay from "./ChatSummary";
 import ChatScenario from "./ChatScenario";
 import ChatStudySheet from "./ChatStudySheet";
 import MessageRating from "./MessageRating";
 
-import QuizLoading from "./QuizLoading";
 import StreamingLogo from "./StreamingLogo";
 import StaticLogo from "./StaticLogo";
 
@@ -213,6 +212,7 @@ const ChatMessage = ({
   onMessageRated,
   onQuizExtended,
   onOpenPractice,
+  onRetryDebrief,
   onDeleteMessage,
   onEditMessage,
   viewAllChatsMode = false
@@ -222,11 +222,6 @@ const ChatMessage = ({
   // ============================================
   // ALL HOOKS MUST BE CALLED FIRST (before any returns)
   // ============================================
-
-  // Flashcard state management
-  const [currentCardIndex, setCurrentCardIndex] = useState(0);
-  const [showFlashcardResults, setShowFlashcardResults] = useState(false);
-  const [flashcardModalOpen, setFlashcardModalOpen] = useState(false);
 
   // Hover state for delete button (dev mode only)
   const [isHovered, setIsHovered] = useState(false);
@@ -367,122 +362,6 @@ const ChatMessage = ({
     }
   }, [message?.id, onQuizInteraction, onQuizAnswerSelect]);
 
-  // ============================================
-  // FLASHCARD HANDLERS
-  // ============================================
-
-  // Initialize flashcard view
-  useEffect(() => {
-    if (parsedFlashcardData) {
-      devLog("🔄 Initializing flashcard view, total cards:", parsedFlashcardData.length);
-      const firstUnreviewed = parsedFlashcardData.findIndex(card => !card.userReview);
-      devLog("🔍 First unreviewed card index:", firstUnreviewed);
-
-      if (firstUnreviewed === -1 && parsedFlashcardData.length > 0) {
-        devLog("📊 All cards reviewed, showing results");
-        setShowFlashcardResults(true);
-      } else {
-        const targetIndex = firstUnreviewed !== -1 ? firstUnreviewed : 0;
-        devLog("🎯 Setting current card index to:", targetIndex);
-        setCurrentCardIndex(targetIndex);
-        setShowFlashcardResults(false);
-      }
-    }
-  }, [message?.id, parsedFlashcardData]);
-
-  // Flashcard review handler
-  const handleCardReview = useCallback((cardIndex, reviewData) => {
-    if (!message || !parsedFlashcardData) return;
-
-    const card = parsedFlashcardData[cardIndex];
-
-    // Update card status based on review
-    let newStatus = card.status || 'new';
-    let newReviewCount = (card.reviewCount || 0);
-
-    if (reviewData.knowIt) {
-      newReviewCount++;
-      if (newReviewCount >= 3) {
-        newStatus = 'mastered';
-      } else {
-        newStatus = 'learning';
-      }
-    } else {
-      newReviewCount = 0;
-      newStatus = 'new';
-    }
-
-    // Prepare update data
-    const updateData = {
-      messageId: message.id,
-      cardIndex: cardIndex,
-      userReview: reviewData,
-      status: newStatus,
-      reviewCount: newReviewCount,
-      lastReviewed: new Date()
-    };
-
-    // Call parent handler to update Firebase
-    if (onQuizAnswerSelect) {
-      onQuizAnswerSelect(updateData);
-    }
-  }, [message?.id, parsedFlashcardData, onQuizAnswerSelect]);
-
-  // Next card handler
-  const handleNextCard = useCallback(() => {
-    if (!parsedFlashcardData) return;
-
-    const nextIndex = currentCardIndex + 1;
-
-    if (nextIndex < parsedFlashcardData.length) {
-      setCurrentCardIndex(nextIndex);
-    } else {
-      // Check if all reviewed
-      const allReviewed = parsedFlashcardData.every(card => card.userReview);
-      if (allReviewed) {
-        setShowFlashcardResults(true);
-      }
-    }
-  }, [currentCardIndex, parsedFlashcardData]);
-
-  // Skip card handler
-  const handleSkipCard = useCallback(() => {
-    if (!parsedFlashcardData) return;
-
-    const nextIndex = currentCardIndex + 1;
-    if (nextIndex < parsedFlashcardData.length) {
-      setCurrentCardIndex(nextIndex);
-    }
-  }, [currentCardIndex, parsedFlashcardData]);
-
-  // Navigate to specific card
-  const handleNavigateToCard = useCallback((index) => {
-    setCurrentCardIndex(index);
-    setShowFlashcardResults(false);
-  }, []);
-
-  // Review flashcards again
-  const handleReviewFlashcards = useCallback(() => {
-    setCurrentCardIndex(0);
-    setShowFlashcardResults(false);
-  }, []);
-
-  // Continue learning (focus on non-mastered cards)
-  const handleContinueLearning = useCallback(() => {
-    if (!parsedFlashcardData) return;
-
-    const firstNonMastered = parsedFlashcardData.findIndex(
-      card => card.status !== 'mastered'
-    );
-
-    if (firstNonMastered !== -1) {
-      setCurrentCardIndex(firstNonMastered);
-      setShowFlashcardResults(false);
-    } else {
-      setCurrentCardIndex(0);
-      setShowFlashcardResults(false);
-    }
-  }, [parsedFlashcardData]);
 
   // ============================================
   // GUARD CLAUSE (after all hooks)
@@ -533,6 +412,7 @@ const ChatMessage = ({
 
       {/* Content */}
       <div className="message-content" data-selectable="true">
+        {message.type === 'practice_debrief' && <PracticeDebrief message={message} onSendMessage={onSendMessage} onRetry={onRetryDebrief} />}
         {/* Delete Button (Dev Mode + View All Chats Only) */}
         {isDevelopment && viewAllChatsMode && isHovered && onDeleteMessage && !message.isStreaming && (
           <button
@@ -585,66 +465,10 @@ const ChatMessage = ({
           </div>
         )}
 
-        {/* Flashcard Display - Single Card Navigation */}
-        {isAI && Array.isArray(parsedFlashcardData) && parsedFlashcardData.length > 0 && (() => {
-          devLog("🎴 RENDERING FLASHCARDS - Total:", parsedFlashcardData.length);
-          devLog("🎴 Current card index:", currentCardIndex);
-          devLog("🎴 Show results:", showFlashcardResults);
-          return true;
-        })() && (
+        {isAI && Array.isArray(parsedFlashcardData) && (parsedFlashcardData.length > 0 || message.isStreaming) && (
           <div className="message-text">
-            <div className="flashcard-view-container">
-              {showFlashcardResults ? (
-                <>
-                  {/* Results Screen */}
-                  <FlashcardResults
-                    totalCards={parsedFlashcardData.length}
-                    masteredCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === true).length}
-                    learningCards={parsedFlashcardData.filter(c => c.userReview?.knowIt === false).length}
-                    newCards={parsedFlashcardData.filter(c => !c.userReview).length}
-                    onContinue={handleContinueLearning}
-                    onReview={handleReviewFlashcards}
-                    topicBreakdown={(() => {
-                      // Calculate topic breakdown
-                      const topicMap = {};
-                      parsedFlashcardData.forEach(card => {
-                        const topic = card.topic || 'General';
-                        if (!topicMap[topic]) {
-                          topicMap[topic] = { topic, total: 0, mastered: 0, learning: 0 };
-                        }
-                        topicMap[topic].total++;
-                        if (card.userReview?.knowIt === true) topicMap[topic].mastered++;
-                        else if (card.userReview?.knowIt === false) topicMap[topic].learning++;
-                      });
-                      return Object.values(topicMap);
-                    })()}
-                  />
-                </>
-              ) : parsedFlashcardData[currentCardIndex] ? (
-                /* Current Flashcard */
-                <ChatFlashcard
-                  flashcard={parsedFlashcardData[currentCardIndex]}
-                  cardIndex={currentCardIndex}
-                  onCardReview={handleCardReview}
-                  onNext={handleNextCard}
-                  onSkip={handleSkipCard}
-                  isLastCard={currentCardIndex === parsedFlashcardData.length - 1}
-                  totalCards={parsedFlashcardData.length}
-                  modalOpen={flashcardModalOpen}
-                  onModalChange={setFlashcardModalOpen}
-                  allFlashcards={parsedFlashcardData}
-                  onNavigate={handleNavigateToCard}
-                  showReview={false}
-                  showResults={showFlashcardResults}
-                  onReviewFlashcards={handleReviewFlashcards}
-                  onContinueLearning={handleContinueLearning}
-                  isStreaming={message.isStreaming}
-                />
-              ) : (
-                /* Loading state */
-                <QuizLoading />
-              )}
-            </div>
+            <FlashcardPractice key={message.id} message={message} cards={parsedFlashcardData}
+              chatId={chatId} files={uploadedFilesList} readOnly={viewAllChatsMode} />
           </div>
         )}
 
@@ -710,7 +534,7 @@ const ChatMessage = ({
         )}
 
         {/* Regular Text Message */}
-        {!(isAI && message.error) && !parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && (
+        {!(isAI && message.error) && !parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && message.type !== 'practice_debrief' && (
           <div className={isAI ? "message-text" : isEditing ? "message-edit-mode" : "user-text user-text-markdown"}>
             {isUser ? (
               isEditing ? (

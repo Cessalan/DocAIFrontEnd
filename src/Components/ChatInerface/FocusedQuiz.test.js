@@ -42,6 +42,24 @@ test('reduced motion returns to chat immediately', () => {
   } finally { window.matchMedia = original; }
 });
 
+test('early exit does not request a completion debrief', () => {
+  const complete = jest.fn();
+  render(<FocusedQuiz message={message} chatId="chat" visible onExit={jest.fn()} onSessionComplete={complete} />);
+  fireEvent.click(screen.getByRole('button', { name: '← Back to chat' }));
+  expect(complete).not.toHaveBeenCalled();
+});
+
+test('closing a fully answered quiz supplies a saved session for the debrief', async () => {
+  const complete = jest.fn();
+  render(<FocusedQuiz message={{ ...message, quizData: [mcq], expectedTotal: 1 }} chatId="chat" visible onExit={jest.fn()} onSessionComplete={complete} />);
+  fireEvent.click(screen.getByRole('button', { name: /B.*Abdomen/ }));
+  fireEvent.click(screen.getByRole('button', { name: '← Back to chat' }));
+  expect(complete).toHaveBeenCalledTimes(1);
+  await complete.mock.calls[0][0].saved;
+  expect(complete.mock.calls[0][0].questionCount).toBe(1);
+  expect(savePractice.mock.calls.at(-1)[2].firstAnswers[0].isCorrect).toBe(false);
+});
+
 test('the only composer lives below the conversation inside the tutor panel', () => {
   render(<FocusedQuiz message={message} chatId="chat" visible onExit={jest.fn()} />);
   const tutor = screen.getByRole('complementary', { name: 'Question tutor' });

@@ -190,3 +190,28 @@ body.dark-mode .focused-quiz {
   .practice-discussion { max-height:38vh; min-height:120px; }
   .practice-composer { padding:10px 14px; }.practice-mobile-return { display:block; padding:4px 8px; }
 }
+
+/* Use the same solid action surface as the rest of focused practice. */
+.focused-quiz .case-study-container .case-study-submit-btn,
+.focused-quiz .case-study-container .case-study-submit-btn.enabled:hover,
+.focused-quiz .case-study-container .case-study-submit-btn.enabled:active {
+  background: var(--practice-accent, #e88d7d);
+  color: #28222d;
+  border: 0;
+  box-shadow: none;
+  transform: none;
+  transition: opacity 160ms ease;
+}
+.focused-quiz .case-study-container .case-study-submit-btn.enabled:hover { opacity: .9; }
+.focused-quiz.has-case.has-tutor .practice-work { max-width: min(1880px, 100%); min-width: 0; }
+.focused-quiz.has-case.has-tutor .practice-question { overflow: auto; scrollbar-width: thin; scrollbar-color: var(--practice-line) transparent; }
+.focused-quiz.has-case .practice-question::-webkit-scrollbar { width: 5px; height: 5px; }
+.focused-quiz.has-case .practice-question::-webkit-scrollbar-button { display: none; width: 0; height: 0; }
+@media (min-width: 1201px) {
+  .focused-quiz.has-case .case-split-layout { height: auto; align-items: start; }
+  .focused-quiz.has-case .case-reference-pane,
+  .focused-quiz.has-case .case-answer-pane { height: auto; max-height: max(320px, calc(100dvh - 310px)); }
+  .focused-quiz.has-case .case-patient-file { height: auto; max-height: max(320px, calc(100dvh - 310px)); }
+  .focused-quiz.has-case .case-answer-pane { overflow: auto; }
+  .focused-quiz.has-case .case-chart-scroll { overflow: auto; }
+}

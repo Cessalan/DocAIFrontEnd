@@ -7,6 +7,7 @@ jest.mock('remark-gfm', () => ({ __esModule: true, default: () => {} }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'en' }, t: (key, fallback) => typeof fallback === 'string' ? fallback : fallback?.defaultValue || key }) }));
 jest.mock('./ChatQuizStream', () => () => <div>Legacy inline quiz</div>);
 jest.mock('./ChatFlashcard', () => () => null);
+jest.mock('../../Services/FlashcardPracticeService', () => ({ saveFlashcardReview: jest.fn(), askFlashcardTutor: jest.fn() }));
 jest.mock('./FlashcardResults', () => () => null);
 jest.mock('./ChatSummary', () => () => null);
 jest.mock('./ChatScenario', () => () => null);
@@ -33,4 +34,14 @@ test('legacy quizzes use their actual question topics as the launch title', () =
   render(<ChatMessage message={{ id: 'legacy', role: 'assistant', type: 'quiz', quizTopic: 'Quiz practice', quizData: [{ question: 'A question', topic: 'Trauma care' }, { question: 'Another question', topic: 'Family support' }] }} onOpenPractice={jest.fn()} />);
   expect(screen.getByRole('heading', { name: 'Trauma care · Family support' })).toBeInTheDocument();
   expect(screen.queryByText('Tutor included')).not.toBeInTheDocument();
+});
+
+test('saved flashcards in the main chat use the new focused review', () => {
+  render(<ChatMessage message={{ id: 'saved-deck', role: 'assistant', type: 'flashcard',
+    flashcardData: [{ front: 'Recall this idea?', back: 'A useful answer', topic: 'Course concepts' }] }} chatId="chat" />);
+  expect(screen.getByRole('heading', { name: 'Course concepts' })).toBeInTheDocument();
+  expect(screen.queryByText('A useful answer')).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Start review/ }));
+  expect(screen.getByRole('dialog', { name: 'Flashcard review' })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Recall this idea?' })).toBeInTheDocument();
 });

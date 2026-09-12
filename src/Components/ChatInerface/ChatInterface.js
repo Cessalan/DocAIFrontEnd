@@ -22,6 +22,8 @@ import {
 import ChatMessage from './ChatMessage';
 import FocusedQuiz from './FocusedQuiz';
 import ChatSendButton from './ChatSendButton';
+import { completePractice } from '../../Services/PracticeService';
+import { placePracticeDebriefs } from './practiceMessageOrder';
 import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
 import PostUploadActions from './PostUploadActions';
@@ -197,6 +199,8 @@ const ChatInterface = ({
   goToStudyMode = false,           // Flag to auto-trigger study mode after upload from landing page
   onStudyModeTriggered = null      // Callback when study mode flag has been consumed
 }) => {
+  // Initialize translations before any hook dependency reads i18n.language.
+  const { t, i18n } = useTranslation();
 
   // Auth context - need reactive auth state for pending upload processing
   const { isUserLoggedIn, userProfile, currentUser, setUserProfile } = useAuth() || {};
@@ -580,6 +584,27 @@ const ChatInterface = ({
   chatMessagesRef.current = chatMessages;
   const currentChatIDRef = useRef(currentChatID);
   currentChatIDRef.current = currentChatID;
+  const debriefRequests = useRef(new Set());
+  const handleSessionComplete = useCallback(async ({ messageId, questionCount, saved = Promise.resolve() }) => {
+    const chatId = currentChatIDRef.current;
+    const key = `${chatId}:${messageId}:${questionCount}`;
+    if (debriefRequests.current.has(key)) return;
+    debriefRequests.current.add(key);
+    const id = `pending-debrief-${messageId}-${questionCount}`;
+    const base = { id, role: 'assistant', type: 'practice_debrief', sourceQuizId: messageId, questionCount };
+    const replace = result => {
+      if (currentChatIDRef.current !== chatId) return;
+      setChatMessages(previous => [...previous.filter(item => !(item.type === 'practice_debrief' && item.sourceQuizId === messageId && item.questionCount === questionCount)), result]);
+    };
+    replace({ ...base, content: i18n.language.startsWith('fr') ? 'Préparation du bilan de ta pratique…' : 'Reviewing your practice…', isStreaming: true });
+    try {
+      await saved;
+      const result = await completePractice({ chat_id: chatId, message_id: messageId, language: i18n.language });
+      replace(result);
+    } catch (_) {
+      replace({ ...base, content: i18n.language.startsWith('fr') ? 'Le bilan n’a pas pu être chargé. Réessaie dans un instant.' : 'Your review could not load. Please retry in a moment.', debriefError: true });
+    } finally { debriefRequests.current.delete(key); }
+  }, [i18n.language]);
   const userInputTextRef = useRef(userInputText);
   userInputTextRef.current = userInputText;
   const uploadedFilesListRef = useRef(uploadedFilesList);
@@ -1099,6 +1124,7 @@ const ChatInterface = ({
       setChatMessages(prev => {
         // Local messages to preserve (not in Firebase)
         const localOnlyMessages = prev.filter(msg => {
+          if (msg.type === 'practice_debrief' && loadedMessages.some(item => item.type === 'practice_debrief' && item.sourceQuizId === msg.sourceQuizId && item.questionCount === msg.questionCount)) return false;
           const notInFirebase = !loadedMessages.some(fbMsg => fbMsg.id === msg.id);
 
           // Keep: active uploads, streaming messages, pending post-upload actions, pending flashcards/quizzes/mindmaps
@@ -1109,6 +1135,7 @@ const ChatInterface = ({
             (msg.isStreaming === true) ||
             (msg.type === 'post_upload_actions' && notInFirebase) ||
             (msg.type === 'plan_onboarding' && notInFirebase) ||
+            (msg.type === 'practice_debrief' && notInFirebase && msg.debriefError) ||
             ((msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap') && notInFirebase);
 
           if (shouldPreserve && (msg.type === 'flashcard' || msg.type === 'quiz' || msg.type === 'mindmap')) {
@@ -1199,8 +1226,6 @@ const ChatInterface = ({
 
     fetchFiles();
   }, [currentChatID]);
-
-  const { t, i18n } = useTranslation();
 
   const currentLanguage = i18n.language || 'en'; // Fallback to 'en' if language is not yet initialized
   currentLanguageRef.current = currentLanguage;
@@ -4744,6 +4769,7 @@ const ChatInterface = ({
     }
     return null;
   }, [chatMessages]);
+  const displayedChatMessages = useMemo(() => placePracticeDebriefs(chatMessages), [chatMessages]);
 
   return (
     <div style={{ display: 'flex', height: '100vh', position: 'relative', flex: 1, minWidth: 0 }}>
@@ -4753,7 +4779,7 @@ const ChatInterface = ({
           onCopyCreated={id => { copiedPracticeChat.current = id; closeFocusedQuiz(); onChatSelected(id); }}
           message={chatMessages.find(m => m.id === focusedQuizId)} visible={quizFocused && !isStudyMode} launchOrigin={practiceOrigin}
           onPracticeChange={practice => setChatMessages(previous => previous.map(message => message.id === focusedQuizId ? { ...message, practice } : message))}
-          onExit={closeFocusedQuiz} />
+          onExit={closeFocusedQuiz} onSessionComplete={handleSessionComplete} />
       )}
       <ProgressDashboard />
 
@@ -5314,7 +5340,7 @@ const ChatInterface = ({
 
           {/* Actual Messages - hidden until positioned */}
           <div style={{ opacity: isInitialLoadComplete ? 1 : 0, transition: 'opacity 0.3s ease' }}>
-            {chatMessages.map((message, messageIndex) => {
+            {displayedChatMessages.map((message, messageIndex) => {
               // Once the drill is running, the upload analysis card has done
               // its job. It reports on a step the student has already moved
               // past, and leaving it up puts a finished green "Analysis
@@ -5667,6 +5693,7 @@ const ChatInterface = ({
                       onMessageRated={handleMessageRated}
                       onQuizExtended={handleQuizExtended}
                       onOpenPractice={openFocusedQuiz}
+                      onRetryDebrief={handleSessionComplete}
                       onSendMessage={stableHandleSendMessage}
                       onRetryMessage={handleRetryMessage}
                       onDeleteMessage={handleDeleteMessage}

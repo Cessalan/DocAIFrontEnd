@@ -1151,3 +1151,98 @@ body.dark-mode .case-study-container .feedback-rationale-container {
     border-width: 3px;
   }
 }
+
+/* Patient file: quiet paper surfaces, readable chart, explicit priority slots. */
+.case-study-container .case-study-topic-badge { background: transparent; border: 0; padding: 0; margin: 8px 0 24px; border-radius: 0; }
+.case-study-container .topic-badge-text { font: 500 clamp(20px, 2vw, 27px)/1.4 'Outfit', sans-serif; color: var(--q-text); }
+.case-study-container .topic-badge-icon { display: none; }
+.case-patient-file { margin: 0 0 28px; padding: clamp(18px, 2.5vw, 28px); border-radius: 16px; background: var(--q-sunken); box-shadow: 0 8px 28px rgba(45,35,25,.035); }
+.case-file-label { color: var(--q-accent-text); font: 500 13px/1.5 'Outfit', sans-serif; margin-bottom: 22px; }
+.case-file-label > span { display: block; color: var(--q-text-soft); font-weight: 400; font-size: 12px; margin-top: 4px; }
+.case-chart-grid { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(190px, 1fr); gap: 24px 32px; align-items: start; }
+.case-chart-section:only-child { grid-column: 1 / -1; }
+.case-chart-nursesNotes { grid-row: span 2; }
+.case-chart-section h3 { font: 500 14px/1.5 'Outfit', sans-serif; color: var(--q-text); margin: 0 0 12px; }
+.case-chart-text { font: 400 15px/1.8 'Outfit', sans-serif; color: var(--q-text-soft); overflow-wrap: anywhere; }
+.case-chart-text p { margin: 0 0 14px; }
+.case-chart-text p:last-child { margin-bottom: 0; }
+.case-chart-text strong { font-weight: 500; color: var(--q-text); }
+.case-chart-text table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.case-chart-text td, .case-chart-text th { padding: 8px 5px; text-align: left; border-bottom: 1px solid var(--q-border); }
+.case-study-container .case-study-question { border: 0; background: transparent; padding: 0; margin: 26px 0 12px; font: 500 19px/1.6 'Outfit', sans-serif; }
+.case-task-label { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; color: var(--q-text-soft); margin-bottom: 8px; }
+.case-study-container .case-study-hint { border: 0; background: transparent; padding: 0; color: var(--q-text-soft); font: 400 12px/1.6 'Outfit', sans-serif; margin-bottom: 18px; }
+.case-study-container .case-study-hint::before { display: none; }
+.case-study-container .case-study-drag-item { display: flex; gap: 12px; padding: 16px; border: 1px solid transparent; border-radius: 14px; background: var(--q-sunken); box-shadow: 0 3px 12px rgba(35,25,20,.035); cursor: default; touch-action: auto; }
+.case-study-container .case-study-drag-item.dragging { box-shadow: 0 14px 28px rgba(25,20,15,.15); border-color: var(--q-accent-line); }
+.case-priority-number { display: grid; place-items: center; flex: 0 0 30px; height: 30px; border-radius: 50%; background: var(--q-accent-soft); color: var(--q-accent-text); font: 500 14px 'Outfit', sans-serif; }
+.case-study-container button.drag-handle { border: 0; padding: 4px; background: transparent; color: var(--q-text-muted); flex: 0 0 20px; width: 20px; cursor: grab; touch-action: none; }
+.case-study-container button.drag-handle svg { width: 14px; height: 20px; }
+.case-study-container .drag-item-text { font: 400 15px/1.6 'Outfit', sans-serif; min-width: 0; flex: 1; }
+.case-move-controls { display: flex; gap: 4px; flex-shrink: 0; }
+.case-move-controls button { border: 0; border-radius: 8px; width: 32px; height: 36px; background: transparent; color: var(--q-text-soft); cursor: pointer; }
+.case-move-controls button:hover:not(:disabled) { background: var(--q-accent-soft); color: var(--q-accent-text); }
+.case-move-controls button:disabled { opacity: .22; cursor: default; }
+.case-study-container button:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 3px; }
+.case-study-container .case-study-submit-btn { width: auto; min-width: 190px; display: block; margin: 24px 0 0 auto; padding: 14px 24px; border-radius: 12px; font: 500 15px/1.5 'Outfit', sans-serif; box-shadow: none; }
+.case-order-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
+.case-study-container .case-order-comparison .correct-order-section { margin: 0; }
+.case-study-container .case-study-feedback { border: 0; background: var(--q-sunken); padding: 24px; border-radius: 16px; text-align: left; }
+body.dark-mode .case-study-container, [data-theme="dark"] .case-study-container, .dark .case-study-container { --q-sunken: #292826; --q-text: #eee9df; --q-text-soft: #bdb7ad; --q-accent: #c7b8de; --q-accent-text: #c7b8de; --q-accent-soft: rgba(199,184,222,.09); --q-accent-line: rgba(199,184,222,.2); }
+@media (max-width: 720px) { .case-chart-grid, .case-order-comparison { grid-template-columns: minmax(0,1fr); } .case-chart-nursesNotes { grid-row: auto; } .case-study-container .case-study-drag-item { flex-wrap: wrap; gap: 8px; padding: 13px; } .case-move-controls { margin-left: auto; } .case-study-container .drag-item-text { flex-basis: calc(100% - 70px); } }
+@media (prefers-reduced-motion: reduce) { .case-study-container .case-study-drag-item { transition: none !important; } }
+
+/* Keep the reference chart and the decision in separate, bounded panes. */
+.case-study-container .case-split-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 26px; height: clamp(380px, calc(100dvh - 260px), 850px); }
+.case-reference-pane, .case-answer-pane { min-width: 0; min-height: 0; }
+.case-reference-pane { display: flex; flex-direction: column; }
+.case-split-layout .case-patient-file { display: flex; flex-direction: column; min-height: 0; height: 100%; margin: 0; padding: 20px; }
+.case-file-label { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 15px; }
+.case-file-label button { border: 0; background: transparent; color: var(--q-accent-text); font: inherit; cursor: pointer; }
+.case-chart-tabs { display: flex; gap: 6px; flex-shrink: 0; padding-bottom: 14px; }
+.case-chart-tabs button { border: 0; border-radius: 9px; padding: 9px 14px; color: var(--q-text-soft); background: transparent; font: 500 13px 'Outfit', sans-serif; cursor: pointer; }
+.case-chart-tabs button[aria-selected="true"] { background: var(--q-accent-soft); color: var(--q-accent-text); }
+.case-chart-scroll { flex: 1; min-height: 0; overflow: auto; padding-right: 10px; scrollbar-width: thin; scrollbar-color: var(--q-accent-line) transparent; }
+.case-answer-pane { overflow: auto; padding: 0 8px 12px 0; scrollbar-width: thin; }
+.case-answer-pane .case-study-question { margin-top: 0; font-size: 17px; }
+.case-answer-pane .case-study-drag-item { padding: 12px; gap: 8px; }
+.case-answer-pane .case-study-submit-btn { position: sticky; bottom: 0; z-index: 5; margin-top: 16px; }
+.case-mobile-switch { display: none; }
+.case-chart-return-note { font-size: 12px; color: var(--q-text-soft); margin: 8px 0 0; }
+.focused-quiz.has-case .practice-work { display: block; max-width: 1740px; }
+.focused-quiz.has-case .practice-question { height: 100%; }
+.focused-quiz.has-case .study-step-card { max-width: none; }
+.focused-quiz.has-case .case-reference-pane .practice-tutor { position: static; width: 100%; height: 100%; min-height: 0; max-height: none; margin: 0; flex: 1; }
+@media (max-width: 900px) {
+ .case-study-container .case-split-layout { display: block; height: calc(100dvh - 280px); min-height: 330px; }
+ .case-reference-pane, .case-answer-pane { height: 100%; }
+ .case-view-chart .case-answer-pane, .case-view-answer .case-reference-pane { display: none; }
+ .case-mobile-switch { display: flex; gap: 8px; margin-bottom: 16px; }
+ .case-mobile-switch button { border: 0; border-radius: 10px; padding: 10px 14px; background: var(--q-sunken); color: var(--q-text-soft); font: inherit; cursor: pointer; }
+ .case-mobile-switch button[aria-pressed="true"] { color: var(--q-accent-text); background: var(--q-accent-soft); }
+}
+
+/* Case + tutor stay together; the chart never disappears for a discussion. */
+.focused-quiz.has-case.has-tutor .practice-work { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 350px); gap: 24px; width: 100%; max-width: 1880px; align-items: start; }
+.focused-quiz.has-case.has-tutor .practice-question { min-width: 0; padding: 18px; }
+.focused-quiz.has-case.has-tutor .practice-work > .practice-tutor { position: sticky; top: 18px; margin: 18px 18px 0 0; height: min(620px, calc(100dvh - 125px)); min-height: 0; max-height: calc(100dvh - 125px); }
+.case-chart-scroll > section + section { margin-top: 24px; }
+.case-chart-scroll h3 { font-size: 14px; font-weight: 500; margin: 0 0 12px; }
+@media (max-width: 1200px) and (min-width: 901px) {
+ .focused-quiz.has-case .case-split-layout { grid-template-columns: minmax(0,1fr); height: auto; }
+ .focused-quiz.has-case .case-reference-pane { height: 290px; }
+ .focused-quiz.has-case .case-answer-pane { overflow: visible; }
+}
+@media (max-width: 900px) {
+ .focused-quiz.has-case.has-tutor .practice-work { display: flex; flex-direction: column; gap: 10px; overflow: hidden; height: 100%; }
+ .focused-quiz.has-case.has-tutor .practice-question { flex: 1; min-height: 0; width: 100%; overflow: auto; }
+ .focused-quiz.has-case.has-tutor .practice-work > .practice-tutor { position: relative; top: auto; margin: 0 12px 12px; width: calc(100% - 24px); flex: 0 0 230px; height: 230px; max-height: 32dvh; }
+ .focused-quiz.has-case .case-split-layout { height: max(260px, calc(68dvh - 240px)); min-height: 260px; }
+ .focused-quiz.has-case .practice-tutor > header { padding: 10px 14px; }
+ .focused-quiz.has-case .practice-tutor .practice-composer { padding: 8px 14px; }
+}
+
+.case-file-label > .case-file-heading { display: inline-flex; align-items: center; gap: 8px; color: inherit; font: inherit; margin: 0; }
+.case-chart-tabs button { display: inline-flex; align-items: center; gap: 7px; }
+.case-chart-icon { width: 17px; height: 17px; flex: 0 0 17px; opacity: .8; }
+.case-chart-tabs button[aria-selected="true"] .case-chart-icon { opacity: 1; }
