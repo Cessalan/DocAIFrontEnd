@@ -1,3 +1,5 @@
+import catalog from './catalog.json';
+const bankSize = slug => (catalog.banks[slug] || []).length;
 const focusedTopics = {
   'dosage-calculation-practice-questions': {
     label: 'Calculation lab',
@@ -78,7 +80,7 @@ export function experienceFor(page) {
   };
   if (page.slug === 'hesi-a2-practice-test') return {
     eyebrow: 'A focused admission-prep check',
-    metrics: [['12 questions', 'across your sections'], ['4 sections', 'choose what matters'], ['Instant result', 'with review priorities']],
+    metrics: [['12 per set', `from ${bankSize(page.slug)} original questions`], ['4 sections', 'choose what matters'], ['Instant result', 'with review priorities']],
     label: 'What this diagnostic gives you',
     title: 'A percentage is not a study strategy.',
     lede: 'Finish with section-by-section performance, the concepts you missed, and a clear first topic to revisit. Use it as a starting point alongside your school’s required HESI A2 sections.',
@@ -90,7 +92,7 @@ export function experienceFor(page) {
   };
   if (page.slug === 'hesi-practice-questions') return {
     eyebrow: 'Built for nursing-course decisions',
-    metrics: [['6 questions', 'in a focused sample'], ['Clinical mix', 'across core subjects'], ['Weak-area map', 'after your last answer']],
+    metrics: [['6 per set', `from ${bankSize(page.slug)} clinical questions`], ['Clinical mix', 'across core subjects'], ['Weak-area map', 'after your last answer']],
     label: 'Closer to your actual exam',
     title: 'Practice is more useful when it matches your course.',
     lede: 'This starter checks nursing judgment across several subjects. The natural next step is to turn your professor’s slides, notes, and study guide into targeted practice.',
@@ -103,7 +105,7 @@ export function experienceFor(page) {
   const focused = focusedTopics[page.slug];
   return {
     eyebrow: 'Focused practice, useful feedback',
-    metrics: [['5 minutes', 'for a first signal'], ['1 at a time', 'with rationales'], ['Personal result', 'to guide review']],
+    metrics: [[`${bankSize(page.slug)} questions`, 'fresh set every visit'], ['1 at a time', 'with rationales'], ['Personal result', 'to guide review']],
     ...focused
   };
 }

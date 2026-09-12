@@ -38,6 +38,11 @@ export async function recordSeoSignup(user, isNewUser = true) {
     const [{ db }, { doc, setDoc }] = await Promise.all([import('../Firebase/config'), import('firebase/firestore')]);
     await setDoc(doc(db, 'users', user.uid, 'seoMiniProducts', pending.slug), { value: pending.value, updatedAt: new Date().toISOString() });
   }
+  // The NCLEX-bound pages also carry a practice intent: seed her answers into
+  // the attempt log and store what she missed for the generator. Idempotent,
+  // so running again from the arrival screen is harmless.
+  const { commitIntent } = await import('./NclexHandoffService');
+  await commitIntent(user.uid);
 }
 async function persistAcquisition(uid) {
   const context = readLocal('acquisition');
@@ -55,11 +60,33 @@ export async function loadSavedProduct(slug) {
   const snap = await getDoc(doc(db, 'users', auth.currentUser.uid, 'seoMiniProducts', slug));
   return snap.exists() ? snap.data().value : null;
 }
+/**
+ * Where a landing-page CTA sends her.
+ *
+ * NCLEX-cluster pages and the nursing-school subject pages land on
+ * /nclex/start, which reads the intent written here and proposes a real
+ * first session. The HESI pages keep the older chat handoff: HESI A2 is an
+ * admission exam with no place in the NCSBN blueprint, and the nursing HESI
+ * page's promise is "bring your course material", which is the chat's job.
+ */
 export async function continueSeo(page, value, { save = false, topic = '', track = 'RN', automatic = false } = {}) {
   writeLocal(page.slug, value);
   writeLocal('handoff', { slug: page.slug, value, at: Date.now() });
-  if (!automatic) trackSeo('seo_nursequiz_cta_clicked', page, { action: save ? 'save' : 'practice' });
+  const { buildIntent } = await import('../Components/SeoPractice/seoToNclex');
+  const intent = buildIntent(page, value, { topic, track });
+  const destination = intent ? 'nclex' : 'chat';
+  if (!automatic) trackSeo('seo_nursequiz_cta_clicked', page, { action: save ? 'save' : 'practice', destination });
   const [{ auth, db }, { doc, setDoc }] = await Promise.all([import('../Firebase/config'), import('firebase/firestore')]);
+  if (intent) {
+    const { writeIntent, commitIntent } = await import('./NclexHandoffService');
+    writeIntent(intent);
+    const returnTo = `/nclex/start?from=${encodeURIComponent(page.slug)}`;
+    if (!auth.currentUser) return `/signup?returnTo=${encodeURIComponent(returnTo)}`;
+    persistAcquisition(auth.currentUser.uid).catch(() => {});
+    await setDoc(doc(db, 'users', auth.currentUser.uid, 'seoMiniProducts', page.slug), { value, updatedAt: new Date().toISOString() });
+    await commitIntent(auth.currentUser.uid);
+    return returnTo;
+  }
   const returnTo = save ? `/${page.slug}?save=1#mini-product` : '/c';
   if (!save) {
     const exam = page.cluster === 'HESI A2' ? 'HESI A2 admission' : page.cluster === 'Nursing HESI' ? 'nursing HESI-style' : `NCLEX-${track}`;

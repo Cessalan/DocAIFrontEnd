@@ -39,10 +39,23 @@
   --nq-hairline: rgba(100, 80, 60, 0.1);
   --nq-hairline-soft: rgba(100, 80, 60, 0.06);
 
+  /* Notebook materials — the same paper, tape and shadow the landing pages
+     use, so arriving here reads as walking into the same room. */
+  --nq-paper: #fffdfa;
+  --nq-paper-shadow: rgba(83, 58, 32, 0.09);
+  --nq-tape: rgba(232, 141, 125, 0.16);
+  --nq-rule: rgba(93, 70, 44, 0.09);
+  --nq-margin: rgba(232, 141, 125, 0.45);
+  --nq-sticky: #fff6c9;
+  --nq-sticky-ink: #5c4a1c;
+  --nq-accent-deep: #cc7567;
+  --nq-glow: rgba(232, 141, 125, 0.16);
+
   min-height: 100vh;
   background:
-    radial-gradient(1100px 520px at 50% -10%, rgba(232, 141, 125, 0.07), transparent 70%),
-    var(--bg-warm);
+    radial-gradient(1100px 520px at 50% -10%, rgba(232, 141, 125, 0.09), transparent 70%),
+    radial-gradient(700px 400px at 100% 30%, rgba(248, 200, 196, 0.08), transparent 70%),
+    #fbf7f1;
   color: var(--nq-ink);
   font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -62,9 +75,117 @@ body.dark-mode .nq {
   --nq-hairline: rgba(255, 255, 255, 0.08);
   --nq-hairline-soft: rgba(255, 255, 255, 0.05);
 
+  --nq-paper: #2b2926;
+  --nq-paper-shadow: rgba(0, 0, 0, 0.28);
+  --nq-tape: rgba(184, 165, 212, 0.2);
+  --nq-rule: rgba(220, 204, 177, 0.1);
+  --nq-margin: rgba(184, 165, 212, 0.5);
+  --nq-sticky: #3a3530;
+  --nq-sticky-ink: #ede2c8;
+  --nq-accent-deep: #a994c8;
+  --nq-glow: rgba(184, 165, 212, 0.16);
+
   background:
-    radial-gradient(1100px 520px at 50% -10%, rgba(184, 165, 212, 0.09), transparent 70%),
-    var(--dark-bg-primary);
+    radial-gradient(1100px 520px at 50% -10%, rgba(184, 165, 212, 0.1), transparent 70%),
+    #211f1e;
+}
+
+/* ── Notebook primitives ──────────────────────────────────────────────────
+   Shared with the SEO pages by convention, not by import: .seo-paper /
+   .seo-tape / .seo-hand there, .nq-paper / .nq-tape / .nq-hand here. Same
+   numbers. If one moves, move the other. ─────────────────────────────── */
+
+.nq-hand {
+  display: block;
+  font-family: var(--font-accent);
+  font-size: 1.45rem;
+  line-height: 1.3;
+  color: var(--nq-muted);
+  transform: rotate(-1.5deg);
+  transform-origin: left bottom;
+}
+
+.nq-paper {
+  position: relative;
+  background: var(--nq-paper);
+  border-radius: 24px;
+  box-shadow:
+    0 24px 70px var(--nq-paper-shadow),
+    0 0 0 1px var(--nq-hairline),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  min-width: 0;
+}
+
+body.dark-mode .nq-paper { box-shadow: 0 24px 70px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline); }
+
+.nq-tape {
+  position: absolute;
+  width: 68px;
+  height: 21px;
+  top: -9px;
+  right: 35px;
+  transform: rotate(7deg);
+  background: var(--nq-tape);
+  box-shadow: inset 0 0 0 1px var(--nq-hairline);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.nq-tape.is-left { right: auto; left: 32px; transform: rotate(-6deg); }
+
+/* The score ring — same geometry as the landing page's result ring. */
+.nq-ring {
+  width: 118px;
+  height: 118px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: conic-gradient(var(--nq-accent) var(--score, 0deg), var(--nq-hairline) 0);
+  position: relative;
+}
+
+.nq-ring::before {
+  content: '';
+  position: absolute;
+  inset: 9px;
+  background: var(--nq-paper);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px var(--nq-hairline);
+}
+
+.nq-ring > div { position: relative; display: grid; text-align: center; line-height: 1.15; }
+.nq-ring strong { font-size: 1.6rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--nq-ink); }
+.nq-ring span { color: var(--nq-muted); font-size: 0.62rem; max-width: 76px; letter-spacing: 0.02em; }
+
+/* Ruled paper: a repeating hairline every 34px with a coral margin line —
+   the ledger the blueprint rows sit on. */
+.nq-ruled {
+  background-image: repeating-linear-gradient(
+    180deg,
+    transparent 0 33px,
+    var(--nq-rule) 33px 34px
+  );
+  background-position: 0 14px;
+}
+
+.nq-ruled::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 46px;
+  width: 1.5px;
+  background: var(--nq-margin);
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+@media (max-width: 620px) {
+  .nq-hand { font-size: 1.25rem; }
+  .nq-ring { width: 100px; height: 100px; }
+  .nq-ring strong { font-size: 1.35rem; }
+  .nq-ruled::after { left: 22px; }
 }
 
 .nq-wrap {
@@ -83,6 +204,7 @@ body.dark-mode .nq {
   max-width: 1060px;
   margin: 0 auto;
   padding: 26px 26px 18px;
+  border-bottom: 1px dashed var(--nq-hairline);
 }
 
 .nq-brand {
@@ -182,8 +304,10 @@ body.dark-mode .nq {
   gap: 18px;
   margin-bottom: 20px;
   padding-bottom: 13px;
-  border-bottom: 1px solid var(--nq-hairline);
+  border-bottom: 1px dashed var(--nq-hairline);
 }
+
+.nq-section-head .nq-hand { font-size: 1.15rem; margin-bottom: 2px; transform: rotate(-1deg); }
 
 .nq-section-note {
   font-size: 0.83rem;
@@ -195,29 +319,47 @@ body.dark-mode .nq {
 
 /* ── The verdict — the hero, and the thing the product is judged on ───── */
 
+/* The verdict sits on a sheet of paper with a strip of tape, over a soft
+   glow — the same hero treatment as the landing pages. The sentence stays
+   in Outfit: the one place this surface must sound certain. */
+.nq-hero {
+  position: relative;
+  margin-top: 34px;
+}
+
+.nq-hero > .nq-hand { margin: 0 0 12px 6px; }
+
+.nq-hero-glow {
+  position: absolute;
+  z-index: 0;
+  width: 640px;
+  height: 380px;
+  left: 50%;
+  top: -40px;
+  transform: translateX(-50%);
+  background: radial-gradient(ellipse, var(--nq-glow), transparent 68%);
+  filter: blur(6px);
+  pointer-events: none;
+}
+
 .nq-verdict {
   position: relative;
-  margin-top: 26px;
+  z-index: 1;
+  margin-top: 0;
   padding: 40px 40px 34px;
-  border-radius: var(--radius-2xl);
-  background: var(--nq-surface);
-  border: 1px solid var(--nq-hairline);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  border-radius: 24px;
+  background: var(--nq-paper);
+  box-shadow:
+    0 24px 70px var(--nq-paper-shadow),
+    0 0 0 1px var(--nq-hairline),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
-/* A single hairline of accent along the top edge — the one flourish. */
-.nq-verdict::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 3px;
-  background: var(--gradient-primary);
+body.dark-mode .nq-verdict {
+  box-shadow: 0 24px 70px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
 }
 
-body.dark-mode .nq-verdict::before {
-  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
-}
+.nq-verdict .nq-eyebrow { margin-bottom: 14px; }
 
 .nq-verdict-headline {
   font-family: 'Outfit', -apple-system, sans-serif;
@@ -270,26 +412,19 @@ body.dark-mode .nq-verdict::before {
 
 .nq-readiness {
   flex: 0 0 auto;
-  text-align: right;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
   padding-left: 30px;
-  border-left: 1px solid var(--nq-hairline-soft);
+  border-left: 1px dashed var(--nq-hairline);
 }
 
-.nq-readiness-num {
-  font-family: 'Outfit', -apple-system, sans-serif;
-  font-size: 2.6rem;
-  font-weight: 700;
-  line-height: 1;
-  letter-spacing: -0.03em;
-  font-variant-numeric: tabular-nums;
-  color: var(--nq-ink);
-  display: block;
-}
+.nq-readiness .nq-ring { margin-bottom: 10px; }
 
 .nq-readiness-label {
   display: block;
-  margin-top: 8px;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 600;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -298,7 +433,7 @@ body.dark-mode .nq-verdict::before {
 
 .nq-readiness-band {
   display: inline-block;
-  margin-top: 11px;
+  margin-top: 9px;
   padding: 4px 11px;
   border-radius: 999px;
   font-size: 0.75rem;
@@ -315,29 +450,56 @@ body.dark-mode .nq-verdict::before {
 
 /* ── Next action ──────────────────────────────────────────────────────── */
 
+/* "do this next" — the handwritten note above the button. */
+.nq-next-note {
+  display: block;
+  margin: 26px 0 -14px 8px;
+  font-family: var(--font-accent);
+  font-size: 1.3rem;
+  color: var(--nq-muted);
+  transform: rotate(-1.5deg);
+}
+
 .nq-action {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 20px;
   width: 100%;
   margin-top: 26px;
-  padding: 20px 24px;
+  padding: 22px 26px;
   border: 0;
-  border-radius: var(--radius-xl);
-  background: var(--gradient-primary);
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--nq-accent), var(--nq-accent-deep));
   color: #fff;
   font-family: inherit;
   text-align: left;
   cursor: pointer;
-  box-shadow: 0 10px 28px -14px rgba(232, 141, 125, 0.75);
+  overflow: hidden;
+  box-shadow: 0 14px 34px -14px rgba(232, 141, 125, 0.85);
   transition: var(--transition-normal);
 }
 
+.nq-action::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.1), transparent 75%);
+  transform: translateX(-120%);
+  pointer-events: none;
+}
+
+.nq-action:hover::after { animation: nqSheen 900ms ease; }
+
+@keyframes nqSheen {
+  to { transform: translateX(120%); }
+}
+
 body.dark-mode .nq-action {
-  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  background: linear-gradient(135deg, #c7b8de 0%, #a994c8 100%);
   color: #241f2b;
-  box-shadow: 0 10px 28px -14px rgba(184, 165, 212, 0.6);
+  box-shadow: 0 14px 34px -14px rgba(184, 165, 212, 0.6);
 }
 
 .nq-action:hover { transform: translateY(-2px); box-shadow: 0 16px 34px -14px rgba(232, 141, 125, 0.85); }
@@ -499,29 +661,17 @@ body.dark-mode .nq-mark::before {
   margin: 38px auto 0;
   max-width: 460px;
   padding: 34px 32px 28px;
-  border-radius: var(--radius-2xl);
-  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--nq-surface-alt) 100%);
-  border: 1px solid rgba(232, 141, 125, 0.28);
-  box-shadow: var(--shadow-lg);
+  border-radius: 24px;
+  background: var(--nq-paper);
+  box-shadow:
+    0 24px 70px var(--nq-paper-shadow),
+    0 0 0 1px var(--nq-hairline),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
   text-align: left;
-  overflow: hidden;
 }
 
 body.dark-mode .nq-hero-card {
-  border-color: rgba(184, 165, 212, 0.3);
-  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--dark-bg-secondary) 100%);
-}
-
-.nq-hero-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 4px;
-  background: var(--gradient-primary);
-}
-
-body.dark-mode .nq-hero-card::before {
-  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  box-shadow: 0 24px 70px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
 }
 
 .nq-hero-card-kicker {
@@ -771,18 +921,44 @@ body.dark-mode .nq-check-row.is-on .nq-signal-dot {
 
 /* ── Blueprint rows ───────────────────────────────────────────────────── */
 
-.nq-blueprint { display: flex; flex-direction: column; }
+/* The blueprint is a ledger page: ruled paper, a coral margin line, and
+   the eight rows written on the lines. */
+.nq-blueprint {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 28px 12px 66px;
+  border-radius: 20px;
+  background-color: var(--nq-paper);
+  box-shadow: 0 18px 50px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
+  overflow: hidden;
+}
 
 .nq-bp-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 150px 108px;
+  grid-template-columns: minmax(0, 1fr) 150px 92px;
   align-items: center;
   gap: 16px;
-  padding: 14px 4px;
-  border-bottom: 1px solid var(--nq-hairline-soft);
+  min-height: 68px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--nq-rule);
 }
 
-.nq-bp-row:first-child { border-top: 1px solid var(--nq-hairline-soft); }
+.nq-bp-row:last-child { border-bottom: 0; }
+
+/* The row index in the margin, like a numbered list in a notebook. */
+.nq-bp-row { counter-increment: nq-bp; }
+.nq-blueprint { counter-reset: nq-bp; }
+
+.nq-bp-row::before {
+  content: counter(nq-bp, decimal-leading-zero);
+  position: absolute;
+  left: 22px;
+  font-family: var(--font-accent);
+  font-size: 1.05rem;
+  color: var(--nq-accent);
+  opacity: 0.8;
+}
 
 .nq-bp-name { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
@@ -868,14 +1044,18 @@ body.dark-mode .nq-bp-track { background: rgba(255, 255, 255, 0.07); }
   gap: 15px;
 }
 
+/* Subjects are index cards: paper, a coloured tab along the top edge that
+   carries the verdict, and a drawn icon — so the grid scans as a card box
+   rather than as a list of buttons. */
 .nq-subject {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  padding: 22px 21px 19px;
-  border-radius: var(--radius-xl);
-  background: var(--nq-surface);
-  border: 1px solid var(--nq-hairline);
+  padding: 24px 21px 19px;
+  border-radius: 18px;
+  background: var(--nq-paper);
+  border: 0;
+  box-shadow: 0 12px 34px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
   text-align: left;
   font-family: inherit;
   cursor: pointer;
@@ -887,26 +1067,50 @@ body.dark-mode .nq-bp-track { background: rgba(255, 255, 255, 0.07); }
 .nq-subject::after {
   content: '';
   position: absolute;
-  inset: auto 0 0 0;
-  height: 2px;
+  inset: 0 auto auto 20px;
+  width: 44px;
+  height: 4px;
+  border-radius: 0 0 4px 4px;
   background: var(--nq-untested);
   opacity: 0.55;
 }
 
-.nq-subject.is-solid::after { background: var(--nq-solid); }
-.nq-subject.is-provisional::after { background: var(--nq-solid); opacity: 0.4; }
-.nq-subject.is-improving::after { background: var(--nq-improving); }
-.nq-subject.is-gap::after { background: var(--nq-gap); }
+.nq-subject.is-solid::after { background: var(--nq-solid); opacity: 1; }
+.nq-subject.is-provisional::after { background: var(--nq-solid); opacity: 0.5; }
+.nq-subject.is-improving::after { background: var(--nq-improving); opacity: 1; }
+.nq-subject.is-gap::after { background: var(--nq-gap); opacity: 1; }
 
 .nq-subject:hover {
-  transform: translateY(-3px);
-  box-shadow: var(--shadow-md);
-  border-color: var(--nq-accent);
+  transform: translateY(-4px) rotate(-0.4deg);
+  box-shadow: 0 22px 44px var(--nq-paper-shadow), 0 0 0 1px var(--nq-accent);
 }
+
+.nq-subject-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.nq-subject-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(232, 141, 125, 0.1);
+  color: var(--nq-accent);
+  transform: rotate(-4deg);
+}
+
+body.dark-mode .nq-subject-icon { background: rgba(184, 165, 212, 0.14); }
+
+.nq-subject-icon svg { width: 19px; height: 19px; }
 
 .nq-subject h3 {
   font-family: var(--font-handwritten);
-  font-size: 1.14rem;
+  font-size: 1.18rem;
   font-weight: 600;
   letter-spacing: -0.015em;
   margin: 0;
@@ -955,32 +1159,64 @@ body.dark-mode .nq-pill { background: rgba(255, 255, 255, 0.06); }
 
 /* ── Concept list ─────────────────────────────────────────────────────── */
 
-.nq-concepts { display: flex; flex-direction: column; gap: 9px; }
+/* Concepts she keeps missing are sticky notes: the thing you write on a
+   Post-it and stick to the wall above the desk. Each note is numbered and
+   tilted a degree or two so the row reads as pinned, not as generated. */
+.nq-concepts {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+  gap: 14px;
+}
 
 .nq-concept {
+  position: relative;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 13px 17px;
-  border-radius: var(--radius-md);
-  background: var(--nq-surface);
-  border: 1px solid var(--nq-hairline-soft);
-  border-left: 3px solid var(--nq-gap);
+  flex-direction: column;
+  gap: 10px;
+  min-height: 112px;
+  padding: 18px 16px 14px;
+  border-radius: 4px 4px 14px 4px;
+  background: var(--nq-sticky);
+  color: var(--nq-sticky-ink);
+  box-shadow: 0 10px 24px -8px rgba(83, 58, 32, 0.28);
+  transform: rotate(-1deg);
+}
+
+.nq-concept:nth-child(2n) { transform: rotate(1.2deg); }
+.nq-concept:nth-child(3n) { transform: rotate(-0.6deg); }
+
+.nq-concept::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 50%;
+  width: 54px;
+  height: 16px;
+  transform: translateX(-50%) rotate(-2deg);
+  background: var(--nq-tape);
+  box-shadow: inset 0 0 0 1px var(--nq-hairline);
+}
+
+.nq-concept-index {
+  font-family: var(--font-accent);
+  font-size: 1.05rem;
+  color: var(--nq-gap);
 }
 
 .nq-concept-label {
-  font-size: 0.92rem;
-  color: var(--nq-ink);
-  font-weight: 500;
+  font-family: var(--font-handwritten);
+  font-size: 1.02rem;
+  line-height: 1.3;
+  font-weight: 600;
   min-width: 0;
   overflow-wrap: anywhere;
+  flex: 1;
 }
 
 .nq-concept-score {
   flex: 0 0 auto;
-  font-size: 0.8rem;
-  color: var(--nq-muted);
+  font-size: 0.76rem;
+  opacity: 0.75;
   font-variant-numeric: tabular-nums;
 }
 
@@ -989,13 +1225,27 @@ body.dark-mode .nq-pill { background: rgba(255, 255, 255, 0.06); }
 .nq-formats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; }
 
 .nq-format {
-  padding: 18px 20px;
-  border-radius: var(--radius-lg);
-  background: var(--nq-surface);
-  border: 1px solid var(--nq-hairline);
+  position: relative;
+  padding: 22px 20px 18px;
+  border-radius: 16px;
+  background: var(--nq-paper);
+  box-shadow: 0 12px 34px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
   display: flex;
   flex-direction: column;
   gap: 7px;
+}
+
+/* A little tape on the top-left corner of each card. */
+.nq-format::before {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 16px;
+  width: 46px;
+  height: 15px;
+  transform: rotate(-5deg);
+  background: var(--nq-tape);
+  box-shadow: inset 0 0 0 1px var(--nq-hairline);
 }
 
 .nq-format-name { font-size: 0.83rem; font-weight: 600; color: var(--nq-ink-soft); }
@@ -1104,28 +1354,16 @@ body.dark-mode .nq-pill { background: rgba(255, 255, 255, 0.06); }
   margin: 34px auto 0;
   max-width: 470px;
   padding: 30px 30px 26px;
-  border-radius: var(--radius-2xl);
-  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--nq-surface-alt) 100%);
-  border: 1px solid rgba(232, 141, 125, 0.28);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
+  border-radius: 24px;
+  background: var(--nq-paper);
+  box-shadow:
+    0 24px 70px var(--nq-paper-shadow),
+    0 0 0 1px var(--nq-hairline),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 body.dark-mode .nq-start-card {
-  border-color: rgba(184, 165, 212, 0.3);
-  background: linear-gradient(180deg, var(--nq-surface) 0%, var(--dark-bg-secondary) 100%);
-}
-
-.nq-start-card::before {
-  content: '';
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 4px;
-  background: var(--gradient-primary);
-}
-
-body.dark-mode .nq-start-card::before {
-  background: linear-gradient(135deg, #b8a5d4 0%, #d4c8e8 100%);
+  box-shadow: 0 24px 70px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
 }
 
 .nq-start-card h2 {
@@ -1359,13 +1597,32 @@ body.dark-mode .nq-progress-fill {
 /* ── The question card ─────────────────────────────────────── */
 
 .nq-question {
+  position: relative;
   max-width: 680px;
   margin: 0 auto;
-  padding: 34px 34px 30px;
-  border-radius: var(--radius-2xl);
-  background: var(--nq-surface);
-  border: 1px solid var(--nq-hairline);
-  box-shadow: var(--shadow-md);
+  padding: 36px 36px 30px;
+  border-radius: 24px;
+  background: var(--nq-paper);
+  box-shadow:
+    0 24px 70px var(--nq-paper-shadow),
+    0 0 0 1px var(--nq-hairline),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+
+body.dark-mode .nq-question { box-shadow: 0 24px 70px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline); }
+
+/* Tape on the question sheet. */
+.nq-question::before {
+  content: '';
+  position: absolute;
+  width: 68px;
+  height: 21px;
+  top: -9px;
+  right: 35px;
+  transform: rotate(7deg);
+  background: var(--nq-tape);
+  box-shadow: inset 0 0 0 1px var(--nq-hairline);
+  pointer-events: none;
 }
 
 .nq-mcq-stem {
@@ -1692,15 +1949,239 @@ body.dark-mode .nq-check:disabled {
   .nq-check { width: 100%; justify-content: center; }
 }
 
+/* ── Arrival (from a landing page) ────────────────────────────────────────
+   One sheet of paper, her result on it, one button. The ring and the
+   numbered tags are the same components she saw thirty seconds ago on the
+   landing page, so the handoff reads as continuity rather than a reset. */
+
+.nq-arrival {
+  position: relative;
+  max-width: 640px;
+  margin: 30px auto 0;
+}
+
+.nq-arrival > .nq-hand { position: relative; z-index: 1; margin: 0 0 12px 8px; }
+
+.nq-arrival-card { position: relative; z-index: 1; padding: 36px 36px 32px; }
+.nq-arrival .nq-secondary { position: relative; z-index: 1; }
+
+.nq-arrival-top {
+  display: flex;
+  align-items: center;
+  gap: 26px;
+  margin-bottom: 22px;
+}
+
+.nq-arrival-title {
+  font-family: 'Outfit', -apple-system, sans-serif;
+  font-size: clamp(1.5rem, 3.2vw, 2rem);
+  font-weight: 700;
+  line-height: 1.16;
+  letter-spacing: -0.022em;
+  margin: 0 0 10px;
+  color: var(--nq-ink);
+  text-wrap: balance;
+}
+
+.nq-arrival-lede {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.6;
+  color: var(--nq-ink-soft);
+  max-width: 48ch;
+}
+
+.nq-arrival-label {
+  display: block;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.11em;
+  text-transform: uppercase;
+  color: var(--nq-muted);
+}
+
+.nq-arrival-missed { margin: 6px 0 22px; }
+.nq-arrival-missed .nq-arrival-label { margin-bottom: 10px; }
+
+.nq-arrival-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.nq-arrival-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  background: var(--nq-surface-alt);
+  box-shadow: 0 0 0 1px var(--nq-hairline);
+  font-size: 0.86rem;
+  color: var(--nq-ink);
+}
+
+body.dark-mode .nq-arrival-tags span { background: rgba(255, 255, 255, 0.05); }
+
+.nq-arrival-tags b {
+  color: var(--nq-accent);
+  font: italic 0.78rem Georgia, serif;
+}
+
+.nq-arrival-clean {
+  margin: 4px 0 22px;
+  font-size: 0.92rem;
+  color: var(--nq-ink-soft);
+}
+
+.nq-arrival-facts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 22px 0 18px;
+  border-radius: 14px;
+  box-shadow: 0 0 0 1px var(--nq-hairline);
+  overflow: hidden;
+}
+
+.nq-arrival-facts > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 14px 16px;
+}
+
+.nq-arrival-facts > div + div { border-left: 1px solid var(--nq-hairline); }
+.nq-arrival-facts strong { font-size: 1.3rem; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+.nq-arrival-facts span { font-size: 0.7rem; color: var(--nq-muted); }
+
+.nq-arrival-session {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 22px 0 18px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  background: rgba(232, 141, 125, 0.08);
+  border: 1px dashed rgba(232, 141, 125, 0.4);
+}
+
+body.dark-mode .nq-arrival-session {
+  background: rgba(184, 165, 212, 0.1);
+  border-color: rgba(184, 165, 212, 0.4);
+}
+
+.nq-arrival-session-icon {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: var(--nq-paper);
+  color: var(--nq-accent);
+  box-shadow: 0 0 0 1px var(--nq-hairline);
+  transform: rotate(-4deg);
+}
+
+.nq-arrival-session-icon svg { width: 22px; height: 22px; }
+
+.nq-arrival-session-body { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.nq-arrival-session-body strong { font-size: 1rem; font-weight: 600; color: var(--nq-ink); }
+.nq-arrival-session-meta { font-size: 0.8rem; color: var(--nq-muted); }
+
+@media (max-width: 620px) {
+  .nq-arrival-card { padding: 26px 20px 22px; border-radius: 18px; }
+  .nq-arrival-top { flex-direction: column; align-items: flex-start; gap: 16px; }
+  .nq-arrival-facts { grid-template-columns: 1fr; }
+  .nq-arrival-facts > div + div { border-left: 0; border-top: 1px solid var(--nq-hairline); }
+}
+
+/* ── Today's plan (from the saved landing-page planner) ─────────────────── */
+
+.nq-plan-card {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin-top: 22px;
+  text-align: left;
+  padding: 18px 22px;
+  border-radius: 18px;
+  background: var(--nq-paper);
+  box-shadow: 0 12px 34px var(--nq-paper-shadow), 0 0 0 1px var(--nq-hairline);
+}
+
+.nq-plan-date {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 12px;
+  background: var(--nq-sticky);
+  color: var(--nq-sticky-ink);
+  transform: rotate(-3deg);
+  box-shadow: 0 6px 14px -6px rgba(83, 58, 32, 0.3);
+}
+
+.nq-plan-date b { font-size: 1.25rem; line-height: 1; font-weight: 700; }
+.nq-plan-date span { font-size: 0.6rem; letter-spacing: 0.08em; text-transform: uppercase; margin-top: 3px; }
+
+.nq-plan-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.nq-plan-body .nq-arrival-label { margin-bottom: 2px; }
+.nq-plan-body strong { font-family: var(--font-handwritten); font-size: 1.1rem; font-weight: 600; color: var(--nq-ink); }
+.nq-plan-body p { margin: 0; font-size: 0.86rem; color: var(--nq-ink-soft); line-height: 1.45; }
+
+.nq-plan-go {
+  flex: none;
+  padding: 10px 16px;
+  border: 0;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--nq-accent), var(--nq-accent-deep));
+  color: #fff;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 22px -12px rgba(232, 141, 125, 0.9);
+  transition: var(--transition-fast);
+}
+
+body.dark-mode .nq-plan-go { color: #241f2b; }
+.nq-plan-go:hover { transform: translateY(-2px); }
+
+@media (max-width: 620px) {
+  .nq-plan-card { flex-wrap: wrap; }
+  .nq-plan-go { width: 100%; }
+}
+
 /* ── Empty / loading ──────────────────────────────────────────────────── */
 
 .nq-loading {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 14px;
   min-height: 60vh;
   color: var(--nq-muted);
-  font-size: 0.92rem;
+  font-family: var(--font-accent);
+  font-size: 1.35rem;
+}
+
+/* A pen-stroke that draws itself while a question is being written. */
+.nq-loading::before {
+  content: '';
+  width: 120px;
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--nq-accent), var(--nq-accent-deep));
+  transform-origin: left center;
+  animation: nqPen 1.4s ease-in-out infinite;
+}
+
+@keyframes nqPen {
+  0% { transform: scaleX(0.1); opacity: 0.5; }
+  60% { transform: scaleX(1); opacity: 1; }
+  100% { transform: scaleX(1); opacity: 0; }
 }
 
 .nq-empty {
@@ -1734,21 +2215,29 @@ body.dark-mode .nq-check:disabled {
   .nq-doors { grid-template-columns: 1fr; }
   .nq-verdict-body { flex-direction: column; gap: 26px; }
   .nq-readiness {
+    flex-direction: row;
+    align-items: center;
+    gap: 18px;
     text-align: left;
     padding-left: 0;
     padding-top: 22px;
     border-left: 0;
-    border-top: 1px solid var(--nq-hairline-soft);
+    border-top: 1px dashed var(--nq-hairline);
     width: 100%;
   }
+  .nq-readiness .nq-ring { margin-bottom: 0; }
+  .nq-readiness-band { display: inline-block; margin-top: 6px; }
 }
 
 @media (max-width: 620px) {
   .nq-wrap { padding: 0 18px 72px; }
   .nq-topbar { padding: 16px 18px; flex-wrap: wrap; }
-  .nq-verdict { padding: 28px 22px 24px; border-radius: var(--radius-lg); }
-  .nq-bp-row { grid-template-columns: minmax(0, 1fr) 104px; row-gap: 9px; }
+  .nq-verdict { padding: 28px 22px 24px; border-radius: 18px; }
+  .nq-blueprint { padding: 6px 14px 8px 40px; }
+  .nq-bp-row::before { left: 12px; }
+  .nq-bp-row { grid-template-columns: minmax(0, 1fr) 90px; row-gap: 9px; }
   .nq-bp-track { grid-column: 1 / -1; order: 3; }
+  .nq-concepts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
   .nq-section-head { flex-direction: column; align-items: flex-start; gap: 8px; }
   .nq-section-note { text-align: left; }
 }

@@ -10,14 +10,15 @@ Use `node scripts/preview-seo-build.cjs` for a local production preview on port 
 
 ## Product behavior
 
-- Planner: RN/PN, dated or 2/4/8-week horizon, daily time, priority topics, dated schedule and checkoffs. Anonymous progress stays in browser storage; signed-in saves use `users/{uid}/seoMiniProducts/{slug}`. Day-level practice opens the existing chat with a prepared prompt for the student to send. Existing account limits remain authoritative.
+- Planner: RN/PN, dated or 2/4/8-week horizon, daily time, priority topics, dated schedule and checkoffs. Anonymous progress stays in browser storage; signed-in saves use `users/{uid}/seoMiniProducts/{slug}`. "Save my plan" and day-level practice hand off to `/nclex/start`, which writes the exam date and track to `nclexMeta/profile` and proposes today's session; `/nclex` then shows a "Today in your plan" card. Existing account limits remain authoritative.
 - Diagnostics: small original MCQ/SATA samples, rationale after submission, factual results and missed concepts. A perfect result has no invented weakness; zero correct has no invented strength. Samples are not comprehensive exams or readiness predictions.
+- Handoff to `/nclex` (NCLEX cluster and the nursing-school subject pages only; HESI pages keep the chat handoff): `SeoPractice/seoToNclex.js` maps each catalog question to a curriculum subject/area/client-needs category, builds a practice intent, and `Services/NclexHandoffService.js` commits it after auth — the landing answers are seeded into `nclexAttempts` as `source: 'seo-sample'` rows with deterministic ids, and the missed concepts are stored in `nclexMeta/profile.seoContext` and appended to the generator's instructions for 14 days or until the log has its own evidence (`Nclex/nclexHandoff.js`).
 - A2 guide: topic review followed by a recall check, separate from nursing HESI practice.
 - Learning references are stored beside the question bank. These are original sample items, not recalled exam questions. They have not undergone independent clinical editorial review.
 
 ## Measurement
 
-`funnelEvents` contains `seo_page_viewed`, `seo_primary_cta_clicked`, `seo_mini_product_started`, `seo_mini_product_completed`, `seo_result_viewed`, `seo_nursequiz_cta_clicked` and `seo_signup`. Rows carry first-touch `landingPage`, `keywordCluster`, `source`, `campaign`, and a 30-day browser `funnelId`; `productPage` identifies the current tool. Localhost analytics are suppressed. Count distinct funnel IDs per step so reloads/retries do not inflate conversion rates. First-touch attribution is approximate across devices or cleared storage.
+`funnelEvents` contains `seo_page_viewed`, `seo_primary_cta_clicked`, `seo_mini_product_started`, `seo_mini_product_completed`, `seo_result_viewed`, `seo_nursequiz_cta_clicked` (with `destination: nclex|chat`), `seo_signup`, `seo_nclex_arrived` and `seo_nclex_session_started`. Rows carry first-touch `landingPage`, `keywordCluster`, `source`, `campaign`, and a 30-day browser `funnelId`; `productPage` identifies the current tool. Localhost analytics are suppressed. Count distinct funnel IDs per step so reloads/retries do not inflate conversion rates. First-touch attribution is approximate across devices or cleared storage.
 
 At authentication, attribution is saved to `users/{uid}/seoAttribution/firstTouch` without creating a root user document or bypassing onboarding. Returning-user sign-ins preserve attribution without emitting a signup.
 

@@ -98,6 +98,10 @@ export const logAttempt = async (uid, attempt) => {
       seconds: Number.isFinite(Number(attempt.seconds)) ? Number(attempt.seconds) : null,
       confidence: attempt.confidence ?? null,
       questionId: attempt.questionId ?? null,
+      // Where the row came from. Absent for the product's own generated
+      // questions; 'seo-sample' for the landing-page items seeded at
+      // arrival, so any later read can separate the two if it needs to.
+      source: attempt.source ?? null,
       at: new Date().toISOString(),
     };
     const ref = await addDoc(attemptsRef(uid), row);
@@ -108,6 +112,56 @@ export const logAttempt = async (uid, attempt) => {
     console.error('[nclex] logAttempt failed', err);
     return null;
   }
+};
+
+/**
+ * Seed rows that were answered somewhere else — today, the landing pages.
+ *
+ * IDEMPOTENT ON PURPOSE. The handoff can be committed twice for one visit
+ * (once when the CTA is pressed by a signed-in student, once more from the
+ * post-signup hook), and `addDoc` would double every row. Each row is
+ * written with a deterministic id derived from `key` + questionId, so the
+ * second write is a no-op overwrite of the first.
+ *
+ * `at` is the moment she actually answered on the landing page, not now:
+ * `trendFor` splits the log chronologically, and rows stamped at seed time
+ * would sit AFTER questions she answered before signing up on a previous
+ * device.
+ */
+export const seedAttempts = async (uid, rows, key, answeredAt) => {
+  if (!uid || !Array.isArray(rows) || !rows.length || !key) return 0;
+  const at = new Date(Number(answeredAt) || Date.now()).toISOString();
+  let written = 0;
+  await Promise.all(
+    rows.map(async (r, i) => {
+      if (!r?.questionId) return;
+      try {
+        await setDoc(doc(attemptsRef(uid), `${key}-${r.questionId}`), {
+          subject: r.subject ?? null,
+          area: r.area ?? null,
+          category: r.category ?? null,
+          concept: r.concept ?? null,
+          skills: Array.isArray(r.skills) ? r.skills : [],
+          format: r.format ?? null,
+          difficulty: Number.isFinite(Number(r.difficulty)) ? Number(r.difficulty) : null,
+          correct: !!r.correct,
+          partialScore: 0,
+          seconds: null,
+          confidence: null,
+          questionId: r.questionId,
+          source: r.source || 'seo-sample',
+          // Millisecond offsets keep the seeded rows in the order she
+          // answered them without colliding on one timestamp.
+          at: new Date(new Date(at).getTime() + i).toISOString(),
+        });
+        written += 1;
+      } catch (err) {
+        devWarn('[nclex] seedAttempts row failed', r.questionId, err);
+      }
+    })
+  );
+  devLog('[nclex] seeded', written, 'attempts from', key);
+  return written;
 };
 
 /**

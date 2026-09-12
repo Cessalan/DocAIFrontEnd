@@ -38,6 +38,44 @@ export function bankFor(slug, sections = []) {
   const ids = catalog.banks[slug] || [];
   return catalog.questions.filter(q => ids.includes(q.id) && (!sections.length || sections.includes(q.section)));
 }
+function shuffle(list, random = Math.random) {
+  const out = [...list];
+  for (let i = out.length - 1; i > 0; i -= 1) { const j = Math.floor(random() * (i + 1)); [out[i], out[j]] = [out[j], out[i]]; }
+  return out;
+}
+// Each visit draws a fresh, section-balanced set from the bank. Questions the
+// visitor has already seen (tracked per page in local storage) are used only
+// when the unseen pool cannot fill the set, so refreshing or "keep going" gives
+// new material for as long as the bank allows. Order within a set is random.
+export function pickSet(questions, size, seen = [], random = Math.random) {
+  if (!size || questions.length <= size) return shuffle(questions, random);
+  const chosen = [];
+  const roundRobin = list => {
+    const bySection = {};
+    shuffle(list, random).forEach(q => (bySection[q.section] || (bySection[q.section] = [])).push(q));
+    const lanes = Object.values(bySection);
+    while (chosen.length < size && lanes.some(lane => lane.length)) {
+      for (const lane of lanes) { if (chosen.length < size && lane.length) chosen.push(lane.shift()); }
+    }
+  };
+  roundRobin(questions.filter(q => !seen.includes(q.id)));
+  roundRobin(questions.filter(q => seen.includes(q.id)));
+  return shuffle(chosen, random);
+}
+export function unseenCount(questions, seen = []) {
+  return questions.filter(q => !seen.includes(q.id)).length;
+}
+// Landing coverage is a topic map, not the item bank: extra questions that
+// reuse a concept would otherwise dump a card (or the stem) for every id.
+export function coverageTopics(questions) {
+  const seen = new Set();
+  return questions.filter(q => {
+    const key = `${q.section}|${q.concept}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
+}
 export function grade(question, selected) {
   return selected.length === question.answer.length && question.answer.every(i => selected.includes(i));
 }
@@ -83,6 +121,6 @@ export function faqs(page) {
     [a2 ? 'Is HESI A2 the same as a nursing HESI exam?' : 'Are these official exam questions?', a2 ? 'No. HESI A2 is admission preparation. Nursing HESI assessments relate to nursing-program coursework. This page focuses on admission skills.' : 'No. These are original NurseQuiz learning questions, not recalled exam items or official NCSBN or Elsevier questions.'],
     [a2 ? 'Which sections should I review?' : 'What does my result tell me?', a2 ? 'Check the sections required by your target school. This starter covers math, anatomy and physiology, reading, and vocabulary; it is not the complete HESI A2 exam.' : 'Your result reports this sample only. Missed concepts are useful review prompts, not a validated readiness score or a prediction of passing.'],
     ['Can I try this without signing up?', 'Yes. Review explanations and your result before deciding whether to continue in NurseQuiz. An account is only needed to save across devices or continue with personalized in-app practice.'],
-    ['What happens after I finish?', 'You can retry missed questions, review the explanations, or continue with your chosen topic in NurseQuiz. Repeats help learning but do not count as new evidence of readiness.']
+    ['What happens after I finish?', 'You can continue with questions you have not seen yet, retry missed items, review the explanations, or continue with your chosen topic in NurseQuiz. Repeats help learning but do not count as new evidence of readiness.']
   ];
 }

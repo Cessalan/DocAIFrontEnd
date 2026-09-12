@@ -9,6 +9,7 @@ import NclexShell from './NclexShell';
 import { nextSpec, sessionLength } from './nclexSpec';
 import { buildProfile, formatRows } from './nclexProfile';
 import { nextAction } from './nclexVerdict';
+import { handoffContext } from './nclexHandoff';
 import { FORMAT_LABELS, findCategory } from './nclexCurriculum';
 import { generate_exam } from '../../Services/FastAPICalls';
 import {
@@ -124,6 +125,24 @@ const NclexPractice = () => {
     [priorAttempts, history]
   );
 
+  /* What she arrived with from a landing page, reduced to what is still
+     worth telling the generator. A ref, because the first spec is built
+     inside the session effect before `meta` has rendered. The reduction is
+     re-run against the WORKING profile on every spec so a concept drops out
+     the moment the log has enough of its own evidence on it. */
+  const metaRef = useRef(null);
+  metaRef.current = meta;
+  const contextFor = useCallback(
+    (workingProfile) =>
+      handoffContext(
+        metaRef.current?.seoContext || null,
+        workingProfile,
+        Date.now(),
+        daysUntil(metaRef.current?.examDate)
+      ),
+    []
+  );
+
   /* One fetch, no state. Takes a spec so the caller owns the decision of
      WHAT to ask for; returns { question, spec } or null. */
   const fetchQuestion = useCallback(
@@ -177,7 +196,7 @@ const NclexPractice = () => {
   const generate = useCallback(
     async (index, workingProfile) => {
       if (!chatId) return;
-      const s = nextSpec(workingProfile, index, fixed);
+      const s = nextSpec(workingProfile, index, fixed, contextFor(workingProfile));
       setLoading(true);
       setError(null);
       setAnswered(null);
@@ -191,7 +210,7 @@ const NclexPractice = () => {
       }
       present(got, index);
     },
-    [chatId, fixed, fetchQuestion, present, t]
+    [chatId, fixed, fetchQuestion, present, t, contextFor]
   );
 
   /* ── Prefetch ────────────────────────────────────────────────────────
@@ -242,7 +261,7 @@ const NclexPractice = () => {
   const ensurePrefetch = useCallback(
     (index, workingProfile, key) => {
       if (index >= total) return;              // nothing after the last question
-      const want = nextSpec(workingProfile, index, fixed);
+      const want = nextSpec(workingProfile, index, fixed, contextFor(workingProfile));
 
       // Already have exactly this, or already fetching exactly this.
       if (prefetched.current?.index === index && sameSpec(prefetched.current.spec, want)) return;
@@ -267,7 +286,7 @@ const NclexPractice = () => {
       })();
       prefetching.current = { index, spec: want, seq, promise };
     },
-    [fetchQuestion, fixed, total]
+    [fetchQuestion, fixed, total, contextFor]
   );
 
   /* Where she would come back to. Unanswered: the question on screen.
@@ -347,6 +366,7 @@ const NclexPractice = () => {
       if (cancelled) return;
       setPriorAttempts(rows);
       setMeta(m);
+      metaRef.current = m; // generate(0) below runs before the state renders
 
       /* Resume, if she left one exactly like this behind. Matching on the
          query string means a saved pharmacology session is never resumed
@@ -484,36 +504,81 @@ const NclexPractice = () => {
       (h) => !h.correct && h.confidence === 'very_sure'
     ).length;
 
+    const pct = history.length ? Math.round((correct / history.length) * 100) : 0;
+    const missedConcepts = [
+      ...new Set(history.filter((h) => !h.correct && h.concept).map((h) => h.concept)),
+    ].slice(0, 4);
+
     return (
       <NclexShell {...shellProps}>
-        <section className="nq-verdict" style={{ marginTop: 30 }}>
-          <p className="nq-eyebrow">{t('nclex.sessionDone', 'Session complete')}</p>
-          <h1 className="nq-verdict-headline">
-            {correct}/{history.length} {t('nclex.correctLower', 'correct')}
-            {partial > 0 && (
-              <>
-                {' · '}
-                {t('nclex.partialCount', '{{n}} partly right', { count: partial, n: partial })}
-              </>
-            )}
-          </h1>
-          <p className="nq-verdict-detail">
-            {confidentMisses > 0
-              ? t(
-                  'nclex.confidentMiss',
-                  'You were sure about {{n}} of the ones you missed. Those are the ones that cost people the exam — you do not go back and review what you think you know.',
-                  { n: confidentMisses }
-                )
-              : t(
-                  'nclex.sessionNote',
-                  'Everything here is folded into your readiness picture.'
+        <div className="nq-hero">
+          <div className="nq-hero-glow" aria-hidden="true" />
+          <span className="nq-hand">{t('nclex.sessionHand', 'pencils down')}</span>
+          <section className="nq-verdict">
+            <span className="nq-tape" aria-hidden="true" />
+            <p className="nq-eyebrow">{t('nclex.sessionDone', 'Session complete')}</p>
+            <div className="nq-verdict-body">
+              <div className="nq-verdict-main">
+                <h1 className="nq-verdict-headline">
+                  {correct}/{history.length} {t('nclex.correctLower', 'correct')}
+                  {partial > 0 && (
+                    <>
+                      {' · '}
+                      {t('nclex.partialCount', '{{n}} partly right', { count: partial, n: partial })}
+                    </>
+                  )}
+                </h1>
+                <p className="nq-verdict-detail">
+                  {confidentMisses > 0
+                    ? t(
+                        'nclex.confidentMiss',
+                        'You were sure about {{n}} of the ones you missed. Those are the ones that cost people the exam — you do not go back and review what you think you know.',
+                        { n: confidentMisses }
+                      )
+                    : t(
+                        'nclex.sessionNote',
+                        'Everything here is folded into your readiness picture.'
+                      )}
+                </p>
+                {missedConcepts.length > 0 && (
+                  <div className="nq-arrival-missed" style={{ marginTop: 18, marginBottom: 0 }}>
+                    <span className="nq-arrival-label">
+                      {t('nclex.missedThisSession', 'Missed this session')}
+                    </span>
+                    <div className="nq-arrival-tags">
+                      {missedConcepts.map((c, i) => (
+                        <span key={c}>
+                          <b>{String(i + 1).padStart(2, '0')}</b>
+                          {c}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
                 )}
-          </p>
-        </section>
+              </div>
+              <div className="nq-readiness">
+                <div
+                  className="nq-ring"
+                  style={{ '--score': `${pct * 3.6}deg` }}
+                  role="img"
+                  aria-label={`${pct}% ${t('nclex.correctLower', 'correct')}`}
+                >
+                  <div>
+                    <strong>{pct}%</strong>
+                    <span>{t('nclex.thisSessionShort', 'this session')}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
 
         <section className="nq-section">
           <div className="nq-section-head">
-            <h2 className="nq-h2">{t('nclex.thisSession', 'This session, by format')}</h2>
+            <div>
+              <span className="nq-hand">{t('nclex.byFormatHand', 'where the exam is hardest')}</span>
+              <h2 className="nq-h2">{t('nclex.thisSession', 'This session, by format')}</h2>
+            </div>
           </div>
           <div className="nq-formats">
             {formatRows(sessionProfile)
@@ -534,6 +599,7 @@ const NclexPractice = () => {
           </div>
         </section>
 
+        <span className="nq-next-note">{t('nclex.doThisNext', 'do this next →')}</span>
         <button
           type="button"
           className="nq-action"

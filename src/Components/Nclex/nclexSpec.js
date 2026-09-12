@@ -32,6 +32,7 @@
 
 import { SUBJECTS, findSubject, findCategory, categoryWeight } from './nclexCurriculum';
 import { categoryRows, priorityCategories, MIN_FOR_VERDICT } from './nclexProfile';
+import { contextInstructions } from './nclexHandoff';
 
 /**
  * The rotation. Two of every three questions are a format the exam leans on
@@ -112,7 +113,7 @@ export const topicFor = ({ area, subject, category }) => {
  * all: without asking for the tag we cannot aggregate it, and without
  * aggregating it "you have a prioritization problem" is unsayable.
  */
-export const instructionsFor = (spec) => {
+export const instructionsFor = (spec, context = null) => {
   const cat = findCategory(spec.category);
   const lines = [
     'Write one NCLEX-style question for a graduating nursing student.',
@@ -128,6 +129,9 @@ export const instructionsFor = (spec) => {
       ? 'Make it hard: the distractors should all be plausible actions.'
       : null,
     'End the rationale by naming the single concept being tested in 2-5 words.',
+    // What she came in with — the landing-page misses, her track, her date.
+    // See nclexHandoff.js for what is included and when it stops being.
+    ...contextInstructions(context),
   ].filter(Boolean);
   return lines.join(' ');
 };
@@ -138,8 +142,10 @@ export const instructionsFor = (spec) => {
  * @param {Object} profile   from buildProfile
  * @param {number} n         0-based index within this session
  * @param {Object} params    { mode, subject, area, category, format }
+ * @param {Object} [context] from nclexHandoff.handoffContext — only changes
+ *                           `instructions`, never the fields sameSpec compares
  */
-export const nextSpec = (profile, n, params = {}) => {
+export const nextSpec = (profile, n, params = {}, context = null) => {
   const category = categoryForIndex(profile, n, params);
   const format = formatForIndex(n, params.format);
   const subject =
@@ -164,7 +170,7 @@ export const nextSpec = (profile, n, params = {}) => {
     difficulty,
     weight: categoryWeight(category),
   };
-  return { ...spec, topic: topicFor(spec), instructions: instructionsFor(spec) };
+  return { ...spec, topic: topicFor(spec), instructions: instructionsFor(spec, context) };
 };
 
 /**

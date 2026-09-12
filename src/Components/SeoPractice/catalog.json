@@ -70,7 +70,8 @@
       "cta": "Start practice test",
       "icon": "spark",
       "description": "A short admission-prep check across the sections you choose.",
-      "conversion": "Practice my weak areas"
+      "conversion": "Practice my weak areas",
+      "sessionSize": 12
     },
     {
       "slug": "hesi-a2-study-guide",
@@ -92,7 +93,8 @@
       "cta": "Start practicing",
       "icon": "clipboard",
       "description": "Practice clinical decisions for nursing coursework and HESI-style assessments.",
-      "conversion": "Prepare for my exam"
+      "conversion": "Prepare for my exam",
+      "sessionSize": 6
     },
     {
       "slug": "dosage-calculation-practice-questions",
@@ -103,7 +105,8 @@
       "cta": "Check my calculations",
       "icon": "calculator",
       "description": "Work through tablets, liquids, infusion rates, and weight-based calculations.",
-      "conversion": "Practice what I missed"
+      "conversion": "Practice my weak areas",
+      "sessionSize": 6
     },
     {
       "slug": "nursing-fundamentals-practice-questions",
@@ -114,7 +117,8 @@
       "cta": "Start practicing",
       "icon": "clipboard",
       "description": "Check infection prevention, safety, and the reasoning behind your choices.",
-      "conversion": "Practice my weak areas"
+      "conversion": "Practice my weak areas",
+      "sessionSize": 6
     },
     {
       "slug": "pharmacology-nclex-questions",
@@ -125,7 +129,8 @@
       "cta": "Test me on pharmacology",
       "icon": "spark",
       "description": "Medication scenarios and select-all questions with explanations you can use.",
-      "conversion": "Practice my weak areas"
+      "conversion": "Practice my weak areas",
+      "sessionSize": 6
     },
     {
       "slug": "cardiac-nclex-questions",
@@ -136,7 +141,8 @@
       "cta": "Start cardiac practice",
       "icon": "pulse",
       "description": "A focused check of cardiac anatomy and medication-safety reasoning.",
-      "conversion": "Practice my weak areas"
+      "conversion": "Practice my weak areas",
+      "sessionSize": 6
     },
     {
       "slug": "pediatric-nclex-questions",
@@ -147,7 +153,8 @@
       "cta": "Start pediatric practice",
       "icon": "heart",
       "description": "Check infant safety, developmental follow-up, and weight-based calculations.",
-      "conversion": "Practice my weak areas"
+      "conversion": "Practice my weak areas",
+      "sessionSize": 6
     }
   ],
   "banks": {
@@ -163,7 +170,18 @@
       "a-vocab-1",
       "a-vocab-2",
       "a-ap-3",
-      "a-ap-4"
+      "a-ap-4",
+      "a-math-5",
+      "a-math-6",
+      "a-math-7",
+      "a-math-8",
+      "a-ap-5",
+      "a-ap-6",
+      "a-ap-7",
+      "a-read-3",
+      "a-read-4",
+      "a-vocab-3",
+      "a-vocab-4"
     ],
     "hesi-a2-study-guide": [
       "a-math-1",
@@ -185,38 +203,73 @@
       "f-2",
       "p-3",
       "d-5",
-      "ped-3"
+      "ped-3",
+      "f-5",
+      "p-7",
+      "d-8",
+      "ped-7",
+      "c-7",
+      "f-8"
     ],
     "dosage-calculation-practice-questions": [
       "d-1",
       "d-2",
       "d-3",
       "d-4",
-      "d-5"
+      "d-5",
+      "d-6",
+      "d-7",
+      "d-8",
+      "d-9",
+      "d-10"
     ],
     "nursing-fundamentals-practice-questions": [
       "f-1",
       "f-2",
       "f-3",
-      "f-4"
+      "f-4",
+      "f-5",
+      "f-6",
+      "f-7",
+      "f-8",
+      "f-9",
+      "f-10"
     ],
     "pharmacology-nclex-questions": [
       "p-1",
       "p-2",
       "p-3",
-      "p-4"
+      "p-4",
+      "p-5",
+      "p-6",
+      "p-7",
+      "p-8",
+      "p-9",
+      "p-10"
     ],
     "cardiac-nclex-questions": [
       "c-1",
       "c-2",
       "c-3",
-      "c-4"
+      "c-4",
+      "c-5",
+      "c-6",
+      "c-7",
+      "c-8",
+      "c-9",
+      "c-10"
     ],
     "pediatric-nclex-questions": [
       "ped-1",
       "ped-2",
       "ped-3",
-      "ped-4"
+      "ped-4",
+      "ped-5",
+      "ped-6",
+      "ped-7",
+      "ped-8",
+      "ped-9",
+      "ped-10"
     ]
   },
   "questions": [
@@ -819,6 +872,736 @@
       ],
       "type": "mcq",
       "why": "The sympathetic division coordinates responses to challenge, including changes in heart activity. The parasympathetic division supports many rest-and-digest functions.",
+      "source": "nervous"
+    },
+    {
+      "id": "p-5",
+      "section": "Pharmacology",
+      "concept": "Anticoagulant safety",
+      "stem": "A patient taking warfarin realizes they forgot yesterday’s dose and it is now time for today’s dose. Which guidance is appropriate?",
+      "options": [
+        "Take yesterday’s and today’s doses together now",
+        "Take today’s dose as usual and report the missed dose to the prescriber",
+        "Stop warfarin until the next INR appointment",
+        "Take half of today’s dose"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "A missed warfarin dose is not made up by doubling. The usual dose continues and the prescriber is told, because the INR may need to be checked sooner.",
+      "source": "warfarin"
+    },
+    {
+      "id": "p-6",
+      "section": "Pharmacology",
+      "concept": "Medication teaching",
+      "stem": "Which report from a patient taking warfarin needs the most prompt follow-up?",
+      "options": [
+        "A small bruise on the forearm after bumping a table",
+        "A nosebleed that has not stopped after 10 minutes of firm pressure",
+        "A preference for taking the dose in the evening",
+        "Eating a green salad twice a week"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Bleeding that does not stop with pressure is a warning sign on an anticoagulant. Minor bruising, evening dosing, and consistent vitamin K intake do not need urgent action.",
+      "source": "warfarin"
+    },
+    {
+      "id": "p-7",
+      "section": "Pharmacology",
+      "concept": "Diuretic adverse effects",
+      "stem": "A patient is starting furosemide. Which points belong in the teaching? Select all that apply.",
+      "options": [
+        "Rise slowly from sitting to standing",
+        "Report muscle cramps or an irregular heartbeat",
+        "Take the dose at bedtime so the effect happens during sleep",
+        "Report ringing in the ears or a change in hearing",
+        "Expect to urinate more after each dose"
+      ],
+      "answer": [
+        0,
+        1,
+        3,
+        4
+      ],
+      "type": "sata",
+      "why": "Furosemide can drop blood pressure on standing, lower potassium, and affect hearing. Increased urination is expected, which is why the dose is usually taken earlier in the day rather than at bedtime.",
+      "source": "furosemide"
+    },
+    {
+      "id": "p-8",
+      "section": "Pharmacology",
+      "concept": "Diuretic adverse effects",
+      "stem": "A patient taking furosemide has a potassium result below the reference range and reports leg cramps. Which action is most appropriate first?",
+      "options": [
+        "Encourage an extra furosemide dose",
+        "Notify the prescriber and follow orders for potassium monitoring or replacement",
+        "Restrict the patient’s fluid intake",
+        "Reassure the patient that cramps are expected"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Low potassium with symptoms is a medication effect that needs the prescriber’s decision. More diuretic would worsen it, and reassurance ignores a correctable problem.",
+      "source": "furosemide"
+    },
+    {
+      "id": "p-9",
+      "section": "Pharmacology",
+      "concept": "Medication interactions",
+      "stem": "A patient stabilized on warfarin is prescribed a new antibiotic. Which teaching is safest?",
+      "options": [
+        "No change is needed because antibiotics do not affect warfarin",
+        "The INR may change, so expect closer monitoring and report any bleeding",
+        "Stop warfarin for the length of the antibiotic course",
+        "Double vitamin K intake while on the antibiotic"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Many medicines change how warfarin works. The safe response is closer INR monitoring and bleeding awareness, not stopping the anticoagulant or changing the diet on your own.",
+      "source": "warfarin"
+    },
+    {
+      "id": "p-10",
+      "section": "Pharmacology",
+      "concept": "Anticoagulant safety",
+      "stem": "Which laboratory value is used to monitor warfarin therapy?",
+      "options": [
+        "Blood glucose",
+        "INR",
+        "Serum potassium",
+        "Hemoglobin A1c"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Warfarin is dosed against the INR. Glucose and A1c track diabetes control, and potassium is watched with diuretics rather than with warfarin.",
+      "source": "warfarin"
+    },
+    {
+      "id": "c-5",
+      "section": "Cardiac",
+      "concept": "Systemic circulation",
+      "stem": "Oxygen-poor blood returning from the body enters the heart through which route?",
+      "options": [
+        "Pulmonary veins into the left atrium",
+        "Aorta into the left ventricle",
+        "Superior and inferior venae cavae into the right atrium",
+        "Pulmonary trunk into the right ventricle"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Systemic venous blood returns through the venae cavae to the right atrium. The pulmonary veins carry oxygen-rich blood from the lungs to the left atrium.",
+      "source": "heart"
+    },
+    {
+      "id": "c-6",
+      "section": "Cardiac",
+      "concept": "Pulmonary circulation",
+      "stem": "Blood returning from the lungs enters which chamber first?",
+      "options": [
+        "Right atrium",
+        "Left atrium",
+        "Right ventricle",
+        "Left ventricle"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The pulmonary veins deliver freshly oxygenated blood to the left atrium, which passes it through the mitral valve to the left ventricle.",
+      "source": "heart"
+    },
+    {
+      "id": "c-7",
+      "section": "Cardiac",
+      "concept": "Valve anatomy",
+      "stem": "Which valve sits between the left ventricle and the aorta?",
+      "options": [
+        "Mitral valve",
+        "Tricuspid valve",
+        "Aortic valve",
+        "Pulmonary valve"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "The aortic valve is the left ventricle’s outflow valve. The mitral valve is the left atrioventricular valve, and the tricuspid and pulmonary valves belong to the right side.",
+      "source": "heart"
+    },
+    {
+      "id": "c-8",
+      "section": "Cardiac",
+      "concept": "Heart structure",
+      "stem": "Which statements about the structure of the heart are accurate? Select all that apply.",
+      "options": [
+        "The myocardium is the muscular layer that contracts",
+        "The endocardium lines the inside of the chambers",
+        "The pericardium is the innermost layer of the heart wall",
+        "The interventricular septum separates the two ventricles"
+      ],
+      "answer": [
+        0,
+        1,
+        3
+      ],
+      "type": "sata",
+      "why": "From the outside in, the layers are epicardium, myocardium, and endocardium. The pericardium is the sac around the heart, not a layer of the wall. The septum keeps right- and left-sided blood separate.",
+      "source": "heart"
+    },
+    {
+      "id": "c-9",
+      "section": "Cardiac",
+      "concept": "Cardiac medication safety",
+      "stem": "A cardiac patient taking warfarin asks whether to take aspirin for a headache. Which response is best?",
+      "options": [
+        "Aspirin is fine in any amount",
+        "Check with the prescriber or pharmacist first because bleeding risk can increase",
+        "Take a double dose of aspirin so it works faster",
+        "Skip today’s warfarin and take the aspirin"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Aspirin adds antiplatelet effect to an anticoagulant, so bleeding risk rises. The prescriber decides; the patient should not skip warfarin or self-adjust.",
+      "source": "warfarin"
+    },
+    {
+      "id": "c-10",
+      "section": "Cardiac",
+      "concept": "Systemic circulation",
+      "stem": "Which vessels supply the heart muscle itself with oxygen-rich blood?",
+      "options": [
+        "Pulmonary arteries",
+        "Coronary arteries branching from the aorta",
+        "Superior and inferior venae cavae",
+        "Pulmonary veins"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The coronary arteries arise from the base of the aorta and perfuse the myocardium. Blood inside the chambers does not nourish the heart wall.",
+      "source": "heart"
+    },
+    {
+      "id": "d-6",
+      "section": "Dosage calculations",
+      "concept": "Unit conversion",
+      "stem": "Calculation exercise: an order is 0.25 mg. Each tablet is labeled 125 mcg. How many tablets are needed?",
+      "options": [
+        "0.5",
+        "1",
+        "2",
+        "4"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Convert first: 0.25 mg = 250 mcg. Then 250 ÷ 125 = 2 tablets. Match units before dividing.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-7",
+      "section": "Dosage calculations",
+      "concept": "Infusion rate",
+      "stem": "Calculation exercise: 500 mL must infuse over 4 hours with tubing that delivers 15 drops/mL. What is the rate in drops per minute?",
+      "options": [
+        "15",
+        "31",
+        "62",
+        "125"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "500 mL ÷ 240 minutes ≈ 2.08 mL/min. Multiply by 15 drops/mL to get about 31 drops per minute.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-8",
+      "section": "Dosage calculations",
+      "concept": "Liquid calculation",
+      "stem": "Calculation exercise: a solution contains 250 mg per 10 mL. The order is 100 mg. What volume is needed?",
+      "options": [
+        "2.5 mL",
+        "4 mL",
+        "10 mL",
+        "25 mL"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Set up the proportion: 100 mg × (10 mL ÷ 250 mg) = 4 mL.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-9",
+      "section": "Dosage calculations",
+      "concept": "Weight-based calculation",
+      "stem": "Calculation exercise: a patient weighs 66 lb. The order is 5 mg/kg. Using 2.2 lb = 1 kg, what is the dose?",
+      "options": [
+        "30 mg",
+        "150 mg",
+        "330 mg",
+        "66 mg"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "66 ÷ 2.2 = 30 kg. Then 30 kg × 5 mg/kg = 150 mg. Convert pounds to kilograms before applying the dose.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-10",
+      "section": "Dosage calculations",
+      "concept": "Infusion time",
+      "stem": "Calculation exercise: 750 mL is infusing at 125 mL/hour. How long will the infusion run?",
+      "options": [
+        "4 hours",
+        "6 hours",
+        "8 hours",
+        "10 hours"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Divide volume by rate: 750 ÷ 125 = 6 hours.",
+      "source": "hesi"
+    },
+    {
+      "id": "f-5",
+      "section": "Fundamentals",
+      "concept": "Hand hygiene",
+      "stem": "A nurse’s hands are not visibly soiled after routine patient contact. Which hand hygiene method is appropriate?",
+      "options": [
+        "Skip hand hygiene until hands look dirty",
+        "Use an alcohol-based hand rub",
+        "Rinse with water only",
+        "Wipe hands with a dry paper towel"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Alcohol-based hand rub is the preferred method when hands are not visibly soiled. Hand hygiene is still required after every patient contact.",
+      "source": "infection"
+    },
+    {
+      "id": "f-6",
+      "section": "Fundamentals",
+      "concept": "Standard precautions",
+      "stem": "A patient in the waiting area is coughing frequently. Which action reflects respiratory hygiene under Standard Precautions?",
+      "options": [
+        "Ask the patient to leave the building",
+        "Offer a mask and tissues and encourage hand hygiene",
+        "Place every patient in the area in isolation",
+        "Take no action because coughing is common"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Respiratory hygiene means source control: covering the cough, offering a mask, and cleaning hands. It protects others without overreacting.",
+      "source": "infection"
+    },
+    {
+      "id": "f-7",
+      "section": "Fundamentals",
+      "concept": "Injection safety",
+      "stem": "After giving an injection, what should the nurse do with the used needle?",
+      "options": [
+        "Recap it carefully and place it in the regular trash",
+        "Place it directly into a sharps container without recapping",
+        "Bend the needle so it cannot be reused",
+        "Leave it on the tray to dispose of later"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Used sharps go straight into a puncture-resistant sharps container. Recapping, bending, and delayed disposal are common causes of needlestick injuries.",
+      "source": "injection"
+    },
+    {
+      "id": "f-8",
+      "section": "Fundamentals",
+      "concept": "Injection safety",
+      "stem": "Which practices are consistent with safe injection practices? Select all that apply.",
+      "options": [
+        "Use a new needle and syringe for every injection",
+        "Use a single-dose vial for one patient only",
+        "Keep multi-dose vials in the immediate patient treatment area",
+        "Enter a vial with a new sterile needle and syringe each time"
+      ],
+      "answer": [
+        0,
+        1,
+        3
+      ],
+      "type": "sata",
+      "why": "Needles, syringes, and single-dose vials are single use. Multi-dose vials are kept away from the immediate patient treatment area to avoid contamination.",
+      "source": "injection"
+    },
+    {
+      "id": "f-9",
+      "section": "Fundamentals",
+      "concept": "Exposure prevention",
+      "stem": "When removing personal protective equipment after care, which item is generally removed first?",
+      "options": [
+        "Mask",
+        "Gloves",
+        "Eye protection",
+        "Gown"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Gloves are the most contaminated item and come off first. The mask is removed last, after leaving the room and cleaning hands.",
+      "source": "infection"
+    },
+    {
+      "id": "f-10",
+      "section": "Fundamentals",
+      "concept": "Hand hygiene",
+      "stem": "Which situation calls for soap and water rather than an alcohol-based hand rub?",
+      "options": [
+        "Before touching a patient",
+        "After touching the patient’s environment",
+        "When hands are visibly soiled",
+        "Between tasks on the same patient"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Alcohol rub does not remove visible soil. Soap and water are also used after exposure to certain spore-forming organisms.",
+      "source": "infection"
+    },
+    {
+      "id": "ped-5",
+      "section": "Pediatrics",
+      "concept": "Safe sleep",
+      "stem": "A caregiver asks where an infant should sleep during the first months. Which arrangement is recommended?",
+      "options": [
+        "In the caregiver’s bed",
+        "On a firm, flat surface in the caregiver’s room but not in the same bed",
+        "On a couch with pillows for support",
+        "In a car seat overnight"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Room-sharing without bed-sharing is recommended. Couches, pillows, and seats are not safe sleep surfaces.",
+      "source": "sleep"
+    },
+    {
+      "id": "ped-6",
+      "section": "Pediatrics",
+      "concept": "Sleep environment",
+      "stem": "Which item is safe to have in an infant’s sleep space?",
+      "options": [
+        "Soft bumper pads",
+        "A loose blanket",
+        "A fitted sheet on a firm mattress",
+        "A stuffed toy"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "The sleep surface should be firm and flat with only a fitted sheet. Soft objects and loose bedding increase suffocation risk.",
+      "source": "sleep"
+    },
+    {
+      "id": "ped-7",
+      "section": "Pediatrics",
+      "concept": "Developmental follow-up",
+      "stem": "A parent worries that their 12-month-old is not yet babbling or pointing. Which guidance is best?",
+      "options": [
+        "Wait until age 3 to see whether it improves",
+        "Discuss the concern with the child’s clinician now and ask about developmental screening",
+        "Compare the child with older siblings",
+        "Assume it is a temporary phase"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Concerns about milestones deserve early attention. Screening and early support matter more than waiting or comparing.",
+      "source": "milestones"
+    },
+    {
+      "id": "ped-8",
+      "section": "Pediatrics",
+      "concept": "Developmental follow-up",
+      "stem": "Which statements reflect current guidance on developmental milestones? Select all that apply.",
+      "options": [
+        "Milestones are skills most children can do by a certain age",
+        "A missed milestone is a reason to talk with a clinician",
+        "Children always catch up without help",
+        "Caregivers should act early rather than wait and see"
+      ],
+      "answer": [
+        0,
+        1,
+        3
+      ],
+      "type": "sata",
+      "why": "Milestones are population norms, not deadlines, but a missed one is a reason to talk with a clinician. “They will catch up” is not a plan.",
+      "source": "milestones"
+    },
+    {
+      "id": "ped-9",
+      "section": "Pediatrics",
+      "concept": "Weight-based calculation",
+      "stem": "Calculation exercise: a child weighs 22 lb. The order is 15 mg/kg per dose. Using 2.2 lb = 1 kg, what is the dose?",
+      "options": [
+        "15 mg",
+        "150 mg",
+        "330 mg",
+        "100 mg"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "22 ÷ 2.2 = 10 kg. Then 10 kg × 15 mg/kg = 150 mg per dose.",
+      "source": "hesi"
+    },
+    {
+      "id": "ped-10",
+      "section": "Pediatrics",
+      "concept": "Safe sleep",
+      "stem": "A caregiver says the infant sleeps better on the stomach. Which teaching is best?",
+      "options": [
+        "Stomach sleeping is fine once the infant seems comfortable",
+        "Place the infant on the back for every sleep, including naps",
+        "Prop the infant on the side with pillows",
+        "Alternate sides each night"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Back to sleep applies to every sleep, not just nighttime. Side positioning and props are not safe alternatives.",
+      "source": "sleep"
+    },
+    {
+      "id": "a-math-5",
+      "section": "Math",
+      "concept": "Percentages",
+      "stem": "A student answered 45 of 60 questions correctly. What percentage is that?",
+      "options": [
+        "65%",
+        "70%",
+        "75%",
+        "80%"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "45 ÷ 60 = 0.75, or 75%. Divide the part by the whole, then move the decimal two places.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-math-6",
+      "section": "Math",
+      "concept": "Decimals",
+      "stem": "What is 2.5 × 0.4?",
+      "options": [
+        "0.1",
+        "1.0",
+        "6.25",
+        "10"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Multiply as whole numbers (25 × 4 = 100), then place two decimal places: 1.00.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-math-7",
+      "section": "Math",
+      "concept": "Conversions",
+      "stem": "How many grams are in 2.4 kilograms?",
+      "options": [
+        "24",
+        "240",
+        "2,400",
+        "24,000"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "One kilogram is 1,000 grams, so 2.4 kg = 2,400 g. Moving to a smaller unit makes the number larger.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-math-8",
+      "section": "Math",
+      "concept": "Ratios",
+      "stem": "A clinic sees 3 new patients for every 5 returning patients. If 40 patients are seen, how many are new?",
+      "options": [
+        "8",
+        "15",
+        "24",
+        "25"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The ratio has 8 parts in total. 40 ÷ 8 = 5 per part, so new patients are 3 × 5 = 15.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-read-3",
+      "section": "Reading",
+      "concept": "Main idea",
+      "stem": "Read: “Short daily walks improved mood scores in a study of office workers more than one long weekly workout did, even though total exercise time was equal.” What is the main idea?",
+      "options": [
+        "Weekly workouts have no benefit",
+        "Frequent shorter activity had a stronger effect on mood than the same time spent in one session",
+        "Office workers dislike exercising",
+        "Mood cannot be measured reliably"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The passage compares two ways of spending the same exercise time and reports that the frequent pattern helped mood more. The other options add claims the passage never makes.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-read-4",
+      "section": "Reading",
+      "concept": "Inference",
+      "stem": "Read: “The pharmacy closes at 6 p.m. on weekdays and is closed on weekends. Refills requested after 4 p.m. are ready the next business day.” When will a refill requested on Friday at 5 p.m. be ready?",
+      "options": [
+        "Friday at 6 p.m.",
+        "Saturday morning",
+        "Monday",
+        "Sunday"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "A request after 4 p.m. waits for the next business day. The pharmacy is closed Saturday and Sunday, so that is Monday.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-vocab-3",
+      "section": "Vocabulary",
+      "concept": "Medical vocabulary",
+      "stem": "Which term describes a condition that develops suddenly and lasts a short time?",
+      "options": [
+        "Chronic",
+        "Acute",
+        "Benign",
+        "Latent"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Acute means sudden and short-lived. Chronic is long-lasting, benign means not harmful, and latent means present but not yet active.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-vocab-4",
+      "section": "Vocabulary",
+      "concept": "Meaning in context",
+      "stem": "“The nurse noted the wound was not healing and looked for any impediment to recovery.” What does impediment mean?",
+      "options": [
+        "Improvement",
+        "Obstacle",
+        "Measurement",
+        "Medication"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "An impediment is something that blocks or slows progress. The sentence is about looking for what is getting in the way of healing.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-ap-5",
+      "section": "Anatomy & Physiology",
+      "concept": "Respiratory physiology",
+      "stem": "Where does gas exchange between air and blood take place in the lungs?",
+      "options": [
+        "Trachea",
+        "Bronchi",
+        "Alveoli",
+        "Larynx"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Alveoli are the thin-walled sacs where oxygen and carbon dioxide diffuse across to and from pulmonary capillaries. The airways above them only conduct air.",
+      "source": "lung"
+    },
+    {
+      "id": "a-ap-6",
+      "section": "Anatomy & Physiology",
+      "concept": "Endocrine system",
+      "stem": "Which pancreatic hormone raises blood glucose between meals?",
+      "options": [
+        "Insulin",
+        "Glucagon",
+        "Somatostatin",
+        "Cortisol"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Glucagon from the alpha cells signals the liver to release glucose. Insulin does the opposite, and cortisol comes from the adrenal cortex rather than the pancreas.",
+      "source": "endocrine"
+    },
+    {
+      "id": "a-ap-7",
+      "section": "Anatomy & Physiology",
+      "concept": "Nervous system",
+      "stem": "Which division of the autonomic nervous system slows the heart rate and promotes digestion?",
+      "options": [
+        "Sympathetic",
+        "Parasympathetic",
+        "Somatic",
+        "Central"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The parasympathetic division supports rest-and-digest functions. The sympathetic division drives fight-or-flight, and the somatic system controls skeletal muscle.",
       "source": "nervous"
     }
   ]

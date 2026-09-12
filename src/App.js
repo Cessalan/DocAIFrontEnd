@@ -30,6 +30,7 @@ const seoProductSlugs = ['nclex-study-plan', 'hesi-a2-practice-test', 'hesi-a2-s
 const NclexHome = lazy(() => import("./Components/Nclex/NclexHome"));
 const NclexSubject = lazy(() => import("./Components/Nclex/NclexSubject"));
 const NclexPractice = lazy(() => import("./Components/Nclex/NclexPractice"));
+const NclexArrival = lazy(() => import("./Components/Nclex/NclexArrival"));
 const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmin"));
 const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
 const ConversationReader = lazy(() => import("./Components/Admin/ConversationReader"));
@@ -125,6 +126,17 @@ function App() {
           element={
             <ProtectedRoute>
               <NclexPractice />
+            </ProtectedRoute>
+          }
+        />
+        {/* Where the SEO landing pages hand off to. Reads the practice intent
+            written at the CTA and proposes the first session; with nothing to
+            read it forwards to /nclex. */}
+        <Route
+          path="/nclex/start"
+          element={
+            <ProtectedRoute>
+              <NclexArrival />
             </ProtectedRoute>
           }
         />

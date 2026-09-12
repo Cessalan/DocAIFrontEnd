@@ -13,10 +13,24 @@ import {
 } from './nclexProfile';
 import { buildVerdict, nextAction, MIN_FOR_READINESS } from './nclexVerdict';
 import { FORMAT_LABELS } from './nclexCurriculum';
-import { TargetIcon, CompassIcon } from './NclexIcons';
+import { TargetIcon, CompassIcon, AreaIcon } from './NclexIcons';
 import { loadAttempts, loadMeta, saveMeta, daysUntil } from '../../Services/NclexService';
-import { devLog } from '../../Services/devLogger';
+import { loadSavedProduct } from '../../Services/SeoMiniProductService';
+import { PLANNER_SUBJECTS } from '../SeoPractice/seoToNclex';
+import { devLog, devWarn } from '../../Services/devLogger';
 import './Nclex.css';
+
+/** Today's row of a saved landing-page plan, or null. Pure, for the card. */
+export const todaysPlanRow = (saved, now = new Date()) => {
+  const rows = saved?.plan?.rows;
+  if (!Array.isArray(rows) || !rows.length) return null;
+  const key = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+  const today = rows.find((r) => r.date === key);
+  // Past the last day → nothing; before the first → the first day.
+  if (today) return today;
+  if (key < rows[0].date) return rows[0];
+  return null;
+};
 
 /**
  * NclexHome — the surface a student lands on, and the one she comes back to.
@@ -51,6 +65,7 @@ const NclexHome = () => {
 
   const [attempts, setAttempts] = useState(null); // null = still loading
   const [meta, setMeta] = useState(null);
+  const [savedPlan, setSavedPlan] = useState(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -60,17 +75,24 @@ const NclexHome = () => {
         if (!cancelled) setAttempts([]);
         return;
       }
-      const [rows, m] = await Promise.all([
+      const [rows, m, plan] = await Promise.all([
         loadAttempts(currentUser.uid),
         loadMeta(currentUser.uid),
+        loadSavedProduct('nclex-study-plan').catch((err) => {
+          devWarn('[nclex] saved plan unavailable', err);
+          return null;
+        }),
       ]);
       if (cancelled) return;
       devLog('[nclex] loaded', rows.length, 'attempts');
       setAttempts(rows);
       setMeta(m);
+      setSavedPlan(plan);
     })();
     return () => { cancelled = true; };
   }, [currentUser, authLoading]);
+
+  const planRow = useMemo(() => todaysPlanRow(savedPlan), [savedPlan]);
 
   const profile = useMemo(() => buildProfile(attempts || []), [attempts]);
   const verdict = useMemo(() => buildVerdict(profile), [profile]);
@@ -127,9 +149,40 @@ const NclexHome = () => {
       untested: t('nclex.v.untested', 'Not measured'),
     }[v] || v);
 
+  /* Today's task from a plan she built on the landing page. Shown in every
+     state — a plan is the one thing that can outrank the verdict, because
+     she made it and dated it herself. */
+  const planCard = planRow && (
+    <div className="nq-plan-card">
+      <div className="nq-plan-date" aria-hidden="true">
+        <b>{new Date(`${planRow.date}T12:00:00`).getDate()}</b>
+        <span>{new Date(`${planRow.date}T12:00:00`).toLocaleDateString(undefined, { month: 'short' })}</span>
+      </div>
+      <div className="nq-plan-body">
+        <span className="nq-arrival-label">
+          {t('nclex.todayInPlan', "Today in your plan")} · {planRow.phase}
+        </span>
+        <strong>{planRow.title}</strong>
+        <p>{planRow.task}</p>
+      </div>
+      <button
+        type="button"
+        className="nq-plan-go"
+        onClick={() =>
+          startPractice({
+            subject: PLANNER_SUBJECTS[planRow.subject] || undefined,
+            count: 10,
+            from: 'plan',
+          })
+        }
+      >
+        {t('nclex.startTodays', "Start today's practice")} →
+      </button>
+    </div>
+  );
+
   return (
     <NclexShell examDate={examDate} daysLeft={daysLeft} onSaveExamDate={handleSaveExamDate}>
-      <div style={{ textAlign: 'right', marginBottom: 16 }}><button className="nq-btn nq-btn-quiet" onClick={() => navigate('/nclex-study-plan')}>{t('nclex.openStudyPlanner', 'Open my study planner')} →</button></div>
       {cold ? (
         <section className="nq-cold">
           <p className="nq-eyebrow">{t('nclex.kicker', 'NCLEX preparation')}</p>
@@ -150,7 +203,10 @@ const NclexHome = () => {
             )}
           </p>
 
+          {planCard}
+
           <div className="nq-hero-card">
+            <span className="nq-tape" aria-hidden="true" />
             <div className="nq-hero-card-kicker">
               <em aria-hidden="true"><CompassIcon /></em>
               <span>{t('nclex.readinessCheck', 'Readiness check')}</span>
@@ -205,7 +261,11 @@ const NclexHome = () => {
            description at answer three, and the only one that gives her a
            reason to answer a fourth. */
         <>
+          <div className="nq-hero">
+          <div className="nq-hero-glow" aria-hidden="true" />
+          <span className="nq-hand">{t('nclex.buildingHand', 'the picture is coming together')}</span>
           <section className="nq-verdict">
+            <span className="nq-tape" aria-hidden="true" />
             <p className="nq-eyebrow">{t('nclex.whereYouStand', 'Where you stand')}</p>
             <h1 className="nq-verdict-headline">
               {t('nclex.buildingTitle', "We're building your NCLEX profile.")}
@@ -234,7 +294,11 @@ const NclexHome = () => {
               </span>
             </div>
           </section>
+          </div>
 
+          {planCard}
+
+          <span className="nq-next-note">{t('nclex.doThisNext', 'do this next →')}</span>
           <button type="button" className="nq-action" onClick={() => startPractice(action)}>
             <span>
               <span className="nq-action-label">
@@ -301,7 +365,11 @@ const NclexHome = () => {
         </>
       ) : (
         <>
+          <div className="nq-hero">
+          <div className="nq-hero-glow" aria-hidden="true" />
+          <span className="nq-hand">{t('nclex.verdictHand', 'here is what your answers say')}</span>
           <section className="nq-verdict">
+            <span className="nq-tape" aria-hidden="true" />
             <p className="nq-eyebrow">{t('nclex.whereYouStand', 'Where you stand')}</p>
             <div className="nq-verdict-body">
               <div className="nq-verdict-main">
@@ -312,12 +380,17 @@ const NclexHome = () => {
 
               {verdict.showReadiness && (
                 <div className="nq-readiness">
-                  <span className="nq-readiness-num">
-                    {Math.round(verdict.readiness.value * 100)}%
-                  </span>
-                  <span className="nq-readiness-label">
-                    {t('nclex.estReadiness', 'Estimated readiness')}
-                  </span>
+                  <div
+                    className="nq-ring"
+                    style={{ '--score': `${Math.round(verdict.readiness.value * 360)}deg` }}
+                    role="img"
+                    aria-label={`${Math.round(verdict.readiness.value * 100)}% ${t('nclex.estReadiness', 'Estimated readiness')}`}
+                  >
+                    <div>
+                      <strong>{Math.round(verdict.readiness.value * 100)}%</strong>
+                      <span>{t('nclex.estReadiness', 'Estimated readiness')}</span>
+                    </div>
+                  </div>
                   <span className={`nq-readiness-band is-${verdict.band.key}`}>
                     {verdict.band.label}
                   </span>
@@ -325,7 +398,11 @@ const NclexHome = () => {
               )}
             </div>
           </section>
+          </div>
 
+          {planCard}
+
+          <span className="nq-next-note">{t('nclex.doThisNext', 'do this next →')}</span>
           <button type="button" className="nq-action" onClick={() => startPractice(action)}>
             <span>
               <span className="nq-action-label">{action.label}</span>
@@ -343,7 +420,10 @@ const NclexHome = () => {
       {!cold && !building && (
         <section className="nq-section">
           <div className="nq-section-head">
-            <h2 className="nq-h2">{t('nclex.blueprintTitle', 'Your exam, by content area')}</h2>
+            <div>
+              <span className="nq-hand">{t('nclex.blueprintHand', 'the ledger')}</span>
+              <h2 className="nq-h2">{t('nclex.blueprintTitle', 'Your exam, by content area')}</h2>
+            </div>
             <p className="nq-section-note">
               {t(
                 'nclex.blueprintNote',
@@ -424,7 +504,10 @@ const NclexHome = () => {
       {/* ── Subjects ──────────────────────────────────────────────────── */}
       <section className="nq-section" id="nq-subjects">
         <div className="nq-section-head">
-          <h2 className="nq-h2">{t('nclex.subjectsTitle', 'Practice by subject')}</h2>
+          <div>
+            <span className="nq-hand">{t('nclex.subjectsHand', 'the card box')}</span>
+            <h2 className="nq-h2">{t('nclex.subjectsTitle', 'Practice by subject')}</h2>
+          </div>
         </div>
         <div className="nq-subjects">
           {subjects.map((s) => (
@@ -434,7 +517,12 @@ const NclexHome = () => {
               className={`nq-subject is-${s.verdict}`}
               onClick={() => navigate(`/nclex/subject/${s.id}`)}
             >
-              <h3>{s.label}</h3>
+              <div className="nq-subject-head">
+                <span className="nq-subject-icon" aria-hidden="true">
+                  <AreaIcon area={s.areas[0]} />
+                </span>
+                <h3>{s.label}</h3>
+              </div>
               <p>{s.blurb}</p>
               <div className="nq-subject-foot">
                 <span className={`nq-pill is-${s.verdict}`}>{verdictLabel(s.verdict)}</span>
@@ -453,14 +541,18 @@ const NclexHome = () => {
       {concepts.length > 0 && (
         <section className="nq-section">
           <div className="nq-section-head">
-            <h2 className="nq-h2">{t('nclex.conceptsTitle', 'Still getting these wrong')}</h2>
+            <div>
+              <span className="nq-hand">{t('nclex.conceptsHand', 'pinned above the desk')}</span>
+              <h2 className="nq-h2">{t('nclex.conceptsTitle', 'Still getting these wrong')}</h2>
+            </div>
             <p className="nq-section-note">
               {t('nclex.conceptsNote', 'Named from your own missed questions.')}
             </p>
           </div>
           <div className="nq-concepts">
-            {concepts.map((c) => (
+            {concepts.map((c, i) => (
               <div className="nq-concept" key={c.concept}>
+                <span className="nq-concept-index">{String(i + 1).padStart(2, '0')}</span>
                 <span className="nq-concept-label">{c.concept}</span>
                 <span className="nq-concept-score">
                   {c.correct}/{c.total} {t('nclex.correct', 'correct')}

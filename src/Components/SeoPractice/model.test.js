@@ -1,4 +1,4 @@
-import { bankFor, createPlan, diagnostic, grade, parseDate } from './model';
+import { bankFor, coverageTopics, createPlan, diagnostic, grade, parseDate, pickSet, unseenCount } from './model';
 import catalog from './catalog.json';
 const input = { track: 'RN', unscheduled: false, examDate: '2026-09-25', minutes: 60, weak: ['Pharmacology'] };
 const today = new Date(2026, 8, 11, 12);
@@ -32,6 +32,30 @@ test('no strengths at zero; all-correct has no invented weaknesses; unattempted 
   expect(diagnostic(questions, right).needsWork).toBeNull();
   expect(diagnostic(questions, right).percentage).toBe(100);
   expect(diagnostic(questions, {}).total).toBe(0);
+});
+test('each set prefers unseen questions, balances sections, and every bank outgrows one set', () => {
+  const bank = bankFor('hesi-a2-practice-test');
+  const rng = (() => { let s = 7; return () => { s = (s * 16807) % 2147483647; return (s - 1) / 2147483646; }; })();
+  const first = pickSet(bank, 12, [], rng);
+  expect(first).toHaveLength(12);
+  expect(new Set(first.map(q => q.id)).size).toBe(12);
+  expect(new Set(first.map(q => q.section)).size).toBe(4);
+  const seen = first.map(q => q.id);
+  const second = pickSet(bank, 12, seen, rng);
+  expect(second.filter(q => seen.includes(q.id))).toHaveLength(12 - unseenCount(bank, seen));
+  expect(second.filter(q => !seen.includes(q.id))).toHaveLength(unseenCount(bank, seen));
+  expect(pickSet(bank.slice(0, 3), 6, [], rng)).toHaveLength(3);
+  expect(catalog.banks['hesi-a2-study-guide']).toHaveLength(12);
+  expect(catalog.banks['hesi-a2-practice-test'].length).toBeGreaterThan(12);
+  for (const page of catalog.pages.filter(p => p.kind === 'diagnostic')) {
+    expect(page.sessionSize).toBeGreaterThan(0);
+    expect(bankFor(page.slug).length).toBeGreaterThan(page.sessionSize);
+    const topics = coverageTopics(bankFor(page.slug));
+    expect(topics.length).toBeGreaterThan(0);
+    expect(topics.length).toBeLessThanOrEqual(bankFor(page.slug).length);
+    expect(new Set(topics.map(q => `${q.section}|${q.concept}`)).size).toBe(topics.length);
+    expect(topics.every(q => !bankFor(page.slug).some(item => item.stem === q.concept))).toBe(true);
+  }
 });
 test('select-all requires the exact set and every public bank has valid source-backed items', () => {
   const sata = catalog.questions.find(q => q.type === 'sata');

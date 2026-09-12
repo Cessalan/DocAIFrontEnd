@@ -165,6 +165,7 @@ const NclexSubject = () => {
         </header>
 
         <div className="nq-start-card">
+          <span className="nq-tape" aria-hidden="true" />
           <h2>{t('nclex.whereStart', 'Where should I start?')}</h2>
           <p>
             {t(
