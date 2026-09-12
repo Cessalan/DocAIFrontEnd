@@ -118,7 +118,6 @@ const Signup = () => {
       setError('');
       setLoading(true);
 
-      console.log("Creating user with Firebase" , email, password);
       // Create user with Firebase
       await  handleCreateUserWithEmailAndPassword (auth,email, password);
 

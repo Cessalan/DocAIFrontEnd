@@ -22,6 +22,8 @@ const PublicQuizView = lazy(() => import("./Components/PublicQuiz/PublicQuizView
 const BlogList = lazy(() => import("./Components/Blog/BlogList"));
 const BlogPost = lazy(() => import("./Components/Blog/BlogPost"));
 const NclexQuestionGenerator = lazy(() => import("./Components/LandingPages/NclexQuestionGenerator"));
+const SeoMiniProduct = lazy(() => import('./Components/SeoPractice/SeoMiniProduct'));
+const seoProductSlugs = ['nclex-study-plan', 'hesi-a2-practice-test', 'hesi-a2-study-guide', 'hesi-practice-questions', 'dosage-calculation-practice-questions', 'nursing-fundamentals-practice-questions', 'pharmacology-nclex-questions', 'cardiac-nclex-questions', 'pediatric-nclex-questions'];
 // NCLEX is its own surface, not a view inside ChatLayout: there is no chat,
 // no sidebar and no upload in it, because a candidate who has graduated has
 // no documents to talk about. It shares the adaptive modules, not the shell.
@@ -82,6 +84,7 @@ function App() {
         <Route path="/blog/:slug" element={<BlogPost />} />
 
         {/* SEO Landing Pages */}
+        {seoProductSlugs.map(slug => <Route key={slug} path={`/${slug}`} element={<SeoMiniProduct key={slug} slug={slug} />} />)}
         <Route path="/nclex-question-generator" element={<NclexQuestionGenerator />} />
         <Route path="/ai-nclex-question-generator" element={<NclexQuestionGenerator />} />
 

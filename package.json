@@ -32,7 +32,7 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build && node scripts/generate-blog-html.js",
+    "build": "react-scripts build && node scripts/generate-blog-html.js && node scripts/generate-seo-products.cjs",
     "test": "react-scripts test",
     "test:landing": "react-scripts test src/tests/verifications/landing-page-verification.spec.js",
     "eject": "react-scripts eject",

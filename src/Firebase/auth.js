@@ -6,23 +6,27 @@ import { createUserWithEmailAndPassword ,
         signInWithEmailAndPassword, 
         signInWithPopup,
         updatePassword,
-        OAuthProvider} from "firebase/auth";
+        OAuthProvider, getAdditionalUserInfo} from "firebase/auth";
+
+const recordAcquisition = result => {
+    import('../Services/SeoMiniProductService').then(service => service.recordSeoSignup(result.user, Boolean(getAdditionalUserInfo(result)?.isNewUser))).catch(() => {});
+    return result;
+};
 
 export const handleCreateUserWithEmailAndPassword = async (auth,email, password) => {
-    return createUserWithEmailAndPassword(auth,email,password);
+    return createUserWithEmailAndPassword(auth,email,password).then(recordAcquisition);
 };
 
 
 export const handleSignInWithEMailAndPassword = (email,password) => {
-    console.log(email +" "+password)
-    return signInWithEmailAndPassword(auth,email,password);
+    return signInWithEmailAndPassword(auth,email,password).then(recordAcquisition);
 };
 
 export const handleSignInWithGoogleAccount = async() => {
     try {
         const Provider = new GoogleAuthProvider();
         const signInResult = await signInWithPopup(auth, Provider);
-        return signInResult;
+        return recordAcquisition(signInResult);
     } catch (error) {
         console.error('Google sign-in error:', error);
 
@@ -81,6 +85,7 @@ export const handleSignInWithAppleAccount = async () => {
     });
 
     const result = await signInWithPopup(auth, provider);
+    recordAcquisition(result);
     
     // The signed-in user info
     const user = result.user;

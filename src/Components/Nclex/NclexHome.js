@@ -129,6 +129,7 @@ const NclexHome = () => {
 
   return (
     <NclexShell examDate={examDate} daysLeft={daysLeft} onSaveExamDate={handleSaveExamDate}>
+      <div style={{ textAlign: 'right', marginBottom: 16 }}><button className="nq-btn nq-btn-quiet" onClick={() => navigate('/nclex-study-plan')}>{t('nclex.openStudyPlanner', 'Open my study planner')} →</button></div>
       {cold ? (
         <section className="nq-cold">
           <p className="nq-eyebrow">{t('nclex.kicker', 'NCLEX preparation')}</p>

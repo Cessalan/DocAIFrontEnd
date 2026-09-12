@@ -905,6 +905,13 @@ const QuizRoomLanding = () => {
 
           {/* Bottom motivational text */}
           <div className="landing-footer">
+            <nav className="landing-study-tools" aria-label="Free study tools">
+              <a href="/nclex-study-plan">NCLEX study planner</a>
+              <a href="/hesi-a2-practice-test">HESI A2 practice test</a>
+              <a href="/hesi-a2-study-guide">HESI A2 study guide</a>
+              <a href="/hesi-practice-questions">HESI nursing practice</a>
+              <a href="/dosage-calculation-practice-questions">Dosage calculations</a>
+            </nav>
             <p className="footer-text">
               {t('landing.footerText', 'Built for Nursing exams and NCLEX')}
             </p>

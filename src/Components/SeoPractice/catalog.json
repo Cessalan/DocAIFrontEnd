@@ -1,0 +1,825 @@
+{
+  "sources": {
+    "nclex": {
+      "label": "NCSBN · NCLEX test plans",
+      "url": "https://www.nclex.com/test-plans"
+    },
+    "hesi": {
+      "label": "Elsevier · HESI Admission Assessment review",
+      "url": "https://evolve.elsevier.com/cs/product/9780323640121?role=faculty"
+    },
+    "heart": {
+      "label": "OpenStax · Heart anatomy",
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/19-1-heart-anatomy"
+    },
+    "lung": {
+      "label": "OpenStax · Gas exchange",
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/22-4-gas-exchange"
+    },
+    "infection": {
+      "label": "CDC · Standard precautions",
+      "url": "https://www.cdc.gov/infection-control/hcp/isolation-precautions/recommendations.html"
+    },
+    "injection": {
+      "label": "CDC · Injection safety",
+      "url": "https://www.cdc.gov/injection-safety/hcp/clinical-guidance/index.html"
+    },
+    "warfarin": {
+      "label": "MedlinePlus · Warfarin",
+      "url": "https://medlineplus.gov/druginfo/meds/a682277.html"
+    },
+    "furosemide": {
+      "label": "MedlinePlus · Furosemide",
+      "url": "https://medlineplus.gov/druginfo/meds/a682858.html"
+    },
+    "sleep": {
+      "label": "CDC · Infant sleep safety",
+      "url": "https://www.cdc.gov/sudden-infant-death/about/index.html"
+    },
+    "milestones": {
+      "label": "CDC · Developmental milestones",
+      "url": "https://www.cdc.gov/act-early/milestones/index.html"
+    },
+    "endocrine": {
+      "label": "OpenStax · Endocrine pancreas",
+      "url": "https://openstax.org/books/anatomy-and-physiology-2e/pages/17-9-the-endocrine-pancreas"
+    },
+    "nervous": {
+      "label": "OpenStax · Autonomic nervous system",
+      "url": "https://openstax.org/books/anatomy-and-physiology/pages/15-1-divisions-of-the-autonomic-nervous-system"
+    }
+  },
+  "pages": [
+    {
+      "slug": "nclex-study-plan",
+      "kind": "planner",
+      "cluster": "NCLEX",
+      "title": "Build your personalized NCLEX study plan",
+      "subtitle": "Know what to study between now and test day.",
+      "cta": "Build my plan",
+      "icon": "calendar",
+      "description": "Turn a date on your calendar into a plan you can actually follow.",
+      "conversion": "Save my NCLEX plan"
+    },
+    {
+      "slug": "hesi-a2-practice-test",
+      "kind": "diagnostic",
+      "cluster": "HESI A2",
+      "title": "Free HESI A2 practice test",
+      "subtitle": "Find what feels solid—and what to review next.",
+      "cta": "Start practice test",
+      "icon": "spark",
+      "description": "A short admission-prep check across the sections you choose.",
+      "conversion": "Practice my weak areas"
+    },
+    {
+      "slug": "hesi-a2-study-guide",
+      "kind": "guide",
+      "cluster": "HESI A2",
+      "title": "HESI A2 study guide",
+      "subtitle": "A little review. A quick recall check. A clearer next step.",
+      "cta": "Explore the guide",
+      "icon": "book",
+      "description": "Pick a topic, understand the idea, then try it without your notes.",
+      "conversion": "Continue my HESI A2 prep"
+    },
+    {
+      "slug": "hesi-practice-questions",
+      "kind": "diagnostic",
+      "cluster": "Nursing HESI",
+      "title": "HESI nursing practice questions",
+      "subtitle": "Don't just review. Find out what you'd actually miss.",
+      "cta": "Start practicing",
+      "icon": "clipboard",
+      "description": "Practice clinical decisions for nursing coursework and HESI-style assessments.",
+      "conversion": "Prepare for my exam"
+    },
+    {
+      "slug": "dosage-calculation-practice-questions",
+      "kind": "diagnostic",
+      "cluster": "Nursing school",
+      "title": "Dosage calculation practice questions",
+      "subtitle": "Find the calculation step that keeps tripping you up.",
+      "cta": "Check my calculations",
+      "icon": "calculator",
+      "description": "Work through tablets, liquids, infusion rates, and weight-based calculations.",
+      "conversion": "Practice what I missed"
+    },
+    {
+      "slug": "nursing-fundamentals-practice-questions",
+      "kind": "diagnostic",
+      "cluster": "NCLEX",
+      "title": "Nursing fundamentals practice questions",
+      "subtitle": "Small decisions. Essential nursing habits.",
+      "cta": "Start practicing",
+      "icon": "clipboard",
+      "description": "Check infection prevention, safety, and the reasoning behind your choices.",
+      "conversion": "Practice my weak areas"
+    },
+    {
+      "slug": "pharmacology-nclex-questions",
+      "kind": "diagnostic",
+      "cluster": "NCLEX",
+      "title": "Pharmacology NCLEX practice questions",
+      "subtitle": "Know the medication. Notice the risk. Choose your next step.",
+      "cta": "Test me on pharmacology",
+      "icon": "spark",
+      "description": "Medication scenarios and select-all questions with explanations you can use.",
+      "conversion": "Practice my weak areas"
+    },
+    {
+      "slug": "cardiac-nclex-questions",
+      "kind": "diagnostic",
+      "cluster": "NCLEX",
+      "title": "Cardiac NCLEX practice questions",
+      "subtitle": "Connect the circulation pathway to safer decisions.",
+      "cta": "Start cardiac practice",
+      "icon": "pulse",
+      "description": "A focused check of cardiac anatomy and medication-safety reasoning.",
+      "conversion": "Practice my weak areas"
+    },
+    {
+      "slug": "pediatric-nclex-questions",
+      "kind": "diagnostic",
+      "cluster": "NCLEX",
+      "title": "Pediatric NCLEX practice questions",
+      "subtitle": "A little more confidence caring for little ones.",
+      "cta": "Start pediatric practice",
+      "icon": "heart",
+      "description": "Check infant safety, developmental follow-up, and weight-based calculations.",
+      "conversion": "Practice my weak areas"
+    }
+  ],
+  "banks": {
+    "hesi-a2-practice-test": [
+      "a-math-1",
+      "a-math-2",
+      "a-math-3",
+      "a-math-4",
+      "a-ap-1",
+      "a-ap-2",
+      "a-read-1",
+      "a-read-2",
+      "a-vocab-1",
+      "a-vocab-2",
+      "a-ap-3",
+      "a-ap-4"
+    ],
+    "hesi-a2-study-guide": [
+      "a-math-1",
+      "a-math-2",
+      "a-math-3",
+      "a-math-4",
+      "a-ap-1",
+      "a-ap-2",
+      "a-read-1",
+      "a-read-2",
+      "a-vocab-1",
+      "a-vocab-2",
+      "a-ap-3",
+      "a-ap-4"
+    ],
+    "hesi-practice-questions": [
+      "f-1",
+      "p-1",
+      "f-2",
+      "p-3",
+      "d-5",
+      "ped-3"
+    ],
+    "dosage-calculation-practice-questions": [
+      "d-1",
+      "d-2",
+      "d-3",
+      "d-4",
+      "d-5"
+    ],
+    "nursing-fundamentals-practice-questions": [
+      "f-1",
+      "f-2",
+      "f-3",
+      "f-4"
+    ],
+    "pharmacology-nclex-questions": [
+      "p-1",
+      "p-2",
+      "p-3",
+      "p-4"
+    ],
+    "cardiac-nclex-questions": [
+      "c-1",
+      "c-2",
+      "c-3",
+      "c-4"
+    ],
+    "pediatric-nclex-questions": [
+      "ped-1",
+      "ped-2",
+      "ped-3",
+      "ped-4"
+    ]
+  },
+  "questions": [
+    {
+      "id": "a-math-1",
+      "section": "Math",
+      "concept": "Fractions",
+      "stem": "A learner completes 3/4 of a review on Monday and half of the remaining work on Tuesday. What fraction is still unfinished?",
+      "options": [
+        "1/8",
+        "1/4",
+        "3/8",
+        "1/2"
+      ],
+      "answer": [
+        0
+      ],
+      "type": "mcq",
+      "why": "One quarter remains after Monday. Half of that quarter is one eighth. Apply the second fraction to the remainder, not the whole.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-math-2",
+      "section": "Math",
+      "concept": "Ratios",
+      "stem": "A mixture uses concentrate and water in a 1:4 ratio. How much concentrate is needed for 750 mL of mixture?",
+      "options": [
+        "187.5 mL",
+        "150 mL",
+        "300 mL",
+        "600 mL"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "There are five equal parts in the final mixture. 750 ÷ 5 = 150 mL of concentrate; the other four parts are water.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-math-3",
+      "section": "Math",
+      "concept": "Conversions",
+      "stem": "How many milliliters equal 0.075 L?",
+      "options": [
+        "7.5 mL",
+        "750 mL",
+        "75 mL",
+        "0.75 mL"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Multiply liters by 1,000: 0.075 × 1,000 = 75 mL. The smaller unit gives a larger number.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-math-4",
+      "section": "Math",
+      "concept": "Algebra",
+      "stem": "Solve 3(x − 2) = 21.",
+      "options": [
+        "5",
+        "7",
+        "8",
+        "9"
+      ],
+      "answer": [
+        3
+      ],
+      "type": "mcq",
+      "why": "Divide both sides by 3 to get x − 2 = 7. Add 2: x = 9. Substituting 9 gives 3 × 7 = 21.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-ap-1",
+      "section": "Anatomy & Physiology",
+      "concept": "Cardiovascular anatomy",
+      "stem": "Which chamber pumps blood directly into the pulmonary trunk?",
+      "options": [
+        "Left atrium",
+        "Right ventricle",
+        "Left ventricle",
+        "Right atrium"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The right ventricle sends blood toward the lungs. The left ventricle pumps into the aorta.",
+      "source": "heart"
+    },
+    {
+      "id": "a-ap-2",
+      "section": "Anatomy & Physiology",
+      "concept": "Respiratory physiology",
+      "stem": "Why does oxygen move from the alveoli into pulmonary capillary blood?",
+      "options": [
+        "Active pumping by alveoli",
+        "Higher oxygen partial pressure in alveoli",
+        "Blood pressure pushes oxygen inward",
+        "Oxygen follows carbon dioxide in the same direction"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Oxygen diffuses down its partial-pressure gradient. Carbon dioxide has its own gradient, in the opposite direction.",
+      "source": "lung"
+    },
+    {
+      "id": "a-read-1",
+      "section": "Reading",
+      "concept": "Main idea",
+      "stem": "Read: “A class replaced one long review with three short sessions. Students recalled more after a week, although their immediate scores were similar. The teacher kept the shorter sessions.” Which statement best captures the main idea?",
+      "options": [
+        "Short sessions improved delayed recall in this class",
+        "All students prefer short classes",
+        "Immediate scores improved dramatically",
+        "Long reviews never work"
+      ],
+      "answer": [
+        0
+      ],
+      "type": "mcq",
+      "why": "The passage contrasts similar immediate scores with better later recall. The other choices add claims the passage does not support.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-read-2",
+      "section": "Reading",
+      "concept": "Inference",
+      "stem": "Read: “The library extended evening hours during exam week. Every evening, the additional study rooms filled within an hour.” Which inference is best supported?",
+      "options": [
+        "The rooms were free",
+        "Students stopped studying at home",
+        "There was demand for evening study space",
+        "All students passed"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Quickly filled rooms support demand for space. The passage says nothing about fees, home study, or exam outcomes.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-vocab-1",
+      "section": "Vocabulary",
+      "concept": "Meaning in context",
+      "stem": "“The patient's symptoms were transient and resolved before the appointment.” In this sentence, transient means:",
+      "options": [
+        "Severe",
+        "Recurring daily",
+        "Permanent",
+        "Temporary"
+      ],
+      "answer": [
+        3
+      ],
+      "type": "mcq",
+      "why": "Transient means short-lived. The phrase about symptoms resolving supports that meaning.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-vocab-2",
+      "section": "Vocabulary",
+      "concept": "Medical vocabulary",
+      "stem": "Which term means occurring on both sides?",
+      "options": [
+        "Unilateral",
+        "Bilateral",
+        "Proximal",
+        "Distal"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Bilateral refers to both sides. Unilateral is one-sided; proximal and distal describe relative distance.",
+      "source": "hesi"
+    },
+    {
+      "id": "f-1",
+      "section": "Fundamentals",
+      "concept": "Hand hygiene",
+      "stem": "After removing gloves, a nurse sees blood on their hands. What should happen next?",
+      "options": [
+        "Apply a second pair of gloves",
+        "Use soap and water",
+        "Wipe with a dry towel",
+        "Use gloves instead of hand hygiene"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Visible blood requires soap and water. Gloves do not replace cleaning the hands.",
+      "source": "infection"
+    },
+    {
+      "id": "f-2",
+      "section": "Fundamentals",
+      "concept": "Standard precautions",
+      "stem": "Which actions belong to Standard Precautions? Select all that apply.",
+      "options": [
+        "Clean hands between patient contacts",
+        "Use eye protection when a splash is anticipated",
+        "Reuse a syringe after changing the needle",
+        "Clean shared equipment between patients"
+      ],
+      "answer": [
+        0,
+        1,
+        3
+      ],
+      "type": "sata",
+      "why": "Standard Precautions include hand hygiene, exposure-appropriate protection, and equipment cleaning. A new needle does not make a used syringe safe.",
+      "source": "infection"
+    },
+    {
+      "id": "f-3",
+      "section": "Fundamentals",
+      "concept": "Injection safety",
+      "stem": "A nurse has a single-dose vial with medication left over after treating one patient. Which plan is appropriate?",
+      "options": [
+        "Save it for another patient",
+        "Combine it with another opened vial",
+        "Discard the remainder appropriately",
+        "Use it for another patient with a new syringe"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Single-dose vials are for one patient. Leftover medication should not become a shared supply.",
+      "source": "injection"
+    },
+    {
+      "id": "f-4",
+      "section": "Fundamentals",
+      "concept": "Exposure prevention",
+      "stem": "A procedure is expected to splash body fluid toward the nurse's face. Which preparation addresses that risk?",
+      "options": [
+        "Gloves alone",
+        "Eye and face protection appropriate to the exposure",
+        "A clean apron alone",
+        "Hand hygiene after the procedure only"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Choose protective equipment for the anticipated exposure. Gloves alone do not protect the eyes, nose, or mouth.",
+      "source": "infection"
+    },
+    {
+      "id": "p-1",
+      "section": "Pharmacology",
+      "concept": "Anticoagulant safety",
+      "stem": "A patient taking warfarin reports black, tarry stools. Which response has priority?",
+      "options": [
+        "Explain this is an expected harmless effect",
+        "Recommend an extra dose",
+        "Promptly assess and contact the treating clinician about possible bleeding",
+        "Wait for the next routine INR appointment"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Tarry stools can indicate bleeding. This needs prompt assessment and escalation, rather than waiting for a routine laboratory visit.",
+      "source": "warfarin"
+    },
+    {
+      "id": "p-2",
+      "section": "Pharmacology",
+      "concept": "Medication teaching",
+      "stem": "Which statements show appropriate warfarin teaching? Select all that apply.",
+      "options": [
+        "Keep INR monitoring appointments",
+        "Double the next dose after a missed day",
+        "Discuss new supplements with the pharmacist or prescriber",
+        "Keep vitamin K intake reasonably consistent"
+      ],
+      "answer": [
+        0,
+        2,
+        3
+      ],
+      "type": "sata",
+      "why": "Monitoring and interaction checks matter. Vitamin K intake should be consistent, and a missed dose is not corrected by doubling the next day's dose.",
+      "source": "warfarin"
+    },
+    {
+      "id": "p-3",
+      "section": "Pharmacology",
+      "concept": "Diuretic adverse effects",
+      "stem": "After starting furosemide, a patient reports marked thirst, weakness, and muscle cramps. What should the nurse prioritize?",
+      "options": [
+        "Treat the symptoms as proof the medication is working",
+        "Assess fluid and electrolyte status and notify the clinician",
+        "Advise doubling the dose",
+        "Tell the patient to avoid all fluids"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "These symptoms may signal excessive fluid or electrolyte loss. Assess and escalate rather than changing the dose without an order.",
+      "source": "furosemide"
+    },
+    {
+      "id": "p-4",
+      "section": "Pharmacology",
+      "concept": "Medication interactions",
+      "stem": "A patient taking warfarin wants to start an over-the-counter ibuprofen product. What is the best response?",
+      "options": [
+        "It is always safe because no prescription is needed",
+        "Stop warfarin independently",
+        "Check with the pharmacist or prescriber before starting it",
+        "Take twice as much warfarin"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Ibuprofen can increase bleeding risk with warfarin. Nonprescription status does not remove the need to check an interaction.",
+      "source": "warfarin"
+    },
+    {
+      "id": "c-1",
+      "section": "Cardiac",
+      "concept": "Pulmonary circulation",
+      "stem": "A catheter passes from the right atrium through the tricuspid valve. Which chamber does it enter next?",
+      "options": [
+        "Left atrium",
+        "Left ventricle",
+        "Right ventricle",
+        "Aorta"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "The tricuspid valve lies between the right atrium and right ventricle.",
+      "source": "heart"
+    },
+    {
+      "id": "c-2",
+      "section": "Cardiac",
+      "concept": "Systemic circulation",
+      "stem": "Blood leaving the left ventricle enters which vessel?",
+      "options": [
+        "Pulmonary trunk",
+        "Aorta",
+        "Superior vena cava",
+        "Pulmonary vein"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The aorta carries left-ventricular output into systemic circulation.",
+      "source": "heart"
+    },
+    {
+      "id": "c-3",
+      "section": "Cardiac",
+      "concept": "Cardiac medication safety",
+      "stem": "During a cardiac follow-up, a patient taking warfarin describes a fall with a head strike. Which response is appropriate?",
+      "options": [
+        "Wait to see whether a bruise appears",
+        "Recommend skipping monitoring",
+        "Arrange prompt medical evaluation",
+        "Reassure because there is no visible bleeding"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Head injury while taking an anticoagulant requires prompt medical attention. Absence of visible bleeding is not reassurance.",
+      "source": "warfarin"
+    },
+    {
+      "id": "c-4",
+      "section": "Cardiac",
+      "concept": "Valve anatomy",
+      "stem": "Which structures are atrioventricular valves? Select all that apply.",
+      "options": [
+        "Tricuspid",
+        "Aortic",
+        "Mitral",
+        "Pulmonary"
+      ],
+      "answer": [
+        0,
+        2
+      ],
+      "type": "sata",
+      "why": "Tricuspid and mitral valves separate atria from ventricles. Aortic and pulmonary valves are ventricular outflow valves.",
+      "source": "heart"
+    },
+    {
+      "id": "d-1",
+      "section": "Dosage calculations",
+      "concept": "Tablet calculation",
+      "stem": "Calculation exercise: an order is 750 mg. Each tablet contains 250 mg. How many tablets supply the ordered amount?",
+      "options": [
+        "2",
+        "2.5",
+        "3",
+        "4"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "750 mg ÷ 250 mg per tablet = 3 tablets. Units cancel to tablets.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-2",
+      "section": "Dosage calculations",
+      "concept": "Liquid calculation",
+      "stem": "Calculation exercise: a solution contains 125 mg per 5 mL. What volume contains 300 mg?",
+      "options": [
+        "6 mL",
+        "12 mL",
+        "15 mL",
+        "24 mL"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "300 ÷ 125 × 5 = 12 mL. Check: 25 mg/mL × 12 mL = 300 mg.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-3",
+      "section": "Dosage calculations",
+      "concept": "Infusion rate",
+      "stem": "Calculation exercise: 1,000 mL must run over 8 hours. What rate in mL/hour gives that volume?",
+      "options": [
+        "80",
+        "100",
+        "125",
+        "800"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Divide volume by hours: 1,000 ÷ 8 = 125 mL/hour.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-4",
+      "section": "Dosage calculations",
+      "concept": "Weight-based calculation",
+      "stem": "Calculation exercise: a 44-lb child has an order for 10 mg/kg per dose. Use 2.2 lb = 1 kg. What is the dose?",
+      "options": [
+        "440 mg",
+        "20 mg",
+        "100 mg",
+        "200 mg"
+      ],
+      "answer": [
+        3
+      ],
+      "type": "mcq",
+      "why": "44 ÷ 2.2 = 20 kg. Then 20 kg × 10 mg/kg = 200 mg per dose. A real medication also needs dose-range checks.",
+      "source": "hesi"
+    },
+    {
+      "id": "d-5",
+      "section": "Dosage calculations",
+      "concept": "Daily versus per-dose",
+      "stem": "Calculation exercise: 30 mg/kg/day is divided into three equal doses for a 20-kg patient. What is each dose?",
+      "options": [
+        "600 mg",
+        "200 mg",
+        "300 mg",
+        "1,800 mg"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "The total daily amount is 30 × 20 = 600 mg. Divide by three doses: 200 mg per dose.",
+      "source": "hesi"
+    },
+    {
+      "id": "ped-1",
+      "section": "Pediatrics",
+      "concept": "Safe sleep",
+      "stem": "A parent asks how to position an infant for routine sleep. Which response is appropriate?",
+      "options": [
+        "On the stomach after feeding",
+        "On the back on a firm, flat sleep surface",
+        "On the side with a rolled blanket",
+        "In a soft recliner"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Use a firm, flat sleep surface and place the infant on their back.",
+      "source": "sleep"
+    },
+    {
+      "id": "ped-2",
+      "section": "Pediatrics",
+      "concept": "Sleep environment",
+      "stem": "Which choices support an infant's safe sleep environment? Select all that apply.",
+      "options": [
+        "A fitted sheet on a firm sleep surface",
+        "Loose blankets around the infant",
+        "Keeping soft toys out of the sleep space",
+        "Sharing a room on a separate sleep surface"
+      ],
+      "answer": [
+        0,
+        2,
+        3
+      ],
+      "type": "sata",
+      "why": "Keep the sleep space free of loose bedding and soft objects. Room sharing on a separate sleep surface is safer than bed sharing.",
+      "source": "sleep"
+    },
+    {
+      "id": "ped-3",
+      "section": "Pediatrics",
+      "concept": "Developmental follow-up",
+      "stem": "A parent says their child has lost a skill they previously used. What should the nurse encourage?",
+      "options": [
+        "Wait until the next school year",
+        "Compare the child only with siblings",
+        "Promptly discuss the change with the child's healthcare professional",
+        "Assume every lost skill is normal"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "Loss of a skill warrants a conversation and developmental follow-up. A milestone checklist is not a substitute for evaluation.",
+      "source": "milestones"
+    },
+    {
+      "id": "ped-4",
+      "section": "Pediatrics",
+      "concept": "Weight-based calculation",
+      "stem": "Calculation exercise: a child weighs 33 lb. Using 2.2 lb = 1 kg, which weight should be used in a mg/kg calculation?",
+      "options": [
+        "15 kg",
+        "33 kg",
+        "66 kg",
+        "72.6 kg"
+      ],
+      "answer": [
+        0
+      ],
+      "type": "mcq",
+      "why": "33 ÷ 2.2 = 15 kg. Convert pounds before applying a dose stated per kilogram.",
+      "source": "hesi"
+    },
+    {
+      "id": "a-ap-3",
+      "section": "Anatomy & Physiology",
+      "concept": "Endocrine system",
+      "stem": "Which pancreatic cells release insulin?",
+      "options": [
+        "Alpha cells",
+        "Beta cells",
+        "Red blood cells",
+        "Platelets"
+      ],
+      "answer": [
+        1
+      ],
+      "type": "mcq",
+      "why": "Beta cells in pancreatic islets release insulin. Alpha cells release glucagon. Think of the cell type and its hormone as a pair.",
+      "source": "endocrine"
+    },
+    {
+      "id": "a-ap-4",
+      "section": "Anatomy & Physiology",
+      "concept": "Nervous system",
+      "stem": "Which division is most associated with the body's fight-or-flight response?",
+      "options": [
+        "Parasympathetic",
+        "Somatic sensory",
+        "Sympathetic",
+        "Enteric alone"
+      ],
+      "answer": [
+        2
+      ],
+      "type": "mcq",
+      "why": "The sympathetic division coordinates responses to challenge, including changes in heart activity. The parasympathetic division supports many rest-and-digest functions.",
+      "source": "nervous"
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import SeoMiniProduct, { Diagnostic } from './SeoMiniProduct';
+import catalog from './catalog.json';
+import { loadSavedProduct } from '../../Services/SeoMiniProductService';
+jest.mock('react-router-dom', () => ({ MemoryRouter: ({ children }) => <>{children}</>, Link: ({ to, children, ...props }) => <a href={to} {...props}>{children}</a>, useNavigate: () => jest.fn() }), { virtual: true });
+jest.mock('../../Services/SeoMiniProductService', () => ({ trackSeo: jest.fn(), readLocal: jest.fn(), writeLocal: jest.fn(), continueSeo: jest.fn(), loadSavedProduct: jest.fn().mockResolvedValue(null) }));
+beforeEach(() => { loadSavedProduct.mockResolvedValue(null); });
+test('a visitor generates a dated plan without authentication', () => {
+  render(<MemoryRouter><SeoMiniProduct slug="nclex-study-plan" /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: '2 weeks' }));
+  fireEvent.click(screen.getAllByRole('button', { name: /Build my plan/ })[1]);
+  expect(screen.getByText('14 days of focused review')).toBeVisible();
+  expect(screen.getByRole('button', { name: /Save my plan/ })).toBeEnabled();
+});
+test('rationale stays hidden until an answer is committed; completion reports evidence', () => {
+  const page = catalog.pages.find(p => p.slug === 'hesi-a2-practice-test');
+  const q = catalog.questions[0];
+  render(<MemoryRouter><Diagnostic page={page} initialQuestions={[q]} /></MemoryRouter>);
+  fireEvent.click(screen.getByRole('button', { name: /Start practice/ }));
+  expect(screen.queryByText(q.why)).not.toBeInTheDocument();
+  expect(screen.getByRole('button', { name: /Check my answer/ })).toBeDisabled();
+  fireEvent.click(screen.getByLabelText(/1\/8/));
+  fireEvent.click(screen.getByRole('button', { name: /Check my answer/ }));
+  expect(screen.getByText(q.why)).toBeVisible();
+  fireEvent.click(screen.getByRole('button', { name: /See my takeaways/ }));
+  expect(screen.getByText('1/1 correct on your first pass.')).toBeVisible();
+  expect(screen.queryByText('Start your review here')).not.toBeInTheDocument();
+});
