@@ -56,13 +56,37 @@ service cloud.firestore {
       allow update, delete: if false;
     }
 
+    // Outbound email log. BACKEND ONLY — no client read, no client write.
+    //
+    // Two separate reasons, and either alone would be enough:
+    //
+    //   1. Every row carries a recipient's email address. Left under the open
+    //      catch-all below, the whole mailing list — 2,079 addresses — is
+    //      readable by anyone who can reach the project, with no login.
+    //
+    //   2. The document id IS the idempotency lock. email_sender writes the
+    //      row as the lock, and _already_sent treats a row with
+    //      status == 'sent' as proof a message has gone out. A client that can
+    //      write here can forge 'sent' rows to silently suppress a campaign,
+    //      or delete real ones to make the next run mail the same students a
+    //      second time. The guard against duplicate sends cannot live in a
+    //      collection the recipients can edit.
+    //
+    // The Admin SDK bypasses these rules, so the backend is unaffected.
+    match /emailLog/{logId} {
+      allow read, write: if false;
+    }
+
     // Every other collection: unchanged (open) — deliberately identical to
     // the previous rules so nothing else changes behavior.
-    // NOTE: rules OR together, so this open rule would hand write access back
-    // to funnelEvents unless that collection is excluded here — the same
-    // subtlety documented on billingEvents above.
+    // NOTE: rules OR together, so this open rule would hand read and write
+    // access back to funnelEvents and emailLog unless both are excluded HERE.
+    // The narrower `allow ... if false` above does not take access away — it
+    // only documents the intent. This exclusion list is what enforces it.
     match /{collection}/{docPath=**} {
-      allow read, write: if collection != 'users' && collection != 'funnelEvents';
+      allow read, write: if collection != 'users'
+        && collection != 'funnelEvents'
+        && collection != 'emailLog';
     }
   }
 }

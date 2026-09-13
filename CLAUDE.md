@@ -79,6 +79,48 @@ await consumeGeneration(units);
 
 This is a **client-side gate only** and is bypassable; real enforcement has to live in NQBackEnd2. A second, mostly-superseded meter tracks study plans per 30 days.
 
+### Outbound email (backend only)
+
+The one channel that can reach a student who is not in the tab. It lives
+entirely in NQBackEnd2 — there is no frontend email code — but it reads this
+repo's data model and mirrors two of its constants, so it breaks from changes
+made here.
+
+- `services/email_sender.py` sends via Resend and holds every guard:
+  **disabled unless `EMAIL_ENABLED` is exactly `true`** (anything else is a
+  full dry run with the payload logged), suppression checked even in dry run,
+  a per-message idempotency key that *is* the `emailLog` document id, and a
+  daily cap for domain warm-up. The guards all fail **closed**.
+- `services/email_campaigns.py` decides who gets mailed. Its rule: *no student
+  is mailed unless we can state something true and specific about her*, so a
+  selector returns candidates carrying their own personalisation and drops
+  anyone whose evidence is too thin. Four campaigns: `winback_gap`,
+  `plan_unstarted`, `exam_countdown`, `announcement`.
+- `services/email_announcements.py` is the only **authored** copy — the same
+  words to everybody, so nothing in it can be verified per recipient. Content
+  is code, not Firestore, partly for review and partly because `emailLog` and
+  most of this database are still client-writable. Every announcement carries
+  `status`, and **`EMAIL_ENABLED=true` is not enough to send one**: the slug
+  must also be flipped to `approved`. The flag and the words are two decisions.
+- `tools/email_preview.py` renders every template and every announcement to
+  files, sending nothing. It is the fast loop; a browser cannot tell you how
+  Outlook renders a table, so send one real test to yourself before any list.
+- `tools/email_run.py` is the hand-operated trigger: `--preflight`,
+  `--audience [--campaigns]`, `--campaign NAME [--slug S] [--limit N]`. It runs
+  the same selectors and guards as the route, and when `EMAIL_ENABLED` is true
+  it refuses without `--yes` and tells you what it was about to do.
+- Routes: `/api/email/unsubscribe` (public, HMAC token, no login — an opt-out
+  that demands a login is not an opt-out), `/api/email/run` (the cron target),
+  `/api/email/audience` (counts only, sends nothing), `/api/email/preflight`,
+  `/api/email/test`. All but unsubscribe need `x-cron-secret`.
+
+`emailLog` is **backend-only** in `firestore.rules`: it holds every recipient's
+address *and* the locks that stop duplicate sends, so a client that could write
+it could forge `sent` rows to silence a campaign or delete them to double-mail.
+
+Nothing has been sent yet — as of 2026-09-12 the log is empty and no account
+has unsubscribed. Read `/api/email/audience` before turning the flag on.
+
 ### Course intelligence (upload → plan)
 
 A study-plan upload no longer goes straight from files to a generated plan. The
@@ -135,6 +177,8 @@ Changing either side alone will break the UI in ways tests won't catch:
 - `PRIORITY_WEIGHTS` and the `CONFIDENCE` values in `CourseIntelligence/courseIntelligenceModel.js` mirror the same names in `NQBackEnd2/services/course_intelligence.py`. The weights decide which topic the report names as the starting point; if the two sides disagree, the reveal promises one topic and the plan opens on another. A confidence value defined on one side only renders as an unstyled badge.
 - The course-intelligence SSE heartbeat: `COURSE_INTELLIGENCE_HEARTBEAT_S` in `NQBackEnd2/main.py` (10s) against `CI_STALL_MS` in `Services/CourseIntelligenceService.js` (45s). Three web searches run concurrently server-side and can be silent for 30s, so the heartbeat is the only thing distinguishing a slow search from a dead backend. Same class of contract as the upload stream above.
 - Stripe prices in `src/config/billing.js` are **display only**; the authoritative price is in Stripe. `usage.tier` is flipped exclusively by the backend webhook.
+- `NODE_MINUTES` (and its `|| 4` fallback) in `StudyMode/planFormatting.js` mirrors `NODE_MINUTES` / `NODE_MINUTES_DEFAULT` in `NQBackEnd2/services/email_campaigns.py`. The email promises "about 4 minutes" for the first step; if the tables drift, the product contradicts that number on the first screen she lands on. `tests/test_email_campaigns.py` reads the real `planFormatting.js` and fails on drift, so this one is actually enforced — as long as the frontend file stays on the same machine.
+- `isRealNode` in `StudyMode/firstBlock.js` (`type !== 'section_banner'`) mirrors `NON_STEP_NODE_TYPES` in `email_campaigns.py`. Step counts quoted in email come from it. The email side originally filtered `"banner"` — a type the planner never emits — so every section header counted as a step and the mail overstated the work to exactly the students who had not started because it looked long.
 
 ## Root markdown files
 

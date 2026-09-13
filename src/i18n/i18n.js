@@ -543,7 +543,7 @@ const resources = {
         examYesterday: "Exam yesterday",
         examDaysAgo: "Exam {{count}} days ago",
         chats: "Chats",
-        newChat: "New chat",
+        newChat: "New study session",
         expandSidebar: "Expand sidebar",
         usage: "Analytics",
         logout: "Logout",
@@ -2935,11 +2935,11 @@ const resources = {
         examYesterday: "Examen hier",
         examDaysAgo: "Examen il y a {{count}} jours",
         chats: "Discussions",
-        newChat: "Nouveau chat",
+        newChat: "Nouvelle séance d'étude",
         expandSidebar: "Ouvrir le menu",
         usage: "Analytiques",
         logout: "Déconnexion",
-        studySession: "Session d'étude",
+        studySession: "Séance d'étude",
         rename: "Renommer",
         delete: "Supprimer",
         deleteTitle: "Supprimer le chat?",
@@ -3991,7 +3991,7 @@ const resources = {
 
         // StudyModeContainer & loading states
         preparing: "Préparation de ta {{type}}...",
-        startingSession: "Démarrage de ta session d'étude...",
+        startingSession: "Démarrage de ta séance d'étude...",
         exitStudyMode: "Quitter le mode étude",
 
         // Node-type loading messages (rotating)
