@@ -1277,7 +1277,7 @@ export const plan_review_path = async (chat_id, performance, original_topics = [
  * @param {string} language - Language
  * @returns {Promise<Object>} - { questions: [...], hash, examConfig }
  */
-export const generate_exam = async (chat_id, topic, question_types = ['mcq', 'sata', 'casestudy'], question_count = 10, custom_instructions = null, language = 'en') => {
+export const generate_exam = async (chat_id, topic, question_types = ['mcq', 'sata', 'casestudy'], question_count = 10, custom_instructions = null, language = 'en', options = {}) => {
   try {
     devLog("📝 Generating exam:", { topic, question_types, question_count });
 
@@ -1290,7 +1290,13 @@ export const generate_exam = async (chat_id, topic, question_types = ['mcq', 'sa
         question_types,
         question_count,
         custom_instructions,
-        language
+        language,
+        // The node's difficulty, which the planner already set — the student is
+        // never asked for it. Only consulted when quiz_mode is "applied".
+        difficulty: options.difficulty || 2,
+        // Opt-in per caller. The adaptive drills and NCLEX practice keep
+        // "knowledge"; only a study exam node asks for the applied mix.
+        quiz_mode: options.quizMode || 'knowledge'
       })
     });
 
@@ -1603,7 +1609,12 @@ export const generate_study_item_stream = async (
     // Node-specified length. The backend falls back to STUDY_QUIZ_QUESTIONS
     // when this is null, so only nodes that genuinely need a different size
     // (the single-question pattern experiment) set it.
-    num_questions: options.numQuestions || null
+    num_questions: options.numQuestions || null,
+    // The node's 1-3 difficulty. The backend uses it to decide how much of a
+    // quiz node is applied (a named condition + what the nurse monitors/does)
+    // rather than plain recall. Raw difficulty is sent, never a ratio — the mix
+    // table stays backend-only so it can't drift out of sync with this file.
+    difficulty: options.difficulty || 1
   });
 
   // Abort the stream if no data arrives for 90 seconds.

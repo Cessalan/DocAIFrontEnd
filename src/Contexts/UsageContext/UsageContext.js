@@ -134,9 +134,15 @@ export function UsageProvider({ children }) {
       // every rate computed from this collection.
       if (liveQ.isPro) return;
 
-      const blocked = reason === 'plans' || reason === 'plan_ready'
-        ? liveP.remaining <= 0
-        : liveQ.remaining <= 0;
+      // The upload gate consults no quota at all — one upload per chat, full
+      // stop — so it is ALWAYS a wall. Measuring it against the question
+      // budget would file a student who still had 60 questions left as
+      // "browsing", which is the one distinction this field exists to make.
+      const blocked = reason === 'upload'
+        ? true
+        : reason === 'plans' || reason === 'plan_ready'
+          ? liveP.remaining <= 0
+          : liveQ.remaining <= 0;
 
       logPaywall(reason || 'none', ctx?.reachedStep || null, {
         trigger: trigger || 'manual',

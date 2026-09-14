@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import PaperShimmer from '../ChatInerface/PaperShimmer';
 
 /**
  * StudyLoadingScreen — Elapsed-aware loading experience.
@@ -26,6 +27,12 @@ const MESSAGE_KEYS = {
   audio:     ['audioLoading1', 'audioLoading2', 'audioLoading3', 'audioLoading4', 'audioLoading5'],
   mindmap:   ['mindmapLoading1', 'mindmapLoading2', 'mindmapLoading3', 'mindmapLoading4', 'mindmapLoading5'],
 };
+
+/* Node types whose card is question-shaped, so a skeleton of that shape is an
+   honest placeholder rather than decoration. Chat shows the same one while a
+   batch streams; matching it here keeps the two waits one idiom instead of two.
+   Lessons, audio and mindmaps have no such shape and keep the dots. */
+const SKELETON_TYPES = { quiz: 4, exam: 4, flashcard: 2 };
 
 /* Seconds after which we stop pretending this is quick. */
 const SLOW_AT = 15;
@@ -151,9 +158,13 @@ const StudyLoadingScreen = ({ nodeType = 'lesson', onRetry, onBack }) => {
           <div className="study-loading-premium__bar-fill" style={{ width: `${pct}%` }} />
         </div>
 
-        <div className="study-loading-premium__dots">
-          <span /><span /><span />
-        </div>
+        {SKELETON_TYPES[nodeType] ? (
+          <PaperShimmer label="" options={SKELETON_TYPES[nodeType]} className="study-loading-premium__preview" />
+        ) : (
+          <div className="study-loading-premium__dots">
+            <span /><span /><span />
+          </div>
+        )}
 
         {/* Escape hatch — a stalled generation must never be a dead end. */}
         {canEscape && (

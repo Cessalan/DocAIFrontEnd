@@ -1,4 +1,4 @@
-import { daysUntilExam, isExamSoon } from './upgradeCopy';
+import { daysUntilExam, isExamSoon, cleanTopicLabel } from './upgradeCopy';
 
 /**
  * These exist because the exam-urgency copy in UpgradeModal was dark in
@@ -66,5 +66,54 @@ describe('isExamSoon', () => {
   it('honours a custom window', () => {
     expect(isExamSoon(inDays(10), 7)).toBe(false);
     expect(isExamSoon(inDays(5), 7)).toBe(true);
+  });
+});
+
+
+describe('cleanTopicLabel', () => {
+  it('strips the node-kind scaffolding the study engine prefixes onto labels', () => {
+    expect(cleanTopicLabel('Focused drill: Fluid & Electrolytes')).toBe('Fluid & Electrolytes');
+    expect(cleanTopicLabel('Review: Cardiac Pharmacology')).toBe('Cardiac Pharmacology');
+    expect(cleanTopicLabel('Targeted practice: prioritization')).toBe('Prioritization');
+  });
+
+  it('unwraps a nested label rather than printing the machine filing system', () => {
+    // Exactly what shipped to a student on the paywall: nodeReadout builds the
+    // challenge label from the PREVIOUS node's label, so the prefixes stack.
+    expect(cleanTopicLabel('Harder: Testing a theory: prioritization')).toBe('Prioritization');
+    expect(cleanTopicLabel('Harder: Focused drill: Harder: Focused drill: Key Terms'))
+      .toBe('Key Terms');
+  });
+
+  it('recovers a topic the old length guard would have thrown away', () => {
+    // 55 chars of scaffolding around a perfectly printable topic. The >48 rule
+    // used to drop this entirely and render no context card at all.
+    const nested = 'Harder: Focused drill: Harder: Review: Medication Safety';
+    expect(nested.length).toBeGreaterThan(48);
+    expect(cleanTopicLabel(nested)).toBe('Medication Safety');
+  });
+
+  it('strips the French variants, space-before-colon included', () => {
+    expect(cleanTopicLabel('Plus difficile : Pharmacologie')).toBe('Pharmacologie');
+    expect(cleanTopicLabel('Exercice ciblé : Pharmacologie')).toBe('Pharmacologie');
+    expect(cleanTopicLabel('Révision : Pharmacologie')).toBe('Pharmacologie');
+  });
+
+  it('only touches the first character, so skill keys keep their shape', () => {
+    expect(cleanTopicLabel('Testing a theory: select-all-that-apply'))
+      .toBe('Select-all-that-apply');
+  });
+
+  it('still drops placeholders, empties and real sentences', () => {
+    expect(cleanTopicLabel('Harder: New Chat')).toBeNull();
+    expect(cleanTopicLabel('Focused drill: ')).toBeNull();
+    expect(cleanTopicLabel(null)).toBeNull();
+    expect(cleanTopicLabel('  ')).toBeNull();
+    expect(cleanTopicLabel('Can you explain why furosemide causes hypokalemia in detail'))
+      .toBeNull();
+  });
+
+  it('leaves an ordinary topic alone', () => {
+    expect(cleanTopicLabel('Fluid & Electrolytes')).toBe('Fluid & Electrolytes');
   });
 });

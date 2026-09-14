@@ -136,11 +136,13 @@ const resources = {
         title: "Study without limits",
         titleNclex: "Pass your NCLEX with room to spare",
         titleCourse: "Ace your course exam",
-        titleBlocked: "Don't stop now. 🔥",
+        titleBlocked: "Don't stop now.",
         titlePlanBlocked: "You've got more exams to prepare for.",
         // Opened from LockedPlanPreview: she is looking at her plan, so the
         // copy finishes that sentence rather than starting one about limits.
         titlePlanReady: "Your plan is ready.",
+        // Upload gate — the third wall, and the last one to get its own copy.
+        titleUpload: "Bring all your notes.",
         body: "Master every topic, find your weak spots faster, and walk into your exam ready.",
         bodyBlocked: "You've reached your free practice limit. Upgrade to Pro and keep preparing for your exam.",
         bodyExam: "Your exam is {{when}} — don't let a question limit slow your final push.",
@@ -156,12 +158,13 @@ const resources = {
         bodyPlanReady: "Unlock the full plan and work it in the order it's already sorted into — hardest first, refreshers last.",
         bodyPlanReadyExam: "Your exam is {{when}}. Unlock the full plan and work it in the order it's already sorted into.",
         bodyPlanBlockedExam: "You've already started {{count}} study plans this month — and your exam is {{when}}. Give every course its own personalized plan with Pro.",
+        bodyUpload: "Free covers one upload per chat. Pro lets you add every lecture, slide deck and handout for the same exam — and practise across all of them at once.",
+        bodyUploadExam: "Free covers one upload per chat. Your exam is {{when}} — Pro lets you add every lecture and handout for it, and practise across all of them at once.",
         // Context + momentum
         wereStudying: "You were practicing",
         questionsDone: "questions completed",
         momentumNudge: "Keep your momentum going!",
         // The offer
-        proBadge: "PRO",
         excelTitle: "Study to excel, not just to pass.",
         out: {
           practice: "Practice until it clicks",
@@ -177,15 +180,27 @@ const resources = {
           nextStep: "Know what to study next",
           nextStepSub: "Never waste a study session"
         },
-        // Price + CTA
-        perMonth: "/ month",
-        cancelAnytime: "Cancel anytime. No commitments.",
-        billedYearly: "Billed {{symbol}}{{amount}} yearly. Cancel anytime.",
-        savePct: "Save {{pct}}%",
-        withAnnual: "with annual",
-        switchMonthly: "Switch to monthly",
+        // Price + CTA. `cadence` strings say what she is actually CHARGED and
+        // how often; the per-month equivalent only ever appears inside the
+        // billed* sentences, where it can't be mistaken for the charge.
+        planNameMonthly: "Monthly",
+        planNameSemester: "Semester Pass",
+        planNameAnnual: "Annual",
+        badgePopular: "Most popular",
+        planTagSemester: "One payment, covers your term",
+        planTagAnnual: "Lowest price per month",
+        // Price metadata: what currency, how often, and only then the per-month
+        // equivalent. The big number is always the actual charge.
+        metaPerMonth: "{{currency}} / month",
+        metaPerMonths: "{{currency}} / {{count}} months",
+        metaPerYear: "{{currency}} / year",
+        metaPerMonthEquiv: "about {{symbol}}{{perMonth}} a month",
+        metaPerMonthShort: "{{symbol}}{{perMonth}}/mo",
+        saveShort: "Save {{pct}}%",
+        noCommitment: "No commitment · Cancel anytime",
         ctaContinue: "Continue studying with Pro",
         ctaPlans: "Unlock every plan with Pro",
+        ctaUpload: "Add all your notes with Pro",
         or: "or",
         notNow: "Not now",
         // Already-Pro branch
@@ -2531,9 +2546,10 @@ const resources = {
         title: "Étudie sans limites",
         titleNclex: "Réussis ton NCLEX avec de la marge",
         titleCourse: "Cartonne à ton examen",
-        titleBlocked: "N'arrête pas maintenant. 🔥",
+        titleBlocked: "N'arrête pas maintenant.",
         titlePlanBlocked: "Tu as d'autres examens à préparer.",
         titlePlanReady: "Ton plan est prêt.",
+        titleUpload: "Apporte toutes tes notes.",
         body: "Maîtrise chaque sujet, repère tes points faibles plus vite et arrive prêt(e) à ton examen.",
         bodyBlocked: "Tu as atteint ta limite de pratique gratuite. Passe en Pro et continue à préparer ton examen.",
         bodyExam: "Ton examen est {{when}} — ne laisse pas une limite de questions freiner ta dernière ligne droite.",
@@ -2549,12 +2565,13 @@ const resources = {
         bodyPlanReady: "Débloque le plan complet et suis-le dans l'ordre déjà établi — le plus dur d'abord, les rappels à la fin.",
         bodyPlanReadyExam: "Ton examen est {{when}}. Débloque le plan complet et suis-le dans l'ordre déjà établi.",
         bodyPlanBlockedExam: "Tu as déjà créé {{count}} plans d'étude ce mois-ci — et ton examen est {{when}}. Donne à chaque cours son propre plan personnalisé avec Pro.",
+        bodyUpload: "Le forfait gratuit permet un téléversement par conversation. Pro te laisse ajouter chaque cours, diaporama et document pour le même examen — et pratiquer sur l'ensemble d'un coup.",
+        bodyUploadExam: "Le forfait gratuit permet un téléversement par conversation. Ton examen est {{when}} — Pro te laisse ajouter chaque cours et document, et pratiquer sur l'ensemble d'un coup.",
         // Contexte + élan
         wereStudying: "Tu pratiquais",
         questionsDone: "questions complétées",
         momentumNudge: "Garde ton élan !",
         // L'offre
-        proBadge: "PRO",
         excelTitle: "Étudie pour exceller, pas juste pour passer.",
         out: {
           practice: "Pratique jusqu'à ce que ça clique",
@@ -2570,16 +2587,25 @@ const resources = {
           nextStep: "Sache quoi étudier ensuite",
           nextStepSub: "Ne perds plus une seule séance"
         },
-        // Prix + CTA
-        perMonth: "/ mois",
-        cancelAnytime: "Annule à tout moment. Sans engagement.",
-        // Le symbole est écrit en toutes lettres ici : "$83.07" se dit "83,07 $ US".
-        billedYearly: "Facturé {{amount}} $ US par année. Annule à tout moment.",
-        savePct: "Économise {{pct}} %",
-        withAnnual: "avec l'annuel",
-        switchMonthly: "Passer au mensuel",
+        // Prix + CTA. Le symbole est écrit en toutes lettres ici : "$83.07" se
+        // dit "83,07 $ US", donc {{symbol}} n'est volontairement pas utilisé
+        // dans les phrases de facturation françaises.
+        planNameMonthly: "Mensuel",
+        planNameSemester: "Forfait session",
+        planNameAnnual: "Annuel",
+        badgePopular: "Le plus populaire",
+        planTagSemester: "Un seul paiement, toute ta session",
+        planTagAnnual: "Le plus bas prix par mois",
+        metaPerMonth: "{{currency}} / mois",
+        metaPerMonths: "{{currency}} / {{count}} mois",
+        metaPerYear: "{{currency}} / année",
+        metaPerMonthEquiv: "environ {{perMonth}} $ US par mois",
+        metaPerMonthShort: "{{perMonth}} $ US/mois",
+        saveShort: "Économise {{pct}} %",
+        noCommitment: "Sans engagement · Annule à tout moment",
         ctaContinue: "Continuer d'étudier avec Pro",
         ctaPlans: "Débloquer tous les plans avec Pro",
+        ctaUpload: "Ajouter toutes tes notes avec Pro",
         or: "ou",
         notNow: "Plus tard",
         // Déjà Pro

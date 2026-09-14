@@ -3,34 +3,13 @@
   width: 100%; height: 100dvh; max-height:100dvh; min-height: 0; padding: 0; overflow: clip; box-sizing:border-box;
   --practice-bg: #faf7f5; --practice-paper: #fff; --practice-ink: #332b2b;
   --practice-muted: #766d6a; --practice-line: #eadfdb; --practice-soft: #f8eae5;
+  --paper-skeleton-bg: var(--practice-soft);
   background: var(--practice-bg); color: var(--practice-ink);
 }
 .focused-quiz[hidden] { display: none !important; }
-.focused-quiz.study-mode-container.is-opening:not([hidden]) {
-  animation:practice-paper-unfold 700ms linear backwards;
-  will-change:clip-path;
-}
-.focused-quiz.study-mode-container.is-folding {
-  pointer-events:none;
-  animation:practice-paper-fold 540ms linear both;
-  will-change:clip-path,opacity;
-}
-@keyframes practice-paper-unfold {
-  from { clip-path:var(--practice-paper-source); animation-timing-function:cubic-bezier(.32,0,.7,.7); }
-  48% { clip-path:var(--practice-paper-bend); animation-timing-function:cubic-bezier(.3,.3,.2,1); }
-  to { clip-path:var(--practice-paper-full); }
-}
-@keyframes practice-paper-fold {
-  from { opacity:1; clip-path:var(--practice-paper-full); animation-timing-function:cubic-bezier(.4,0,.7,.7); }
-  52% { opacity:1; clip-path:var(--practice-paper-bend); animation-timing-function:cubic-bezier(.3,.3,.6,1); }
-  to { opacity:0; clip-path:var(--practice-paper-source); }
-}
-.focused-quiz.is-opening:not([hidden]) > .practice-header,
-.focused-quiz.is-opening:not([hidden]) > .practice-work { animation:practice-page-reveal 700ms ease both; }
-.focused-quiz.is-folding > .practice-header,
-.focused-quiz.is-folding > .practice-work { animation:practice-page-hide 540ms ease both; }
-@keyframes practice-page-reveal { 0% { opacity:0; } 25% { opacity:.2; } 100% { opacity:1; } }
-@keyframes practice-page-hide { 0% { opacity:1; } 85%,100% { opacity:0; } }
+/* Open/close is the shared paper genie — see paperTransition.css. Only the
+   tutor's own entrance is suppressed here, so it doesn't animate twice while
+   the sheet itself is unfolding. */
 .focused-quiz.is-opening .practice-tutor,.focused-quiz.is-folding .practice-tutor,.focused-quiz .practice-tutor[data-animate="false"] { animation:none; }
 .focused-quiz *, .focused-quiz *::before, .focused-quiz *::after { box-sizing:border-box; }
 [data-theme="dark"] .focused-quiz, .dark .focused-quiz, body.dark-mode .focused-quiz {
@@ -74,11 +53,7 @@
 .practice-notice,.practice-error { padding:12px 18px; background:var(--practice-soft); color:var(--practice-ink); font-size:13px; display:flex; gap:12px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
 .practice-shimmer { max-width:700px; margin:auto; padding:26px; background:var(--practice-paper); border:1px solid var(--practice-line); border-radius:18px; }
 .practice-shimmer p { color:var(--practice-muted); font-size:13px; }
-.practice-skeleton { display:block; position:relative; overflow:hidden; border-radius:8px; height:15px; background:var(--practice-soft); margin:12px 0; }
-.practice-skeleton::after { content:''; position:absolute; inset:0; transform:translateX(-100%); background:linear-gradient(100deg,transparent,rgba(255,255,255,.5),transparent); animation:practice-sheen 1.65s ease-in-out infinite; }
-.practice-skeleton.short { width:38%; }.practice-skeleton.title { height:48px; width:90%; margin:24px 0; }.practice-skeleton.option { height:56px; }
 .practice-tutor-loading { padding:8px; }.practice-tutor-loading .sr-only { position:absolute; width:1px; height:1px; clip-path:inset(50%); overflow:hidden; }
-@keyframes practice-sheen { to { transform:translateX(100%); } }
 .focused-quiz.study-mode-container {
   --practice-bg:var(--bg-cream,#fdf8f3); --practice-paper:var(--bg-paper,#fffef9);
   --practice-ink:var(--text-primary,#3d3d3d); --practice-muted:var(--text-secondary,#6b6b6b);
@@ -163,10 +138,7 @@ body.dark-mode .focused-quiz {
 .practice-starters { display:flex; flex-wrap:wrap; gap:8px; margin-top:20px; }
 .practice-starters button { padding:9px 12px; border:1px solid var(--practice-line); border-radius:20px; background:transparent; color:var(--practice-muted); font:inherit; font-size:13px; }
 @media(prefers-reduced-motion:reduce) {
-  .focused-quiz.study-mode-container.is-opening:not([hidden]),.focused-quiz.study-mode-container.is-folding { animation:none; will-change:auto; }
-  .focused-quiz.is-opening:not([hidden]) > .practice-header,.focused-quiz.is-opening:not([hidden]) > .practice-work,.focused-quiz.is-folding > .practice-header,.focused-quiz.is-folding > .practice-work { animation:none; }
-  .practice-skeleton::after { animation:none; transform:none; opacity:.3; }
-  .focused-quiz .practice-work { transition:none; }
+    .focused-quiz .practice-work { transition:none; }
   .focused-quiz .practice-tutor { animation:none; }
 }
 @media(min-width:761px) and (max-width:1100px) {

@@ -15,21 +15,15 @@
 import { auth } from '../Firebase/config';
 import { API_BASE_URL } from '../Services/config';
 
+/* The Semester Pass link is a LIVE Payment Link, checked in so the plan works
+   without extra env setup. The env var still wins, so a dev/test link set in
+   `.env.development.local` overrides it — but if none is set, a dev build
+   sends you to the real one. `usesLiveFallback` exists so startCheckout can
+   say so out loud instead of taking your money quietly. */
+const SEMESTER_LINK_ENV = process.env.REACT_APP_STRIPE_LINK_SEMESTER || '';
+const SEMESTER_LINK_LIVE = 'https://buy.stripe.com/eVqeVeghhfTW4hI3bPf3a09';
+
 export const PLANS = [
-  {
-    id: 'annual',
-    name: 'Annual',
-    amount: 83.07,           // US$/year — display only; MUST match the Stripe price
-    currency: 'USD',
-    symbol: '$',             // shown before the amount (French copy renders "$ US" via i18n)
-    interval: 'year',
-    perMonth: 6.92,          // 83.07 / 12, for the "$6.92/mo" subtitle
-    savePct: 48,             // vs paying monthly (13.34*12 = 160.08 → 83.07 = ~48% off)
-    recommended: true,
-    // Fill these from your Stripe dashboard once created:
-    stripePriceId: process.env.REACT_APP_STRIPE_PRICE_ANNUAL || '',
-    paymentLink: process.env.REACT_APP_STRIPE_LINK_ANNUAL || '',
-  },
   {
     id: 'monthly',
     name: 'Monthly',
@@ -37,10 +31,46 @@ export const PLANS = [
     currency: 'USD',
     symbol: '$',
     interval: 'month',
+    intervalCount: 1,
     perMonth: 13.34,
+    savePct: 0,
     recommended: false,
     stripePriceId: process.env.REACT_APP_STRIPE_PRICE_MONTHLY || '',
     paymentLink: process.env.REACT_APP_STRIPE_LINK_MONTHLY || '',
+  },
+  {
+    /* The semester pass is a RECURRING 4-month price, not a one-off. That
+       matters well beyond this file: entitlement is revoked only by Stripe's
+       subscription lifecycle events, and `usage.tier` is a flag with no expiry
+       date anywhere in the system. A one-time "pass" would grant Pro forever.
+       If this is ever re-created in Stripe, it must stay recurring. */
+    id: 'semester',
+    name: 'Semester Pass',
+    amount: 40.17,           // US$ per 4 months — display only; MUST match Stripe
+    currency: 'USD',
+    symbol: '$',
+    interval: 'month',
+    intervalCount: 4,        // ⚠️ same `interval` as monthly — always look plans up by id
+    perMonth: 10.04,         // 40.17 / 4
+    savePct: 25,             // vs 4 months at 13.34 (53.36 → 40.17 = ~24.7%)
+    recommended: false,
+    stripePriceId: process.env.REACT_APP_STRIPE_PRICE_SEMESTER || '',
+    paymentLink: SEMESTER_LINK_ENV || SEMESTER_LINK_LIVE,
+    usesLiveFallback: !SEMESTER_LINK_ENV,
+  },
+  {
+    id: 'annual',
+    name: 'Annual',
+    amount: 83.07,           // US$/year — display only; MUST match the Stripe price
+    currency: 'USD',
+    symbol: '$',
+    interval: 'year',
+    intervalCount: 1,
+    perMonth: 6.92,          // 83.07 / 12, for the "$6.92/mo" subtitle
+    savePct: 48,             // vs paying monthly (13.34*12 = 160.08 → 83.07 = ~48% off)
+    recommended: true,
+    stripePriceId: process.env.REACT_APP_STRIPE_PRICE_ANNUAL || '',
+    paymentLink: process.env.REACT_APP_STRIPE_LINK_ANNUAL || '',
   },
 ];
 
@@ -69,6 +99,13 @@ export const startCheckout = async (planId, user = {}) => {
   // Create two recurring Payment Links in Stripe, drop their URLs in the env
   // vars above, and this opens them with the uid attached for the webhook.
   if (plan.paymentLink) {
+    if (plan.usesLiveFallback && process.env.NODE_ENV === 'development') {
+      console.warn(
+        `[billing] "${planId}" is falling back to the LIVE Stripe Payment Link — ` +
+        `this will charge a real card. Set REACT_APP_STRIPE_LINK_${planId.toUpperCase()} ` +
+        `in .env.development.local to a test link.`
+      );
+    }
     const url = new URL(plan.paymentLink);
     if (user.uid) url.searchParams.set('client_reference_id', user.uid);
     if (user.email) url.searchParams.set('prefilled_email', user.email);

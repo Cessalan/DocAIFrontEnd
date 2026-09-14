@@ -12,16 +12,12 @@ import { appendUniqueQuestions, initialPracticeSettings, normalizePracticeQuesti
 import '../StudyMode/StudyMode.css';
 import './FocusedQuiz.css';
 
-// Matching path commands let the browser interpolate a curved, narrowing sheet.
-// The lower edge stays attached to the launch card as the upper edge unfurls.
-import { paperContour } from './paperTransition';
+import { usePaperTransition } from './paperTransition';
+import PaperShimmer from './PaperShimmer';
+import PaperSurface from './PaperSurface';
 
 export function PracticeShimmer() {
-  return <div className="practice-shimmer" role="status" aria-label="Preparing your questions">
-    <span className="practice-skeleton short" /><span className="practice-skeleton title" />
-    {[0, 1, 2, 3].map(i => <span key={i} className="practice-skeleton option" />)}
-    <p>Preparing your questions…</p>
-  </div>;
+  return <PaperShimmer className="practice-shimmer" />;
 }
 
 export default function FocusedQuiz({ message, chatId, visible, onExit, onPracticeChange, readOnly = false, onCopyCreated, launchOrigin, onSessionComplete }) {
@@ -32,10 +28,10 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   const [active, setActive] = useState(null);
   const [tutorOpen, setTutorOpen] = useState(false);
   const [animateTutor, setAnimateTutor] = useState(false);
-  const [closing, setClosing] = useState(false);
-  const [opening, setOpening] = useState(visible);
-  useLayoutEffect(() => { setOpening(visible); setAnimateTutor(false); }, [visible]);
-  const exitPending = useRef(false);
+  const onExitRef = useRef(onExit); onExitRef.current = onExit;
+  const paper = usePaperTransition({ visible, origin: launchOrigin, onClosed: () => onExitRef.current() });
+  const { closing } = paper;
+  useLayoutEffect(() => { setAnimateTutor(false); }, [visible]);
   const [copying, setCopying] = useState(false);
   const [text, setText] = useState('');
   const [busy, setBusy] = useState(false);
@@ -62,13 +58,8 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   useEffect(() => { const timer = setTimeout(persist, 350); return () => clearTimeout(timer); }, [practice, persist]);
   useEffect(() => () => { persist(); tutorAbort.current?.abort(); batchRef.current?.controller.abort(); }, [persist]);
   useEffect(() => { if (!visible) persist(); }, [visible, persist]);
-  const finishExit = useCallback(() => {
-    if (!exitPending.current) return;
-    exitPending.current = false;
-    onExit();
-  }, [onExit]);
   const closePractice = useCallback(() => {
-    if (exitPending.current) return;
+    if (paper.pending.current) return;
     persist();
     const saved = practiceRef.current;
     const all = appendUniqueQuestions(message.quizData || [], saved.questions || []);
@@ -78,19 +69,8 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
       onSessionComplete?.({ messageId: message.id, questionCount: all.length,
         saved: saveChain.current.then(() => { if (dirty.current) throw new Error('Progress has not synced yet.'); }) });
     }
-    exitPending.current = true;
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) finishExit();
-    else setClosing(true);
-  }, [persist, finishExit, message, remaining, isPro, readOnly, onSessionComplete]);
-  useEffect(() => {
-    if (!closing) return;
-    // Also finish if the browser interrupts the CSS animation.
-    const timer = setTimeout(finishExit, 620);
-    return () => clearTimeout(timer);
-  }, [closing, finishExit]);
-  useEffect(() => {
-    if (!visible) { exitPending.current = false; setClosing(false); }
-  }, [visible]);
+    paper.close();
+  }, [persist, paper, message, remaining, isPro, readOnly, onSessionComplete]);
 
   const questions = useMemo(() => appendUniqueQuestions(message.quizData || [], practice.questions || []).map((q, index) =>
     normalizePracticeQuestion({ ...q, userSelection: practice.answers?.[index] || q.userSelection })), [message.quizData, practice.questions, practice.answers]);
@@ -185,39 +165,28 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
 
   const content = useMemo(() => ({ questions, _expectedTotal: target,
     _isStreaming: !readOnly && (!!message.isStreaming || extending || (target > loaded && !batchError)) }), [questions, target, message.isStreaming, extending, loaded, batchError, readOnly]);
-  const origin = launchOrigin?.width > 0 ? launchOrigin : { left: window.innerWidth * .3, top: window.innerHeight * .3, width: window.innerWidth * .4, height: window.innerHeight * .3 };
-  const viewportWidth = document.documentElement.clientWidth || window.innerWidth;
-  const viewportHeight = window.innerHeight;
-  const originStyle = {
-    '--practice-paper-source': paperContour(origin.left, origin.left + origin.width, origin.top, origin.top + origin.height, origin.left, origin.left + origin.width, 22),
-    '--practice-paper-bend': paperContour(0, viewportWidth, 0, Math.max(origin.top + origin.height, viewportHeight * .76), origin.left, origin.left + origin.width, 18),
-    '--practice-paper-full': paperContour(0, viewportWidth, 0, viewportHeight, 0, viewportWidth, 0),
-  };
   const isCase = ['casestudy', 'ordering', 'bowtie'].includes(current?.questionType);
   const tutorPanel = <aside className="practice-tutor" data-animate={animateTutor} data-has-discussion={history.length > 0 || busy || !!tutorError} aria-label="Question tutor"><header><div className="practice-tutor-identity"><div className="practice-tutor-mascot" aria-hidden="true"><StudyPathMascot size={48} /></div><div className="practice-tutor-label"><strong>Your tutor</strong><span>Question {questionIndex + 1} · {active?.showFeedback ? 'Let’s review your reasoning' : 'Hints first. Your answer is yours.'}</span></div></div>{!isCase && <button onClick={() => setTutorOpen(false)} aria-label="Close tutor">×</button>}</header>
       <div className="practice-discussion">{!history.length && <><p>{active?.showFeedback ? 'Talk through your answer, one step at a time.' : 'A little help, without giving it away. Tell me where you’re stuck.'}</p><div className="practice-starters">{['Rephrase the question', 'Give me a small hint'].map(prompt => <button key={prompt} disabled={readOnly || busy} onClick={() => send(prompt)}>{prompt}</button>)}</div></>}
         {history.map((turn, index) => <div key={index} className={`practice-turn ${turn.role}`}><ReactMarkdown>{turn.content}</ReactMarkdown>
           {turn.sources?.map((source, i) => <details key={i}><summary>{source.source}{source.page != null ? ` · page ${Number(source.page) + 1}` : ''}</summary><p>{source.text}</p></details>)}</div>)}
-        {busy && <div className="practice-tutor-loading" role="status"><span className="practice-skeleton" /><span className="practice-skeleton short" /><span className="sr-only">Your tutor is responding</span></div>}
+        {busy && <div className="practice-tutor-loading" role="status"><span className="paper-skeleton" /><span className="paper-skeleton short" /><span className="sr-only">Your tutor is responding</span></div>}
         {tutorError && <p className="practice-error" role="alert">{tutorError} Your message is in the input so you can retry.</p>}<div ref={tutorBottom} /></div>
     <form className="practice-composer" onSubmit={event => { event.preventDefault(); send(); }}><div><label htmlFor="practice-input">Question {questionIndex + 1}{active?.showFeedback ? ' · Answer saved' : ''}</label><button className="practice-mobile-return" type="button" onClick={() => { questionPane.current?.scrollTo({ top: 0, behavior: 'smooth' }); questionPane.current?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' }); }}>Back to question ↑</button></div>
       <div className="practice-input-shell"><textarea id="practice-input" disabled={readOnly} value={text} onChange={event => setText(event.target.value)} placeholder="Ask your tutor…" rows={2}
         onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send(); } }} />
       <ChatSendButton label={t('chat.send', 'Send')} busy={busy} disabled={readOnly || !text.trim() || !current} /></div></form>
     </aside>;
-  return createPortal(<section className={`focused-quiz study-mode-container ${isCase ? 'has-case has-tutor' : tutorOpen ? 'has-tutor' : ''} ${closing ? 'is-folding' : opening ? 'is-opening' : ''}`} style={originStyle} hidden={!visible} inert={closing ? true : undefined} aria-label="Focused quiz practice"
-    onAnimationEnd={event => {
-      if (event.target !== event.currentTarget) return;
-      if (event.animationName === 'practice-paper-fold') finishExit();
-      if (event.animationName === 'practice-paper-unfold') setOpening(false);
-    }}>
-    <header className="practice-header"><div><strong>{message.quizTopic || 'Your practice'}</strong><span>{loaded} ready · {target} questions{!isPro ? ` · ${remaining} remaining in your allowance` : ''}</span></div>
+  return createPortal(<section ref={paper.ref} className={`focused-quiz study-mode-container paper-sheet ${isCase ? 'has-case has-tutor' : tutorOpen ? 'has-tutor' : ''} ${paper.className}`} hidden={!visible} inert={closing ? true : undefined} data-paper={paper.mode} aria-label="Focused quiz practice"
+    onAnimationEnd={paper.handleAnimationEnd}>
+    <PaperSurface mode={paper.mode} />
+    <header className="practice-header paper-page"><div><strong>{message.quizTopic || 'Your practice'}</strong><span>{loaded} ready · {target} questions{!isPro ? ` · ${remaining} remaining in your allowance` : ''}</span></div>
       <button type="button" onClick={closePractice}>← Back to chat</button></header>
     {notice && <div className="practice-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss notice">×</button></div>}
     {readOnly && <div className="practice-notice">This is another user's conversation. Make your own copy to answer and discuss it. Uploaded source files are not copied.
       {onCopyCreated && <button disabled={copying} onClick={async () => { setCopying(true); try { const id = await copyPracticeToOwnChat(message, questions); onCopyCreated(id); } catch (error) { setSaveError(error.message); } finally { setCopying(false); } }}>{copying ? 'Creating your practice…' : 'Practice in my own chat'}</button>}</div>}
     {saveError && <div className="practice-error" role="alert">{saveError} <button onClick={persist}>Retry save</button></div>}
-    <div className="practice-work"><div className="practice-question" ref={questionPane}>
+    <div className="practice-work paper-page"><div className="practice-question" ref={questionPane}>
       {loaded === 0 ? <PracticeShimmer /> : <StudyQuizCard content={content} savedProgress={initialSnapshot.current}
         practiceMode onHint={() => send('Give me a small hint')} onQuestionContext={onContext} onSnapshot={readOnly ? undefined : onSnapshot} onAnswer={readOnly ? undefined : onAnswer}
         renderLoading={() => <PracticeShimmer />} onContinue={closePractice} />}

@@ -1,0 +1,177 @@
+/* The paper genie — shared by chat's FocusedQuiz and study mode's node view.
+   Keyframe names are a contract with paperTransition.js, which matches on them
+   in handleAnimationEnd; renaming one means renaming both.
+
+   The --paper-* frames are written onto the element by usePaperTransition in a
+   layout effect, in the element's own coordinate space. */
+
+/* Armed: held at the start frame with the layers already allocated, but not
+   yet animating. One frame of this is what keeps the browser from doing its
+   allocation during the fold's first frame. */
+.paper-sheet.is-arming:not([hidden]) {
+  clip-path: var(--paper-source);
+  will-change: clip-path;
+}
+.paper-sheet.is-opening:not([hidden]) {
+  animation: paper-unfold 420ms linear backwards;
+  will-change: clip-path;
+}
+/* Animating clip-path repaints what it clips. Giving the content its own raster
+   layer for the duration means each frame re-composites a finished texture
+   instead of re-painting every card, gradient and shadow underneath. Scoped to
+   the animating classes so nothing stays promoted at rest. */
+.paper-sheet.is-arming > .paper-page,
+.paper-sheet.is-opening > .paper-page,
+.paper-sheet.is-folding > .paper-page { will-change: transform; transform: translateZ(0); }
+.paper-sheet.is-folding {
+  pointer-events: none;
+  animation: paper-fold 260ms linear both;
+  will-change: clip-path, opacity;
+}
+@keyframes paper-unfold {
+  from { clip-path: var(--paper-source); animation-timing-function: cubic-bezier(.32,0,.7,.7); }
+  48% { clip-path: var(--paper-bend); animation-timing-function: cubic-bezier(.3,.3,.2,1); }
+  to { clip-path: var(--paper-full); }
+}
+@keyframes paper-fold {
+  from { opacity: 1; clip-path: var(--paper-full); animation-timing-function: cubic-bezier(.4,0,.7,.7); }
+  52% { opacity: 1; clip-path: var(--paper-bend); animation-timing-function: cubic-bezier(.3,.3,.6,1); }
+  to { opacity: 0; clip-path: var(--paper-source); }
+}
+
+/* Contents fade in behind the unfolding edge rather than riding it, so text
+   never appears mid-fold at an angle it was never laid out for. */
+.paper-sheet.is-opening:not([hidden]) > .paper-page { animation: paper-page-reveal 420ms ease both; }
+.paper-sheet.is-folding > .paper-page { animation: paper-page-hide 260ms ease both; }
+@keyframes paper-page-reveal { 0% { opacity: 0; } 25% { opacity: .2; } 100% { opacity: 1; } }
+@keyframes paper-page-hide { 0% { opacity: 1; } 85%, 100% { opacity: 0; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .paper-sheet.is-opening:not([hidden]),
+  .paper-sheet.is-folding { animation: none; will-change: auto; }
+  .paper-sheet.is-opening:not([hidden]) > .paper-page,
+  .paper-sheet.is-folding > .paper-page { animation: none; }
+}
+
+/* ── The paper itself ─────────────────────────────────────────────────────
+   A clip-path alone gives a silhouette, which reads as a shape being cropped.
+   What sells a sheet of paper is that its surface responds: grain at rest, and
+   while it moves, light and shadow that follow the curve. The shading is
+   anchored to --paper-foot-*, written by usePaperTransition from the same rect
+   that builds the silhouette, so the creases converge where the paper is
+   actually pinched against the control that was tapped.
+
+   Both layers sit ABOVE the content on purpose. Text is printed on the sheet,
+   so when the sheet turns away from the light the text goes with it. */
+
+.paper-surface { position: absolute; inset: 0; z-index: 50; pointer-events: none; overflow: hidden; }
+.paper-surface > span { position: absolute; inset: 0; display: block; }
+
+/* Stock, not an effect — deliberately at the edge of perceptible. Fibres run
+   slightly off-horizontal so the weave never lines up with the UI's own rules. */
+.paper-grain {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.82' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(97deg, rgba(122, 94, 86, .03) 0 1px, transparent 1px 6px);
+  background-size: 140px 140px, auto;
+  opacity: var(--paper-grain-strength, .05);
+}
+/* The grain is stock, not motion. Hiding it during the fold takes a
+   full-surface noise tile out of every animated frame, and at 5% opacity its
+   arrival afterwards is not something you can see. */
+.paper-sheet.is-arming .paper-grain,
+.paper-sheet.is-opening .paper-grain,
+.paper-sheet.is-folding .paper-grain { display: none; }
+
+/* Shadow of the fold, in two coats:
+     1. the pinch — a pool of shadow where the sheet is still pressed against
+        the control it came out of
+     2. the curled sides — the band that actually reads as curvature
+   A third coat along the leading edge went with the simplification; at this
+   speed nobody reads it, and it was another gradient to rasterise. Opacity is
+   what animates, never the gradients: an interpolating gradient repaints the
+   whole surface every frame. */
+.paper-shade {
+  opacity: 0;
+  background:
+    radial-gradient(150% 58% at var(--paper-foot-x, 50%) var(--paper-foot-y, 100%),
+      var(--paper-shade-ink, rgba(74, 47, 40, .5)) 0%, transparent 64%),
+    linear-gradient(to right, var(--paper-shade-edge, rgba(74, 47, 40, .28)) 0%, transparent 11%,
+      transparent 89%, var(--paper-shade-edge, rgba(74, 47, 40, .28)) 100%);
+}
+
+.paper-sheet.is-opening:not([hidden]) .paper-shade { animation: paper-shade-unfold 420ms linear both; }
+.paper-sheet.is-folding .paper-shade { animation: paper-shade-fold 260ms linear both; }
+
+/* The shading is strongest while the sheet is narrow and steeply curved, and
+   is gone by the time it lies flat — a sheet at rest is just a page. */
+@keyframes paper-shade-unfold {
+  0% { opacity: 1; }
+  45% { opacity: .55; }
+  100% { opacity: 0; }
+}
+@keyframes paper-shade-fold {
+  0% { opacity: 0; }
+  55% { opacity: .55; }
+  100% { opacity: 1; }
+}
+/* No drop-shadow here, deliberately. A filter on the sheet follows the
+   clip-path, which looks right, but it allocates a full-viewport filter buffer
+   the first frame it runs — on a 2560x1440 screen that allocation is the hitch
+   you feel at the moment the sheet opens. The cast is folded into the shade
+   gradients above instead, which cost nothing extra. */
+
+/* The skeleton that stands in for content while it generates. Shared so the
+   study plan's wait looks like chat's instead of a second, unrelated idiom. */
+.paper-skeleton { display: block; position: relative; overflow: hidden; border-radius: 8px; height: 15px; background: var(--paper-skeleton-bg, rgba(0,0,0,.06)); margin: 12px 0; }
+.paper-skeleton::after { content: ''; position: absolute; inset: 0; transform: translateX(-100%); background: linear-gradient(100deg, transparent, rgba(255,255,255,.5), transparent); animation: paper-sheen 1.65s ease-in-out infinite; }
+.paper-skeleton.short { width: 38%; }
+.paper-skeleton.title { height: 48px; width: 90%; margin: 24px 0; }
+.paper-skeleton.option { height: 56px; }
+@keyframes paper-sheen { to { transform: translateX(100%); } }
+@media (prefers-reduced-motion: reduce) {
+  .paper-skeleton::after { animation: none; transform: none; opacity: .3; }
+}
+
+/* Dark surfaces take the same light differently: multiplying grain into an
+   already-dark ground reads as dirt, so the fibres become faint highlights and
+   the creases lean on a deeper black instead of brown. */
+body.dark-mode .paper-sheet,
+[data-theme="dark"] .paper-sheet {
+  --paper-grain-strength: .07;
+  --paper-shade-ink: rgba(0, 0, 0, .62);
+  --paper-shade-edge: rgba(0, 0, 0, .4);
+}
+
+/* ── The cheap path ───────────────────────────────────────────────────────
+   Devices that cannot afford a per-frame repaint get the same journey out of
+   the same point using only transform and opacity, which the compositor owns
+   outright and cannot drop a frame on. It is a zoom rather than a fold; that is
+   the trade, and it is better than a fold that stutters. usePaperTransition
+   picks this from hardware, or localStorage.nqPaperFold forces it. */
+.paper-sheet[data-paper="simple"].is-arming:not([hidden]),
+.paper-sheet[data-paper="simple"].is-opening:not([hidden]),
+.paper-sheet[data-paper="simple"].is-folding {
+  clip-path: none; animation: none; will-change: auto;
+}
+.paper-sheet[data-paper="simple"].is-opening:not([hidden]) > .paper-page,
+.paper-sheet[data-paper="simple"].is-arming:not([hidden]) > .paper-page {
+  transform-origin: var(--paper-foot-x, 50%) var(--paper-foot-y, 50%);
+  animation: paper-zoom-in 300ms cubic-bezier(.22, 1, .36, 1) both;
+}
+.paper-sheet[data-paper="simple"].is-folding > .paper-page {
+  transform-origin: var(--paper-foot-x, 50%) var(--paper-foot-y, 50%);
+  animation: paper-zoom-out 220ms cubic-bezier(.4, 0, .7, .7) both;
+}
+@keyframes paper-zoom-in {
+  from { opacity: 0; transform: scale(.34) translate3d(0, 14px, 0); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes paper-zoom-out {
+  from { opacity: 1; transform: none; }
+  to { opacity: 0; transform: scale(.34) translate3d(0, 14px, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .paper-shade { animation: none !important; opacity: 0; }
+}

@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PLANS, startCheckout, openBillingPortal } from '../../config/billing';
+import { getPlan, startCheckout, openBillingPortal } from '../../config/billing';
 import { daysUntilExam } from './upgradeCopy';
 import { formatCountdown } from '../../Services/UsageService';
 import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
@@ -73,9 +73,6 @@ const IconBrain = () => (
 const IconClipboard = () => (
   <svg {...svgProps}><rect x="5" y="4" width="14" height="17" rx="2" /><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1" /><path d="M9 11h6M9 15h4" /></svg>
 );
-const IconTrophy = () => (
-  <svg {...svgProps}><path d="M7 4h10v5a5 5 0 0 1-10 0V4Z" /><path d="M7 6H4.5v1A3.5 3.5 0 0 0 8 10.5M17 6h2.5v1a3.5 3.5 0 0 1-3.5 3.5" /><path d="M12 14v3M9 20h6M10 17h4" /></svg>
-);
 const IconLock = () => (
   <svg {...svgProps}><rect x="4.5" y="10" width="15" height="10.5" rx="2.5" /><path d="M8 10V7.5a4 4 0 0 1 8 0V10" /></svg>
 );
@@ -96,6 +93,21 @@ const OUTCOMES = [
 
 const fmtAmount = (n) => (Number.isInteger(n) ? String(n) : Number(n).toFixed(2));
 
+/* Cheapest commitment first. The order is also the fallback order if a plan is
+   ever missing from PLANS. */
+const PLAN_ORDER = ['monthly', 'semester', 'annual'];
+
+/* Which plan leads depends on WHY she is here, not on which one earns most.
+   A student blocked mid-practice four days from an exam is not making a
+   four-month decision — monthly is the lowest-commitment yes, and pushing a
+   term commitment at peak panic is how you earn refund requests. Someone at
+   the plan wall is working a course across a whole term, and for her the pass
+   is both cheaper per month and the honest shape of what she's buying. */
+const defaultPlanId = (reason) =>
+  (reason === 'plans' || reason === 'plan_ready') && getPlan('semester')
+    ? 'semester'
+    : 'monthly';
+
 const UpgradeModal = ({
   isOpen, onClose, limit = 50, used = 0, remaining = Infinity, msUntilReset = 0,
   user = {}, studyGoal = null, examDate = null, topic = null, isPro = false,
@@ -104,13 +116,24 @@ const UpgradeModal = ({
   const { t } = useTranslation();
   const [portalLoading, setPortalLoading] = useState(false);
 
-  const monthly = PLANS.find((p) => p.interval === 'month') || PLANS[0] || null;
-  const annual = PLANS.find((p) => p.interval === 'year') || null;
+  // ⚠️ Look plans up by id, NEVER by `interval`. The semester pass is a 4-month
+  // recurring price, so it carries `interval: 'month'` exactly like the monthly
+  // plan does — an interval-based find() returns whichever happens to sit first
+  // in the array and silently charges the wrong one.
+  const plans = PLAN_ORDER.map(getPlan).filter(Boolean);
 
-  // Default to monthly: it's the lowest-commitment yes. Annual is offered as a
-  // one-tap swap rather than a second competing button, so the CTA stays single.
-  const [annualSelected, setAnnualSelected] = useState(false);
-  const selected = (annualSelected && annual) || monthly;
+  const [selectedId, setSelectedId] = useState(() => defaultPlanId(reason));
+
+  // The modal stays mounted between openings (UsageProvider renders it once and
+  // it returns null while closed), so a useState initializer only ever runs for
+  // the FIRST student to see it. Re-seed the recommended plan on each open.
+  useEffect(() => {
+    if (!isOpen) return;
+    setSelectedId(defaultPlanId(reason));
+  }, [isOpen, reason]);
+
+  const selected = getPlan(selectedId) || plans[0] || null;
+  const otherPlans = plans.filter((p) => p.id !== (selected && selected.id));
 
   if (!isOpen) return null;
 
@@ -185,6 +208,13 @@ const UpgradeModal = ({
   const isPlanReady = reason === 'plan_ready';
   const isPlanGate = reason === 'plans' || isPlanReady;
 
+  // The upload gate is the third wall and, until now, the only one that could
+  // not say its own name: it fired as `openUpgrade(null, …)` and rendered the
+  // aspirational "Study without limits" pitch at someone who had just been
+  // stopped from attaching a file. It is not metered — waiting does not earn a
+  // second upload — so it never routes through the countdown copy below.
+  const isUploadGate = reason === 'upload';
+
   // "Blocked" = actually out of budget on whichever meter fired. Opening the
   // modal proactively (badge tap with budget left) shows the marketing pitch.
   const blocked = isPlanGate ? plansRemaining <= 0 : remaining <= 0;
@@ -201,14 +231,16 @@ const UpgradeModal = ({
   // Headline: interruption first when we actually blocked them, goal-based
   // aspiration when they opened this themselves.
   let title;
-  if (isPlanReady) {
+  if (isUploadGate) {
+    title = t('upgrade.titleUpload', 'Bring all your notes.');
+  } else if (isPlanReady) {
     // She is looking at her plan. Continue that sentence; don't start a new
     // one about limits.
     title = t('upgrade.titlePlanReady', 'Your plan is ready.');
   } else if (blocked && isPlanGate) {
     title = t('upgrade.titlePlanBlocked', "You've got more exams to prepare for.");
   } else if (blocked) {
-    title = t('upgrade.titleBlocked', "Don't stop now. 🔥");
+    title = t('upgrade.titleBlocked', "Don't stop now.");
   } else if (studyGoal === 'NCLEX Prep') {
     title = t('upgrade.titleNclex', 'Pass your NCLEX with room to spare');
   } else if (studyGoal === 'Course Exam') {
@@ -218,7 +250,11 @@ const UpgradeModal = ({
   }
 
   let subtitle;
-  if (isPlanReady) {
+  if (isUploadGate) {
+    subtitle = examSoon
+      ? t('upgrade.bodyUploadExam', "Free covers one upload per chat. Your exam is {{when}} — Pro lets you add every lecture and handout for it, and practise across all of them at once.", { when: whenLabel })
+      : t('upgrade.bodyUpload', 'Free covers one upload per chat. Pro lets you add every lecture, slide deck and handout for the same exam — and practise across all of them at once.');
+  } else if (isPlanReady) {
     subtitle = examSoon
       ? t('upgrade.bodyPlanReadyExam', "Your exam is {{when}}. Unlock the full plan and work it in the order it's already sorted into.", { when: whenLabel })
       : t('upgrade.bodyPlanReady', "Unlock the full plan and work it in the order it's already sorted into — hardest first, refreshers last.");
@@ -237,6 +273,61 @@ const UpgradeModal = ({
       ? t('upgrade.bodyExam', "Your exam is {{when}} — don't let a question limit slow your final push.", { when: whenLabel })
       : t('upgrade.body', 'Master every topic, find your weak spots faster, and walk into your exam ready.');
   }
+
+  /* Per-plan copy in one place. The price is a large number with small
+     metadata stacked beside it, never a sentence: `amount` is exactly what her
+     card is charged, `metaPrimary` says in what currency and how often, and the
+     per-month equivalent is demoted to `metaSecondary`, where it cannot be
+     mistaken for the charge. */
+  const planCopy = (plan) => {
+    const sym = plan.symbol || '$';
+    const cur = plan.currency || 'USD';
+    const save = plan.savePct
+      ? t('upgrade.saveShort', 'Save {{pct}}%', { pct: plan.savePct })
+      : null;
+    const equiv = t('upgrade.metaPerMonthEquiv', 'about {{symbol}}{{perMonth}} a month', {
+      symbol: sym,
+      perMonth: fmtAmount(plan.perMonth),
+    });
+    const perMo = t('upgrade.metaPerMonthShort', '{{symbol}}{{perMonth}}/mo', {
+      symbol: sym,
+      perMonth: fmtAmount(plan.perMonth),
+    });
+    const amount = (plan.symbol || '$') + fmtAmount(plan.amount);
+
+    if (plan.id === 'semester') {
+      return {
+        name: t('upgrade.planNameSemester', 'Semester Pass'),
+        tag: t('upgrade.planTagSemester', 'One payment, covers your term'),
+        amount,
+        metaPrimary: t('upgrade.metaPerMonths', '{{currency}} / {{count}} months', { currency: cur, count: plan.intervalCount }),
+        metaSecondary: [equiv, save].filter(Boolean).join(' · '),
+        rowSub: [perMo, save].filter(Boolean).join(' · '),
+      };
+    }
+    if (plan.id === 'annual') {
+      return {
+        name: t('upgrade.planNameAnnual', 'Annual'),
+        tag: t('upgrade.planTagAnnual', 'Lowest price per month'),
+        amount,
+        metaPrimary: t('upgrade.metaPerYear', '{{currency}} / year', { currency: cur }),
+        metaSecondary: [equiv, save].filter(Boolean).join(' · '),
+        rowSub: [perMo, save].filter(Boolean).join(' · '),
+      };
+    }
+    return {
+      name: t('upgrade.planNameMonthly', 'Monthly'),
+      label: t('upgrade.badgePopular', 'Most popular'),
+      tag: null,
+      amount,
+      metaPrimary: t('upgrade.metaPerMonth', '{{currency}} / month', { currency: cur }),
+      metaSecondary: null,
+      // Monthly has no per-month saving to quote — its own amount IS the
+      // monthly figure — so the row carries the same signal as the label, and
+      // the plan says the same thing whichever position it is in.
+      rowSub: t('upgrade.badgePopular', 'Most popular'),
+    };
+  };
 
   const countdownText = isPlanGate
     ? t('upgrade.nextPlanInline', 'Continue free in {{time}} (next plan)', { time: formatCountdown(planMsUntilReset) })
@@ -303,12 +394,10 @@ const UpgradeModal = ({
         )}
 
         {/* The offer, framed as results rather than capabilities. */}
+        {/* No badge, no trophy. Six competing accents above the price is what
+            made this read as decorated rather than designed — the headline and
+            the outcomes carry the offer, and the CTA is the only accent left. */}
         <div className="upgrade-pro">
-          <div className="upgrade-pro-head">
-            <span className="upgrade-pro-badge">{t('upgrade.proBadge', 'PRO')}</span>
-            <span className="upgrade-pro-trophy" aria-hidden="true"><IconTrophy /></span>
-          </div>
-
           <h3 className="upgrade-pro-title">
             {t('upgrade.excelTitle', 'Study to excel, not just to pass.')}
           </h3>
@@ -326,40 +415,60 @@ const UpgradeModal = ({
           </ul>
         </div>
 
-        {/* One price on screen at a time. Annual is a swap, not a rival CTA. */}
+        {/* The price block. Three plans now, but still one price on screen at a
+            time: the recommended plan is stated in full, the other two fold
+            away behind a disclosure. The folded rows carry their PRICES — a
+            row that says only "Save more" makes the student pay a tap to learn
+            the number, and the only person who spends that tap is one who had
+            already decided. */}
         {selected && (
-          <div className="upgrade-price">
-            <span className="upgrade-price-main">
-              <span className="upgrade-price-amount">
-                {selected.symbol || '$'}{fmtAmount(annualSelected ? selected.perMonth : selected.amount)}
-              </span>
-              <span className="upgrade-price-interval">{t('upgrade.perMonth', '/ month')}</span>
-              <span className="upgrade-price-sub">
-                {annualSelected
-                  ? t('upgrade.billedYearly', 'Billed {{symbol}}{{amount}} yearly. Cancel anytime.', { symbol: selected.symbol || '$', amount: fmtAmount(selected.amount) })
-                  : t('upgrade.cancelAnytime', 'Cancel anytime. No commitments.')}
-              </span>
-            </span>
-
-            {annual && (
-              <button
-                type="button"
-                className={`upgrade-price-swap ${annualSelected ? 'is-on' : ''}`}
-                onClick={() => setAnnualSelected((v) => !v)}
-                aria-pressed={annualSelected}
-              >
-                {annualSelected ? (
-                  <span className="upgrade-swap-main">{t('upgrade.switchMonthly', 'Switch to monthly')}</span>
-                ) : (
-                  <>
-                    <span className="upgrade-swap-main">
-                      {t('upgrade.savePct', 'Save {{pct}}%', { pct: annual.savePct })}
+          <div className="upgrade-picker">
+            {(() => {
+              const copy = planCopy(selected);
+              return (
+                <div className="upgrade-pick-lead">
+                  {copy.label && <span className="upgrade-pick-label">{copy.label}</span>}
+                  <div className="upgrade-pick-lead-row">
+                    <span className="upgrade-pick-lead-text">
+                      <span className="upgrade-pick-name">{copy.name}</span>
+                      {copy.tag && <span className="upgrade-pick-tag">{copy.tag}</span>}
                     </span>
-                    <span className="upgrade-swap-sub">{t('upgrade.withAnnual', 'with annual')}</span>
-                  </>
-                )}
-                <span className="upgrade-swap-chevron" aria-hidden="true">›</span>
-              </button>
+                    <span className="upgrade-pick-price">
+                      <span className="upgrade-pick-amount">{copy.amount}</span>
+                      <span className="upgrade-pick-meta">
+                        <span>{copy.metaPrimary}</span>
+                        {copy.metaSecondary && <span>{copy.metaSecondary}</span>}
+                      </span>
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {otherPlans.length > 0 && (
+              <ul className="upgrade-pick-more">
+                {otherPlans.map((plan) => {
+                  const copy = planCopy(plan);
+                  return (
+                    <li key={plan.id}>
+                      <button
+                        type="button"
+                        className="upgrade-pick-row"
+                        onClick={() => setSelectedId(plan.id)}
+                      >
+                        <span className="upgrade-pick-row-text">
+                          <span className="upgrade-pick-name">{copy.name}</span>
+                          <span className="upgrade-pick-row-sub">{copy.rowSub}</span>
+                        </span>
+                        <span className="upgrade-pick-row-price">
+                          <span className="upgrade-pick-row-amount">{copy.amount}</span>
+                          <span className="upgrade-pick-row-cadence">{copy.metaPrimary}</span>
+                        </span>
+                      </button>
+                    </li>
+                  );
+                })}
+              </ul>
             )}
           </div>
         )}
@@ -383,14 +492,20 @@ const UpgradeModal = ({
             disabled={!selected}
           >
             <span className="upgrade-cta-lock" aria-hidden="true"><IconLock /></span>
-            {isPlanGate
-              ? t('upgrade.ctaPlans', 'Unlock every plan with Pro')
-              : t('upgrade.ctaContinue', 'Continue studying with Pro')}
+            {isUploadGate
+              ? t('upgrade.ctaUpload', 'Add all your notes with Pro')
+              : isPlanGate
+                ? t('upgrade.ctaPlans', 'Unlock every plan with Pro')
+                : t('upgrade.ctaContinue', 'Continue studying with Pro')}
             <span className="upgrade-cta-arrow" aria-hidden="true">→</span>
           </button>
 
           {/* The free path stays honest and reachable, but it no longer competes
               with the CTA for attention — it used to sit above it in 30px type. */}
+          <p className="upgrade-fineprint">
+            {t('upgrade.noCommitment', 'No commitment · Cancel anytime')}
+          </p>
+
           <div className="upgrade-or"><span>{t('upgrade.or', 'or')}</span></div>
 
           <button className="upgrade-wait" onClick={onClose}>

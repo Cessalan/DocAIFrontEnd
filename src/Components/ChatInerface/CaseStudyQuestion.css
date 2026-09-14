@@ -825,7 +825,12 @@ body.dark-mode .case-study-container .feedback-rationale-container {
   width: 100%;
   margin-top: 12px;
   padding: 13px 18px;
-  background: linear-gradient(135deg, var(--q-accent) 0%, var(--q-accent-dark) 100%);
+  /* Coral pair, not `--q-accent`: dark mode redefines `--q-accent` to lavender
+     without redefining its partner `--q-accent-dark`, so this faded
+     lavender-to-coral — the only button in the app that did. Same fix as
+     `.case-study-submit-btn`. Applies on the chat surface too, which had the
+     identical bug. */
+  background: linear-gradient(135deg, var(--primary-coral, #e88d7d) 0%, var(--primary-coral-dark, #c46a5a) 100%);
   color: white;
   border: none;
   border-radius: var(--q-radius-organic);
@@ -1184,7 +1189,30 @@ body.dark-mode .case-study-container .feedback-rationale-container {
 .case-move-controls button:hover:not(:disabled) { background: var(--q-accent-soft); color: var(--q-accent-text); }
 .case-move-controls button:disabled { opacity: .22; cursor: default; }
 .case-study-container button:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 3px; }
-.case-study-container .case-study-submit-btn { width: auto; min-width: 190px; display: block; margin: 24px 0 0 auto; padding: 14px 24px; border-radius: 12px; font: 500 15px/1.5 'Outfit', sans-serif; box-shadow: none; }
+/* Submit: the split layout needs it auto-width and right-aligned (full width
+   across the answer pane reads as a banner), but everything ELSE about it must
+   match `.study-continue-btn` and `.sata-submit-btn`, which are identical to
+   each other and are the app's button. This override used to strip the Kalam
+   face, drop the weight to 500 and remove the sticker shadow, which made the
+   one button in a case study look like it came from a different product.
+   The gradient is pinned to the coral pair rather than `--q-accent` because
+   dark mode redefines `--q-accent` to lavender WITHOUT redefining its partner
+   `--q-accent-dark` (still coral) — so this button, alone in the app, faded
+   lavender-to-coral. `--primary-coral*` is theme-stable, and is the same source
+   `.study-continue-btn` uses. */
+.case-study-container .case-study-submit-btn {
+  width: auto;
+  min-width: 190px;
+  display: block;
+  margin: 24px 0 0 auto;
+  padding: 14px 24px;
+  border-radius: 10px 12px 11px 10px;
+  background: linear-gradient(135deg, var(--primary-coral, #e88d7d) 0%, var(--primary-coral-dark, #c46a5a) 100%);
+  font-family: 'Kalam', 'Patrick Hand', cursive;
+  font-size: 16px;
+  font-weight: 700;
+  box-shadow: 3px 4px 0 rgba(196, 106, 90, 0.4), 0 4px 12px rgba(232, 141, 125, 0.3);
+}
 .case-order-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
 .case-study-container .case-order-comparison .correct-order-section { margin: 0; }
 .case-study-container .case-study-feedback { border: 0; background: var(--q-sunken); padding: 24px; border-radius: 16px; text-align: left; }
@@ -1193,7 +1221,15 @@ body.dark-mode .case-study-container, [data-theme="dark"] .case-study-container,
 @media (prefers-reduced-motion: reduce) { .case-study-container .case-study-drag-item { transition: none !important; } }
 
 /* Keep the reference chart and the decision in separate, bounded panes. */
-.case-study-container .case-split-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 26px; height: clamp(380px, calc(100dvh - 260px), 850px); }
+/* Fixed height on purpose, not fit-to-content: across a mixed-format exam a
+   container that resized per question would move the Submit button vertically
+   every time, which in a timed test is a moving click target. The two panes
+   scroll inside it instead.
+   The ceiling was 850px / `100dvh - 260px`, which on a 1210px-tall screen left
+   226px of measured dead space below the content — the tallest pane only needs
+   about 620px. 660px keeps the frame stable while cutting that to ~36px, and
+   anything longer scrolls, which is what the panes are already set up to do. */
+.case-study-container .case-split-layout { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 26px; height: clamp(380px, calc(100dvh - 320px), 660px); }
 .case-reference-pane, .case-answer-pane { min-width: 0; min-height: 0; }
 .case-reference-pane { display: flex; flex-direction: column; }
 .case-split-layout .case-patient-file { display: flex; flex-direction: column; min-height: 0; height: 100%; margin: 0; padding: 20px; }
@@ -1207,6 +1243,22 @@ body.dark-mode .case-study-container, [data-theme="dark"] .case-study-container,
 .case-answer-pane .case-study-question { margin-top: 0; font-size: 17px; }
 .case-answer-pane .case-study-drag-item { padding: 12px; gap: 8px; }
 .case-answer-pane .case-study-submit-btn { position: sticky; bottom: 0; z-index: 5; margin-top: 16px; }
+
+/* Next gets the same sticky treatment submit already had. The answer pane is a
+   fixed-height scroller, so once the reveal adds a long rationale above it the
+   button simply scrolled out of view and looked missing. Shape matches submit
+   (auto width, right-aligned) so the primary action does not change size or
+   position between answering and moving on. */
+.case-answer-pane .case-study-next-btn {
+  position: sticky;
+  bottom: 0;
+  z-index: 5;
+  width: auto;
+  min-width: 190px;
+  margin: 16px 0 0 auto;
+  padding: 14px 24px;
+  border-radius: 10px 12px 11px 10px;
+}
 .case-mobile-switch { display: none; }
 .case-chart-return-note { font-size: 12px; color: var(--q-text-soft); margin: 8px 0 0; }
 .focused-quiz.has-case .practice-work { display: block; max-width: 1740px; }

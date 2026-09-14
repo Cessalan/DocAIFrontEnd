@@ -2881,7 +2881,7 @@ const ChatInterface = ({
     if (!isPro && uploadedFilesListRef.current.length > 0) {
       // trigger is what separates this HARD BLOCK from a voluntary badge
       // tap in the funnel data — both used to arrive as openUpgrade(null).
-      openUpgrade(null, { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
+      openUpgrade('upload', { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
       if (e.target) e.target.value = '';
       return;
     }
@@ -4524,7 +4524,7 @@ const ChatInterface = ({
     if (!isPro && uploadedFilesListRef.current.length > 0) {
       // trigger is what separates this HARD BLOCK from a voluntary badge
       // tap in the funnel data — both used to arrive as openUpgrade(null).
-      openUpgrade(null, { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
+      openUpgrade('upload', { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
       return;
     }
     documentFileInputRef.current?.click();

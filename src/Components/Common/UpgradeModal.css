@@ -1,11 +1,18 @@
-/* The CTA deliberately runs hotter than --primary-coral (#e88d7d). The brand
-   coral is a *background* color used all over the app, so a button painted in
-   it reads as one more surface rather than as the one thing to press. These
-   two stops stay in the coral family but carry enough saturation to be the
-   loudest element on the modal. Change these two values to retune it. */
+/* ONE accent on this surface, and it is the button. Everything else — the
+   context card, the outcome icons, the price block — is neutral ink on neutral
+   paper, so nothing competes with the thing we want pressed. The CTA is a flat
+   fill rather than a gradient for the same reason: a gradient reads as
+   decoration, and this screen had six decorations stacked above the price.
+   Retune the button here and nowhere else. */
 .upgrade-modal {
-  --upgrade-cta-from: #ef6f57;
-  --upgrade-cta-to: #d2432f;
+  /* Contrast-checked against the white label: #c74b33 gives 4.7:1, which the
+     previous coral (4.1:1) missed. The CTA text is 15px/700 — bold, but under
+     the 18.66px threshold for WCAG "large text", so it needs the full 4.5:1. */
+  --upgrade-accent: #c74b33;
+  --upgrade-accent-hover: #ab3f2b;
+  --upgrade-accent-ink: #fff;
+  --upgrade-hairline: rgba(61, 61, 61, 0.12);
+  --upgrade-surface: rgba(61, 61, 61, 0.035);
 }
 
 .upgrade-overlay {
@@ -132,35 +139,31 @@
 .upgrade-context {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 11px;
   margin-bottom: 10px;
   padding: 10px 12px;
-  border-radius: 14px;
+  border-radius: 12px;
   text-align: left;
-  background: var(--bg-warm, #fff5eb);
-  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.18));
+  background: var(--upgrade-surface);
+  border: 1px solid var(--upgrade-hairline);
 }
+/* No filled tile behind the icon — a thin glyph at text weight, the way the
+   reference sets its list marks. */
 .upgrade-context-icon {
   flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: rgba(232, 141, 125, 0.16);
-  color: var(--primary-coral-dark, #c46a5a);
+  color: var(--text-muted, #999);
 }
 .upgrade-context-icon svg { width: 18px; height: 18px; }
 .upgrade-context-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .upgrade-context-label {
-  font-size: 12px;
+  font-size: 11.5px;
   color: var(--text-muted, #999);
 }
 .upgrade-context-topic {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--primary-coral-dark, #c46a5a);
+  font-size: 14.5px;
+  font-weight: 650;
+  color: var(--text-primary, #3d3d3d);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -171,87 +174,43 @@
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px 18px;
-  margin-bottom: 12px;
+  gap: 6px 16px;
+  margin-bottom: 14px;
+  font-size: 12px;
 }
 .upgrade-stat {
   display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12.5px;
-  color: var(--text-secondary, #6b6b6b);
+  align-items: baseline;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--text-muted, #999);
 }
+/* Was a green pill. The number is already the emphasis; a coloured chip around
+   it just adds a third accent to a screen that should have one. */
 .upgrade-stat-num {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: rgba(126, 190, 150, 0.18);
-  color: #4f8a67;
   font-size: 12.5px;
-  font-weight: 800;
+  font-weight: 700;
+  color: var(--text-primary, #3d3d3d);
+  font-variant-numeric: tabular-nums;
 }
-.upgrade-stat-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 999px;
-  background: rgba(232, 141, 125, 0.16);
-  color: var(--primary-coral-dark, #c46a5a);
-}
-.upgrade-stat-icon svg { width: 14px; height: 14px; }
+.upgrade-stat-icon { display: none; }
 
-/* ── The Pro offer, framed as outcomes ────────────────────────────────── */
+/* ── The Pro offer, framed as outcomes ────────────────────────────────────
+   Rules instead of a filled card. The outcomes are a list, and a list does not
+   need a container to be read as one. */
 .upgrade-pro {
   position: relative;
-  margin-bottom: 12px;
-  padding: 12px 13px 11px;
-  border-radius: 16px;
+  margin-bottom: 16px;
+  padding: 13px 0 15px;
   text-align: left;
-  background: var(--bg-cream, #fdf8f3);
-  border: 1.5px solid rgba(232, 141, 125, 0.35);
+  border-top: 1px solid var(--upgrade-hairline);
+  border-bottom: 1px solid var(--upgrade-hairline);
 }
-
-.upgrade-pro-head {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-}
-.upgrade-pro-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 10.5px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #fff;
-  background: linear-gradient(135deg, var(--primary-coral, #e88d7d), var(--primary-coral-dark, #c46a5a));
-}
-.upgrade-pro-badge::before { content: '★'; font-size: 10px; }
-.upgrade-pro-trophy {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  margin: -2px -2px 0 0;
-  color: var(--primary-coral, #e88d7d);
-  opacity: 0.75;
-}
-.upgrade-pro-trophy svg { width: 26px; height: 26px; }
 
 .upgrade-pro-title {
-  margin: 7px 0 11px;
-  font-size: 16.5px;
-  font-weight: 800;
+  margin: 0 0 12px;
+  font-size: 15.5px;
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-primary, #3d3d3d);
 }
@@ -259,7 +218,7 @@
 .upgrade-outcomes {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px 10px;
+  gap: 11px 14px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -273,19 +232,14 @@
 .upgrade-outcome-icon {
   flex: 0 0 auto;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 9px;
-  background: rgba(232, 141, 125, 0.14);
-  color: var(--primary-coral-dark, #c46a5a);
+  margin-top: 1px;
+  color: var(--text-muted, #999);
 }
-.upgrade-outcome-icon svg { width: 16px; height: 16px; }
+.upgrade-outcome-icon svg { width: 15px; height: 15px; }
 .upgrade-outcome-text { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .upgrade-outcome-title {
   font-size: 12.5px;
-  font-weight: 700;
+  font-weight: 650;
   line-height: 1.25;
   color: var(--text-primary, #3d3d3d);
 }
@@ -295,100 +249,180 @@
   color: var(--text-muted, #999);
 }
 
-/* ── Price: one number, with annual as a swap rather than a rival CTA ─── */
-.upgrade-price {
+/* ── Price: three plans, one of them stated in full ────────────────────────
+   The lead plan is the only one in large type; the other two fold behind a text
+   disclosure. The price is set the way a pricing page sets it — one large
+   number, with small metadata stacked beside it saying what currency and how
+   often. The per-month equivalent lives in that metadata, never as the
+   headline, so the number she reads is the number she is charged. */
+.upgrade-picker {
+  margin-bottom: 4px;
+  text-align: left;
+}
+
+.upgrade-pick-lead {
+  padding: 13px 14px;
+  border-radius: 14px;
+  background: var(--upgrade-surface);
+  border: 1px solid var(--upgrade-hairline);
+}
+
+/* Plain letter-spaced text, not a filled pill — it states a fact about what
+   other students picked without becoming a sixth accent on the surface. */
+.upgrade-pick-label {
+  display: block;
+  margin-bottom: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-muted, #999);
+}
+
+.upgrade-pick-lead-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.upgrade-pick-lead-text { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.upgrade-pick-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary, #3d3d3d);
+}
+
+.upgrade-pick-tag {
+  font-size: 12px;
+  line-height: 1.3;
+  color: var(--text-muted, #999);
+}
+
+.upgrade-pick-price {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.upgrade-pick-amount {
+  font-size: 27px;
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  line-height: 1;
+  color: var(--text-primary, #3d3d3d);
+  font-variant-numeric: tabular-nums;
+}
+
+.upgrade-pick-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+  font-size: 10.5px;
+  line-height: 1.35;
+  color: var(--text-muted, #999);
+  text-align: right;
+}
+
+.upgrade-pick-more {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: upgrade-pick-reveal 0.18s ease-out;
+}
+
+.upgrade-pick-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 4px;
-  padding: 12px 14px;
-  border-radius: 16px;
-  text-align: left;
-  background: var(--bg-warm, #fff5eb);
-  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.18));
-}
-.upgrade-price-main {
-  flex: 1 1 auto;
-  min-width: 0;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: baseline;
-  gap: 5px;
-}
-.upgrade-price-amount {
-  font-size: 26px;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary, #3d3d3d);
-}
-.upgrade-price-interval {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-muted, #999);
-}
-.upgrade-price-sub {
-  flex: 1 0 100%;
-  margin-top: 2px;
-  font-size: 11.5px;
-  color: var(--text-muted, #999);
-}
-
-.upgrade-price-swap {
-  flex: 0 0 auto;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 7px 10px;
+  gap: 12px;
+  width: 100%;
+  padding: 10px 14px;
   border-radius: 12px;
-  border: 1px solid rgba(232, 141, 125, 0.35);
-  background: rgba(255, 255, 255, 0.7);
-  color: var(--primary-coral-dark, #c46a5a);
-  font-size: 11.5px;
-  font-weight: 700;
-  line-height: 1.2;
+  border: 1px solid var(--upgrade-hairline);
+  background: transparent;
   text-align: left;
   cursor: pointer;
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
+  transition: border-color 0.15s ease, background 0.15s ease;
 }
-.upgrade-price-swap:hover { transform: translateY(-1px); border-color: var(--primary-coral, #e88d7d); }
-.upgrade-price-swap.is-on {
-  background: rgba(232, 141, 125, 0.16);
-  border-color: var(--primary-coral, #e88d7d);
+.upgrade-pick-row:hover {
+  border-color: rgba(61, 61, 61, 0.28);
+  background: var(--upgrade-surface);
 }
-.upgrade-swap-main { display: block; }
-.upgrade-swap-sub { display: block; font-weight: 500; font-size: 10.5px; opacity: 0.8; }
-.upgrade-price-swap .upgrade-swap-main + .upgrade-swap-sub { margin-left: -0.5px; }
-.upgrade-swap-chevron { font-size: 15px; line-height: 1; opacity: 0.7; }
+
+.upgrade-pick-row-text { flex: 1 1 auto; display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.upgrade-pick-row .upgrade-pick-name { font-size: 13.5px; font-weight: 650; }
+
+/* The economics, not marketing copy. Three prices in three different cadences
+   are not comparable until something states them in the same unit. */
+.upgrade-pick-row-sub {
+  font-size: 11px;
+  color: var(--text-secondary, #6b6b6b);
+}
+
+.upgrade-pick-row-price {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 1px;
+}
+.upgrade-pick-row-amount {
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: var(--text-primary, #3d3d3d);
+  font-variant-numeric: tabular-nums;
+}
+.upgrade-pick-row-cadence {
+  font-size: 10px;
+  color: var(--text-muted, #999);
+  white-space: nowrap;
+}
+@keyframes upgrade-pick-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
 
 /* ── The single CTA ───────────────────────────────────────────────────── */
 .upgrade-cta {
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 9px;
-  padding: 15px 18px;
+  width: 100%;
+  padding: 14px 16px;
   border: none;
-  border-radius: 14px;
-  font-size: 15.5px;
+  border-radius: 13px;
+  background: var(--upgrade-accent);
+  color: var(--upgrade-accent-ink);
+  font-size: 15px;
   font-weight: 700;
-  color: #fff;
+  letter-spacing: -0.005em;
   cursor: pointer;
-  background: linear-gradient(135deg, var(--upgrade-cta-from), var(--upgrade-cta-to));
-  box-shadow: 0 8px 20px rgba(210, 67, 47, 0.35);
-  transition: transform 0.12s ease, box-shadow 0.15s ease, filter 0.15s ease;
+  transition: background 0.15s ease;
 }
-.upgrade-cta:hover {
-  transform: translateY(-1px);
-  filter: brightness(1.05);
-  box-shadow: 0 12px 26px rgba(210, 67, 47, 0.42);
-}
-.upgrade-cta:active { transform: translateY(0); }
-.upgrade-cta:disabled { opacity: 0.6; cursor: default; transform: none; box-shadow: none; }
+.upgrade-cta:hover { background: var(--upgrade-accent-hover); }
+.upgrade-cta:disabled { opacity: 0.5; cursor: default; }
 .upgrade-cta-lock { display: inline-flex; }
-.upgrade-cta-lock svg { width: 16px; height: 16px; }
-.upgrade-cta-arrow { font-size: 16px; line-height: 1; }
+.upgrade-cta-lock svg { width: 15px; height: 15px; }
+.upgrade-cta-arrow { font-size: 15px; line-height: 1; }
+
+/* Sits under the button, as on a pricing page — it reassures after the ask
+   rather than hedging before it. */
+.upgrade-fineprint {
+  margin: 8px 0 0;
+  font-size: 11px;
+  color: var(--text-muted, #999);
+}
 
 .upgrade-or {
   display: flex;
@@ -472,66 +506,54 @@
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-/* Dark mode */
+/* ── Dark mode ────────────────────────────────────────────────────────────
+   Most of this is now a token swap: the accent becomes the lavender one and
+   the hairline/surface invert. Only the ink colours need restating. */
 body.dark-mode .upgrade-modal {
-  background: var(--dark-bg-elevated, #262626);
-  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
+  /* Dark mode takes the reference's approach instead: a light button with dark
+     ink. White on lavender was 3.3:1; this is ~7:1 and reads as the one bright
+     element on the surface. */
+  --upgrade-accent: #b8a5d4;
+  --upgrade-accent-hover: #c7b7de;
+  --upgrade-accent-ink: #241f2e;
+  --upgrade-hairline: rgba(255, 255, 255, 0.11);
+  --upgrade-surface: rgba(255, 255, 255, 0.045);
+  background: var(--dark-bg-primary, #242424);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.1));
 }
 body.dark-mode .upgrade-title { color: #f5f5f5; }
 body.dark-mode .upgrade-body { color: #c8c8c8; }
 body.dark-mode .upgrade-close:hover { background: rgba(255, 255, 255, 0.08); color: #f5f5f5; }
-body.dark-mode .upgrade-footer { border-top-color: var(--dark-border, rgba(255, 255, 255, 0.1)); }
-body.dark-mode .upgrade-scroll { scrollbar-color: rgba(184, 165, 212, 0.45) transparent; }
-body.dark-mode .upgrade-scroll::-webkit-scrollbar-thumb { background-color: rgba(184, 165, 212, 0.45); }
+body.dark-mode .upgrade-footer { border-top-color: var(--upgrade-hairline); }
+body.dark-mode .upgrade-scroll { scrollbar-color: rgba(255, 255, 255, 0.25) transparent; }
+body.dark-mode .upgrade-scroll::-webkit-scrollbar-thumb { background-color: rgba(255, 255, 255, 0.25); }
 
-body.dark-mode .upgrade-context,
-body.dark-mode .upgrade-price {
-  background: var(--dark-bg-secondary, #2f2f2f);
-  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
-}
+body.dark-mode .upgrade-context-topic,
+body.dark-mode .upgrade-stat-num,
+body.dark-mode .upgrade-pro-title,
+body.dark-mode .upgrade-pick-name,
+body.dark-mode .upgrade-pick-amount,
+body.dark-mode .upgrade-pick-row-amount { color: #f5f5f5; }
+
+body.dark-mode .upgrade-outcome-title { color: #e8e8e8; }
 body.dark-mode .upgrade-context-icon,
 body.dark-mode .upgrade-outcome-icon,
-body.dark-mode .upgrade-stat-icon {
-  background: rgba(184, 165, 212, 0.18);
-  color: var(--dark-accent-light, #d4c8e8);
-}
-body.dark-mode .upgrade-context-topic { color: var(--dark-accent-light, #d4c8e8); }
-body.dark-mode .upgrade-stat { color: #c8c8c8; }
-body.dark-mode .upgrade-stat-num { background: rgba(126, 190, 150, 0.22); color: #9fd4b4; }
+body.dark-mode .upgrade-outcome-sub,
+body.dark-mode .upgrade-context-label,
+body.dark-mode .upgrade-stat,
+body.dark-mode .upgrade-pick-label,
+body.dark-mode .upgrade-pick-tag,
+body.dark-mode .upgrade-pick-meta,
+body.dark-mode .upgrade-pick-row-cadence,
+body.dark-mode .upgrade-pick-row-sub,
+body.dark-mode .upgrade-fineprint { color: #9a9a9a; }
 
-body.dark-mode .upgrade-pro {
-  background: var(--dark-bg-secondary, #2f2f2f);
-  border-color: rgba(184, 165, 212, 0.4);
-}
-body.dark-mode .upgrade-pro-badge {
-  background: linear-gradient(135deg, var(--dark-accent, #b8a5d4), var(--dark-accent-hover, #a894c9));
-}
-body.dark-mode .upgrade-pro-trophy { color: var(--dark-accent, #b8a5d4); }
-body.dark-mode .upgrade-pro-title { color: #f5f5f5; }
-body.dark-mode .upgrade-outcome-title { color: #e8e8e8; }
-body.dark-mode .upgrade-outcome-sub { color: #999; }
+body.dark-mode .upgrade-pick-row:hover { border-color: rgba(255, 255, 255, 0.28); }
 
-body.dark-mode .upgrade-price-amount { color: #f5f5f5; }
-body.dark-mode .upgrade-price-swap {
-  background: rgba(255, 255, 255, 0.06);
-  border-color: rgba(184, 165, 212, 0.4);
-  color: var(--dark-accent-light, #d4c8e8);
-}
-body.dark-mode .upgrade-price-swap.is-on { background: rgba(184, 165, 212, 0.2); }
-
-body.dark-mode .upgrade-modal {
-  /* Dark mode's accent is lavender, not coral — the CTA follows it so the
-     modal doesn't look like a different product with the lights off. */
-  --upgrade-cta-from: #b8a5d4;
-  --upgrade-cta-to: #9d86c4;
-}
-body.dark-mode .upgrade-cta {
-  box-shadow: 0 8px 20px rgba(140, 120, 180, 0.35);
-  color: #1f1b24;
-}
 body.dark-mode .upgrade-or::before,
-body.dark-mode .upgrade-or::after { background: var(--dark-border, rgba(255, 255, 255, 0.1)); }
+body.dark-mode .upgrade-or::after { background: var(--upgrade-hairline); }
 
+/* Pro-user branch (manage subscription) keeps its own lavender treatment. */
 body.dark-mode .upgrade-plan {
   background: var(--dark-bg-secondary, #2f2f2f);
   border-color: var(--dark-border, rgba(255, 255, 255, 0.1));
@@ -539,7 +561,7 @@ body.dark-mode .upgrade-plan {
 body.dark-mode .upgrade-plan:hover { border-color: var(--dark-accent, #b8a5d4); }
 body.dark-mode .upgrade-plan.is-recommended {
   border-color: var(--dark-accent, #b8a5d4);
-  background: linear-gradient(180deg, rgba(184, 165, 212, 0.15), var(--dark-bg-secondary, #2f2f2f));
+  background: rgba(184, 165, 212, 0.12);
 }
 body.dark-mode .upgrade-plan-name { color: #c8c8c8; }
 body.dark-mode .upgrade-plan-sub { color: var(--dark-accent-light, #d4c8e8); }
@@ -574,10 +596,8 @@ body.dark-mode .upgrade-plan-sub { color: var(--dark-accent-light, #d4c8e8); }
   .upgrade-stat-icon { width: 21px; height: 21px; }
   .upgrade-stat-icon svg { width: 12px; height: 12px; }
 
-  .upgrade-pro { margin-bottom: 10px; padding: 10px 11px 9px; }
-  .upgrade-pro-title { margin: 6px 0 9px; font-size: 15.5px; }
-  .upgrade-pro-trophy { width: 28px; height: 28px; }
-  .upgrade-pro-trophy svg { width: 22px; height: 22px; }
+  .upgrade-pro { margin-bottom: 12px; padding: 11px 0 12px; }
+  .upgrade-pro-title { margin: 0 0 10px; font-size: 14.5px; }
 
   .upgrade-outcomes { grid-template-columns: 1fr; gap: 8px; }
   .upgrade-outcome { gap: 7px; }
@@ -587,10 +607,11 @@ body.dark-mode .upgrade-plan-sub { color: var(--dark-accent-light, #d4c8e8); }
   .upgrade-outcome-sub { font-size: 10.5px; line-height: 1.25; }
 
   /* Stays a row: stacking it costs ~40px and the two halves do fit at 320px. */
-  .upgrade-price { padding: 10px 12px; }
-  .upgrade-price-amount { font-size: 23px; }
-  .upgrade-price-sub { font-size: 11px; }
-  .upgrade-price-swap { padding: 6px 8px; font-size: 11px; }
+  .upgrade-pick-lead { padding: 11px 12px; }
+  .upgrade-pick-amount { font-size: 23px; }
+  .upgrade-pick-name { font-size: 14px; }
+  .upgrade-pick-row { padding: 9px 12px; }
+  .upgrade-fineprint { font-size: 10.5px; }
 
   .upgrade-footer { padding-top: 10px; }
   .upgrade-cta { padding: 13px 14px; font-size: 15px; }
@@ -606,12 +627,13 @@ body.dark-mode .upgrade-plan-sub { color: var(--dark-accent-light, #d4c8e8); }
   .upgrade-overlay { padding: 8px; }
   .upgrade-modal { max-height: 96vh; }
   .upgrade-outcomes { gap: 8px 10px; }
-  .upgrade-pro-title { margin: 6px 0 9px; }
+  .upgrade-pro-title { margin: 0 0 10px; }
   .upgrade-head { margin-bottom: 10px; }
   .upgrade-stats { margin-bottom: 10px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .upgrade-overlay, .upgrade-modal { animation: none; }
-  .upgrade-cta:hover, .upgrade-price-swap:hover, .upgrade-plan:hover { transform: none; }
+  .upgrade-cta:hover, .upgrade-plan:hover { transform: none; }
+  .upgrade-pick-more { animation: none; }
 }

@@ -14913,6 +14913,31 @@ body.dark-mode .nt3-note {
   display: none;
 }
 
+/* Case studies need a wider card than anything else in the plan.
+   `.case-split-layout` is a two-column grid (patient chart | ordering), and the
+   focused card is capped at 700px — which leaves each column about 330px, so
+   every drag item wraps to four lines and the question scrolls out of view.
+   The chat surface already solves this with `.focused-quiz.has-case`
+   (CaseStudyQuestion.css); study mode never matched because its card is not
+   inside `.focused-quiz`. `:has()` is used rather than a new class because the
+   question type lives in StudyExamCard's own state — the container above it
+   has no idea a case study is being rendered. Same selector style as
+   ChatInterface.css, which already relies on `:has()`. */
+.study-mode-focused .study-content-centered:has(.case-study-container) {
+  max-width: 1400px;
+}
+
+/* Below roughly 1100px the two columns are too narrow to be worth keeping,
+   so the chart stacks above the answer. Mirrors the collapse the chat surface
+   does at its own breakpoint. Height goes auto because a fixed-height grid
+   that now stacks would clip the second row. */
+@media (max-width: 1100px) {
+  .study-mode-focused .study-exam-card .case-study-container .case-split-layout {
+    grid-template-columns: minmax(0, 1fr);
+    height: auto;
+  }
+}
+
 /* Quiz card: keeps the format badge (its header just says "Quick
    Check"), but the counter and progress bar are duplicates. */
 .study-step-card:not(.study-exam-card) .sata-title,
@@ -14926,4 +14951,28 @@ body.dark-mode .nt3-note {
 .study-step-card:not(.study-exam-card) .case-study-title-row {
   justify-content: flex-start;
   margin-bottom: 0;
+}
+
+
+/* ── Paper genie (see ChatInerface/paperTransition.css) ────────────────────
+   The node view unfolds out of the tapped step. The card's own slide-in was
+   built for a plain view swap; running both reads as two separate animations
+   fighting, so the card holds still while the sheet opens. */
+.study-mode-container.paper-sheet.is-opening .study-step-card,
+.study-mode-container.paper-sheet.is-folding .study-step-card { animation: none; }
+.study-mode-container.paper-sheet.is-folding { overflow: clip; }
+
+/* Skeleton tint for the shared shimmer inside study surfaces. */
+.study-mode-container { --paper-skeleton-bg: rgba(232, 141, 125, 0.13); }
+body.dark-mode .study-mode-container { --paper-skeleton-bg: rgba(255, 255, 255, 0.08); }
+
+/* The question-shaped wait. Sized to the card it stands in for so the real
+   content lands where the skeleton already was. */
+.study-loading-premium__preview { width: 100%; max-width: 520px; margin: 18px auto 4px; }
+.study-loading-premium__preview .paper-skeleton { margin: 10px 0; }
+.study-loading-premium__preview .paper-skeleton.title { height: 40px; margin: 16px 0; }
+.study-loading-premium__preview .paper-skeleton.option { height: 44px; }
+@media (max-width: 640px) {
+  .study-loading-premium__preview .paper-skeleton.title { height: 34px; }
+  .study-loading-premium__preview .paper-skeleton.option { height: 38px; }
 }

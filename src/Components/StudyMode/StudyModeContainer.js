@@ -19,6 +19,9 @@ import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import ExamConfigModal from './ExamConfigModal';
 import { getStepTopicLabel } from './planFormatting';
+import { usePaperTransition } from '../ChatInerface/paperTransition';
+import PaperSurface from '../ChatInerface/PaperSurface';
+import '../ChatInerface/paperTransition.css';
 import { computeReadinessDelta } from './readinessDelta';
 import DevPaywallPill from '../Common/DevPaywallPill';
 import { markMessageEngaged } from '../../Services/FireBaseServiceChats';
@@ -58,6 +61,11 @@ const isDev = process.env.NODE_ENV === 'development';
 const QUIZ_QUESTIONS = 5;
 const FLASHCARD_CARDS = 5;
 const DIAGNOSTIC_QUESTIONS = 3;
+
+/* How recently a tap must have happened for the node view to unfold out of it.
+   Long enough to cover a tap that kicks off an async start, short enough that a
+   launch nobody just asked for doesn't inherit a stale rectangle. */
+const TAP_ORIGIN_MAX_AGE_MS = 1500;
 
 /* Readiness maths lives in readinessDelta.js, tested.
 
@@ -126,6 +134,40 @@ const StudyModeContainer = ({
   // after advancing, before React has re-rendered.
   const nodesRef = useRef([]);
   nodesRef.current = nodes;
+  /* Where the node view should unfold from.
+     handleStartNode has a dozen call sites and only some are taps — auto-start,
+     inserted recommendation nodes, retry and the exam config modal all launch
+     with no DOM element to measure. Rather than thread an origin through every
+     one, the last tapped control is captured here and read at launch. The
+     freshness window is what keeps it honest: a programmatic start that follows
+     no recent tap gets no origin and falls back to a centred sheet. */
+  const tapOriginRef = useRef(null);
+  const [launchOrigin, setLaunchOrigin] = useState(null);
+  useEffect(() => {
+    const remember = event => {
+      const control = event.target?.closest?.('button, [role="button"], a');
+      if (!control) return;
+      const rect = control.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0) tapOriginRef.current = { at: Date.now(),
+        rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height } };
+    };
+    document.addEventListener('pointerdown', remember, true);
+    return () => document.removeEventListener('pointerdown', remember, true);
+  }, []);
+  const takeLaunchOrigin = useCallback(() => {
+    const tap = tapOriginRef.current;
+    tapOriginRef.current = null;
+    setLaunchOrigin(tap && Date.now() - tap.at < TAP_ORIGIN_MAX_AGE_MS ? tap.rect : null);
+  }, []);
+  /* The node view unfolds out of the tapped step and folds back into it — the
+     same paper genie chat uses, so a step opened from the plan and a quiz opened
+     from a message behave identically. Only the deliberate exit folds: the
+     completion paths hand off to the celebration and readout, which have their
+     own choreography to run. */
+  const exitNodeRef = useRef(null);
+  const paper = usePaperTransition({ visible: view === 'node', origin: launchOrigin,
+    onClosed: () => exitNodeRef.current?.() });
+
   const [activeNodeId, setActiveNodeId] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
   const [currentContent, setCurrentContent] = useState(null);
@@ -282,6 +324,7 @@ const StudyModeContainer = ({
   // launched). Callers outside the overview MUST handle both — otherwise the
   // user is left staring at the screen they clicked from with no reaction.
   const handleStartNode = useCallback(async (node) => {
+    takeLaunchOrigin();
     console.log('📚 Starting node:', node);
     console.log('📬 Node messageId:', node.messageId || 'NONE - will generate new content');
 
@@ -567,7 +610,11 @@ const StudyModeContainer = ({
         askedHashes,
         language,
         handleStreamProgress,
-        { isDiagnostic, numQuestions: node.num_questions || null }
+        {
+          isDiagnostic,
+          numQuestions: node.num_questions || null,
+          difficulty: node.difficulty || 1,
+        }
       );
 
       // Guard against null result (e.g. stream closed without sending 'complete')
@@ -668,7 +715,7 @@ const StudyModeContainer = ({
     } finally {
       setIsLoadingContent(false);
     }
-  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t, requireQuota, consumeGeneration]);
+  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t, requireQuota, consumeGeneration, takeLaunchOrigin]);
 
   // Auto-launch the first node if requested
   const hasAutoStartedNodeRef = useRef(false);
@@ -1392,7 +1439,11 @@ const StudyModeContainer = ({
         examConfig.questionTypes,
         examConfig.questionCount,
         examConfig.customInstructions,
-        language
+        language,
+        // The planner already set this node's difficulty, so the mini-test
+        // config modal does not ask the student for it. It sets how much of
+        // the exam is applied rather than plain recall.
+        { difficulty: examNode.difficulty || 2, quizMode: 'applied' }
       );
 
       if (!result?.questions?.length) {
@@ -1591,8 +1642,8 @@ const StudyModeContainer = ({
   }, [nodes, handleStartNode, handlePracticeWeakArea]);
 
   // Handle exit from node view - go back to overview
-  const handleExitNode = useCallback(() => {
-    console.log('📚 Exiting node, returning to overview');
+  const returnToOverview = useCallback(() => {
+    devLog('📚 Exiting node, returning to overview');
     setCurrentContent(null);
     setView('overview');
     setMascotState({
@@ -1602,6 +1653,10 @@ const StudyModeContainer = ({
       lookDirection: 'center'
     });
   }, []);
+  exitNodeRef.current = returnToOverview;
+  // Fold the sheet, then return. usePaperTransition calls back exactly once —
+  // including under reduced motion, where it returns immediately.
+  const handleExitNode = useCallback(() => { paper.close(); }, [paper]);
 
   // Handle exit from overview or transition - leave study mode entirely
   const handleExitStudy = useCallback(() => {
@@ -1927,13 +1982,15 @@ const StudyModeContainer = ({
 
   // Render node content view
   return (
-    <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+    <div ref={paper.ref} onAnimationEnd={paper.handleAnimationEnd} data-paper={paper.mode}
+      className={`study-mode-container study-mode-focused paper-sheet ${paper.className} ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+      <PaperSurface mode={paper.mode} />
       <StudyModeHeader
         unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
         unitSubtitle={studyState?.path?.unitSubtitle || ''}
       />
 
-      <div className="study-main-content">
+      <div className="study-main-content paper-page">
         {/* Centered content - no path view, just the current step */}
         <div className="study-focused-layout">
           <div className="study-content-centered">
