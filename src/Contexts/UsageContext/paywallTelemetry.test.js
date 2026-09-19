@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '../../i18n/i18n';
 import { UsageProvider, useUsageLimit } from './UsageContext';
+import { FREE_LIMIT } from '../../Services/UsageService';
 
 /**
  * Paywall view counter.
@@ -18,7 +19,10 @@ import { UsageProvider, useUsageLimit } from './UsageContext';
  */
 
 let mockTier = 'free';
-let mockUsed = 12;
+const DEFAULT_USED = 12;
+// Derived, not hard-coded: the free limit is a pricing lever and moves.
+const BUDGET_LEFT = FREE_LIMIT - DEFAULT_USED;
+let mockUsed = DEFAULT_USED;
 let mockPlansUsed = 1;
 
 jest.mock('../AuthContext/AuthContext', () => ({
@@ -67,7 +71,7 @@ const setup = async (expected) => {
 const views = () => rows.filter(r => r.step === 'paywall_viewed');
 
 describe('paywall view counter', () => {
-  beforeEach(() => { mockTier = 'free'; mockUsed = 12; mockPlansUsed = 1; });
+  beforeEach(() => { mockTier = 'free'; mockUsed = DEFAULT_USED; mockPlansUsed = 1; });
 
   it('records a view when the question throttle blocks', async () => {
     mockUsed = 9999; // out of budget
@@ -79,7 +83,7 @@ describe('paywall view counter', () => {
 
   it('records a view when the plan quota blocks', async () => {
     mockPlansUsed = 99;
-    await setup('free:58:0');
+    await setup(`free:${BUDGET_LEFT}:0`);
     fireEvent.click(screen.getByText('plan'));
     await waitFor(() => expect(views()).toHaveLength(1));
     expect(views()[0]).toMatchObject({ trigger: 'plan_quota', reason: 'plans' });
@@ -90,7 +94,7 @@ describe('paywall view counter', () => {
       // Both call openUpgrade(null, …). Before `trigger` existed these were
       // indistinguishable, so any conversion rate mixed a hard block with
       // someone volunteering to buy.
-      await setup('free:58:2');
+      await setup(`free:${BUDGET_LEFT}:2`);
       fireEvent.click(screen.getByText('upload'));
       await waitFor(() => expect(views()).toHaveLength(1));
       expect(views()[0].trigger).toBe('upload_gate');
@@ -98,7 +102,7 @@ describe('paywall view counter', () => {
 
     it('marks a voluntary open as not blocked', async () => {
       mockUsed = 12; // plenty of budget left
-      await setup('free:58:2');
+      await setup(`free:${BUDGET_LEFT}:2`);
       fireEvent.click(screen.getByText('menu'));
       await waitFor(() => expect(views()).toHaveLength(1));
       expect(views()[0].trigger).toBe('account_menu');

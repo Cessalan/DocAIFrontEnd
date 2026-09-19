@@ -637,3 +637,16 @@ body.dark-mode .upgrade-plan-sub { color: var(--dark-accent-light, #d4c8e8); }
   .upgrade-cta:hover, .upgrade-plan:hover { transform: none; }
   .upgrade-pick-more { animation: none; }
 }
+
+/* ── Already Pro (2026-09-16) ─────────────────────────────────────────
+   The journey first, the account second. */
+.upgrade-pro-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.upgrade-pro-actions .upgrade-manage {
+  width: 100%;
+}

@@ -749,6 +749,11 @@ const getchatDate = (timestamp) => {
             )}
           </div>
         )}
+        {isDevelopment && (
+          <div className="nav-item" onClick={() => navigate('/admin/paywall')}>
+            💳 Paywall (Dev)
+          </div>
+        )}
         <AccountRow
           user={{
             uid: user?.uid,

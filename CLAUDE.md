@@ -27,6 +27,8 @@ Single test file (Jest via react-scripts). In PowerShell set `$env:CI="true"` fi
 
 Deploy is Firebase Hosting to project `docai-efb03`: `firebase deploy --only hosting` (and `--only firestore:rules` for `firestore.rules`).
 
+**Deploy order across the two repos matters.** A frontend change that calls a *new* backend route ships the backend first — on 2026-09-11 the reverse produced 176 `404 Not Found` failures from `/study/course-intelligence` in one day, every one falling back to the old flow. A change that *tightens* a shared limit ships the frontend first, or students between the old and new limit get server errors instead of the upgrade modal.
+
 ### Verifying large files
 
 `ChatInterface.js` (~5.7k lines) and `StudyModeContainer.js` (~2.1k) are too big for a full build to be a fast feedback loop. Syntax-check them directly instead:
@@ -65,7 +67,7 @@ Messages are discriminated by `type`: `text`, `quiz`, `flashcard`, `mindmap`, `s
 
 ### Monetization gate
 
-[UsageService.js](src/Services/UsageService.js) + [UsageContext.js](src/Contexts/UsageContext/UsageContext.js) implement a rolling-window throttle: `FREE_LIMIT = 70` **questions** per 7 days for free users, unlimited for `usage.tier === 'pro'`. The unit is items generated, not calls — derive it with `generationUnits(payload)`.
+[UsageService.js](src/Services/UsageService.js) + [UsageContext.js](src/Contexts/UsageContext/UsageContext.js) implement a rolling-window throttle: `FREE_LIMIT = 40` **questions** per 7 days (lowered from 70 on 2026-09-16) for free users, unlimited for `usage.tier === 'pro'`. The unit is items generated, not calls — derive it with `generationUnits(payload)`.
 
 The gate pattern at every generation site is:
 
@@ -77,7 +79,7 @@ await consumeGeneration(units);
 
 `UsageProvider` renders `<UpgradeModal>` itself, so any component in the tree can raise the paywall. In a dev build, `localStorage.nqDevFreeLimit = 3` fakes a small cap.
 
-This is a **client-side gate only** and is bypassable; real enforcement has to live in NQBackEnd2. A second, mostly-superseded meter tracks study plans per 30 days.
+The client gate alone is bypassable, so NQBackEnd2's `services/usage_guard.py` re-checks the same Firestore state server-side on the main generation paths (and fails open on its own read errors). Its `FREE_LIMIT` must match this file's. A second, mostly-superseded meter tracks study plans per 30 days.
 
 ### Outbound email (backend only)
 
@@ -147,6 +149,16 @@ the `plan_onboarding` chat message:
   which is what stops a plan following the order of the uploaded PowerPoint.
   `_order_units_by_priority` applies it, and only when there is no diagnostic —
   a measured gap outranks a predicted one.
+- **The check inside the brief is the readiness check** (2026-09-16): up to 8
+  questions generated with the investigation by
+  `NQBackEnd2/services/course_question_preview.py`, in a fixed mix of applied,
+  select-all, prioritization and case-study questions, each quoting her upload.
+  The opener is always a single-answer question on the passage animated on
+  screen. Citations the model copies imperfectly are repaired only from the
+  source text (`_resolve_quote`), never trusted. `CourseStudyBrief` grades
+  select-all as all-or-nothing but records `partial`, writes each answer's
+  `format` to study performance, and charges the answers to the question meter
+  without ever gating on it.
 - If any of this fails, `PlanOnboarding` falls back to the previous flow
   (`insights → first lesson → quick check → exam date`) intact, including the
   derived diagnostic. That fallback is covered by most of `PlanOnboarding.test.js`.
@@ -176,6 +188,8 @@ Changing either side alone will break the UI in ways tests won't catch:
 - `PLAN_BUDGETS` / `TIER_UNITS` / `SPRINT_MAX_DAYS` / `FOCUS_MAX_DAYS` / `GAP_MAX_PCT` / `SOLID_MIN_PCT` in `StudyMode/planPreviewModel.js` mirror the same names in `NQBackEnd2/main.py` (`_plan_archetype`, `_apply_budget`, `_weight_path_by_diagnostic`, `_tier_for_score`). This is the worst drift in the list: the model computes the **locked plan preview shown just before the paywall**, so a mismatch quotes a student "14 study sessions", takes her money, and delivers 8.
 - `PRIORITY_WEIGHTS` and the `CONFIDENCE` values in `CourseIntelligence/courseIntelligenceModel.js` mirror the same names in `NQBackEnd2/services/course_intelligence.py`. The weights decide which topic the report names as the starting point; if the two sides disagree, the reveal promises one topic and the plan opens on another. A confidence value defined on one side only renders as an unstyled badge.
 - The course-intelligence SSE heartbeat: `COURSE_INTELLIGENCE_HEARTBEAT_S` in `NQBackEnd2/main.py` (10s) against `CI_STALL_MS` in `Services/CourseIntelligenceService.js` (45s). Three web searches run concurrently server-side and can be silent for 30s, so the heartbeat is the only thing distinguishing a slow search from a dead backend. Same class of contract as the upload stream above.
+- The readiness-check question shape: `READINESS_QUESTIONS`, `KIND_FORMAT` and the select-all key rules (`SATA_OPTIONS`, 2–4 `correctIndices`) in `NQBackEnd2/services/course_question_preview.py` against `READINESS_QUESTION_CAP`, `CHECK_FORMATS` and `hasValidShape` in `CourseIntelligence/courseCalibrationModel.js`. A format the frontend doesn't know is dropped, not rendered. **Ship the frontend first** when this shape changes: an older frontend shows a case study without its scenario and discards every select-all item.
+- `FREE_LIMIT` / `WINDOW_MS` in `Services/UsageService.js` mirror the same names in `NQBackEnd2/services/usage_guard.py`, which re-checks the quota server-side (`check_quota` in `main.py`, unit reservation in `practice_api.py`). If they drift, the UI and the server disagree about when a student is out of questions. The public SEO pages (`public/free-ai-for-nursing-students.html`, `public/nclex-question-generator.html`) also state the number in body copy and FAQ structured data.
 - Stripe prices in `src/config/billing.js` are **display only**; the authoritative price is in Stripe. `usage.tier` is flipped exclusively by the backend webhook.
 - `NODE_MINUTES` (and its `|| 4` fallback) in `StudyMode/planFormatting.js` mirrors `NODE_MINUTES` / `NODE_MINUTES_DEFAULT` in `NQBackEnd2/services/email_campaigns.py`. The email promises "about 4 minutes" for the first step; if the tables drift, the product contradicts that number on the first screen she lands on. `tests/test_email_campaigns.py` reads the real `planFormatting.js` and fails on drift, so this one is actually enforced — as long as the frontend file stays on the same machine.
 - `isRealNode` in `StudyMode/firstBlock.js` (`type !== 'section_banner'`) mirrors `NON_STEP_NODE_TYPES` in `email_campaigns.py`. Step counts quoted in email come from it. The email side originally filtered `"banner"` — a type the planner never emits — so every section header counted as a step and the mail overstated the work to exactly the students who had not started because it looked long.

@@ -10,7 +10,7 @@ jest.mock('../../Services/FastAPICalls', () => ({
   plan_diagnostic_quiz: jest.fn().mockResolvedValue({ questions: [] }),
 }));
 
-jest.mock('../../Services/StudySessionService', () => ({ updateStudyPerformance: jest.fn().mockResolvedValue({}) }));
+jest.mock('../../Services/StudySessionService', () => ({ updateStudyPerformance: jest.fn().mockResolvedValue({}), saveQuickCheckRecord: jest.fn().mockResolvedValue('check') }));
 
 jest.mock('../../Services/FunnelService', () => ({
   FUNNEL: {
@@ -172,7 +172,7 @@ describe('PlanOnboarding', () => {
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
-  it('goes from answers directly to the recommendation and date, then builds with that date', async () => {
+  it('shows findings after answers, then continues to the date and builds with that date', async () => {
     let emit;
     run_course_intelligence.mockImplementation(({ onEvent }) => {
       emit = onEvent;
@@ -190,6 +190,9 @@ describe('PlanOnboarding', () => {
     fireEvent.click(screen.getByRole('button', { name: /Next question/ }));
     fireEvent.click(screen.getByRole('button', { name: 'A A' }));
     fireEvent.click(screen.getByRole('button', { name: /See my starting point/ }));
+    expect(screen.getByRole('heading', { name: 'What your quick check showed' })).toBeInTheDocument();
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Continue to my plan/ }));
     expect(screen.getByRole('heading', { name: /We analyzed your answers\. Let’s start with/ })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /Web sources/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Build my study plan/ })).toBeNull();

@@ -127,7 +127,7 @@ import { coerceDate, calendarDaysBetween } from '../StudyMode/studySchedule';
 // StudyModeContainer is lazy-loaded — see the code-splitting block below the imports.
 
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
-import { FUNNEL, startFunnel, logFunnelStep } from '../../Services/FunnelService';
+import { FUNNEL, startFunnel, logFunnelStep, logFunnelStepOnce, getFunnelId } from '../../Services/FunnelService';
 import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
 import DrillExamDate from '../ExamDrill/DrillExamDate';
@@ -446,6 +446,9 @@ const ChatInterface = ({
   // Both ride through to /study/start: the report gives the planner its topic
   // ORDER, which is the thing that stops a plan following her slide deck.
   const [pendingCourseIntelligence, setPendingCourseIntelligence] = useState(null);
+  // The readiness check's answers for the plan being launched, so a blocked
+  // student's locked preview can show her verdict. { answers, funnelId } | null.
+  const [pendingReadiness, setPendingReadiness] = useState(null);
   const [pendingCourseContext, setPendingCourseContext] = useState(null);
 
   // Pre-upload action selection (when user picks action before uploading)
@@ -2990,6 +2993,9 @@ const ChatInterface = ({
           filenames: files.map(f => f.name),
           fileCount: files.length,
           actions: [],
+          // startFunnel ran above; the card carries the id so the readiness
+          // check reports into this upload even after a reload.
+          funnelId: getFunnelId(),
           // The timeline's "reading your materials" step stays running until
           // this flips, and the intelligence run is held until then too.
           materialsReady: false,
@@ -3434,6 +3440,16 @@ const ChatInterface = ({
       case 'post_upload_message':
         devLog('📬 Post-upload message received:', update);
 
+        // Every branch below is a finished upload — drill, study plan,
+        // pre-selected action, first-upload card, plain attach. This used to be
+        // logged inside the study-plan branch only, so roughly half of all
+        // uploads read as abandoned in the funnel when they were not. Once per
+        // funnel, because a completion counted twice inflates every rate below.
+        logFunnelStepOnce(FUNNEL.UPLOAD_COMPLETED, {
+          topicsFound: (update.topics || []).length,
+          fileCount: update.file_count || (update.filenames || []).length || 0,
+        });
+
         // Exam Drill entry. Checked BEFORE the study-journey branch because
         // the drill is a different destination entirely: no plan, no
         // onboarding card, straight into being examined on what was just
@@ -3505,17 +3521,14 @@ const ChatInterface = ({
             filenames: update.filenames || [],
             fileCount: update.file_count || (update.filenames || []).length || 0,
             actions: update.actions || [],
+            // Persisted with the card (AppendToChat below) — see the early card.
+            funnelId: getFunnelId(),
             // Her documents are in the session now, so the investigation can
             // read them. This is the flag the intelligence run waits on.
             materialsReady: true,
             timestamp: Date.now()
           };
           planOnboardingIdRef.current = null;
-
-          logFunnelStep(FUNNEL.UPLOAD_COMPLETED, {
-            topicsFound: (update.topics || []).length,
-            fileCount: update.file_count || (update.filenames || []).length || 0,
-          });
 
           // Idempotent add: if the Firestore listener already inserted this id
           // (race: addDoc cache-write fires onSnapshot before our setState commits),
@@ -4192,6 +4205,7 @@ const ChatInterface = ({
     // set() ordering of her upload's topics, which is the order of her slide
     // deck. Null is a supported input and reproduces the old behaviour.
     setPendingCourseIntelligence(extras.courseIntelligence || null);
+    setPendingReadiness(extras.readiness || null);
     if (extras.courseContext) setPendingCourseContext(extras.courseContext);
 
     // Persist the report beside the chat so a returning student's plan surface
@@ -5239,6 +5253,7 @@ const ChatInterface = ({
             setPendingStudyTopics([]);
             setPendingRankedTopics([]);
             setPendingStudyUserPreferences(null);
+            setPendingReadiness(null);
           }}
           onStart={(newStudyState) => {
             devLog('📚 Study session started:', newStudyState);
@@ -5250,6 +5265,7 @@ const ChatInterface = ({
             setPendingStudyTopics([]);
             setPendingRankedTopics([]);
             setPendingStudyUserPreferences(null);
+            setPendingReadiness(null);
           }}
           chatId={currentChatID}
           uploadedDocs={pendingStudyDocs}
@@ -5261,6 +5277,7 @@ const ChatInterface = ({
           diagnostic={studyDiagnostic}
           courseContext={pendingCourseContext}
           courseIntelligence={pendingCourseIntelligence}
+          readiness={pendingReadiness}
         />
 
         {/* Game Chat Empty State - Quiz data wasn't saved */}
@@ -5485,13 +5502,15 @@ const ChatInterface = ({
                         // means ready. Only the card created at upload start
                         // sets it false.
                         materialsReady={message.materialsReady !== false}
+                        funnelId={message.funnelId || null}
                         uploadFailed={Boolean(message.uploadFailed)}
                         savedCourseContext={pendingCourseContext}
                         onCourseContext={handleCourseContext}
-                        onConfirm={({ userPreferences, diagnostic, rankedTopics, courseContext, courseIntelligence }) =>
+                        onConfirm={({ userPreferences, diagnostic, rankedTopics, courseContext, courseIntelligence, readiness }) =>
                           handlePlanOnboardingConfirm(message, userPreferences, diagnostic, rankedTopics, {
                             courseContext,
                             courseIntelligence,
+                            readiness,
                           })
                         }
                       />

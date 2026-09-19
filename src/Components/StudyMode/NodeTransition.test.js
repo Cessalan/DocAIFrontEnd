@@ -76,14 +76,39 @@ const pattern = (evidenceCount) => ({
 describe('NodeTransition — the post-node readout', () => {
   beforeEach(() => jest.clearAllMocks());
 
-  test('the score is context for a sentence, not the headline', async () => {
+  test('zero recalled cards offers support and a guided lesson without a giant zero', async () => {
+    get_node_debrief.mockResolvedValue(noPattern(0));
+    const { onPracticeMore, container } = setup({
+      node: { id: 'cards-zero', type: 'flashcard', label: 'ABCDE' },
+      content: { cards: Array.from({ length: 5 }, () => ({ front: 'Airway', back: 'Review' })) },
+      flashcardProgress: { cardStatuses: { 0: 'need_review', 1: 'need_review', 2: 'need_review', 3: 'need_review', 4: 'need_review' } },
+    });
+    expect(screen.getByText('Let’s work through this together.')).toBeInTheDocument();
+    expect(screen.getByText('5 cards marked for review')).toBeInTheDocument();
+    expect(container.querySelector('.nt-result__number')).toBeNull();
+    fireEvent.click(screen.getByText('Start guided review →'));
+    expect(onPracticeMore).toHaveBeenCalledWith(expect.objectContaining({ type: 'lesson' }));
+  });
+
+  test('zero quiz score stays honest and prioritizes review over a pattern drill', async () => {
+    get_node_debrief.mockResolvedValue(pattern(3));
+    const { onPracticeMore } = setup({
+      quizProgress: { questionStatuses: { 0: 'incorrect', 1: 'incorrect', 2: 'incorrect', 3: 'incorrect', 4: 'incorrect' } },
+    });
+    await screen.findByText('I noticed something');
+    expect(screen.getByText('0 of 5 correct')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Start guided review →'));
+    expect(onPracticeMore).toHaveBeenCalledWith(expect.objectContaining({ type: 'lesson' }));
+  });
+
+  test('shows the first-attempt result beside a concise headline', async () => {
     get_node_debrief.mockResolvedValue(noPattern(0));
     setup();
 
     expect(await screen.findByText('One thing to firm up.')).toBeInTheDocument();
-    const score = document.querySelector('.nt2-score-line__score');
-    expect(score.textContent.replace(/\s+/g, ' ').trim()).toBe('4 / 5');
-    expect(screen.getByText("You're getting the hang of this.")).toBeInTheDocument();
+    const score = document.querySelector('.nt-result__score');
+    expect(score.textContent.replace(/\s+/g, ' ').trim()).toBe('4of 5 correct');
+    expect(screen.getByText('Nice work.')).toBeInTheDocument();
   });
 
   test('the takeaway is one labelled line, and it is the only insight shown', async () => {
@@ -122,7 +147,7 @@ describe('NodeTransition — the post-node readout', () => {
     get_node_debrief.mockResolvedValue(noPattern(2));
     setup();
 
-    await screen.findByText('Keep building →');
+    await screen.findByText('Continue with quick review →');
     // The skeleton is up until the debrief resolves — an insight that popped
     // in late would read as a guess, so the space is held while it loads.
     // What must not survive is the block once we know there is nothing in it.
@@ -164,7 +189,7 @@ describe('NodeTransition — the post-node readout', () => {
     get_node_debrief.mockResolvedValue(noPattern(0));
     const { onContinue, onPracticeMore } = setup();
 
-    fireEvent.click(await screen.findByText('Keep building →'));
+    fireEvent.click(await screen.findByText('Continue with quick review →'));
     expect(onContinue).toHaveBeenCalled();
     expect(onPracticeMore).not.toHaveBeenCalled();
   });
@@ -175,6 +200,7 @@ describe('NodeTransition — the post-node readout', () => {
 
     // Offered as a sentence rather than a bordered card, so it stops reading
     // as a rival to the primary button — but it still does the same thing.
+    await waitFor(() => expect(document.querySelector('.nt2-insight__skeleton')).toBeNull());
     fireEvent.click(await screen.findByText('Review · 4 min'));
     const node = onPracticeMore.mock.calls[0][0];
     expect(node.type).toBe('flashcard');
@@ -186,7 +212,7 @@ describe('NodeTransition — the post-node readout', () => {
     const { onContinue } = setup();
 
     await waitFor(() => expect(get_node_debrief).toHaveBeenCalled());
-    fireEvent.click(screen.getByText('Keep building →'));
+    fireEvent.click(screen.getByText('Continue with quick review →'));
     expect(onContinue).toHaveBeenCalled();
   });
 
@@ -194,7 +220,7 @@ describe('NodeTransition — the post-node readout', () => {
     get_node_debrief.mockResolvedValue(noPattern(0));
     setup();
 
-    await screen.findByText('Keep building →');
+    await screen.findByText('Continue with quick review →');
     expect(screen.queryByText('Solid session')).toBeNull();
     expect(screen.queryByText('Your next step is:')).toBeNull();
     expect(screen.queryByText('Your next recap is ready:')).toBeNull();

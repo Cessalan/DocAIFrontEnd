@@ -82,7 +82,7 @@ describe('simulateLimit (dev paywall preview)', () => {
     expect(screen.getByText(/Don't stop now/)).toBeInTheDocument();
     expect(screen.getByText('Continue studying with Pro')).toBeInTheDocument();
     // The real manage/cancel branch must not leak into the preview.
-    expect(screen.queryByText(/You're on Pro/)).toBeNull();
+    expect(screen.queryByText(/fully unlocked/)).toBeNull();
     expect(screen.queryByText('Manage subscription')).toBeNull();
   });
 

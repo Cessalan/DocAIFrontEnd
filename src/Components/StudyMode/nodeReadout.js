@@ -247,7 +247,7 @@ export const buildNodeReadout = ({
 
   let recommendation;
 
-  if (tone !== 'confirmed' && hasPattern && !isPatternEstablished(debrief) && canTestTheory) {
+  if (result?.scorePercent !== 0 && tone !== 'confirmed' && hasPattern && !isPatternEstablished(debrief) && canTestTheory) {
     /* The evidence clears the bar for a theory, not a verdict. One question she
        can win by reading differently proves it to her in a way no explanation
        does — and if she misses it, nothing was oversold. */
@@ -264,7 +264,7 @@ export const buildNodeReadout = ({
       node: null,
       testSkill: skill,
     };
-  } else if (tone !== 'confirmed' && hasPattern) {
+  } else if (result?.scorePercent !== 0 && tone !== 'confirmed' && hasPattern) {
     const drill = skillDrill(skill);
     recommendation = {
       kind: 'fix',

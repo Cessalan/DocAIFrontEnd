@@ -221,3 +221,122 @@ body.dark-mode .locked-plan__later:hover { color: #b8b8b8; }
   .locked-plan__cta { transition: none; }
   .locked-plan__cta:hover { transform: none; }
 }
+
+/* ── The verdict (2026-09-16) ─────────────────────────────────────────
+   The weakness is the headline of each row; the evidence sits under it in a
+   quieter voice; a plain severity label sits on the right. No rank numbers
+   (they read like a report) and no dots (they were not understood). */
+
+.locked-plan__basis {
+  margin: 6px 0 0;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.locked-plan__findings {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  border-top: 1px solid var(--glass-border);
+}
+
+.locked-plan__finding {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 2px;
+  border-bottom: 1px solid var(--glass-border);
+}
+
+.locked-plan__finding-body {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.locked-plan__finding-title {
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.35;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+
+.locked-plan__finding-evidence {
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.locked-plan__severity {
+  flex-shrink: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.locked-plan__severity.is-high { color: #c9543f; }
+.locked-plan__severity.is-needsWork { color: #b7791f; }
+.locked-plan__severity.is-early { color: var(--text-muted); font-weight: 500; }
+
+.locked-plan__strength {
+  margin: 0 0 14px;
+  font-size: 0.82rem;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
+.locked-plan__fix {
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-warm);
+  text-align: center;
+}
+
+.locked-plan__fix-label {
+  margin: 0 0 6px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--primary-coral);
+}
+
+.locked-plan__fix-copy {
+  margin: 0 0 8px;
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+
+.locked-plan__fix-meta {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.locked-plan__fix-meta strong { color: var(--text-primary); }
+
+.locked-plan__gate--verdict {
+  margin-top: 16px;
+  padding-top: 0;
+  border-top: 0;
+}
+
+body.dark-mode .locked-plan__basis,
+body.dark-mode .locked-plan__finding-evidence,
+body.dark-mode .locked-plan__severity.is-early { color: #8f8f8f; }
+body.dark-mode .locked-plan__findings,
+body.dark-mode .locked-plan__finding { border-color: var(--dark-border); }
+body.dark-mode .locked-plan__finding-title,
+body.dark-mode .locked-plan__fix-copy,
+body.dark-mode .locked-plan__fix-meta strong { color: #f0f0f0; }
+body.dark-mode .locked-plan__strength,
+body.dark-mode .locked-plan__fix-meta { color: #b0b0b0; }
+body.dark-mode .locked-plan__severity.is-high { color: #f08c78; }
+body.dark-mode .locked-plan__severity.is-needsWork { color: #e8b456; }
+body.dark-mode .locked-plan__fix { background: var(--dark-bg-tertiary, var(--dark-bg-secondary)); }
+body.dark-mode .locked-plan__fix-label { color: var(--dark-accent-light); }

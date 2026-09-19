@@ -3,7 +3,11 @@ export const FUNNEL = { REPORT_VIEWED: 'report_viewed', REVEAL_VIEWED: 'reveal_v
 export const logFunnelStep = () => {};
 export const logFunnelStepOnce = () => {};
 export const updateStudyPerformance = async () => {};
+export const saveQuickCheckRecord = async () => {};
+export const waitForQuickCheckSave = async () => {};
 export const plan_diagnostic_quiz = (_chat, _files, _language, _prefs, { signal } = {}) => new Promise((resolve, reject) => {
   const timer = setTimeout(() => resolve(studioQuestions), 800);
   signal?.addEventListener('abort', () => { clearTimeout(timer); reject(new DOMException('Aborted', 'AbortError')); }, { once: true });
 });
+export const logPaywall = () => {};
+export const useUsageLimit = () => ({ consume: async () => {} });

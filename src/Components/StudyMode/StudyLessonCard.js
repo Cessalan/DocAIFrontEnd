@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
+import { ReviewReason } from './TopicEvidence';
 import StudyCelebration from './StudyCelebration';
 import { playCelebrationSound, playCorrectSound } from '../../utils/soundEffects';
 
@@ -19,7 +20,7 @@ import { playCelebrationSound, playCorrectSound } from '../../utils/soundEffects
  * @param {Function} onContinue - Callback when user completes all pages
  * @param {Function} onExit - Callback to exit/close the card
  */
-const StudyLessonCard = ({ content, isReviewMode = false, skipCelebration = false, onContinue, onExit }) => {
+const StudyLessonCard = ({ content, reviewReason = null, isReviewMode = false, skipCelebration = false, onContinue, onExit }) => {
   const { t } = useTranslation();
   const [currentPage, setCurrentPage] = useState(0);
   const [showCelebration, setShowCelebration] = useState(false);
@@ -142,6 +143,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, skipCelebration = fals
               </button>
             )}
           </div>
+          <ReviewReason reason={reviewReason} />
           <div className="study-card-content study-lesson-page-content">
             <div className="study-lesson-skeleton" aria-live="polite">
               <span className="study-lesson-skeleton__line" />
@@ -173,6 +175,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, skipCelebration = fals
           )}
         </div>
 
+        {!showCelebration && <ReviewReason reason={reviewReason} compact={currentPage > 0} />}
         {/* Progress bar showing page progress */}
         <StudyProgressBar
           current={currentPage}
@@ -281,6 +284,7 @@ const StudyLessonCard = ({ content, isReviewMode = false, skipCelebration = fals
         )}
       </div>
 
+      {!showCelebration && <ReviewReason reason={reviewReason} />}
       {/* Show celebration or lesson content */}
       {showCelebration ? (
         <div className="study-card-content">

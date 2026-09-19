@@ -45,14 +45,23 @@ import { devLog } from './devLogger';
  *     so no gate could ever reach them.
  *   - Net effect: only ~13% of free users ever saw a hard block at all.
  *
- * 70 per rolling 7 days is deliberately BINDING, not a backstop. One study
- * plan runs ~40 units (our 4th subscriber spent 39 on a single 8-node plan),
- * so a week buys roughly 1.5 plans — the block now lands mid-plan, on an
- * engaged student, which is the only moment that has ever converted anyone.
- * Consequence to keep in mind: this largely retires the plan quota as a live
- * gate, since 70 units runs out before 3 plans do.
+ * 40 per rolling 7 days is deliberately BINDING, not a backstop.
+ *
+ * Lowered from 70 on 2026-09-16. At 70 the wall almost never fired: 8 of 138
+ * free users active that week reached it, against 26 at 40. Of the 12
+ * subscribers who had spent any questions before paying, 8 bought below 40,
+ * so the lower line asks the heavy users sooner without taking away the use
+ * that sold everyone else. Going lower (30, 20) starts to cut into that.
+ *
+ * One study plan runs ~40 units (our 4th subscriber spent 39 on a single
+ * 8-node plan), so the block now lands around the end of a first plan, on an
+ * engaged student. Consequence to keep in mind: the plan quota is retired as a
+ * live gate even further, since 40 units runs out long before 3 plans do.
+ *
+ * NQBackEnd2 `services/usage_guard.py` holds its own FREE_LIMIT and re-checks
+ * this on the server — change both together.
  */
-export const FREE_LIMIT = 70;                      // questions (items) per window for free tier
+export const FREE_LIMIT = 40;                      // questions (items) per window for free tier
 export const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;  // rolling window length (7 days)
 
 /**

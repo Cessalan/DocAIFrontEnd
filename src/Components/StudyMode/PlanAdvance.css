@@ -1,0 +1,23 @@
+/* The opening plan and this transition share PlanNextSteps, including all rows. */
+.plan-advance { width: min(540px, calc(100% - 32px)); box-sizing: border-box; margin: 24px auto; padding: 28px; border-radius: 24px; background: #fffaf5; color: #443b38; border: 1px solid #dfd5cc; animation: plan-advance-enter 400ms ease-out both; }
+.plan-advance h2 { font: inherit; font-size: 18px; line-height: 1.4; font-weight: 600; margin: 0 0 24px; min-height: 50px; }
+.plan-advance > p { min-height: 18px; font-size: 12px; margin: 18px 0 0; color: #777; }
+.plan-advance > .plan-advance__next { margin: -14px 0 22px; line-height: 1.5; min-height: 36px; }
+.plan-advance__actions { min-height: 38px; display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 10px; font-size: 12px; }
+.plan-advance__actions button { border: 1px solid #bb8373; background: transparent; color: inherit; padding: 8px 12px; border-radius: 8px; font: inherit; cursor: pointer; flex-shrink: 0; }
+.plan-advance__actions button:focus-visible { outline: 2px solid #bb8373; outline-offset: 3px; }
+.plan-advance__preparing { display: inline-flex; align-items: center; gap: 8px; line-height: 1.5; }
+.plan-advance__loading-dots { display: inline-flex; gap: 3px; flex-shrink: 0; }
+.plan-advance__loading-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .3; animation: plan-preparing-pulse 1.5s ease-in-out infinite; }
+.plan-advance__loading-dots i:nth-child(2) { animation-delay: .18s; }
+.plan-advance__loading-dots i:nth-child(3) { animation-delay: .36s; }
+@keyframes plan-preparing-pulse { 0%, 65%, 100% { opacity: .3; } 30% { opacity: .85; } }
+@media (prefers-reduced-motion: reduce) { .plan-advance__loading-dots i { animation: none; opacity: .5; } }
+.study-arrival-step { margin: 0 0 12px; color: #72675f; font-size: 12px; text-align: left; }
+.study-arrival-step:focus-visible { outline: 2px solid #bb8373; outline-offset: 4px; }
+.dark-mode .study-arrival-step { color: #bcb3ad; }
+.dark-mode .plan-advance { background: #292827; color: #eee8e5; border-color: #ffffff18; }
+.dark-mode .plan-advance > p { color: #bbb; }
+@keyframes plan-advance-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { .plan-advance, .plan-advance.is-confirmed { animation: none; } }
+@media (max-width: 480px) { .plan-advance { padding: 20px; } }

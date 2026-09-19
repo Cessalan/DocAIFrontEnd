@@ -34,6 +34,7 @@ const NclexArrival = lazy(() => import("./Components/Nclex/NclexArrival"));
 const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmin"));
 const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
 const ConversationReader = lazy(() => import("./Components/Admin/ConversationReader"));
+const PaywallTracker = lazy(() => import("./Components/Admin/PaywallTracker"));
 
 /**
  * Route-level loading state. Deliberately self-contained (inline styles, brand
@@ -98,6 +99,9 @@ function App() {
         )}
         {isDev && (
           <Route path="/admin/conversations" element={<ConversationReader />} />
+        )}
+        {isDev && (
+          <Route path="/admin/paywall" element={<PaywallTracker />} />
         )}
 
         {/* ── NCLEX ────────────────────────────────────────────────────

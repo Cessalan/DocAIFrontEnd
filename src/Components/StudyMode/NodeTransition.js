@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TopicProgress } from './TopicEvidence';
 import { getStepTopicLabel } from './planFormatting';
 import { buildNodeReadout } from './nodeReadout';
 import { buildHistoryFeedback } from './studyHistoryModel';
@@ -16,6 +17,7 @@ import {
   disableReminder,
 } from '../../Services/StudyReminderService';
 import './StudyMode.css';
+import './NodeResult.css';
 
 const ReadinessGain = ({ value, label }) => {
   const [displayed, setDisplayed] = useState(() => (
@@ -125,6 +127,7 @@ const NodeTransition = ({
   onAnalytics,       // (event, payload) => fire analytics (no-op safe)
   onTestTheory,      // (skill) => insert a single question built around the pattern
   priorPerformance,  // studyPerformance snapshot taken BEFORE this node started
+  topicProgress = null,
 }) => {
   const { t, i18n } = useTranslation();
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -298,6 +301,7 @@ const NodeTransition = ({
   // Show readiness delta only if exam date is set, delta is positive,
   // and the user did well enough that the boost feels earned (not patronizing).
   const showReadinessDelta = !!examDate
+    && !topicProgress
     && typeof readinessDelta === 'number'
     && readinessDelta > 0
     && (bucket === 'mastered' || bucket === 'solid');
@@ -1349,9 +1353,24 @@ const NodeTransition = ({
     );
   }
 
+  const zeroResult = score?.total > 0 && result.scorePercent === 0;
+  const frResult = i18n.language.startsWith('fr');
+  const recapAction = showRecap && (
+          <p className="nt4-alt">
+            <button
+              type="button"
+              className="nt4-alt__link"
+              onClick={handleRecap}
+              disabled={isLoadingPractice || isAdvancing}
+            >
+              {t('transition.reviewMins', 'Review · 4 min')}
+            </button>
+          </p>
+        );
+
   return (
     <div className="node-transition node-transition--scored">
-      <div className="node-transition__card node-transition__card--v2">
+      <div className={`node-transition__card node-transition__card--v2 nt-result${zeroResult ? ' nt-result--zero' : ''}`}>
         {onExit && (
           <button className="node-transition__exit" onClick={handleClose} title={t('transition.exit', 'Exit session')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
@@ -1360,50 +1379,44 @@ const NodeTransition = ({
           </button>
         )}
 
-        {/* ── 1. What happened ──
-             The topic sits above the headline as a quiet label rather than in
-             a sentence of its own: she knows what she just did, she needs one
-             line of orientation, not prose about it. */}
-        <div className="nt2-identity">
-          <div className={`nt2-identity__check nt2-identity__check--${bucket}`} aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-
-          {result.topic && (
-            <p className="nt3-eyebrow" title={result.topic}>
-              {truncateTopic(getStepTopicLabel(result.topic), 44)}
-            </p>
-          )}
-
-          <h2 className="nt2-identity__header">{readout?.headline}</h2>
-
-          {/* The score supports the caption, not the other way round: the
-              number stays small and the sentence beside it says what it means. */}
-          <p className="nt2-score-line">
-            <span className="nt2-score-line__score">
-              {score?.got} <span className="nt2-score-line__of">/</span> {score?.total}
-            </span>
-            <span className="nt2-score-line__sep">·</span>
-            <span className="nt2-score-line__tail">{readout?.caption}</span>
-            {showReadinessDelta && (
-              <ReadinessGain
-                key={node?.id}
-                value={readinessDelta}
-                label={t('transition.closerToReady', 'closer to ready')}
-              />
-            )}
-          </p>
-
-          {/* The history line. Absent whenever there is nothing true to say —
-              buildHistoryFeedback returns null rather than manufacturing
-              encouragement, and the silence is what makes it land when it
-              does appear. */}
-          {historyLine && (
-            <p className="nt2-history-line">{historyLine}</p>
-          )}
+        <div className="nt-result__top">
+          <span className={`nt2-identity__check nt2-identity__check--${bucket}`} aria-hidden="true">✓</span>
+          <span>{t('transition.resultComplete', { defaultValue: i18n.language.startsWith('fr') ? 'Activité terminée' : 'Activity complete' })}</span>
         </div>
+        <div className="nt-result__hero">
+          <div className="nt-result__intro">
+            <h2 className="nt2-identity__header">{zeroResult ? (frResult ? 'Voyons cela ensemble.' : 'Let’s work through this together.') : readout?.tone === 'improving'
+              ? (i18n.language.startsWith('fr') ? 'Tu progresses.' : 'You’re making progress.')
+              : readout?.tone === 'plain' && ['solid', 'mastered'].includes(bucket)
+                ? (i18n.language.startsWith('fr') ? 'Bien joué.' : 'Nice work.')
+                : readout?.headline}</h2>
+            <p className="nt-result__topic">{node.topic || getStepTopicLabel(result.topic).replace(/\s*[-–]\s*(Quick Check|Drill|Vérification rapide)\s*$/i, '')}</p>
+          </div>
+          {!zeroResult && <div className="nt-result__score">
+            <span className="nt-result__number">{score?.got}</span>
+            <span className="nt-result__denominator">{i18n.language.startsWith('fr')
+              ? `sur ${score?.total} ${result.type === 'flashcard' ? 'retenues' : 'correctes'}`
+              : `of ${score?.total} ${result.type === 'flashcard' ? 'recalled' : 'correct'}`}</span>
+          </div>}
+        </div>
+        {zeroResult && <p className="nt-result__zero-summary">{result.type === 'flashcard'
+          ? (frResult ? `${score.total} cartes à revoir` : `${score.total} cards marked for review`)
+          : (frResult ? `0 sur ${score.total} réponses correctes` : `0 of ${score.total} correct`)}</p>}
+        {!zeroResult && score?.total > 0 && <div className="nt-result__segments" aria-hidden="true">
+          {score.total <= 12 ? Array.from({ length: score.total }, (_, i) => <span key={i} className={i < score.got ? 'is-filled' : ''} />)
+            : <span className="nt-result__track"><span style={{ width: `${score.got / score.total * 100}%` }} /></span>}
+        </div>}
+        <div className="nt-result__caption">
+          <span>{readout?.caption}</span>
+          {showReadinessDelta && <ReadinessGain key={node?.id} value={readinessDelta} label={t('transition.closerToReady', 'closer to ready')} />}
+        </div>
+        {historyLine && <p className="nt2-history-line">{historyLine}</p>}
+
+        {/* ── 2. What I noticed ──
+             Topic-specific progress sits above the existing feedback. */}
+        {['quiz', 'exam'].includes(node?.type) && Object.entries(topicProgress?.latest || {})
+          .filter(([, row]) => row.nodeId === node.id)
+          .map(([key, row]) => <TopicProgress key={key} baseline={topicProgress.baseline[key]} latest={row} />)}
 
         {/* ── 2. What I noticed ──
              The most valuable thing on the screen, and the reason the
@@ -1490,7 +1503,7 @@ const NodeTransition = ({
                       {debrief.noteMode === 'clean'
                         ? t('transition.takeawayClean', 'Locked in')
                         : debrief.noteMode === 'blank'
-                          ? t('transition.takeawayBlank', 'Start here')
+                          ? (zeroResult ? (frResult ? 'Commençons par' : 'We’ll start with') : t('transition.takeawayBlank', 'Start here'))
                           : t('transition.takeawayFocus', 'Focus on')}
                     </span>
                     <span className="nt4-takeaway__text">{debrief.note}</span>
@@ -1503,8 +1516,12 @@ const NodeTransition = ({
                   null
                 )
               )}
+              {recapAction}
             </div>
           </>
+        )}
+        {!debriefLoading && !(debrief && (experimentConfirmed || debrief.hasPattern || debrief.note)) && (
+          <div className="nt-result__recap-only">{recapAction}</div>
         )}
 
         {/* ── 3. The next action ──
@@ -1544,7 +1561,7 @@ const NodeTransition = ({
               </>
             ) : (
               <>
-                <span className="node-transition__btn-label">{recommendation?.cta}</span>
+                <span className="node-transition__btn-label">{zeroResult && recommendation?.kind === 'walkthrough' ? (frResult ? 'Commencer la révision guidée →' : 'Start guided review →') : recommendation?.kind === 'continue' && nextNode ? (i18n.language.startsWith('fr') ? 'Continuer : ' : 'Continue with ') + t(`study.nodeType.${nextNode.type}`, nextNode.type).toLocaleLowerCase(i18n.language) + ' →' : recommendation?.cta}</span>
                 <span className="node-transition__btn-preview">{recommendation?.meta}</span>
               </>
             )}
@@ -1557,19 +1574,7 @@ const NodeTransition = ({
              be pressed, which is not a quiet secondary option, it is a second
              decision. As one line it reads as an aside the primary action
              already assumes she will skip. */}
-        {showRecap && (
-          <p className="nt4-alt">
-            {t('transition.lockInFirst', 'Want to lock in that weak spot first?')}{' '}
-            <button
-              type="button"
-              className="nt4-alt__link"
-              onClick={handleRecap}
-              disabled={isLoadingPractice || isAdvancing}
-            >
-              {t('transition.reviewMins', 'Review · 4 min')}
-            </button>
-          </p>
-        )}
+
 
         {/* ── Was the content itself any good? ──
             Placed after the recommendation and before the escape hatches, not
@@ -1654,7 +1659,7 @@ const NodeTransition = ({
 
         {/* ── Frictionless exit — small gray text link ── */}
         <button className="nt2-done" onClick={handleDoneForToday}>
-          {t('transition.doneForToday', 'Save progress & return tomorrow')}
+          {i18n.language.startsWith('fr') ? 'Terminer pour le moment' : 'Finish for now'}
         </button>
       </div>
     </div>

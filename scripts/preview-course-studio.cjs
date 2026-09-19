@@ -9,9 +9,10 @@ const output = path.join(root, 'node_modules/.cache/course-studio-preview');
 async function start() {
   const context = await esbuild.context({
     entryPoints: [path.join(__dirname, 'course-studio-preview/Preview.jsx')],
-    bundle: true, outdir: output, loader: { '.js': 'jsx' }, sourcemap: true,
+    bundle: true, outdir: output, loader: { '.js': 'jsx', '.mp3': 'dataurl', '.wav': 'dataurl' }, sourcemap: true,
     define: { 'process.env.NODE_ENV': '"development"' },
     plugins: [{ name: 'illustrative-services', setup(build) {
+      build.onResolve({ filter: /Contexts\/UsageContext\/UsageContext$/ }, () => ({ path: path.join(__dirname, 'course-studio-preview/services.js') }));
       build.onResolve({ filter: /Services\/(FastAPICalls|FunnelService|StudySessionService)$/ }, () => ({ path: path.join(__dirname, 'course-studio-preview/services.js') }));
     } }],
   });

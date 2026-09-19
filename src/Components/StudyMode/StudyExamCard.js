@@ -169,6 +169,9 @@ const StudyExamCard = ({
 
     const storedAnswer = {
       questionType: answerData.questionType || questionType,
+      selectedIndices: answerData.selectedIndices ?? null,
+      selectedIndex: answerData.selectedIndex ?? null,
+      isPartial: !answerData.isCorrect && (answerData.score || 0) > 0,
       isCorrect: answerData.isCorrect || false,
       score: answerData.score || 0,
       maxScore: answerData.maxScore || 1,

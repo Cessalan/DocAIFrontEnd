@@ -714,7 +714,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
         questionIndex: currentQueuePosition,
         progress: {
           questionStatuses: newStatuses,
-          firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+          firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
             ? firstAttemptStatuses  // Use frozen snapshot if available
             : newStatuses,          // First pass — current statuses ARE first-attempt
           queueIndex: queueIndex,
@@ -765,7 +765,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
         questionIndex: currentQueuePosition,
         progress: {
           questionStatuses: newStatuses,
-          firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+          firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
             ? firstAttemptStatuses
             : newStatuses,
           queueIndex: queueIndex,
@@ -810,7 +810,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
         questionIndex: currentQueuePosition,
         progress: {
           questionStatuses: newStatuses,
-          firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+          firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
             ? firstAttemptStatuses
             : newStatuses,
           queueIndex: queueIndex,
@@ -915,7 +915,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
           questionIndex: null,
           progress: {
             questionStatuses: questionStatuses,
-            firstAttemptStatuses: Object.keys(firstAttemptStatuses).length > 0
+            firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
               ? firstAttemptStatuses : questionStatuses,
             queueIndex: nextQueueIndex,
             isReviewRound: isReviewRound

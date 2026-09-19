@@ -147,9 +147,13 @@ const UpgradeModal = ({
     if (!redirected) setPortalLoading(false);
   };
 
-  // ── Already Pro: manage/cancel instead of the upgrade pitch ───────────────
-  // Stripe's hosted Billing Portal handles cancellation; the webhook then
-  // flips the tier back to free.
+  // ── Already Pro: the fix in progress, then the account ───────────────────
+  // The free screens say "here's what's wrong"; this one says "we're fixing
+  // it". It used to lead with "You're on Pro" and a list of unlimited things,
+  // which read as account admin in the middle of a readiness journey (owner
+  // review, 2026-09-16). Continuing is the primary action; managing the
+  // subscription stays one tap away. Stripe's hosted Billing Portal handles
+  // cancellation; the webhook then flips the tier back to free.
   if (isPro) {
     return (
       <div className="upgrade-overlay" onClick={handleOverlayClick}>
@@ -165,15 +169,19 @@ const UpgradeModal = ({
             <NurseQuizMascot size={84} isExcited lookDirection="center" />
           </div>
 
-          <h2 className="upgrade-title">{t('upgrade.proTitle', "You're on Pro")}</h2>
+          <h2 className="upgrade-title">{t('upgrade.proTitle', 'Your plan is fully unlocked')}</h2>
 
           <p className="upgrade-body">
-            {t('upgrade.proBody', 'Unlimited practice, uploads, and weak-spot reviews — you have it all. Manage your plan, update payment details, or cancel anytime.')}
+            {t('upgrade.proBody', 'Keep working through your weak spots, recheck your readiness, and adjust your plan as you improve.')}
           </p>
 
-          <div className="upgrade-plans">
+          <div className="upgrade-pro-actions">
+            <button type="button" className="upgrade-cta" onClick={onClose}>
+              {t('upgrade.proContinue', 'Keep going')}
+            </button>
             <button
-              className="upgrade-plan is-recommended"
+              type="button"
+              className="upgrade-plan upgrade-manage"
               onClick={handleManageSubscription}
               disabled={portalLoading}
             >
@@ -187,10 +195,6 @@ const UpgradeModal = ({
               </span>
             </button>
           </div>
-
-          <button className="upgrade-wait" onClick={onClose}>
-            {t('upgrade.close', 'Close')}
-          </button>
         </div>
       </div>
     );
@@ -234,9 +238,9 @@ const UpgradeModal = ({
   if (isUploadGate) {
     title = t('upgrade.titleUpload', 'Bring all your notes.');
   } else if (isPlanReady) {
-    // She is looking at her plan. Continue that sentence; don't start a new
-    // one about limits.
-    title = t('upgrade.titlePlanReady', 'Your plan is ready.');
+    // She has just seen what her check found. Sell the fix; don't start a
+    // new sentence about limits, and never "unlock".
+    title = t('upgrade.titlePlanReady', "Fix what's holding you back.");
   } else if (blocked && isPlanGate) {
     title = t('upgrade.titlePlanBlocked', "You've got more exams to prepare for.");
   } else if (blocked) {
@@ -256,8 +260,8 @@ const UpgradeModal = ({
       : t('upgrade.bodyUpload', 'Free covers one upload per chat. Pro lets you add every lecture, slide deck and handout for the same exam — and practise across all of them at once.');
   } else if (isPlanReady) {
     subtitle = examSoon
-      ? t('upgrade.bodyPlanReadyExam', "Your exam is {{when}}. Unlock the full plan and work it in the order it's already sorted into.", { when: whenLabel })
-      : t('upgrade.bodyPlanReady', "Unlock the full plan and work it in the order it's already sorted into — hardest first, refreshers last.");
+      ? t('upgrade.bodyPlanReadyExam', 'Your exam is {{when}}. Pro builds your next sessions around your weakest areas first, and rechecks them until they improve.', { when: whenLabel })
+      : t('upgrade.bodyPlanReady', 'Pro builds your next sessions around your weakest areas first, and rechecks them until they improve.');
   } else if (isPlanGate) {
     subtitle = blocked
       ? (examSoon

@@ -81,6 +81,12 @@ export const FUNNEL = Object.freeze({
   FOCUS_SKIPPED: 'focus_skipped',
   DIAGNOSTIC_STARTED: 'diagnostic_started',
   DIAGNOSTIC_COMPLETED: 'diagnostic_completed',
+  // Readiness engine (2026-09-16): the check that opens a plan, the verdict it
+  // produces, and the later recheck. WEAKNESS_INSIGHT_VIEWED is the strategy's
+  // north-star event — log it where the verdict actually renders, once.
+  READINESS_CHECK_STARTED: 'readiness_check_started',
+  WEAKNESS_INSIGHT_VIEWED: 'weakness_insight_viewed',
+  READINESS_RECHECKED: 'readiness_rechecked',
   PLAN_PREVIEW_VIEWED: 'plan_preview_viewed',
   PAYWALL_VIEWED: 'paywall_viewed',
   // The other half of a view. Without it you know who was asked but not
@@ -92,6 +98,31 @@ export const FUNNEL = Object.freeze({
   PLAN_STARTED: 'plan_started',
   FLOW_ABANDONED: 'flow_abandoned',
 });
+
+/**
+ * Where the browser thinks it is, read once at module load.
+ *
+ * This is the ONLY geography the product has. Nothing else stores a country:
+ * `users` has no locale or timezone field, no IP is ever captured, and the
+ * country Stripe knows exists only for people who reached a card — which is
+ * precisely the population a conversion question is not about. GA4 derives a
+ * country from IP, but its data cannot be joined to a uid or to these rows.
+ *
+ * The timezone is a good enough proxy for a country and costs nothing: no IP
+ * lookup, no third-party call, no consent banner. It is read once because it
+ * cannot change mid-session, and wrapped because `resolvedOptions` throws in a
+ * few locked-down browsers.
+ */
+const CLIENT_PLACE = (() => {
+  try {
+    return {
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone || null,
+      locale: (typeof navigator !== 'undefined' && navigator.language) || null,
+    };
+  } catch {
+    return { timeZone: null, locale: null };
+  }
+})();
 
 /**
  * One id per upload attempt. Held in module scope rather than on `window`
@@ -145,6 +176,8 @@ export const logFunnelStep = (step, props = {}) => {
       funnelId: currentFunnelId,
       uid: auth.currentUser?.uid || null,
       isAnonymous: !auth.currentUser,
+      // Before the context spread, so an explicit prop can still override it.
+      ...CLIENT_PLACE,
       ...currentFunnelContext,
       ...props,
       // Client clock for ordering within a funnel (serverTimestamp is null in

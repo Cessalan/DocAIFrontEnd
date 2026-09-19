@@ -817,7 +817,8 @@ export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}
     // ORDER server-side; null reproduces the pre-feature behaviour, same as
     // a null diagnostic does.
     courseContext: options.courseContext || null,
-    courseIntelligence: options.courseIntelligence || null
+    courseIntelligence: options.courseIntelligence || null,
+    quickCheckId: options.quickCheckId || null
   });
 
   try {
@@ -936,10 +937,11 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
   // the journey while the upload tail is still running and have StartStudyModal
   // pick up the same plan promise when the user actually clicks Begin Journey.
   const existing = _inFlightStudyJourneys.get(chat_id);
-  if (existing) {
+  if (existing && existing.quickCheckId === (options.quickCheckId || null)) {
     devLog(`♻️ Reusing in-flight /study/start for ${chat_id}`);
     return existing;
   }
+  if (existing) clear_in_flight_study_journey(chat_id);
 
   let resolvePlan, rejectPlan;
   const planPromise = new Promise((res, rej) => { resolvePlan = res; rejectPlan = rej; });
@@ -970,7 +972,8 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
     // inputs or the fallback produces a differently ordered plan than the one
     // the reveal just promised.
     courseContext: options.courseContext || null,
-    courseIntelligence: options.courseIntelligence || null
+    courseIntelligence: options.courseIntelligence || null,
+    quickCheckId: options.quickCheckId || null
   });
 
   const settleFirstNode = (value) => {
@@ -1103,6 +1106,7 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
   // backlog replayed, then live updates.
   const handle = {
     planPromise,
+    quickCheckId: options.quickCheckId || null,
     abort: () => controller.abort(),
     thinking: thinkingLog,
     thinkingListeners,
@@ -1535,12 +1539,14 @@ export const generate_study_item = async (
   node_label,
   context_tags = [],
   asked_hashes = [],
-  language = 'en'
+  language = 'en',
+  options = {}
 ) => {
   const requestBody = JSON.stringify({
     chat_id: chat_id,
     node_type: node_type,
     node_label: node_label,
+    node_id: options.nodeId || null,
     context_tags: context_tags,
     asked_hashes: asked_hashes,
     language: language
@@ -1606,6 +1612,7 @@ export const generate_study_item_stream = async (
     asked_hashes: asked_hashes,
     language: language,
     is_diagnostic: !!options.isDiagnostic,
+    node_id: options.nodeId || null,
     // Node-specified length. The backend falls back to STUDY_QUIZ_QUESTIONS
     // when this is null, so only nodes that genuinely need a different size
     // (the single-question pattern experiment) set it.

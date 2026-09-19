@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import BrainMascot from '../QuizRoom/BrainMascot';
 import BookMascot from '../QuizRoom/BookMascot';
@@ -12,13 +12,15 @@ import {
   get_prefetched_node_content,
   subscribe_study_thinking
 } from '../../Services/FastAPICalls';
-import { createStudySession } from '../../Services/StudySessionService';
+import { createStudySession, waitForQuickCheckSave } from '../../Services/StudySessionService';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
-import { formatNodeType, getStepTopicLabel } from './planFormatting';
+import { getStepTopicLabel } from './planFormatting';
 import { buildFirstBlock, isRealNode } from './firstBlock';
-import { getStudyNodeIcon } from './planNodeIcon';
+
 import LockedPlanPreview from './LockedPlanPreview';
+import PlanNextSteps from './PlanNextSteps';
 import { FUNNEL, logFunnelStep, logFunnelStepOnce, logPaywall } from '../../Services/FunnelService';
+import { devWarn } from '../../Services/devLogger';
 import './StudyMode.css';
 
 const MASCOTS = [BrainMascot, BookMascot, PillMascot, CoffeeCupMascot, MatchaCupMascot];
@@ -53,10 +55,20 @@ const StartStudyModal = ({
   // priority order rather than in the order of her slide deck, and the reveal
   // has already promised her which topic comes first.
   courseContext = null,
-  courseIntelligence = null
+  courseIntelligence = null,
+  // { answers, funnelId } from the readiness check, or null. Only the LOCKED
+  // preview reads it: it is how a blocked student sees her verdict before the ask.
+  readiness = null
 }) => {
   const { t } = useTranslation();
-  const { canCreatePlan, requirePlanQuota, consumePlan, openUpgrade } = useUsageLimit();
+  const { canCreatePlan, requirePlanQuota, consumePlan, openUpgrade, refresh: refreshUsage } = useUsageLimit();
+
+  // Set when /study/start itself refused for plan quota. From then on the
+  // verdict's button offers the upgrade instead of retrying: the client's
+  // "can create" flag was evidently stale (a plan started on another
+  // device), and retrying would bounce straight back to the same screen —
+  // a button that visibly does nothing.
+  const serverBlockedRef = useRef(false);
 
   // ── Phase machine ─────────────────────────────────────────
   // 'idle' | 'loading' | 'plan_preview' | 'locked_preview' | 'starting' | 'done'
@@ -156,6 +168,7 @@ const StartStudyModal = ({
   // Reset on open
   useEffect(() => {
     if (isOpen) {
+      serverBlockedRef.current = false;
       setPhase('idle');
       setError(null);
       setHasAutoStarted(false);
@@ -202,11 +215,13 @@ const StartStudyModal = ({
     setPathResult(null);
 
     const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
+    const quickCheckId = readiness?.answers?.[0]?.checkId || null;
 
     try {
+      if (quickCheckId) await waitForQuickCheckSave(quickCheckId).catch(() => {});
       const { planPromise } = start_study_journey(
         chatId, uploadIds, userPreferences, language, diagnostic,
-        { courseContext, courseIntelligence }
+        { courseContext, courseIntelligence, quickCheckId }
       );
       const path = await planPromise;
 
@@ -222,6 +237,12 @@ const StartStudyModal = ({
       // the same reason the client-side check does: she gets the plan on
       // screen before the ask, not a quota notice instead of one.
       if (err?.code === 'plan_quota_exceeded') {
+        serverBlockedRef.current = true;
+        // The server checks the CHAT OWNER's plans; the client checks the
+        // signed-in user's. They only disagree on a stale tab — or in dev,
+        // inside someone else's chat via "All chats" / "view as user".
+        devWarn("Plan refused by the server for this chat's owner while this tab allowed it: stale quota, or another user's chat.");
+        if (refreshUsage) refreshUsage();
         logPaywall('plans', 'plan_preview', { deferred: true, source: 'server' });
         setPhase('locked_preview');
         return;
@@ -230,7 +251,7 @@ const StartStudyModal = ({
       try {
         const path = await plan_study_path(
           chatId, uploadIds, userPreferences, language, diagnostic,
-          { courseContext, courseIntelligence }
+          { courseContext, courseIntelligence, quickCheckId }
         );
         if (!path?.nodes?.length) throw new Error('Failed to generate study path');
         setPathResult(path);
@@ -312,6 +333,22 @@ const StartStudyModal = ({
       archetype: pathResult?.archetype || null,
     });
   }, [phase, pathResult]);
+
+  // A student who upgrades while her locked verdict is open — typically on
+  // the return trip from Stripe, when the focus refresh flips her tier — goes
+  // straight on to the plan she just paid for. Only on the false→true
+  // transition: a server-side block under a stale "can create" flag must not
+  // bounce between the verdict and the planner forever.
+  const couldCreatePlanRef = useRef(canCreatePlan);
+  useEffect(() => {
+    const could = couldCreatePlanRef.current;
+    couldCreatePlanRef.current = canCreatePlan;
+    if (phase === 'locked_preview' && !could && canCreatePlan) {
+      serverBlockedRef.current = false;
+      handleStartJourney();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [canCreatePlan, phase]);
 
   // Auto-start
   useEffect(() => {
@@ -427,7 +464,15 @@ const StartStudyModal = ({
             daysToExam={
               userPreferences?.examDaysAway ?? null
             }
-            onUnlock={() => openUpgrade('plan_ready', { topic: topics[0] || null, trigger: 'plan_ready', reachedStep: 'plan_preview' })}
+            readiness={readiness}
+            // The weakest topic the verdict named, when it named one, so the
+            // upgrade modal talks about the same thing she just read.
+            // Someone who can already create a plan (upgraded, or her
+            // window rolled over) is taken to the plan, not to a paywall or
+            // to the account screen a Pro user would otherwise land on.
+            onUnlock={(leadTopic) => (canCreatePlan && !serverBlockedRef.current
+              ? handleStartJourney()
+              : openUpgrade('plan_ready', { topic: leadTopic || topics[0] || null, trigger: 'plan_ready', reachedStep: 'plan_preview' }))}
             onClose={safeClose}
           />
         )}
@@ -655,55 +700,11 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t, calibrated = false })
         </p>
       )}
 
-      <ul className="study-modal-plan-list">
-        {realNodes.map((node, idx) => {
-          const isFirst = idx === 0;
-          // Render the same way the destination StudyPlanOverview does — same
-          // SVG icon, type tag on top in coral, clean topic label below — so
-          // the user sees the same rows here that will appear on the study
-          // page after Let's go.
-          return (
-            <li
-              key={node.id || idx}
-              className={`study-modal-plan-item ${isFirst ? 'is-first' : ''}`}
-              data-type={node.type}
-              style={{ animationDelay: `${idx * 70}ms` }}
-            >
-              <span className="study-modal-plan-icon" aria-hidden="true">
-                {getStudyNodeIcon(node.type)}
-              </span>
-              <span className="study-modal-plan-content">
-                <span className="study-modal-plan-type">
-                  {formatNodeType(node.type, t)}
-                </span>
-                <span className="study-modal-plan-label">
-                  {getStepTopicLabel(node.label) || node.type}
-                </span>
-              </span>
-              {isFirst && (
-                <button type="button" className="study-modal-start study-modal-start--inline" onClick={onStart}
-                  aria-label={calibrated ? t('courseStudio.planStart') : t('study.letsGo', "Let's go")}>
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-                    <polygon points="5 3 19 12 5 21 5 3" />
-                  </svg>
-                  {t('study.planFirstBadge', 'Start here')}
-                </button>
-              )}
-            </li>
-          );
-        })}
-        {reserveCount > 0 && (
-          <li className="study-modal-plan-more">
-            {t('study.planReserveNote', '+{{count}} more, unlocked when you finish these', {
-              count: reserveCount
-            })}
-          </li>
-        )}
-      </ul>
+      <PlanNextSteps nodes={realNodes} reserveCount={reserveCount} onStart={onStart} />
 
       {minutes ? (
         <p className="study-modal-plan-meta">
-          {t('study.planEstimate', '{{steps}} steps · about {{mins}} min total', {
+          {t('study.planBlockEstimate', lang.startsWith('fr') ? 'Cette séance : {{steps}} étapes · environ {{mins}} min' : 'This session: {{steps}} steps · about {{mins}} min', {
             steps: totalSteps,
             mins: minutes
           })}

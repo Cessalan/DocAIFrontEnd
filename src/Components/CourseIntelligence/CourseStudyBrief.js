@@ -1,10 +1,15 @@
 import React, { useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { plan_diagnostic_quiz } from '../../Services/FastAPICalls';
-import { updateStudyPerformance } from '../../Services/StudySessionService';
+import { updateStudyPerformance, saveQuickCheckRecord } from '../../Services/StudySessionService';
+import { QuestionAnswerRecord, QuickCheckRecord } from '../../Services/QuickCheckRecord';
+import { v4 as uuidv4 } from 'uuid';
 import { FUNNEL, logFunnelStep, logFunnelStepOnce } from '../../Services/FunnelService';
 import { plannerTopics } from './courseIntelligenceModel';
-import { calibrationQuestions, calibrationPlan } from './courseCalibrationModel';
+import {
+  calibrationQuestions, calibrationPlan, gradeAnswer, isKeyOption, answerKey, formatTally, questionFormatCounts,
+} from './courseCalibrationModel';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { CourseStudioHeader } from './CourseStudioFrame';
 import CourseSourceTabs from './CourseSourceTabs';
 import { CheckIcon } from './CourseIntelligenceIcons';
@@ -13,13 +18,26 @@ import './CourseStudio.css';
 import CourseSourcePassage from './CourseSourcePassage';
 import './CourseDocumentStage.css';
 import CourseExamWelcome from './CourseExamWelcome';
+import QuickCheckFindings from './QuickCheckFindings';
 
 const QUESTION_WAIT_MS = 25000;
+
+// A chip naming the format before she reads the stem, so a select-all item is
+// never mistaken for "pick one". Plain applied questions need no label.
+const formatLabelKey = (question) => {
+  if (question?.format === 'sata') return 'courseStudio.formatSata';
+  if (question?.format === 'casestudy') return 'courseStudio.formatCase';
+  if (question?.kind === 'prioritization') return 'courseStudio.formatPriority';
+  return null;
+};
 
 // A single surface: course evidence -> first-attempt answers -> an explained order.
 // The raw course report remains untouched; answers travel beside it to the planner.
 const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', daysToExam = null,
-  examDate = null, onExamDate, disabled = false, onStart, initialQuiz = null, initialPhase = 'brief', streamlined = false }) => {
+  examDate = null, onExamDate, disabled = false, onStart, initialQuiz = null, initialPhase = 'brief', streamlined = false,
+  // The upload this check belongs to. Logged explicitly so a check resumed after
+  // a reload still lands in its upload's funnel — the in-memory id is gone by then.
+  funnelId = null }) => {
   const { t } = useTranslation();
   const questionId = useId();
   const [phase, setPhase] = useState(initialPhase);
@@ -27,6 +45,10 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const [quiz, setQuiz] = useState(initialQuiz ? { state: 'ready', questions: initialQuiz.questions } : { state: 'loading', questions: [] });
   const [answers, setAnswers] = useState([]);
   const [picked, setPicked] = useState(null);
+  // Select-all choices before "Check my answer". `picked` stays null until she
+  // commits, so every "has she answered" test below means the same thing.
+  const [selection, setSelection] = useState([]);
+  const { consume } = useUsageLimit();
   const [showDate, setShowDate] = useState(false);
   const [starting, setStarting] = useState(false);
   const heading = useRef(null);
@@ -35,6 +57,7 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const phaseRef = useRef(initialPhase);
   const answerLock = useRef(false);
   const completedRef = useRef(false);
+  const [checkId] = useState(() => uuidv4());
   const buildLock = useRef(false);
   const requestRef = useRef(null);
   const topicKey = JSON.stringify(plannerTopics(report));
@@ -44,16 +67,26 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const initialPlan = useMemo(() => calibrationPlan(report), [report]);
   const adaptedPlan = useMemo(() => calibrationPlan(report, answers, daysToExam), [report, answers, daysToExam]);
   const isResult = phase === 'result';
-  const currentPlan = isResult ? adaptedPlan : initialPlan;
+  const currentPlan = isResult || phase === 'date' ? adaptedPlan : initialPlan;
   const question = quiz.questions[answers.length];
   const hasAnswer = picked !== null;
   const lead = currentPlan.rows[0];
+  const isSata = question?.format === 'sata';
+  const grade = question && hasAnswer ? gradeAnswer(question, picked) : { correct: false, partial: false };
+  const tagFunnel = (props) => (funnelId ? { ...props, funnelId } : props);
 
   useEffect(() => {
     if (initialPhase === 'check') {
       heading.current?.focus();
       logFunnelStep(FUNNEL.DIAGNOSTIC_STARTED, { via: 'source_transformation', questionCount: initialQuiz?.questions?.length || 0 });
+      logFunnelStep(FUNNEL.READINESS_CHECK_STARTED, tagFunnel({
+        via: 'source_transformation',
+        questionCount: initialQuiz?.questions?.length || 0,
+        ...questionFormatCounts(initialQuiz?.questions || []),
+      }));
     }
+    // tagFunnel only reads funnelId, which is fixed for the life of the card.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialPhase, initialQuiz]);
 
   useEffect(() => {
@@ -109,11 +142,23 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
     requestRef.current?.abort();
     setAnswers(all);
     setPhase('result');
+    if (chatId && all.length) {
+      const record = new QuickCheckRecord({ checkId, chatId, answers: all, offered: quiz.questions.length, funnelId });
+      Promise.resolve(saveQuickCheckRecord(record))
+        .catch(() => saveQuickCheckRecord(record))
+        .catch(error => console.error('Failed to save quick-check baseline:', error));
+    }
     const plan = calibrationPlan(report, all, daysToExam);
-    logFunnelStep(FUNNEL.DIAGNOSTIC_COMPLETED, {
+    logFunnelStep(FUNNEL.DIAGNOSTIC_COMPLETED, tagFunnel({
       via: 'course_brief', answered: all.length, offered: quiz.questions.length,
       skipped: all.length === 0, scoredTopics: Object.keys(plan.scores || {}).length,
-    });
+      ...formatTally(all),
+    }));
+    // Metered, never gated. The check is the value a free plan exists to show,
+    // so it always runs, but what she answered still counts toward the weekly
+    // allowance. Charged per answer, not per question generated: a question
+    // she skipped taught her nothing.
+    if (all.length) Promise.resolve(consume(all.length)).catch(() => {});
     logFunnelStepOnce(FUNNEL.REVEAL_VIEWED, { via: 'course_brief', changedStart: plan.changed, startTopic: plan.rows[0]?.topic });
     // Writes touch the same performance document: serialize them to avoid
     // concurrent read/modify/write losing part of the student's baseline.
@@ -123,22 +168,25 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
           await updateStudyPerformance(chatId, {
             topic: answer.topic, type: 'quiz', correct: answer.correct,
             concept: answer.correct ? undefined : answer.question,
-            conceptKey: answer.concept || undefined, format: 'mcq',
+            conceptKey: answer.concept || undefined, format: answer.format || 'mcq',
           });
         }
       })().catch(() => { /* The plan already carries the scores if baseline storage fails. */ });
     }
   };
 
+  // One answer, as the planner and the funnel read it.
+  const answerRecord = () => {
+    const graded = gradeAnswer(question, picked);
+    return new QuestionAnswerRecord({ checkId, questionIndex: answers.length, question, selection: picked, grade: graded }).toJSON();
+  };
+
   const advance = () => {
     if (!question || !hasAnswer || answerLock.current || disabled) return;
     answerLock.current = true;
-    const all = [...answers, {
-      topic: question.topic, concept: question.concept, question: question.question,
-      correct: picked === question.correctIndex, unsure: picked === 'unsure',
-    }];
+    const all = [...answers, answerRecord()];
     if (all.length === quiz.questions.length) finish(all);
-    else { setAnswers(all); setPicked(null); }
+    else { setAnswers(all); setPicked(null); setSelection([]); }
   };
   useEffect(() => { answerLock.current = false; }, [answers.length]);
 
@@ -146,6 +194,9 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
     if (disabled) return;
     setQuestionLanguage(language);
     logFunnelStep(FUNNEL.DIAGNOSTIC_STARTED, { via: 'course_brief', questionCount: quiz.questions.length });
+    logFunnelStep(FUNNEL.READINESS_CHECK_STARTED, tagFunnel({
+      via: 'course_brief', questionCount: quiz.questions.length, ...questionFormatCounts(quiz.questions),
+    }));
     setPhase('check');
   };
   const build = () => {
@@ -160,7 +211,7 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const dateLabel = examDate ? new Date(`${String(examDate).slice(0, 10)}T00:00:00`).toLocaleDateString(language.startsWith('fr') ? 'fr-CA' : 'en-CA', { month: 'short', day: 'numeric' }) : null;
   const resultTitle = answers.length ? adaptedPlan.changed ? 'changedTitle' : 'resultTitle' : 'skippedTitle';
 
-  if (streamlined && isResult) {
+  if (streamlined && (phase === 'date' || (isResult && answers.length === 0))) {
     const chooseDateAndBuild = (date) => {
       if (disabled || buildLock.current) return;
       buildLock.current = true;
@@ -180,6 +231,20 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
       onChoose={chooseDateAndBuild} />;
   }
 
+  if (streamlined && isResult && answers.length > 0) {
+    return <section className="cs-shell cs-brief is-result" aria-busy={starting}>
+      <div className="cs-body">
+        <h3 ref={heading} tabIndex={-1} className="cs-title">{t('courseStudio.findingsTitle')}</h3>
+        <QuickCheckFindings answers={answers} lead={lead} funnelId={funnelId}>
+        <div className="cs-primary-action cs-findings-action">
+          <button type="button" className="course-context__cta cs-button" disabled={disabled || starting}
+            onClick={() => setPhase('date')}>{t('courseStudio.findingsContinue')}<span aria-hidden="true">→</span></button>
+        </div>
+        </QuickCheckFindings>
+      </div>
+    </section>;
+  }
+
   const sourceQuiz = phase === 'check' && Boolean(initialQuiz);
   return <section className={`cs-shell cs-brief is-${phase}${sourceQuiz ? ' cs-source-quiz' : ''}`} aria-busy={starting}>
     {!streamlined && <CourseStudioHeader context={report.context} stage={isResult ? 2 : 1} />}
@@ -187,34 +252,59 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
       <div className="cs-section-heading">
         <h3 ref={heading} tabIndex={-1} className="cs-title">{t(`courseStudio.${streamlined ? 'checkHeading' : isResult ? resultTitle : phase === 'check' ? initialQuiz ? 'transformTitle' : 'checkTitle' : 'briefTitle'}`)}</h3>
         {phase === 'check' && !initialQuiz && !streamlined && <p className="cs-sub">{t('courseStudio.checkSub')}</p>}
+        {/* Set the expectation before the first hard question, so a low score
+            reads as information rather than failure. Opening on a graded test
+            used to cost 22 points of first-node completion. */}
+        {phase === 'check' && answers.length === 0 && !hasAnswer && <p className="cs-sub cs-readiness-framing">{t('courseStudio.readinessFraming')}</p>}
       </div>
 
       {phase === 'check' ? <div className="cs-assessment">
-        {quiz.state === 'ready' && question ? <div className={`cs-question${sourceQuiz ? ' cs-document-card is-ready' : ''}`} key={answers.length}>
+        {quiz.state === 'ready' && question ? <div className={`cs-question${sourceQuiz ? ' cs-document-card is-ready' : ''}${answers.length === 0 ? ' is-first-question' : ''}`} key={answers.length}>
           {sourceQuiz && question.source && <CourseSourcePassage source={question.source} compact />}
-          <div className="cs-question-meta"><span>{question.topic}</span><span>{t('courseStudio.questionCount', { current: answers.length + 1, total: quiz.questions.length })}</span></div>
+          <div className="cs-question-meta"><span>{question.topic}</span><span className="cs-question-meta__end">
+            {formatLabelKey(question) && <span className={`cs-format-chip is-${question.format}`}>{t(formatLabelKey(question))}</span>}
+            <span>{t('courseStudio.questionCount', { current: answers.length + 1, total: quiz.questions.length })}</span>
+          </span></div>
           <div className="cs-question-progress" aria-hidden="true">{quiz.questions.map((_, index) => <span key={index} className={index < answers.length ? 'is-done' : index === answers.length ? 'is-current' : ''} />)}</div>
           {!sourceQuiz && question.source && <CourseSourcePassage source={question.source} compact />}
+          {question.format === 'casestudy' && question.scenario && <div className="cs-scenario">
+            <span className="cs-kicker">{t('courseStudio.scenarioLabel')}</span>
+            <p>{question.scenario}</p>
+          </div>}
           <h4 id={questionId} ref={questionHeading} tabIndex={-1}>{question.question}</h4>
-          <p className="cs-answer-hint">{t('courseStudio.answerHint')}</p>
+          <p className="cs-answer-hint">{t(isSata ? 'courseStudio.answerHintSata' : 'courseStudio.answerHint')}</p>
           <div className="cs-options" role="group" aria-labelledby={questionId}>
-            {question.options.map((option, index) => <button key={index} type="button" disabled={hasAnswer || disabled}
-              aria-pressed={picked === index}
-              aria-label={hasAnswer && question.correctIndex === index ? t('courseStudio.answer', { answer: option }) : undefined}
-              className={`study-quiz-option cs-option${hasAnswer || disabled ? ' disabled' : ''}${picked === index ? ' selected' : ''}${hasAnswer && question.correctIndex === index ? ' correct' : ''}${hasAnswer && picked === index && index !== question.correctIndex ? ' incorrect' : ''}`}
-              onClick={() => { if (picked === null) setPicked(index); }}>
-              <span className="study-quiz-option-letter">{String.fromCharCode(65 + index)}</span><span className="study-quiz-option-text">{option}</span>
-              {hasAnswer && question.correctIndex === index && <CheckIcon size={18} />}
-            </button>)}
+            {question.options.map((option, index) => {
+              const chosen = isSata
+                ? (hasAnswer ? Array.isArray(picked) && picked.includes(index) : selection.includes(index))
+                : picked === index;
+              const key = hasAnswer && isKeyOption(question, index);
+              return <button key={index} type="button" disabled={hasAnswer || disabled}
+                aria-pressed={chosen}
+                aria-label={key ? t('courseStudio.answer', { answer: option }) : undefined}
+                className={`study-quiz-option cs-option${isSata ? ' cs-option--multi' : ''}${hasAnswer || disabled ? ' disabled' : ''}${chosen ? ' selected' : ''}${key ? ' correct' : ''}${hasAnswer && chosen && !key ? ' incorrect' : ''}`}
+                onClick={() => {
+                  if (picked !== null) return;
+                  if (isSata) setSelection(prev => (prev.includes(index) ? prev.filter(i => i !== index) : [...prev, index]));
+                  else setPicked(index);
+                }}>
+                <span className="study-quiz-option-letter">{String.fromCharCode(65 + index)}</span><span className="study-quiz-option-text">{option}</span>
+                {key && <CheckIcon size={18} />}
+              </button>;
+            })}
+            {!hasAnswer && isSata && <button type="button" className="course-context__cta cs-button cs-check-answer"
+              disabled={disabled || selection.length === 0}
+              onClick={() => setPicked([...selection].sort((a, b) => a - b))}>{t('courseStudio.checkAnswer')}</button>}
             {!hasAnswer && <button type="button" className="study-quiz-idk-btn cs-unsure" disabled={disabled} onClick={() => setPicked('unsure')}><span aria-hidden="true">?</span>{t('courseStudio.unsure')}</button>}
           </div>
           {hasAnswer && <div className="cs-answer-review">
             <div className="cs-feedback" role="status">
               <div className="cs-feedback-heading">
-                <span>{t('courseStudio.correctAnswer')}</span>
-                {picked === question.correctIndex && <span className="cs-feedback-correct"><CheckIcon size={13} />{t('courseStudio.correct')}</span>}
+                <span>{t(isSata ? 'courseStudio.correctAnswers' : 'courseStudio.correctAnswer')}</span>
+                {grade.correct && <span className="cs-feedback-correct"><CheckIcon size={13} />{t('courseStudio.correct')}</span>}
               </div>
-              <div className="cs-feedback-answer"><span>{String.fromCharCode(65 + question.correctIndex)}</span><strong>{question.options[question.correctIndex]}</strong></div>
+              {answerKey(question).map(index => <div key={index} className="cs-feedback-answer"><span>{String.fromCharCode(65 + index)}</span><strong>{question.options[index]}</strong></div>)}
+              {grade.partial && <p className="cs-feedback-partial">{t('courseStudio.partialSata')}</p>}
               {question.rationale && <p>{question.rationale}</p>}
             </div>
             <div className="cs-review-action"><button type="button" className="course-context__cta cs-button" disabled={disabled} onClick={advance}>{t(answers.length + 1 === quiz.questions.length ? 'courseStudio.seeResult' : 'courseStudio.next')}<span aria-hidden="true">→</span></button></div>
@@ -241,11 +331,11 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
         </div>}
         <button type="button" className="cs-text-button cs-assessment-skip" disabled={disabled} onClick={() => {
           // Preserve an answer already revealed even if the student skips before Next.
-          const all = question && hasAnswer ? [...answers, { topic: question.topic, concept: question.concept,
-            question: question.question, correct: picked === question.correctIndex, unsure: picked === 'unsure' }] : answers;
+          const all = question && hasAnswer ? [...answers, answerRecord()] : answers;
           finish(all);
         }}>{t('courseStudio.skipRemaining')}</button>
       </div> : <>
+        {isResult && answers.length > 0 && <QuickCheckFindings answers={answers} lead={lead} funnelId={funnelId} />}
         <div className={`cs-brief-grid${!isResult ? ' is-compact' : ''}`}>
           <div className="cs-focus-story">
             <span className="cs-kicker">{t('courseStudio.first')}</span>

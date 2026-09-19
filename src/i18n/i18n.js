@@ -140,7 +140,7 @@ const resources = {
         titlePlanBlocked: "You've got more exams to prepare for.",
         // Opened from LockedPlanPreview: she is looking at her plan, so the
         // copy finishes that sentence rather than starting one about limits.
-        titlePlanReady: "Your plan is ready.",
+        titlePlanReady: "Fix what's holding you back.",
         // Upload gate — the third wall, and the last one to get its own copy.
         titleUpload: "Bring all your notes.",
         body: "Master every topic, find your weak spots faster, and walk into your exam ready.",
@@ -155,8 +155,8 @@ const resources = {
         nextPlanInline: "Continue free in {{time}} (next plan)",
         bodyPlan: "Pro gives every course you're taking its own plan — not just the first few.",
         bodyPlanBlocked: "You've already started {{count}} study plans this month. Give every course its own personalized plan with Pro.",
-        bodyPlanReady: "Unlock the full plan and work it in the order it's already sorted into — hardest first, refreshers last.",
-        bodyPlanReadyExam: "Your exam is {{when}}. Unlock the full plan and work it in the order it's already sorted into.",
+        bodyPlanReady: "Pro builds your next sessions around your weakest areas first, and rechecks them until they improve.",
+        bodyPlanReadyExam: "Your exam is {{when}}. Pro builds your next sessions around your weakest areas first, and rechecks them until they improve.",
         bodyPlanBlockedExam: "You've already started {{count}} study plans this month — and your exam is {{when}}. Give every course its own personalized plan with Pro.",
         bodyUpload: "Free covers one upload per chat. Pro lets you add every lecture, slide deck and handout for the same exam — and practise across all of them at once.",
         bodyUploadExam: "Free covers one upload per chat. Your exam is {{when}} — Pro lets you add every lecture and handout for it, and practise across all of them at once.",
@@ -204,8 +204,10 @@ const resources = {
         or: "or",
         notNow: "Not now",
         // Already-Pro branch
-        proTitle: "You're on Pro",
-        proBody: "Unlimited practice, uploads, and weak-spot reviews — you have it all. Manage your plan, update payment details, or cancel anytime.",
+        // Pro is "we're fixing it", not "you have unlimited stuff".
+        proTitle: "Your plan is fully unlocked",
+        proBody: "Keep working through your weak spots, recheck your readiness, and adjust your plan as you improve.",
+        proContinue: "Keep going",
         manage: "Manage subscription",
         manageSub: "Change plan, update card, or cancel",
         portalOpening: "Opening…",
@@ -700,9 +702,71 @@ const resources = {
         totalMinutes: "· about {{count}} min",
         trimmed_one: "1 lower-priority topic left out to fit your exam date.",
         trimmed_other: "{{count}} lower-priority topics left out to fit your exam date.",
-        gateCopy: "You've got a lot to learn — but not everything matters equally. This plan is ordered by what your exam is most likely to test and what you actually missed.",
-        cta: "Unlock my study plan",
-        later: "Not now"
+        // Fallback only — shown when there are no readiness-check answers.
+        gateCopy: "This plan is ordered by what your exam is most likely to test and what you actually missed. Pro builds it and rechecks you as you go.",
+        cta: "Get my full plan with Pro",
+        later: "Not now",
+        // The readiness verdict (2026-09-16): the whole diagnosis is free,
+        // the fix is what Pro sells. Never "unlock", never "a lot to learn".
+        verdict: {
+          eyebrow: "Your readiness check",
+          titleToday: "Here's what could cost you marks today",
+          titleTomorrow: "Here's what could cost you marks tomorrow",
+          titleDays: "Here's what could cost you marks in {{days}} days",
+          titleNoDate: "Here's what's holding you back",
+          titleClean: "Nothing big is holding you back on what we checked",
+          basedOn_one: "From your {{count}} answer",
+          basedOn_other: "From your {{count}} answers",
+          basedOnEarly_one: "An early read from 1 answer",
+          basedOnEarly_other: "An early read from your {{count}} answers",
+          severity: {
+            high: "High concern",
+            needsWork: "Needs work",
+            early: "Early signal"
+          },
+          formatGap: {
+            title: "You know the content, but the question format is costing you marks",
+            evidence: "{{hard}} of {{hardTotal}} on select-all and case questions, {{standard}} of {{standardTotal}} on standard ones"
+          },
+          sata: {
+            title: "Select-all questions",
+            evidence: "{{correct}} of {{total}} fully right",
+            evidencePartial: "{{correct}} of {{total}} fully right, partly right on {{partial}}"
+          },
+          casestudy: {
+            title: "Applying it to a patient case",
+            evidence_one: "Missed the case study",
+            evidence_other: "{{correct}} of {{count}} case studies right"
+          },
+          priority: {
+            title: "Deciding what the nurse does first",
+            evidence: "{{correct}} of {{total}} priority questions right"
+          },
+          topic: {
+            evidence: "{{correct}} of {{total}} right",
+            missedBoth: "Missed both",
+            missedAll: "Missed all {{total}}"
+          },
+          strength: "Solid already: {{topic}} ({{correct}} of {{total}})",
+          // Short names for the fix sentence. Students say "SATA".
+          short: {
+            formatGap: "SATA + case studies",
+            sata: "SATA",
+            casestudy: "case studies",
+            priority: "prioritization"
+          },
+          fixLabel: "How Pro fixes this",
+          fixBoth: "Your plan starts with {{skills}}, then rechecks {{topics}} until it improves.",
+          fixSkills: "Your plan starts with {{skills}}, then rechecks these weak spots until they improve.",
+          fixTopics_one: "Your plan starts with {{topics}}, then rechecks it until it improves.",
+          fixTopics_other: "Your plan starts with {{topics}}, then rechecks them until they improve.",
+          fixCopyClean: "Pro checks the rest of your material the same way, so nothing on the exam catches you off guard.",
+          // The minutes quoted next to this are the plan's TOTAL. Never "each".
+          builtForExam: "· built for your exam date",
+          ctaFix: "Fix my weak spots",
+          ctaBuild: "Build my plan",
+          ctaClean: "Check the rest with Pro"
+        }
       },
 
       // ══════════════════════════════════════════════════════════════
@@ -2548,7 +2612,7 @@ const resources = {
         titleCourse: "Cartonne à ton examen",
         titleBlocked: "N'arrête pas maintenant.",
         titlePlanBlocked: "Tu as d'autres examens à préparer.",
-        titlePlanReady: "Ton plan est prêt.",
+        titlePlanReady: "Corrige ce qui te freine.",
         titleUpload: "Apporte toutes tes notes.",
         body: "Maîtrise chaque sujet, repère tes points faibles plus vite et arrive prêt(e) à ton examen.",
         bodyBlocked: "Tu as atteint ta limite de pratique gratuite. Passe en Pro et continue à préparer ton examen.",
@@ -2562,8 +2626,8 @@ const resources = {
         nextPlanInline: "Continuer gratuitement dans {{time}} (prochain plan)",
         bodyPlan: "Pro donne à chaque cours que tu suis son propre plan — pas seulement aux premiers.",
         bodyPlanBlocked: "Tu as déjà créé {{count}} plans d'étude ce mois-ci. Donne à chaque cours son propre plan personnalisé avec Pro.",
-        bodyPlanReady: "Débloque le plan complet et suis-le dans l'ordre déjà établi — le plus dur d'abord, les rappels à la fin.",
-        bodyPlanReadyExam: "Ton examen est {{when}}. Débloque le plan complet et suis-le dans l'ordre déjà établi.",
+        bodyPlanReady: "Pro construit tes prochaines séances autour de tes points les plus faibles d'abord, et te réévalue jusqu'à ce qu'ils s'améliorent.",
+        bodyPlanReadyExam: "Ton examen est {{when}}. Pro construit tes prochaines séances autour de tes points les plus faibles d'abord, et te réévalue jusqu'à ce qu'ils s'améliorent.",
         bodyPlanBlockedExam: "Tu as déjà créé {{count}} plans d'étude ce mois-ci — et ton examen est {{when}}. Donne à chaque cours son propre plan personnalisé avec Pro.",
         bodyUpload: "Le forfait gratuit permet un téléversement par conversation. Pro te laisse ajouter chaque cours, diaporama et document pour le même examen — et pratiquer sur l'ensemble d'un coup.",
         bodyUploadExam: "Le forfait gratuit permet un téléversement par conversation. Ton examen est {{when}} — Pro te laisse ajouter chaque cours et document, et pratiquer sur l'ensemble d'un coup.",
@@ -2609,8 +2673,9 @@ const resources = {
         or: "ou",
         notNow: "Plus tard",
         // Déjà Pro
-        proTitle: "Tu es en Pro",
-        proBody: "Pratique, téléversements et révisions illimités — tu as tout. Gère ton forfait, mets à jour ton paiement ou annule à tout moment.",
+        proTitle: "Ton plan est entièrement débloqué",
+        proBody: "Continue à travailler tes points faibles, réévalue ta préparation et ajuste ton plan à mesure que tu progresses.",
+        proContinue: "Continuer",
         manage: "Gérer l'abonnement",
         manageSub: "Changer de forfait, mettre à jour la carte ou annuler",
         portalOpening: "Ouverture…",
@@ -3088,9 +3153,66 @@ const resources = {
         totalMinutes: "· environ {{count}} min",
         trimmed_one: "1 sujet moins prioritaire écarté pour tenir avant ton examen.",
         trimmed_other: "{{count}} sujets moins prioritaires écartés pour tenir avant ton examen.",
-        gateCopy: "Tu as beaucoup à apprendre — mais tout ne compte pas pareil. Ce plan est ordonné selon ce que ton examen risque le plus de tester et ce que tu as réellement raté.",
-        cta: "Débloquer mon plan",
-        later: "Plus tard"
+        gateCopy: "Ce plan est ordonné selon ce que ton examen risque le plus de tester et ce que tu as réellement raté. Pro le construit et te réévalue au fil du temps.",
+        cta: "Obtenir mon plan complet avec Pro",
+        later: "Plus tard",
+        verdict: {
+          eyebrow: "Ton bilan de préparation",
+          titleToday: "Voici ce qui pourrait te coûter des points aujourd'hui",
+          titleTomorrow: "Voici ce qui pourrait te coûter des points demain",
+          titleDays: "Voici ce qui pourrait te coûter des points dans {{days}} jours",
+          titleNoDate: "Voici ce qui te freine",
+          titleClean: "Rien d'important ne te freine sur ce qu'on a vérifié",
+          basedOn_one: "D'après ta réponse",
+          basedOn_other: "D'après tes {{count}} réponses",
+          basedOnEarly_one: "Une première lecture, d'après ta réponse",
+          basedOnEarly_other: "Une première lecture, d'après tes {{count}} réponses",
+          severity: {
+            high: "Préoccupation majeure",
+            needsWork: "À travailler",
+            early: "Premier signal"
+          },
+          formatGap: {
+            title: "Tu connais la matière, mais le format des questions te coûte des points",
+            evidence: "{{hard}} sur {{hardTotal}} aux questions à réponses multiples et aux études de cas, {{standard}} sur {{standardTotal}} aux questions standard"
+          },
+          sata: {
+            title: "Questions à réponses multiples",
+            evidence: "{{correct}} sur {{total}} entièrement justes",
+            evidencePartial: "{{correct}} sur {{total}} entièrement justes, en partie justes à {{partial}}"
+          },
+          casestudy: {
+            title: "Appliquer la matière à un cas de patient",
+            evidence_one: "Étude de cas ratée",
+            evidence_other: "{{correct}} sur {{count}} études de cas réussies"
+          },
+          priority: {
+            title: "Décider quoi faire en premier",
+            evidence: "{{correct}} sur {{total}} questions de priorité réussies"
+          },
+          topic: {
+            evidence: "{{correct}} sur {{total}} réussies",
+            missedBoth: "Les deux ratées",
+            missedAll: "Les {{total}} ratées"
+          },
+          strength: "Déjà solide : {{topic}} ({{correct}} sur {{total}})",
+          short: {
+            formatGap: "les questions à réponses multiples + les études de cas",
+            sata: "les questions à réponses multiples",
+            casestudy: "les études de cas",
+            priority: "la priorisation"
+          },
+          fixLabel: "Comment Pro corrige ça",
+          fixBoth: "Ton plan commence par {{skills}}, puis réévalue {{topics}} jusqu'à ce que ça s'améliore.",
+          fixSkills: "Ton plan commence par {{skills}}, puis réévalue ces points faibles jusqu'à ce qu'ils s'améliorent.",
+          fixTopics_one: "Ton plan commence par {{topics}}, puis le réévalue jusqu'à ce que ça s'améliore.",
+          fixTopics_other: "Ton plan commence par {{topics}}, puis les réévalue jusqu'à ce qu'ils s'améliorent.",
+          fixCopyClean: "Pro vérifie le reste de ta matière de la même façon, pour que rien ne te surprenne à l'examen.",
+          builtForExam: "· conçu pour ta date d'examen",
+          ctaFix: "Corriger mes points faibles",
+          ctaBuild: "Construire mon plan",
+          ctaClean: "Vérifier le reste avec Pro"
+        }
       },
 
       courseContext: {

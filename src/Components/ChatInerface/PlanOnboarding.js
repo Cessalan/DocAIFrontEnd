@@ -59,7 +59,10 @@ const PlanOnboarding = ({
   // not ask her the same four questions again.
   savedCourseContext = null,
   onCourseContext,
-  onConfirm
+  onConfirm,
+  // The upload funnel this card belongs to, persisted on the message so the
+  // readiness check still reports into it after a reload.
+  funnelId = null,
 }) => {
   const { t } = useTranslation();
 
@@ -293,10 +296,14 @@ const PlanOnboarding = ({
       // an LLM pass, and re-deriving it would spend them twice.
       courseIntelligence: rawReportRef.current,
       courseIntelligenceReport: report,
+      // The readiness check's own answers — format, kind, partial — which the
+      // topic score map above throws away. The locked preview builds the
+      // student's verdict from them. Null when the check was skipped.
+      readiness: calibration?.answers?.length ? { answers: calibration.answers, funnelId } : null,
     });
   }, [
     userOnboarding, autoHardestTopics, diagnostic, ranked,
-    quickCheckResult, courseContext, report, intelligenceFailed, onConfirm,
+    quickCheckResult, courseContext, report, intelligenceFailed, onConfirm, funnelId,
   ]);
 
   const handleBriefStart = useCallback((calibration) => {
@@ -436,6 +443,7 @@ const PlanOnboarding = ({
           disabled={disabled}
           onExamDate={handleBriefDate}
           onStart={handleBriefStart}
+          funnelId={funnelId}
         />
       )}
 

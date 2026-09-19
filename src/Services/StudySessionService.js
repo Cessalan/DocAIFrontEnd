@@ -22,7 +22,8 @@ import {
   orderBy,
   limit,
   serverTimestamp,
-  arrayUnion
+  arrayUnion,
+  runTransaction
 } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { devLog } from './devLogger';
@@ -65,6 +66,8 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
       label: node.label,
       tags: node.tags || [],
       difficulty: node.difficulty || 1,
+      ...(node.topic ? { topic: node.topic, topicKey: node.topicKey || null } : {}),
+      ...(node.reviewReason ? { reviewReason: node.reviewReason } : {}),
       status: !isRealNode(node) ? 'banner' : (isActive ? 'active' : 'locked'),
       messageId: null // Will be set when content is generated
     });
@@ -108,6 +111,7 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
         },
         path: {
           topics: topics,
+          quickCheckId: pathResult.quickCheckId || null,
           // Counts describe the LIVE block, so "done" is reachable and every
           // progress readout in the app is measured against something finishable.
           totalNodes: blockCount || nodesWithIds.filter(isRealNode).length,
@@ -141,6 +145,7 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
       status: 'active',
       path: {
         topics: topics,
+        quickCheckId: pathResult.quickCheckId || null,
         nodes: nodesWithIds,
         activeNodeId: nodesWithIds[0]?.id || null,
         totalNodes: nodesWithIds.length,
@@ -465,6 +470,7 @@ export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) 
       difficulty: newNodeDef.difficulty || 1,
       adaptive: true,
       reason: newNodeDef.reason || '',
+      ...(newNodeDef.detour ? { detour: newNodeDef.detour } : {}),
       status: 'active',
       messageId: null,
       // Carry phase from current node so it appears in the right section
@@ -836,6 +842,8 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
     // Persist new fields if present (questionStatuses, firstAttemptStatuses, isReviewRound)
     if (progress.questionStatuses) progressData.questionStatuses = progress.questionStatuses;
     if (progress.firstAttemptStatuses) progressData.firstAttemptStatuses = progress.firstAttemptStatuses;
+    if (progress.firstAttemptAnswers) progressData.firstAttemptAnswers = progress.firstAttemptAnswers;
+    if (progress.answers) progressData.answers = progress.answers;
     if (progress.isReviewRound !== undefined) progressData.isReviewRound = progress.isReviewRound;
     if (progress.queueIndex !== undefined) progressData.queueIndex = progress.queueIndex;
 
@@ -846,6 +854,43 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
     console.error('❌ Error saving quiz progress:', error);
     // Don't throw - this is non-critical
   }
+};
+
+/** Save once under the student's existing performance document. A retry cannot
+ * replace the original evidence or create another baseline for the same check.
+ */
+const quickCheckSaves = new Map();
+export const waitForQuickCheckSave = async (checkId) => {
+  const pending = quickCheckSaves.get(checkId);
+  try { await pending; } catch (error) {
+    const retry = quickCheckSaves.get(checkId);
+    if (retry && retry !== pending) await retry;
+    else throw error;
+  }
+};
+
+export const saveQuickCheckRecord = (record) => {
+  const pending = persistQuickCheckRecord(record);
+  quickCheckSaves.set(record.checkId, pending);
+  // Successful writes need no further waiting; retain failures for the launch
+  // to notice until a retry replaces them. Bound the in-memory bookkeeping.
+  pending.then(() => {
+    if (quickCheckSaves.get(record.checkId) === pending) quickCheckSaves.delete(record.checkId);
+  }, () => {});
+  if (quickCheckSaves.size > 32) quickCheckSaves.delete(quickCheckSaves.keys().next().value);
+  return pending;
+};
+
+const persistQuickCheckRecord = async (record) => {
+  const userId = auth.currentUser?.uid;
+  if (!userId) throw new Error('User not authenticated');
+  const data = record.toJSON();
+  const target = doc(db, 'users', userId, 'studyPerformance', data.chatId, 'quickChecks', data.checkId);
+  await runTransaction(db, async transaction => {
+    const existing = await transaction.get(target);
+    if (!existing.exists()) transaction.set(target, data);
+  });
+  return data.checkId;
 };
 
 /**

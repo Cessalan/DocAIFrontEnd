@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+import { TopicProgress } from './TopicEvidence';
 import { formatNodeType, getStepTopicLabel, estimateMinutes } from './planFormatting';
 import { getStudyNodeIcon } from './planNodeIcon';
 import WarmUrgencyDashboard from './WarmUrgencyDashboard';
@@ -406,6 +407,7 @@ const StudyPlanOverview = ({
   onRetakeExam,
   onShowInsights,
   insightsData = null,
+  topicProgress = null,
   sidebarOpen = true,
   isGeneratingPhase2 = false,
   onStartPhase2,
@@ -950,6 +952,11 @@ const StudyPlanOverview = ({
           </div>
         )}
       </div>
+
+      {/* ── Warm Urgency Dashboard
+          Keep the baseline comparison visible when returning to this plan. */}
+      {Object.entries(topicProgress?.latest || {}).map(([key, row]) =>
+        <TopicProgress key={key} baseline={topicProgress.baseline[key]} latest={row} />)}
 
       {/* ── Warm Urgency Dashboard
           Empathic replacement for the old countdown+confidence layout.

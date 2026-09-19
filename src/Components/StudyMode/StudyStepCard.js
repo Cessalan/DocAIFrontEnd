@@ -88,6 +88,7 @@ const StudyStepCard = ({
       return (
         <StudyLessonCard
           content={content}
+          reviewReason={node.reviewReason}
           isReviewMode={isReviewMode}
           onContinue={onContinue}
           onExit={onExit}

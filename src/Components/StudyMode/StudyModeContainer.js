@@ -10,6 +10,8 @@ import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
 import QuizMasterySummary from './QuizMasterySummary';
 import NodeTransition from './NodeTransition';
+import PlanAdvance from './PlanAdvance';
+import { hasUsableStudyContent } from './planAdvanceReadiness';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
 import PerformanceBreakdown from '../Progress/PerformanceBreakdown';
 import BrainMascot from '../QuizRoom/BrainMascot';
@@ -18,11 +20,13 @@ import PillMascot from '../QuizRoom/PillMascot';
 import CoffeeCupMascot from '../QuizRoom/CoffeeCupMascot';
 import MatchaCupMascot from '../QuizRoom/MatchaCupMascot';
 import ExamConfigModal from './ExamConfigModal';
-import { getStepTopicLabel } from './planFormatting';
+import { getStepTopicLabel, formatNodeType } from './planFormatting';
 import { usePaperTransition } from '../ChatInerface/paperTransition';
 import PaperSurface from '../ChatInerface/PaperSurface';
 import '../ChatInerface/paperTransition.css';
 import { computeReadinessDelta } from './readinessDelta';
+import { getTopicProgress, savePracticeAttempt } from '../../Services/TopicProgressService';
+import { PracticeAttemptRecord } from '../../Services/topicProgressModel';
 import DevPaywallPill from '../Common/DevPaywallPill';
 import { markMessageEngaged } from '../../Services/FireBaseServiceChats';
 import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam, get_prefetched_node_content, consume_prefetched_node_content } from '../../Services/FastAPICalls';
@@ -199,6 +203,18 @@ const StudyModeContainer = ({
 
   // Track if current node is being reviewed (gives only 5 XP)
   const [isReviewingNode, setIsReviewingNode] = useState(false);
+  const [topicProgress, setTopicProgress] = useState(null);
+  const progressScopeRef = useRef(null);
+  useEffect(() => {
+    let alive = true;
+    const scope = {};
+    progressScopeRef.current = scope;
+    setTopicProgress(null);
+    getTopicProgress(chatId, studyState?.path?.quickCheckId).then(data => {
+      if (alive) setTopicProgress(current => current || data);
+    }).catch(() => {});
+    return () => { alive = false; progressScopeRef.current = null; };
+  }, [chatId, studyState?.path?.quickCheckId]);
 
   // Performance tracking animation state
   const [insightPulse, setInsightPulse] = useState(null); // { type: 'strength'|'weakness'|'noted', topic }
@@ -247,6 +263,22 @@ const StudyModeContainer = ({
   // blocks re-entry while the advance is in flight (see handleTransitionContinue).
   const [isAdvancing, setIsAdvancing] = useState(false);
   const advanceLockRef = useRef(false);
+  const [planAdvance, setPlanAdvance] = useState(null);
+  const advanceScopeRef = useRef(null);
+  const advancePauseRef = useRef(null);
+  useEffect(() => {
+    advanceScopeRef.current = {};
+    setPlanAdvance(null);
+    setIsAdvancing(false);
+    advanceLockRef.current = false;
+    return () => {
+      advanceScopeRef.current = null;
+      if (advancePauseRef.current) {
+        clearTimeout(advancePauseRef.current.timer);
+        advancePauseRef.current = null;
+      }
+    };
+  }, [chatId]);
   const [isLoadingPractice, setIsLoadingPractice] = useState(false);
   const [isLoadingCustom, setIsLoadingCustom] = useState(false);
   const [customEcho, setCustomEcho] = useState(null); // { message, node }
@@ -457,6 +489,7 @@ const StudyModeContainer = ({
           } else if (savedContent.quizProgress) {
             console.log('📊 Restoring quiz progress:', savedContent.quizProgress);
             setSavedProgress(savedContent.quizProgress);
+            latestQuizProgressRef.current = savedContent.quizProgress;
           } else if (savedContent.mindmapProgress) {
             console.log('📊 Restoring mindmap progress:', savedContent.mindmapProgress);
             setSavedProgress(savedContent.mindmapProgress);
@@ -613,6 +646,7 @@ const StudyModeContainer = ({
         {
           isDiagnostic,
           numQuestions: node.num_questions || null,
+          nodeId: node.id,
           difficulty: node.difficulty || 1,
         }
       );
@@ -729,6 +763,20 @@ const StudyModeContainer = ({
   // Handle quiz answer
   const handleAnswer = useCallback((answerData) => {
     console.log('📝 Answer submitted:', answerData);
+    if (answerData.progress) {
+      const firstAttemptAnswers = { ...(latestQuizProgressRef.current?.firstAttemptAnswers || {}) };
+      const index = answerData.questionIndex;
+      if (!isReviewingNode && !answerData.progress.isReviewRound && Number.isInteger(index)
+          && typeof answerData.isCorrect === 'boolean' && !Object.prototype.hasOwnProperty.call(firstAttemptAnswers, index)) {
+        firstAttemptAnswers[index] = {
+          correct: answerData.isCorrect,
+          partial: !answerData.isCorrect && !!(answerData.isPartial || answerData.partial || answerData.score > 0),
+          selection: answerData.selectedIndices ?? answerData.selectedIndex ?? null,
+          recordedAt: new Date().toISOString(),
+        };
+      }
+      answerData = { ...answerData, progress: { ...answerData.progress, firstAttemptAnswers } };
+    }
 
     // Only update mascot for actual answers (not navigation)
     if (answerData.isCorrect !== null) {
@@ -825,7 +873,7 @@ const StudyModeContainer = ({
 
     // Track latest quiz progress for mastery summary
     if (answerData.progress) latestQuizProgressRef.current = answerData.progress;
-  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly]);
+  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly, isReviewingNode]);
 
   // Handle flashcard review
   const handleReview = useCallback((reviewData) => {
@@ -1119,6 +1167,17 @@ const StudyModeContainer = ({
     setReadinessDelta(null);
     setView('transition');
 
+    if (!isReviewingNode && studyState?.path?.quickCheckId && activeNode) {
+      const scope = progressScopeRef.current;
+      const attempt = new PracticeAttemptRecord({ checkId: studyState.path.quickCheckId,
+        node: activeNode, content: currentContent, progress: latestQuizProgressRef.current });
+      savePracticeAttempt(chatId, attempt).then(data => {
+        if (data && scope === progressScopeRef.current) setTopicProgress(data);
+      }).catch(() => savePracticeAttempt(chatId, attempt).then(data => {
+        if (data && scope === progressScopeRef.current) setTopicProgress(data);
+      })).catch(error => console.error('Could not save topic progress:', error));
+    }
+
     // Compute readiness delta from pre/post snapshots so the transition
     // screen can show "↑ X% closer to ready" when an exam date is set.
     // Fire-and-forget — the screen renders immediately and the line
@@ -1136,7 +1195,7 @@ const StudyModeContainer = ({
         setReadinessDelta(delta);
       }).catch(() => setReadinessDelta(null));
     }
-  }, [viewOnly, handleAdvanceNode, chatId, examDate, studyState]);
+  }, [viewOnly, handleAdvanceNode, chatId, examDate, studyState, isReviewingNode, activeNode, currentContent]);
 
   // Lightweight analytics sink — currently logs in dev. Wire this to
   // a real provider (PostHog, Amplitude, GA) later without touching
@@ -1160,9 +1219,20 @@ const StudyModeContainer = ({
     if (advanceLockRef.current) return;
     advanceLockRef.current = true;
     setIsAdvancing(true);
+    const scope = advanceScopeRef.current;
+    const pathSnapshot = nodesRef.current.filter(node => node.type !== 'section_banner');
+    setPlanAdvance({ nodes: pathSnapshot, fromId: activeNodeId, toId: null, confirmed: false });
 
     try {
       const result = await completeNodeAndAdvance(chatId, activeNodeId);
+      if (advanceScopeRef.current !== scope) return;
+      setPlanAdvance({ nodes: pathSnapshot, fromId: activeNodeId, toId: result.nextNodeId, confirmed: true, isComplete: result.isComplete });
+      // The content request runs during this readable pause, not after it.
+      const timer = setTimeout(() => {
+        if (advanceScopeRef.current === scope) setPlanAdvance(previous => previous ? { ...previous, elapsed: true } : null);
+        advancePauseRef.current = null;
+      }, 4500);
+      advancePauseRef.current = { timer };
 
       // Update local node statuses
       setNodes(prev => prev.map(n => {
@@ -1188,9 +1258,6 @@ const StudyModeContainer = ({
         // Session done — go to overview for the completion state
         setIsComplete(true);
         setView('overview');
-        if (currentPhase >= 2 || totalPhases >= 2) {
-          if (onComplete) onComplete();
-        }
       } else {
         // Find the next node object and launch it directly
         setActiveNodeId(result.nextNodeId);
@@ -1203,6 +1270,7 @@ const StudyModeContainer = ({
           // (phase 2, an inserted node, a stale tab). Land on the overview
           // rather than leaving the transition card up with nothing happening.
           setView('overview');
+          setPlanAdvance(null);
         } else {
           const outcome = await handleStartNode(nextNode);
           // 'exam_config' is fine — the config modal renders over this view.
@@ -1211,30 +1279,47 @@ const StudyModeContainer = ({
           // user never saw.
           if (outcome === 'blocked') {
             setView('overview');
+            setPlanAdvance(null);
           }
         }
       }
     } catch (error) {
       console.error('❌ Error advancing to next node:', error);
       // Fallback: go to overview
-      setView('overview');
+      if (advanceScopeRef.current === scope) { setView('overview'); setPlanAdvance(null); }
     } finally {
-      advanceLockRef.current = false;
-      setIsAdvancing(false);
+      if (advanceScopeRef.current === scope) {
+        advanceLockRef.current = false;
+        setIsAdvancing(false);
+      }
     }
-  }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases, handleStartNode]);
+  }, [chatId, activeNodeId, handleStartNode]);
 
   // ── Transition screen: user chose "Practice More" ─────────────────
   const handleTransitionPractice = useCallback(async (remediationNodeDef) => {
     console.log('📚 Practice More requested:', remediationNodeDef);
+    if (advanceLockRef.current) return;
+    advanceLockRef.current = true;
+    const scope = advanceScopeRef.current;
+    const snapshot = nodesRef.current.filter(node => node.type !== 'section_banner');
+    const returnNode = snapshot[snapshot.findIndex(node => node.id === activeNodeId) + 1];
+    setPlanAdvance({ nodes: snapshot, fromId: activeNodeId, confirmed: false, detour: true, returnId: returnNode?.id });
     setIsLoadingPractice(true);
 
     try {
       const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
         chatId,
         activeNodeId,
-        remediationNodeDef
+        { ...remediationNodeDef, detour: { fromNodeId: activeNodeId, returnNodeId: returnNode?.id || null } }
       );
+      if (scope !== advanceScopeRef.current) return;
+      setPlanAdvance({ nodes: updatedNodes.filter(node => node.type !== 'section_banner'), fromId: activeNodeId,
+        toId: insertedNode.id, confirmed: true, detour: true, returnId: returnNode?.id });
+      const timer = setTimeout(() => {
+        if (scope === advanceScopeRef.current) setPlanAdvance(previous => previous ? { ...previous, elapsed: true } : null);
+        advancePauseRef.current = null;
+      }, 5500);
+      advancePauseRef.current = { timer };
 
       // Update local state with the mutated path
       setNodes(updatedNodes);
@@ -1243,15 +1328,20 @@ const StudyModeContainer = ({
       setCurrentContent(null);
       setIsLoadingPractice(false);
 
-      // Go directly to the new node (no overview stop)
-      handleStartNode(insertedNode);
+      // Prepare during the visible detour, using the same readiness gate as Move on.
+      const outcome = await handleStartNode(insertedNode);
+      if (scope === advanceScopeRef.current && outcome === 'blocked') {
+        setPlanAdvance(null);
+        setView('overview');
+      }
     } catch (error) {
       console.error('❌ Error inserting practice node:', error);
-      setIsLoadingPractice(false);
-      // Fallback: just advance normally
-      await handleAdvanceNode();
+      // A failed insert must not silently skip the review the student requested.
+      if (scope === advanceScopeRef.current) { setPlanAdvance(null); setView('transition'); }
+    } finally {
+      if (scope === advanceScopeRef.current) { setIsLoadingPractice(false); advanceLockRef.current = false; }
     }
-  }, [chatId, activeNodeId, handleAdvanceNode, handleStartNode]);
+  }, [chatId, activeNodeId, handleStartNode]);
 
   // ── Transition screen: user submitted custom request ──────────────
   const handleTransitionCustomRequest = useCallback(async (userText, context = {}) => {
@@ -1601,28 +1691,16 @@ const StudyModeContainer = ({
    */
   const handleTestTheory = useCallback(async (skill) => {
     if (!skill) return;
-    try {
-      const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
-        chatId,
-        activeNodeId,
-        {
-          type: 'quiz',
-          label: t('study.experimentLabel', 'Testing a theory: {{skill}}', { skill }),
-          tags: [`experiment:${skill}`, 'weak_area'],
-          // A test of technique has to be hard enough to actually test it.
-          difficulty: 2,
-          adaptive: true,
-          num_questions: 1,
-          reason: `One question to test the ${skill} pattern`,
-        }
-      );
-      setNodes(updatedNodes);
-      handleStartNode(insertedNode);
-    } catch (error) {
-      console.error('❌ Error creating theory-test node:', error);
-    }
-  }, [chatId, activeNodeId, handleStartNode, t]);
-
+    await handleTransitionPractice({
+      type: 'quiz',
+      label: t('study.experimentLabel', 'Testing a theory: {{skill}}', { skill }),
+      tags: [`experiment:${skill}`, 'weak_area'],
+      difficulty: 2,
+      adaptive: true,
+      num_questions: 1,
+      reason: `One question to test the ${skill} pattern`,
+    });
+  }, [handleTransitionPractice, t]);
   /**
    * Insights CTA — reopen the node a missed question came from, so "review
    * this concept" lands on the explanation she already has rather than
@@ -1794,6 +1872,36 @@ const StudyModeContainer = ({
     );
   };
 
+  // Keep the path visible until there is usable content (including a first
+  // streamed question/page), an exam configuration, or an actionable error.
+  const nextActivityReady = !!planAdvance?.confirmed && (
+    planAdvance.isComplete || showExamConfig ||
+    (activeNode?.id === planAdvance.toId && !isLoadingContent && (hasUsableStudyContent(activeNode.type, currentContent) || !!contentError))
+  );
+  const arrivalHeadingRef = useRef(null);
+  const arrivalFocusPending = useRef(false);
+  const openPreparedActivity = useCallback(() => {
+    if (!nextActivityReady) return;
+    if (advancePauseRef.current) {
+      clearTimeout(advancePauseRef.current.timer);
+      advancePauseRef.current = null;
+    }
+    arrivalFocusPending.current = true;
+    setPlanAdvance(null);
+    if (planAdvance?.isComplete && (currentPhase >= 2 || totalPhases >= 2)) onComplete?.();
+  }, [nextActivityReady, planAdvance?.isComplete, currentPhase, totalPhases, onComplete]);
+  useEffect(() => {
+    if (planAdvance?.elapsed && nextActivityReady) openPreparedActivity();
+  }, [planAdvance?.elapsed, nextActivityReady, openPreparedActivity]);
+  useEffect(() => {
+    if (planAdvance || view !== 'node' || !arrivalFocusPending.current) return undefined;
+    const frame = requestAnimationFrame(() => {
+      arrivalHeadingRef.current?.focus({ preventScroll: true });
+      arrivalFocusPending.current = false;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [planAdvance, view]);
+
   // Build studyState for overview (with updated local state)
   const currentStudyState = {
     ...studyState,
@@ -1812,15 +1920,16 @@ const StudyModeContainer = ({
   };
 
   // Render transition screen (post-node decision moment)
-  if (view === 'transition') {
+  if (planAdvance || view === 'transition') {
     return (
       <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
         <StudyModeHeader
           unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
           unitSubtitle={studyState?.path?.unitSubtitle || ''}
         />
-        <NodeTransition
+        {planAdvance ? <PlanAdvance {...planAdvance} ready={nextActivityReady} error={contentError && activeNode?.id === planAdvance.toId} onOpenNow={openPreparedActivity} onBack={() => { setPlanAdvance(null); setView('overview'); }} reserveCount={reserveRemaining ?? studyState?.reserve?.remaining ?? 0} /> : <NodeTransition
           chatId={chatId}
+          topicProgress={topicProgress}
           node={activeNode}
           content={currentContent}
           quizProgress={latestQuizProgressRef.current}
@@ -1848,7 +1957,7 @@ const StudyModeContainer = ({
           customEcho={customEcho}
           onConfirmCustom={handleConfirmCustom}
           onCancelCustom={handleCancelCustom}
-        />
+        />}
         {renderInsightsModal()}
 
         {/* Exam config modal — the next node can be a mini-test, and
@@ -1857,7 +1966,7 @@ const StudyModeContainer = ({
             the overview branch. Backing out drops to the overview rather than
             back onto a transition card for a node already marked done. */}
         <ExamConfigModal
-          isOpen={showExamConfig}
+          isOpen={showExamConfig && !planAdvance}
           onClose={() => { setShowExamConfig(false); setPendingExamNode(null); setView('overview'); }}
           onStart={handleExamStart}
           topic={pendingExamNode?.label || ''}
@@ -1908,6 +2017,7 @@ const StudyModeContainer = ({
         )}
         <StudyPlanOverview
           studyState={currentStudyState}
+          topicProgress={topicProgress}
           examDate={examDate}
           examName={examName}
           onNodeSelect={handleNodeSelect}
@@ -1994,6 +2104,9 @@ const StudyModeContainer = ({
         {/* Centered content - no path view, just the current step */}
         <div className="study-focused-layout">
           <div className="study-content-centered">
+            {activeNode && realNodes.some(node => node.id === activeNode.id) && <p className="study-arrival-step" ref={arrivalHeadingRef} tabIndex={-1}>
+              {language.startsWith('fr') ? 'Étape' : 'Step'} {realNodes.findIndex(node => node.id === activeNode.id) + 1} {language.startsWith('fr') ? 'sur' : 'of'} {realNodes.length} · {formatNodeType(activeNode.type, t)}
+            </p>}
             {isLoadingContent ? (
               <StudyLoadingScreen
                 nodeType={activeNode?.type || 'lesson'}

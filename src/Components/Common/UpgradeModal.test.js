@@ -3,6 +3,21 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import '../../i18n/i18n';
 import UpgradeModal from './UpgradeModal';
 
+describe('UpgradeModal (already Pro)', () => {
+  test('speaks to the fix in progress, puts the journey first, keeps account management', () => {
+    const onClose = jest.fn();
+    render(<UpgradeModal isOpen isPro onClose={onClose} />);
+    expect(screen.getByText('Your plan is fully unlocked')).toBeInTheDocument();
+    expect(screen.getByText(/Keep working through your weak spots/)).toBeInTheDocument();
+    // Not a list of unlimited things.
+    expect(screen.queryByText(/Unlimited practice/)).toBeNull();
+    expect(screen.getByText('Manage subscription')).toBeInTheDocument();
+    expect(screen.getByText('Change plan, update card, or cancel')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Keep going'));
+    expect(onClose).toHaveBeenCalled();
+  });
+});
+
 describe('UpgradeModal (blocked, question gate)', () => {
   const base = {
     isOpen: true, onClose: () => {}, limit: 30, used: 17, remaining: 0,
