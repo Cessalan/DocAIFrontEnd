@@ -1,11 +1,9 @@
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import ReactMarkdown from 'react-markdown';
+import TutorDiscussionPanel from './TutorDiscussionPanel';
 import { useTranslation } from 'react-i18next';
 import { v4 as uuid } from 'uuid';
 import StudyQuizCard from '../StudyMode/StudyQuizCard';
-import StudyPathMascot from '../QuizRoom/StudyPathMascot';
-import ChatSendButton from './ChatSendButton';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { askPracticeTutor, savePractice, streamPracticeBatch, copyPracticeToOwnChat } from '../../Services/PracticeService';
 import { appendUniqueQuestions, initialPracticeSettings, normalizePracticeQuestion, permittedTotal } from './practiceModel';
@@ -166,17 +164,7 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   const content = useMemo(() => ({ questions, _expectedTotal: target,
     _isStreaming: !readOnly && (!!message.isStreaming || extending || (target > loaded && !batchError)) }), [questions, target, message.isStreaming, extending, loaded, batchError, readOnly]);
   const isCase = ['casestudy', 'ordering', 'bowtie'].includes(current?.questionType);
-  const tutorPanel = <aside className="practice-tutor" data-animate={animateTutor} data-has-discussion={history.length > 0 || busy || !!tutorError} aria-label="Question tutor"><header><div className="practice-tutor-identity"><div className="practice-tutor-mascot" aria-hidden="true"><StudyPathMascot size={48} /></div><div className="practice-tutor-label"><strong>Your tutor</strong><span>Question {questionIndex + 1} · {active?.showFeedback ? 'Let’s review your reasoning' : 'Hints first. Your answer is yours.'}</span></div></div>{!isCase && <button onClick={() => setTutorOpen(false)} aria-label="Close tutor">×</button>}</header>
-      <div className="practice-discussion">{!history.length && <><p>{active?.showFeedback ? 'Talk through your answer, one step at a time.' : 'A little help, without giving it away. Tell me where you’re stuck.'}</p><div className="practice-starters">{['Rephrase the question', 'Give me a small hint'].map(prompt => <button key={prompt} disabled={readOnly || busy} onClick={() => send(prompt)}>{prompt}</button>)}</div></>}
-        {history.map((turn, index) => <div key={index} className={`practice-turn ${turn.role}`}><ReactMarkdown>{turn.content}</ReactMarkdown>
-          {turn.sources?.map((source, i) => <details key={i}><summary>{source.source}{source.page != null ? ` · page ${Number(source.page) + 1}` : ''}</summary><p>{source.text}</p></details>)}</div>)}
-        {busy && <div className="practice-tutor-loading" role="status"><span className="paper-skeleton" /><span className="paper-skeleton short" /><span className="sr-only">Your tutor is responding</span></div>}
-        {tutorError && <p className="practice-error" role="alert">{tutorError} Your message is in the input so you can retry.</p>}<div ref={tutorBottom} /></div>
-    <form className="practice-composer" onSubmit={event => { event.preventDefault(); send(); }}><div><label htmlFor="practice-input">Question {questionIndex + 1}{active?.showFeedback ? ' · Answer saved' : ''}</label><button className="practice-mobile-return" type="button" onClick={() => { questionPane.current?.scrollTo({ top: 0, behavior: 'smooth' }); questionPane.current?.parentElement?.scrollTo({ top: 0, behavior: 'smooth' }); }}>Back to question ↑</button></div>
-      <div className="practice-input-shell"><textarea id="practice-input" disabled={readOnly} value={text} onChange={event => setText(event.target.value)} placeholder="Ask your tutor…" rows={2}
-        onKeyDown={event => { if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); send(); } }} />
-      <ChatSendButton label={t('chat.send', 'Send')} busy={busy} disabled={readOnly || !text.trim() || !current} /></div></form>
-    </aside>;
+  const tutorPanel = <TutorDiscussionPanel {...{ animateTutor, history, busy, tutorError, questionIndex, active, isCase, readOnly, setTutorOpen, send, tutorBottom, questionPane, text, setText, current, t }} />;
   return createPortal(<section ref={paper.ref} className={`focused-quiz study-mode-container paper-sheet ${isCase ? 'has-case has-tutor' : tutorOpen ? 'has-tutor' : ''} ${paper.className}`} hidden={!visible} inert={closing ? true : undefined} data-paper={paper.mode} aria-label="Focused quiz practice"
     onAnimationEnd={paper.handleAnimationEnd}>
     <PaperSurface mode={paper.mode} />

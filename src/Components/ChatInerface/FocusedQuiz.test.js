@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import FocusedQuiz from './FocusedQuiz';
+jest.mock('../StudyMode/StudyReasoning', () => () => null);
 import { askPracticeTutor, savePractice, streamPracticeBatch, copyPracticeToOwnChat } from '../../Services/PracticeService';
 
 const mockQuota = { remaining: 0, isPro: false, refresh: jest.fn(), openUpgrade: jest.fn() };
@@ -62,6 +63,7 @@ test('closing a fully answered quiz supplies a saved session for the debrief', a
 
 test('the only composer lives below the conversation inside the tutor panel', () => {
   render(<FocusedQuiz message={message} chatId="chat" visible onExit={jest.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Discuss this question' }));
   const tutor = screen.getByRole('complementary', { name: 'Question tutor' });
   expect(tutor).toContainElement(screen.getByRole('textbox'));
   expect(screen.getAllByRole('textbox')).toHaveLength(1);
@@ -73,6 +75,7 @@ test('the only composer lives below the conversation inside the tutor panel', ()
 
 test('help uses the selected answer and never replaces or regenerates the question', async () => {
   const { rerender } = render(<FocusedQuiz message={message} chatId="chat" visible onExit={jest.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Discuss this question' }));
   fireEvent.click(screen.getByRole('button', { name: /B.*Abdomen/ }));
   fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Why is my answer wrong?' } });
   fireEvent.click(screen.getByRole('button', { name: 'Send' }));
@@ -112,6 +115,7 @@ test('SATA and clinical case renderers share the practice flow and save their an
 test('requests for more questions at the free limit preserve the quiz and open upgrade', async () => {
   askPracticeTutor.mockResolvedValue({ action: 'extend', reply: 'You want more practice.', settings: { requested_total: 100 } });
   render(<FocusedQuiz message={message} chatId="chat" visible onExit={jest.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Discuss this question' }));
   fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Give me 100 more questions' } });
   fireEvent.click(screen.getByRole('button', { name: 'Send' }));
   await waitFor(() => expect(mockQuota.openUpgrade).toHaveBeenCalled());
@@ -141,6 +145,7 @@ test('admin preview shows the focused quiz without saving or generating for anot
   const onPracticeChange = jest.fn();
   render(<FocusedQuiz message={{ ...message, practice: { pendingBatch: { request_id: 'other-user' } } }} chatId="other-chat" visible readOnly onPracticeChange={onPracticeChange} onExit={jest.fn()} />);
   expect(await screen.findByText('Where are the lungs?')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Discuss this question' }));
   expect(screen.getByRole('textbox')).toBeDisabled();
   expect(screen.getByRole('complementary', { name: 'Question tutor' })).toBeInTheDocument();
   expect(onPracticeChange).not.toHaveBeenCalled();

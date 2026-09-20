@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import SATAQuestion from '../ChatInerface/SATAQuestion';
 import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
 import StudyCelebration from './StudyCelebration';
+import StudyReasoning from './StudyReasoning';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound } from '../../utils/soundEffects';
 import './StudyMode.css';
 
@@ -21,6 +22,7 @@ import './StudyMode.css';
  *   - Handles mixed types in a single session
  */
 const StudyExamCard = ({
+  chatId, nodeId,
   content,           // { questions: [...], examConfig: {...} }
   savedProgress,     // For resume
   onAnswer,          // Per-question callback
@@ -170,6 +172,8 @@ const StudyExamCard = ({
     const storedAnswer = {
       questionType: answerData.questionType || questionType,
       selectedIndices: answerData.selectedIndices ?? null,
+      selectedOptions: answerData.selectedOptions ?? null,
+      userOrder: answerData.userOrder ?? null,
       selectedIndex: answerData.selectedIndex ?? null,
       isPartial: !answerData.isCorrect && (answerData.score || 0) > 0,
       isCorrect: answerData.isCorrect || false,
@@ -379,6 +383,11 @@ const StudyExamCard = ({
           isLastQuestion={isLastQuestion}
           inModal={false}
         />
+      )}
+      {chatId && nodeId && !viewOnly && currentQuestion && (!timerEnabled || hasAnswered) && (
+        <StudyReasoning key={`${chatId}:${nodeId}:${currentIndex}`}
+          chatId={chatId} nodeId={nodeId} questionIndex={currentIndex}
+          question={currentQuestion} selection={answers[currentIndex]} revealed={hasAnswered} />
       )}
     </div>
   );

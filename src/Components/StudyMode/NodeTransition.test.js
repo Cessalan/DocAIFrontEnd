@@ -268,3 +268,15 @@ describe('readiness increase animation', () => {
     unmount();
   });
 });
+
+test('reasoning debrief names the discussion and starts its targeted practice', async () => {
+  get_node_debrief.mockResolvedValue({ ...noPattern(0, 'You asked how to judge each option. Try that distinction independently.', 'reasoning'),
+    reasoningFocus: { skill: 'Assess each option independently', question_type: 'sata', learner_quote: 'I choose every action that sounds helpful.' } });
+  const { onPracticeMore } = setup();
+  expect(await screen.findByText('From our discussion')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Practise what we discussed/ }));
+  expect(onPracticeMore).toHaveBeenCalledWith(expect.objectContaining({
+    type: 'exam', examConfig: expect.objectContaining({ questionCount: 3, customInstructions: expect.stringContaining('Assess each option independently') }),
+  }));
+  expect(get_node_debrief.mock.calls.at(-1)[1]).toMatchObject({ node_id: 'node-1', items: expect.arrayContaining([expect.objectContaining({ question_index: 4, correct: false })]) });
+});

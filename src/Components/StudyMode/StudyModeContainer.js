@@ -2119,6 +2119,7 @@ const StudyModeContainer = ({
               />
             ) : currentContent ? (
               <StudyStepCard
+                chatId={chatId}
                 node={activeNode}
                 content={currentContent}
                 savedProgress={savedProgress}

@@ -1,3 +1,4 @@
+import { loadNodeReasoning, saveReasoningSummary } from './StudyReasoningService';
 import { auth } from '../Firebase/config';
 import { API_BASE_URL } from './config';
 import { devLog } from './devLogger';
@@ -1435,6 +1436,8 @@ export const interpret_study_request = async (chat_id, user_text, current_topic,
 export const get_node_debrief = async (chat_id, payload, language = 'en') => {
   try {
     devLog("🧭 Requesting node debrief:", payload.topic);
+    const discussions = ['quiz', 'exam'].includes(payload.node_type)
+      ? await loadNodeReasoning(chat_id, payload.node_id) : [];
 
     const response = await fetch(`${FAST_API_BASE}/study/node-debrief`, {
       method: "POST",
@@ -1445,6 +1448,7 @@ export const get_node_debrief = async (chat_id, payload, language = 'en') => {
         node_type: payload.node_type || 'quiz',
         score_percent: payload.score_percent || 0,
         items: payload.items || [],
+        reasoning_discussions: discussions,
         days_until_exam: payload.days_until_exam ?? null,
         plan_formats: payload.plan_formats || [],
         // Unscored nodes (lesson, audio, mindmap) carry no items, so the
@@ -1467,6 +1471,7 @@ export const get_node_debrief = async (chat_id, payload, language = 'en') => {
 
     const result = await response.json();
     devLog("✅ Node debrief:", result);
+    void saveReasoningSummary(chat_id, payload.node_id, result).catch(() => {});
     return result;
 
   } catch (error) {

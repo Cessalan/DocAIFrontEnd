@@ -205,3 +205,23 @@ describe('isPatternEstablished', () => {
     expect(isPatternEstablished(patternDebrief(3))).toBe(true);
   });
 });
+
+test('discussion objective becomes a three-question transfer drill without labelling help as weakness', () => {
+  const { recommendation, caption } = readout({ debrief: {
+    noteMode: 'reasoning', reasoningFocus: { skill: 'Direct versus indirect assessment',
+      question_type: 'sata', learner_quote: 'I thought vital signs measured relief.' },
+  } });
+  expect(recommendation.kind).toBe('reasoning');
+  expect(recommendation.node.examConfig).toMatchObject({ questionTypes: ['sata'], questionCount: 3, timerEnabled: false });
+  expect(recommendation.node.examConfig.customInstructions).toContain('Direct versus indirect assessment');
+  expect(recommendation.node.examConfig.customInstructions).toContain('ABCDE Emergency Patient Assessment');
+  expect(recommendation.node.tags).toContain('reasoning_followup');
+  expect(recommendation.node.tags).not.toContain('weak_area');
+  expect(caption).toContain('independently');
+});
+
+test('a proposed discussion focus without learner evidence cannot override the usual recommendation', () => {
+  const baseline = readout();
+  const unsupported = readout({ debrief: { reasoningFocus: { skill: 'Invented difficulty' } } });
+  expect(unsupported.recommendation).toEqual(baseline.recommendation);
+});

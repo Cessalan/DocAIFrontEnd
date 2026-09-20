@@ -30,6 +30,7 @@ import StudyExamCard from './StudyExamCard';
  * @param {Function} onExit - Callback to exit/close the current card
  */
 const StudyStepCard = ({
+  chatId,
   node,
   content,
   savedProgress = null,
@@ -98,6 +99,8 @@ const StudyStepCard = ({
     case 'quiz':
       return (
         <StudyQuizCard
+          chatId={chatId}
+          nodeId={node.id}
           content={content}
           savedProgress={savedProgress}
           isReviewMode={isReviewMode}
@@ -154,6 +157,8 @@ const StudyStepCard = ({
     case 'exam':
       return (
         <StudyExamCard
+          chatId={chatId}
+          nodeId={node.id}
           content={content}
           savedProgress={savedProgress}
           onAnswer={onAnswer}

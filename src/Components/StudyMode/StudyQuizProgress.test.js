@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import '../../i18n/i18n';
 import StudyQuizCard from './StudyQuizCard';
+jest.mock('./StudyReasoning', () => () => null);
 
 jest.mock('../../Services/FastAPICalls', () => ({ fetchQuizRationale: jest.fn() }));
 jest.mock('../../utils/soundEffects', () => ({ playCorrectSound: jest.fn(), playIncorrectSound: jest.fn(), playCelebrationSound: jest.fn(), playMilestoneSound: jest.fn() }));

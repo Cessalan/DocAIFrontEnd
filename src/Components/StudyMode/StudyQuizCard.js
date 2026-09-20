@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
+import StudyReasoning from './StudyReasoning';
 import StudyCelebration from './StudyCelebration';
 import SATAQuestion from '../ChatInerface/SATAQuestion';
 import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
@@ -25,7 +26,7 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
    rewards — the completion celebration is only a couple of items away. */
 const QUIZ_MILESTONE_MIN_SET = 8;
 
-const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor }) => {
+const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor }) => {
   const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -42,6 +43,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
   const [selectedIndex, setSelectedIndex] = useState(savedProgress?.selectedIndex ?? null);
   const [showFeedback, setShowFeedback] = useState(savedProgress?.showFeedback || false);
   const [isCorrect, setIsCorrect] = useState(savedProgress?.isCorrect || false);
+  const [reasoningAnswers, setReasoningAnswers] = useState({});
 
   // Per-question rationale state — keyed by question index, NOT queue position,
   // so a later re-shuffle doesn't lose previously-fetched HTML. Each entry:
@@ -739,6 +741,7 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
     if (showFeedback) return;
 
     const correct = !!answerData?.isCorrect;
+    setReasoningAnswers(previous => ({ ...previous, [currentQueuePosition]: answerData }));
     setIsCorrect(correct);
     setShowFeedback(true);
 
@@ -1458,6 +1461,13 @@ const StudyQuizCard = ({ content, savedProgress, isReviewMode = false, isDiagnos
           </div>
 
           {/* Summary and Continue - show when all questions are correct */}
+          {chatId && nodeId && !viewOnly && !isDiagnostic && currentQuestion?.question && (
+            <StudyReasoning key={`${chatId}:${nodeId}:${currentQueuePosition}:${isReviewRound}`}
+              chatId={chatId} nodeId={nodeId} questionIndex={currentQueuePosition}
+              question={currentQuestion} revealed={showFeedback}
+              selection={{ ...reasoningAnswers[currentQueuePosition], selectedIndex, isCorrect }} />
+          )}
+
           {allCorrect && (
             <div className="study-card-footer study-card-footer-stacked">
               <div className="study-completion-message">

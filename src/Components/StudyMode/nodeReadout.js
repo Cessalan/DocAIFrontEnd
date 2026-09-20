@@ -247,7 +247,28 @@ export const buildNodeReadout = ({
 
   let recommendation;
 
-  if (result?.scorePercent !== 0 && tone !== 'confirmed' && hasPattern && !isPatternEstablished(debrief) && canTestTheory) {
+  const reasoningFocus = debrief?.reasoningFocus;
+  if (reasoningFocus?.skill && reasoningFocus?.learner_quote && !experimentConfirmed) {
+    const format = ['mcq', 'sata', 'casestudy'].includes(reasoningFocus.question_type) ? reasoningFocus.question_type : 'mcq';
+    caption = t('transition.reasoningCaption', 'A point from our discussion to try independently.');
+    recommendation = {
+      kind: 'reasoning',
+      title: reasoningFocus.skill,
+      rationale: t('transition.reasoningWhy', 'Try the idea we discussed in three new questions.'),
+      cta: t('transition.reasoningCta', 'Practise what we discussed →'),
+      meta: t('transition.metaDrill', { count: DRILL_QUESTIONS, defaultValue: '{{count}} questions · ~5 min' }),
+      testSkill: null,
+      node: {
+        type: 'exam', label: reasoningFocus.skill,
+        tags: sourceTags.concat('reasoning_followup'), difficulty: 2, adaptive: true,
+        reason: 'Independent practice of a point discussed in ' + topic,
+        examConfig: { questionTypes: [format], questionCount: DRILL_QUESTIONS, timerEnabled: false,
+          customInstructions: 'Topic: ' + topic + '. Learning objective: ' + reasoningFocus.skill
+            + '. Create three NEW scenarios to check this distinction independently, not copies of previous questions. '
+            + 'Do not reveal the answer in the stem. Prior discussion is not evidence of weakness or mastery.' },
+      },
+    };
+  } else if (result?.scorePercent !== 0 && tone !== 'confirmed' && hasPattern && !isPatternEstablished(debrief) && canTestTheory) {
     /* The evidence clears the bar for a theory, not a verdict. One question she
        can win by reading differently proves it to her in a way no explanation
        does — and if she misses it, nothing was oversold. */

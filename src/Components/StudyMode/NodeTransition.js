@@ -411,6 +411,9 @@ const NodeTransition = ({
     const items = questions
       .map((q, i) => ({
         question: String(q?.question || '').slice(0, 400),
+        question_index: i,
+        options: (Array.isArray(q?.options) ? q.options : []).filter(option => typeof option === 'string').slice(0, 20),
+        correct_answer: String(q?.options?.[q?.correctIndex] || (Array.isArray(q?.correctAnswers) ? q.correctAnswers.join('; ') : '')).slice(0, 2000),
         correct: wasCorrect(i),
         answered: wasAnswered(i),
         question_type: q?.questionType || q?.metadata?.questionType || 'mcq',
@@ -429,6 +432,7 @@ const NodeTransition = ({
       const res = await get_node_debrief(
         chatId,
         {
+          node_id: node?.id,
           topic: result.topic,
           node_type: result.type,
           score_percent: result.scorePercent,
@@ -447,7 +451,7 @@ const NodeTransition = ({
       }
     })();
     return () => { alive = false; };
-  }, [result, content, quizProgress, chatId, daysUntilExam, planFormats, experimentConfirmed, i18n]);
+  }, [result, content, quizProgress, chatId, daysUntilExam, planFormats, experimentConfirmed, i18n, node?.id]);
 
   /* ── Debrief for everything that isn't a quiz ──────────────────────────
      Flashcards, lessons, audio and concept maps are most of a plan, and
@@ -1500,7 +1504,9 @@ const NodeTransition = ({
                 debrief.note ? (
                   <p className="nt4-takeaway">
                     <span className="nt4-takeaway__label">
-                      {debrief.noteMode === 'clean'
+                      {debrief.noteMode === 'reasoning'
+                        ? t('transition.takeawayReasoning', 'From our discussion')
+                        : debrief.noteMode === 'clean'
                         ? t('transition.takeawayClean', 'Locked in')
                         : debrief.noteMode === 'blank'
                           ? (zeroResult ? (frResult ? 'Commençons par' : 'We’ll start with') : t('transition.takeawayBlank', 'Start here'))
