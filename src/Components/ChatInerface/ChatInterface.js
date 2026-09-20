@@ -64,6 +64,7 @@ import {
   DeleteMessage,
   SaveOrUpdateMessage,
   UpdateMessageContent,
+  SaveQuickCheckProgress,
   markMessageEngaged,
   SavePostUploadSelection
 } from '../../Services/FireBaseServiceChats.js';
@@ -4094,6 +4095,13 @@ const ChatInterface = ({
     }).catch(err => console.error('Failed to persist course context:', err));
   }, [currentChatID]);
 
+  const handleQuickCheckProgress = useCallback((messageId, quickCheck) => {
+    setChatMessages(previous => previous.map(message => message.id === messageId
+      ? { ...message, quickCheck } : message));
+    SaveQuickCheckProgress(currentChatID, messageId, quickCheck)
+      .catch(error => console.error('Failed to save quick-check progress:', error));
+  }, [currentChatID]);
+
   const handlePlanOnboardingConfirm = (planOnboardingMsg, userPreferences, diagnostic, rankedTopics = [], extras = {}) => {
     if (!planOnboardingMsg) return;
     devLog('✅ PlanOnboarding confirm — straight to the plan', diagnostic);
@@ -5505,6 +5513,8 @@ const ChatInterface = ({
                         funnelId={message.funnelId || null}
                         uploadFailed={Boolean(message.uploadFailed)}
                         savedCourseContext={pendingCourseContext}
+                        savedQuickCheck={message.quickCheck}
+                        onQuickCheckProgress={checkpoint => handleQuickCheckProgress(message.id, checkpoint)}
                         onCourseContext={handleCourseContext}
                         onConfirm={({ userPreferences, diagnostic, rankedTopics, courseContext, courseIntelligence, readiness }) =>
                           handlePlanOnboardingConfirm(message, userPreferences, diagnostic, rankedTopics, {

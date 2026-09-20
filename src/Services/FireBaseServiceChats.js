@@ -710,6 +710,27 @@ const resolveMessageRef = async (chatId, messageId) => {
   return null;
 };
 
+// Serialize checkpoints per upload so a slow earlier write cannot replace a
+// later answer. Update only this field: never revive an already converted card
+// or change its position in chat history.
+const quickCheckWrites = new Map();
+export const SaveQuickCheckProgress = (chatId, messageId, checkpoint) => {
+  if (!chatId || !messageId) return Promise.reject(new Error('Chat and message IDs are required'));
+  const key = JSON.stringify([chatId, messageId]);
+  const data = JSON.parse(JSON.stringify(checkpoint));
+  const write = async () => {
+    const target = await resolveMessageRef(chatId, messageId);
+    if (!target) throw new Error('Quick-check message not found');
+    await updateDoc(target, { quickCheck: data });
+  };
+  const pending = (quickCheckWrites.get(key) || Promise.resolve())
+    .catch(() => {}).then(() => write().catch(() => write()));
+  quickCheckWrites.set(key, pending);
+  const cleanup = () => { if (quickCheckWrites.get(key) === pending) quickCheckWrites.delete(key); };
+  pending.then(cleanup, cleanup);
+  return pending;
+};
+
 /**
  * Stamp that a student actually engaged with a rendered artifact.
  *

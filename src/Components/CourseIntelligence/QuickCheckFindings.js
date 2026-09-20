@@ -45,7 +45,6 @@ export default function QuickCheckFindings({ answers, lead, funnelId, children }
     <section className="cs-findings-takeaway">
       <span className="cs-findings-kicker">{t('courseStudio.takeawayLabel')}</span>
       <h4>{takeaway.title}</h4>
-      <p>{takeaway.evidence}</p>
     </section>
     {strengths.length > 0 && <section className="cs-findings-strength">
       <span className="cs-findings-check" aria-hidden="true">✓</span>

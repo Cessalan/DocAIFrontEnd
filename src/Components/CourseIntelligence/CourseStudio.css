@@ -343,3 +343,4 @@ body.dark-mode .cs-findings-number { color: #e3bd7c; }
 }
 .cs-findings-action .cs-button > span { flex: 0 0 auto; font-size: 20px; }
 .cs-findings-action + .cs-findings-footnote { margin-top: 14px; }
+.cs-findings-action__hint { margin: 0; text-align: center; color: var(--cs-muted); font-size: 12px; line-height: 1.5; }

@@ -236,6 +236,24 @@ it('grades a fully right select-all answer as correct', async () => {
   expect(onStart.mock.calls[0][0].answers[0]).toEqual(expect.objectContaining({ correct: true, partial: false, format: 'sata' }));
 });
 
+it('restores uncommitted select-all choices without generating new questions', async () => {
+  const sata = { ...studioQuestions.questions[0], format: 'sata', kind: 'sata',
+    options: ['Sign A', 'Sign B', 'Sign C', 'Sign D', 'Sign E'], correctIndices: [1, 3], correctIndex: undefined };
+  let saved;
+  const first = mount({ initialQuiz: { questions: [sata] }, initialPhase: 'check',
+    onProgress: value => { saved = JSON.parse(JSON.stringify(value)); } });
+  fireEvent.click(within(screen.getByRole('group')).getByText('Sign D'));
+  expect(saved.picked).toBeNull();
+  first.unmount();
+  mount({ savedProgress: saved, initialPhase: 'check' });
+  expect(within(screen.getByRole('group')).getByText('Sign D').closest('button')).toHaveAttribute('aria-pressed', 'true');
+  expect(screen.getByRole('button', { name: 'Check my answer' })).toBeEnabled();
+  expect(plan_diagnostic_quiz).not.toHaveBeenCalled();
+  fireEvent.click(within(screen.getByRole('group')).getByText('Sign B'));
+  fireEvent.click(screen.getByRole('button', { name: 'Check my answer' }));
+  expect(screen.queryByText(/You had part of this/)).toBeNull();
+});
+
 it.each(['free', 'pro', 'exhausted'])('shows findings before dates and plan creation for %s users', async (tier) => {
   const usage = require('../../Contexts/UsageContext/UsageContext');
   const spy = jest.spyOn(usage, 'useUsageLimit').mockReturnValue({
@@ -257,7 +275,7 @@ it.each(['free', 'pro', 'exhausted'])('shows findings before dates and plan crea
     expect(screen.queryByText('When is your exam?')).toBeNull();
     expect(onStart).not.toHaveBeenCalled();
     expect(logFunnelStep).toHaveBeenCalledWith('weakness_insight_viewed', expect.objectContaining({ via: 'quick_check', funnelId: 'free-findings', answered: 2 }));
-    fireEvent.click(screen.getByRole('button', { name: /Continue to my plan/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Get ready for my exam/ }));
     expect(screen.getByText('When is your exam?')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'I don’t know yet' }));
     expect(onStart).toHaveBeenCalledTimes(1);
@@ -274,7 +292,7 @@ it('shows a single answered question as early evidence when the rest is skipped'
   fireEvent.click(screen.getByText('I’m not sure yet'));
   fireEvent.click(screen.getByRole('button', { name: /Continue with what you know/ }));
   expect(screen.getByText('0 of 1 answers correct on your first try.')).toBeInTheDocument();
-  expect(screen.getByText(/Start by revisiting: cardiac output/)).toBeInTheDocument();
+  expect(screen.getByText('You have a specific place to start practising.')).toBeInTheDocument();
   expect(screen.queryByText('What you answered well')).toBeNull();
 });
 

@@ -63,12 +63,23 @@ const PlanOnboarding = ({
   // The upload funnel this card belongs to, persisted on the message so the
   // readiness check still reports into it after a reload.
   funnelId = null,
+  savedQuickCheck = null,
+  onQuickCheckProgress,
 }) => {
   const { t } = useTranslation();
+  const [resume] = useState(() => {
+    const progress = savedQuickCheck?.progress;
+    return savedQuickCheck?.version === 1 && normalizeReport(savedQuickCheck.report)
+      && progress?.checkId && Array.isArray(progress.questions) && progress.questions.length >= 2
+      && Array.isArray(progress.answers) && progress.answers.length <= progress.questions.length
+      && ['brief', 'check', 'result', 'date'].includes(progress.phase)
+      && (progress.phase !== 'check' || progress.answers.length < progress.questions.length)
+      ? savedQuickCheck : null;
+  });
 
   // ── State ────────────────────────────────────────────────────────────
   const [phase, setPhase] = useState(() => {
-    return autoInvestigate || savedCourseContext ? 'intelligence' : 'context';
+    return resume ? 'report' : autoInvestigate || savedCourseContext ? 'intelligence' : 'context';
   });
   const [examKey, setExamKey] = useState(null);
   const [customDate, setCustomDate] = useState('');
@@ -79,9 +90,9 @@ const PlanOnboarding = ({
   // ── Course intelligence ──────────────────────────────────────────────
   const [courseContext, setCourseContext] = useState(savedCourseContext || null);
   const [timeline, setTimeline] = useState(initialTimeline);
-  const [report, setReport] = useState(null);
+  const [report, setReport] = useState(() => resume ? normalizeReport(resume.report) : null);
   const [previewReport, setPreviewReport] = useState(null);
-  const [seedQuiz, setSeedQuiz] = useState(null);
+  const [seedQuiz, setSeedQuiz] = useState(() => resume ? { questions: resume.progress.questions } : null);
   const [intelligenceFailed, setIntelligenceFailed] = useState(false);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const runRef = useRef(null);
@@ -91,7 +102,11 @@ const PlanOnboarding = ({
   // original shape, and normalizeReport deliberately renames things for the
   // UI — handing the renamed version back would silently produce an unordered
   // plan, which is the failure this whole feature exists to prevent.
-  const rawReportRef = useRef(null);
+  const rawReportRef = useRef(resume?.report || null);
+  const handleQuickCheckProgress = useCallback((progress) => {
+    if (!rawReportRef.current) return;
+    onQuickCheckProgress?.({ version: 1, report: rawReportRef.current, progress });
+  }, [onQuickCheckProgress]);
 
   // Dates belong to this course. A profile date may refer to another exam;
   // only an explicit choice saved in this course's context is reused here.
@@ -408,7 +423,9 @@ const PlanOnboarding = ({
       )}
 
       {(phase === 'intelligence' || phase === 'retry') && !seedQuiz && (autoInvestigate ?
-        <CourseUploadWelcome materialsReady={materialsReady} failed={phase === 'retry'} onRetry={() => {
+        <CourseUploadWelcome materialsReady={materialsReady}
+          preparingCheck={timeline.transformation?.state === 'building' || timeline.transformation?.state === 'ready'}
+          failed={phase === 'retry'} onRetry={() => {
           setTimeline(initialTimeline()); setIntelligenceFailed(false); setRetryAttempt(attempt => attempt + 1); setPhase('intelligence');
         }} /> :
         <CourseIntelligenceTimeline
@@ -433,6 +450,8 @@ const PlanOnboarding = ({
           timeline={timeline}
           report={report || previewReport}
           initialQuiz={seedQuiz}
+          savedProgress={resume?.progress}
+          onProgress={handleQuickCheckProgress}
           initialPhase={autoInvestigate || seedQuiz ? 'check' : 'brief'}
           streamlined={autoInvestigate}
           chatId={chatId}

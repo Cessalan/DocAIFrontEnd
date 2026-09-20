@@ -11,15 +11,38 @@ export const TypedLine = ({ text, delay = 0 }) => (
   </span>
 );
 
-export function CourseUploadWelcome({ materialsReady = false, failed = false, onRetry }) {
+export function CourseUploadWelcome({ materialsReady = false, preparingCheck = false, failed = false, onRetry }) {
   const { t } = useTranslation();
-  return <section className="cs-shell cs-exam-welcome cs-upload-welcome">
+  const titleId = useId();
+  const [elapsed, setElapsed] = useState(0);
+  useEffect(() => {
+    setElapsed(0);
+    if (failed) return undefined;
+    const started = Date.now();
+    const timer = setInterval(() => setElapsed(Math.floor((Date.now() - started) / 1000)), 1000);
+    return () => clearInterval(timer);
+  }, [materialsReady, preparingCheck, failed]);
+  const messageIndex = Math.floor(elapsed / 8) % 3;
+  const steps = ['uploadReadStep', 'uploadContextStep', 'uploadCheckStep'];
+  const activeStep = materialsReady ? (preparingCheck ? 2 : 1) : 0;
+  const statusKey = ['uploadReadingStatus', 'uploadContextStatus', 'uploadCheckStatus'][activeStep];
+  return <section className="cs-shell cs-exam-welcome cs-upload-welcome" aria-labelledby={titleId}>
     <StudioMascot size={42} />
-    <h3 className="cs-title cs-exam-welcome__title"><span className="sr-only">{t('courseStudio.examWelcome')}</span>
-      <TypedLine text={t('courseStudio.examWelcome')} />
-    </h3>
-    <div className={`cs-upload-welcome__shimmer${failed ? ' is-stopped' : ''}`} aria-hidden="true" />
-    <p role="status" className="cs-upload-welcome__status">{t(failed ? 'courseStudio.transformFailed' : materialsReady ? 'courseStudio.quizLoading' : 'courseStudio.processingFiles')}</p>
+    <h3 id={titleId} className="cs-title cs-exam-welcome__title">{t('courseStudio.uploadPlanTitle')}</h3>
+    <p className="cs-upload-welcome__subtitle">{t('courseStudio.uploadPlanSubtitle')}</p>
+    <ol className="cs-upload-welcome__steps" aria-label={t('courseStudio.uploadProgress')}>
+      {steps.map((step, index) => <li key={step}
+        className={index < activeStep ? 'is-done' : index === activeStep ? (failed ? 'is-failed' : 'is-current') : ''}
+        aria-current={index === activeStep ? 'step' : undefined}>
+        <span className="cs-upload-welcome__step-icon" aria-hidden="true">{index < activeStep ? '✓' : index + 1}</span>
+        <span>{t(`courseStudio.${step}`)}</span>
+      </li>)}
+    </ol>
+    <div className="cs-upload-welcome__activity">
+      <p role="status" className="cs-upload-welcome__status"><span className={failed ? undefined : 'cs-upload-welcome__shimmer'}>{t(failed ? 'courseStudio.transformFailed' : `courseStudio.${statusKey}`)}</span></p>
+      {!failed && <p className="cs-upload-welcome__hint" key={messageIndex}>{t(`courseStudio.uploadHint${messageIndex + 1}`)}</p>}
+    </div>
+    {!failed && elapsed >= 30 && <p role="status" className="cs-upload-welcome__slow">{t('courseStudio.uploadLongWait')}</p>}
     {failed && onRetry && <button type="button" className="course-context__cta cs-button" onClick={onRetry}>{t('courseStudio.retryQuestion')}</button>}
   </section>;
 }

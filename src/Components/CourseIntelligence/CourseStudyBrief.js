@@ -37,17 +37,18 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   examDate = null, onExamDate, disabled = false, onStart, initialQuiz = null, initialPhase = 'brief', streamlined = false,
   // The upload this check belongs to. Logged explicitly so a check resumed after
   // a reload still lands in its upload's funnel — the in-memory id is gone by then.
-  funnelId = null }) => {
+  funnelId = null, savedProgress = null, onProgress }) => {
   const { t } = useTranslation();
   const questionId = useId();
-  const [phase, setPhase] = useState(initialPhase);
-  const [questionLanguage, setQuestionLanguage] = useState(null);
-  const [quiz, setQuiz] = useState(initialQuiz ? { state: 'ready', questions: initialQuiz.questions } : { state: 'loading', questions: [] });
-  const [answers, setAnswers] = useState([]);
-  const [picked, setPicked] = useState(null);
+  const [resume] = useState(savedProgress);
+  const [phase, setPhase] = useState(resume?.phase || initialPhase);
+  const [questionLanguage, setQuestionLanguage] = useState(resume?.language || null);
+  const [quiz, setQuiz] = useState(resume ? { state: 'ready', questions: resume.questions } : initialQuiz ? { state: 'ready', questions: initialQuiz.questions } : { state: 'loading', questions: [] });
+  const [answers, setAnswers] = useState(resume?.answers || []);
+  const [picked, setPicked] = useState(resume?.picked ?? null);
   // Select-all choices before "Check my answer". `picked` stays null until she
   // commits, so every "has she answered" test below means the same thing.
-  const [selection, setSelection] = useState([]);
+  const [selection, setSelection] = useState(resume?.selection || []);
   const { consume } = useUsageLimit();
   const [showDate, setShowDate] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -56,8 +57,8 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const dateAnchor = useRef(null);
   const phaseRef = useRef(initialPhase);
   const answerLock = useRef(false);
-  const completedRef = useRef(false);
-  const [checkId] = useState(() => uuidv4());
+  const completedRef = useRef(resume?.phase === 'result' || resume?.phase === 'date');
+  const [checkId] = useState(() => resume?.checkId || uuidv4());
   const buildLock = useRef(false);
   const requestRef = useRef(null);
   const topicKey = JSON.stringify(plannerTopics(report));
@@ -75,8 +76,19 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const grade = question && hasAnswer ? gradeAnswer(question, picked) : { correct: false, partial: false };
   const tagFunnel = (props) => (funnelId ? { ...props, funnelId } : props);
 
+  // Save the exact questions and review state, including committed answers
+  // awaiting Next and uncommitted select-all choices. The callback is kept in
+  // a ref so parent message updates cannot cause a persistence render loop.
+  const onProgressRef = useRef(onProgress);
+  useLayoutEffect(() => { onProgressRef.current = onProgress; }, [onProgress]);
   useEffect(() => {
-    if (initialPhase === 'check') {
+    if (quiz.state !== 'ready') return;
+    onProgressRef.current?.({ checkId, questions: quiz.questions, answers, picked, selection,
+      phase, language: requestLanguage });
+  }, [checkId, quiz, answers, picked, selection, phase, requestLanguage]);
+
+  useEffect(() => {
+    if (initialPhase === 'check' && !resume) {
       heading.current?.focus();
       logFunnelStep(FUNNEL.DIAGNOSTIC_STARTED, { via: 'source_transformation', questionCount: initialQuiz?.questions?.length || 0 });
       logFunnelStep(FUNNEL.READINESS_CHECK_STARTED, tagFunnel({
@@ -87,7 +99,7 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
     }
     // tagFunnel only reads funnelId, which is fixed for the life of the card.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPhase, initialQuiz]);
+  }, [initialPhase, initialQuiz, resume]);
 
   useEffect(() => {
     logFunnelStepOnce(FUNNEL.REPORT_VIEWED, { via: 'course_brief', priorityCount: initialPlan.rows.length });
@@ -96,7 +108,7 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   // Prepare questions while the student reads the brief. Abort on skip/unmount;
   // late responses cannot replace a result or restart an abandoned assessment.
   useEffect(() => {
-    if (initialQuiz) return undefined;
+    if (initialQuiz || resume) return undefined;
     let alive = true;
     const controller = new AbortController();
     requestRef.current = controller;
@@ -123,7 +135,7 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
     };
     load();
     return () => { alive = false; clearTimeout(timer); controller.abort(); };
-  }, [chatId, requestLanguage, topicKey, initialQuiz]);
+  }, [chatId, requestLanguage, topicKey, initialQuiz, resume]);
 
   useEffect(() => {
     if (phaseRef.current !== phase) {
@@ -239,6 +251,7 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
         <div className="cs-primary-action cs-findings-action">
           <button type="button" className="course-context__cta cs-button" disabled={disabled || starting}
             onClick={() => setPhase('date')}>{t('courseStudio.findingsContinue')}<span aria-hidden="true">→</span></button>
+          <p className="cs-findings-action__hint">{t('courseStudio.findingsContinueHint')}</p>
         </div>
         </QuickCheckFindings>
       </div>

@@ -140,7 +140,7 @@ describe('PlanOnboarding', () => {
     mockRun(() => new Promise(() => {}));
     const props = { autoInvestigate: true, chatId: 'upload-chat', filenames: ['Lecture.pdf'], onConfirm: jest.fn() };
     const { rerender } = render(<PlanOnboarding {...props} materialsReady={false} />);
-    expect(screen.getByRole('heading', { name: 'Let’s get you ready for the exam.' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Find out what to review in your course notes' })).toBeTruthy();
     expect(screen.queryByRole('group', { name: 'Pick a date' })).toBeNull();
     expect(screen.queryByText('stub-submit-context')).toBeNull();
     expect(run_course_intelligence).not.toHaveBeenCalled();
@@ -163,7 +163,7 @@ describe('PlanOnboarding', () => {
   it('keeps a failed automatic investigation on the transformation and can retry without reuploading', async () => {
     render(<PlanOnboarding autoInvestigate chatId="upload-chat" filenames={['Lecture.pdf']} />);
     await flush();
-    expect(screen.getByRole('heading', { name: 'Let’s get you ready for the exam.' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Find out what to review in your course notes' })).toBeTruthy();
     expect(screen.getByRole('button', { name: 'Try again' })).toBeTruthy();
     mockRun(() => new Promise(() => {}));
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }));
@@ -192,7 +192,7 @@ describe('PlanOnboarding', () => {
     fireEvent.click(screen.getByRole('button', { name: /See my starting point/ }));
     expect(screen.getByRole('heading', { name: 'What your quick check showed' })).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /Continue to my plan/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Get ready for my exam/ }));
     expect(screen.getByRole('heading', { name: /We analyzed your answers\. Let’s start with/ })).toBeInTheDocument();
     expect(screen.queryByRole('tab', { name: /Web sources/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Build my study plan/ })).toBeNull();
@@ -206,12 +206,59 @@ describe('PlanOnboarding', () => {
     expect(onConfirm.mock.calls[0][0].diagnostic).toEqual({ Diuretics: 100 });
   });
 
+  it('resumes the same quick check and answer review without rerunning research or grading twice', async () => {
+    let emit;
+    run_course_intelligence.mockImplementation(({ onEvent }) => {
+      emit = onEvent;
+      return { promise: new Promise(() => {}), abort: jest.fn() };
+    });
+    let checkpoint;
+    const save = jest.fn(value => { checkpoint = JSON.parse(JSON.stringify(value)); });
+    const props = { autoInvestigate: true, chatId: 'resume-chat', onQuickCheckProgress: save };
+    const first = render(<PlanOnboarding {...props} />);
+    act(() => emit({ status: 'course_question_ready', report: REPORT, questions: [0, 1].map(i => ({
+      question: `Resume question ${i + 1}?`, topic: 'Diuretics', options: ['A', 'B', 'C', 'D'], correctIndex: 0,
+    })) }));
+    fireEvent.click(screen.getByRole('button', { name: 'A A' }));
+    fireEvent.click(screen.getByRole('button', { name: /Next question/ }));
+    fireEvent.click(screen.getByRole('button', { name: 'A A' }));
+    expect(checkpoint.progress.answers).toHaveLength(1);
+    expect(checkpoint.progress.picked).toBe(0);
+    const originalId = checkpoint.progress.checkId;
+    first.unmount();
+
+    const resumed = render(<PlanOnboarding {...props} savedQuickCheck={checkpoint} />);
+    expect(run_course_intelligence).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('heading', { name: 'Resume question 2?' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'The answer is A.' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: /See my starting point/ }));
+    await flush();
+    expect(checkpoint.progress).toMatchObject({ checkId: originalId, phase: 'result' });
+    expect(checkpoint.progress.answers).toHaveLength(2);
+    resumed.unmount();
+
+    const { saveQuickCheckRecord, updateStudyPerformance } = jest.requireMock('../../Services/StudySessionService');
+    const savedCount = saveQuickCheckRecord.mock.calls.length;
+    const performanceCount = updateStudyPerformance.mock.calls.length;
+    const results = render(<PlanOnboarding {...props} savedQuickCheck={checkpoint} />);
+    expect(screen.getByRole('heading', { name: 'What your quick check showed' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Get ready for my exam/ }));
+    expect(checkpoint.progress.phase).toBe('date');
+    results.unmount();
+    render(<PlanOnboarding {...props} savedQuickCheck={checkpoint} />);
+    expect(screen.getByRole('button', { name: 'I don’t know yet' })).toBeInTheDocument();
+    await flush();
+    expect(saveQuickCheckRecord).toHaveBeenCalledTimes(savedCount);
+    expect(updateStudyPerformance).toHaveBeenCalledTimes(performanceCount);
+    expect(run_course_intelligence).toHaveBeenCalledTimes(1);
+  });
+
   it('does not repeat the welcome after a saved skip', async () => {
     mockRun(() => new Promise(() => {}));
     render(<PlanOnboarding autoInvestigate chatId="upload-chat" materialsReady={false}
       savedCourseContext={{ examDate: null, examDatePromptAnswered: true }} />);
     expect(screen.queryByRole('button', { name: 'I don’t know yet' })).toBeNull();
-    expect(screen.getByRole('heading', { name: 'Let’s get you ready for the exam.' })).toBeTruthy();
+    expect(screen.getByRole('heading', { name: 'Find out what to review in your course notes' })).toBeTruthy();
     await flush();
   });
 

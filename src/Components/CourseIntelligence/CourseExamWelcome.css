@@ -88,17 +88,53 @@
 @keyframes cs-welcome-confirm { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes cs-welcome-exit { to { opacity: 0; transform: translateY(-6px) scale(.99); } }
 @keyframes cs-welcome-type { to { opacity: 1; } }
-.cs-upload-welcome { padding: 32px 24px; }
-.cs-upload-welcome__shimmer { height: 3px; max-width: 180px; margin: 26px auto 18px; border-radius: 3px; background: linear-gradient(110deg, var(--ci-border) 35%, var(--ci-accent-soft) 48%, var(--ci-accent) 50%, var(--ci-border) 65%); background-size: 250% 100%; animation: cs-upload-sheen 2.4s ease-in-out infinite; }
-.cs-upload-welcome__shimmer.is-stopped { animation: none; }
+.cs-upload-welcome { padding: 32px 28px; }
+.cs-upload-welcome .cs-exam-welcome__title { max-width: 440px; margin: 16px auto 8px; font-size: 23px; text-wrap: balance; }
+.cs-upload-welcome__subtitle { margin: 0 auto; max-width: 400px; color: var(--ci-text-muted); font-size: 13px; line-height: 1.6; }
+.cs-upload-welcome__steps { display: flex; gap: 12px; padding: 0; margin: 28px 0 24px; list-style: none; text-align: left; }
+.cs-upload-welcome__steps li { flex: 1; display: flex; align-items: center; gap: 8px; color: var(--ci-text-muted); font-size: 12px; line-height: 1.4; }
+.cs-upload-welcome__step-icon { display: grid; place-items: center; flex: 0 0 25px; height: 25px; border: 1px solid var(--ci-border); border-radius: 50%; font-size: 11px; }
+.cs-upload-welcome__steps .is-current { color: var(--ci-text); font-weight: 600; }
+.cs-upload-welcome__steps .is-current .cs-upload-welcome__step-icon { border-color: var(--ci-accent); color: var(--ci-accent); box-shadow: 0 0 0 3px var(--ci-accent-soft); }
+.cs-upload-welcome__steps .is-done .cs-upload-welcome__step-icon { background: var(--ci-accent-soft); color: var(--ci-accent); border-color: transparent; }
+.cs-upload-welcome__activity { padding: 28px 16px 20px; background: var(--ci-surface-inset); border: 1px solid var(--ci-border); border-radius: 14px; }
+.cs-upload-welcome__activity .cs-upload-welcome__status { font-size: 16px; font-weight: 800; color: var(--ci-text); line-height: 1.5; }
+.cs-upload-welcome__hint { min-height: 3em; margin: 10px auto 0; max-width: 340px; font-size: 13px; line-height: 1.5; color: var(--ci-text-muted); animation: cs-upload-message .4s ease-out both; }
+.cs-upload-welcome__slow { margin: 16px auto 0; max-width: 400px; font-size: 12px; line-height: 1.6; color: var(--ci-text-muted); }
+@keyframes cs-upload-message { from { opacity: 0; transform: translateY(3px); } to { opacity: 1; transform: translateY(0); } }
+.cs-upload-welcome__shimmer { display: inline-block; --shimmer-peak: #171717; }
+.dark-mode .cs-upload-welcome__shimmer { --shimmer-peak: #fff; }
+@supports ((background-clip: text) or (-webkit-background-clip: text)) {
+  .cs-upload-welcome__shimmer {
+    background-image: linear-gradient(100deg,
+      var(--ci-text-muted) 42%,
+      var(--ci-text) 48%,
+      var(--shimmer-peak) 50%,
+      var(--ci-text) 52%,
+      var(--ci-text-muted) 58%);
+    background-size: 220% 100%;
+    background-repeat: no-repeat;
+    background-position: 100% 50%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    animation: cs-upload-sheen 1.8s linear infinite;
+  }
+}
 .cs-upload-welcome__status { color: var(--ci-text-muted); font-size: 12px; margin: 0; }
 .cs-upload-welcome .cs-button { margin: 20px auto 0; }
 @keyframes cs-upload-sheen { from { background-position: 100% 50%; } to { background-position: 0 50%; } }
+@media (forced-colors: active) {
+  .cs-upload-welcome__shimmer { background: none; color: CanvasText; animation: none; }
+}
 @media (prefers-reduced-motion: reduce) {
+  .cs-upload-welcome__shimmer, .cs-upload-welcome__hint { animation: none; }
+  .cs-upload-welcome__shimmer { background: none; color: inherit; }
   .cs-exam-welcome__letter { opacity: 1; }
   .cs-exam-welcome__calendar::after { display: none; }
 }
 @media (max-width: 480px) {
+  .cs-upload-welcome__steps { gap: 14px; flex-direction: column; margin: 22px 0; }
   .cs-exam-welcome { padding: 20px 16px; }
   .cs-exam-welcome__title { font-size: 22px; }
 }
