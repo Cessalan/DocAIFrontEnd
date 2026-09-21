@@ -4,6 +4,7 @@ import SATAQuestion from '../ChatInerface/SATAQuestion';
 import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
 import StudyCelebration from './StudyCelebration';
 import StudyReasoning from './StudyReasoning';
+import MatrixQuestion from './MatrixQuestion';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound } from '../../utils/soundEffects';
 import './StudyMode.css';
 
@@ -55,17 +56,14 @@ const StudyExamCard = ({
   const isLastQuestion = currentIndex === totalQuestions - 1;
   const hasAnswered = answers[currentIndex] !== undefined;
 
-  // MCQ state (only for mcq type rendered inline)
-  const [selectedMCQ, setSelectedMCQ] = useState(null);
-  const [mcqFeedback, setMcqFeedback] = useState(false);
-  const [mcqCorrect, setMcqCorrect] = useState(false);
+  // Use the persisted answer for both locking and feedback, including on resume.
+  const selectedMCQ = answers[currentIndex]?.selectedIndex ?? null;
+  const mcqFeedback = hasAnswered;
+  const mcqCorrect = answers[currentIndex]?.isCorrect === true;
   const [showRationale, setShowRationale] = useState(false);
 
-  // Reset MCQ state when moving to a new question
+  // Reset presentation state when moving to a new question
   useEffect(() => {
-    setSelectedMCQ(null);
-    setMcqFeedback(false);
-    setMcqCorrect(false);
     setShowRationale(false);
     setShowFeedback(false);
 
@@ -115,7 +113,7 @@ const StudyExamCard = ({
           totalScore += 1;
           correctCount++;
         }
-      } else if (q.questionType === 'sata') {
+      } else if (['sata', 'matrix'].includes(q.questionType)) {
         maxScore += (answer.maxScore || 1);
         totalScore += (answer.score || 0);
         if (answer.isCorrect) correctCount++;
@@ -134,10 +132,7 @@ const StudyExamCard = ({
   const handleMCQAnswer = (index) => {
     if (mcqFeedback || hasAnswered) return;
 
-    setSelectedMCQ(index);
     const correct = index === currentQuestion.correctIndex;
-    setMcqCorrect(correct);
-    setMcqFeedback(true);
     setShowFeedback(true);
 
     if (correct) playCorrectSound();
@@ -171,6 +166,7 @@ const StudyExamCard = ({
 
     const storedAnswer = {
       questionType: answerData.questionType || questionType,
+      selectedRows: answerData.selectedRows ?? null,
       selectedIndices: answerData.selectedIndices ?? null,
       selectedOptions: answerData.selectedOptions ?? null,
       userOrder: answerData.userOrder ?? null,
@@ -297,6 +293,7 @@ const StudyExamCard = ({
       {/* Question type badge */}
       <div className="exam-type-badge">
         {questionType === 'mcq' && t('exam.typeMCQ', 'Multiple Choice')}
+        {questionType === 'matrix' && t('matrix.title', 'Matrix question')}
         {questionType === 'sata' && t('exam.typeSATA', 'Select All That Apply')}
         {questionType === 'casestudy' && t('exam.typeCaseStudy', 'Case Study')}
       </div>
@@ -359,6 +356,10 @@ const StudyExamCard = ({
         </div>
       )}
 
+      {questionType === 'matrix' && currentQuestion && (
+        <MatrixQuestion key={currentIndex} quiz={currentQuestion} previousAnswer={answers[currentIndex]}
+          onAnswerSelect={handleComplexAnswer} onNext={handleNext} isLastQuestion={isLastQuestion} viewOnly={viewOnly} />
+      )}
       {/* ── SATA Renderer ── */}
       {questionType === 'sata' && currentQuestion && (
         <SATAQuestion

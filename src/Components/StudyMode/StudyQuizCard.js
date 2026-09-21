@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyReasoning from './StudyReasoning';
+import MatrixQuestion from './MatrixQuestion';
 import StudyCelebration from './StudyCelebration';
 import SATAQuestion from '../ChatInerface/SATAQuestion';
 import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
@@ -43,7 +44,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
   const [selectedIndex, setSelectedIndex] = useState(savedProgress?.selectedIndex ?? null);
   const [showFeedback, setShowFeedback] = useState(savedProgress?.showFeedback || false);
   const [isCorrect, setIsCorrect] = useState(savedProgress?.isCorrect || false);
-  const [reasoningAnswers, setReasoningAnswers] = useState({});
+  const [reasoningAnswers, setReasoningAnswers] = useState(savedProgress?.matrixAnswers || {});
 
   // Per-question rationale state — keyed by question index, NOT queue position,
   // so a later re-shuffle doesn't lose previously-fetched HTML. Each entry:
@@ -715,6 +716,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
         isCorrect: correct,
         questionIndex: currentQueuePosition,
         progress: {
+          matrixAnswers: reasoningAnswers,
           questionStatuses: newStatuses,
           firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
             ? firstAttemptStatuses  // Use frozen snapshot if available
@@ -767,6 +769,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
         maxScore: answerData?.maxScore,
         questionIndex: currentQueuePosition,
         progress: {
+          matrixAnswers: { ...reasoningAnswers, [currentQueuePosition]: answerData },
           questionStatuses: newStatuses,
           firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
             ? firstAttemptStatuses
@@ -812,6 +815,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
         isCorrect: false,
         questionIndex: currentQueuePosition,
         progress: {
+          matrixAnswers: reasoningAnswers,
           questionStatuses: newStatuses,
           firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
             ? firstAttemptStatuses
@@ -891,6 +895,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
             isCorrect: null,
             questionIndex: null,
             progress: {
+              matrixAnswers: reasoningAnswers,
               questionStatuses: questionStatuses,
               firstAttemptStatuses: frozenStatuses,
               queueIndex: 0,
@@ -917,6 +922,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
           isCorrect: null,
           questionIndex: null,
           progress: {
+            matrixAnswers: reasoningAnswers,
             questionStatuses: questionStatuses,
             firstAttemptStatuses: isReviewRound && Object.keys(firstAttemptStatuses).length > 0
               ? firstAttemptStatuses : questionStatuses,
@@ -1156,7 +1162,12 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
               </div>
             )}
 
-            {isCaseStudy ? (
+            {currentQuestion.questionType === 'matrix' ? (
+              <MatrixQuestion key={currentQueuePosition + ':' + isReviewRound} quiz={currentQuestion}
+                previousAnswer={practiceMode ? currentQuestion.userSelection : !isReviewRound ? reasoningAnswers[currentQueuePosition] : null}
+                onAnswerSelect={handleComplexAnswer} onNext={handleNextQuestion} viewOnly={viewOnly}
+                isLastQuestion={queueIndex >= questionQueue.length - 1} />
+            ) : isCaseStudy ? (
               <CaseStudyQuestion key={`${currentQueuePosition}-${isReviewRound}`}
                 tutorPanel={caseStudyTutor} onOpenTutor={onCaseTutor}
                 quiz={currentQuestion} quizIndex={queueIndex} totalQuestions={expectedTotal || totalQuestions}
@@ -1464,8 +1475,8 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
           {chatId && nodeId && !viewOnly && !isDiagnostic && currentQuestion?.question && (
             <StudyReasoning key={`${chatId}:${nodeId}:${currentQueuePosition}:${isReviewRound}`}
               chatId={chatId} nodeId={nodeId} questionIndex={currentQueuePosition}
-              question={currentQuestion} revealed={showFeedback}
-              selection={{ ...reasoningAnswers[currentQueuePosition], selectedIndex, isCorrect }} />
+              question={currentQuestion} revealed={showFeedback || (currentQuestion.questionType === 'matrix' && !isReviewRound && !!reasoningAnswers[currentQueuePosition])}
+              selection={currentQuestion.questionType === 'matrix' ? reasoningAnswers[currentQueuePosition] : { ...reasoningAnswers[currentQueuePosition], selectedIndex, isCorrect }} />
           )}
 
           {allCorrect && (

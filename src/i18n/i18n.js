@@ -7,6 +7,7 @@ import { courseStudioEn, courseStudioFr } from '../Components/CourseIntelligence
 const resources = {
   en: {
     translation: {
+      matrix: { yourAnswerCorrect: "Your answer · Correct", yourAnswerIncorrect: "Your answer · Incorrect", why: "Why?", rowExplanation: "Explanation", rowCorrect: "Correct", rowReview: "Review this row", title: 'Matrix question', description: 'One answer per row', item: 'Finding or action', table: 'Answer grid', instruction: 'Choose one answer in each row. A column can be used more than once.', correct: 'Correct answer', incorrect: 'Incorrect answer', progress: '{{count}} of {{total}} rows answered', check: 'Check answers', score: '{{score}} of {{total}} rows correct', points: 'Practice scoring: one point per correct row.', finish: 'Finish', next: 'Next question', invalid: 'This question could not load. Please reopen this step.', coaching: 'Treat each row as its own decision. Match it to the scenario, then choose one category.' },
       courseStudio: courseStudioEn,
       'practiceEntry.note': 'a little practice on…',
       'practiceEntry.fromQuestions': 'From your questions',
@@ -2442,6 +2443,13 @@ const resources = {
       exam: {
         configTitle: "Mini-Test",
         configDescription: "Configure your mini-test to match how your real exam will look.",
+        difficultyLabel: "Difficulty",
+        difficulty_easy: "Easy",
+        difficulty_medium: "Medium",
+        difficulty_hard: "Hard",
+        difficultyHint_easy: "Build confidence with straightforward questions.",
+        difficultyHint_medium: "Apply what you know to clinical situations.",
+        difficultyHint_hard: "Work through more complex scenarios and closer answer choices.",
         questionTypes: "Question types",
         typeMCQ: "Multiple Choice",
         typeMCQDesc: "1 correct answer",
@@ -2484,6 +2492,7 @@ const resources = {
 
   fr: {
     translation: {
+      matrix: { yourAnswerCorrect: "Ta réponse · Correcte", yourAnswerIncorrect: "Ta réponse · Incorrecte", why: "Pourquoi ?", rowExplanation: "Explication", rowCorrect: "Correct", rowReview: "À revoir", title: 'Question matricielle', description: 'Une réponse par ligne', item: 'Observation ou intervention', table: 'Grille de réponses', instruction: 'Choisissez une réponse par ligne. Une colonne peut être utilisée plusieurs fois.', correct: 'Bonne réponse', incorrect: 'Réponse incorrecte', progress: '{{count}} lignes sur {{total}} complétées', check: 'Vérifier les réponses', score: '{{score}} lignes correctes sur {{total}}', points: 'Notation de pratique : un point par ligne correcte.', finish: 'Terminer', next: 'Question suivante', invalid: 'Cette question ne peut pas être affichée. Rouvrez cette étape.', coaching: 'Évaluez chaque ligne séparément. Reliez-la au scénario, puis choisissez une catégorie.' },
       courseStudio: courseStudioFr,
       'practiceEntry.note': 'un peu de pratique sur…',
       'practiceEntry.fromQuestions': 'À partir de tes questions',
@@ -4843,6 +4852,13 @@ const resources = {
       exam: {
         configTitle: "Mini-Test",
         configDescription: "Configure ton mini-test pour qu'il ressemble à ton vrai examen.",
+        difficultyLabel: "Difficulté",
+        difficulty_easy: "Facile",
+        difficulty_medium: "Intermédiaire",
+        difficulty_hard: "Difficile",
+        difficultyHint_easy: "Prends confiance avec des questions simples.",
+        difficultyHint_medium: "Applique tes connaissances à des situations cliniques.",
+        difficultyHint_hard: "Analyse des scénarios plus complexes avec des choix de réponses plus proches.",
         questionTypes: "Types de questions",
         typeMCQ: "Choix multiple",
         typeMCQDesc: "1 bonne réponse",

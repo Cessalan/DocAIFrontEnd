@@ -1296,9 +1296,10 @@ export const generate_exam = async (chat_id, topic, question_types = ['mcq', 'sa
         question_count,
         custom_instructions,
         language,
-        // The node's difficulty, which the planner already set — the student is
-        // never asked for it. Only consulted when quiz_mode is "applied".
+        // Planner difficulty controls the applied/recall mix; the student's
+        // selection controls complexity within each question format.
         difficulty: options.difficulty || 2,
+        question_difficulty: options.questionDifficulty || 'medium',
         // Opt-in per caller. The adaptive drills and NCLEX practice keep
         // "knowledge"; only a study exam node asks for the applied mix.
         quiz_mode: options.quizMode || 'knowledge'

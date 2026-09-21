@@ -419,7 +419,7 @@ const NodeTransition = ({
         question_type: q?.questionType || q?.metadata?.questionType || 'mcq',
         // Generators disagree on the field name; the debrief reads whichever
         // is populated so it can explain the miss rather than just name it.
-        rationale: String(q?.justification || q?.rationale || q?.correctBlurb || '').slice(0, 600),
+        rationale: String(q?.questionType === 'matrix' ? (q.rows || []).map(row => row.text + ': ' + (q.columns || []).find(c => c.id === row.correctColumnId)?.label + ' — ' + row.explanation).join(' | ') : q?.justification || q?.rationale || q?.correctBlurb || '').slice(0, 1200),
       }))
       .filter((it) => it.question && it.answered)
       .map(({ answered, ...it }) => it);

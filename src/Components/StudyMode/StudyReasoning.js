@@ -77,9 +77,9 @@ export default function StudyReasoning({ chatId, nodeId, questionIndex, question
   };
   return <div className={`study-reasoning ${open ? 'is-open' : ''}`}>
     <div hidden={open}>
-    <label htmlFor="study-reasoning-draft">Why did you choose that answer? <span>Optional</span></label>
+    <label htmlFor="study-reasoning-draft">Talk me through your thinking <span>Optional</span></label>
     <form className="study-reasoning-composer" onSubmit={event => { event.preventDefault(); send(); }}>
-    <textarea ref={input} id="study-reasoning-draft" rows={1} maxLength={4000} value={text} onChange={e => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`; }} placeholder="Talk through your thinking…" disabled={busy || loading} />
+    <textarea ref={input} id="study-reasoning-draft" rows={1} maxLength={4000} value={text} onChange={e => { setText(e.target.value); e.target.style.height = "auto"; e.target.style.height = `${Math.min(e.target.scrollHeight, 120)}px`; }} placeholder="What guided your choices? Where were you unsure?" disabled={busy || loading} />
     <ChatSendButton label="Discuss my reasoning" busy={busy} disabled={!text.trim() || loading || !!unsaved || error.startsWith('Previous discussion')} />
     </form>
     {history.length > 0 && <button className="study-reasoning-reopen" type="button" onClick={() => setOpen(true)}>Continue discussion <span aria-hidden="true">↗</span></button>}

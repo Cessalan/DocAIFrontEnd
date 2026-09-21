@@ -1530,10 +1530,7 @@ const StudyModeContainer = ({
         examConfig.questionCount,
         examConfig.customInstructions,
         language,
-        // The planner already set this node's difficulty, so the mini-test
-        // config modal does not ask the student for it. It sets how much of
-        // the exam is applied rather than plain recall.
-        { difficulty: examNode.difficulty || 2, quizMode: 'applied' }
+        { difficulty: examNode.difficulty || 2, quizMode: 'applied', questionDifficulty: examConfig.questionDifficulty }
       );
 
       if (!result?.questions?.length) {
@@ -1550,6 +1547,7 @@ const StudyModeContainer = ({
         ...result,
         examConfig: {
           ...result.examConfig,
+          questionDifficulty: examConfig.questionDifficulty || 'medium',
           // Coerced because this object is written straight to Firestore,
           // which rejects undefined. A self-launching drill sets no timer at
           // all, so the fields simply aren't in its config.
@@ -1656,7 +1654,8 @@ const StudyModeContainer = ({
         chatId,
         activeNodeId,
         {
-          type: 'quiz',
+          type: isFormat && focus.key === 'matrix' ? 'exam' : 'quiz',
+          ...(isFormat && focus.key === 'matrix' ? { examConfig: { questionTypes: ['matrix'], questionCount: count, timerEnabled: false } } : {}),
           label: isFormat
             ? t('study.practiceFormatLabel', 'Targeted practice: {{name}}', { name: focus.name })
             : focus.name,

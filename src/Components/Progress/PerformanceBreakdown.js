@@ -25,6 +25,7 @@ import './PerformanceBreakdown.css';
  */
 
 const FORMAT_LABELS = {
+  matrix: ['matrix.title', 'Matrix question'],
   mcq: ['performance.formatMcq', 'Multiple choice'],
   sata: ['performance.formatSata', 'Select all that apply'],
   casestudy: ['performance.formatCase', 'Priority & case study'],
@@ -33,6 +34,7 @@ const FORMAT_LABELS = {
 /* Why the format is hard and what to do differently — shown only for the
    area actually being called out. */
 const FORMAT_COACHING = {
+  matrix: ['matrix.coaching', 'Treat each row as its own decision. Match it to the scenario, then choose one category.'],
   sata: [
     'performance.coachSata',
     'Every option is graded on its own, and one wrong pick loses the whole question. Go option by option and ask "true or false?" about each — never hunt for the single best answer.',

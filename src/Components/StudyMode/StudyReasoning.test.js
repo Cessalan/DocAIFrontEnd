@@ -12,7 +12,7 @@ const props = { chatId: 'chat', nodeId: 'node', questionIndex: 0,
   revealed: false, selection: { selectedIndex: 1, isCorrect: false } };
 beforeEach(() => { jest.clearAllMocks(); loadReasoning.mockResolvedValue([]); saveReasoning.mockResolvedValue(); discussReasoning.mockResolvedValue({ reply: 'What supports that connection?', sources: [] }); });
 async function submit() {
-  const input = screen.getByLabelText(/Why did you choose/);
+  const input = screen.getByLabelText(/Talk me through your thinking/);
   await waitFor(() => expect(input).toBeEnabled());
   fireEvent.change(input, { target: { value: 'I noticed the respiratory rate.' } });
   fireEvent.click(screen.getByRole('button', { name: 'Discuss my reasoning' }));
@@ -60,7 +60,7 @@ test('closing keeps the panel mounted for its exit animation, then returns focus
   fireEvent.click(screen.getByRole('button', { name: 'Close tutor' }));
   expect(document.querySelector('.study-reasoning-side')).toHaveClass('is-closing');
   await waitFor(() => expect(document.querySelector('.study-reasoning-side')).toBeNull());
-  expect(screen.getByLabelText(/Why did you choose/)).toHaveFocus();
+  expect(screen.getByLabelText(/Talk me through your thinking/)).toHaveFocus();
   fireEvent.click(screen.getByRole('button', { name: /Continue discussion/ }));
   expect(document.querySelector('.study-reasoning-side')).toHaveClass('is-entering');
 });
@@ -73,7 +73,7 @@ test('reduced motion closes immediately without waiting for an animation', async
     await screen.findByText('What supports that connection?');
     fireEvent.keyDown(document, { key: 'Escape' });
     expect(document.querySelector('.study-reasoning-side')).toBeNull();
-    expect(screen.getByLabelText(/Why did you choose/)).toHaveFocus();
+    expect(screen.getByLabelText(/Talk me through your thinking/)).toHaveFocus();
   } finally { window.matchMedia = original; }
 });
 

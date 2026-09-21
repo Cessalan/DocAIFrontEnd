@@ -249,7 +249,7 @@ export const buildNodeReadout = ({
 
   const reasoningFocus = debrief?.reasoningFocus;
   if (reasoningFocus?.skill && reasoningFocus?.learner_quote && !experimentConfirmed) {
-    const format = ['mcq', 'sata', 'casestudy'].includes(reasoningFocus.question_type) ? reasoningFocus.question_type : 'mcq';
+    const format = ['mcq', 'sata', 'casestudy', 'matrix'].includes(reasoningFocus.question_type) ? reasoningFocus.question_type : 'mcq';
     caption = t('transition.reasoningCaption', 'A point from our discussion to try independently.');
     recommendation = {
       kind: 'reasoning',

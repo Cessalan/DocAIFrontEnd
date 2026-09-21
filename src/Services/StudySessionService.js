@@ -1120,7 +1120,7 @@ export const updateStudyPerformance = async (chatId, result) => {
 export const BREAKDOWN_MIN_SAMPLE = 5;
 
 /** Display order / labels live in the UI; this is just the known set. */
-const KNOWN_FORMATS = ['mcq', 'sata', 'casestudy'];
+const KNOWN_FORMATS = ['mcq', 'sata', 'casestudy', 'matrix'];
 
 /**
  * Accuracy by topic and by question format for ONE study session.

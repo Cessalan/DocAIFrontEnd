@@ -28,10 +28,12 @@ const ExamConfigModal = ({
     mcq: true,
     sata: true,
     casestudy: true,
+    matrix: true,
   });
 
   // Question count
   const [questionCount, setQuestionCount] = useState(10);
+  const [questionDifficulty, setQuestionDifficulty] = useState('medium');
 
   // Timer
   const [timerEnabled, setTimerEnabled] = useState(false);
@@ -76,6 +78,7 @@ const ExamConfigModal = ({
     onStart({
       questionTypes: selectedTypes,
       questionCount,
+      questionDifficulty,
       timerEnabled,
       timerSeconds: timerEnabled ? getTimerSeconds(selectedTypes) : null,
       customInstructions: customInstructions.trim() || null,
@@ -84,7 +87,7 @@ const ExamConfigModal = ({
 
   // Calculate per-question timer based on question mix
   const getTimerSeconds = (types) => {
-    const timings = { mcq: 60, sata: 90, casestudy: 150 };
+    const timings = { mcq: 60, sata: 90, matrix: 120, casestudy: 150 };
     const totalTime = types.reduce((sum, t) => sum + (timings[t] || 90), 0);
     return Math.round(totalTime / types.length);
   };
@@ -125,6 +128,7 @@ const ExamConfigModal = ({
           </div>
         ) : (
           <>
+            <div className="exam-config__body">
             {/* Header */}
             <div className="exam-config__header">
               <div className="exam-config__icon">
@@ -152,6 +156,7 @@ const ExamConfigModal = ({
                 <button
                   className={`exam-config__type-btn ${questionTypes.mcq ? 'active' : ''}`}
                   onClick={() => toggleType('mcq')}
+                  aria-pressed={questionTypes.mcq}
                 >
                   <span className="exam-config__type-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -165,6 +170,7 @@ const ExamConfigModal = ({
                 <button
                   className={`exam-config__type-btn ${questionTypes.sata ? 'active' : ''}`}
                   onClick={() => toggleType('sata')}
+                  aria-pressed={questionTypes.sata}
                 >
                   <span className="exam-config__type-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -175,9 +181,15 @@ const ExamConfigModal = ({
                   <span className="exam-config__type-desc">{t('exam.typeSATADesc', 'Multiple correct answers')}</span>
                 </button>
 
+                <button type="button" aria-pressed={questionTypes.matrix} className={`exam-config__type-btn ${questionTypes.matrix ? 'active' : ''}`} onClick={() => toggleType('matrix')}>
+                  <span className="exam-config__type-icon" aria-hidden="true">▦</span>
+                  <span className="exam-config__type-name">{t('matrix.title', 'Matrix question')}</span>
+                  <span className="exam-config__type-desc">{t('matrix.description', 'One answer per row')}</span>
+                </button>
                 <button
                   className={`exam-config__type-btn ${questionTypes.casestudy ? 'active' : ''}`}
                   onClick={() => toggleType('casestudy')}
+                  aria-pressed={questionTypes.casestudy}
                 >
                   <span className="exam-config__type-icon">
                     <svg viewBox="0 0 24 24" fill="currentColor" width="16" height="16">
@@ -189,6 +201,24 @@ const ExamConfigModal = ({
                 </button>
               </div>
             </div>
+
+            <fieldset className="exam-config__difficulty">
+              <legend className="exam-config__label">{t('exam.difficultyLabel', 'Difficulty')}</legend>
+              <div className="exam-config__difficulty-options">
+                {['easy', 'medium', 'hard'].map(level => (
+                  <label key={level} className="exam-config__difficulty-option">
+                    <input type="radio" name="exam-difficulty" value={level}
+                      checked={questionDifficulty === level} onChange={() => setQuestionDifficulty(level)} />
+                    <span>{t(`exam.difficulty_${level}`, { easy: 'Easy', medium: 'Medium', hard: 'Hard' }[level])}</span>
+                  </label>
+                ))}
+              </div>
+              <p className="exam-config__estimate">{t(`exam.difficultyHint_${questionDifficulty}`, {
+                easy: 'Build confidence with straightforward questions.',
+                medium: 'Apply what you know to clinical situations.',
+                hard: 'Work through more complex scenarios and closer answer choices.',
+              }[questionDifficulty])}</p>
+            </fieldset>
 
             {/* Question Count */}
             <div className="exam-config__section">
@@ -250,6 +280,7 @@ const ExamConfigModal = ({
                 className={`exam-config__toggle ${timerEnabled ? 'active' : ''}`}
                 onClick={() => setTimerEnabled(!timerEnabled)}
                 role="switch"
+                aria-label={t('exam.simulateTiming', 'Simulate exam timing')}
                 aria-checked={timerEnabled}
               >
                 <span className="exam-config__toggle-thumb" />
@@ -257,22 +288,25 @@ const ExamConfigModal = ({
             </div>
 
             {/* Custom Instructions */}
-            <div className="exam-config__section">
-              <label className="exam-config__label">
+            <details className="exam-config__extras">
+              <summary>
                 {t('exam.customInstructions', 'Additional instructions')}
                 <span className="exam-config__label-optional"> ({t('exam.optional', 'optional')})</span>
-              </label>
+              </summary>
               <textarea
                 className="exam-config__textarea"
+                aria-label={t('exam.customInstructions', 'Additional instructions')}
                 placeholder={t('exam.customPlaceholder', 'e.g. "My professor focuses on prioritization" or "Include drug calculations"')}
                 value={customInstructions}
                 onChange={(e) => setCustomInstructions(e.target.value)}
                 rows={2}
                 maxLength={300}
               />
+            </details>
             </div>
 
             {/* Start Button */}
+            <div className="exam-config__footer">
             <button
               className="exam-config__start"
               onClick={handleStart}
@@ -283,6 +317,7 @@ const ExamConfigModal = ({
               </svg>
               {t('exam.startExam', 'Start Mini-Test')}
             </button>
+            </div>
           </>
         )}
       </div>
