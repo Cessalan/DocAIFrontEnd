@@ -114,6 +114,40 @@ const skillDrill = (skill) => {
   return { questionTypes: ['mcq'], instructions: '' };
 };
 
+/**
+ * The one-question pattern experiment, as a node.
+ *
+ * It rides the same `exam` + `examConfig` path as the drills above, for the
+ * same reason: a plain quiz node cannot force a format, so a "select-all"
+ * experiment used to arrive as single-answer multiple choice. Worse, the only
+ * topic it sent was its own label, so every run retrieved the same passage and
+ * regenerated the same question with whichever key the model picked that time.
+ * `topic` is the subject of the node the theory came from (see nodeTopic.js).
+ *
+ * @param {string} skill - debrief skill key
+ * @param {string} topic - the subject to set the question in ('' if unknown)
+ * @param {string} label - display label, already translated
+ */
+export const buildExperimentNode = (skill, topic, label) => {
+  const drill = skillDrill(skill);
+  return {
+    type: 'exam',
+    label,
+    ...(topic ? { topic } : {}),
+    tags: ['experiment:' + skill, 'weak_area'],
+    difficulty: 2,
+    adaptive: true,
+    reason: 'One question to test the ' + skill + ' pattern',
+    examConfig: {
+      questionTypes: drill.questionTypes,
+      questionCount: 1,
+      timerEnabled: false,
+      customInstructions: [topic ? 'Focus on ' + topic + '.' : '', drill.instructions]
+        .filter(Boolean).join(' '),
+    },
+  };
+};
+
 /** Human name for a skill, for copy. Falls back to the raw key. */
 const skillLabel = (skill, t) => {
   if (skill === SKILL_PRIORITY) return t('transition.skillPriority', 'prioritization');
@@ -160,11 +194,15 @@ export const buildNodeReadout = ({
   nextNode,
   priorPerformance,
   canTestTheory,
+  testedSkills,
   node,
+  nodeTopic,
   estimateMinutes,
   t,
 }) => {
-  const topic = (result && result.topic) || '';
+  // `nodeTopic` is the subject resolved from the plan; `result.topic` is the
+  // node's display label, which for inserted nodes is a decorated non-topic.
+  const topic = nodeTopic || (result && result.topic) || '';
   const miss = result && result.type === 'flashcard'
     ? (result.needReview || 0)
     : ((result && result.incorrect) || 0);
@@ -229,9 +267,14 @@ export const buildNodeReadout = ({
   const est = typeof estimateMinutes === 'function' ? estimateMinutes : () => 4;
   const sourceTags = ['adaptive', 'source:' + ((node && node.id) || 'unknown')];
 
+  // Carried on every node built here so generation and the NEXT readout see
+  // the subject, not "Harder: Review: …".
+  const topicField = topic ? { topic } : {};
+
   const drillNode = (label, drill, reason) => ({
     type: 'exam',
     label,
+    ...topicField,
     tags: sourceTags.concat('weak_area'),
     difficulty: 2,
     adaptive: true,
@@ -259,7 +302,7 @@ export const buildNodeReadout = ({
       meta: t('transition.metaDrill', { count: DRILL_QUESTIONS, defaultValue: '{{count}} questions · ~5 min' }),
       testSkill: null,
       node: {
-        type: 'exam', label: reasoningFocus.skill,
+        type: 'exam', label: reasoningFocus.skill, ...topicField,
         tags: sourceTags.concat('reasoning_followup'), difficulty: 2, adaptive: true,
         reason: 'Independent practice of a point discussed in ' + topic,
         examConfig: { questionTypes: [format], questionCount: DRILL_QUESTIONS, timerEnabled: false,
@@ -268,10 +311,15 @@ export const buildNodeReadout = ({
             + 'Do not reveal the answer in the stem. Prior discussion is not evidence of weakness or mastery.' },
       },
     };
-  } else if (result?.scorePercent !== 0 && tone !== 'confirmed' && hasPattern && !isPatternEstablished(debrief) && canTestTheory) {
+  } else if (result?.scorePercent !== 0 && tone !== 'confirmed' && hasPattern && !isPatternEstablished(debrief) && canTestTheory
+    && !(Array.isArray(testedSkills) && testedSkills.includes(skill))) {
     /* The evidence clears the bar for a theory, not a verdict. One question she
        can win by reading differently proves it to her in a way no explanation
-       does — and if she misses it, nothing was oversold. */
+       does — and if she misses it, nothing was oversold.
+
+       Once per skill per plan. The plan-wide pattern outlives the experiment,
+       so without this every node after it re-offered the same test: one
+       student ran nine in a row. Already tested → the drill below. */
     recommendation = {
       kind: 'test',
       title: t('transition.recTestTitle', {
@@ -319,6 +367,7 @@ export const buildNodeReadout = ({
       node: {
         type: 'lesson',
         label: t('transition.remediationLesson', { topic, defaultValue: 'Review: ' + topic }),
+        ...topicField,
         tags: sourceTags.concat('weak_area'),
         difficulty: (node && node.difficulty) || 1,
         adaptive: true,
@@ -364,6 +413,7 @@ export const buildNodeReadout = ({
       node: {
         type: 'exam',
         label: t('transition.challengeLabel', { topic, defaultValue: 'Harder: {{topic}}' }),
+        ...topicField,
         tags: sourceTags.concat('challenge'),
         difficulty: 3,
         adaptive: true,

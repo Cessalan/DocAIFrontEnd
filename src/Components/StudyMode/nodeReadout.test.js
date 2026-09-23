@@ -1,4 +1,4 @@
-import { buildNodeReadout, detectImprovement, isPatternEstablished, DRILL_QUESTIONS } from './nodeReadout';
+import { buildNodeReadout, buildExperimentNode, detectImprovement, isPatternEstablished, DRILL_QUESTIONS } from './nodeReadout';
 
 /* Stand-in for i18next's `t`. Mirrors the two call shapes the app uses:
    t(key, 'Default') and t(key, { vars, defaultValue }). Interpolates so the
@@ -147,6 +147,34 @@ describe('recommendation', () => {
     expect(rec.kind).toBe('fix');
   });
 
+  it('never offers the same experiment twice in one plan', () => {
+    // The loop from 2026-09-22: the plan-wide pattern outlived the experiment
+    // and every later node re-offered it. Already tested → the drill instead.
+    const rec = readout({
+      debrief: patternDebrief(2, 'select-all-that-apply'),
+      testedSkills: ['select-all-that-apply'],
+    }).recommendation;
+    expect(rec.kind).toBe('fix');
+    expect(rec.testSkill).toBeNull();
+    expect(rec.node.examConfig.questionTypes).toEqual(['sata']);
+  });
+
+  it('still offers an experiment for a skill that has not been tested', () => {
+    const rec = readout({ debrief: patternDebrief(2), testedSkills: ['select-all-that-apply'] }).recommendation;
+    expect(rec.kind).toBe('test');
+  });
+
+  it('labels and generates from the resolved subject, not the decorated label', () => {
+    const rec = readout({
+      result: quizResult(5, 5, { topic: 'Harder: Testing a theory: prioritization' }),
+      bucket: 'mastered',
+      nextNode: null,
+      nodeTopic: 'Pediatric neurologic assessment',
+    }).recommendation;
+    expect(rec.node.label).toBe('Harder: Pediatric neurologic assessment');
+    expect(rec.node.topic).toBe('Pediatric neurologic assessment');
+  });
+
   it('re-teaches instead of retesting when she is under water', () => {
     const rec = readout({ result: quizResult(1, 5), bucket: 'tough' }).recommendation;
     expect(rec.kind).toBe('walkthrough');
@@ -224,4 +252,23 @@ test('a proposed discussion focus without learner evidence cannot override the u
   const baseline = readout();
   const unsupported = readout({ debrief: { reasoningFocus: { skill: 'Invented difficulty' } } });
   expect(unsupported.recommendation).toEqual(baseline.recommendation);
+});
+
+describe('buildExperimentNode', () => {
+  it('asks a select-all theory with a select-all question, set in the real subject', () => {
+    const node = buildExperimentNode('select-all-that-apply', 'Perineal care', 'Testing a theory: select-all-that-apply');
+    expect(node.type).toBe('exam');
+    expect(node.topic).toBe('Perineal care');
+    expect(node.tags).toContain('experiment:select-all-that-apply');
+    expect(node.examConfig.questionTypes).toEqual(['sata']);
+    expect(node.examConfig.questionCount).toBe(1);
+    expect(node.examConfig.customInstructions).toContain('Focus on Perineal care.');
+  });
+
+  it('writes no topic field at all when none is known', () => {
+    // Firestore rejects `undefined`, and an empty topic would beat the label.
+    const node = buildExperimentNode('prioritization', '', 'Testing a theory: prioritization');
+    expect('topic' in node).toBe(false);
+    expect(node.examConfig.questionTypes).toEqual(['casestudy']);
+  });
 });

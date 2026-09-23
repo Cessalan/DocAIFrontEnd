@@ -68,7 +68,8 @@ function RouteFallback() {
 }
 
 // Check if we're in development mode
-const isDev = process.env.NODE_ENV === 'development';
+const AdminGuard = lazy(() => import('./Components/Admin/AdminGuard'));
+const AdminWorkspace = lazy(() => import('./Components/Admin/AdminWorkspace'));
 
 function App() {
   return (
@@ -90,19 +91,16 @@ function App() {
         <Route path="/nclex-question-generator" element={<NclexQuestionGenerator />} />
         <Route path="/ai-nclex-question-generator" element={<NclexQuestionGenerator />} />
 
-        {/* Admin Routes - DEV ONLY */}
-        {isDev && (
-          <Route path="/admin/question-bank" element={<QuestionBankAdmin />} />
-        )}
-        {isDev && (
-          <Route path="/admin/satisfaction" element={<SatisfactionDashboard />} />
-        )}
-        {isDev && (
-          <Route path="/admin/conversations" element={<ConversationReader />} />
-        )}
-        {isDev && (
-          <Route path="/admin/paywall" element={<PaywallTracker />} />
-        )}
+        <Route path="/admin" element={<AdminGuard />}>
+          <Route index element={<AdminWorkspace />} />
+          <Route path="exams" element={<AdminWorkspace />} />
+          <Route path="email" element={<AdminWorkspace />} />
+          <Route path="access" element={<AdminWorkspace />} />
+          <Route path="question-bank" element={<QuestionBankAdmin />} />
+          <Route path="satisfaction" element={<SatisfactionDashboard />} />
+          <Route path="conversations" element={<ConversationReader />} />
+          <Route path="paywall" element={<PaywallTracker />} />
+        </Route>
 
         {/* ── NCLEX ────────────────────────────────────────────────────
             A standalone product surface. Protected like the rest of the app,

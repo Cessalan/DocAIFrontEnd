@@ -126,6 +126,8 @@ const NodeTransition = ({
   onCancelCustom,    // () => cancel the custom request
   onAnalytics,       // (event, payload) => fire analytics (no-op safe)
   onTestTheory,      // (skill) => insert a single question built around the pattern
+  testedSkills,      // skills already given an experiment in this plan (never re-offered)
+  nodeTopic,         // the node's subject, resolved from the plan (label may be decorated)
   priorPerformance,  // studyPerformance snapshot taken BEFORE this node started
   topicProgress = null,
 }) => {
@@ -777,11 +779,13 @@ const NodeTransition = ({
       nextNode,
       priorPerformance,
       canTestTheory: !!onTestTheory,
+      testedSkills,
       node,
+      nodeTopic,
       estimateMinutes: getEstimate,
       t,
     });
-  }, [result, bucket, debrief, experimentConfirmed, nextNode, priorPerformance, onTestTheory, node, t]);
+  }, [result, bucket, debrief, experimentConfirmed, nextNode, priorPerformance, onTestTheory, testedSkills, node, nodeTopic, t]);
 
   // ── Determine remediation node type based on severity ───────────────
   const remediationType = useMemo(() => {

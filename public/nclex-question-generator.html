@@ -77,829 +77,312 @@
     ]
   }
   </script>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-
-    :root {
-      --primary-coral: #e88d7d;
-      --primary-peach: #f4a896;
-      --primary-blush: #f8c8c4;
-      --accent-butter: #fff3cd;
-      --accent-sage: #d4e5d7;
-      --accent-cream: #fffaf3;
-      --text-primary: #3d3d3d;
-      --text-secondary: #6b6b6b;
-      --text-muted: #999999;
-      --bg-paper: #fffef9;
-      --bg-warm: linear-gradient(180deg, #fffef9 0%, #fff5eb 50%, #fef0e8 100%);
-      --shadow-lifted: 0 12px 32px rgba(0, 0, 0, 0.08);
-      --font-main: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
-      --font-handwritten: 'Kalam', cursive;
-    }
-
-    body {
-      min-height: 100vh;
-      background: var(--bg-warm);
-      background-attachment: fixed;
-      color: var(--text-primary);
-      font-family: var(--font-main);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 32px 20px;
-      line-height: 1.6;
-    }
-
-    a { color: var(--primary-coral); text-decoration: none; }
-    a:hover { color: var(--text-primary); }
-
-    .card {
-      width: 100%;
-      max-width: 920px;
-      background: rgba(255, 254, 249, 0.95);
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 24px;
-      padding: 40px;
-      box-shadow: var(--shadow-lifted);
-    }
-
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      margin-bottom: 24px;
-    }
-    .logo { width: 52px; height: 52px; }
-    .brand-name {
-      font-size: 26px;
-      font-weight: 700;
-      font-family: var(--font-handwritten);
-      color: var(--primary-coral);
-    }
-
-    .urgency-banner {
-      background: linear-gradient(90deg, #22c55e, #16a34a);
-      color: white;
-      padding: 10px 16px;
-      border-radius: 100px;
-      font-size: 13px;
-      font-weight: 600;
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 16px;
-      animation: pulse 2s ease-in-out infinite;
-    }
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.85; }
-    }
-
-    .eyebrow {
-      font-family: var(--font-handwritten);
-      color: var(--primary-coral);
-      font-size: 18px;
-      margin-bottom: 8px;
-    }
-
-    h1 {
-      font-size: 34px;
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 14px;
-      color: var(--text-primary);
-    }
-
-    .lead {
-      font-size: 17px;
-      color: var(--text-secondary);
-      margin-bottom: 24px;
-      max-width: 640px;
-    }
-
-    .highlight {
-      background: linear-gradient(180deg, transparent 60%, rgba(255, 235, 122, 0.5) 60%);
-      padding: 0 2px;
-    }
-
-    .cta-section {
-      background: linear-gradient(135deg, rgba(232, 141, 125, 0.08), rgba(255, 243, 205, 0.4));
-      border: 2px solid var(--primary-coral);
-      border-radius: 20px;
-      padding: 24px;
-      margin-bottom: 28px;
-      text-align: center;
-    }
-
-    .cta-headline {
-      font-size: 20px;
-      font-weight: 600;
-      margin-bottom: 6px;
-    }
-
-    .cta-subtext {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-bottom: 16px;
-    }
-
-    .btn-primary {
-      background: var(--primary-coral);
-      color: white;
-      padding: 16px 32px;
-      border-radius: 100px;
-      font-weight: 700;
-      font-size: 17px;
-      border: none;
-      box-shadow: 0 6px 20px rgba(232, 141, 125, 0.4);
-      transition: all 0.2s ease;
-      display: inline-block;
-      cursor: pointer;
-    }
-    .btn-primary:hover {
-      transform: translateY(-3px);
-      box-shadow: 0 8px 28px rgba(232, 141, 125, 0.5);
-      color: white;
-    }
-
-    .no-cc {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 10px;
-    }
-
-    .social-proof {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-      margin-top: 16px;
-      flex-wrap: wrap;
-    }
-
-    .proof-item {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 13px;
-      color: var(--text-secondary);
-    }
-
-    .stars { color: #fbbf24; }
-
-    .feature-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 14px;
-      margin-bottom: 28px;
-    }
-
-    .feature-card {
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 16px;
-      padding: 18px;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-    .feature-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
-    }
-
-    .feature-icon {
-      width: 48px;
-      height: 48px;
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 24px;
-      margin: 0 auto 10px;
-    }
-    .feature-icon.pink { background: #ffd6e0; }
-    .feature-icon.green { background: #d8f5d8; }
-    .feature-icon.blue { background: #d4f0fc; }
-    .feature-icon.yellow { background: #fff8b8; }
-
-    .feature-title {
-      font-weight: 600;
-      font-size: 15px;
-      margin-bottom: 4px;
-    }
-
-    .feature-text {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    /* Comparison */
-    .comparison {
-      margin: 28px 0;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-radius: 16px;
-      overflow: hidden;
-      background: white;
-    }
-
-    .comparison-title {
-      background: var(--accent-butter);
-      padding: 14px 18px;
-      font-weight: 600;
-      font-size: 16px;
-    }
-
-    .comparison table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
-
-    .comparison th, .comparison td {
-      padding: 12px 14px;
-      text-align: left;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.06);
-    }
-
-    .comparison th {
-      background: rgba(0,0,0,0.02);
-      color: var(--text-primary);
-      font-weight: 600;
-    }
-
-    .comparison td { color: var(--text-secondary); }
-    .comparison tr:last-child td { border-bottom: none; }
-
-    .comparison tr.highlight-row {
-      background: linear-gradient(90deg, rgba(232, 141, 125, 0.08), rgba(255, 243, 205, 0.2));
-    }
-    .comparison tr.highlight-row td:first-child {
-      font-weight: 600;
-      color: var(--primary-coral);
-    }
-
-    .check { color: #22c55e; font-weight: 700; }
-    .cross { color: #cbd5e1; }
-
-    /* Testimonial */
-    .testimonial {
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 24px 0;
-      position: relative;
-    }
-
-    .testimonial::before {
-      content: '"';
-      font-size: 48px;
-      color: var(--primary-blush);
-      position: absolute;
-      top: 10px;
-      left: 16px;
-      font-family: Georgia, serif;
-    }
-
-    .testimonial-text {
-      font-size: 15px;
-      color: var(--text-secondary);
-      padding-left: 32px;
-      font-style: italic;
-    }
-
-    .testimonial-author {
-      font-size: 13px;
-      color: var(--text-muted);
-      padding-left: 32px;
-      margin-top: 10px;
-    }
-
-    /* Second CTA */
-    .bottom-cta {
-      text-align: center;
-      padding: 28px 0 8px;
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-      margin-top: 24px;
-    }
-
-    .bottom-cta h3 {
-      font-family: var(--font-handwritten);
-      font-size: 22px;
-      color: var(--primary-coral);
-      margin-bottom: 8px;
-    }
-
-    .bottom-cta p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      margin-bottom: 16px;
-    }
-
-    .faq {
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-      padding-top: 24px;
-      margin-top: 24px;
-    }
-
-    .faq h3 {
-      font-family: var(--font-handwritten);
-      font-size: 20px;
-      color: var(--primary-coral);
-      margin-bottom: 16px;
-    }
-
-    .faq-item { margin-bottom: 14px; }
-    .faq-item strong { color: var(--text-primary); font-weight: 600; }
-    .faq-item p { color: var(--text-muted); font-size: 14px; margin-top: 4px; }
-
-    .links {
-      margin-top: 24px;
-      padding-top: 20px;
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-    }
-    .links a {
-      display: inline-block;
-      margin-right: 20px;
-      margin-bottom: 8px;
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
-    .links a:hover { color: var(--primary-coral); }
-
-    .footer-note {
-      color: var(--text-muted);
-      font-size: 13px;
-      margin-top: 16px;
-      font-style: italic;
-    }
-
-    /* Content Section Styles */
-    .content-section {
-      margin: 32px 0;
-      padding: 28px 0;
-      border-top: 1px solid rgba(0, 0, 0, 0.06);
-    }
-
-    .content-section h2 {
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--text-primary);
-      margin-bottom: 16px;
-    }
-
-    .content-section h3 {
-      font-family: var(--font-handwritten);
-      font-size: 20px;
-      color: var(--primary-coral);
-      margin: 20px 0 12px;
-    }
-
-    .content-section p {
-      color: var(--text-secondary);
-      font-size: 15px;
-      margin-bottom: 14px;
-      line-height: 1.7;
-    }
-
-    .content-section ul {
-      margin: 14px 0 14px 24px;
-      color: var(--text-secondary);
-      font-size: 15px;
-    }
-
-    .content-section li {
-      margin-bottom: 8px;
-      line-height: 1.6;
-    }
-
-    /* Steps Section */
-    .steps-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 20px;
-      margin: 24px 0;
-    }
-
-    .step-card {
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 16px;
-      padding: 24px;
-      position: relative;
-    }
-
-    .step-number {
-      width: 36px;
-      height: 36px;
-      background: var(--primary-coral);
-      color: white;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 16px;
-      margin-bottom: 14px;
-    }
-
-    .step-card h4 {
-      font-size: 17px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 10px;
-    }
-
-    .step-card p {
-      color: var(--text-secondary);
-      font-size: 14px;
-      line-height: 1.6;
-    }
-
-    /* User Types Grid */
-    .user-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin: 24px 0;
-    }
-
-    .user-card {
-      background: linear-gradient(135deg, rgba(232, 141, 125, 0.05), rgba(255, 243, 205, 0.3));
-      border: 1px solid rgba(232, 141, 125, 0.2);
-      border-radius: 16px;
-      padding: 20px;
-      text-align: center;
-    }
-
-    .user-card .user-icon {
-      font-size: 32px;
-      margin-bottom: 10px;
-    }
-
-    .user-card h4 {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 8px;
-    }
-
-    .user-card p {
-      font-size: 13px;
-      color: var(--text-muted);
-    }
-
-    /* Competitor Comparison Cards */
-    .competitor-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 16px;
-      margin: 24px 0;
-    }
-
-    .competitor-card {
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.06);
-      border-radius: 16px;
-      padding: 20px;
-    }
-
-    .competitor-card h4 {
-      font-size: 15px;
-      font-weight: 600;
-      color: var(--primary-coral);
-      margin-bottom: 10px;
-    }
-
-    .competitor-card p {
-      font-size: 14px;
-      color: var(--text-secondary);
-      line-height: 1.6;
-    }
-
-    /* Testimonials Grid */
-    .testimonials-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 16px;
-      margin: 24px 0;
-    }
-
-    @media (max-width: 600px) {
-      .card { padding: 24px; }
-      h1 { font-size: 26px; }
-      .feature-grid { grid-template-columns: 1fr 1fr; }
-      .comparison th, .comparison td { padding: 8px 10px; font-size: 12px; }
-      .social-proof { flex-direction: column; gap: 8px; }
-    }
-  </style>
-  <style>
-    /* Sample-question cards: this page's whole promise is "show me the output",
-       so the generated examples get real chrome instead of a bullet list. */
-    .qcard {
-      background: white;
-      border: 1px solid rgba(0, 0, 0, 0.08);
-      border-left: 4px solid var(--primary-coral);
-      border-radius: 16px;
-      padding: 24px;
-      margin-bottom: 20px;
-      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.05);
-    }
-    .qtag {
-      display: inline-block;
-      background: var(--accent-butter);
-      color: #8a6d1f;
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
-      padding: 5px 12px;
-      border-radius: 100px;
-      margin-bottom: 14px;
-    }
-    .qstem {
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--text-primary);
-      margin-bottom: 14px;
-      line-height: 1.65;
-    }
-    .qopts { list-style: none; margin: 0 0 16px; padding: 0; }
-    .qopts li {
-      padding: 10px 14px;
-      border: 1px solid rgba(0, 0, 0, 0.07);
-      border-radius: 10px;
-      margin-bottom: 8px;
-      font-size: 15px;
-      color: var(--text-secondary);
-    }
-    .qopts li.correct {
-      background: rgba(212, 229, 215, 0.45);
-      border-color: rgba(34, 197, 94, 0.35);
-      color: var(--text-primary);
-      font-weight: 500;
-    }
-    .qrat {
-      background: var(--accent-cream);
-      border-radius: 12px;
-      padding: 16px 18px;
-      font-size: 14.5px;
-      color: var(--text-secondary);
-      line-height: 1.7;
-    }
-    .qrat strong { color: var(--text-primary); }
-    .prompt-box {
-      background: #2b2b2b;
-      color: #f0efe9;
-      border-radius: 14px;
-      padding: 20px 22px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 13.5px;
-      line-height: 1.75;
-      white-space: pre-wrap;
-      overflow-x: auto;
-      margin: 16px 0 8px;
-    }
-    .qtable { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 14.5px; }
-    .qtable th, .qtable td {
-      text-align: left;
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-      vertical-align: top;
-    }
-    .qtable th { font-weight: 700; color: var(--text-primary); background: rgba(255, 243, 205, 0.4); }
-    .qtable td { color: var(--text-secondary); }
-    .table-wrap { overflow-x: auto; }
-  </style>
+  <link rel="stylesheet" href="/css/landing.css">
 </head>
 <body>
-  <div class="card">
-    <div class="header">
-      <img src="/favicon.svg" alt="NurseQuizAI logo" class="logo">
-      <span class="brand-name">NurseQuizAI</span>
-    </div>
 
-    <nav aria-label="Breadcrumb" style="font-size: 13px; color: var(--text-muted); margin-bottom: 18px;">
-      <a href="/">Home</a> &rsaquo; <a href="/best-ai-study-tool-nclex">Best AI Study Tool for NCLEX</a> &rsaquo; <span>NCLEX Question Generator</span>
+<header class="topbar">
+  <div class="wrap wrap-wide topbar-inner">
+    <a class="brand" href="/">
+      <img src="/favicon.svg" alt="">
+      <span>NurseQuizAI</span>
+    </a>
+    <nav>
+      <a class="plain" href="/login">Log in</a>
+      <a class="btn btn-sm" href="/signup?returnTo=%2Fnclex">Start free</a>
     </nav>
+  </div>
+</header>
 
-    <div class="urgency-banner">
-      <span>Free to start &mdash; no credit card</span>
+<main>
+
+  <section class="hero">
+    <div class="wrap">
+      <h1>NCLEX question generator, <span class="hl">built from your own nursing notes</span></h1>
+      <p class="sub">
+        Upload a lecture PDF, a slide deck, or a photo of your notebook. NCLEX-style items come back in about
+        thirty seconds, each with a rationale for the right answer and a line on why every distractor is wrong.
+      </p>
+      <div class="trust">
+        <span><span class="tick">&#10003;</span>40 questions a week, free</span>
+        <span><span class="tick">&#10003;</span>No credit card</span>
+        <span><span class="tick">&#10003;</span>Works with a photo of your notes</span>
+      </div>
+      <p class="proof">
+        <span class="heart" aria-hidden="true">&#9829;</span> Made with nurses
+        <span class="sep" aria-hidden="true">&middot;</span>
+        Used by thousands of nursing students
+      </p>
     </div>
 
-    <div class="eyebrow">NCLEX Question Generator</div>
-    <h1>NCLEX Question Generator &mdash; <span class="highlight">Built From Your Own Nursing Notes</span></h1>
-
-    <p class="lead">
-      Upload a lecture PDF, a slide deck, or a photo of your notebook and get NCLEX-style practice questions back in about thirty seconds &mdash; <a href="/sata-questions-nclex">select all that apply</a>, prioritization, delegation, pharmacology, and the case-based <a href="/nclex-next-gen-guide">Next-Gen NCLEX</a> formats &mdash; each with a rationale for the right answer and an explanation of why every distractor is wrong.
-    </p>
-
-    <blockquote style="background: linear-gradient(135deg, rgba(212,229,215,0.3), rgba(255,243,205,0.3)); border-left: 4px solid var(--primary-coral); border-radius: 12px; padding: 18px 22px; margin-bottom: 24px; font-size: 15px; color: var(--text-primary); line-height: 1.7;">
-      <strong>What an NCLEX question generator does:</strong> it reads nursing content you give it and writes new practice items in the formats the exam actually uses, at the application and analysis level rather than simple recall. No tool can hand you real NCLEX questions &mdash; those are confidential NCSBN property &mdash; so the honest measure of a generator is whether its items look and reason like the exam's, and whether the rationale teaches you something when you get one wrong.
-    </blockquote>
-
-    <nav style="background: white; border: 1px solid rgba(0,0,0,0.08); border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;">
-      <strong style="font-size: 15px; display: block; margin-bottom: 12px;">What&rsquo;s on this page:</strong>
-      <ul style="list-style: none; padding: 0; margin: 0; font-size: 14px; line-height: 2;">
-        <li><a href="#examples">3 Questions It Actually Generated (with rationales)</a></li>
-        <li><a href="#how-it-works">How the Generator Works</a></li>
-        <li><a href="#question-types">Every NCLEX Question Type It Writes</a></li>
-        <li><a href="#your-notes">Why Generate From Your Notes Instead of a Question Bank</a></li>
-        <li><a href="#chatgpt">Using ChatGPT to Generate NCLEX Questions (and Where It Breaks)</a></li>
-        <li><a href="#quality">How to Tell a Good NCLEX-Style Question From a Bad One</a></li>
-        <li><a href="#faq">Frequently Asked Questions</a></li>
-      </ul>
-    </nav>
-
-    <div class="cta-section">
-      <div class="cta-headline">Generate Your First Set in Under a Minute</div>
-      <div class="cta-subtext">Upload one lecture and see what comes back &mdash; free, no card</div>
-      <a href="/signup?returnTo=%2Fnclex" class="btn-primary">Generate Questions Free</a>
-      <div class="no-cc">Works with PDFs, PPTX, DOCX &amp; photos of handwritten notes</div>
-    </div>
-
-    <div class="feature-grid">
-      <div class="feature-card">
-        <div class="feature-icon pink">&#9989;</div>
-        <div class="feature-title">SATA Items</div>
-        <div class="feature-text">Select-all-that-apply, scored the way the exam scores them</div>
+    <div class="wrap">
+      <div class="demo-lead">
+        <h2>Answer three it generated. No account.</h2>
+        <span class="count" id="count">Question 1 of 3</span>
       </div>
-      <div class="feature-card">
-        <div class="feature-icon green">&#128203;</div>
-        <div class="feature-title">Prioritization</div>
-        <div class="feature-text">&ldquo;Which client do you see first&rdquo; scenarios</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon blue">&#129658;</div>
-        <div class="feature-title">Pharmacology</div>
-        <div class="feature-text">Drug classes, adverse effects, nursing considerations</div>
-      </div>
-      <div class="feature-card">
-        <div class="feature-icon yellow">&#129504;</div>
-        <div class="feature-title">Clinical Judgment</div>
-        <div class="feature-text">Next-Gen case studies with linked follow-ups</div>
-      </div>
-    </div>
 
-    <!-- Sample output: the whole promise of this page -->
-    <div class="content-section">
-      <h2 id="examples">3 Questions the Generator Actually Wrote</h2>
-      <p>Most pages that rank for &ldquo;NCLEX question generator&rdquo; never show you a question. These three came out of ordinary course material &mdash; a pharmacology lecture, a med-surg shift-report handout, and a sepsis case study. Read the rationales; that is where the difference between a question generator and a study tool shows up.</p>
-
-      <div class="qcard">
-        <span class="qtag">Select All That Apply &middot; Pharmacology</span>
-        <p class="qstem">A nurse is caring for a client with heart failure who was started on furosemide 40 mg IV daily. Which findings should the nurse report to the provider? <em>Select all that apply.</em></p>
-        <ul class="qopts">
-          <li class="correct">Serum potassium 3.1 mEq/L</li>
-          <li>Weight loss of 2 kg over 48 hours</li>
-          <li class="correct">Serum sodium 128 mEq/L</li>
-          <li>Urine output of 60 mL/hr</li>
-          <li class="correct">New-onset ringing in the ears</li>
-          <li class="correct">Blood pressure 88/52 mmHg</li>
+      <!-- Q1: single answer first. An opener she can win is worth more than an
+           opener that shows off, and select-all is scored all or nothing. -->
+      <div class="q" id="q1" data-type="single">
+        <p class="q-source">Generated from <b>a med-surg shift-report handout</b> &middot; prioritization</p>
+        <p class="q-stem">
+          A nurse on a medical-surgical unit receives report on four clients at the start of the shift.
+          Which client should the nurse assess first?
+        </p>
+        <ul class="opts">
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>A client two days after hip arthroplasty reporting incisional pain of 6 on a 0 to 10 scale</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>A client with COPD whose oxygen saturation is 90 percent on 2 L by nasal cannula</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>A client with type 2 diabetes whose fasting blood glucose is 248 mg/dL</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>A client one day after thyroidectomy reporting tingling around the mouth</span></button></li>
         </ul>
-        <div class="qrat">
-          <strong>Rationale.</strong> Furosemide is a loop diuretic acting on the ascending loop of Henle, so the reportable findings are the ones showing the drug has overshot: hypokalemia at 3.1 mEq/L, which raises the risk of dysrhythmia and is especially dangerous alongside digoxin; hyponatremia at 128 mEq/L; hypotension from volume depletion; and tinnitus, an early sign of the ototoxicity loop diuretics can cause when pushed IV too rapidly.
-          <br><br>
-          <strong>Why the other two are wrong.</strong> A 2 kg loss over 48 hours and a urine output of 60 mL/hr are not complications &mdash; they are the therapeutic response you were hoping for. Flagging them as adverse findings is the trap this item type is built around: it tests whether you can separate an expected drug effect from a dangerous one.
+        <div class="rat" hidden>
+          <p class="verdict"></p>
+          <p><b>Why it is the answer.</b> Perioral tingling on the first postoperative day after a thyroidectomy points to hypocalcemia from parathyroid injury or removal during surgery. Left alone it progresses through carpopedal spasm to laryngospasm, an airway emergency. Airway beats everything else on the list.</p>
+          <p><b>Why the others wait.</b> Post-op pain of 6 out of 10 on day two is expected and treatable. An oxygen saturation of 90 percent is acceptable in COPD, where the usual target is 88 to 92. A glucose of 248 mg/dL needs attention but is not an immediate threat. Prioritization items are rarely about which client is sickest overall. They are about which finding is <em>unexpected</em> for that diagnosis on that day.</p>
+        </div>
+        <div class="after" hidden>
+          <p><b>That came from one handout.</b> Point it at your own lecture and it writes forty like it, weighted the way your instructor weighted the material.</p>
+          <a class="btn" href="/signup?returnTo=%2Fnclex">Upload my lecture</a>
+          <p class="note">Free, no card. Or keep going: a select-all and a Next-Gen case study below.</p>
         </div>
       </div>
 
-      <div class="qcard">
-        <span class="qtag">Prioritization &middot; Med-Surg</span>
-        <p class="qstem">A nurse on a medical-surgical unit receives report on four clients at the start of the shift. Which client should the nurse assess first?</p>
-        <ul class="qopts">
-          <li>A client two days after hip arthroplasty reporting incisional pain of 6 on a 0&ndash;10 scale</li>
-          <li>A client with COPD whose oxygen saturation is 90% on 2 L by nasal cannula</li>
-          <li>A client with type 2 diabetes whose fasting blood glucose is 248 mg/dL</li>
-          <li class="correct">A client one day after thyroidectomy reporting tingling around the mouth</li>
+      <!-- Q2 -->
+      <div class="q" id="q2" data-type="multi" hidden>
+        <p class="q-source">Generated from <b>a pharmacology lecture</b> on diuretics &middot; select all that apply</p>
+        <p class="q-stem">
+          A nurse is caring for a client with heart failure who was started on furosemide 40 mg IV daily.
+          Which findings should the nurse report to the provider? <em>Select all that apply.</em>
+        </p>
+        <ul class="opts">
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Serum potassium 3.1 mEq/L</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>Weight loss of 2 kg over 48 hours</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Serum sodium 128 mEq/L</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>Urine output of 60 mL/hr</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>New-onset ringing in the ears</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Blood pressure 88/52 mmHg</span></button></li>
         </ul>
-        <div class="qrat">
-          <strong>Rationale.</strong> Perioral tingling on the first postoperative day after a thyroidectomy points to hypocalcemia from parathyroid injury or removal during surgery. Left alone it progresses through carpopedal spasm to laryngospasm &mdash; an airway emergency. Airway beats everything else on the list.
-          <br><br>
-          <strong>Why the others wait.</strong> Post-op pain of 6/10 on day two is expected and treatable. An oxygen saturation of 90% is acceptable in COPD, where the usual target range is 88&ndash;92%. A glucose of 248 mg/dL needs attention but is not an immediate threat. Prioritization items are rarely about which client is sickest overall &mdash; they are about which finding is <em>unexpected</em> for that diagnosis on that day.
+        <div class="check-row">
+          <button type="button" class="btn btn-ghost check">Check my answer</button>
+          <span class="hint">Scored all or nothing, the way the exam scores it.</span>
+        </div>
+        <div class="rat" hidden>
+          <p class="verdict"></p>
+          <p><b>Why those four.</b> Furosemide is a loop diuretic acting on the ascending loop of Henle, so the reportable findings are the ones showing the drug has overshot: hypokalemia at 3.1 mEq/L, which raises the risk of dysrhythmia and is especially dangerous alongside digoxin; hyponatremia at 128 mEq/L; hypotension from volume depletion; and tinnitus, an early sign of the ototoxicity loop diuretics can cause when pushed IV too rapidly.</p>
+          <p><b>Why the other two are wrong.</b> A 2 kg loss over 48 hours and a urine output of 60 mL/hr are not complications. They are the therapeutic response you were hoping for. Flagging them as adverse findings is the trap this item type is built around: it tests whether you can separate an expected drug effect from a dangerous one.</p>
         </div>
       </div>
 
-      <div class="qcard">
-        <span class="qtag">Next-Gen Clinical Judgment &middot; Case Study</span>
-        <p class="qstem"><strong>Case:</strong> A 72-year-old client is admitted from home with three days of dysuria and new confusion. Vital signs: temperature 38.9&deg;C (102&deg;F), heart rate 118, respirations 24, blood pressure 96/54 mmHg, oxygen saturation 94% on room air. Laboratory results: WBC 18,400/mm&sup3;, lactate 3.2 mmol/L.<br><br>Which actions are indicated within the first hour? <em>Select all that apply.</em></p>
-        <ul class="qopts">
-          <li class="correct">Obtain blood cultures before the first antibiotic dose</li>
-          <li class="correct">Administer broad-spectrum IV antibiotics</li>
-          <li class="correct">Begin a 30 mL/kg isotonic crystalloid bolus</li>
-          <li>Withhold IV fluids until the blood pressure normalizes</li>
-          <li class="correct">Recheck the serum lactate after the fluid bolus</li>
-          <li>Place the client on bedrest and reassess in four hours</li>
+      <!-- Q3 -->
+      <div class="q" id="q3" data-type="multi" hidden>
+        <p class="q-source">Generated from <b>a sepsis case study</b> &middot; Next-Gen clinical judgment</p>
+        <div class="q-case">
+          <b>Case.</b> A 72-year-old client is admitted from home with three days of dysuria and new confusion.
+          <div class="vitals">
+            <span>Temp 38.9&deg;C</span><span>HR 118</span><span>RR 24</span><span>BP 96/54</span><span>SpO&#8322; 94% RA</span>
+          </div>
+          <div class="vitals"><span>WBC 18,400/mm&sup3;</span><span>Lactate 3.2 mmol/L</span></div>
+        </div>
+        <p class="q-stem">Which actions are indicated within the first hour? <em>Select all that apply.</em></p>
+        <ul class="opts">
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Obtain blood cultures before the first antibiotic dose</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Administer broad-spectrum IV antibiotics</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Begin a 30 mL/kg isotonic crystalloid bolus</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>Withhold IV fluids until the blood pressure normalizes</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false" data-correct="1"><span class="mark"></span><span>Recheck the serum lactate after the fluid bolus</span></button></li>
+          <li><button type="button" class="opt" aria-pressed="false"><span class="mark"></span><span>Place the client on bedrest and reassess in four hours</span></button></li>
         </ul>
-        <div class="qrat">
-          <strong>Rationale.</strong> Infection plus a lactate above 2 mmol/L plus hypotension is sepsis with hypoperfusion, and the point of the hour-one bundle is that the clock is already running. Cultures go first so the organism is still recoverable, antibiotics follow immediately and are never delayed to chase a culture, 30 mL/kg of crystalloid restores perfusion, and the repeat lactate tells you whether it worked.
-          <br><br>
-          <strong>Why the two distractors fail.</strong> Withholding fluids until the pressure improves inverts the physiology &mdash; the fluid is the treatment <em>for</em> the pressure. Reassessing in four hours is the option that sounds calm and measured and costs the client their life; recognizing that time itself is the intervention is exactly the judgment the Next-Gen format was built to measure.
+        <div class="check-row">
+          <button type="button" class="btn btn-ghost check">Check my answer</button>
+          <span class="hint">Four of the six belong in the first hour.</span>
+        </div>
+        <div class="rat" hidden>
+          <p class="verdict"></p>
+          <p><b>Why those four.</b> Infection plus a lactate above 2 mmol/L plus hypotension is sepsis with hypoperfusion, and the point of the hour-one bundle is that the clock is already running. Cultures go first so the organism is still recoverable, antibiotics follow immediately and are never delayed to chase a culture, 30 mL/kg of crystalloid restores perfusion, and the repeat lactate tells you whether it worked.</p>
+          <p><b>Why the two distractors fail.</b> Withholding fluids until the pressure improves inverts the physiology: the fluid is the treatment <em>for</em> the pressure. Reassessing in four hours is the option that sounds calm and measured and costs the client their life. Recognising that time itself is the intervention is exactly the judgment the <a href="/nclex-next-gen-guide">Next-Gen format</a> was built to measure.</p>
+        </div>
+        <div class="after" hidden>
+          <p><b>That is all three.</b> They came from someone else's material. Yours is what you are actually being tested on, and it takes one upload and about thirty seconds.</p>
+          <a class="btn btn-lg" href="/signup?returnTo=%2Fnclex">Generate questions from my notes</a>
+          <p class="note">40 questions a week free, no credit card. PDFs, PowerPoints, Word docs, or a photo of your notes.</p>
         </div>
       </div>
 
-      <p style="font-size: 14px; color: var(--text-muted);">Generated items are practice material, not real exam questions. NCLEX&reg; is a registered trademark of the National Council of State Boards of Nursing, which neither endorses nor licenses this tool.</p>
+      <p class="legal-note">
+        Generated items are practice material, not real exam questions. NCLEX&reg; is a registered trademark of
+        the National Council of State Boards of Nursing, which neither endorses nor licenses this tool.
+      </p>
     </div>
+  </section>
 
-    <!-- How it works -->
-    <div class="content-section">
-      <h2 id="how-it-works">How the Generator Works</h2>
-      <p><em style="font-size: 13px; color: var(--text-muted);">Last updated: September 2026</em></p>
+  <section class="band sw-band" aria-labelledby="sw-heading">
+    <div class="wrap wrap-wide">
+      <h2 id="sw-heading" class="sw-title">Used by students from 180+ nursing schools</h2>
+      <p class="sw-sub">From community college ADN programs to university BSN and NP tracks, in the United States, Canada, the Philippines, Australia and South Africa.</p>
+      <div class="sw" role="group" aria-label="A sample of the schools our students attend">
+          <div class="sw-row" style="--sw-dur: 54s">
+            <div class="sw-track" role="list">
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#e88d7d" aria-hidden="true"><span class="sw-initials">JHU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=jhu.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Johns Hopkins</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">DU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=drexel.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Drexel</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">CU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=clemson.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Clemson</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#d4a373" aria-hidden="true"><span class="sw-initials">CWRU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=case.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Case Western</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">KSU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=kent.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Kent State</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">ASU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=appstate.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Appalachian State</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">DU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=duq.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Duquesne</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">USF</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=usf.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">South Florida</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">WGU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=wgu.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Western Governors</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">KU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=keiseruniversity.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Keiser</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">ITC</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=ivytech.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Ivy Tech</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">RSU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=rsu.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Rogers State</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">SLC</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=stlawrencecollege.ca&sz=128" alt="" decoding="async"></span><span class="sw-name">St. Lawrence</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#e88d7d" aria-hidden="true"><span class="sw-initials">CSH</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=cegepsth.qc.ca&sz=128" alt="" decoding="async"></span><span class="sw-name">Cégep Saint-Hyacinthe</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">AU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=adamson.edu.ph&sz=128" alt="" decoding="async"></span><span class="sw-name">Adamson</span></span></div>
+            </div>
+          </div>
+          <div class="sw-row is-reversed" style="--sw-dur: 64s">
+            <div class="sw-track" role="list">
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">NU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=northeastern.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Northeastern</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">TU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=tulane.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Tulane</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">UW</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=uw.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Washington</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">ASU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=asu.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Arizona State</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">UH</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=uh.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Houston</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#d4a373" aria-hidden="true"><span class="sw-initials">MSU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=montclair.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Montclair State</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#d4a373" aria-hidden="true"><span class="sw-initials">SU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=simmons.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Simmons</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">UK</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=uky.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Kentucky</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#d4a373" aria-hidden="true"><span class="sw-initials">PG</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=purdueglobal.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Purdue Global</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">HU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=herzing.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Herzing</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#e88d7d" aria-hidden="true"><span class="sw-initials">ACC</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=austincc.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Austin CC</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#d4a373" aria-hidden="true"><span class="sw-initials">UU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=utica.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Utica</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">UW</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=uwindsor.ca&sz=128" alt="" decoding="async"></span><span class="sw-name">Windsor</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">BCU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=bcu.ac.uk&sz=128" alt="" decoding="async"></span><span class="sw-name">Birmingham City</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">XU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=xu.edu.ph&sz=128" alt="" decoding="async"></span><span class="sw-name">Xavier University</span></span></div>
+            </div>
+          </div>
+          <div class="sw-row" style="--sw-dur: 44s">
+            <div class="sw-track" role="list">
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#e88d7d" aria-hidden="true"><span class="sw-initials">RU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=rutgers.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Rutgers</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">UM</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=miami.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Miami</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#d4a373" aria-hidden="true"><span class="sw-initials">BC</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=bc.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Boston College</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">UA</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=arizona.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Arizona</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">OSU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=okstate.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Oklahoma State</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">RU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=rowan.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Rowan</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">TCNJ</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=tcnj.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">College of New Jersey</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">UNC</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=charlotte.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">UNC Charlotte</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#8fa8b8" aria-hidden="true"><span class="sw-initials">ECPI</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=ecpi.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">ECPI</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">GCU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=gcu.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Grand Canyon</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#e88d7d" aria-hidden="true"><span class="sw-initials">MDC</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=mdc.edu&sz=128" alt="" decoding="async"></span><span class="sw-name">Miami Dade</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#a3b18a" aria-hidden="true"><span class="sw-initials">YU</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=yorku.ca&sz=128" alt="" decoding="async"></span><span class="sw-name">York</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#b8a5d4" aria-hidden="true"><span class="sw-initials">UQTR</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=uqtr.ca&sz=128" alt="" decoding="async"></span><span class="sw-name">UQTR</span></span></div>
+              <div class="sw-item" role="listitem"><span class="sw-chip"><span class="sw-mark" style="background:#c4907f" aria-hidden="true"><span class="sw-initials">OLF</span><img class="sw-logo" data-src="https://www.google.com/s2/favicons?domain=fatima.edu.ph&sz=128" alt="" decoding="async"></span><span class="sw-name">Our Lady of Fatima</span></span></div>
+            </div>
+          </div>
+      </div>
+      <p class="sw-note">School names identify where our students study. No affiliation or endorsement is implied.</p>
+    </div>
+  </section>
 
-      <div class="steps-grid">
-        <div class="step-card">
-          <div class="step-number">1</div>
-          <div class="feature-title">Upload what you are actually tested on</div>
-          <div class="feature-text">A lecture PDF, a PowerPoint, a Word study guide, or a phone photo of your notebook. Handwriting is read with OCR, so a legible page works.</div>
+  <section class="band tint">
+    <div class="wrap">
+      <h2 class="sec">How the generator works</h2>
+      <p class="sec-sub">About thirty seconds for a typical lecture, a minute or two for a hundred-page review packet.</p>
+      <div class="steps">
+        <div class="step">
+          <div class="n"></div>
+          <div>
+            <h3 class="sub-h">Upload what you are actually tested on</h3>
+            <p>A lecture PDF, a PowerPoint, a Word study guide, or a phone photo of your notebook. Handwriting is read with OCR, so a legible page works.</p>
+          </div>
         </div>
-        <div class="step-card">
-          <div class="step-number">2</div>
-          <div class="feature-title">Say what you need</div>
-          <div class="feature-text">Ask for SATA, prioritization, pharmacology or full Next-Gen case studies, and how many. Or ask for a mixed set and let it weight toward the topics you have been missing.</div>
+        <div class="step">
+          <div class="n"></div>
+          <div>
+            <h3 class="sub-h">Say what you need</h3>
+            <p>Ask for SATA, prioritization, pharmacology or full Next-Gen case studies, and how many. Or ask for a mixed set and let it weight toward the topics you have been missing.</p>
+          </div>
         </div>
-        <div class="step-card">
-          <div class="step-number">3</div>
-          <div class="feature-title">Answer, then read every rationale</div>
-          <div class="feature-text">Each item explains the correct answer and each distractor. Missed concepts come back in later sets instead of quietly disappearing.</div>
+        <div class="step">
+          <div class="n"></div>
+          <div>
+            <h3 class="sub-h">Answer, then read every rationale</h3>
+            <p>Each item explains the correct answer and each distractor. Missed concepts come back in later sets instead of quietly disappearing.</p>
+          </div>
         </div>
       </div>
-
-      <p>The whole loop runs in about thirty seconds for a typical lecture and a minute or two for a hundred-page review packet. Along with the questions you get flashcards, a printable study sheet, and an audio summary built from the same upload, so one file turns into a full study session rather than one quiz.</p>
+      <p style="margin-top:22px">
+        Along with the questions you get flashcards, a printable study sheet and an audio summary built from the
+        same upload, so one file turns into a full study session rather than one quiz.
+      </p>
     </div>
+  </section>
 
-    <!-- Question types -->
-    <div class="content-section">
-      <h2 id="question-types">Every NCLEX Question Type It Writes</h2>
-      <p>The NCLEX-RN and NCLEX-PN test plans are not a list of facts; they are a list of behaviours. A generator that only produces four-option recall questions leaves most of the blueprint untested. These are the formats the generator writes, and what each one is really measuring.</p>
-
-      <div class="table-wrap">
-        <table class="qtable">
+  <section class="band">
+    <div class="wrap">
+      <h2 class="sec">Every NCLEX question type it writes</h2>
+      <p class="sec-sub">
+        The NCLEX-RN and NCLEX-PN test plans are not a list of facts, they are a list of behaviours. A generator
+        that only produces four-option recall questions leaves most of the blueprint untested.
+      </p>
+      <div class="scroll-x">
+        <table class="plain">
           <thead>
             <tr><th>Format</th><th>What it looks like</th><th>What it actually tests</th></tr>
           </thead>
           <tbody>
-            <tr>
-              <td><strong>Multiple choice</strong></td>
-              <td>One stem, four options, one correct answer</td>
-              <td>Application of a single concept &mdash; the floor, not the ceiling, of the exam</td>
-            </tr>
-            <tr>
-              <td><strong><a href="/sata-questions-nclex">Select all that apply</a></strong></td>
-              <td>Five or six options, any number correct</td>
-              <td>Whether you know a concept completely rather than recognizing one true statement about it</td>
-            </tr>
-            <tr>
-              <td><strong>Prioritization</strong></td>
-              <td>Four clients or four findings; which comes first</td>
-              <td>Maslow, ABCs, and the ability to spot the finding that is unexpected for that diagnosis</td>
-            </tr>
-            <tr>
-              <td><strong>Delegation and assignment</strong></td>
-              <td>Which task goes to the LPN, the UAP, or stays with the RN</td>
-              <td>Scope of practice and the difference between a stable and an unstable client</td>
-            </tr>
-            <tr>
-              <td><strong>Pharmacology</strong></td>
-              <td>Drug class, adverse effect, teaching point, or a calculation</td>
-              <td>Nursing considerations rather than pure memorization of drug names</td>
-            </tr>
-            <tr>
-              <td><strong><a href="/nclex-next-gen-guide">Next-Gen case studies</a></strong></td>
-              <td>A patient chart with six linked questions as the case unfolds</td>
-              <td>The full NCSBN Clinical Judgment Measurement Model &mdash; recognize cues, analyze, prioritize, act, evaluate</td>
-            </tr>
-            <tr>
-              <td><strong>Bow-tie and matrix items</strong></td>
-              <td>Drag actions, conditions and parameters into a single decision</td>
-              <td><a href="/clinical-judgment-nclex">Clinical judgment</a> under the newer standalone Next-Gen formats</td>
-            </tr>
+            <tr><td>Multiple choice</td><td>One stem, four options, one correct answer</td><td>Application of a single concept. The floor, not the ceiling, of the exam.</td></tr>
+            <tr><td><a href="/sata-questions-nclex">Select all that apply</a></td><td>Five or six options, any number correct</td><td>Whether you know a concept completely rather than recognising one true statement about it.</td></tr>
+            <tr><td>Prioritization</td><td>Four clients or four findings, which comes first</td><td>Maslow, ABCs, and the ability to spot the finding that is unexpected for that diagnosis.</td></tr>
+            <tr><td>Delegation and assignment</td><td>Which task goes to the LPN, the UAP, or stays with the RN</td><td>Scope of practice, and the difference between a stable and an unstable client.</td></tr>
+            <tr><td>Pharmacology</td><td>Drug class, adverse effect, teaching point, or a calculation</td><td>Nursing considerations rather than pure memorisation of drug names.</td></tr>
+            <tr><td><a href="/nclex-next-gen-guide">Next-Gen case studies</a></td><td>A patient chart with six linked questions as the case unfolds</td><td>The full NCSBN Clinical Judgment Measurement Model: recognise cues, analyse, prioritize, act, evaluate.</td></tr>
+            <tr><td>Bow-tie and matrix</td><td>Drag actions, conditions and parameters into one decision</td><td><a href="/clinical-judgment-nclex">Clinical judgment</a> under the newer standalone Next-Gen formats.</td></tr>
           </tbody>
         </table>
       </div>
     </div>
+  </section>
 
-    <!-- Your notes vs question bank -->
-    <div class="content-section">
-      <h2 id="your-notes">Why Generate From Your Notes Instead of a Question Bank</h2>
-
-      <p>A question bank like UWorld or Archer is written against the national blueprint. That makes it excellent preparation for the licensure exam and a poor fit for next Tuesday&rsquo;s med-surg exam, because your instructor is not teaching the blueprint &mdash; they are teaching their lectures, with their emphasis, out of their textbook.</p>
-
-      <h3>For course exams: the emphasis matches</h3>
-      <p>If your pathophysiology professor spent three weeks on acid-base balance and twenty minutes on the endocrine system, a generated set built from those lecture slides will be weighted the same way. A bank cannot know that. This is the single most common reason students say a generated quiz felt closer to their exam than a purchased bank did.</p>
-
-      <h3>For NCLEX: it drills what you keep missing</h3>
-      <p>Generating from your own review notes means the questions come from your weak-area material rather than a fixed sequence. Feed it the cardiac chapter you avoid, and you get thirty new cardiac items &mdash; not the same twelve you have already memorized the answers to, which is the failure mode of every finite question bank once you have been through it twice.</p>
-
-      <h3>The honest tradeoff</h3>
-      <p>A bank has one real advantage: its items were written and reviewed by nurse educators, and the good ones have been calibrated against actual student performance. Generated questions have not. The practical answer for most students is both &mdash; a bank for calibrated volume, a generator for the specific material in front of you and for turning weak areas into unlimited practice. If you are choosing only one, our <a href="/best-ai-study-tool-nclex">comparison of AI study tools for NCLEX</a> lays out where each option actually earns its price.</p>
+  <section class="band tint">
+    <div class="wrap">
+      <h2 class="sec">Why generate from your notes instead of a question bank</h2>
+      <p class="sec-sub">
+        A bank like UWorld or Archer is written against the national blueprint. That makes it excellent
+        preparation for the licensure exam and a poor fit for next Tuesday's med-surg exam, because your
+        instructor is not teaching the blueprint. She is teaching her lectures, with her emphasis, out of her
+        textbook.
+      </p>
+      <div class="versus">
+        <div>
+          <h4>A national question bank</h4>
+          <ul>
+            <li>Written to a blueprint nobody in your course wrote</li>
+            <li>Finite: once you have been through it twice you are recalling answers, not reasoning</li>
+            <li>Items reviewed by nurse educators and calibrated against real student performance</li>
+            <li>Strong for licensure volume</li>
+          </ul>
+        </div>
+        <div>
+          <h4>Generated from your material</h4>
+          <ul>
+            <li>Inherits your instructor's weighting automatically</li>
+            <li>Unlimited: feed it the cardiac chapter you avoid and get thirty fresh cardiac items</li>
+            <li>Not calibrated. Judge each item on the five tests below.</li>
+            <li>Strong for the unit test on Thursday</li>
+          </ul>
+        </div>
+      </div>
+      <h3 class="sub-h" style="margin-top:28px">For course exams, the emphasis matches</h3>
+      <p>If your pathophysiology professor spent three weeks on acid-base balance and twenty minutes on the endocrine system, a generated set built from those slides is weighted the same way. A bank cannot know that. It is the single most common reason students say a generated quiz felt closer to their exam than a purchased bank did.</p>
+      <h3 class="sub-h" style="margin-top:20px">For NCLEX, it drills what you keep missing</h3>
+      <p>Generating from your own review notes means the questions come from your weak-area material rather than a fixed sequence. That is the failure mode of every finite bank once you have been through it twice: you start remembering the item instead of working the problem.</p>
+      <h3 class="sub-h" style="margin-top:20px">The honest tradeoff</h3>
+      <p>A bank has one real advantage, and it is a serious one: its items were written and reviewed by nurse educators and calibrated against actual student performance. Generated questions have not been. The practical answer for most students is both, and if you are choosing only one, our <a href="/best-ai-study-tool-nclex">comparison of AI study tools for NCLEX</a> lays out where each option earns its price.</p>
     </div>
+  </section>
 
-    <!-- ChatGPT -->
-    <div class="content-section">
-      <h2 id="chatgpt">Using ChatGPT to Generate NCLEX Questions (and Where It Breaks)</h2>
-
-      <p>A general chatbot will write you NCLEX-style questions, and with a careful prompt they can be decent. If that is what you want, here is a prompt that produces far better items than &ldquo;write me some NCLEX questions&rdquo;:</p>
-
+  <section class="band">
+    <div class="wrap">
+      <h2 class="sec">Using ChatGPT instead, and where it breaks</h2>
+      <p class="sec-sub">A general chatbot will write you NCLEX-style questions, and with a careful prompt they can be decent. If that is what you want, this produces far better items than "write me some NCLEX questions":</p>
       <div class="prompt-box">You are an NCLEX-RN item writer. Using only the content below,
 write 5 NCLEX-style questions at the application/analysis level.
 
@@ -916,91 +399,111 @@ Content:
 """
 [paste your lecture notes here]
 """</div>
-
-      <p>That will get you real practice. Three things break down when you try to live on it:</p>
-
-      <ul style="line-height: 2; color: var(--text-secondary);">
-        <li><strong>Volume.</strong> You are re-pasting your notes every session, and context limits mean a hundred-page review packet has to be chopped into pieces by hand.</li>
-        <li><strong>Drift.</strong> Without constant correction, general models slide toward recall questions with one obviously-correct option. Half the value of an NCLEX item is in the quality of its distractors, and that is the first thing to go.</li>
-        <li><strong>Memory.</strong> The chat does not know you missed four fluid-and-electrolyte questions last Tuesday, so it cannot bring them back. Spaced repetition on your own errors is where most of the score improvement actually comes from.</li>
+      <p style="margin-top:18px">That will get you real practice. Three things break down when you try to live on it:</p>
+      <ul class="rules">
+        <li><b>Volume.</b> You are re-pasting your notes every session, and context limits mean a hundred-page review packet has to be chopped into pieces by hand.</li>
+        <li><b>Drift.</b> Without constant correction, general models slide toward recall questions with one obviously correct option. Half the value of an NCLEX item is in the quality of its distractors, and that is the first thing to go.</li>
+        <li><b>Memory.</b> The chat does not know you missed four fluid and electrolyte questions last Tuesday, so it cannot bring them back. Spaced repetition on your own errors is where most of the score improvement actually comes from.</li>
       </ul>
-
-      <p>We wrote a longer, fairer breakdown of this in <a href="/nursequizai-vs-chatgpt">NurseQuizAI vs ChatGPT for NCLEX prep</a> &mdash; including the cases where ChatGPT is genuinely the better choice.</p>
+      <p style="margin-top:20px">We wrote a longer and fairer breakdown in <a href="/nursequizai-vs-chatgpt">NurseQuizAI vs ChatGPT for NCLEX prep</a>, including the cases where ChatGPT is genuinely the better choice.</p>
     </div>
+  </section>
 
-    <!-- Quality -->
-    <div class="content-section">
-      <h2 id="quality">How to Tell a Good NCLEX-Style Question From a Bad One</h2>
-
-      <p>Any generator, ours included, will occasionally produce a weak item. It is worth being able to spot one, because practising against bad questions teaches bad test-taking habits. A well-formed NCLEX-style item passes all five of these:</p>
-
-      <ul style="line-height: 2; color: var(--text-secondary);">
-        <li><strong>You cannot answer it from the stem alone.</strong> If reading the question tells you the answer without knowing the content, it is testing English, not nursing.</li>
-        <li><strong>Every distractor is something a client might plausibly need.</strong> The exam almost never offers you an option that would harm the patient outright. It offers you four reasonable actions and asks which comes first.</li>
-        <li><strong>It asks you to do something, not to recall something.</strong> &ldquo;Which finding requires immediate follow-up&rdquo; is an exam question. &ldquo;What is the normal range for potassium&rdquo; is a flashcard.</li>
-        <li><strong>There are no absolutes in the options.</strong> &ldquo;Always,&rdquo; &ldquo;never,&rdquo; and &ldquo;all&rdquo; are giveaways, and their presence usually means the writer ran out of distractors.</li>
-        <li><strong>The rationale explains the wrong answers too.</strong> An item that only defends its correct answer teaches you nothing about the reasoning you got wrong.</li>
+  <section class="band tint">
+    <div class="wrap">
+      <h2 class="sec">How to tell a good NCLEX-style question from a bad one</h2>
+      <p class="sec-sub">Any generator, ours included, will occasionally produce a weak item. It is worth being able to spot one, because practising against bad questions teaches bad test-taking habits. A well-formed item passes all five:</p>
+      <ul class="rules">
+        <li><b>You cannot answer it from the stem alone.</b> If reading the question tells you the answer without knowing the content, it is testing English, not nursing.</li>
+        <li><b>Every distractor is something a client might plausibly need.</b> The exam almost never offers an option that would harm the patient outright. It offers four reasonable actions and asks which comes first.</li>
+        <li><b>It asks you to do something, not to recall something.</b> "Which finding requires immediate follow-up" is an exam question. "What is the normal range for potassium" is a flashcard.</li>
+        <li><b>There are no absolutes in the options.</b> Always, never and all are giveaways, and their presence usually means the writer ran out of distractors.</li>
+        <li><b>The rationale explains the wrong answers too.</b> An item that only defends its correct answer teaches you nothing about the reasoning you got wrong.</li>
       </ul>
-
-      <p>If a generated question fails one of these, skip it rather than arguing with it &mdash; and generate a fresh set from a tighter section of your notes. Narrow input almost always produces sharper items than a whole textbook at once.</p>
+      <p style="margin-top:20px">If a generated question fails one of these, skip it rather than arguing with it, and generate a fresh set from a tighter section of your notes. Narrow input almost always produces sharper items than a whole textbook at once.</p>
     </div>
+  </section>
 
-    <div class="bottom-cta">
-      <h3>Stop rereading. Start answering.</h3>
-      <p>Upload one lecture and see what comes back. It takes under a minute, and it is free to start &mdash; no card, no trial countdown.</p>
-      <a href="/signup?returnTo=%2Fnclex" class="btn-primary">Generate NCLEX Questions Free</a>
-      <div class="no-cc">PDFs &bull; PowerPoints &bull; Word docs &bull; photos of handwritten notes</div>
-    </div>
-
-    <div class="faq">
-      <h3 id="faq">Frequently Asked Questions</h3>
-      <div class="faq-item">
-        <strong>Is there a free NCLEX question generator?</strong>
-        <p>Yes. NurseQuizAI generates NCLEX-style questions from your own notes free during early access, with no credit card. Free accounts can generate 40 questions per rolling seven days &mdash; enough for several focused practice sessions a week. We break down exactly what is and isn&rsquo;t included on <a href="/free-ai-for-nursing-students">free AI for nursing students</a>.</p>
-      </div>
-      <div class="faq-item">
-        <strong>Can AI generate real NCLEX questions?</strong>
-        <p>No, and be wary of anyone claiming otherwise. Live NCLEX items are confidential and owned by the NCSBN; sites advertising &ldquo;real exam questions&rdquo; are either recycling old public samples or making it up. What AI can do is write items in the same formats, at the same cognitive level, from content you supply.</p>
-      </div>
-      <div class="faq-item">
-        <strong>Does it generate SATA and Next-Gen questions?</strong>
-        <p>Yes &mdash; <a href="/sata-questions-nclex">select all that apply</a>, prioritization, delegation, pharmacology, and the case-based <a href="/nclex-next-gen-guide">Next-Gen formats</a> including bow-tie and matrix items.</p>
-      </div>
-      <div class="faq-item">
-        <strong>How many questions can I generate?</strong>
-        <p>40 per rolling seven days on the free plan. Upgrading removes the cap. The counter is on generated items, so a 20-question set costs 20, not one.</p>
-      </div>
-      <div class="faq-item">
-        <strong>Does it work with handwritten notes?</strong>
-        <p>Yes. Photograph or scan the page and the text is extracted automatically. Legibility and lighting matter more than handwriting style.</p>
-      </div>
-      <div class="faq-item">
-        <strong>Does it explain the wrong answers?</strong>
-        <p>Every item comes back with a rationale for the correct option and a sentence on why each distractor is wrong. On NCLEX-style questions the distractor reasoning is usually where the learning is.</p>
-      </div>
-      <div class="faq-item">
-        <strong>Can I use it for nursing school exams, not just NCLEX?</strong>
-        <p>That is the most common use. Because the questions come from your lecture material, they track your instructor&rsquo;s emphasis in a way a national question bank cannot. Pharmacology, med-surg and patho are the heaviest-used subjects.</p>
-      </div>
-      <div class="faq-item">
-        <strong>Is my uploaded material private?</strong>
-        <p>Yes. Uploads are encrypted in transit and at rest, are never shared with third parties or used to train public models, and can be deleted from your account at any time.</p>
+  <section class="band">
+    <div class="wrap">
+      <h2 class="sec">Questions students ask first</h2>
+      <div class="faq">
+        <details open>
+          <summary>Is there a free NCLEX question generator?</summary>
+          <p>Yes. NurseQuizAI generates NCLEX-style questions from your own notes free during early access, with no credit card. Free accounts can generate 40 questions per rolling seven days, enough for several focused practice sessions a week. We break down exactly what is and is not included on <a href="/free-ai-for-nursing-students">free AI for nursing students</a>.</p>
+        </details>
+        <details>
+          <summary>Can AI generate real NCLEX questions?</summary>
+          <p>No, and be wary of anyone claiming otherwise. Live NCLEX items are confidential and owned by the NCSBN; sites advertising real exam questions are either recycling old public samples or making it up. What AI can do is write items in the same formats, at the same cognitive level, from content you supply.</p>
+        </details>
+        <details>
+          <summary>Does it generate SATA and Next-Gen questions?</summary>
+          <p>Yes: <a href="/sata-questions-nclex">select all that apply</a>, prioritization, delegation, pharmacology, and the case-based <a href="/nclex-next-gen-guide">Next-Gen formats</a> including bow-tie and matrix items. The three samples above are a prioritization item, a SATA and a Next-Gen case study.</p>
+        </details>
+        <details>
+          <summary>How many questions can I generate?</summary>
+          <p>40 per rolling seven days on the free plan. Upgrading removes the cap. The counter is on generated items, so a 20-question set costs 20, not one.</p>
+        </details>
+        <details>
+          <summary>Does it work with handwritten notes?</summary>
+          <p>Yes. Photograph or scan the page and the text is extracted automatically. Legibility and lighting matter more than handwriting style.</p>
+        </details>
+        <details>
+          <summary>Does it explain the wrong answers?</summary>
+          <p>Every item comes back with a rationale for the correct option and a sentence on why each distractor is wrong. On NCLEX-style questions the distractor reasoning is usually where the learning is.</p>
+        </details>
+        <details>
+          <summary>Can I use it for nursing school exams, not just NCLEX?</summary>
+          <p>That is the most common use. Because the questions come from your lecture material, they track your instructor's emphasis in a way a national question bank cannot. Pharmacology, med-surg and patho are the heaviest-used subjects. There is a page for that case: <a href="/nursing-practice-questions-ai">AI nursing practice questions</a>.</p>
+        </details>
+        <details>
+          <summary>Is my uploaded material private?</summary>
+          <p>Yes. Uploads are encrypted in transit and at rest, are never shared with third parties or used to train public models, and can be deleted from your account at any time.</p>
+        </details>
       </div>
     </div>
+  </section>
 
-    <div class="links">
+  <section class="band">
+    <div class="wrap">
+      <div class="close">
+        <h2>Stop rereading. Start answering.</h2>
+        <p>Upload one lecture and see what comes back. It takes under a minute, and it is free to start, with no card and no trial countdown.</p>
+        <a class="btn btn-lg" href="/signup?returnTo=%2Fnclex">Generate NCLEX questions free</a>
+        <p class="note">40 a week free. PDFs, PowerPoints, Word docs, photos of handwritten notes.</p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="crumbs">
+      <a href="/">Home</a> &rsaquo; <a href="/best-ai-study-tool-nclex">Best AI Study Tool for NCLEX</a> &rsaquo; NCLEX Question Generator
+    </div>
+    <div class="foot-links">
+      <a href="/nursing-practice-questions-ai">AI Nursing Practice Questions</a>
       <a href="/best-ai-study-tool-nclex">Best AI Study Tool for NCLEX</a>
       <a href="/free-ai-for-nursing-students">Free AI for Nursing Students</a>
       <a href="/sata-questions-nclex">SATA Questions Guide</a>
       <a href="/nclex-next-gen-guide">Next-Gen NCLEX Guide</a>
       <a href="/clinical-judgment-nclex">Clinical Judgment Model</a>
+      <a href="/nclex-quiz">Free NCLEX Practice Quiz</a>
       <a href="/nursequizai-vs-chatgpt">vs ChatGPT</a>
-      <a href="/nclex-practice-questions-ai">AI NCLEX Practice Questions</a>
       <a href="/blog/how-to-study-for-nclex-in-30-days">30-Day NCLEX Study Plan</a>
       <a href="/blog/best-nclex-study-strategies">Best NCLEX Study Strategies</a>
     </div>
-
-    <p class="footer-note">Built for nursing exams and the NCLEX &bull; Updated September 2026</p>
+    <p class="foot-note">Built for nursing exams and the NCLEX &bull; Updated September 2026</p>
   </div>
+</footer>
+
+<div class="dock" id="dock">
+  <div class="line"><b>40 questions a week, free</b>No credit card needed</div>
+  <a class="btn btn-sm" href="/signup?returnTo=%2Fnclex">Upload notes</a>
+</div>
+
+<script src="/js/landing.js" defer></script>
+<script src="/js/seo-attribution.js" data-slug="nclex-question-generator" data-cluster="NCLEX" defer></script>
 </body>
 </html>

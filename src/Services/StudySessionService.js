@@ -471,6 +471,10 @@ export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) 
       adaptive: true,
       reason: newNodeDef.reason || '',
       ...(newNodeDef.detour ? { detour: newNodeDef.detour } : {}),
+      // The subject, kept apart from the display label. Generation reads it
+      // first; without it an inserted node is generated from its label
+      // ("Testing a theory: …"), which is not a topic at all. See nodeTopic.js.
+      ...(newNodeDef.topic ? { topic: newNodeDef.topic } : {}),
       status: 'active',
       messageId: null,
       // Carry phase from current node so it appears in the right section

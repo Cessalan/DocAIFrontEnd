@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
@@ -25,6 +25,8 @@ import { usePaperTransition } from '../ChatInerface/paperTransition';
 import PaperSurface from '../ChatInerface/PaperSurface';
 import '../ChatInerface/paperTransition.css';
 import { computeReadinessDelta } from './readinessDelta';
+import { resolveNodeTopic, testedSkills as findTestedSkills } from './nodeTopic';
+import { buildExperimentNode } from './nodeReadout';
 import { getTopicProgress, savePracticeAttempt } from '../../Services/TopicProgressService';
 import { PracticeAttemptRecord } from '../../Services/topicProgressModel';
 import DevPaywallPill from '../Common/DevPaywallPill';
@@ -174,6 +176,10 @@ const StudyModeContainer = ({
 
   const [activeNodeId, setActiveNodeId] = useState(null);
   const [activeNode, setActiveNode] = useState(null);
+  // For the transition readout: what the finished node is about, and which
+  // pattern experiments this plan has already run (see nodeTopic.js).
+  const activeNodeTopic = useMemo(() => resolveNodeTopic(activeNode, nodes), [activeNode, nodes]);
+  const testedSkillsInPlan = useMemo(() => findTestedSkills(nodes), [nodes]);
   const [currentContent, setCurrentContent] = useState(null);
   const [savedProgress, setSavedProgress] = useState(null); // Flashcard/quiz progress
   const currentMessageIdRef = useRef(null); // Ref to track messageId for saving progress
@@ -638,7 +644,9 @@ const StudyModeContainer = ({
       const result = await generate_study_item_stream(
         chatId,
         node.type,
-        node.label,
+        // The subject, not the display label — for inserted nodes the label is
+        // decorated ("Review: …") and retrieval searched for it literally.
+        node.topic || node.label,
         node.tags || [],
         askedHashes,
         language,
@@ -1307,10 +1315,18 @@ const StudyModeContainer = ({
     setIsLoadingPractice(true);
 
     try {
+      // Every inserted node carries its subject; the readout usually supplies
+      // it, and this covers any caller that didn't (see nodeTopic.js).
+      const topic = remediationNodeDef.topic
+        || resolveNodeTopic(nodesRef.current.find(node => node.id === activeNodeId), nodesRef.current);
       const { insertedNode, updatedNodes } = await insertNodeAfterCurrent(
         chatId,
         activeNodeId,
-        { ...remediationNodeDef, detour: { fromNodeId: activeNodeId, returnNodeId: returnNode?.id || null } }
+        {
+          ...remediationNodeDef,
+          ...(topic ? { topic } : {}),
+          detour: { fromNodeId: activeNodeId, returnNodeId: returnNode?.id || null },
+        }
       );
       if (scope !== advanceScopeRef.current) return;
       setPlanAdvance({ nodes: updatedNodes.filter(node => node.type !== 'section_banner'), fromId: activeNodeId,
@@ -1525,7 +1541,7 @@ const StudyModeContainer = ({
     try {
       const result = await generate_exam(
         chatId,
-        examNode.label,
+        examNode.topic || examNode.label,
         examConfig.questionTypes,
         examConfig.questionCount,
         examConfig.customInstructions,
@@ -1687,19 +1703,20 @@ const StudyModeContainer = ({
    * Tagged `experiment:<skill>` so the transition screen recognises the node
    * on completion and shows the payoff instead of a fresh diagnosis. Tagging
    * rather than component state means it survives a reload.
+   *
+   * Built as a one-question exam in the skill's own format, set in the subject
+   * of the node she just finished — see buildExperimentNode for what the old
+   * quiz-node version did instead.
    */
   const handleTestTheory = useCallback(async (skill) => {
     if (!skill) return;
-    await handleTransitionPractice({
-      type: 'quiz',
-      label: t('study.experimentLabel', 'Testing a theory: {{skill}}', { skill }),
-      tags: [`experiment:${skill}`, 'weak_area'],
-      difficulty: 2,
-      adaptive: true,
-      num_questions: 1,
-      reason: `One question to test the ${skill} pattern`,
-    });
-  }, [handleTransitionPractice, t]);
+    const fromNode = nodesRef.current.find((n) => n.id === activeNodeId);
+    await handleTransitionPractice(buildExperimentNode(
+      skill,
+      resolveNodeTopic(fromNode, nodesRef.current),
+      t('study.experimentLabel', 'Testing a theory: {{skill}}', { skill })
+    ));
+  }, [handleTransitionPractice, activeNodeId, t]);
   /**
    * Insights CTA — reopen the node a missed question came from, so "review
    * this concept" lands on the explanation she already has rather than
@@ -1950,6 +1967,8 @@ const StudyModeContainer = ({
           onExit={handleExitStudy}
           onAnalytics={handleTransitionAnalytics}
           onTestTheory={handleTestTheory}
+          testedSkills={testedSkillsInPlan}
+          nodeTopic={activeNodeTopic}
           isAdvancing={isAdvancing}
           isLoadingPractice={isLoadingPractice}
           isLoadingCustom={isLoadingCustom}

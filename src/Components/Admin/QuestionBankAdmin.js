@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import './QuestionBankAdmin.css';
+import { API_BASE_URL } from '../../Services/config';
+import { auth } from '../../Firebase/config';
 
-const API_BASE = process.env.REACT_APP_FASTAPI_URL || 'http://localhost:8080';
+const API_BASE = API_BASE_URL;
 
 /**
  * QuestionBankAdmin - Admin UI for importing questions into the Question Bank
@@ -23,7 +25,7 @@ function QuestionBankAdmin() {
   const fetchStats = async () => {
     setLoadingStats(true);
     try {
-      const response = await fetch(`${API_BASE}/admin/question-bank-stats`);
+      const response = await fetch(`${API_BASE}/admin/question-bank-stats`, { headers: { Authorization: `Bearer ${await auth.currentUser.getIdToken()}` } });
       if (response.ok) {
         const data = await response.json();
         setStats(data);
@@ -75,7 +77,7 @@ function QuestionBankAdmin() {
     try {
       const response = await fetch(`${API_BASE}/admin/import-questions`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${await auth.currentUser.getIdToken()}` },
         body: JSON.stringify({ questions })
       });
 
