@@ -54,6 +54,7 @@ function ChatLayout() {
   // Dev-only: impersonate a user by their UID to see their interface
   const isDev = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
   const [impersonatedUid, setImpersonatedUid] = useState(null);
+  const [previewOnboarding, setPreviewOnboarding] = useState(false);
   const handleStopImpersonating = () => {
     setImpersonatedUid(null);
     setSelectedChatId(null);
@@ -320,6 +321,20 @@ function ChatLayout() {
       </div>
 
       {!isProfileComplete && <OnboardingModal />}
+
+      {process.env.NODE_ENV === 'development' && isProfileComplete && (
+        <button
+          type="button"
+          className="dev-onboarding-preview-trigger"
+          onClick={() => setPreviewOnboarding(true)}
+          title="Preview all five onboarding questions without saving answers"
+        >
+          Preview onboarding
+        </button>
+      )}
+      {process.env.NODE_ENV === 'development' && isProfileComplete && previewOnboarding && (
+        <OnboardingModal key="dev-preview" preview onClose={() => setPreviewOnboarding(false)} />
+      )}
 
       {/* Post-exam debrief. Mounted at the shell rather than inside the chat
           because it belongs to the session, not to whichever chat is open —

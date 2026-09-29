@@ -24,6 +24,20 @@ describe('buildReadinessFunnel', () => {
     expect(group(r, 'finding').rate).toBeNull();
   });
 
+  it('windows uploads on a custom from/to range, end exclusive', () => {
+    const r = buildReadinessFunnel({
+      now: NOW,
+      from: new Date('2026-09-10T00:00:00Z'),
+      to: new Date('2026-09-20T00:00:00Z'),
+      events: [
+        row('upload_started', 'f1', 'a', '2026-09-09T23:00:00Z'),
+        row('upload_started', 'f2', 'b', '2026-09-15T10:00:00Z'),
+        row('upload_started', 'f3', 'c', '2026-09-20T00:00:00Z'),
+      ],
+    });
+    expect(r.uploads).toBe(1);
+  });
+
   it('counts each stage once per upload funnel', () => {
     const r = buildReadinessFunnel({
       now: NOW,

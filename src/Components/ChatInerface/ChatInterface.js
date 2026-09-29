@@ -4247,7 +4247,7 @@ const ChatInterface = ({
       if (wowConfig) {
         devLog('Triggering Quick Start action:', wowConfig.actionId);
 
-        const topic = userStage === 'NCLEX Prep'
+        const topic = studyGoal === 'NCLEX Prep' || userStage === 'Final Semester/NCLEX Prep'
           ? 'NCLEX Preparation'
           : 'Nursing fundamentals';
 

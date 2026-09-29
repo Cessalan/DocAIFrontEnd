@@ -1191,11 +1191,21 @@ const resources = {
 
       // Onboarding
       onboarding: {
-        intro: "To better understand your needs, please answer these quick questions ✨",
+        intro: "A few quick details to set up your study space.",
+        eyebrow: "YOUR STUDY SPACE",
+        progressLabel: "Onboarding progress",
+        back: "← Back",
+        optional: "Optional — tell us in your own words",
+        saving: "Saving your answers...",
+        saveError: "We couldn't save your answers. Please try again.",
+        proof: {
+          short: "Students from {{count}}+ nursing schools"
+        },
         step1Title: "What is your main goal today?",
         step2Title: "Where are you in your journey?",
         step3Title: "How do you learn best?",
         step4Title: "What are you hoping NurseQuizAI helps you achieve?",
+        step5Title: "How did you hear about us?",
         loading: "Setting up your profile...",
         tracker: "Question {{current}} of {{total}}",
         processing: {
@@ -1213,13 +1223,21 @@ const resources = {
           formatFlashcards: "Flashcards",
           formatConcept: "Visual Concept Maps",
           formatAudio: "Audio Summaries",
+          referralFriend: "Friend or classmate",
+          referralGoogle: "Google",
+          referralChatGPT: "ChatGPT",
+          referralSocial: "Social media",
+          referralSchool: "School or instructor",
+          referralOther: "Other",
           skipText: "Skip",
-          submitText: "Submit"
+          submitText: "Continue"
         },
         expectationPlaceholder: "I struggle with remembering pharmacology...",
         success: {
-          title: "All set! 🚀",
-          message: "Thanks for setting up your profile. You're ready to start learning!",
+          eyebrow: "ALL SET",
+          title: "Your study space is ready",
+          message: "Your answers are saved. Let's start studying.",
+          summaryLabel: "YOUR CHOICES",
           button: "Start Learning"
         },
         recommendation: {
@@ -3617,11 +3635,21 @@ const resources = {
 
       // Onboarding
       onboarding: {
-        intro: "Pour mieux comprendre vos besoins, veuillez répondre à ces questions rapides ✨",
+        intro: "Quelques détails rapides pour préparer votre espace d'étude.",
+        eyebrow: "VOTRE ESPACE D'ÉTUDE",
+        progressLabel: "Progression de l'accueil",
+        back: "← Retour",
+        optional: "Facultatif — expliquez-le avec vos mots",
+        saving: "Enregistrement de vos réponses...",
+        saveError: "Nous n'avons pas pu enregistrer vos réponses. Réessayez.",
+        proof: {
+          short: "Étudiants de plus de {{count}} écoles de sciences infirmières"
+        },
         step1Title: "Quel est votre objectif aujourd'hui?",
         step2Title: "Où en êtes-vous dans votre parcours ?",
         step3Title: "Comment apprenez-vous le mieux ?",
         step4Title: "Qu'espérez-vous que NurseQuizAI vous aide à accomplir ?",
+        step5Title: "Comment avez-vous entendu parler de nous ?",
         loading: "Configuration de votre profil...",
         tracker: "Question {{current}} sur {{total}}",
         processing: {
@@ -3639,13 +3667,21 @@ const resources = {
           formatFlashcards: "Flashcards",
           formatConcept: "Cartes conceptuelles visuelles",
           formatAudio: "Résumés audio",
+          referralFriend: "Ami ou camarade de classe",
+          referralGoogle: "Google",
+          referralChatGPT: "ChatGPT",
+          referralSocial: "Réseaux sociaux",
+          referralSchool: "École ou enseignant",
+          referralOther: "Autre",
           skipText: "Passer",
-          submitText: "Soumettre"
+          submitText: "Continuer"
         },
         expectationPlaceholder: "J'ai du mal à retenir la pharmacologie...",
         success: {
-          title: "C'est tout bon! 🚀",
-          message: "Merci d'avoir configuré votre profil. Vous êtes prêt à apprendre!",
+          eyebrow: "C'EST PRÊT",
+          title: "Votre espace d'étude est prêt",
+          message: "Vos réponses sont enregistrées. Commençons à étudier.",
+          summaryLabel: "VOS CHOIX",
           button: "Commencer l'apprentissage"
         },
         recommendation: {

@@ -95,10 +95,13 @@ const blankGroup = (key) => ({
  * @param {Array}  input.excludeUids  Test accounts to drop.
  * @param {Date}   input.now
  * @param {number} input.days         Window on the upload's start. 0 = all time.
+ * @param {Date}   [input.from]       Custom window start (inclusive). Overrides `days` when set.
+ * @param {Date}   [input.to]         Custom window end (exclusive).
  */
-export const buildReadinessFunnel = ({ events = [], pros = [], excludeUids = [], now = new Date(), days = 30 } = {}) => {
+export const buildReadinessFunnel = ({ events = [], pros = [], excludeUids = [], now = new Date(), days = 30, from = null, to = null } = {}) => {
   const exclude = new Set(excludeUids);
-  const since = days > 0 ? now.getTime() - days * DAY_MS : null;
+  const since = from ? from.getTime() : days > 0 ? now.getTime() - days * DAY_MS : null;
+  const until = to ? to.getTime() : null;
 
   // funnelId → { uid, steps: step → first time it happened }
   const funnels = new Map();
@@ -114,7 +117,9 @@ export const buildReadinessFunnel = ({ events = [], pros = [], excludeUids = [],
 
   const uploads = [...funnels.values()].filter((f) => {
     const started = f.steps.get(READINESS_STEPS.UPLOAD_STARTED);
-    return started && (since === null || started.getTime() >= since);
+    return started
+      && (since === null || started.getTime() >= since)
+      && (until === null || started.getTime() < until);
   });
 
   const has = (f, step) => f.steps.has(step);

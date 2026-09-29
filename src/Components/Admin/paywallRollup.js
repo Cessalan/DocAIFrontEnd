@@ -64,7 +64,7 @@ export const STEPS = Object.freeze({
 const DAY_MS = 86400000;
 
 /** Firestore Timestamp | Date | string | number | null → Date | null. */
-const toDate = (value) => {
+export const toDate = (value) => {
   if (value === null || value === undefined || value === '') return null;
   if (typeof value.toDate === 'function') return value.toDate();
   const d = value instanceof Date ? value : new Date(value);
@@ -134,14 +134,16 @@ const countDistinct = (rows) => new Set(rows.map((r) => r.uid)).size;
  * @param {Array}  input.pros    Every `usage.tier === 'pro'` user doc, with `id`.
  * @param {Date}   input.now
  * @param {number} input.days    Window for everything except the drought. 0 = all time.
+ * @param {Date}   [input.from]  Custom window start (inclusive). Overrides `days` when set.
+ * @param {Date}   [input.to]    Custom window end (exclusive).
  */
-export const buildPaywallRollup = ({ events = [], users = {}, pros = [], now = new Date(), days = 30 } = {}) => {
+export const buildPaywallRollup = ({ events = [], users = {}, pros = [], now = new Date(), days = 30, from = null, to = null } = {}) => {
   const all = events.map(normalizeEvent).filter((e) => e.uid && e.at);
   const testUids = findTestUids(all, users);
   const real = all.filter((e) => !testUids.has(e.uid)).sort((a, b) => a.at - b.at);
 
-  const since = days > 0 ? new Date(now.getTime() - days * DAY_MS) : null;
-  const inWindow = since ? real.filter((e) => e.at >= since) : real;
+  const since = from || (days > 0 ? new Date(now.getTime() - days * DAY_MS) : null);
+  const inWindow = real.filter((e) => (!since || e.at >= since) && (!to || e.at < to));
   const views = inWindow.filter((e) => e.step === STEPS.VIEW);
 
   // ── One row per person who saw it ───────────────────────────────────────
@@ -200,6 +202,7 @@ export const buildPaywallRollup = ({ events = [], users = {}, pros = [], now = n
       // unpaid checkout was abandoned or is still open lives only in Stripe.
       status: isPro ? 'paid' : p.checkouts > 0 ? 'checkout' : 'none',
       proSince: isPro ? proStartOf(user) : null,
+      signedUpAt: toDate(user.createdAt),
     };
   }).sort((a, b) => b.lastAt - a.lastAt);
 

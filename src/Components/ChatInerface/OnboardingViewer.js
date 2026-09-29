@@ -3,10 +3,15 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../../Firebase/config';
 import './OnboardingViewer.css';
 
+const REFERRAL_LABELS = {
+  friend: 'Friend or classmate', google: 'Google', chatgpt: 'ChatGPT',
+  social: 'Social media', school: 'School or instructor', other: 'Other'
+};
+
 const OnboardingViewer = ({ onClose }) => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState('withText'); // withText, all
+  const [filter, setFilter] = useState('withText'); // withText, withSource, all
   const [search, setSearch] = useState('');
   const [exporting, setExporting] = useState(false);
 
@@ -72,6 +77,7 @@ const OnboardingViewer = ({ onClose }) => {
 
   const filtered = users.filter(u => {
     if (filter === 'withText' && !u.onboarding?.userExpectation?.trim()) return false;
+    if (filter === 'withSource' && !u.onboarding?.referralSource) return false;
     if (search) {
       const q = search.toLowerCase();
       const hay = [
@@ -81,7 +87,9 @@ const OnboardingViewer = ({ onClose }) => {
         u.onboarding?.userStage,
         u.onboarding?.studyGoal,
         u.onboarding?.reviewFormat,
-        u.onboarding?.userExpectation
+        u.onboarding?.userExpectation,
+        u.onboarding?.referralSource,
+        REFERRAL_LABELS[u.onboarding?.referralSource]
       ].join(' ').toLowerCase();
       if (!hay.includes(q)) return false;
     }
@@ -89,12 +97,13 @@ const OnboardingViewer = ({ onClose }) => {
   });
 
   const withTextCount = users.filter(u => u.onboarding?.userExpectation?.trim()).length;
+  const withSourceCount = users.filter(u => u.onboarding?.referralSource).length;
 
   return (
     <div className="onboarding-viewer-overlay" onClick={onClose}>
       <div className="onboarding-viewer-modal" onClick={(e) => e.stopPropagation()}>
         <div className="onboarding-viewer-header">
-          <h2>Onboarding Data ({filtered.length}{filter === 'withText' ? ` / ${withTextCount} with text` : ` / ${users.length} total`})</h2>
+          <h2>Onboarding Data ({filtered.length} / {users.length} total)</h2>
           <div className="onboarding-viewer-header-actions">
             <button
               className="onboarding-viewer-export"
@@ -111,22 +120,28 @@ const OnboardingViewer = ({ onClose }) => {
         <div className="onboarding-viewer-filters">
           <div className="ov-filter-group">
             <button
-              className={`ov-filter-btn ${filter === 'withText' ? 'active' : ''}`}
-              onClick={() => setFilter('withText')}
-            >
-              With typed text
-            </button>
-            <button
               className={`ov-filter-btn ${filter === 'all' ? 'active' : ''}`}
               onClick={() => setFilter('all')}
             >
               All users
             </button>
+            <button
+              className={`ov-filter-btn ${filter === 'withText' ? 'active' : ''}`}
+              onClick={() => setFilter('withText')}
+            >
+              With typed text ({withTextCount})
+            </button>
+            <button
+              className={`ov-filter-btn ${filter === 'withSource' ? 'active' : ''}`}
+              onClick={() => setFilter('withSource')}
+            >
+              With source ({withSourceCount})
+            </button>
           </div>
           <input
             className="ov-search"
             type="text"
-            placeholder="Search uid, email, semester, text…"
+            placeholder="Search uid, email, semester, source, text…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -181,6 +196,7 @@ const OnboardingViewer = ({ onClose }) => {
                   <div className="ov-meta">
                     {ob.studyGoal && <span className="ov-chip">Goal: {ob.studyGoal}</span>}
                     {ob.reviewFormat && <span className="ov-chip">Format: {ob.reviewFormat}</span>}
+                    {ob.referralSource && <span className="ov-chip">Found us: {REFERRAL_LABELS[ob.referralSource] || ob.referralSource}</span>}
                   </div>
                 </div>
               );

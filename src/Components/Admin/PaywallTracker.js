@@ -11,6 +11,7 @@ import {
 } from '../../Services/PaywallQueries';
 import { buildPaywallRollup, TRIGGER_LABELS, TEST_EMAILS } from './paywallRollup';
 import { buildReadinessFunnel } from './readinessFunnel';
+import { filterBySignup } from './signupFilter';
 import './SatisfactionDashboard.css';
 import './PaywallTracker.css';
 
@@ -64,6 +65,14 @@ const examLabel = (days) => {
   return days === 0 ? 'today' : `${days}d`;
 };
 
+// 'YYYY-MM-DD' from a date input → local midnight. `endOfDay` gives the next
+// midnight, so a "to" date includes the whole of that day.
+const parseDay = (value, endOfDay = false) => {
+  if (!value) return null;
+  const [y, m, d] = value.split('-').map(Number);
+  return new Date(y, m - 1, d + (endOfDay ? 1 : 0));
+};
+
 const plural = (n, word) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 // The verdict screen's two button labels (LockedPlanPreview CTA_VARIANTS).
@@ -78,6 +87,13 @@ const rateLabel = (v) => (v === null ? '—' : `${(v * 100).toFixed(1)}%`);
 const PaywallTracker = () => {
   const [data, setData] = useState(null);
   const [days, setDays] = useState(30);
+  // Custom range as date-input strings; either one set overrides `days`.
+  const [fromDay, setFromDay] = useState('');
+  const [toDay, setToDay] = useState('');
+  // Sign-up range, independent of the activity window above.
+  const [signupFrom, setSignupFrom] = useState('');
+  const [signupTo, setSignupTo] = useState('');
+  const [signupLoading, setSignupLoading] = useState(false);
   const [filter, setFilter] = useState('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
@@ -117,24 +133,65 @@ const PaywallTracker = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  const custom = Boolean(fromDay || toDay);
+  const range = useMemo(
+    () => ({ from: parseDay(fromDay), to: parseDay(toDay, true), days: custom ? 0 : days }),
+    [fromDay, toDay, custom, days]
+  );
+
+  const signupActive = Boolean(signupFrom || signupTo);
+
+  /* The first load only reads user docs for paywall viewers. Uploaders who
+     never saw the paywall are read the first time the sign-up filter is used,
+     so the page doesn't pay for hundreds of reads nobody asked for. */
+  useEffect(() => {
+    if (!signupActive || !data) return;
+    const missing = [...new Set(data.readinessEvents.map((e) => e.uid).filter(Boolean))]
+      .filter((uid) => !(uid in data.users));
+    if (missing.length === 0) return;
+    let cancelled = false;
+    setSignupLoading(true);
+    fetchUsers(missing)
+      .then((more) => {
+        if (!cancelled) setData((d) => (d ? { ...d, users: { ...d.users, ...more } } : d));
+      })
+      .catch((err) => console.error('Failed to load uploader profiles:', err))
+      .finally(() => { if (!cancelled) setSignupLoading(false); });
+    return () => { cancelled = true; };
+  }, [signupActive, data]);
+
+  const signup = useMemo(() => {
+    if (!data) return null;
+    const r = { from: parseDay(signupFrom), to: parseDay(signupTo, true) };
+    const paywall = filterBySignup(data.events, data.users, r);
+    const readinessRows = filterBySignup(data.readinessEvents, data.users, r);
+    return {
+      events: paywall.events,
+      readinessEvents: readinessRows.events,
+      unknown: Math.max(paywall.unknown, readinessRows.unknown),
+    };
+  }, [data, signupFrom, signupTo]);
+
   // Fetched once, windowed here: switching windows is instant and never refetches.
   const rollup = useMemo(
-    () => (data ? buildPaywallRollup({ ...data, days, now: new Date() }) : null),
-    [data, days]
+    () => (data && signup
+      ? buildPaywallRollup({ ...data, events: signup.events, ...range, now: new Date() })
+      : null),
+    [data, signup, range]
   );
 
   const readiness = useMemo(() => {
-    if (!data || !rollup) return null;
+    if (!data || !rollup || !signup) return null;
     return buildReadinessFunnel({
       // Paywall rows ride along so "then saw the paywall" can be ordered
       // against the finding inside the same upload funnel.
-      events: [...data.readinessEvents, ...data.events],
+      events: [...signup.readinessEvents, ...signup.events],
       pros: data.pros,
       excludeUids: [...data.testUids, ...rollup.testUids],
-      days,
+      ...range,
       now: new Date(),
     });
-  }, [data, rollup, days]);
+  }, [data, rollup, signup, range]);
 
   const visible = useMemo(() => {
     if (!rollup) return [];
@@ -166,6 +223,41 @@ const PaywallTracker = () => {
     }
   };
 
+  // Everything on screen for the current window, plus the raw rows behind it.
+  const exportJson = () => {
+    // `this[key]` is the value before toJSON runs, so Firestore Timestamps
+    // become ISO strings rather than {seconds, nanoseconds}.
+    function replacer(key, value) {
+      const raw = this[key];
+      if (raw && typeof raw.toDate === 'function') return raw.toDate().toISOString();
+      if (value instanceof Set) return [...value];
+      if (value instanceof Map) return Object.fromEntries(value);
+      return value;
+    }
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      windowDays: custom ? null : days,
+      from: fromDay || null,
+      to: toDay || null,
+      signedUpFrom: signupFrom || null,
+      signedUpTo: signupTo || null,
+      filter,
+      search,
+      rollup,
+      readiness,
+      visiblePeople: visible,
+      raw: data,
+    };
+    const blob = new Blob([JSON.stringify(payload, replacer, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    const span = custom ? `${fromDay || 'start'}_to_${toDay || 'now'}` : `${days || 'all'}d`;
+    a.download = `paywall-${span}-${new Date().toISOString().slice(0, 10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const { totals, lastPro, sinceLastPro } = rollup || {};
 
   return (
@@ -185,17 +277,74 @@ const PaywallTracker = () => {
             <button
               key={w.days}
               type="button"
-              className={`sat-dash__window ${days === w.days ? 'is-active' : ''}`}
-              onClick={() => setDays(w.days)}
+              className={`sat-dash__window ${!custom && days === w.days ? 'is-active' : ''}`}
+              onClick={() => { setDays(w.days); setFromDay(''); setToDay(''); }}
             >
               {w.label}
             </button>
           ))}
+          <label className={`pay-range ${custom ? 'is-active' : ''}`}>
+            <input
+              type="date"
+              aria-label="From date"
+              value={fromDay}
+              max={toDay || undefined}
+              onChange={(e) => setFromDay(e.target.value)}
+            />
+            <span>→</span>
+            <input
+              type="date"
+              aria-label="To date"
+              value={toDay}
+              min={fromDay || undefined}
+              onChange={(e) => setToDay(e.target.value)}
+            />
+          </label>
           <button type="button" className="sat-dash__refresh" onClick={load}>
             Refresh
           </button>
+          <button type="button" className="sat-dash__refresh" onClick={exportJson} disabled={!rollup}>
+            Export JSON
+          </button>
         </div>
       </header>
+
+      <div className="pay-signup">
+        <span className="pay-signup__label">Signed up</span>
+        <label className={`pay-range ${signupActive ? 'is-active' : ''}`}>
+          <input
+            type="date"
+            aria-label="Signed up from"
+            value={signupFrom}
+            max={signupTo || undefined}
+            onChange={(e) => setSignupFrom(e.target.value)}
+          />
+          <span>→</span>
+          <input
+            type="date"
+            aria-label="Signed up to"
+            value={signupTo}
+            min={signupFrom || undefined}
+            onChange={(e) => setSignupTo(e.target.value)}
+          />
+        </label>
+        {signupActive && (
+          <button
+            type="button"
+            className="sat-dash__window"
+            onClick={() => { setSignupFrom(''); setSignupTo(''); }}
+          >
+            Any time
+          </button>
+        )}
+        {signupActive && (
+          <span className="pay-signup__note">
+            {signupLoading
+              ? 'Loading uploader profiles…'
+              : signup?.unknown > 0 && `${plural(signup.unknown, 'student')} with no sign-up date left out`}
+          </span>
+        )}
+      </div>
 
       {loading && <p className="sat-dash__state">Loading…</p>}
 
@@ -534,6 +683,7 @@ const PaywallTracker = () => {
                           <th>Exam in</th>
                           <th>Checkout</th>
                           <th>First seen</th>
+                          <th>Signed up</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -571,6 +721,7 @@ const PaywallTracker = () => {
                                 )}
                               </td>
                               <td className="pay-num">{formatDate(r.firstAt)}</td>
+                              <td className="pay-num">{formatDate(r.signedUpAt)}</td>
                             </tr>
                           );
                         })}

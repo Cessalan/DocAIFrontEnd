@@ -105,6 +105,22 @@ describe('buildPaywallRollup', () => {
     expect(buildPaywallRollup({ now: NOW, days: 0, events }).totals.people).toBe(2);
   });
 
+  it('uses a custom from/to range over days, end exclusive', () => {
+    const events = [
+      view('before', '2026-09-01T12:00:00Z'),
+      view('inside', '2026-09-05T12:00:00Z'),
+      view('after', '2026-09-10T12:00:00Z'),
+    ];
+    const r = buildPaywallRollup({
+      now: NOW,
+      days: 7,
+      from: new Date('2026-09-02T00:00:00Z'),
+      to: new Date('2026-09-10T12:00:00Z'),
+      events,
+    });
+    expect(r.people.map((p) => p.uid)).toEqual(['inside']);
+  });
+
   it('rolls one person up with her latest state, triggers and checkout', () => {
     const r = buildPaywallRollup({
       now: NOW,
