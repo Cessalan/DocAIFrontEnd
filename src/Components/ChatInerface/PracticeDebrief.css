@@ -10,3 +10,5 @@
 .practice-debrief-review { margin-top:18px; padding:18px; border-radius:14px; background:rgba(232,141,125,.06); }
 .practice-debrief-loading { font-size:13px; opacity:.65; }
 body.dark-mode .practice-debrief button,body.dark-mode .practice-debrief-review { background:rgba(184,165,212,.1); border-color:rgba(184,165,212,.2); }
+.practice-debrief-next { margin:14px 0 0; }
+.practice-debrief-error { margin:10px 0 0; font-size:13px; opacity:.8; }

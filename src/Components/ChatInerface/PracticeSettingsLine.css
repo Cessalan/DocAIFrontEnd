@@ -1,0 +1,18 @@
+/* Lives inside .focused-quiz, whose --practice-* variables already switch for
+   dark mode; the rules at the bottom only cover the native controls. */
+.practice-settings { margin-top:4px; font-size:12px; color:var(--practice-muted); }
+.practice-settings-line { margin:0; display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 8px; line-height:1.5; }
+.focused-quiz .practice-header .practice-settings-line button { padding:0; background:none; border:0; border-radius:0; color:var(--practice-ink); font:inherit; font-size:12px; text-decoration:underline; text-underline-offset:2px; }
+.practice-settings-panel { display:flex; flex-wrap:wrap; gap:6px 28px; margin-top:10px; padding-top:10px; border-top:1px solid var(--practice-line); color:var(--practice-ink); }
+.practice-settings-panel fieldset { border:0; margin:0; padding:0; display:flex; flex-wrap:wrap; align-items:center; gap:6px 14px; }
+.practice-settings-panel legend { float:left; margin-right:10px; color:var(--practice-muted); }
+.practice-settings-panel label { display:inline-flex; align-items:center; gap:6px; font-size:13px; cursor:pointer; }
+.practice-settings-panel input { accent-color:var(--practice-ink); margin:0; }
+.practice-settings-status { flex-basis:100%; margin:4px 0 0; color:var(--practice-muted); }
+
+body.dark-mode .practice-settings-panel input { color-scheme:dark; }
+
+@media (max-width:600px) {
+  .practice-settings-panel { flex-direction:column; }
+  .practice-settings-panel legend { float:none; width:100%; margin:0 0 2px; }
+}

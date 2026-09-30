@@ -102,7 +102,7 @@ const DrillCheckpoint = ({ checkpoint, onContinue, onExit, canContinue = true, r
         ) : (
           <div className="drill-cp__spent">
             <p className="drill-cp__spent-text">
-              {t('drill.outOfQuestions', 'You have used your free questions for this week.')}
+              {t('drill.outOfQuestions', 'You have used your free questions for this month.')}
             </p>
             <button
               className="drill-btn drill-btn--primary"
@@ -124,7 +124,7 @@ const DrillCheckpoint = ({ checkpoint, onContinue, onExit, canContinue = true, r
 
       {canContinue && Number.isFinite(remaining) && (
         <p className="drill-cp__remaining">
-          {t('drill.remainingQuestions', '{{count}} questions left this week', { count: remaining })}
+          {t('drill.remainingQuestions', '{{count}} questions left this month', { count: remaining })}
         </p>
       )}
     </div>

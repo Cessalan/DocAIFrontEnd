@@ -80,7 +80,7 @@ const UsagePanel = () => {
   return (
     <div
       className={`usage-panel ${blocked ? 'is-blocked' : ''}`}
-      title={t('usagePanel.tooltip', 'Questions used — refills every week')}
+      title={t('usagePanel.tooltip', 'Questions used — refills every month')}
     >
       <span className="usage-panel-count">
         {blocked ? (

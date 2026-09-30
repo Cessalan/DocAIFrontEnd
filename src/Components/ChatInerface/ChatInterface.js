@@ -22,7 +22,8 @@ import {
 import ChatMessage from './ChatMessage';
 import FocusedQuiz from './FocusedQuiz';
 import ChatSendButton from './ChatSendButton';
-import { completePractice } from '../../Services/PracticeService';
+import { completePractice, createReviewQuiz, savePracticeProfile, subscribePracticeProfile } from '../../Services/PracticeService';
+import { buildCoverage, collectPracticeItems, nextPractice } from './practiceCoverageModel';
 import { placePracticeDebriefs } from './practiceMessageOrder';
 import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
@@ -237,6 +238,10 @@ const ChatInterface = ({
   const [currentChatID, setChatId] = useState(chatId);
   const [currentChatTitle, setChatTitle] = useState('');
   const [practiceOwner, setPracticeOwner] = useState(null);
+  // What this chat remembers about the practice she wants (backend-written,
+  // see practiceProfileModel.js). Live, so "no ordering" said a moment ago is
+  // already on the settings line when the quiz opens.
+  const [practiceProfile, setPracticeProfile] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [focusedQuizId, setFocusedQuizId] = useState(null);
   const [practiceOrigin, setPracticeOrigin] = useState(null);
@@ -589,6 +594,36 @@ const ChatInterface = ({
   const currentChatIDRef = useRef(currentChatID);
   currentChatIDRef.current = currentChatID;
   const debriefRequests = useRef(new Set());
+  // ── Practice memory and coverage (practiceProfileModel / practiceCoverageModel) ──
+  useEffect(() => {
+    setPracticeProfile(null);
+    if (!currentChatID) return undefined;
+    return subscribePracticeProfile(currentChatID, setPracticeProfile);
+  }, [currentChatID]);
+  // Only the chat's owner changes its settings or adds a review quiz to it:
+  // dev "all chats" / view-as mode must never write into a student's chat.
+  const canWritePractice = !!currentUser?.uid && !viewAllChatsMode &&
+    practiceOwner?.chatId === currentChatID && practiceOwner.uid === currentUser.uid;
+  const practiceItems = useMemo(() => collectPracticeItems(chatMessages), [chatMessages]);
+  const practiceNext = useMemo(() => nextPractice(buildCoverage(practiceItems, practiceProfile?.sourceTopics || [])),
+    [practiceItems, practiceProfile?.sourceTopics]);
+  const latestDebriefId = useMemo(() => {
+    for (let i = chatMessages.length - 1; i >= 0; i -= 1) if (chatMessages[i].type === 'practice_debrief') return chatMessages[i].id;
+    return null;
+  }, [chatMessages]);
+  const handlePracticeProfileChange = useCallback(async profile => {
+    setPracticeProfile(profile);
+    await savePracticeProfile(currentChatID, profile);
+  }, [currentChatID]);
+  // "Redo my mistakes": the stored questions she missed, replayed verbatim in
+  // a new quiz in this chat. No generation, so no new key and no allowance.
+  const handleRedoMistakes = useCallback(async review => {
+    const title = t('practiceNext.reviewTitle', { topic: review.topic });
+    const id = await createReviewQuiz(currentChatID, review.questions, title);
+    openFocusedQuiz(id);
+    return id;
+  }, [currentChatID, openFocusedQuiz, t]);
+
   const handleSessionComplete = useCallback(async ({ messageId, questionCount, saved = Promise.resolve() }) => {
     const chatId = currentChatIDRef.current;
     const key = `${chatId}:${messageId}:${questionCount}`;
@@ -4801,7 +4836,8 @@ const ChatInterface = ({
           onCopyCreated={id => { copiedPracticeChat.current = id; closeFocusedQuiz(); onChatSelected(id); }}
           message={chatMessages.find(m => m.id === focusedQuizId)} visible={quizFocused && !isStudyMode} launchOrigin={practiceOrigin}
           onPracticeChange={practice => setChatMessages(previous => previous.map(message => message.id === focusedQuizId ? { ...message, practice } : message))}
-          onExit={closeFocusedQuiz} onSessionComplete={handleSessionComplete} />
+          onExit={closeFocusedQuiz} onSessionComplete={handleSessionComplete}
+          practiceProfile={practiceProfile} onPracticeProfileChange={canWritePractice ? handlePracticeProfileChange : undefined} />
       )}
       <ProgressDashboard />
 
@@ -5723,6 +5759,8 @@ const ChatInterface = ({
                       onQuizExtended={handleQuizExtended}
                       onOpenPractice={openFocusedQuiz}
                       onRetryDebrief={handleSessionComplete}
+                      practiceNext={message.id === latestDebriefId ? practiceNext : null}
+                      onRedoMistakes={canWritePractice ? handleRedoMistakes : undefined}
                       onSendMessage={stableHandleSendMessage}
                       onRetryMessage={handleRetryMessage}
                       onDeleteMessage={handleDeleteMessage}

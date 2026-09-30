@@ -213,6 +213,8 @@ const ChatMessage = ({
   onQuizExtended,
   onOpenPractice,
   onRetryDebrief,
+  practiceNext = null,
+  onRedoMistakes,
   onDeleteMessage,
   onEditMessage,
   viewAllChatsMode = false
@@ -412,7 +414,7 @@ const ChatMessage = ({
 
       {/* Content */}
       <div className="message-content" data-selectable="true">
-        {message.type === 'practice_debrief' && <PracticeDebrief message={message} onSendMessage={onSendMessage} onRetry={onRetryDebrief} />}
+        {message.type === 'practice_debrief' && <PracticeDebrief message={message} onSendMessage={onSendMessage} onRetry={onRetryDebrief} next={practiceNext} onRedoMistakes={onRedoMistakes} />}
         {/* Delete Button (Dev Mode + View All Chats Only) */}
         {isDevelopment && viewAllChatsMode && isHovered && onDeleteMessage && !message.isStreaming && (
           <button

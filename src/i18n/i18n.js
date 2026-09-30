@@ -12,7 +12,11 @@ const resources = {
       'practiceEntry.note': 'a little practice on…',
       'practiceEntry.fromQuestions': 'From your questions',
       'practiceEntry.help': 'A hint if you need one',
-      practiceEntry: { label: 'Quiz practice', title: 'A little practice, a clearer mind', ready_one: '{{count}} question ready', ready_other: '{{count}} questions ready', tutor: 'Tutor included', preparing: 'Preparing your questions…', progress: 'Questions answered', saved: 'Your place is saved', pace: 'At your own pace', start: 'Start practice', resume: 'Resume practice', open: 'Open practice', review: 'Review practice' },
+      practiceEntry: { label: 'Quiz practice', title: 'A little practice, a clearer mind', ready_one: '{{count}} question ready', ready_other: '{{count}} questions ready', tutor: 'Tutor included', preparing: 'Preparing your questions…', progress: 'Questions answered', saved: 'Your place is saved', pace: 'At your own pace', start: 'Start practice', resume: 'Resume practice', open: 'Open practice', review: 'Review practice', noteSet: 'a {{count}}-question practice on…', readyOf: '{{loaded}} of {{count}} ready · more load as you go' },
+      // Practice settings remembered per chat (practiceProfileModel.js) and the
+      // next-step line under a practice review (practiceCoverageModel.js).
+      practiceProfile: { aria: 'Practice settings remembered for this chat', fromFile: 'From {{name}}', fromFiles: 'From your {{count}} files', fromNotes: 'From your pasted notes', formats: '{{list}}', noOrdering: 'no ordering questions', emphasis: '{{text}}', difficulty: { easy: 'easier', medium: 'medium difficulty', hard: 'harder' }, format: { mcq: 'Multiple choice', sata: 'Select all', casestudy: 'Ordering' }, adjust: 'Adjust', done: 'Done', typesHeading: 'Question types', difficultyHeading: 'Difficulty', level: { easy: 'Easier', medium: 'Medium', hard: 'Harder' }, lastFormat: 'Keep at least one question type.', saved: 'Saved for this chat. New questions follow it.', saveFailed: 'That change could not be saved. Try again.' },
+      practiceNext: { both_one: 'You missed {{count}} question on {{weak}} and haven’t practised {{fresh}} yet.', both_other: 'You missed {{count}} questions on {{weak}} and haven’t practised {{fresh}} yet.', weak_one: 'You missed {{count}} question on {{weak}}.', weak_other: 'You missed {{count}} questions on {{weak}}.', fresh: 'You haven’t practised {{fresh}} yet.', redo_one: 'Redo my mistake', redo_other: 'Redo my {{count}} mistakes', practise: 'Practise {{topic}}', preparing: 'Preparing…', failed: 'Those questions could not be opened. Try again.', reviewTitle: 'Mistakes to redo: {{topic}}', focusPrompt: 'Create a short targeted practice on: {{topic}}' },
       // NCLEX — the standalone prep surface (src/Components/Nclex).
       // Every string here also exists in the fr tree below; a missing French
       // key silently falls back to English, which reads as a bug to a
@@ -215,13 +219,13 @@ const resources = {
         close: "Close"
       },
       usageBadge: {
-        title: "Questions left — refills every week",
+        title: "Questions left — refills every month",
         blockedTitle: "Out of questions — resets soon, or upgrade to skip the wait",
         resetsIn: "Resets in {{time}}",
         remaining: "{{remaining}}/{{limit}} questions"
       },
       usagePanel: {
-        tooltip: "Questions used — refills every week",
+        tooltip: "Questions used — refills every month",
         upgradeTitle: "Upgrade to Pro",
         upgrade: "Upgrade",
         proUnlimited: "Pro · Unlimited",
@@ -239,7 +243,7 @@ const resources = {
         subscribed: "Subscribed",
         notSubscribed: "Not subscribed",
         proDetail: "Unlimited questions, uploads, and reviews.",
-        freeDetail: "{{used}} of {{limit}} questions used this week.",
+        freeDetail: "{{used}} of {{limit}} questions used this month.",
         freeBlocked: "Out of questions — next batch in {{time}}.",
         upgrade: "Upgrade to Pro",
         upgradeShort: "Upgrade",
@@ -2454,9 +2458,9 @@ const resources = {
         examTomorrow: "Your exam is tomorrow",
         examInDays: "{{count}} days until your exam",
         answeredSoFar: "{{count}} questions answered so far",
-        outOfQuestions: "You have used your free questions for this week.",
+        outOfQuestions: "You have used your free questions for this month.",
         unlockUnlimited: "Unlock unlimited drilling",
-        remainingQuestions: "{{count}} questions left this week"
+        remainingQuestions: "{{count}} questions left this month"
       },
       exam: {
         configTitle: "Mini-Test",
@@ -2483,7 +2487,7 @@ const resources = {
         optional: "optional",
         customPlaceholder: "e.g. \"My professor focuses on prioritization\" or \"Include drug calculations\"",
         graceNote: "You have {{remaining}} free questions left right now and this mini-test needs {{count}}. We’ll build the full test anyway — your success comes first.",
-        graceUpgrade: "Free questions refill every week · Go unlimited with Pro",
+        graceUpgrade: "Free questions refill every month · Go unlimited with Pro",
         startExam: "Start Mini-Test",
         generating: "Building your mini-test...",
         generatingHint: "Generating {{count}} questions with mixed formats",
@@ -2515,7 +2519,9 @@ const resources = {
       'practiceEntry.note': 'un peu de pratique sur…',
       'practiceEntry.fromQuestions': 'À partir de tes questions',
       'practiceEntry.help': 'Un indice si tu en as besoin',
-      practiceEntry: { label: 'Quiz d’entraînement', title: 'Un peu de pratique pour y voir plus clair', ready_one: '{{count}} question prête', ready_other: '{{count}} questions prêtes', tutor: 'Tuteur inclus', preparing: 'Préparation des questions…', progress: 'Questions répondues', saved: 'Ta progression est sauvegardée', pace: 'À ton rythme', start: 'Commencer', resume: 'Reprendre', open: 'Ouvrir le quiz', review: 'Revoir le quiz' },
+      practiceEntry: { label: 'Quiz d’entraînement', title: 'Un peu de pratique pour y voir plus clair', ready_one: '{{count}} question prête', ready_other: '{{count}} questions prêtes', tutor: 'Tuteur inclus', preparing: 'Préparation des questions…', progress: 'Questions répondues', saved: 'Ta progression est sauvegardée', pace: 'À ton rythme', start: 'Commencer', resume: 'Reprendre', open: 'Ouvrir le quiz', review: 'Revoir le quiz', noteSet: 'une pratique de {{count}} questions sur…', readyOf: '{{loaded}} sur {{count}} prêtes · la suite arrive au fil des réponses' },
+      practiceProfile: { aria: 'Réglages d’entraînement mémorisés pour cette conversation', fromFile: 'D’après {{name}}', fromFiles: 'D’après tes {{count}} fichiers', fromNotes: 'D’après tes notes collées', formats: '{{list}}', noOrdering: 'pas de questions à remettre en ordre', emphasis: '{{text}}', difficulty: { easy: 'plus facile', medium: 'difficulté moyenne', hard: 'plus difficile' }, format: { mcq: 'Choix multiple', sata: 'Sélection multiple', casestudy: 'Remise en ordre' }, adjust: 'Modifier', done: 'Terminé', typesHeading: 'Types de questions', difficultyHeading: 'Difficulté', level: { easy: 'Plus facile', medium: 'Moyenne', hard: 'Plus difficile' }, lastFormat: 'Garde au moins un type de question.', saved: 'Enregistré pour cette conversation. Les prochaines questions le suivront.', saveFailed: 'Ce changement n’a pas pu être enregistré. Réessaie.' },
+      practiceNext: { both_one: 'Tu as manqué {{count}} question sur {{weak}} et tu n’as pas encore pratiqué {{fresh}}.', both_other: 'Tu as manqué {{count}} questions sur {{weak}} et tu n’as pas encore pratiqué {{fresh}}.', weak_one: 'Tu as manqué {{count}} question sur {{weak}}.', weak_other: 'Tu as manqué {{count}} questions sur {{weak}}.', fresh: 'Tu n’as pas encore pratiqué {{fresh}}.', redo_one: 'Refaire mon erreur', redo_other: 'Refaire mes {{count}} erreurs', practise: 'Pratiquer {{topic}}', preparing: 'Préparation…', failed: 'Impossible d’ouvrir ces questions. Réessaie.', reviewTitle: 'Erreurs à refaire : {{topic}}', focusPrompt: 'Crée une courte pratique ciblée sur : {{topic}}' },
       // NCLEX — surface autonome de préparation (src/Components/Nclex).
       nclex: {
         brandTag: "NCLEX",
@@ -2709,13 +2715,13 @@ const resources = {
         close: "Fermer"
       },
       usageBadge: {
-        title: "Questions restantes — recharge chaque semaine",
+        title: "Questions restantes — recharge chaque mois",
         blockedTitle: "Plus de questions — réinitialisation bientôt, ou passe en Pro pour éviter l'attente",
         resetsIn: "Réinitialisation dans {{time}}",
         remaining: "{{remaining}}/{{limit}} questions"
       },
       usagePanel: {
-        tooltip: "Questions utilisées — recharge chaque semaine",
+        tooltip: "Questions utilisées — recharge chaque mois",
         upgradeTitle: "Passer à Pro",
         upgrade: "Devenir Pro",
         proUnlimited: "Pro · Illimité",
@@ -2733,7 +2739,7 @@ const resources = {
         subscribed: "Abonné(e)",
         notSubscribed: "Non abonné(e)",
         proDetail: "Questions, téléversements et révisions illimités.",
-        freeDetail: "{{used}} questions sur {{limit}} utilisées cette semaine.",
+        freeDetail: "{{used}} questions sur {{limit}} utilisées ce mois-ci.",
         freeBlocked: "Plus de questions — prochaine recharge dans {{time}}.",
         upgrade: "Passer à Pro",
         upgradeShort: "Devenir Pro",
@@ -4880,9 +4886,9 @@ const resources = {
         examTomorrow: "Ton examen est demain",
         examInDays: "{{count}} jours avant ton examen",
         answeredSoFar: "{{count}} questions répondues jusqu'ici",
-        outOfQuestions: "Tu as utilisé tes questions gratuites pour cette semaine.",
+        outOfQuestions: "Tu as utilisé tes questions gratuites pour ce mois-ci.",
         unlockUnlimited: "Débloquer l'entraînement illimité",
-        remainingQuestions: "{{count}} questions restantes cette semaine"
+        remainingQuestions: "{{count}} questions restantes ce mois-ci"
       },
       // Examen — mini-test à la fin de chaque section
       exam: {
@@ -4910,7 +4916,7 @@ const resources = {
         optional: "optionnel",
         customPlaceholder: "ex. « Mon prof se concentre sur la priorisation » ou « Inclure des calculs de dosage »",
         graceNote: "Il te reste {{remaining}} questions gratuites en ce moment et ce mini-test en demande {{count}}. On le génère quand même au complet — ta réussite passe en premier.",
-        graceUpgrade: "Tes questions gratuites se rechargent chaque semaine · Passe à Pro pour l'illimité",
+        graceUpgrade: "Tes questions gratuites se rechargent chaque mois · Passe à Pro pour l'illimité",
         startExam: "Commencer le mini-test",
         generating: "Préparation de ton mini-test...",
         generatingHint: "Génération de {{count}} questions en formats mixtes",

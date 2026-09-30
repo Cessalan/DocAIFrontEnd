@@ -114,7 +114,7 @@ describe('DrillCheckpoint', () => {
     render(
       <DrillCheckpoint checkpoint={gapped()} onContinue={() => {}} onExit={() => {}} canContinue={false} />
     );
-    expect(screen.getByText('You have used your free questions for this week.')).toBeInTheDocument();
+    expect(screen.getByText('You have used your free questions for this month.')).toBeInTheDocument();
     expect(screen.getByText('Unlock unlimited drilling')).toBeInTheDocument();
     expect(screen.queryByText('Keep drilling')).toBeNull();
   });
@@ -124,11 +124,11 @@ describe('DrillCheckpoint', () => {
     const free = render(
       <DrillCheckpoint checkpoint={cp} onContinue={() => {}} onExit={() => {}} remaining={12} />
     );
-    expect(screen.getByText('12 questions left this week')).toBeInTheDocument();
+    expect(screen.getByText('12 questions left this month')).toBeInTheDocument();
     free.unmount();
 
     render(<DrillCheckpoint checkpoint={cp} onContinue={() => {}} onExit={() => {}} remaining={Infinity} />);
-    expect(screen.queryByText(/questions left this week/)).toBeNull();
+    expect(screen.queryByText(/questions left this month/)).toBeNull();
   });
 
   it('renders nothing without a checkpoint', () => {

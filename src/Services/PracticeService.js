@@ -1,5 +1,5 @@
 import { auth, db } from '../Firebase/config';
-import { doc, setDoc, getDocs, collection, query, where, limit, writeBatch, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, getDocs, collection, query, where, limit, writeBatch, serverTimestamp, onSnapshot } from 'firebase/firestore';
 import { API_BASE_URL } from './config';
 
 async function headers() {
@@ -64,4 +64,34 @@ export async function savePractice(chatId, messageId, practice) {
   const matches = await getDocs(query(collection(db, 'chats', chatId, 'messages'), where('id', '==', messageId), limit(1)));
   const ref = matches.empty ? doc(db, 'chats', chatId, 'messages', messageId) : matches.docs[0].ref;
   await setDoc(ref, { practice: JSON.parse(JSON.stringify(practice)) }, { merge: true });
+}
+
+// The chat's remembered practice settings (see practiceProfileModel.js). The
+// backend writes them as she talks; this keeps the settings line current
+// without a reload. Resolves to null when the chat has none yet.
+export function subscribePracticeProfile(chatId, onChange) {
+  if (!chatId) return () => {};
+  return onSnapshot(doc(db, 'chats', chatId),
+    snapshot => onChange(snapshot.exists() ? snapshot.data().practiceProfile || null : null),
+    () => onChange(null));
+}
+
+// A change she makes by hand in the settings line. Merged, so the fields the
+// backend owns (source, scope, topics) are left as they are.
+export async function savePracticeProfile(chatId, profile) {
+  await setDoc(doc(db, 'chats', chatId), { practiceProfile: JSON.parse(JSON.stringify(profile)) }, { merge: true });
+}
+
+// "Redo my mistakes": the questions she missed, replayed exactly as stored.
+// Nothing is generated, so the stem, options and key are the ones she already
+// saw (a regenerated question could come back keyed differently), and no
+// question allowance is used. requestedTotal equals the count so the quiz
+// never tries to grow into new material.
+export async function createReviewQuiz(chatId, questions, topic) {
+  const ref = doc(collection(db, 'chats', chatId, 'messages'));
+  const clean = JSON.parse(JSON.stringify(questions.map(({ userSelection, ...question }) => question)));
+  await setDoc(ref, { id: ref.id, role: 'assistant', type: 'quiz', quizTopic: topic, quizData: clean,
+    expectedTotal: clean.length, requestedTotal: clean.length, reviewOfMistakes: true,
+    practice: { settings: { requested_total: clean.length } }, timestamp: serverTimestamp() });
+  return ref.id;
 }

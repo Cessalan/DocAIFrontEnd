@@ -2,7 +2,7 @@
  * UsageService.js
  * Frontend usage throttle for AI generations (monetization gate).
  *
- * Model: a rolling 7-day window. Free users get FREE_LIMIT *questions*
+ * Model: a rolling 30-day window. Free users get FREE_LIMIT *questions*
  * per window; when the window has elapsed the bucket refills automatically.
  * Pro users (usage.tier === 'pro') are unlimited.
  *
@@ -58,11 +58,17 @@ import { devLog } from './devLogger';
  * engaged student. Consequence to keep in mind: the plan quota is retired as a
  * live gate even further, since 40 units runs out long before 3 plans do.
  *
+ * Changed 2026-09-29 to 50 per rolling 30 DAYS (owner's call). Over a month
+ * that is far tighter than 40 a week (~170), while the first sitting gets
+ * slightly more room (50 vs 40) — so the wall still lands after real use of
+ * one course, but a student who comes back next week no longer starts over.
+ *
  * NQBackEnd2 `services/usage_guard.py` holds its own FREE_LIMIT and re-checks
- * this on the server — change both together.
+ * this on the server — change both together. The public SEO pages state the
+ * number in body copy and FAQ structured data.
  */
-export const FREE_LIMIT = 40;                      // questions (items) per window for free tier
-export const WINDOW_MS = 7 * 24 * 60 * 60 * 1000;  // rolling window length (7 days)
+export const FREE_LIMIT = 50;                       // questions (items) per window for free tier
+export const WINDOW_MS = 30 * 24 * 60 * 60 * 1000;  // rolling window length (30 days)
 
 /**
  * Dev-only limit override, so the throttle can be exercised without burning
@@ -105,9 +111,9 @@ export const setDevFreeLimitOverride = (n) => {
 export const getFreeLimit = () => getDevFreeLimitOverride() ?? FREE_LIMIT;
 
 /**
- * Format a reset countdown for display. Day-aware since the window is 7 days:
+ * Format a reset countdown for display. Day-aware since the window is 30 days:
  * "6d 4h" at day scale, "2:14:09" under 24 hours, "14:09" under an hour.
- * A ticking seconds display is meaningless a week out, so days round up to
+ * A ticking seconds display is meaningless weeks out, so days round up to
  * the next hour and stop ticking; the shorter forms keep the live countdown
  * that made the old 3-hour window feel immediate.
  * Shared by UsageBadge, UsagePanel and UpgradeModal.

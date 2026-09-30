@@ -7,6 +7,8 @@ import StudyQuizCard from '../StudyMode/StudyQuizCard';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { askPracticeTutor, savePractice, streamPracticeBatch, copyPracticeToOwnChat } from '../../Services/PracticeService';
 import { appendUniqueQuestions, initialPracticeSettings, normalizePracticeQuestion, permittedTotal } from './practiceModel';
+import { settingsWithProfile } from './practiceProfileModel';
+import PracticeSettingsLine from './PracticeSettingsLine';
 import '../StudyMode/StudyMode.css';
 import './FocusedQuiz.css';
 
@@ -18,7 +20,8 @@ export function PracticeShimmer() {
   return <PaperShimmer className="practice-shimmer" />;
 }
 
-export default function FocusedQuiz({ message, chatId, visible, onExit, onPracticeChange, readOnly = false, onCopyCreated, launchOrigin, onSessionComplete }) {
+export default function FocusedQuiz({ message, chatId, visible, onExit, onPracticeChange, readOnly = false, onCopyCreated, launchOrigin, onSessionComplete,
+  practiceProfile = null, onPracticeProfileChange }) {
   const { i18n, t } = useTranslation();
   const { remaining, isPro, refresh, openUpgrade } = useUsageLimit();
   const [practice, setPractice] = useState(() => ({ questions: [], answers: {}, discussions: {}, ...message.practice, settings: initialPracticeSettings(message) }));
@@ -78,6 +81,15 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   const current = questions[questionIndex];
   const history = practice.discussions?.[questionIndex] || [];
   const settingsRef = useRef(practice.settings); settingsRef.current = practice.settings;
+  // The chat's remembered settings (practiceProfileModel.js) steer this quiz's
+  // next batch too: "no ordering" said in chat after this quiz was generated
+  // still applies when it grows. The backend applies them again regardless.
+  useEffect(() => {
+    if (readOnly || !practiceProfile) return;
+    const next = settingsWithProfile(settingsRef.current, practiceProfile);
+    if (JSON.stringify(next) === JSON.stringify(settingsRef.current)) return;
+    settingsRef.current = next; update({ settings: next });
+  }, [practiceProfile, readOnly, update]);
   const questionRef = useRef(questions); questionRef.current = questions;
   const quotaRef = useRef({ remaining, isPro }); quotaRef.current = { remaining, isPro };
   const onContext = useCallback(context => setActive(previous => {
@@ -168,7 +180,8 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   return createPortal(<section ref={paper.ref} className={`focused-quiz study-mode-container paper-sheet ${isCase ? 'has-case has-tutor' : tutorOpen ? 'has-tutor' : ''} ${paper.className}`} hidden={!visible} inert={closing ? true : undefined} data-paper={paper.mode} aria-label="Focused quiz practice"
     onAnimationEnd={paper.handleAnimationEnd}>
     <PaperSurface mode={paper.mode} />
-    <header className="practice-header paper-page"><div><strong>{message.quizTopic || 'Your practice'}</strong><span>{loaded} ready · {target} questions{!isPro ? ` · ${remaining} remaining in your allowance` : ''}</span></div>
+    <header className="practice-header paper-page"><div><strong>{message.quizTopic || 'Your practice'}</strong><span>{loaded} ready · {target} questions{!isPro ? ` · ${remaining} remaining in your allowance` : ''}</span>
+      <PracticeSettingsLine profile={practiceProfile} guess={practice.settings.question_types} onChange={onPracticeProfileChange} readOnly={readOnly} /></div>
       <button type="button" onClick={closePractice}>← Back to chat</button></header>
     {notice && <div className="practice-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss notice">×</button></div>}
     {readOnly && <div className="practice-notice">This is another user's conversation. Make your own copy to answer and discuss it. Uploaded source files are not copied.
