@@ -2,6 +2,7 @@ import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { appendUniqueQuestions, practiceTarget } from './practiceModel';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
+import PrintQuizButton from './PrintQuizButton';
 import './PracticeLaunchCard.css';
 
 export default function PracticeLaunchCard({ message, questions = [], onOpen }) {
@@ -27,9 +28,9 @@ export default function PracticeLaunchCard({ message, questions = [], onOpen }) 
     {!topic && all[0]?.question && <p className="practice-entry-preview">{all[0].question}</p>}
     <p className="practice-entry-detail">{message.isStreaming ? t('practiceEntry.preparing', 'Preparing your questions…') : growing ? t('practiceEntry.readyOf', { defaultValue: '{{loaded}} of {{count}} ready · more load as you go', loaded: all.length, count: target }) : t('practiceEntry.ready', { defaultValue: '{{count}} questions ready', count: all.length })}</p>
     {started && <div className="practice-entry-progress"><div className="practice-entry-track" role="progressbar" aria-label={t('practiceEntry.progress', 'Questions answered')} aria-valuemin={0} aria-valuemax={target} aria-valuenow={answered}><span style={{ width: `${target ? answered / target * 100 : 0}%` }} /></div><span>{answered}/{target}</span></div>}
-    <div className="practice-entry-footer"><span>{started ? t('practiceEntry.saved', 'Your place is saved') : t('practiceEntry.help', 'A hint if you need one')}</span><button type="button" onClick={event => {
+    <div className="practice-entry-footer"><span>{started ? t('practiceEntry.saved', 'Your place is saved') : t('practiceEntry.help', 'A hint if you need one')}</span><div className="practice-entry-actions">{!message.isStreaming && <PrintQuizButton questions={all} answers={message.practice?.answers} topic={topic} />}<button type="button" onClick={event => {
       const { left, top, width, height } = event.currentTarget.closest('.practice-entry').getBoundingClientRect();
       onOpen(message.id, { left, top, width, height });
-    }}>{label}<svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 10h12m-5-5 5 5-5 5"/></svg></button></div>
+    }}>{label}<svg aria-hidden="true" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6"><path d="M4 10h12m-5-5 5 5-5 5"/></svg></button></div></div>
   </section>;
 }

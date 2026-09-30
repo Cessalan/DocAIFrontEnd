@@ -29,6 +29,10 @@ body.dark-mode .practice-entry,[data-theme="dark"] .practice-entry,.dark .practi
 .practice-entry-footer>span { font-size:12px; color:var(--entry-muted); }
 .practice-entry .practice-entry-footer button { display:inline-flex; align-items:center; justify-content:center; gap:10px; padding:11px 15px; border:0; border-radius:10px; background:var(--entry-accent); color:var(--entry-button-ink); font-family:inherit; font-size:13px; font-weight:500; cursor:pointer; white-space:nowrap; min-height:42px; transition:filter .15s; }
 .practice-entry-footer button svg { height:16px; width:16px; }
+.practice-entry-actions { display:flex; align-items:center; gap:8px; margin-left:auto; }
+.practice-entry .practice-entry-footer .print-quiz-btn { background:transparent; color:var(--entry-muted); border:1px solid var(--entry-border); gap:7px; padding:11px 13px; }
+.practice-entry .practice-entry-footer .print-quiz-btn:hover:not(:disabled) { color:inherit; border-color:var(--entry-accent); }
+.practice-entry-footer .print-quiz-btn::after { display:none; }
 .practice-entry .practice-entry-footer button { position:relative; overflow:hidden; isolation:isolate; }
 .practice-entry-footer button::after { content:''; position:absolute; inset:-40% -30%; background:linear-gradient(110deg,transparent 38%,rgba(255,255,255,.14) 50%,transparent 62%); transform:translateX(-110%); pointer-events:none; }
 @media(hover:hover) { .practice-entry-footer button:hover::after { animation:practice-button-sheen 1.5s ease-out 1; } }
@@ -36,3 +40,4 @@ body.dark-mode .practice-entry,[data-theme="dark"] .practice-entry,.dark .practi
 @media(prefers-reduced-motion:reduce) { .practice-entry-footer button:hover::after { animation:none; } }
 .practice-entry-footer button:focus-visible { outline:2px solid var(--entry-accent); outline-offset:4px; }
 @media(max-width:480px) { .practice-entry { padding:18px; } .practice-entry-footer { flex-wrap:wrap; } }
+@media(max-width:400px) { .practice-entry-footer .print-quiz-label { display:none; } }

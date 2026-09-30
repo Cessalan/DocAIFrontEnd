@@ -455,6 +455,7 @@ const ChatInterface = ({
   // The readiness check's answers for the plan being launched, so a blocked
   // student's locked preview can show her verdict. { answers, funnelId } | null.
   const [pendingReadiness, setPendingReadiness] = useState(null);
+  const [pendingStudyImmediateStart, setPendingStudyImmediateStart] = useState(false);
   const [pendingCourseContext, setPendingCourseContext] = useState(null);
 
   // Pre-upload action selection (when user picks action before uploading)
@@ -4249,6 +4250,7 @@ const ChatInterface = ({
     // deck. Null is a supported input and reproduces the old behaviour.
     setPendingCourseIntelligence(extras.courseIntelligence || null);
     setPendingReadiness(extras.readiness || null);
+    setPendingStudyImmediateStart(Boolean(extras.startImmediately));
     if (extras.courseContext) setPendingCourseContext(extras.courseContext);
 
     // Persist the report beside the chat so a returning student's plan surface
@@ -5298,6 +5300,7 @@ const ChatInterface = ({
             setPendingRankedTopics([]);
             setPendingStudyUserPreferences(null);
             setPendingReadiness(null);
+            setPendingStudyImmediateStart(false);
           }}
           onStart={(newStudyState) => {
             devLog('📚 Study session started:', newStudyState);
@@ -5310,6 +5313,7 @@ const ChatInterface = ({
             setPendingRankedTopics([]);
             setPendingStudyUserPreferences(null);
             setPendingReadiness(null);
+            setPendingStudyImmediateStart(false);
           }}
           chatId={currentChatID}
           uploadedDocs={pendingStudyDocs}
@@ -5317,6 +5321,7 @@ const ChatInterface = ({
           rankedTopics={pendingRankedTopics}
           language={i18n?.language || 'en'}
           autoStart={true}
+          startImmediately={pendingStudyImmediateStart}
           userPreferences={pendingStudyUserPreferences || userProfile?.onboarding || {}}
           diagnostic={studyDiagnostic}
           courseContext={pendingCourseContext}
@@ -5552,11 +5557,12 @@ const ChatInterface = ({
                         savedQuickCheck={message.quickCheck}
                         onQuickCheckProgress={checkpoint => handleQuickCheckProgress(message.id, checkpoint)}
                         onCourseContext={handleCourseContext}
-                        onConfirm={({ userPreferences, diagnostic, rankedTopics, courseContext, courseIntelligence, readiness }) =>
+                        onConfirm={({ userPreferences, diagnostic, rankedTopics, courseContext, courseIntelligence, readiness, startImmediately }) =>
                           handlePlanOnboardingConfirm(message, userPreferences, diagnostic, rankedTopics, {
                             courseContext,
                             courseIntelligence,
                             readiness,
+                            startImmediately,
                           })
                         }
                       />

@@ -42,3 +42,11 @@ test('a small quiz keeps its original wording', () => {
   expect(screen.getByText('a little practice on…')).toBeInTheDocument();
   expect(screen.getByText('5 questions ready')).toBeInTheDocument();
 });
+
+test('the card can print the questions loaded so far, but not while they are still arriving', () => {
+  const { unmount } = render(<PracticeLaunchCard message={fiftyRequested} questions={questions} onOpen={() => {}} />);
+  expect(screen.getByRole('button', { name: 'quizPrint.buttonTitle' })).toBeInTheDocument();
+  unmount();
+  render(<PracticeLaunchCard message={{ ...fiftyRequested, isStreaming: true }} questions={questions} onOpen={() => {}} />);
+  expect(screen.queryByRole('button', { name: 'quizPrint.buttonTitle' })).toBeNull();
+});

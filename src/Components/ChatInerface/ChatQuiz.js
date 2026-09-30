@@ -4,6 +4,7 @@ import './ChatInterface.css';
 import './ChatQuizCompact.css';
 import QuizNavigation from './QuizNavigation';
 import ShareQuizButton from './ShareQuizButton';
+import PrintQuizButton from './PrintQuizButton';
 import SATAQuestion from './SATAQuestion';
 import CaseStudyQuestion from './CaseStudyQuestion';
 import UnfoldingCaseStudy from './UnfoldingCaseStudy';
@@ -680,6 +681,7 @@ function ChatQuiz(props) {
               userResults={userResultsForSharing}
               disabled={false}
             />
+            <PrintQuizButton questions={allQuizzes} answers={Object.fromEntries(userAnswers.map(a => [a.quizIndex, a]))} topic={quiz?.topic} />
             <button
               className="quiz-modal-close"
               onClick={handleCloseModal}

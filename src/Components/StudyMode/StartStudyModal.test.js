@@ -2,8 +2,8 @@ import React from 'react';
 import { render, screen, fireEvent, act } from '@testing-library/react';
 import '../../i18n/i18n';
 import StartStudyModal from './StartStudyModal';
-import { start_study_journey } from '../../Services/FastAPICalls';
-import { waitForQuickCheckSave } from '../../Services/StudySessionService';
+import { start_study_journey, plan_study_path } from '../../Services/FastAPICalls';
+import { waitForQuickCheckSave, createStudySession } from '../../Services/StudySessionService';
 
 jest.mock('../../Services/FastAPICalls', () => ({
   plan_study_path: jest.fn(),
@@ -50,6 +50,58 @@ beforeEach(() => {
     openUpgrade: jest.fn(),
     refresh: jest.fn(),
   };
+});
+
+describe('an accepted quick-check plan opens the first activity', () => {
+  const path = { nodes: [{ id: 'lesson-1', type: 'lesson', label: 'Cardiac', status: 'todo' }], archetype: 'focus' };
+  const state = { path, activeNodeId: 'lesson-1' };
+
+  test('commits once and hands off immediately without another confirmation', async () => {
+    const onStart = jest.fn();
+    start_study_journey.mockReturnValue({ planPromise: Promise.resolve(path) });
+    createStudySession.mockResolvedValue(state);
+    render(<StartStudyModal {...props} startImmediately onStart={onStart} />);
+    await act(async () => { await Promise.resolve(); });
+    expect(createStudySession).toHaveBeenCalledTimes(1);
+    expect(createStudySession).toHaveBeenCalledWith('c1', path, ['d1']);
+    expect(mockUsage.requirePlanQuota).toHaveBeenCalledTimes(1);
+    expect(mockUsage.consumePlan).toHaveBeenCalledTimes(1);
+    expect(onStart).toHaveBeenCalledWith(state);
+    expect(screen.queryByText('Start my first activity')).toBeNull();
+  });
+
+  test('also starts immediately when generation uses the fallback', async () => {
+    start_study_journey.mockReturnValue({ planPromise: Promise.reject(new Error('stream interrupted')) });
+    plan_study_path.mockResolvedValue(path);
+    createStudySession.mockResolvedValue(state);
+    const onStart = jest.fn();
+    render(<StartStudyModal {...props} startImmediately onStart={onStart} />);
+    await act(async () => { await Promise.resolve(); });
+    expect(onStart).toHaveBeenCalledWith(state);
+    expect(createStudySession).toHaveBeenCalledTimes(1);
+  });
+
+  test('does not create a session if the student closes while generation is running', async () => {
+    let finish;
+    start_study_journey.mockReturnValue({ planPromise: new Promise(resolve => { finish = resolve; }) });
+    const onStart = jest.fn();
+    render(<StartStudyModal {...props} startImmediately onStart={onStart} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    await act(async () => { finish(path); });
+    expect(createStudySession).not.toHaveBeenCalled();
+    expect(mockUsage.consumePlan).not.toHaveBeenCalled();
+    expect(onStart).not.toHaveBeenCalled();
+  });
+
+  test('rechecks the plan allowance before committing an accepted plan', async () => {
+    start_study_journey.mockReturnValue({ planPromise: Promise.resolve(path) });
+    mockUsage.requirePlanQuota.mockReturnValue(false);
+    render(<StartStudyModal {...props} startImmediately />);
+    await act(async () => { await Promise.resolve(); });
+    expect(createStudySession).not.toHaveBeenCalled();
+    expect(mockUsage.consumePlan).not.toHaveBeenCalled();
+    expect(await screen.findByText('Get my full plan with Pro')).toBeInTheDocument();
+  });
 });
 
 describe('StartStudyModal — the locked verdict button', () => {

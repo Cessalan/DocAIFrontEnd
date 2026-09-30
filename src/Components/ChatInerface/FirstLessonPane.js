@@ -67,6 +67,9 @@ const FirstLessonPane = ({
   contextTags = [],
   language = 'en',
   onDone,
+  // The practice-first onboarding returns to its existing five questions.
+  // It must not generate this legacy pane's separate two-question check.
+  lessonOnly = false,
 }) => {
   const { t } = useTranslation();
   const { consume } = useUsageLimit();
@@ -88,7 +91,11 @@ const FirstLessonPane = ({
   // nothing useful.
   const firstAttemptRef = useRef({});
 
-  useEffect(() => () => { cancelledRef.current = true; }, []);
+  useEffect(() => {
+    // StrictMode reuses the first request after its setup/cleanup probe.
+    cancelledRef.current = false;
+    return () => { cancelledRef.current = true; };
+  }, []);
 
   /**
    * Any failure to produce content — including a server-side quota refusal —
@@ -152,6 +159,10 @@ const FirstLessonPane = ({
   // ── Quick check ──────────────────────────────────────────────────────
   const startQuickCheck = useCallback(() => {
     logFunnelStep(FUNNEL.FIRST_LESSON_COMPLETED, { topic });
+    if (lessonOnly) {
+      onDone?.({ topic, explained: true });
+      return;
+    }
     logFunnelStep(FUNNEL.QUICK_CHECK_STARTED, { topic });
     setStep('quickcheck');
     setQuiz({ questions: [], _isStreaming: true, _expectedTotal: QUICK_CHECK_QUESTIONS });
@@ -196,7 +207,7 @@ const FirstLessonPane = ({
       })
       .catch(err => handleFailure(err, 'quickcheck'));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [chatId, topic, language, consume, handleFailure]);
+  }, [chatId, topic, language, consume, handleFailure, lessonOnly, onDone]);
 
   /**
    * StudyQuizCard reports progress per answer and calls onContinue with no
@@ -234,7 +245,7 @@ const FirstLessonPane = ({
           className="first-lesson__skip first-lesson__skip--primary"
           onClick={() => onDone && onDone({ skipped: true, reason: error })}
         >
-          {t('firstLesson.continueToPlan')}
+          {t(lessonOnly ? 'courseStudio.returnToPractice' : 'firstLesson.continueToPlan')}
         </button>
       </div>
     );
@@ -277,7 +288,7 @@ const FirstLessonPane = ({
           // teaching and the questions that check it.
           skipCelebration
           onContinue={startQuickCheck}
-          onExit={startQuickCheck}
+          onExit={lessonOnly ? () => onDone?.({ topic, skipped: true }) : startQuickCheck}
         />
       )}
     </div>

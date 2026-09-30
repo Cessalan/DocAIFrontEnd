@@ -19,7 +19,7 @@ const answers = [
 it('uses actual partial-answer evidence and hides secondary findings until expanded', () => {
   render(<QuickCheckFindings answers={answers} lead={{ topic: 'Topic A', revisit: ['Concept A'] }} />);
   expect(screen.getByRole('heading', { name: 'You’re getting parts of the select-all questions right.' })).toBeInTheDocument();
-  expect(screen.getByText(/some correct answers on 3 select-all questions/)).toBeInTheDocument();
+  expect(screen.getByText('0 of 3 fully right, partly right on 3')).toBeInTheDocument();
   const summary = screen.getByText('See all findings · 2 more');
   expect(screen.getByText('Missed all 4')).not.toBeVisible();
   fireEvent.click(summary);

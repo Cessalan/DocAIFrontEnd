@@ -4,7 +4,7 @@ import { plannerTopics, priorityRows } from './courseIntelligenceModel';
 const canonical = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
 /* ── The readiness check (2026-09-16) ─────────────────────────────────────
-   Up to eight questions in the formats that separate ready from not-ready:
+   Five questions to give the student useful practice before choosing a plan:
    applied and prioritization (single answer), select-all, and case studies.
    Buyers score ~97% on multiple choice and 22-50% on the others, so a check
    made of multiple choice alone tells nearly everyone she is ready.
@@ -12,7 +12,7 @@ const canonical = (value) => String(value || '').trim().replace(/\s+/g, ' ').toL
    The backend (course_question_preview.py) sends `format` on every question.
    A question without one is the older multiple-choice shape — the fallback
    /study/diagnostic-quiz still produces those — and is read as `mcq`. */
-export const READINESS_QUESTION_CAP = 8;
+export const READINESS_QUESTION_CAP = 5;
 export const CHECK_FORMATS = ['mcq', 'sata', 'casestudy'];
 const SATA_MIN_OPTIONS = 4;
 const SATA_MAX_OPTIONS = 6;

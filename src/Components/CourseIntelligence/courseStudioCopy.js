@@ -1,4 +1,15 @@
 export const courseStudioEn = {
+  explainFirst: 'Explain first',
+  practiceIntro: 'Try {{count}} questions from your notes. Your answers will help us choose what to work on first. An explanation is here if you need it.',
+  returnToPractice: 'Return to practice',
+  explainHeading: 'Let’s go over {{topic}}',
+  explainHint: 'Read a short explanation, then try the same practice questions. Your place is saved.',
+  planOffer: 'We’ll work on this first, then continue through the other topics in your notes.',
+  materialsOffer: 'We’ll begin with {{topic}} from your notes. Your answers during the plan will help us adjust it.',
+  optionalExamDate: 'Add exam date (optional)',
+  startPlan: 'Start my plan',
+  startingPlan: 'Starting your plan…',
+  startPlanHint: 'Go straight to your first activity. You can see the full plan as you study.',
   uploadPlanTitle: 'Find out what to review in your course notes',
   uploadPlanSubtitle: 'A short practice quiz based on your material will help you see what to review first.',
   uploadProgress: 'Preparing your quick check',
@@ -106,6 +117,17 @@ export const courseStudioEn = {
 };
 
 export const courseStudioFr = {
+  explainFirst: 'Expliquer d’abord',
+  practiceIntro: 'Essayez {{count}} questions tirées de vos notes. Vos réponses nous aideront à choisir quoi travailler en premier. Une explication est disponible au besoin.',
+  returnToPractice: 'Revenir aux questions',
+  explainHeading: 'Revoyons {{topic}}',
+  explainHint: 'Lisez une courte explication, puis essayez les mêmes questions. Votre place est sauvegardée.',
+  planOffer: 'Nous travaillerons ce point en premier, puis aborderons les autres sujets de vos notes.',
+  materialsOffer: 'Nous commencerons par {{topic}} dans vos notes. Vos réponses pendant le parcours nous aideront à l’ajuster.',
+  optionalExamDate: 'Ajouter la date de l’examen (facultatif)',
+  startPlan: 'Commencer mon parcours',
+  startingPlan: 'Démarrage de votre parcours…',
+  startPlanHint: 'Passez directement à votre première activité. Le parcours complet reste accessible pendant vos révisions.',
   uploadPlanTitle: 'Découvrez quoi réviser dans vos notes de cours',
   uploadPlanSubtitle: 'Un court quiz basé sur vos documents vous aidera à savoir quoi réviser en premier.',
   uploadProgress: 'Préparation de votre petit bilan',

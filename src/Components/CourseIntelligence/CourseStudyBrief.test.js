@@ -8,11 +8,17 @@ import { plan_diagnostic_quiz } from '../../Services/FastAPICalls';
 import { updateStudyPerformance, saveQuickCheckRecord } from '../../Services/StudySessionService';
 
 jest.mock('../../Services/FastAPICalls', () => ({ plan_diagnostic_quiz: jest.fn() }));
+jest.mock('../ChatInerface/FirstLessonPane', () => props => <div>
+  <span>Explanation of {props.topic}</span>
+  <button onClick={() => props.onDone({ topic: props.topic, explained: true })}>Finish explanation</button>
+</div>);
 jest.mock('../../Services/StudySessionService', () => ({ updateStudyPerformance: jest.fn().mockResolvedValue({}), saveQuickCheckRecord: jest.fn().mockResolvedValue('check') }));
 jest.mock('../../Services/FunnelService', () => ({
   FUNNEL: {
     REPORT_VIEWED: 'report_viewed', DIAGNOSTIC_STARTED: 'diagnostic_started', DIAGNOSTIC_COMPLETED: 'diagnostic_completed',
     WEAKNESS_INSIGHT_VIEWED: 'weakness_insight_viewed', REVEAL_VIEWED: 'reveal_viewed', READINESS_CHECK_STARTED: 'readiness_check_started',
+    STUDY_PLAN_OFFER_VIEWED: 'study_plan_offer_viewed', STUDY_PLAN_ACCEPTED: 'study_plan_accepted',
+    QUICK_CHECK_EXPLANATION_STARTED: 'quick_check_explanation_started',
   },
   logFunnelStep: jest.fn(), logFunnelStepOnce: jest.fn(),
 }));
@@ -49,10 +55,10 @@ it('lets the streamlined flow build without a date or a separate report', async 
   const { onStart } = mount({ streamlined: true, initialPhase: 'check' });
   await flush();
   fireEvent.click(screen.getByRole('button', { name: 'Continue with what you know about me' }));
-  expect(screen.getByRole('heading', { name: /From your notes, let’s start with/ })).toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'A clear place to begin.' })).toBeInTheDocument();
   expect(screen.queryByRole('tab', { name: /Web sources/ })).toBeNull();
   expect(screen.queryByRole('button', { name: /Build my study plan/ })).toBeNull();
-  fireEvent.click(screen.getByRole('button', { name: 'I don’t know yet' }));
+  fireEvent.click(screen.getByRole('button', { name: /Start my plan/ }));
   expect(onStart).toHaveBeenCalledTimes(1);
   expect(onStart).toHaveBeenCalledWith(expect.objectContaining({ examDate: null, diagnostic: null }));
 });
@@ -61,7 +67,7 @@ it('prepares questions from course priorities while the student reads the brief'
   mount();
   await flush();
   expect(screen.getByRole('heading', { name: 'Your course, made clearer.' })).toBeInTheDocument();
-  expect(screen.getByText('6 questions · no grades')).toBeInTheDocument();
+  expect(screen.getByText('5 questions · no grades')).toBeInTheDocument();
   expect(plan_diagnostic_quiz).toHaveBeenCalledWith('studio-chat', [], 'en', {}, expect.objectContaining({ priorityTopics: report.strategy.orderedTopics.slice(0, 3) }));
   expect(screen.queryByRole('button', { name: 'Show me my plan' })).not.toBeInTheDocument();
 });
@@ -70,12 +76,12 @@ it('turns first-attempt answers into the same recommended order handed to the pl
   const { onStart } = mount();
   await flush();
   fireEvent.click(screen.getByRole('button', { name: /Find my starting point/ }));
-  for (const [index, choice] of [0, 1, 'unsure', 'unsure', 0, 'unsure'].entries()) {
+  for (const [index, choice] of [0, 1, 'unsure', 'unsure', 0].entries()) {
     const group = screen.getByRole('group');
     const buttons = within(group).getAllByRole('button');
     fireEvent.click(choice === 'unsure' ? within(group).getByText('I’m not sure yet') : buttons[choice]);
     expect(buttons[0]).toBeDisabled();
-    fireEvent.click(screen.getByRole('button', { name: index === 5 ? /See my starting point/ : /Next question/ }));
+    fireEvent.click(screen.getByRole('button', { name: index === 4 ? /See my starting point/ : /Next question/ }));
   }
   expect(screen.getByRole('heading', { name: 'Your answers changed the starting point.' })).toBeInTheDocument();
   const list = screen.getAllByRole('list').find(node => node.classList.contains('cs-route-list'));
@@ -84,11 +90,11 @@ it('turns first-attempt answers into the same recommended order handed to the pl
   fireEvent.click(screen.getByRole('button', { name: /Build my study plan/ }));
   expect(onStart).toHaveBeenCalledTimes(1);
   expect(onStart.mock.calls[0][0]).toEqual(expect.objectContaining({
-    diagnostic: { 'Cardiovascular medications': 100, 'Fluid & electrolytes': 0, 'Endocrine care': 50 },
-    focusTopics: ['Fluid & electrolytes', 'Endocrine care'],
+    diagnostic: { 'Cardiovascular medications': 100, 'Fluid & electrolytes': 0, 'Endocrine care': 100 },
+    focusTopics: ['Fluid & electrolytes'],
   }));
   await flush();
-  expect(updateStudyPerformance).toHaveBeenCalledTimes(6);
+  expect(updateStudyPerformance).toHaveBeenCalledTimes(5);
 });
 
 it('retains an already revealed answer when the student skips the remaining questions', async () => {
@@ -275,9 +281,7 @@ it.each(['free', 'pro', 'exhausted'])('shows findings before dates and plan crea
     expect(screen.queryByText('When is your exam?')).toBeNull();
     expect(onStart).not.toHaveBeenCalled();
     expect(logFunnelStep).toHaveBeenCalledWith('weakness_insight_viewed', expect.objectContaining({ via: 'quick_check', funnelId: 'free-findings', answered: 2 }));
-    fireEvent.click(screen.getByRole('button', { name: /Get ready for my exam/ }));
-    expect(screen.getByText('When is your exam?')).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: 'I don’t know yet' }));
+    fireEvent.click(screen.getByRole('button', { name: /Start my plan/ }));
     expect(onStart).toHaveBeenCalledTimes(1);
     expect(onStart).toHaveBeenCalledWith(expect.objectContaining({
       examDate: null, diagnostic: { 'Cardiovascular medications': 50 },
@@ -306,4 +310,37 @@ it('does not invent weaknesses or claim mastery when every answer is correct', a
   expect(screen.getByText('A good start on these questions')).toBeInTheDocument();
   expect(screen.queryByText('What to practise')).toBeNull();
   expect(screen.getByText(/A starting signal, not a mastery score/)).toBeInTheDocument();
+});
+
+it('offers five questions and returns from explanation to the same saved practice', async () => {
+  let saved;
+  const props = { streamlined: true, initialPhase: 'check', initialQuiz: studioQuestions,
+    onProgress: value => { saved = JSON.parse(JSON.stringify(value)); } };
+  const first = mount(props);
+  expect(screen.getByText('Question 1 of 5')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Explain first' }));
+  expect(saved.phase).toBe('lesson');
+  expect(saved.answers).toHaveLength(0);
+  const checkId = saved.checkId;
+  first.unmount();
+  mount({ ...props, savedProgress: saved });
+  expect(screen.getByText('Explanation of Cardiovascular medications')).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Finish explanation' }));
+  expect(screen.getByRole('heading', { name: studioQuestions.questions[0].question })).toBeInTheDocument();
+  expect(saved.checkId).toBe(checkId);
+  fireEvent.click(screen.getByText('I’m not sure yet'));
+  fireEvent.click(screen.getByRole('button', { name: /Continue with what you know/ }));
+  expect(saved.answers[0]).toMatchObject({ checkId, explainedFirst: true, correct: false });
+  expect(plan_diagnostic_quiz).not.toHaveBeenCalled();
+  expect(logFunnelStep).toHaveBeenCalledWith('study_plan_offer_viewed', expect.objectContaining({
+    answered: 1, offered: 5, explainedFirst: true,
+  }));
+  await flush();
+});
+
+it('keeps all questions in an older in-progress check when the new cap is lower', () => {
+  const questions = [...studioQuestions.questions, ...studioQuestions.questions.slice(0, 2)];
+  mount({ streamlined: true, savedProgress: { phase: 'check', checkId: 'older-check',
+    questions, answers: [], picked: null, selection: [] } });
+  expect(screen.getByText('Question 1 of 8')).toBeInTheDocument();
 });

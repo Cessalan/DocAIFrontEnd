@@ -172,7 +172,7 @@ describe('PlanOnboarding', () => {
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
-  it('shows findings after answers, then continues to the date and builds with that date', async () => {
+  it('shows findings, offers an optional date, then starts the tailored plan', async () => {
     let emit;
     run_course_intelligence.mockImplementation(({ onEvent }) => {
       emit = onEvent;
@@ -192,15 +192,17 @@ describe('PlanOnboarding', () => {
     fireEvent.click(screen.getByRole('button', { name: /See my starting point/ }));
     expect(screen.getByRole('heading', { name: 'What your quick check showed' })).toBeInTheDocument();
     expect(onConfirm).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /Get ready for my exam/ }));
-    expect(screen.getByRole('heading', { name: /We analyzed your answers\. Let’s start with/ })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Add exam date \(optional\)/ }));
     expect(screen.queryByRole('tab', { name: /Web sources/ })).toBeNull();
     expect(screen.queryByRole('button', { name: /Build my study plan/ })).toBeNull();
     const today = new Date();
     fireEvent.click(screen.getByRole('gridcell', { name: today.toDateString() }));
     const expected = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    expect(onConfirm).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: /Start my plan/ }));
     await waitFor(() => expect(onCourseContext).toHaveBeenCalledWith({ examDate: expected, examDatePromptAnswered: true }));
     expect(onConfirm).toHaveBeenCalledTimes(1);
+    expect(onConfirm.mock.calls[0][0].startImmediately).toBe(true);
     expect(onConfirm.mock.calls[0][0].userPreferences.examDaysAway).toBe(0);
     expect(onConfirm.mock.calls[0][0].courseContext.examDate).toBe(expected);
     expect(onConfirm.mock.calls[0][0].diagnostic).toEqual({ Diuretics: 100 });
@@ -242,11 +244,13 @@ describe('PlanOnboarding', () => {
     const performanceCount = updateStudyPerformance.mock.calls.length;
     const results = render(<PlanOnboarding {...props} savedQuickCheck={checkpoint} />);
     expect(screen.getByRole('heading', { name: 'What your quick check showed' })).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /Get ready for my exam/ }));
-    expect(checkpoint.progress.phase).toBe('date');
+    expect(screen.getByRole('button', { name: /Start my plan/ })).toBeInTheDocument();
+    expect(checkpoint.progress.phase).toBe('result');
     results.unmount();
+    // Existing sessions saved on the old date screen resume at the new offer.
+    checkpoint.progress.phase = 'date';
     render(<PlanOnboarding {...props} savedQuickCheck={checkpoint} />);
-    expect(screen.getByRole('button', { name: 'I don’t know yet' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Start my plan/ })).toBeInTheDocument();
     await flush();
     expect(saveQuickCheckRecord).toHaveBeenCalledTimes(savedCount);
     expect(updateStudyPerformance).toHaveBeenCalledTimes(performanceCount);

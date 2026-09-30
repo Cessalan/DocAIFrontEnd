@@ -7,7 +7,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { FUNNEL, logFunnelStep, logFunnelStepOnce } from '../../Services/FunnelService';
 import { plannerTopics } from './courseIntelligenceModel';
 import {
-  calibrationQuestions, calibrationPlan, gradeAnswer, isKeyOption, answerKey, formatTally, questionFormatCounts,
+  calibrationQuestions, calibrationPlan, gradeAnswer, isKeyOption, answerKey, formatTally, questionFormatCounts, READINESS_QUESTION_CAP,
 } from './courseCalibrationModel';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { CourseStudioHeader } from './CourseStudioFrame';
@@ -17,7 +17,7 @@ import DatePicker from '../Common/DatePicker';
 import './CourseStudio.css';
 import CourseSourcePassage from './CourseSourcePassage';
 import './CourseDocumentStage.css';
-import CourseExamWelcome from './CourseExamWelcome';
+import FirstLessonPane from '../ChatInerface/FirstLessonPane';
 import QuickCheckFindings from './QuickCheckFindings';
 
 const QUESTION_WAIT_MS = 25000;
@@ -41,14 +41,18 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const { t } = useTranslation();
   const questionId = useId();
   const [resume] = useState(savedProgress);
-  const [phase, setPhase] = useState(resume?.phase || initialPhase);
+  // Old checkpoints may be on the separate date screen. Resume them at the
+  // offer, where the date is now optional and never an extra required step.
+  const [phase, setPhase] = useState(resume?.phase === 'date' ? 'result' : resume?.phase || initialPhase);
   const [questionLanguage, setQuestionLanguage] = useState(resume?.language || null);
-  const [quiz, setQuiz] = useState(resume ? { state: 'ready', questions: resume.questions } : initialQuiz ? { state: 'ready', questions: initialQuiz.questions } : { state: 'loading', questions: [] });
+  const [quiz, setQuiz] = useState(resume ? { state: 'ready', questions: resume.questions } : initialQuiz ? { state: 'ready', questions: initialQuiz.questions.slice(0, READINESS_QUESTION_CAP) } : { state: 'loading', questions: [] });
   const [answers, setAnswers] = useState(resume?.answers || []);
   const [picked, setPicked] = useState(resume?.picked ?? null);
   // Select-all choices before "Check my answer". `picked` stays null until she
   // commits, so every "has she answered" test below means the same thing.
   const [selection, setSelection] = useState(resume?.selection || []);
+  const [explainedTopics, setExplainedTopics] = useState(resume?.explainedTopics || []);
+  const [chosenDate, setChosenDate] = useState(resume?.examDate ?? examDate);
   const { consume } = useUsageLimit();
   const [showDate, setShowDate] = useState(false);
   const [starting, setStarting] = useState(false);
@@ -61,6 +65,8 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const [checkId] = useState(() => resume?.checkId || uuidv4());
   const buildLock = useRef(false);
   const requestRef = useRef(null);
+  const checkStartedRef = useRef(Boolean(resume));
+  const offerViewedRef = useRef(false);
   const topicKey = JSON.stringify(plannerTopics(report));
   // Once the check starts, translating the surrounding UI must not replace
   // questions underneath answers the student has already given.
@@ -84,22 +90,33 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   useEffect(() => {
     if (quiz.state !== 'ready') return;
     onProgressRef.current?.({ checkId, questions: quiz.questions, answers, picked, selection,
-      phase, language: requestLanguage });
-  }, [checkId, quiz, answers, picked, selection, phase, requestLanguage]);
+      phase, language: requestLanguage, explainedTopics, examDate: chosenDate });
+  }, [checkId, quiz, answers, picked, selection, phase, requestLanguage, explainedTopics, chosenDate]);
 
   useEffect(() => {
-    if (initialPhase === 'check' && !resume) {
+    if (phase === 'check' && quiz.state === 'ready' && !checkStartedRef.current) {
+      checkStartedRef.current = true;
       heading.current?.focus();
-      logFunnelStep(FUNNEL.DIAGNOSTIC_STARTED, { via: 'source_transformation', questionCount: initialQuiz?.questions?.length || 0 });
+      logFunnelStep(FUNNEL.DIAGNOSTIC_STARTED, tagFunnel({ via: 'course_brief', questionCount: quiz.questions.length }));
       logFunnelStep(FUNNEL.READINESS_CHECK_STARTED, tagFunnel({
-        via: 'source_transformation',
-        questionCount: initialQuiz?.questions?.length || 0,
-        ...questionFormatCounts(initialQuiz?.questions || []),
+        via: 'course_brief', onboardingVersion: 'practice_first_v1', checkId,
+        questionCount: quiz.questions.length,
+        ...questionFormatCounts(quiz.questions),
       }));
     }
     // tagFunnel only reads funnelId, which is fixed for the life of the card.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialPhase, initialQuiz, resume]);
+  }, [phase, quiz, checkId]);
+
+  useEffect(() => {
+    if (!streamlined || !isResult || offerViewedRef.current) return;
+    offerViewedRef.current = true;
+    logFunnelStep(FUNNEL.STUDY_PLAN_OFFER_VIEWED, tagFunnel({
+      onboardingVersion: 'practice_first_v1', checkId, answered: answers.length,
+      offered: quiz.questions.length, explainedFirst: explainedTopics.length > 0,
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [streamlined, isResult, checkId, answers.length, quiz.questions.length, explainedTopics.length]);
 
   useEffect(() => {
     logFunnelStepOnce(FUNNEL.REPORT_VIEWED, { via: 'course_brief', priorityCount: initialPlan.rows.length });
@@ -162,7 +179,8 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
     }
     const plan = calibrationPlan(report, all, daysToExam);
     logFunnelStep(FUNNEL.DIAGNOSTIC_COMPLETED, tagFunnel({
-      via: 'course_brief', answered: all.length, offered: quiz.questions.length,
+      via: 'course_brief', onboardingVersion: 'practice_first_v1', checkId,
+      answered: all.length, offered: quiz.questions.length, explainedFirst: explainedTopics.length > 0,
       skipped: all.length === 0, scoredTopics: Object.keys(plan.scores || {}).length,
       ...formatTally(all),
     }));
@@ -190,7 +208,8 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   // One answer, as the planner and the funnel read it.
   const answerRecord = () => {
     const graded = gradeAnswer(question, picked);
-    return new QuestionAnswerRecord({ checkId, questionIndex: answers.length, question, selection: picked, grade: graded }).toJSON();
+    return { ...new QuestionAnswerRecord({ checkId, questionIndex: answers.length, question, selection: picked, grade: graded }).toJSON(),
+      explainedFirst: explainedTopics.includes(question.topic) };
   };
 
   const advance = () => {
@@ -205,55 +224,71 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
   const begin = () => {
     if (disabled) return;
     setQuestionLanguage(language);
-    logFunnelStep(FUNNEL.DIAGNOSTIC_STARTED, { via: 'course_brief', questionCount: quiz.questions.length });
-    logFunnelStep(FUNNEL.READINESS_CHECK_STARTED, tagFunnel({
-      via: 'course_brief', questionCount: quiz.questions.length, ...questionFormatCounts(quiz.questions),
-    }));
     setPhase('check');
   };
   const build = () => {
-    if (disabled || starting) return;
+    if (disabled || starting || buildLock.current) return;
+    buildLock.current = true;
     setStarting(true);
-    onStart?.({ diagnostic: adaptedPlan.scores, answers,
-      rankedTopics: adaptedPlan.rows.map(row => ({ topic: row.topic })),
-      focusTopics: adaptedPlan.rows.filter(row => row.tier === 'gap' || row.tier === 'shaky').slice(0, 2).map(row => row.topic),
+    const date = chosenDate ? String(chosenDate).slice(0, 10) : null;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const days = date ? Math.max(0, Math.round((new Date(`${date}T00:00:00`) - today) / 86400000)) : null;
+    const plan = streamlined ? calibrationPlan(report, answers, days) : adaptedPlan;
+    logFunnelStep(FUNNEL.STUDY_PLAN_ACCEPTED, tagFunnel({
+      onboardingVersion: 'practice_first_v1', checkId, answered: answers.length,
+      hasExamDate: Boolean(date), explainedFirst: explainedTopics.length > 0,
+    }));
+    onStart?.({ ...(streamlined ? { examDate: date } : {}), diagnostic: plan.scores, answers,
+      rankedTopics: plan.rows.map(row => ({ topic: row.topic })),
+      focusTopics: plan.rows.filter(row => row.tier === 'gap' || row.tier === 'shaky').slice(0, 2).map(row => row.topic),
     });
   };
 
-  const dateLabel = examDate ? new Date(`${String(examDate).slice(0, 10)}T00:00:00`).toLocaleDateString(language.startsWith('fr') ? 'fr-CA' : 'en-CA', { month: 'short', day: 'numeric' }) : null;
+  const displayDate = streamlined ? chosenDate : examDate;
+  const dateLabel = displayDate ? new Date(`${String(displayDate).slice(0, 10)}T00:00:00`).toLocaleDateString(language.startsWith('fr') ? 'fr-CA' : 'en-CA', { month: 'short', day: 'numeric' }) : null;
   const resultTitle = answers.length ? adaptedPlan.changed ? 'changedTitle' : 'resultTitle' : 'skippedTitle';
 
-  if (streamlined && (phase === 'date' || (isResult && answers.length === 0))) {
-    const chooseDateAndBuild = (date) => {
-      if (disabled || buildLock.current) return;
-      buildLock.current = true;
-      setStarting(true);
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const days = date ? Math.max(0, Math.round((new Date(`${date}T00:00:00`) - today) / 86400000)) : null;
-      const plan = calibrationPlan(report, answers, days);
-      onStart?.({ examDate: date, diagnostic: plan.scores, answers,
-        rankedTopics: plan.rows.map(row => ({ topic: row.topic })),
-        focusTopics: plan.rows.filter(row => row.tier === 'gap' || row.tier === 'shaky').slice(0, 2).map(row => row.topic),
-      });
-    };
-    return <CourseExamWelcome language={language} disabled={disabled || starting} animateGreeting={false}
-      question={t('courseStudio.examDateQuestion')}
-      greeting={t(answers.length ? 'courseStudio.checkRecommendation' : 'courseStudio.materialsRecommendation', { topic: lead?.topic || t('courseStudio.empty') })}
-      onChoose={chooseDateAndBuild} />;
+  if (phase === 'lesson' && question) {
+    return <section className="cs-shell cs-brief cs-explain-first">
+      <div className="cs-body">
+        <h3 ref={heading} tabIndex={-1} className="cs-title">{t('courseStudio.explainHeading', { topic: question.topic })}</h3>
+        <p className="cs-sub">{t('courseStudio.explainHint')}</p>
+        <button type="button" className="cs-text-button cs-explain-button" onClick={() => setPhase('check')}>
+          {t('courseStudio.returnToPractice')}
+        </button>
+        <FirstLessonPane chatId={chatId} topic={question.topic} language={requestLanguage} lessonOnly
+          contextTags={question.concept ? [question.concept] : []} onDone={result => {
+            if (result?.explained) setExplainedTopics(topics => [...new Set([...topics, question.topic])]);
+            setPhase('check');
+          }} />
+      </div>
+    </section>;
   }
 
-  if (streamlined && isResult && answers.length > 0) {
+  if (streamlined && isResult) {
+    const offer = <div className="cs-plan-offer">
+      <p className="cs-plan-offer__summary">{t(answers.length ? 'courseStudio.planOffer' : 'courseStudio.materialsOffer', { topic: lead?.topic || t('courseStudio.empty') })}</p>
+      <div className="cs-date-inline">
+        <button type="button" className="course-context__date-chip cs-date-button" disabled={disabled || starting}
+          ref={dateAnchor} onClick={() => setShowDate(value => !value)} aria-haspopup="dialog" aria-expanded={showDate}>
+          {dateLabel ? t('courseStudio.dateLabel', { date: dateLabel }) : t('courseStudio.optionalExamDate')}<span aria-hidden="true">↗</span>
+        </button>
+        {showDate && <DatePicker value={chosenDate ? String(chosenDate).slice(0, 10) : ''}
+          onChange={value => { setChosenDate(value); onExamDate?.(value); setShowDate(false); }}
+          minDate={new Date()} onClose={() => setShowDate(false)} anchorRef={dateAnchor} language={language} />}
+      </div>
+      <div className="cs-primary-action cs-findings-action">
+        <button type="button" className="course-context__cta cs-button" disabled={disabled || starting}
+          onClick={build}>{t(starting ? 'courseStudio.startingPlan' : 'courseStudio.startPlan')}<span aria-hidden="true">→</span></button>
+        <p className="cs-findings-action__hint">{t('courseStudio.startPlanHint')}</p>
+      </div>
+    </div>;
     return <section className="cs-shell cs-brief is-result" aria-busy={starting}>
       <div className="cs-body">
-        <h3 ref={heading} tabIndex={-1} className="cs-title">{t('courseStudio.findingsTitle')}</h3>
-        <QuickCheckFindings answers={answers} lead={lead} funnelId={funnelId}>
-        <div className="cs-primary-action cs-findings-action">
-          <button type="button" className="course-context__cta cs-button" disabled={disabled || starting}
-            onClick={() => setPhase('date')}>{t('courseStudio.findingsContinue')}<span aria-hidden="true">→</span></button>
-          <p className="cs-findings-action__hint">{t('courseStudio.findingsContinueHint')}</p>
-        </div>
-        </QuickCheckFindings>
+        <h3 ref={heading} tabIndex={-1} className="cs-title">{t(answers.length ? 'courseStudio.findingsTitle' : 'courseStudio.skippedTitle')}</h3>
+        {answers.length > 0
+          ? <QuickCheckFindings answers={answers} lead={lead} funnelId={funnelId}>{offer}</QuickCheckFindings>
+          : offer}
       </div>
     </section>;
   }
@@ -268,7 +303,13 @@ const CourseStudyBrief = ({ report, chatId, filenames = [], language = 'en', day
         {/* Set the expectation before the first hard question, so a low score
             reads as information rather than failure. Opening on a graded test
             used to cost 22 points of first-node completion. */}
-        {phase === 'check' && answers.length === 0 && !hasAnswer && <p className="cs-sub cs-readiness-framing">{t('courseStudio.readinessFraming')}</p>}
+        {phase === 'check' && answers.length === 0 && !hasAnswer && <p className="cs-sub cs-readiness-framing">{t(streamlined && quiz.state === 'ready' ? 'courseStudio.practiceIntro' : 'courseStudio.readinessFraming', { count: quiz.questions.length })}</p>}
+        {phase === 'check' && answers.length === 0 && !hasAnswer && question && <button type="button"
+          className="cs-text-button cs-explain-button" disabled={disabled} onClick={() => {
+            setQuestionLanguage(value => value || language);
+            logFunnelStep(FUNNEL.QUICK_CHECK_EXPLANATION_STARTED, tagFunnel({ checkId, topic: question.topic, onboardingVersion: 'practice_first_v1' }));
+            setPhase('lesson');
+          }}>{t('courseStudio.explainFirst')}</button>}
       </div>
 
       {phase === 'check' ? <div className="cs-assessment">

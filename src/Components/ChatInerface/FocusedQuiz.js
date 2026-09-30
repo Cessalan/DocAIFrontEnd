@@ -9,6 +9,7 @@ import { askPracticeTutor, savePractice, streamPracticeBatch, copyPracticeToOwnC
 import { appendUniqueQuestions, initialPracticeSettings, normalizePracticeQuestion, permittedTotal } from './practiceModel';
 import { settingsWithProfile } from './practiceProfileModel';
 import PracticeSettingsLine from './PracticeSettingsLine';
+import PrintQuizButton from './PrintQuizButton';
 import '../StudyMode/StudyMode.css';
 import './FocusedQuiz.css';
 
@@ -182,7 +183,8 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
     <PaperSurface mode={paper.mode} />
     <header className="practice-header paper-page"><div><strong>{message.quizTopic || 'Your practice'}</strong><span>{loaded} ready · {target} questions{!isPro ? ` · ${remaining} remaining in your allowance` : ''}</span>
       <PracticeSettingsLine profile={practiceProfile} guess={practice.settings.question_types} onChange={onPracticeProfileChange} readOnly={readOnly} /></div>
-      <button type="button" onClick={closePractice}>← Back to chat</button></header>
+      <div className="practice-header-actions"><PrintQuizButton questions={questions} topic={message.quizTopic || message.topic} />
+        <button type="button" onClick={closePractice}>← Back to chat</button></div></header>
     {notice && <div className="practice-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss notice">×</button></div>}
     {readOnly && <div className="practice-notice">This is another user's conversation. Make your own copy to answer and discuss it. Uploaded source files are not copied.
       {onCopyCreated && <button disabled={copying} onClick={async () => { setCopying(true); try { const id = await copyPracticeToOwnChat(message, questions); onCopyCreated(id); } catch (error) { setSaveError(error.message); } finally { setCopying(false); } }}>{copying ? 'Creating your practice…' : 'Practice in my own chat'}</button>}</div>}

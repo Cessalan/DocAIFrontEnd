@@ -344,3 +344,7 @@ body.dark-mode .cs-findings-number { color: #e3bd7c; }
 .cs-findings-action .cs-button > span { flex: 0 0 auto; font-size: 20px; }
 .cs-findings-action + .cs-findings-footnote { margin-top: 14px; }
 .cs-findings-action__hint { margin: 0; text-align: center; color: var(--cs-muted); font-size: 12px; line-height: 1.5; }
+.cs-explain-button { margin: 0 0 12px; }
+.cs-plan-offer { margin-top: 18px; }
+.cs-plan-offer__summary { margin: 0 0 12px; line-height: 1.6; }
+.cs-explain-first .first-lesson__header { display: none; }

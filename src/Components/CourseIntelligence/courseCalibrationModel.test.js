@@ -76,9 +76,9 @@ describe('readiness formats', () => {
     expect(result[2].scenario).toBe('A patient scenario.');
   });
 
-  it('caps the check at eight questions', () => {
+  it('caps the check at five questions', () => {
     const many = Array.from({ length: 12 }, (_, i) => ({ ...valid, question: `question ${i}` }));
-    expect(calibrationQuestions({ questions: many }, topics)).toHaveLength(8);
+    expect(calibrationQuestions({ questions: many }, topics)).toHaveLength(5);
   });
 
   it('grades select-all as all-or-nothing but remembers a partial answer', () => {

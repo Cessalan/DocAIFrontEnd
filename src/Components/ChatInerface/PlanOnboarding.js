@@ -72,7 +72,7 @@ const PlanOnboarding = ({
     return savedQuickCheck?.version === 1 && normalizeReport(savedQuickCheck.report)
       && progress?.checkId && Array.isArray(progress.questions) && progress.questions.length >= 2
       && Array.isArray(progress.answers) && progress.answers.length <= progress.questions.length
-      && ['brief', 'check', 'result', 'date'].includes(progress.phase)
+      && ['brief', 'check', 'lesson', 'result', 'date'].includes(progress.phase)
       && (progress.phase !== 'check' || progress.answers.length < progress.questions.length)
       ? savedQuickCheck : null;
   });
@@ -315,6 +315,7 @@ const PlanOnboarding = ({
       // topic score map above throws away. The locked preview builds the
       // student's verdict from them. Null when the check was skipped.
       readiness: calibration?.answers?.length ? { answers: calibration.answers, funnelId } : null,
+      startImmediately: Boolean(calibration),
     });
   }, [
     userOnboarding, autoHardestTopics, diagnostic, ranked,

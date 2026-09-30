@@ -28,8 +28,8 @@ const MASCOTS = [BrainMascot, BookMascot, PillMascot, CoffeeCupMascot, MatchaCup
 /**
  * StartStudyModal — Orchestrates the full study launch flow:
  *   1. loading       → /study/start streams; planPromise resolves on plan_ready
- *   2. plan_preview  → user sees their actual path while createStudySession runs in bg
- *   3. starting      → awaits createStudySession if user beats it
+ *   2. plan_preview  → user confirms the path (skipped for an accepted quick-check offer)
+ *   3. starting      → creates the study session after that commitment
  *   4. done          → calls onStart(studyState)
  */
 const StartStudyModal = ({
@@ -41,6 +41,8 @@ const StartStudyModal = ({
   topics = [],
   language = 'en',
   autoStart = false,
+  // The student already accepted the tailored offer after the quick check.
+  startImmediately = false,
   userPreferences = {},
   // {topic: percent} from the pre-plan diagnostic, or null when she skipped it
   // (or the diagnostic failed). Null produces the old uniform plan, which is
@@ -56,8 +58,8 @@ const StartStudyModal = ({
   // has already promised her which topic comes first.
   courseContext = null,
   courseIntelligence = null,
-  // { answers, funnelId } from the readiness check, or null. Only the LOCKED
-  // preview reads it: it is how a blocked student sees her verdict before the ask.
+  // { answers, funnelId } from the readiness check, or null. Powers the locked
+  // preview and links a successful start back to the same upload funnel.
   readiness = null
 }) => {
   const { t } = useTranslation();
@@ -69,12 +71,16 @@ const StartStudyModal = ({
   // device), and retrying would bounce straight back to the same screen —
   // a button that visibly does nothing.
   const serverBlockedRef = useRef(false);
+  const launchVersionRef = useRef(0);
+  const generatingRef = useRef(false);
+  const committingRef = useRef(false);
+  useEffect(() => () => { launchVersionRef.current += 1; }, []);
 
   // ── Phase machine ─────────────────────────────────────────
   // 'idle' | 'loading' | 'plan_preview' | 'locked_preview' | 'starting' | 'done'
   const [phase, setPhase] = useState('idle');
 
-  // Plan revealed to user while session save is in flight
+  // Generated plan, ready for preview confirmation or immediate commitment.
   const [pathResult, setPathResult] = useState(null);
 
   // Error
@@ -167,6 +173,7 @@ const StartStudyModal = ({
 
   // Reset on open
   useEffect(() => {
+    launchVersionRef.current += 1;
     if (isOpen) {
       serverBlockedRef.current = false;
       setPhase('idle');
@@ -174,6 +181,8 @@ const StartStudyModal = ({
       setHasAutoStarted(false);
       setPathResult(null);
       setThinking([]);
+      generatingRef.current = false;
+      committingRef.current = false;
     }
   }, [isOpen]);
 
@@ -183,12 +192,12 @@ const StartStudyModal = ({
   // spinner. The first node keeps streaming into the prefetch cache that
   // StudyModeContainer reads when auto-starting node 1.
   //
-  // NOTE: createStudySession is NOT called here. It's deferred to
-  // handleStartFromPreview ("Let's go") because the Firestore write sets
-  // isStudySession:true on the chat, which auto-traps the user into study
-  // mode on next visit (see ChatInterface.js:713). If the user closes the
-  // modal during plan_preview, no Firestore mutation should have happened.
+  // The regular flow waits for the preview confirmation before saving a
+  // session. startImmediately is only passed after the student accepts the
+  // tailored quick-check offer. Closing during generation cancels either flow.
   const handleStartJourney = async () => {
+    if (generatingRef.current || committingRef.current) return;
+    const launchVersion = ++launchVersionRef.current;
     // ── The plan gate, relocated ──────────────────────────────────────
     // A study path plus its first node is the most expensive call in the
     // product, so a blocked student still must not trigger it. What changed
@@ -211,6 +220,7 @@ const StartStudyModal = ({
     }
 
     setPhase('loading');
+    generatingRef.current = true;
     setError(null);
     setPathResult(null);
 
@@ -219,17 +229,21 @@ const StartStudyModal = ({
 
     try {
       if (quickCheckId) await waitForQuickCheckSave(quickCheckId).catch(() => {});
+      if (launchVersion !== launchVersionRef.current) return;
       const { planPromise } = start_study_journey(
         chatId, uploadIds, userPreferences, language, diagnostic,
         { courseContext, courseIntelligence, quickCheckId }
       );
       const path = await planPromise;
+      if (launchVersion !== launchVersionRef.current) return;
 
       if (!path?.nodes?.length) throw new Error('Failed to generate study path');
 
       setPathResult(path);
-      setPhase('plan_preview');
+      if (startImmediately) await commitPlan(path);
+      else setPhase('plan_preview');
     } catch (err) {
+      if (launchVersion !== launchVersionRef.current) return;
       console.error('Error starting study journey via /study/start:', err);
       // Server-side plan gate fired (client check was stale or bypassed).
       // Don't retry through the fallback — it enforces the same limit and
@@ -253,41 +267,47 @@ const StartStudyModal = ({
           chatId, uploadIds, userPreferences, language, diagnostic,
           { courseContext, courseIntelligence, quickCheckId }
         );
+        if (launchVersion !== launchVersionRef.current) return;
         if (!path?.nodes?.length) throw new Error('Failed to generate study path');
         setPathResult(path);
-        setPhase('plan_preview');
+        if (startImmediately) await commitPlan(path);
+        else setPhase('plan_preview');
       } catch (fallbackErr) {
+        if (launchVersion !== launchVersionRef.current) return;
         console.error('Error starting study journey (fallback):', fallbackErr);
         setError(fallbackErr.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
         setPhase('idle');
       }
+    } finally {
+      if (launchVersion === launchVersionRef.current) generatingRef.current = false;
     }
   };
 
-  // ── User confirms after seeing the plan ───────────────────
-  // This is the commit point. createStudySession runs here — first time the
-  // chat is mutated to a study session. Adds ~200-500ms to "Let's go" but
-  // keeps the preview phase side-effect-free so a close is always recoverable.
-  const handleStartFromPreview = async () => {
-    if (!pathResult) return;
+  // Save only after an explicit offer/preview acceptance, then enter activity 1.
+  const commitPlan = async (path) => {
+    if (!path || committingRef.current) return;
     // Re-check at the commit point. The pre-generation check has already
     // passed for anyone who reaches here, so this only fires in a race (a
     // plan started in another tab while this preview was open). Keeping it
     // means the meter cannot be walked past by holding a preview open.
     if (!requirePlanQuota()) {
       logPaywall('plans', 'plan_preview_commit');
+      setPhase('locked_preview');
       return;
     }
+    committingRef.current = true;
     setPhase('starting');
     try {
       const uploadIds = uploadedDocs.map(doc => doc.id || doc.uploadId);
-      const studyState = await createStudySession(chatId, pathResult, uploadIds);
+      const studyState = await createStudySession(chatId, path, uploadIds);
       // Charge the plan only once it actually exists. Abandoning the preview
       // costs nothing, which is what keeps the preview side-effect-free.
       consumePlan();
       logFunnelStep(FUNNEL.PLAN_STARTED, {
-        nodeCount: pathResult?.nodes?.length || 0,
-        archetype: pathResult?.archetype || null,
+        nodeCount: path?.nodes?.length || 0,
+        archetype: path?.archetype || null,
+        ...(readiness?.funnelId ? { funnelId: readiness.funnelId } : {}),
+        ...(startImmediately ? { onboardingVersion: 'practice_first_v1', via: 'quick_check_offer' } : {}),
       });
       setPhase('done');
       if (onStart) onStart(studyState);
@@ -295,16 +315,20 @@ const StartStudyModal = ({
       console.error('Error creating study session:', err);
       setError(err.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
       setPhase('plan_preview');
+      committingRef.current = false;
     }
   };
+  const handleStartFromPreview = () => commitPlan(pathResult);
 
   // ── Safe close ────────────────────────────────────────────
   // Tears down any in-flight /study/start SSE stream so the backend doesn't
   // keep generating + sending events after the user has bailed. Safe to call
   // at any phase: clear_in_flight_study_journey is a no-op when there's no
-  // active stream. No Firestore cleanup needed here because createStudySession
-  // is deferred to "Let's go" — see handleStartJourney comment above.
+  // active stream. Closing is disabled during session creation; generation
+  // and preview can still be abandoned without creating a study session.
   const safeClose = () => {
+    launchVersionRef.current += 1;
+    generatingRef.current = false;
     if (chatId) clear_in_flight_study_journey(chatId);
     if (onClose) onClose();
   };
