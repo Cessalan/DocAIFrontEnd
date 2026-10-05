@@ -1,6 +1,7 @@
 import { db, auth } from "../Firebase/config";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { devLog } from "./devLogger";
+import { clarityFunnelStep } from "./ClarityService";
 
 /**
  * FunnelService — one row per step of the upload → plan → paywall funnel.
@@ -191,6 +192,7 @@ export const logFunnelStep = (step, props = {}) => {
     };
 
     devLog(`📊 ${step}`, props);
+    clarityFunnelStep(step, row);
 
     return addDoc(collection(db, COLLECTION), row).catch((err) => {
       // Best-effort: a lost row is a gap in a chart, not a broken study session.

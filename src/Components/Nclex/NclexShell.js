@@ -1,4 +1,4 @@
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef, useMemo, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 /* The app's real mark. `/NQWarmLogo.png` — which five SEO landing pages point
@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
    of them. Use the same SVG the app shell uses instead. */
 import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
 import DatePicker from '../Common/DatePicker';
+import { clarityTag } from '../../Services/ClarityService';
 import './Nclex.css';
 
 /**
@@ -33,6 +34,10 @@ const NclexShell = ({ examDate, daysLeft, onSaveExamDate, children }) => {
   const { t, i18n } = useTranslation();
   const [picking, setPicking] = useState(false);
   const anchorRef = useRef(null);
+
+  /* Every NCLEX screen renders this shell, so this one tag lets Clarity
+     filter to "sessions that touched the NCLEX product". */
+  useEffect(() => { clarityTag('product', 'nclex'); }, []);
 
   const urgent = typeof daysLeft === 'number' && daysLeft <= 14;
 

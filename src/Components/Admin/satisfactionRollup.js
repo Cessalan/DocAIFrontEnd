@@ -91,6 +91,13 @@ export const normalizeRow = (raw = {}) => {
     transcript: Array.isArray(context.transcript) ? context.transcript : [],
     devPreview: context.devPreview === true,
     daysAfterExam: typeof context.daysAfterExam === 'number' ? context.daysAfterExam : null,
+    // Cancellation survey only.
+    churnKind: context.churnKind || null,
+    examOutcome: context.examOutcome || null,
+    reasonDetail: context.reasonDetail || null,
+    continuedToPortal: context.continuedToPortal === true,
+    proTenureDays: typeof context.proTenureDays === 'number' ? context.proTenureDays : null,
+    examDaysFromNow: typeof context.examDaysFromNow === 'number' ? context.examDaysFromNow : null,
     at: toDate(raw.timestamp) || toDate(raw.createdAt)
   };
 };
@@ -251,6 +258,64 @@ export const buildExamDebrief = (rows = []) => {
 };
 
 /**
+ * The cancellation survey, rolled up on its own.
+ *
+ * Raw churn is the wrong number for this product: a student who passed her
+ * exam and left is the outcome we sell. The headline is the FAILURE share
+ * (reasons that say the product did not do its job), and the pass rate among
+ * those who left after their exam.
+ *
+ * A row is an answer, not a confirmed cancellation: she can still back out on
+ * Stripe's page. `continued` counts the ones who went on to the portal.
+ *
+ * @param {Array} rows  Normalised rows (all surfaces; this filters its own).
+ */
+export const buildCancellations = (rows = []) => {
+  const exits = rows.filter((r) => r.surface === SURFACE.CANCELLATION && r.reasons.length > 0);
+  const newestFirst = (a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0);
+
+  const byKind = { natural: 0, failure: 0, circumstance: 0 };
+  exits.forEach((r) => {
+    if (Object.prototype.hasOwnProperty.call(byKind, r.churnKind)) byKind[r.churnKind] += 1;
+  });
+
+  const reasonMap = new Map();
+  exits.forEach((r) => {
+    const reason = r.reasons[0];
+    reasonMap.set(reason, (reasonMap.get(reason) || 0) + 1);
+  });
+  const byReason = [...reasonMap.entries()]
+    .map(([reason, count]) => ({
+      reason,
+      count,
+      share: Math.round((count / exits.length) * 100)
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  const outcomes = { passed: 0, not_passed: 0, waiting: 0, private: 0 };
+  exits.forEach((r) => {
+    if (Object.prototype.hasOwnProperty.call(outcomes, r.examOutcome)) outcomes[r.examOutcome] += 1;
+  });
+  // Only answers that state a result count toward the rate. "Waiting" and
+  // "rather not say" are honest non-answers, not failures.
+  const known = outcomes.passed + outcomes.not_passed;
+
+  return {
+    total: exits.length,
+    continued: exits.filter((r) => r.continuedToPortal).length,
+    byKind,
+    failureShare: exits.length > 0 ? Math.round((byKind.failure / exits.length) * 100) : null,
+    byReason,
+    outcomes,
+    passRate: known > 0 ? Math.round((outcomes.passed / known) * 100) : null,
+    // "What would have kept you", newest first: the work queue.
+    notes: exits.filter((r) => r.comment).sort(newestFirst),
+    // Free text behind "something else" and "using something else instead".
+    details: exits.filter((r) => r.reasonDetail).sort(newestFirst)
+  };
+};
+
+/**
  * Build the whole rollup.
  *
  * @param {Array} rawRows   Firestore documents (with `id` attached).
@@ -284,6 +349,10 @@ export const buildRollup = (rawRows = [], { commentLimit = 50 } = {}) => {
   const reasonMap = new Map();
   rows.forEach((row) => {
     if (row.sentiment >= 0) return;
+    // Cancellation reasons are tallied by buildCancellations against every
+    // exit, not just the negative ones; here they would read as content
+    // complaints.
+    if (row.surface === SURFACE.CANCELLATION) return;
     row.reasons.forEach((reason) => {
       reasonMap.set(reason, (reasonMap.get(reason) || 0) + 1);
     });
@@ -326,7 +395,7 @@ export const buildRollup = (rawRows = [], { commentLimit = 50 } = {}) => {
   // Newest first. Free text is the only part that can say something we didn't
   // think to offer as a chip, so it is never truncated here.
   const comments = rows
-    .filter((r) => r.comment)
+    .filter((r) => r.comment && r.surface !== SURFACE.CANCELLATION)
     .sort((a, b) => (b.at?.getTime() || 0) - (a.at?.getTime() || 0))
     .slice(0, commentLimit);
 
@@ -348,6 +417,7 @@ export const buildRollup = (rawRows = [], { commentLimit = 50 } = {}) => {
     byReason,
     defect,
     examDebrief: buildExamDebrief(rows),
+    cancellations: buildCancellations(rows),
     comments,
     byDay,
     // Rows that arrived without a usable sentiment. Surfaced rather than

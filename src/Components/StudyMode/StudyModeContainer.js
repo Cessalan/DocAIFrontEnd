@@ -33,6 +33,8 @@ import DevPaywallPill from '../Common/DevPaywallPill';
 import { markMessageEngaged } from '../../Services/FireBaseServiceChats';
 import { generate_study_item_stream, generate_study_audio, generate_study_mindmap, plan_review_path, interpret_study_request, generate_exam, get_prefetched_node_content, consume_prefetched_node_content } from '../../Services/FastAPICalls';
 import { devLog } from '../../Services/devLogger';
+import { clarityEvent, clarityTag } from '../../Services/ClarityService';
+import { studyPlanTags } from './studyClarityTags';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
@@ -344,6 +346,18 @@ const StudyModeContainer = ({
   const currentStep = completedCount + 1;
   const totalSteps = realNodes.length;
 
+  // Label the Clarity recording with where she stood when she opened this
+  // plan. Once per plan per page load: Clarity keeps every value a tag is
+  // ever given, so re-tagging on each completion would blur the bucket.
+  const clarityTaggedRef = useRef(null);
+  useEffect(() => {
+    if (viewOnly || !totalSteps || clarityTaggedRef.current === chatId) return;
+    clarityTaggedRef.current = chatId;
+    Object.entries(studyPlanTags({ completed: completedCount, total: totalSteps, examDate }))
+      .forEach(([key, value]) => clarityTag(key, value));
+    clarityEvent('study_plan_opened');
+  }, [chatId, viewOnly, totalSteps, completedCount, examDate]);
+
   // Topic the paywall would name if the user were blocked right now — the node
   // they're on, else the next unfinished one. Dev preview only (see DevPaywallPill).
   const paywallTopic = isDev
@@ -373,7 +387,12 @@ const StudyModeContainer = ({
       // handleExamStart may overshoot the cap on purpose (we'd rather let her
       // finish a full mini-test than cut it short; the modal explains this).
       if (!viewOnly && !requireQuota({ topic: getStepTopicLabel(node.label) })) {
+        clarityEvent('study_node_blocked');
         return 'blocked';
+      }
+      if (!viewOnly) {
+        clarityEvent('study_node_started');
+        clarityEvent('study_node_started_exam');
       }
       /* A node that arrives with its own config was built by the post-node
          recommendation, which already told her what it was going to do and
@@ -404,7 +423,12 @@ const StudyModeContainer = ({
     // and aren't gated. Dev viewOnly mode is exempt. Block before any loading
     // UI so a throttled start is a clean no-op (modal opens via requireQuota).
     if (!node.messageId && !viewOnly && !requireQuota({ topic: getStepTopicLabel(node.label) })) {
+      clarityEvent('study_node_blocked');
       return 'blocked';
+    }
+    if (!viewOnly) {
+      clarityEvent('study_node_started');
+      clarityEvent(`study_node_started_${node.type || 'unknown'}`);
     }
 
     // ── Diagnostic detection ──────────────────────────────────────────

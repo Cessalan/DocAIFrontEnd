@@ -23,6 +23,7 @@ import {
   clearSession,
 } from '../../Services/NclexService';
 import { devLog, devWarn } from '../../Services/devLogger';
+import { clarityEvent, clarityTag } from '../../Services/ClarityService';
 import './Nclex.css';
 
 /**
@@ -205,6 +206,7 @@ const NclexPractice = () => {
       const got = await fetchQuestion(s);
       if (!got) {
         setError(t('nclex.genFailed', "That question didn't come through. Try again."));
+        clarityEvent('nclex_generation_failed');
         setLoading(false);
         return;
       }
@@ -367,6 +369,7 @@ const NclexPractice = () => {
       setPriorAttempts(rows);
       setMeta(m);
       metaRef.current = m; // generate(0) below runs before the state renders
+      clarityTag('nclex_mode', mode);
 
       /* Resume, if she left one exactly like this behind. Matching on the
          query string means a saved pharmacology session is never resumed
@@ -380,6 +383,7 @@ const NclexPractice = () => {
       if (resumable) {
         setHistory(saved.history || []);
         devLog('[nclex] resumed at', saved.next.index, 'of', total);
+        clarityEvent('nclex_session_resumed');
         // Already generated and already charged when she first saw it.
         present({ question: saved.next.question, spec: saved.next.spec }, saved.next.index, false);
         return;
@@ -388,12 +392,14 @@ const NclexPractice = () => {
       if (requireQuota && !requireQuota({ topic: 'NCLEX practice' })) {
         setLoading(false);
         setError(t('nclex.quota', 'You have used your free questions for now.'));
+        clarityEvent('nclex_quota_blocked');
         return;
       }
+      clarityEvent('nclex_session_started');
       generate(0, buildProfile(rows));
     })();
     return () => { cancelled = true; };
-  }, [currentUser, generate, present, requireQuota, t, sessionKey, total]);
+  }, [currentUser, generate, present, requireQuota, t, sessionKey, total, mode]);
 
   const handleAnswer = useCallback(
     async (data) => {
@@ -427,6 +433,8 @@ const NclexPractice = () => {
       setHistory(nextHistory);
       if (currentUser?.uid) logAttempt(currentUser.uid, attempt);
       devLog('[nclex] answered', attempt.format, attempt.correct, `${seconds}s`);
+      clarityEvent('nclex_question_answered');
+      if (nextHistory.length === 1) clarityEvent('nclex_first_answer');
 
       // Re-check the speculative question against a profile that now includes
       // the answer she just gave. Keeps it if the request is unchanged (the
@@ -444,11 +452,13 @@ const NclexPractice = () => {
     const answeredCount = history.length;
     if (answeredCount >= total) {
       setDone(true);
+      clarityEvent('nclex_session_completed');
       if (currentUser?.uid) clearSession(currentUser.uid);
       return;
     }
     if (requireQuota && !requireQuota({ topic: 'NCLEX practice' })) {
       setDone(true);
+      clarityEvent('nclex_quota_blocked');
       if (currentUser?.uid) clearSession(currentUser.uid);
       return;
     }

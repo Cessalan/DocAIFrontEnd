@@ -39,17 +39,16 @@ const btn = {
   cursor: 'pointer'
 };
 
-const DevExamDebriefPill = () => {
+const DevExamDebriefPill = ({ docked = false }) => {
   if (process.env.NODE_ENV !== 'development') return null;
 
   return (
     <div
       style={{
-        position: 'fixed',
-        bottom: 16,
-        // Left, because DevPaywallPill already owns bottom-right.
-        left: 16,
-        zIndex: 1200, // below .exam-debrief-overlay (10000) so the modal covers it
+        // Left, because DevPaywallPill already owns bottom-right. Below
+        // .exam-debrief-overlay (10000) so the modal covers it. Inside
+        // DevToolsDock it flows with the other pills instead.
+        ...(docked ? {} : { position: 'fixed', bottom: 16, left: 16, zIndex: 1200 }),
         display: 'flex',
         alignItems: 'center',
         gap: 6,

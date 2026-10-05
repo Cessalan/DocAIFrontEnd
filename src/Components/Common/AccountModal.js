@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
-import { openBillingPortal } from '../../config/billing';
 import { formatCountdown } from '../../Services/UsageService';
 import { handleSignOut } from '../../Firebase/auth';
 import './AccountModal.css';
@@ -22,8 +21,7 @@ import './AccountModal.css';
  */
 const AccountModal = ({ isOpen, onClose, user = {} }) => {
   const { t } = useTranslation();
-  const { isPro, limit, used, remaining, msUntilReset, openUpgrade } = useUsageLimit();
-  const [portalLoading, setPortalLoading] = useState(false);
+  const { isPro, limit, used, remaining, msUntilReset, openUpgrade, openManageSubscription } = useUsageLimit();
 
   if (!isOpen) return null;
 
@@ -31,10 +29,11 @@ const AccountModal = ({ isOpen, onClose, user = {} }) => {
     if (e.target === e.currentTarget) onClose();
   };
 
-  const handleManage = async () => {
-    setPortalLoading(true);
-    const redirected = await openBillingPortal();
-    if (!redirected) setPortalLoading(false);
+  // Hand off to the provider's manage step (billing vs cancel + exit survey)
+  // rather than stacking a second modal on this one.
+  const handleManage = () => {
+    onClose();
+    openManageSubscription();
   };
 
   const handleUpgrade = () => {
@@ -116,10 +115,8 @@ const AccountModal = ({ isOpen, onClose, user = {} }) => {
           )}
 
           {isPro ? (
-            <button className="account-action" onClick={handleManage} disabled={portalLoading}>
-              {portalLoading
-                ? t('account.portalOpening', 'Opening…')
-                : t('account.manage', 'Manage subscription')}
+            <button className="account-action" onClick={handleManage}>
+              {t('account.manage', 'Manage subscription')}
             </button>
           ) : (
             <button className="account-action is-upgrade" onClick={handleUpgrade}>

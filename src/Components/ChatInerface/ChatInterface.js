@@ -97,6 +97,7 @@ import { useTranslation } from 'react-i18next';
 import StudyGuideGenerator from './StudyGuideGenerator.js';
 import StudySheetLivePreview from './StudySheetLivePreview.js';
 // StudySheetSimple is lazy-loaded — see the code-splitting block below the imports.
+import { updateStudySheetMessage, savedStudySheetMessage } from '../../Services/studySheetEvents';
 import StickyQuizProgress from './StickyQuizProgress';
 // DISABLED: Suggested prompts feature - see comment where component was rendered
 // import SuggestedPrompts from './SuggestedPrompts';
@@ -147,7 +148,7 @@ import { saveExamDate, noteExamDateAsked } from '../../Services/ExamDrillService
 
 // react-pdf + pdfjs-dist — the single largest dependency. Opens on file preview.
 const FileViewerModal = lazy(() => import('./FileViewerModal'));
-// html2pdf.js, for study-sheet export. Only for 'studysheet' messages.
+// Study sheets and their PDF exporter load only when requested.
 const StudySheetSimple = lazy(() => import('./StudySheetSimple.js'));
 // reactflow + its stylesheet. Only for 'mindmap' messages.
 const ChatMindmap = lazy(() => import('./ChatMindmap'));
@@ -506,6 +507,18 @@ const ChatInterface = ({
   // 'connecting', 'connected', 'disconnected', 'error'
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
+  const studySheetStreamRef = useRef(null);
+  const interruptStudySheet = useCallback((message) => {
+    const current = studySheetStreamRef.current;
+    if (!current?.isStreaming) return false;
+    const french = current.studySheet?.language === 'french' || currentLanguageRef.current?.startsWith('fr');
+    const next = updateStudySheetMessage(current, { status: 'study_sheet_error', message: message ||
+      (french ? 'La fiche a été interrompue. Réessayez pour obtenir une version complète.'
+        : 'The study sheet was interrupted. Please retry for a complete version.') });
+    studySheetStreamRef.current = next;
+    setChatMessages(prev => prev.map(msg => msg.id === next.id ? next : msg));
+    return true;
+  }, []);
   const [studySheetData, setStudySheetData] = useState({
     htmlContent: '',
     sections: [],
@@ -963,6 +976,7 @@ const ChatInterface = ({
 
     // Clear messages if switching chats (not on initial load)
     if (isSwitchingChats) {
+      studySheetStreamRef.current = null;
       setChatMessages([]);
     }
 
@@ -1301,6 +1315,8 @@ const ChatInterface = ({
     // Fresh send = fresh completion state. If a previous stream errored (or a
     // quiz/audio flow set this), a stale true would skip saving THIS response.
     isQuizGeneratingRef.current = false;
+    interruptStudySheet();
+    studySheetStreamRef.current = null;
 
     // Add user message (unless hidden for automated prompts)
     const newUserMessage = {
@@ -1378,6 +1394,7 @@ const ChatInterface = ({
     let empatheticMessageId = null; // Track empathetic message bubble
     let quizMessageId = null; // Track quiz bubble
     let webSourcesMessageId = null; // Track web-sources panel bubble (school-specific exam research)
+    let studySheetMessageId = null;
 
     try {
       // Use WebSocket with all your current logic
@@ -1406,6 +1423,10 @@ const ChatInterface = ({
             setStreamingStatus(null);
             setIsStreaming(false);
             setIsAiTyping(false);
+            if (studySheetMessageId && studySheetStreamRef.current?.id === studySheetMessageId) {
+              interruptStudySheet(statusUpdate.message);
+              return;
+            }
 
             // Server-side quota rejection (usage_guard in NQBackEnd2): the
             // paywall is the answer, not a retry — retrying would just be
@@ -1860,15 +1881,12 @@ const ChatInterface = ({
           // Study sheet generation trigger - create inline message
           // Handle both "study_sheet_trigger" (from tools) and "study_sheet_start" (from generator)
           if (statusUpdate.status === "study_sheet_trigger" || statusUpdate.status === "study_sheet_start") {
+            if (currentChatIDRef.current && currentChatIDRef.current !== targetChatId) return;
             devLog("📚 Study sheet started:", statusUpdate);
+            isQuizGeneratingRef.current = true;
 
-            // Check if we already have a streaming studysheet to avoid duplicates
-            setChatMessages(prev => {
-              const hasStreamingStudySheet = prev.some(msg => msg.type === 'studysheet' && msg.isStreaming);
-              if (hasStreamingStudySheet) {
-                return prev; // Don't create duplicate
-              }
-              return [...prev, {
+            if (!studySheetMessageId) {
+              const message = {
                 id: `studysheet-${Date.now()}`,
                 role: 'assistant',
                 type: 'studysheet',
@@ -1876,76 +1894,29 @@ const ChatInterface = ({
                 content: '',
                 isStreaming: true,
                 timestamp: new Date()
-              }];
-            });
+              };
+              studySheetMessageId = message.id;
+              studySheetStreamRef.current = message;
+              setChatMessages(prev => [...prev.filter(msg => msg.id !== streamingMessageId), message]);
+            }
 
             onCloseSidebar();
             return;
           }
 
-          // Study sheet chunk - append content
-          if (statusUpdate.status === "study_sheet_chunk") {
-            devLog("📚 Study sheet chunk received");
-            setChatMessages(prev =>
-              prev.map(msg =>
-                msg.type === 'studysheet' && msg.isStreaming
-                  ? { ...msg, content: msg.content + (statusUpdate.content || '') }
-                  : msg
-              )
-            );
-            return;
-          }
-
-          // Study sheet complete
-          if (statusUpdate.status === "study_sheet_complete") {
-            devLog("📚 Study sheet complete");
-
-            // First, find the streaming study sheet BEFORE updating state
-            setChatMessages(prev => {
-              // Find the streaming study sheet we're about to complete
-              const streamingStudySheet = prev.find(
-                msg => msg.type === 'studysheet' && msg.isStreaming
-              );
-
-              if (streamingStudySheet && streamingStudySheet.content) {
-                // Save to Firebase
-                const messageForFirebase = {
-                  id: streamingStudySheet.id,
-                  role: 'assistant',
-                  type: 'studysheet',
-                  topic: streamingStudySheet.topic,
-                  content: streamingStudySheet.content,
-                  timestamp: streamingStudySheet.timestamp || new Date()
-                };
-
-                devLog("📚 Saving study sheet to Firebase:", messageForFirebase.id);
-                AppendToChat(updatedChatId || currentChatID, messageForFirebase)
-                  .then(() => devLog('✅ Study sheet saved to Firebase'))
-                  .catch(err => console.error('❌ Failed to save study sheet:', err));
-              } else {
-                devLog("⚠️ No streaming study sheet found to save");
-              }
-
-              // Update state to mark as complete
-              return prev.map(msg =>
-                msg.type === 'studysheet' && msg.isStreaming
-                  ? { ...msg, isStreaming: false }
-                  : msg
-              );
-            });
-            return;
-          }
-
-          // Study sheet error
-          if (statusUpdate.status === "study_sheet_error") {
-            devLog("📚 Study sheet error:", statusUpdate.message);
-            setChatMessages(prev =>
-              prev.map(msg =>
-                msg.type === 'studysheet' && msg.isStreaming
-                  ? { ...msg, isStreaming: false, error: statusUpdate.message }
-                  : msg
-              )
-            );
+          if (["study_sheet_header", "study_sheet_section", "study_sheet_reset", "study_sheet_chunk",
+            "study_sheet_complete", "study_sheet_error"].includes(statusUpdate.status)) {
+            const current = studySheetStreamRef.current;
+            if (!current?.isStreaming || current.id !== studySheetMessageId) return;
+            const next = updateStudySheetMessage(current, statusUpdate);
+            studySheetStreamRef.current = next;
+            setChatMessages(prev => prev.map(msg => msg.id === next.id ? next : msg));
+            // Persist outside React's state updater, which can run twice in
+            // Strict Mode. The ref also ignores duplicate completion frames.
+            if (statusUpdate.status === 'study_sheet_complete' && next.content) {
+              AppendToChat(updatedChatId || currentChatID, savedStudySheetMessage(next))
+                .catch(err => console.error('Failed to save study sheet:', err));
+            }
             return;
           }
 
@@ -2147,6 +2118,7 @@ const ChatInterface = ({
 
           // Check if this was a quiz (don't save quiz as text)
           if (isQuizGeneratingRef.current) {
+            if (studySheetMessageId && studySheetStreamRef.current?.id === studySheetMessageId) interruptStudySheet();
             isQuizGeneratingRef.current = false;
             setIsAiTyping(false);
             return;
@@ -2199,6 +2171,8 @@ const ChatInterface = ({
       setStreamingStatus(null);
       setIsStreaming(false);
 
+      if (studySheetMessageId && studySheetStreamRef.current?.id === studySheetMessageId) interruptStudySheet();
+
       setChatMessages(prev =>
         prev.map(msg =>
           msg.id === streamingMessageId
@@ -2231,6 +2205,7 @@ const ChatInterface = ({
       const success = await cancelWebSocketStream(currentChatID);
 
       if (success) {
+        interruptStudySheet();
         // Update UI state
         setIsStreaming(false);
         setIsAiTyping(false);
@@ -5582,6 +5557,7 @@ const ChatInterface = ({
                         <StudySheetSimple
                           topic={message.topic}
                           content={message.content}
+                          studySheet={message.studySheet}
                           isStreaming={message.isStreaming}
                           error={message.error}
                           inline={true}

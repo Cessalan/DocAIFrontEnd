@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { Link, useLocation, useOutletContext } from 'react-router-dom';
 import { adminRequest } from '../../Services/AdminService';
 import AdminEmail from './AdminEmail';
+import StudyInspectorLink from './StudyInspectorLink';
 const api = (path, body, method = 'POST') => adminRequest('/admin/workspace' + path, { method, ...(body ? { body: JSON.stringify(body) } : {}) });
 const date = value => value ? new Date(value).toLocaleString() : 'Not recorded';
 export default function AdminWorkspace() {
@@ -38,10 +39,10 @@ export default function AdminWorkspace() {
       <div className="admin-table"><table><thead><tr><th>User</th><th>Plan</th><th>Usage</th><th>{tab === 'exams' ? 'Exam' : 'Last activity'}</th><th>Actions</th></tr></thead><tbody>{filtered.map(item => <tr key={item.uid + (item.id || '')}><td>{item.email || item.uid}<small>{item.name}</small></td><td>{item.usage?.tier || 'free'}</td><td>{item.usage?.count ?? '—'}</td><td>{tab === 'exams' ? <>{item.date}<small>{item.source}</small></> : date(item.lastActive)}</td><td><button disabled={busy} onClick={() => action(async () => setDetail({ email: item.email, ...await adminRequest('/admin/workspace/users/' + encodeURIComponent(item.uid)) }))}>View activity</button> <Link to={'/admin/email?uid=' + encodeURIComponent(item.uid)}>Write email</Link></td></tr>)}</tbody></table></div>
       {!busy && !filtered.length && <p>No matching users.</p>}
       {cursor && tab === 'users' && <button disabled={busy} onClick={() => action(async () => { const data = await adminRequest('/admin/workspace/users?cursor=' + encodeURIComponent(cursor)); setItems(old => [...old, ...data.items]); setCursor(data.cursor); })}>Load more users</button>}
-      {detail && <section><h2>{detail.email} · Activity</h2>{detail.truncated && <p>Showing up to 100 exams and conversations.</p>}<h3>Exams</h3>{detail.exams.map(exam => <p key={exam.id}>{exam.name || exam.subject} · {date(exam.date)}</p>)}<h3>Conversations</h3>{detail.chats.map(chat => <p key={chat.id}>{chat.title || 'Untitled'} · {date(chat.updatedAt || chat.createdAt)}</p>)}</section>}
+      {detail && <section><h2>{detail.email} · Activity</h2>{detail.truncated && <p>Showing up to 100 exams and conversations.</p>}<h3>Exams</h3>{detail.exams.map(exam => <p key={exam.id}>{exam.name || exam.subject} · {date(exam.date)}</p>)}<h3>Conversations</h3>{detail.chats.map(chat => <p key={chat.id}>{chat.title || 'Untitled'} · {date(chat.updatedAt || chat.createdAt)} <StudyInspectorLink chatId={chat.id} /></p>)}</section>}
     </>}
     {tab === 'access' && identity.role === 'owner' && <><form onSubmit={e => { e.preventDefault(); action(async () => { await api('/admins', { email }); setEmail(''); await load(); }); }}><label>Existing account email<input type="email" required value={email} onChange={e => setEmail(e.target.value)} /></label><button disabled={busy}>Grant admin access</button></form>{items.map(item => <p key={item.uid}>{item.email} · {item.role} · {item.active ? 'Active' : 'Revoked'} {item.role !== 'owner' && item.active && <button disabled={busy} onClick={() => action(async () => { await api('/admins/' + item.uid, null, 'DELETE'); await load(); })}>Revoke access</button>}</p>)}</>}
-    {tab === 'email' && <AdminEmail uid={uid} />}
+    {tab === 'email' && <AdminEmail uid={uid} actorUid={identity.uid} />}
   </main>;
 }
 

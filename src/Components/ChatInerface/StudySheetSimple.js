@@ -1,464 +1,136 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useId, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import html2pdf from 'html2pdf.js';
+import { resolveStudySheet, sourceLabel, sheetFilename } from './studySheetModel';
 import './StudySheetSimple.css';
 
-// Parse inline markdown (bold, italic) within text
-function parseInlineMarkdown(text) {
-  if (!text) return text;
-
-  // Split by bold markers (**text**) and process
-  const parts = [];
-  let remaining = text;
-  let keyIdx = 0;
-
-  while (remaining.length > 0) {
-    const boldMatch = remaining.match(/\*\*(.+?)\*\*/);
-
-    if (boldMatch) {
-      const beforeBold = remaining.substring(0, boldMatch.index);
-      if (beforeBold) {
-        parts.push(beforeBold);
-      }
-      parts.push(<strong key={`b-${keyIdx++}`}>{boldMatch[1]}</strong>);
-      remaining = remaining.substring(boldMatch.index + boldMatch[0].length);
-    } else {
-      parts.push(remaining);
-      break;
-    }
-  }
-
-  return parts.length > 0 ? parts : text;
-}
-
-// Parse markdown content with headers, lists, and formatting
-function parseContent(text) {
-  if (!text) return null;
-
-  const lines = text.split('\n');
-  const elements = [];
-
-  lines.forEach((line, idx) => {
-    const trimmed = line.trim();
-
-    // Empty line = spacer
-    if (!trimmed) {
-      elements.push(<div key={`s-${idx}`} className="study-spacer" />);
-      return;
-    }
-
-    // Horizontal rule (---, ___, ***)
-    if (/^[-_*]{3,}$/.test(trimmed)) {
-      elements.push(<hr key={`hr-${idx}`} className="study-divider" />);
-      return;
-    }
-
-    // Markdown H1 (# Header)
-    const h1Match = trimmed.match(/^#\s+(.+)/);
-    if (h1Match) {
-      elements.push(
-        <h1 key={`h1-${idx}`} className="study-main-header">
-          {parseInlineMarkdown(h1Match[1])}
-        </h1>
-      );
-      return;
-    }
-
-    // Markdown H2 (## Header)
-    const h2Match = trimmed.match(/^##\s+(.+)/);
-    if (h2Match) {
-      elements.push(
-        <h2 key={`h2-${idx}`} className="study-section-header">
-          {parseInlineMarkdown(h2Match[1])}
-        </h2>
-      );
-      return;
-    }
-
-    // Markdown H3 (### Header)
-    const h3Match = trimmed.match(/^###\s+(.+)/);
-    if (h3Match) {
-      elements.push(
-        <h3 key={`h3-${idx}`} className="study-subsection-header">
-          {parseInlineMarkdown(h3Match[1])}
-        </h3>
-      );
-      return;
-    }
-
-    // UPPERCASE HEADER (line that's all caps, at least 3 chars) - legacy support
-    if (trimmed.length > 2 && trimmed === trimmed.toUpperCase() && /^[A-Z\s]+$/.test(trimmed)) {
-      elements.push(
-        <h2 key={`h-${idx}`} className="study-section-header">
-          {trimmed}
-        </h2>
-      );
-      return;
-    }
-
-    // Bullet list items (- item or * item)
-    const bulletMatch = trimmed.match(/^[-*]\s+(.+)/);
-    if (bulletMatch) {
-      elements.push(
-        <div key={`b-${idx}`} className="study-bullet">
-          <span className="bullet-marker">•</span>
-          <span className="bullet-content">{parseInlineMarkdown(bulletMatch[1])}</span>
-        </div>
-      );
-      return;
-    }
-
-    // Numbered list items (1. 2. 3. etc)
-    const numMatch = trimmed.match(/^(\d+)[.)]\s+(.+)/);
-    if (numMatch) {
-      elements.push(
-        <div key={`n-${idx}`} className="study-numbered">
-          <span className="number-marker">{numMatch[1]}</span>
-          <span className="numbered-content">{parseInlineMarkdown(numMatch[2])}</span>
-        </div>
-      );
-      return;
-    }
-
-    // Lines ending with colon are sub-headers (legacy support)
-    if (trimmed.endsWith(':') && trimmed.length < 60 && !trimmed.startsWith('-') && !trimmed.startsWith('*')) {
-      elements.push(
-        <h3 key={`sh-${idx}`} className="study-subsection-header">
-          {parseInlineMarkdown(trimmed)}
-        </h3>
-      );
-      return;
-    }
-
-    // Regular paragraph with inline markdown support
-    elements.push(
-      <p key={`p-${idx}`} className="study-paragraph">
-        {parseInlineMarkdown(trimmed)}
-      </p>
-    );
+// React text nodes keep uploaded/model content inert. Only these inline marks
+// are interpreted; no generated HTML or executable links reach the page.
+function Inline({ text }) {
+  return String(text || '').split(/(\*\*[^*]+\*\*|`[^`]+`|\*[^*]+\*)/g).map((part, i) => {
+    if (part.startsWith('**')) return <strong key={i}>{part.slice(2, -2)}</strong>;
+    if (part.startsWith('`')) return <code key={i}>{part.slice(1, -1)}</code>;
+    if (part.startsWith('*')) return <em key={i}>{part.slice(1, -1)}</em>;
+    return part;
   });
-
-  return elements;
 }
 
-const StudySheetSimple = ({
-  topic,
-  content = '',
-  isStreaming = false,
-  error = null,
-  inline = false
-}) => {
-  const contentRef = useRef(null);
-  const pdfContentRef = useRef(null);
-  const { t } = useTranslation();
+// Older sheets used all-caps headings. Keep their wording and medical
+// abbreviations, while presenting them with the same hierarchy as new sheets.
+function readableHeading(value) {
+  const text = String(value || '');
+  if (text !== text.toUpperCase() || !/\p{Lu}/u.test(text)) return text;
+  return text.toLowerCase()
+    .replace(/\b(?:gn|rpgn|nclex|ckd|esrd|aki|gbm|gfr|egfr|bun|uti|siadh|adh|ace|arb|copd|ecg|ekg|hiv|aids|dka|iv|icu|cns|pns|sata|rna|dna|rbc|wbc)\b/g, word => word.toUpperCase())
+    .replace(/\biga\b/g, 'IgA').replace(/\bigg\b/g, 'IgG')
+    .replace(/^\p{L}/u, letter => letter.toUpperCase());
+}
 
-  // Auto-scroll while streaming
-  useEffect(() => {
-    if (contentRef.current && isStreaming) {
-      contentRef.current.scrollTop = contentRef.current.scrollHeight;
-    }
-  }, [content, isStreaming]);
+function Block({ block, french, sources, sourcePrefix }) {
+  const labels = french
+    ? { teacher: 'Votre priorité', practice: 'À revoir après votre quiz', takeaway: 'À retenir', example: 'Exemple', self_check: 'Vérifiez votre compréhension' }
+    : { teacher: 'Your priority', practice: 'Review from your practice', takeaway: 'Keep in mind', example: 'Worked example', self_check: 'Check your understanding' };
+  let body;
+  if (block.kind === 'paragraph') body = <p><Inline text={block.text} /></p>;
+  if (block.kind === 'list') {
+    const List = block.ordered ? 'ol' : 'ul';
+    body = <List>{block.items.map((item, i) => <li key={i}><Inline text={item} /></li>)}</List>;
+  }
+  if (block.kind === 'table') body = <div className="sheet-table-scroll" tabIndex={0} role="region" aria-label={block.title || (french ? 'Tableau comparatif' : 'Comparison table')}>
+    <table><thead><tr>{block.columns.map((c, i) => <th key={i} scope="col"><Inline text={c} /></th>)}</tr></thead>
+      <tbody>{block.rows.map((row, i) => <tr key={i}>{row.map((cell, j) => j === 0
+        ? <th key={j} scope="row"><Inline text={cell} /></th> : <td key={j}><Inline text={cell} /></td>)}</tr>)}</tbody></table>
+  </div>;
+  if (block.kind === 'callout') body = <aside className={`sheet-callout sheet-callout-${block.tone}`}>
+    <span className="sheet-callout-label">{labels[block.tone]}</span>
+    {block.title && <h3>{block.title}</h3>}<p><Inline text={block.text} /></p>
+  </aside>;
+  if (block.kind === 'self_check') body = <div className="sheet-self-check">
+    <span className="sheet-callout-label">{labels.self_check}</span>
+    {block.questions.map((q, i) => <div className="sheet-check-item" key={i}>
+      <p><span className="sheet-check-number">{i + 1}</span><Inline text={q.question} /></p>
+      <details><summary>{french ? 'Voir la réponse et le raisonnement' : 'Show answer and reasoning'}</summary>
+        <p><Inline text={q.answer} /></p></details>
+    </div>)}
+  </div>;
+  const refs = (block.sourceIds || []).map(id => sources.find(s => s.id === id)).filter(Boolean);
+  return <div className="sheet-block">
+    {block.supplemental && <span className="sheet-callout-label sheet-supplemental">{french ? 'Explication complémentaire' : 'Supplemental explanation'}</span>}
+    {block.title && block.kind !== 'callout' && <h3>{block.title}</h3>}{body}
+    {!!refs.length && <div className="sheet-block-sources">{refs.map(s => <a key={s.id} href={`#${sourcePrefix}-${s.id}`} onClick={() => {
+      const disclosure = document.getElementById(`${sourcePrefix}-${s.id}`)?.closest('details');
+      if (disclosure) disclosure.open = true;
+    }}>{sourceLabel(s, french)}</a>)}</div>}
+  </div>;
+}
 
-  const handleDownloadPDF = async () => {
-    if (!pdfContentRef.current || !content) return;
-
-    // Create off-screen container with forced light mode styles
-    const offscreenContainer = document.createElement('div');
-    offscreenContainer.style.cssText = `
-      position: absolute;
-      left: -9999px;
-      top: 0;
-      width: 800px;
-      background: #ffffff;
-    `;
-
-    // Clone the content
-    const clone = pdfContentRef.current.cloneNode(true);
-
-    // Apply light mode styles directly to cloned elements
-    clone.style.background = '#ffffff';
-    clone.style.color = '#333333';
-
-    // Force light mode colors on all elements with page break controls
-    const applyLightStyles = (el) => {
-      // PDF Header styling
-      if (el.classList.contains('pdf-header')) {
-        el.style.display = 'block';
-        el.style.marginBottom = '28px';
-        el.style.paddingBottom = '24px';
-        el.style.borderBottom = '3px solid #9b6fb0';
-        el.style.pageBreakAfter = 'avoid';
-        el.style.breakAfter = 'avoid';
-      }
-      if (el.classList.contains('pdf-header-top')) {
-        el.style.display = 'flex';
-        el.style.justifyContent = 'space-between';
-        el.style.alignItems = 'center';
-        el.style.marginBottom = '20px';
-      }
-      if (el.classList.contains('pdf-brand')) {
-        el.style.display = 'flex';
-        el.style.alignItems = 'center';
-        el.style.gap = '12px';
-      }
-      if (el.classList.contains('pdf-logo')) {
-        el.style.width = '40px';
-        el.style.height = '40px';
-        el.style.borderRadius = '8px';
-      }
-      if (el.classList.contains('pdf-brand-text')) {
-        el.style.display = 'flex';
-        el.style.flexDirection = 'column';
-        el.style.gap = '2px';
-      }
-      if (el.classList.contains('pdf-brand-name')) {
-        el.style.fontSize = '18px';
-        el.style.fontWeight = '700';
-        el.style.color = '#1f1f1f';
-        el.style.letterSpacing = '-0.02em';
-      }
-      if (el.classList.contains('pdf-link')) {
-        el.style.color = '#9b6fb0';
-        el.style.fontSize = '13px';
-        el.style.textDecoration = 'none';
-        el.style.fontWeight = '500';
-      }
-      if (el.classList.contains('pdf-tagline')) {
-        el.style.fontSize = '11px';
-        el.style.color = '#888';
-        el.style.fontStyle = 'italic';
-      }
-      if (el.classList.contains('pdf-title-section')) {
-        el.style.textAlign = 'center';
-        el.style.padding = '16px 0';
-      }
-      if (el.classList.contains('pdf-title')) {
-        el.style.fontSize = '26px';
-        el.style.fontWeight = '700';
-        el.style.color = '#1f1f1f';
-        el.style.margin = '0 0 8px 0';
-        el.style.lineHeight = '1.3';
-      }
-      if (el.classList.contains('pdf-subtitle')) {
-        el.style.fontSize = '14px';
-        el.style.color = '#9b6fb0';
-        el.style.fontWeight = '500';
-        el.style.textTransform = 'uppercase';
-        el.style.letterSpacing = '0.1em';
-      }
-      // Section headers with page break controls
-      if (el.classList.contains('study-section-header')) {
-        el.style.background = 'linear-gradient(135deg, #9b6fb0 0%, #7b5a90 100%)';
-        el.style.color = 'white';
-        el.style.padding = '12px 20px';
-        el.style.borderRadius = '8px';
-        el.style.marginTop = '32px';
-        el.style.marginBottom = '16px';
-        el.style.pageBreakAfter = 'avoid';
-        el.style.breakAfter = 'avoid';
-        el.style.pageBreakInside = 'avoid';
-        el.style.breakInside = 'avoid';
-        el.style.boxShadow = '0 2px 8px rgba(155, 111, 176, 0.25)';
-      }
-      if (el.classList.contains('study-subsection-header')) {
-        el.style.color = '#4a3660';
-        el.style.borderLeft = '3px solid #9b6fb0';
-        el.style.paddingLeft = '12px';
-        el.style.marginTop = '24px';
-        el.style.pageBreakAfter = 'avoid';
-        el.style.breakAfter = 'avoid';
-      }
-      if (el.classList.contains('study-main-header')) {
-        el.style.color = '#1f1f1f';
-        el.style.pageBreakAfter = 'avoid';
-        el.style.breakAfter = 'avoid';
-      }
-      if (el.classList.contains('study-paragraph')) {
-        el.style.color = '#333333';
-        el.style.lineHeight = '1.8';
-        el.style.pageBreakInside = 'avoid';
-        el.style.breakInside = 'avoid';
-      }
-      if (el.classList.contains('study-numbered')) {
-        el.style.background = 'linear-gradient(135deg, rgba(155, 111, 176, 0.08) 0%, rgba(155, 111, 176, 0.03) 100%)';
-        el.style.border = '1px solid rgba(155, 111, 176, 0.15)';
-        el.style.borderRadius = '10px';
-        el.style.padding = '14px 16px';
-        el.style.marginBottom = '10px';
-        el.style.pageBreakInside = 'avoid';
-        el.style.breakInside = 'avoid';
-      }
-      if (el.classList.contains('number-marker')) {
-        el.style.background = 'linear-gradient(135deg, #9b6fb0 0%, #7b5a90 100%)';
-        el.style.color = 'white';
-        el.style.borderRadius = '6px';
-        el.style.minWidth = '26px';
-        el.style.height = '26px';
-        el.style.fontWeight = '600';
-      }
-      if (el.classList.contains('numbered-content')) {
-        el.style.color = '#333333';
-        el.style.lineHeight = '1.75';
-      }
-      if (el.classList.contains('study-bullet')) {
-        el.style.pageBreakInside = 'avoid';
-        el.style.breakInside = 'avoid';
-        el.style.marginBottom = '8px';
-      }
-      if (el.classList.contains('bullet-marker')) {
-        el.style.color = '#9b6fb0';
-        el.style.fontWeight = '700';
-      }
-      if (el.classList.contains('bullet-content')) {
-        el.style.color = '#333333';
-      }
-      if (el.classList.contains('study-divider')) {
-        el.style.pageBreakAfter = 'avoid';
-        el.style.breakAfter = 'avoid';
-      }
-      // PDF Footer styling
-      if (el.classList.contains('pdf-footer')) {
-        el.style.display = 'block';
-        el.style.marginTop = '40px';
-        el.style.paddingTop = '20px';
-        el.style.pageBreakInside = 'avoid';
-        el.style.breakInside = 'avoid';
-      }
-      if (el.classList.contains('pdf-footer-line')) {
-        el.style.height = '2px';
-        el.style.background = 'linear-gradient(90deg, transparent, #9b6fb0, transparent)';
-        el.style.marginBottom = '16px';
-      }
-      if (el.classList.contains('pdf-footer-content')) {
-        el.style.display = 'flex';
-        el.style.justifyContent = 'space-between';
-        el.style.alignItems = 'center';
-        el.style.fontSize = '11px';
-        el.style.color = '#888';
-      }
-      if (el.classList.contains('pdf-footer-text')) {
-        el.style.color = '#888';
-      }
-      if (el.classList.contains('pdf-footer-link')) {
-        el.style.color = '#9b6fb0';
-        el.style.fontWeight = '500';
-      }
-      Array.from(el.children).forEach(applyLightStyles);
-    };
-    applyLightStyles(clone);
-
-    offscreenContainer.appendChild(clone);
-    document.body.appendChild(offscreenContainer);
-
-    const opt = {
-      margin: [15, 15, 15, 15],
-      filename: `${topic.replace(/[^a-zA-Z0-9]/g, '_')}_study_sheet.pdf`,
-      image: { type: 'jpeg', quality: 0.98 },
-      html2canvas: {
-        scale: 2,
-        useCORS: true,
-        letterRendering: true,
-        backgroundColor: '#ffffff'
-      },
-      jsPDF: {
-        unit: 'mm',
-        format: 'a4',
-        orientation: 'portrait'
-      },
-      pagebreak: { mode: ['avoid-all', 'css', 'legacy'] }
-    };
-
+export default function StudySheetSimple({ topic, content = '', studySheet = null, isStreaming = false, error = null, inline = false }) {
+  const { i18n } = useTranslation();
+  const id = useId().replace(/:/g, '');
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState(false);
+  const [folded, setFolded] = useState({});
+  const sheet = useMemo(() => resolveStudySheet(studySheet, topic, content,
+    i18n.language?.startsWith('fr') ? 'french' : 'english'), [studySheet, topic, content, i18n.language]);
+  const french = sheet.language === 'french' || sheet.language === 'fr';
+  const hasContent = sheet.sections.length > 0;
+  const sources = sheet.sources || [];
+  const sourcePrefix = `sheet-${id}-source`;
+  const download = async () => {
+    setDownloading(true); setDownloadError(false);
     try {
-      await html2pdf().set(opt).from(clone).save();
+      const { createStudySheetPDF } = await import('./studySheetPdf');
+      const pdf = await createStudySheetPDF(sheet);
+      await pdf.save(sheetFilename(sheet.title), { returnPromise: true });
     } catch (err) {
-      console.error('PDF download failed:', err);
-    } finally {
-      // Clean up off-screen container
-      document.body.removeChild(offscreenContainer);
-    }
+      console.error('Study sheet PDF export failed:', err);
+      setDownloadError(true);
+    } finally { setDownloading(false); }
   };
-
-  return (
-    <div className={`study-sheet-simple-wrapper ${inline ? 'study-sheet-inline' : ''}`}>
-      {/* Header */}
-      <div className="study-sheet-simple-header">
-        <div className="study-header-top">
-          <h1 className="study-sheet-title">
-            <span className="title-icon">📚</span>
-            {topic}
-          </h1>
-          {!isStreaming && !error && content && (
-            <button
-              className="study-download-btn"
-              onClick={handleDownloadPDF}
-              title={t('studysheet.download')}
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
-              <span>PDF</span>
-            </button>
-          )}
+  return <article className={`study-sheet-simple-wrapper ${inline ? 'study-sheet-inline' : ''}`} aria-label={french ? 'Fiche de révision' : 'Study sheet'}>
+    <header className="sheet-header">
+      <div className="sheet-toolbar">
+        <span className="sheet-kicker">{french ? 'Fiche de révision' : 'Study sheet'}</span>
+        {hasContent && !isStreaming && !error && <button className="study-download-btn" onClick={download} disabled={downloading}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="M12 3v12m-4-4 4 4 4-4M5 16v5h14v-5" /></svg>
+          {downloading ? (french ? 'Préparation…' : 'Preparing…') : (french ? 'Télécharger le PDF' : 'Download PDF')}
+        </button>}
+      </div>
+      <h2 className={`study-sheet-title ${String(sheet.title || '').length > 90 ? 'sheet-long-title' : ''}`}>{readableHeading(sheet.title)}</h2>
+      {sheet.subtitle && <p className="sheet-subtitle">{sheet.subtitle}</p>}
+      {(isStreaming || error) && <div className="sheet-status" role="status">{error ? (french ? 'Fiche incomplète' : 'Sheet incomplete')
+        : <><span className="sheet-loading-dot" />{french ? 'Préparation de votre fiche…' : 'Building your study sheet…'}</>}</div>}
+      {downloadError && <p className="sheet-error" role="alert">{french ? 'Le PDF n’a pas pu être préparé. Réessayez.' : 'The PDF could not be prepared. Please try again.'}</p>}
+    </header>
+    {sheet.summary && <div className="sheet-overview"><span className="sheet-callout-label">{french ? 'En un coup d’œil' : 'At a glance'}</span><p><Inline text={sheet.summary} /></p></div>}
+    {sheet.sections.length > 2 && <details className="sheet-contents">
+      <summary><span>{french ? 'Voir les sections' : 'View sections'}</span><span className="sheet-contents-count">{sheet.sections.length}</span>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+      </summary>
+      <nav className="sheet-nav" aria-label={french ? 'Sections de la fiche' : 'Study sheet sections'}>
+        {sheet.sections.map((section, i) => <a key={section.id} href={`#sheet-${id}-${section.id}`} onClick={event => {
+          setFolded(prev => ({ ...prev, [section.id]: false }));
+          event.currentTarget.closest('details').open = false;
+        }}><span>{String(i + 1).padStart(2, '0')}</span>{readableHeading(section.title) || (french ? 'Révision' : 'Review')}</a>)}
+      </nav>
+    </details>}
+    <div className="study-sheet-simple-content">
+      {sheet.sections.map((section, i) => <section className="sheet-section" id={`sheet-${id}-${section.id}`} key={section.id}>
+        {section.title && <h2 className="sheet-section-heading"><button aria-expanded={!folded[section.id]} aria-controls={`sheet-${id}-${section.id}-body`}
+          onClick={() => setFolded(prev => ({ ...prev, [section.id]: !prev[section.id] }))}>
+          <span className="sheet-section-index">{String(i + 1).padStart(2, '0')}</span><span>{readableHeading(section.title)}</span>
+          <svg className="sheet-collapse-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+        </button></h2>}
+        <div id={`sheet-${id}-${section.id}-body`} hidden={!!folded[section.id]}>
+          {section.blocks.map((block, j) => <Block key={j} block={block} french={french} sources={sources} sourcePrefix={sourcePrefix} />)}
         </div>
-        {isStreaming && (
-          <div className="streaming-indicator">
-            <span className="streaming-dot"></span>
-            <span className="streaming-dot"></span>
-            <span className="streaming-dot"></span>
-            <span className="streaming-text">{t('studysheet.generating', 'Generating...')}</span>
-          </div>
-        )}
-        {!isStreaming && !error && content && (
-          <div className="complete-badge">
-            <span>✓</span>
-            <span>{t('studysheet.complete', 'Complete')}</span>
-          </div>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="study-sheet-simple-content" ref={contentRef}>
-        {error ? (
-          <div className="study-error">
-            <span className="error-icon">⚠️</span>
-            <span>{error}</span>
-          </div>
-        ) : (
-          <div className="study-text-content" ref={pdfContentRef}>
-            {/* PDF Header - only visible in PDF */}
-            <div className="pdf-header">
-              <div className="pdf-header-top">
-                <div className="pdf-brand">
-                  <img src="/NQWarmLogo.png" alt="NurseQuizAI" className="pdf-logo" />
-                  <span className="pdf-brand-text">
-                    <span className="pdf-brand-name">NurseQuizAI</span>
-                    <a href="https://nursequizai.com" className="pdf-link">nursequizai.com</a>
-                  </span>
-                </div>
-                <div className="pdf-tagline">{t('studysheet.pdfTagline', 'Your AI-Powered Nursing Study Companion')}</div>
-              </div>
-              <div className="pdf-title-section">
-                <h1 className="pdf-title">{topic}</h1>
-                <div className="pdf-subtitle">{t('studysheet.pdfSubtitle', 'Comprehensive Study Guide')}</div>
-              </div>
-            </div>
-            {parseContent(content)}
-            {isStreaming && <span className="typing-cursor">|</span>}
-            {/* PDF Footer */}
-            <div className="pdf-footer">
-              <div className="pdf-footer-line"></div>
-              <div className="pdf-footer-content">
-                <span className="pdf-footer-text">{t('studysheet.pdfGeneratedBy', 'Generated by NurseQuizAI')}</span>
-                <span className="pdf-footer-link">nursequizai.com</span>
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      </section>)}
+      {isStreaming && !hasContent && <div className="sheet-skeleton" aria-hidden="true"><i /><i /><i /></div>}
+      {error && <p className="sheet-error" role="alert">{error}</p>}
     </div>
-  );
-};
-
-export default StudySheetSimple;
+    {!!sources.length && !isStreaming && <details className="sheet-sources"><summary>{french ? 'Sources et contexte utilisés' : 'Sources and context used'}</summary>
+      <ol>{sources.map(s => <li id={`${sourcePrefix}-${s.id}`} key={s.id}><strong>{sourceLabel(s, french)}</strong>
+        {s.quote && <p>“{s.quote}”</p>}{s.kind === 'quiz' && <span> · {s.answered}/{s.total} {french ? 'questions répondues' : 'questions answered'}</span>}
+      </li>)}</ol>
+    </details>}
+  </article>;
+}

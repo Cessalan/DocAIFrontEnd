@@ -352,3 +352,33 @@ describe('buildRollup — exam debriefs', () => {
     expect(examDebrief.surprises[0]).toMatchObject({ examLabel: 'Med-Surg', preparedness: 2 });
   });
 });
+
+describe('buildRollup — cancellations', () => {
+  const exit = (id, reason, context = {}, extra = {}) => ({
+    id, surface: 'cancellation', sentiment: 0, reasons: [reason], context, ...extra
+  });
+
+  test('headline is the failure share, not raw churn', () => {
+    const { cancellations } = buildRollup([
+      exit('a', 'exam_done', { churnKind: 'natural', examOutcome: 'passed', continuedToPortal: true }),
+      exit('b', 'exam_done', { churnKind: 'natural', examOutcome: 'waiting' }),
+      exit('c', 'not_helping', { churnKind: 'failure' }, { sentiment: -1, comment: 'more SATA' }),
+      exit('d', 'too_expensive', { churnKind: 'circumstance' })
+    ]);
+    expect(cancellations.total).toBe(4);
+    expect(cancellations.failureShare).toBe(25);
+    expect(cancellations.byKind).toEqual({ natural: 2, failure: 1, circumstance: 1 });
+    expect(cancellations.continued).toBe(1);
+    // "waiting" is not a result, so the rate is 1 of 1.
+    expect(cancellations.passRate).toBe(100);
+    expect(cancellations.notes.map((r) => r.id)).toEqual(['c']);
+  });
+
+  test('cancellation reasons stay out of content complaints and comments', () => {
+    const rollup = buildRollup([
+      exit('c', 'not_helping', { churnKind: 'failure' }, { sentiment: -1, comment: 'more SATA' })
+    ]);
+    expect(rollup.byReason).toEqual([]);
+    expect(rollup.comments).toEqual([]);
+  });
+});

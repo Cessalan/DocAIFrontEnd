@@ -1,0 +1,299 @@
+/* ManageSubscriptionModal. Same paper, tokens and single accent as
+   UpgradeModal: the only filled element is the button. Choices are a hairline
+   list, not stacked cards. */
+.msub-modal {
+  --msub-accent: #c74b33;
+  --msub-accent-hover: #ab3f2b;
+  --msub-accent-ink: #fff;
+  --msub-hairline: rgba(61, 61, 61, 0.12);
+  --msub-surface: rgba(61, 61, 61, 0.035);
+  --msub-ink: var(--text-primary, #3d3d3d);
+  --msub-ink-2: var(--text-secondary, #6b6b6b);
+  --msub-ink-3: var(--text-muted, #999);
+
+  position: relative;
+  width: 100%;
+  max-width: 420px;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 14px 24px 20px;
+  border-radius: 20px;
+  background: var(--bg-paper, #fffef9);
+  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.15));
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.25);
+  animation: msub-pop-in 0.22s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Buttons don't inherit the app font by default. */
+.msub-modal button { font-family: inherit; }
+
+.msub-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(40, 30, 30, 0.55);
+  backdrop-filter: blur(4px);
+  animation: msub-fade-in 0.18s ease-out;
+}
+
+.msub-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 0 -10px 4px;
+}
+
+.msub-icon-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--msub-ink-3);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.msub-icon-btn:hover { background: var(--msub-surface); color: var(--msub-ink); }
+.msub-icon-btn svg { width: 18px; height: 18px; }
+
+.msub-title {
+  margin: 0 0 6px;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  color: var(--msub-ink);
+}
+
+.msub-lede {
+  margin: 0 0 18px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--msub-ink-2);
+}
+
+/* ── Step 1: what do you need ─────────────────────────────────────────── */
+.msub-choices {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+}
+.msub-choices li + li { border-top: 1px solid var(--msub-hairline); }
+
+.msub-choice {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  color: var(--msub-ink);
+}
+.msub-choice:disabled { opacity: 0.6; cursor: default; }
+.msub-choice:hover:not(:disabled) .msub-chevron { transform: translateX(2px); color: var(--msub-ink); }
+
+.msub-choice-text { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.msub-choice-name { font-size: 15px; font-weight: 600; }
+.msub-choice-sub { font-size: 12.5px; color: var(--msub-ink-3); }
+
+.msub-chevron {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--msub-ink-3);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+/* ── Step 2: the questions ────────────────────────────────────────────── */
+.msub-q {
+  margin: 0 0 18px;
+  padding: 0;
+  border: none;
+  min-width: 0;
+}
+
+.msub-q-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 650;
+  color: var(--msub-ink);
+}
+
+.msub-optional {
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--msub-ink-3);
+}
+
+.msub-reasons {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border-top: 1px solid var(--msub-hairline);
+}
+.msub-reasons li { border-bottom: 1px solid var(--msub-hairline); }
+
+.msub-reason {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 2px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.35;
+  color: var(--msub-ink-2);
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+.msub-reason:hover { color: var(--msub-ink); }
+.msub-reason.is-on { color: var(--msub-ink); font-weight: 600; }
+
+.msub-radio {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1.5px solid var(--msub-ink-3);
+  transition: border-color 0.12s ease, box-shadow 0.12s ease;
+}
+.msub-reason.is-on .msub-radio {
+  border-color: var(--msub-accent);
+  box-shadow: inset 0 0 0 3.5px var(--bg-paper, #fffef9), inset 0 0 0 8px var(--msub-accent);
+}
+
+.msub-input,
+.msub-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--msub-hairline);
+  background: var(--msub-surface);
+  font: inherit;
+  font-size: 14px;
+  color: var(--msub-ink);
+  outline: none;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.msub-input { margin: 0 0 12px 28px; width: calc(100% - 28px); }
+.msub-textarea { resize: vertical; min-height: 76px; line-height: 1.45; }
+.msub-input:focus,
+.msub-textarea:focus { border-color: var(--msub-accent); background: transparent; }
+.msub-input::placeholder,
+.msub-textarea::placeholder { color: var(--msub-ink-3); }
+
+.msub-segments {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+.msub-segment {
+  padding: 9px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--msub-hairline);
+  background: transparent;
+  font-size: 13.5px;
+  color: var(--msub-ink-2);
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, background 0.12s ease;
+}
+.msub-segment:hover { color: var(--msub-ink); border-color: var(--msub-ink-3); }
+.msub-segment.is-on {
+  border-color: var(--msub-accent);
+  color: var(--msub-ink);
+  font-weight: 600;
+  background: var(--msub-surface);
+}
+
+.msub-congrats {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--msub-ink-2);
+}
+
+.msub-reveal { animation: msub-reveal 0.2s ease-out; }
+
+.msub-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.msub-cta {
+  width: 100%;
+  padding: 14px 16px;
+  border: none;
+  border-radius: 13px;
+  background: var(--msub-accent);
+  color: var(--msub-accent-ink);
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.msub-cta:hover:not(:disabled) { background: var(--msub-accent-hover); }
+.msub-cta:disabled { opacity: 0.45; cursor: default; }
+
+.msub-skip {
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--msub-ink-3);
+  cursor: pointer;
+}
+.msub-skip:hover:not(:disabled) { color: var(--msub-ink); text-decoration: underline; }
+
+@keyframes msub-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes msub-pop-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes msub-reveal {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .msub-modal, .msub-overlay, .msub-reveal { animation: none; }
+}
+
+@media (max-width: 480px) {
+  .msub-modal { padding: 12px 18px 18px; border-radius: 18px; }
+}
+
+/* ── Dark mode: token swap, lavender accent with dark ink like UpgradeModal ── */
+body.dark-mode .msub-modal {
+  --msub-accent: #b8a5d4;
+  --msub-accent-hover: #c7b7de;
+  --msub-accent-ink: #241f2e;
+  --msub-hairline: rgba(255, 255, 255, 0.11);
+  --msub-surface: rgba(255, 255, 255, 0.045);
+  --msub-ink: #f5f5f5;
+  --msub-ink-2: #c8c8c8;
+  --msub-ink-3: #8f8f8f;
+  background: var(--dark-bg-primary, #242424);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.1));
+}
+body.dark-mode .msub-reason.is-on .msub-radio {
+  box-shadow: inset 0 0 0 3.5px var(--dark-bg-primary, #242424), inset 0 0 0 8px var(--msub-accent);
+}

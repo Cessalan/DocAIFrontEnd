@@ -253,6 +253,44 @@ const resources = {
         portalOpening: "Opening…",
         signOut: "Sign out"
       },
+      // Manage subscription + exit survey (ManageSubscriptionModal)
+      cancelSurvey: {
+        chooseTitle: "Manage your subscription",
+        billing: "Update card or switch plan",
+        billingSub: "Opens Stripe's secure billing page",
+        cancel: "Cancel my subscription",
+        cancelSub: "You keep Pro until the end of the period you paid for",
+        back: "Back",
+        title: "Before you go",
+        lede: "Three quick questions. Every answer is read by the people building NurseQuiz, and it decides what we fix next.",
+        q1: "What's the main reason you're cancelling?",
+        reasons: {
+          exam_done: "My exam is done",
+          not_helping: "My exam is coming up, but this isn't helping me prepare",
+          questions_mismatch: "The questions don't match what's on my exams",
+          too_expensive: "It's too expensive for me right now",
+          switched: "I'm using something else instead",
+          didnt_use: "I didn't use it enough",
+          other: "Something else"
+        },
+        detail: {
+          switched: "Which one? (optional)",
+          other: "Tell us what happened (optional)"
+        },
+        q2: "How did it go?",
+        outcomes: {
+          passed: "Passed",
+          not_passed: "Didn't pass",
+          waiting: "Waiting on results",
+          private: "Rather not say"
+        },
+        congrats: "Congratulations. That is exactly what we were here for.",
+        q3: "What one thing would have made you stay, or bring you back?",
+        optional: "Optional",
+        q3Placeholder: "e.g. NCLEX practice after my course ends",
+        continue: "Continue to cancel",
+        skip: "Skip and go to Stripe"
+      },
       // Chat Interface
       chat: {
         title: "NurseQuiz",
@@ -2749,6 +2787,44 @@ const resources = {
         manageHint: "Change de forfait, mets à jour ta carte ou annule — via le portail sécurisé Stripe.",
         portalOpening: "Ouverture…",
         signOut: "Se déconnecter"
+      },
+      // Gérer l'abonnement + questionnaire de départ (ManageSubscriptionModal)
+      cancelSurvey: {
+        chooseTitle: "Gérer votre abonnement",
+        billing: "Changer de carte ou de forfait",
+        billingSub: "Ouvre la page de facturation sécurisée de Stripe",
+        cancel: "Annuler mon abonnement",
+        cancelSub: "Vous gardez Pro jusqu'à la fin de la période payée",
+        back: "Retour",
+        title: "Avant de partir",
+        lede: "Trois questions rapides. Chaque réponse est lue par l'équipe qui construit NurseQuiz et décide de ce que nous corrigeons ensuite.",
+        q1: "Quelle est la raison principale de votre annulation ?",
+        reasons: {
+          exam_done: "Mon examen est terminé",
+          not_helping: "Mon examen approche, mais ça ne m'aide pas à me préparer",
+          questions_mismatch: "Les questions ne correspondent pas à celles de mes examens",
+          too_expensive: "C'est trop cher pour moi en ce moment",
+          switched: "J'utilise autre chose à la place",
+          didnt_use: "Je ne l'ai pas assez utilisé",
+          other: "Autre chose"
+        },
+        detail: {
+          switched: "Lequel ? (facultatif)",
+          other: "Dites-nous ce qui s'est passé (facultatif)"
+        },
+        q2: "Comment ça s'est passé ?",
+        outcomes: {
+          passed: "Réussi",
+          not_passed: "Pas réussi",
+          waiting: "En attente des résultats",
+          private: "Je préfère ne pas le dire"
+        },
+        congrats: "Félicitations. C'est exactement pour ça que nous étions là.",
+        q3: "Qu'est-ce qui vous aurait fait rester, ou vous ferait revenir ?",
+        optional: "Facultatif",
+        q3Placeholder: "ex. de la pratique NCLEX après la fin de mon cours",
+        continue: "Continuer l'annulation",
+        skip: "Passer et aller sur Stripe"
       },
       // Chat Interface
       chat: {

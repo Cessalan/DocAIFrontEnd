@@ -53,7 +53,31 @@ const SURFACE_LABELS = {
   study_block: 'Lessons & blocks',
   app: 'App',
   exam_debrief: 'Exam debriefs',
+  cancellation: 'Cancellations',
   unknown: 'Unknown'
+};
+
+const CANCEL_REASON_LABELS = {
+  exam_done: 'Exam is done',
+  not_helping: "Exam coming up, app isn't helping",
+  questions_mismatch: "Questions don't match their exams",
+  too_expensive: 'Too expensive right now',
+  switched: 'Using something else',
+  didnt_use: "Didn't use it enough",
+  other: 'Something else'
+};
+
+const CHURN_KIND_LABELS = {
+  natural: 'Finished (natural)',
+  failure: 'Product failed them',
+  circumstance: 'Price, time, other'
+};
+
+const OUTCOME_LABELS = {
+  passed: 'Passed',
+  not_passed: "Didn't pass",
+  waiting: 'Waiting on results',
+  private: 'Rather not say'
 };
 
 /* What students said would have helped, from the post-exam debrief. Kept apart
@@ -445,6 +469,107 @@ const SatisfactionDashboard = () => {
                             ))}
                           </details>
                         )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+            </section>
+          )}
+
+          {/* ── 1c. Why subscribers left ── */}
+          {rollup.cancellations.total > 0 && (
+            <section className="sat-dash__section">
+              <h2 className="sat-dash__h2">
+                Why they cancelled{' '}
+                <span className="sat-dash__count">{rollup.cancellations.total}</span>
+              </h2>
+              <p className="sat-dash__note">
+                Asked on the way to Stripe's cancel page. Raw churn is the wrong number here:
+                a student who passed and left is the outcome we sell. Watch the failure share.
+                An answer is not a confirmed cancellation ({rollup.cancellations.continued} went
+                on to Stripe); cross-check billing before counting churn.
+              </p>
+
+              <div className="sat-dash__cards">
+                <div className="sat-card sat-card--primary">
+                  <span className="sat-card__label">Product failed them</span>
+                  <span className="sat-card__value">{pct(rollup.cancellations.failureShare)}</span>
+                  <span className="sat-card__meta">
+                    {rollup.cancellations.byKind.failure} of {rollup.cancellations.total}
+                  </span>
+                </div>
+                {['natural', 'circumstance'].map((kind) => (
+                  <div key={kind} className="sat-card">
+                    <span className="sat-card__label">{CHURN_KIND_LABELS[kind]}</span>
+                    <span className="sat-card__value">{rollup.cancellations.byKind[kind]}</span>
+                  </div>
+                ))}
+                <div className="sat-card">
+                  <span className="sat-card__label">Passed, of those who left after the exam</span>
+                  <span className="sat-card__value">{pct(rollup.cancellations.passRate)}</span>
+                  <span className="sat-card__meta">
+                    {Object.entries(rollup.cancellations.outcomes)
+                      .filter(([, n]) => n > 0)
+                      .map(([k, n]) => `${n} ${OUTCOME_LABELS[k].toLowerCase()}`)
+                      .join(' · ') || 'no results given yet'}
+                  </span>
+                </div>
+              </div>
+
+              <ul className="sat-bars">
+                {rollup.cancellations.byReason.map((r) => (
+                  <li key={r.reason} className="sat-bar">
+                    <span className="sat-bar__label">{labelFor(CANCEL_REASON_LABELS, r.reason)}</span>
+                    <span className="sat-bar__track">
+                      <span className="sat-bar__fill" style={{ width: `${Math.min(100, r.share)}%` }} />
+                    </span>
+                    <span className="sat-bar__count">{r.count} · {pct(r.share)}</span>
+                  </li>
+                ))}
+              </ul>
+
+              {rollup.cancellations.notes.length > 0 && (
+                <>
+                  <h3 className="sat-dash__h3">What would have kept them</h3>
+                  <ul className="sat-comments">
+                    {rollup.cancellations.notes.map((c) => (
+                      <li key={`stay-${c.id}`} className="sat-comment">
+                        <div className="sat-comment__head">
+                          <span className="sat-comment__surface">
+                            {labelFor(CANCEL_REASON_LABELS, c.reasons[0])}
+                          </span>
+                          {c.examOutcome && (
+                            <span className="sat-comment__topic">{OUTCOME_LABELS[c.examOutcome]}</span>
+                          )}
+                          {c.proTenureDays !== null && (
+                            <span className="sat-comment__score">Pro {c.proTenureDays}d</span>
+                          )}
+                          <span className="sat-comment__date">{formatDate(c.at)}</span>
+                        </div>
+                        <p className="sat-comment__text">{c.comment}</p>
+                        {c.reasonDetail && (
+                          <p className="sat-comment__aside">Said: {c.reasonDetail}</p>
+                        )}
+                      </li>
+                    ))}
+                  </ul>
+                </>
+              )}
+
+              {rollup.cancellations.details.filter((c) => !c.comment).length > 0 && (
+                <>
+                  <h3 className="sat-dash__h3">In their words</h3>
+                  <ul className="sat-comments">
+                    {rollup.cancellations.details.filter((c) => !c.comment).map((c) => (
+                      <li key={`detail-${c.id}`} className="sat-comment">
+                        <div className="sat-comment__head">
+                          <span className="sat-comment__surface">
+                            {labelFor(CANCEL_REASON_LABELS, c.reasons[0])}
+                          </span>
+                          <span className="sat-comment__date">{formatDate(c.at)}</span>
+                        </div>
+                        <p className="sat-comment__text">{c.reasonDetail}</p>
                       </li>
                     ))}
                   </ul>

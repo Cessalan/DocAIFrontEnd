@@ -35,6 +35,7 @@ const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmi
 const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
 const ConversationReader = lazy(() => import("./Components/Admin/ConversationReader"));
 const PaywallTracker = lazy(() => import("./Components/Admin/PaywallTracker"));
+const StudyPlanInspector = lazy(() => import('./Components/Admin/StudyPlanInspector'));
 
 /**
  * Route-level loading state. Deliberately self-contained (inline styles, brand
@@ -100,6 +101,8 @@ function App() {
           <Route path="satisfaction" element={<SatisfactionDashboard />} />
           <Route path="conversations" element={<ConversationReader />} />
           <Route path="paywall" element={<PaywallTracker />} />
+          <Route path="study-plans" element={<StudyPlanInspector />} />
+          <Route path="study-plans/:chatId" element={<StudyPlanInspector />} />
         </Route>
 
         {/* ── NCLEX ────────────────────────────────────────────────────

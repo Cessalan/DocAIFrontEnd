@@ -14,7 +14,7 @@ export async function adminRequest(path, options = {}) {
   }
   const data = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const error = new Error(response.status === 404 ? 'The admin API is unavailable. Restart the backend with the latest code.' : typeof data.detail === 'string' ? data.detail : 'Admin request failed.');
+    const error = new Error(response.status === 404 && (!data.detail || data.detail === 'Not Found') ? 'The admin API is unavailable. Restart the backend with the latest code.' : typeof data.detail === 'string' ? data.detail : 'Admin request failed.');
     error.status = response.status;
     throw error;
   }

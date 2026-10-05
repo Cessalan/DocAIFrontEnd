@@ -27,6 +27,7 @@ import {
 } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid';
 import { devLog } from './devLogger';
+import { clarityEvent } from './ClarityService';
 import { buildFirstBlock, extendWithReserve, isRealNode } from '../Components/StudyMode/firstBlock';
 import { estimateMinutes } from '../Components/StudyMode/planFormatting';
 
@@ -138,6 +139,7 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
 
     await updateDoc(chatRef, studyData);
     devLog('✅ Study session created for chat:', chatId);
+    clarityEvent('study_plan_created');
 
     // Return the study state for the frontend
     return {
@@ -405,6 +407,10 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
     });
 
     devLog('✅ Node completed, advanced to:', nextNodeId || 'STUDY COMPLETE');
+    // One generic event to count, one per type to tell lessons from quizzes.
+    clarityEvent('study_node_completed');
+    clarityEvent(`study_node_completed_${nodes[currentIndex].type || 'unknown'}`);
+    if (isComplete) clarityEvent('study_plan_finished');
 
     return {
       nextNodeId,
@@ -504,6 +510,7 @@ export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) 
     });
 
     devLog('✅ Adaptive node inserted after', currentNodeId, '→', insertedNode.id);
+    clarityEvent('study_adaptive_node_added');
 
     return {
       insertedNode,
@@ -552,6 +559,7 @@ export const pauseStudySession = async (chatId) => {
     });
 
     devLog('✅ Study session paused');
+    clarityEvent('study_plan_paused');
   } catch (error) {
     console.error('❌ Error pausing study session:', error);
     throw error;
@@ -573,6 +581,7 @@ export const resumeStudySession = async (chatId) => {
     });
 
     devLog('✅ Study session resumed');
+    clarityEvent('study_plan_resumed');
   } catch (error) {
     console.error('❌ Error resuming study session:', error);
     throw error;
@@ -1433,6 +1442,7 @@ export const appendPhase2 = async (chatId, reviewPathResult) => {
     });
 
     devLog('✅ Phase 2 appended with', phase2Nodes.length, 'review nodes');
+    clarityEvent('study_review_phase_added');
 
     return {
       chatId,
@@ -1506,6 +1516,7 @@ export const extendStudyPath = async (chatId) => {
     });
 
     devLog(`✅ Extended plan by ${addedCount} nodes — ${reserveCount} still in reserve`);
+    clarityEvent('study_plan_extended');
 
     return { added: addedCount, remaining: reserveCount, activeNodeId };
   } catch (error) {

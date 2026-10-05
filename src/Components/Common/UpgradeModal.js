@@ -112,6 +112,7 @@ const UpgradeModal = ({
   isOpen, onClose, limit = 50, used = 0, remaining = Infinity, msUntilReset = 0,
   user = {}, studyGoal = null, examDate = null, topic = null, isPro = false,
   reason = null, planLimit = 3, plansRemaining = Infinity, planMsUntilReset = 0,
+  onManageSubscription = null,
 }) => {
   const { t } = useTranslation();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -142,6 +143,9 @@ const UpgradeModal = ({
   };
 
   const handleManageSubscription = async () => {
+    // The provider's manage step (billing vs cancel + exit survey). The direct
+    // portal jump is only the fallback for a modal rendered outside it.
+    if (onManageSubscription) { onManageSubscription(); return; }
     setPortalLoading(true);
     const redirected = await openBillingPortal();
     if (!redirected) setPortalLoading(false);

@@ -12,6 +12,8 @@ import OnboardingModal from "./Components/Onboarding/OnboardingModal";
 import ExamDebriefPrompt from "./Components/ExamDebrief/ExamDebriefPrompt";
 import DevExamDebriefPill from "./Components/ExamDebrief/DevExamDebriefPill";
 import DevUploadsPill from "./Components/Common/DevUploadsPill";
+import DevToolsDock from "./Components/Common/DevToolsDock";
+import StudyInspectorLink from './Components/Admin/StudyInspectorLink';
 import SelectionProvider from "./Components/Selection/useTextSelection";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
 import { getPendingFiles, clearPendingFiles } from "./utils/pendingUploadStore";
@@ -322,16 +324,6 @@ function ChatLayout() {
 
       {!isProfileComplete && <OnboardingModal />}
 
-      {process.env.NODE_ENV === 'development' && isProfileComplete && (
-        <button
-          type="button"
-          className="dev-onboarding-preview-trigger"
-          onClick={() => setPreviewOnboarding(true)}
-          title="Preview all five onboarding questions without saving answers"
-        >
-          Preview onboarding
-        </button>
-      )}
       {process.env.NODE_ENV === 'development' && isProfileComplete && previewOnboarding && (
         <OnboardingModal key="dev-preview" preview onClose={() => setPreviewOnboarding(false)} />
       )}
@@ -342,13 +334,28 @@ function ChatLayout() {
           which is a student who has no exam behind her yet. */}
       {isProfileComplete && authUid && <ExamDebriefPrompt uid={authUid} />}
 
-      {/* Dev-only: opens that conversation on demand. Renders null in a
-          production build. */}
-      {authUid && <DevExamDebriefPill />}
-
-      {/* Dev-only: download the source files attached to this session.
-          Covers study mode too, which renders inside ChatInterface. */}
-      {authUid && <DevUploadsPill chatId={selectedChatId} />}
+      {/* Dev-only tools, collapsed behind one chip so they don't cover the
+          sidebar. Renders null in a production build. */}
+      {authUid && (
+        <DevToolsDock>
+          {isProfileComplete && (
+            <button
+              type="button"
+              className="dev-onboarding-preview-trigger"
+              onClick={() => setPreviewOnboarding(true)}
+              title="Preview all five onboarding questions without saving answers"
+            >
+              Preview onboarding
+            </button>
+          )}
+          {/* Download the source files attached to this session. Covers study
+              mode too, which renders inside ChatInterface. */}
+          <DevUploadsPill chatId={selectedChatId} docked />
+          <StudyInspectorLink chatId={selectedChatId} className="dev-onboarding-preview-trigger">Open plan timeline ↗</StudyInspectorLink>
+          {/* Opens the post-exam conversation on demand. */}
+          <DevExamDebriefPill docked />
+        </DevToolsDock>
+      )}
     </div>
   );
 }

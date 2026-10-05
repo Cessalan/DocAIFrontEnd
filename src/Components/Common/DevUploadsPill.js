@@ -23,9 +23,9 @@ import { devLog } from '../../Services/devLogger';
  * to be absent from the document, and re-running the same upload can sample
  * differently. Reading the file tells you which.
  *
- * Mounted at ChatLayout (covers chat AND study mode, which renders inside it)
- * and at ExamDrillPage (its own route). All three surfaces are keyed by the
- * same chatId and uploads hang off the chat doc, so one component serves them.
+ * Mounted once, inside ChatLayout's DevToolsDock: that covers chat, study mode
+ * and the /drill/:chatId route, which all render inside the layout and are
+ * keyed by the same chatId. Uploads hang off the chat doc, so one serves all.
  *
  * Safety: returns null outside development builds, and reads only — it never
  * writes to Firestore or Storage.
@@ -34,6 +34,7 @@ import { devLog } from '../../Services/devLogger';
  * and it should be deletable in one file with no leftovers in a stylesheet.
  *
  * @param {string} chatId - the session whose uploads to list
+ * @param {boolean} [docked] - render in flow inside DevToolsDock instead of fixed
  */
 
 const btn = {
@@ -89,7 +90,7 @@ const saveFile = async (file) => {
   }
 };
 
-const DevUploadsPill = ({ chatId }) => {
+const DevUploadsPill = ({ chatId, docked = false }) => {
   const [open, setOpen] = useState(false);
   const [files, setFiles] = useState([]);
   const [state, setState] = useState('idle'); // idle | loading | done | error
@@ -119,11 +120,9 @@ const DevUploadsPill = ({ chatId }) => {
   return (
     <div
       style={{
-        position: 'fixed',
-        // Stacked above DevExamDebriefPill, which owns bottom-left at 16.
-        bottom: 60,
-        left: 16,
-        zIndex: 1200,
+        // Inside DevToolsDock it flows with the other pills; standalone it
+        // pins itself bottom-left.
+        ...(docked ? {} : { position: 'fixed', bottom: 16, left: 16, zIndex: 1200 }),
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',

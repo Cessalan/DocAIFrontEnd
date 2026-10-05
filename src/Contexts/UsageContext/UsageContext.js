@@ -28,6 +28,7 @@ import {
 import { logPaywall, logFunnelStep, FUNNEL } from '../../Services/FunnelService';
 import { daysUntilExam } from '../../Components/Common/upgradeCopy';
 import UpgradeModal from '../../Components/Common/UpgradeModal';
+import ManageSubscriptionModal from '../../Components/Common/ManageSubscriptionModal';
 import UsageBadge from '../../Components/Common/UsageBadge';
 import { cleanTopicLabel } from '../../Components/Common/upgradeCopy';
 
@@ -43,7 +44,7 @@ export const useUsageLimit = () => {
       msUntilReset: 0, requireQuota: () => true, consume: async () => {}, refresh: async () => {},
       planLimit: 0, plansUsed: 0, plansRemaining: Infinity, canCreatePlan: true,
       planMsUntilReset: 0, requirePlanQuota: () => true, consumePlan: async () => {},
-      openUpgrade: () => {}, simulateLimit: () => {},
+      openUpgrade: () => {}, simulateLimit: () => {}, openManageSubscription: () => {},
     };
   }
   return ctx;
@@ -62,6 +63,10 @@ export function UsageProvider({ children }) {
   const [usage, setUsage] = useState({ tier: 'free', windowStart: 0, count: 0 });
   const [now, setNow] = useState(Date.now());
   const [showUpgrade, setShowUpgrade] = useState(false);
+  // The step before Stripe's portal: billing changes go straight through,
+  // cancellations get the exit survey. Rendered here so the account screen
+  // and the Pro upgrade screen open the same one.
+  const [showManage, setShowManage] = useState(false);
   const usageRef = useRef(usage);
   usageRef.current = usage;
 
@@ -314,6 +319,7 @@ export function UsageProvider({ children }) {
       setShowUpgrade(true);
     },
     simulateLimit,
+    openManageSubscription: () => setShowManage(true),
   }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan, simulateLimit, recordPaywallView]);
 
   return (
@@ -360,6 +366,13 @@ export function UsageProvider({ children }) {
         user={{ uid: currentUser?.uid, email: currentUser?.email }}
         studyGoal={studyGoal}
         examDate={examDate}
+        onManageSubscription={() => { setShowUpgrade(false); setShowManage(true); }}
+      />
+      <ManageSubscriptionModal
+        isOpen={showManage}
+        onClose={() => setShowManage(false)}
+        examDate={examDate}
+        proSince={userProfile?.billing?.proSince || null}
       />
     </UsageContext.Provider>
   );

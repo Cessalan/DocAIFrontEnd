@@ -24,7 +24,10 @@ export const SURFACE = {
      surface that rates US rather than a piece of content, and the only one
      whose answer we cannot get any other way — nothing in the app knows what
      happened in the exam room. */
-  EXAM_DEBRIEF: "exam_debrief"
+  EXAM_DEBRIEF: "exam_debrief",
+  /* Asked on the way to Stripe's cancel screen. The other surface that rates
+     US, and the only one that hears from people on their way out. */
+  CANCELLATION: "cancellation"
 };
 
 /**

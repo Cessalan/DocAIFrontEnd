@@ -457,10 +457,7 @@ body.dark-mode .onboarding-skip-btn {
 }
 
 .dev-onboarding-preview-trigger {
-    position: fixed;
-    bottom: 108px;
-    left: 16px;
-    z-index: 1200;
+    /* Rendered inside DevToolsDock, which does the positioning. */
     padding: 8px 12px;
     border: 0;
     border-radius: 999px;

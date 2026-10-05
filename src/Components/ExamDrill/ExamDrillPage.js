@@ -10,7 +10,6 @@ import DrillExamDate from './DrillExamDate';
 import { DrillLoadingShell } from './DrillWriting';
 import { devLog } from '../../Services/devLogger';
 import './ExamDrill.css';
-import DevUploadsPill from '../Common/DevUploadsPill';
 
 /**
  * ExamDrillPage — route wrapper for /drill/:chatId.
@@ -146,9 +145,6 @@ const ExamDrillPage = () => {
         topics={topics}
         onExit={handleExit}
       />
-
-      {/* Dev-only: download the source files this drill was built from. */}
-      <DevUploadsPill chatId={chatId} />
     </div>
   );
 };

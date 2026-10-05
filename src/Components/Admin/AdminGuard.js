@@ -27,10 +27,11 @@ export default function AdminGuard() {
     ['/admin/email', 'Email'], ['/admin', 'Users & usage'],
     ['/admin/exams', 'Upcoming exams'], ['/admin/satisfaction', 'Satisfaction'],
     ['/admin/conversations', 'Conversations'], ['/admin/question-bank', 'Question bank'],
+    ['/admin/study-plans', 'Study timelines'],
     ...(state.identity.role === 'owner' ? [['/admin/access', 'Admin access']] : []),
   ];
   return <><nav className="admin-navigation" aria-label="Admin sections"><span className="admin-navigation-label">Admin</span><div className="admin-navigation-tabs">{tabs.map(([to, label]) => {
-    const active = to.startsWith('/admin?') ? location.pathname === '/admin' && pro : to === '/admin' ? location.pathname === '/admin' && !pro : location.pathname === to;
+    const active = to.startsWith('/admin?') ? location.pathname === '/admin' && pro : to === '/admin' ? location.pathname === '/admin' && !pro : location.pathname === to || location.pathname.startsWith(to + '/');
     return <Link key={to} to={to} aria-current={active ? 'page' : undefined}>{label}</Link>;
   })}</div></nav><Outlet context={state.identity} /></>;
 }
