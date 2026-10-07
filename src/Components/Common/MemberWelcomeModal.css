@@ -1,0 +1,47 @@
+.member-welcome-overlay {
+  position: fixed; inset: 0; z-index: 10020; display: flex;
+  align-items: center; justify-content: center; padding: 20px;
+  background: rgba(40, 30, 30, .56); backdrop-filter: blur(6px);
+}
+.member-welcome {
+  position: relative; width: 100%; max-width: 480px; max-height: calc(100dvh - 40px);
+  display: flex; flex-direction: column; overflow: hidden;
+  border: 1px solid rgba(232, 141, 125, .2); border-radius: 26px;
+  background: var(--bg-paper, #fffef9); color: var(--text-primary, #3d3d3d);
+  box-shadow: 0 30px 90px rgba(0, 0, 0, .25); text-align: center;
+  font-family: inherit;
+}
+.member-welcome-close {
+  position: absolute; z-index: 1; top: 12px; right: 12px; width: 40px; height: 40px;
+  border: 0; border-radius: 50%; background: transparent; color: inherit;
+  font-size: 26px; cursor: pointer;
+}
+.member-welcome-close:hover { background: rgba(128, 128, 128, .1); }
+.member-welcome-content { padding: 22px 30px 8px; overflow-y: auto; min-height: 0; animation: member-welcome-enter .3s ease-out; }
+.member-welcome-art { position: relative; width: fit-content; margin: 0 auto 6px; }
+.member-welcome-label { margin: 0 0 10px; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--text-secondary, #69564e); }
+.member-welcome h2 { margin: 0; font-size: clamp(27px, 5vw, 34px); line-height: 1.15; letter-spacing: -.035em; font-weight: 750; outline: none; }
+.member-welcome-intro { margin: 12px auto 22px; max-width: 350px; font-size: 15px; line-height: 1.6; color: var(--text-secondary, #695f59); }
+.member-welcome-benefits { display: grid; gap: 18px; padding: 0; margin: 0 0 12px; list-style: none; text-align: left; }
+.member-welcome-benefits li { display: flex; gap: 14px; align-items: flex-start; }
+.member-welcome-icon { display: grid; place-items: center; flex: 0 0 40px; height: 40px; border-radius: 13px; background: rgba(232, 141, 125, .12); color: var(--text-primary, #54443d); }
+.member-welcome-icon svg { width: 23px; height: 23px; }
+.member-welcome h3 { font-size: 15px; line-height: 1.4; margin: 0 0 4px; font-weight: 700; }
+.member-welcome-benefits p { margin: 0; font-size: 13px; line-height: 1.6; color: var(--text-secondary, #695f59); }
+.member-welcome-footer { flex-shrink: 0; padding: 12px 30px 24px; }
+.member-welcome-progress { display: flex; justify-content: center; gap: 6px; margin-bottom: 16px; }
+.member-welcome-progress span { width: 6px; height: 6px; border-radius: 9px; background: rgba(128, 128, 128, .25); }
+.member-welcome-progress .active { width: 22px; background: #c74b33; }
+.member-welcome-primary { display: flex; justify-content: center; align-items: center; gap: 12px; width: 100%; min-height: 48px; padding: 12px 20px; border: 0; border-radius: 14px; background: #c74b33; color: #fff; font-size: 15px; font-weight: 700; font-family: inherit; cursor: pointer; }
+.member-welcome-primary:hover { background: #ab3f2b; }
+.member-welcome button:focus-visible { outline: 3px solid #c74b33; outline-offset: 3px; }
+.member-welcome-back { margin-top: 12px; padding: 7px 12px; border: 0; background: transparent; color: var(--text-secondary, #695f59); font: inherit; font-size: 13px; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
+.member-welcome--surprise .member-welcome-content { padding-top: 48px; }
+.member-welcome--surprise .member-welcome-art { margin-bottom: 24px; }
+.member-welcome-bolt { position: absolute; right: -5px; bottom: 5px; display: grid; place-items: center; width: 48px; height: 48px; border-radius: 16px; background: #c74b33; color: #fff; box-shadow: 0 6px 18px rgba(199, 75, 51, .25); transform: rotate(-10deg); }
+.member-welcome-bolt svg { width: 27px; height: 27px; }
+.member-welcome-included { margin: 28px 0 24px; font-size: 13px; color: var(--text-secondary, #695f59); }
+.member-welcome-included span { color: var(--text-primary, #3d3d3d); margin-right: 4px; }
+@keyframes member-welcome-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 480px) { .member-welcome-overlay { padding: 12px; } .member-welcome { max-height: calc(100dvh - 24px); border-radius: 22px; } .member-welcome-content { padding-left: 22px; padding-right: 22px; } .member-welcome-footer { padding-left: 22px; padding-right: 22px; } }
+@media (prefers-reduced-motion: reduce) { .member-welcome-content { animation: none; } }

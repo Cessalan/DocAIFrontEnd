@@ -88,3 +88,28 @@ test('an unanswered repeat does not erase the answered original', () => {
   const items = collectPracticeItems([chatQuiz, repeat]);
   expect(items.find(i => i.question.question === 'Fluid 1?').attempted).toBe(true);
 });
+
+// 2026-10-06: source topics became main topics while questions kept their
+// subtopic tags. A quiz on Circulation then reported "you haven't practised
+// Examen primaire", right after she practised it.
+test('a question tagged with a subtopic counts toward its main topic', () => {
+  const quiz = { id: 'quiz-abcde', type: 'quiz',
+    quizData: [q('Pulse?', 'C — Circulation'), q('Bleed?', 'C — Circulation'), q('Airway?', 'A — Voies aériennes')],
+    practice: { firstAnswers: { 0: { isCorrect: false }, 1: { isCorrect: false }, 2: { isCorrect: true } } } };
+  const groups = [
+    { title: 'Examen primaire', subtopics: ['C — Circulation', 'A — Voies aériennes'] },
+    { title: 'Examen secondaire', subtopics: ['MIST', 'SAMPLE'] }];
+  const coverage = buildCoverage(collectPracticeItems([quiz]), ['Examen primaire', 'Examen secondaire'], groups);
+  const primary = coverage.topics.find(t => t.label === 'Examen primaire');
+  expect(primary.attempted).toBe(3);
+  expect(primary.missed).toHaveLength(2);
+  expect(coverage.untested).toEqual(['Examen secondaire']);
+  expect(coverage.topics.find(t => t.label === 'C — Circulation')).toBeUndefined();
+  expect(nextPractice(coverage).fresh).toBe('Examen secondaire');
+});
+
+test('without groups, coverage behaves exactly as before', () => {
+  const quiz = { id: 'quiz-x', type: 'quiz', quizData: [q('Pulse?', 'C — Circulation')], practice: { firstAnswers: { 0: { isCorrect: true } } } };
+  const coverage = buildCoverage(collectPracticeItems([quiz]), ['Examen primaire']);
+  expect(coverage.untested).toEqual(['Examen primaire']);
+});

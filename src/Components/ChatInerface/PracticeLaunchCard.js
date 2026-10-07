@@ -1,8 +1,10 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
 import { appendUniqueQuestions, practiceTarget } from './practiceModel';
+import { collectPracticeItems } from './practiceCoverageModel';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import PrintQuizButton from './PrintQuizButton';
+import PracticePlanSummary from './PracticePlanSummary';
 import './PracticeLaunchCard.css';
 
 export default function PracticeLaunchCard({ message, questions = [], onOpen }) {
@@ -19,6 +21,12 @@ export default function PracticeLaunchCard({ message, questions = [], onOpen }) 
   const answered = all.filter((question, index) => typeof (message.practice?.answers?.[index] || question.userSelection)?.isCorrect === 'boolean').length;
   const started = answered > 0 || (message.practice?.snapshot?.queueIndex || 0) > 0;
   const complete = all.length > 0 && !growing && answered === all.length && !message.isStreaming;
+  // The score lives here, not in the review note below the card: the note
+  // talks about what she can do and what to fix, and this states the result.
+  // Same first-try rule as the coverage model, so the two never disagree.
+  const firstTry = complete ? collectPracticeItems([{ ...message, type: 'quiz', isStreaming: false, quizData: all }]) : [];
+  const firstTryCorrect = firstTry.filter(item => item.correctFirst).length;
+  const showScore = complete && firstTry.length === all.length && firstTry.every(item => item.attempted);
   const label = complete ? t('practiceEntry.review', 'Review practice') : started ? t('practiceEntry.resume', 'Resume practice') : message.isStreaming ? t('practiceEntry.open', 'Open practice') : t('practiceEntry.start', 'Start practice');
   return <section className="practice-entry" aria-label={t('practiceEntry.label', 'Quiz practice')}>
     <div className="practice-entry-heading">
@@ -26,7 +34,8 @@ export default function PracticeLaunchCard({ message, questions = [], onOpen }) 
       <div><span className="practice-entry-kicker">{target > 10 ? t('practiceEntry.noteSet', { defaultValue: 'a {{count}}-question practice on…', count: target }) : t('practiceEntry.note', 'a little practice on…')}</span><h3>{topic || t('practiceEntry.fromQuestions', 'From your questions')}</h3></div>
     </div>
     {!topic && all[0]?.question && <p className="practice-entry-preview">{all[0].question}</p>}
-    <p className="practice-entry-detail">{message.isStreaming ? t('practiceEntry.preparing', 'Preparing your questions…') : growing ? t('practiceEntry.readyOf', { defaultValue: '{{loaded}} of {{count}} ready · more load as you go', loaded: all.length, count: target }) : t('practiceEntry.ready', { defaultValue: '{{count}} questions ready', count: all.length })}</p>
+    <PracticePlanSummary plan={message.practice?.settings?.practice_plan} />
+    <p className="practice-entry-detail">{showScore ? t('practiceEntry.firstTry', { defaultValue: '{{correct}} of {{count}} right first time', correct: firstTryCorrect, count: all.length }) : message.isStreaming ? t('practiceEntry.preparing', 'Preparing your questions…') : growing ? t('practiceEntry.readyOf', { defaultValue: '{{loaded}} of {{count}} ready · more load as you go', loaded: all.length, count: target }) : t('practiceEntry.ready', { defaultValue: '{{count}} questions ready', count: all.length })}</p>
     {started && <div className="practice-entry-progress"><div className="practice-entry-track" role="progressbar" aria-label={t('practiceEntry.progress', 'Questions answered')} aria-valuemin={0} aria-valuemax={target} aria-valuenow={answered}><span style={{ width: `${target ? answered / target * 100 : 0}%` }} /></div><span>{answered}/{target}</span></div>}
     <div className="practice-entry-footer"><span>{started ? t('practiceEntry.saved', 'Your place is saved') : t('practiceEntry.help', 'A hint if you need one')}</span><div className="practice-entry-actions">{!message.isStreaming && <PrintQuizButton questions={all} answers={message.practice?.answers} topic={topic} />}<button type="button" onClick={event => {
       const { left, top, width, height } = event.currentTarget.closest('.practice-entry').getBoundingClientRect();

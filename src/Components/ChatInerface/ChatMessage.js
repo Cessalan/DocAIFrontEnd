@@ -214,6 +214,7 @@ const ChatMessage = ({
   onOpenPractice,
   onRetryDebrief,
   practiceNext = null,
+  practiceMistakes,
   onRedoMistakes,
   onDeleteMessage,
   onEditMessage,
@@ -414,7 +415,7 @@ const ChatMessage = ({
 
       {/* Content */}
       <div className="message-content" data-selectable="true">
-        {message.type === 'practice_debrief' && <PracticeDebrief message={message} onSendMessage={onSendMessage} onRetry={onRetryDebrief} next={practiceNext} onRedoMistakes={onRedoMistakes} />}
+        {message.type === 'practice_debrief' && <PracticeDebrief message={message} onSendMessage={onSendMessage} onRetry={onRetryDebrief} next={practiceNext} mistakes={practiceMistakes} onRedoMistakes={onRedoMistakes} onOpenPractice={onOpenPractice} />}
         {/* Delete Button (Dev Mode + View All Chats Only) */}
         {isDevelopment && viewAllChatsMode && isHovered && onDeleteMessage && !message.isStreaming && (
           <button
@@ -512,7 +513,7 @@ const ChatMessage = ({
                 fontSize: '14px'
               }}
             >
-              <span>⚠️ {t(message.errorKey || 'chat.streamError')}</span>
+              <span>⚠️ {message.errorMessage || t(message.errorKey || 'chat.streamError')}</span>
               {message.retryText && onRetryMessage && (
                 <button
                   type="button"

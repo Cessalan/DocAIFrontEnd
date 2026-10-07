@@ -36,7 +36,7 @@ export async function completePractice(body) {
   return (await check(await fetch(`${API_BASE_URL}/quiz/debrief`, { method: 'POST', headers: await headers(), body: JSON.stringify(body) }))).json();
 }
 
-export async function streamPracticeBatch(body, onQuestion, signal) {
+export async function streamPracticeBatch(body, onQuestion, signal, onPlan) {
   const response = await check(await fetch(`${API_BASE_URL}/quiz/practice-stream`, { method: 'POST', headers: await headers(), body: JSON.stringify(body), signal }));
   const reader = response.body.getReader(), decoder = new TextDecoder();
   let buffer = '', complete = false;
@@ -45,6 +45,7 @@ export async function streamPracticeBatch(body, onQuestion, signal) {
     const data = JSON.parse(text);
     if (data.status === 'error') throw new Error(data.message);
     if (data.status === 'question_ready') onQuestion(data.question);
+    if (data.status === 'practice_plan_ready') onPlan?.(data.plan);
     if (data.status === 'quiz_complete') complete = true;
   };
   try {

@@ -43,6 +43,7 @@ const AUTO_FOCUS_TOPICS = 2;
 const PlanOnboarding = ({
   topics = [],
   insights = [],
+  mainTopics = [],
   filenames = [],
   fileCount = 0,
   language = 'en',
@@ -471,6 +472,7 @@ const PlanOnboarding = ({
         <UploadInsightsCard
           topics={topics}
           insights={insights}
+          mainTopics={mainTopics}
           fileCount={fileCount || (filenames || []).length || 0}
           disabled={disabled}
           onContinue={handleInsightsContinue}

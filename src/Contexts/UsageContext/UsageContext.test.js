@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import '../../i18n/i18n';
 import { UsageProvider, useUsageLimit } from './UsageContext';
 
@@ -12,6 +12,18 @@ import { UsageProvider, useUsageLimit } from './UsageContext';
 
 // Tier the fake account reports. Mutable so one test can be Pro.
 let mockTier = 'free';
+let mockMembershipCallback;
+
+jest.mock('../../Services/ProductAnnouncementService', () => ({
+  ...jest.requireActual('../../Services/ProductAnnouncementService'),
+  acknowledgeAnnouncement: async () => {},
+}));
+
+jest.mock('../../Services/MemberWelcomeService', () => ({
+  ...jest.requireActual('../../Services/MemberWelcomeService'),
+  watchMembership: (uid, callback) => { mockMembershipCallback = callback; return () => {}; },
+  acknowledgeMemberWelcome: async () => {},
+}));
 
 jest.mock('../AuthContext/AuthContext', () => ({
   useAuth: () => ({ currentUser: { uid: 'dev-uid', email: 'dev@example.com' }, userProfile: {} }),
@@ -46,6 +58,16 @@ const renderHarness = async () => {
   await waitFor(() => expect(screen.getByTestId('used')).toHaveTextContent('12'));
   expect(screen.getByTestId('tier')).toHaveTextContent(mockTier);
 };
+
+test('existing Pro members get What’s new without needing a new checkout', async () => {
+  localStorage.clear(); mockTier = 'pro';
+  await renderHarness();
+  act(() => mockMembershipCallback({ usage: { tier: 'pro', windowStart: Date.now(), count: 12 } }));
+  expect(screen.getByRole('dialog', { name: 'Your course quizzes just got faster.' })).toBeInTheDocument();
+  expect(screen.queryByText('Welcome to Pro.')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /Got it. Let’s study/ }));
+  expect(screen.queryByRole('dialog')).toBeNull();
+});
 
 describe('simulateLimit (dev paywall preview)', () => {
   // simulateLimit reads NODE_ENV at call time, and jest runs as 'test'.
@@ -99,4 +121,23 @@ describe('simulateLimit (dev paywall preview)', () => {
     fireEvent.click(screen.getByText('sim-q'));
     expect(screen.queryByText(/Don't stop now/)).toBeNull();
   });
+});
+
+test('confirmed membership updates the quota and presents the welcome before the speed reveal', async () => {
+  localStorage.clear(); mockTier = 'free';
+  await renderHarness();
+  fireEvent.click(screen.getByRole('button', { name: 'sim-q' }));
+  // A Stripe webhook can arrive while the app is still showing free quota.
+  act(() => mockMembershipCallback({
+    usage: { tier: 'pro', windowStart: Date.now(), count: 12 },
+    billing: { welcomeVersion: 1, proSince: 1000 },
+  }));
+  expect(screen.getByTestId('tier')).toHaveTextContent('pro');
+  expect(screen.getByTestId('remaining')).toHaveTextContent('Infinity');
+  expect(screen.getByRole('dialog', { name: 'Welcome to Pro.' })).toBeInTheDocument();
+  expect(screen.queryByText('Your course quizzes, faster.')).toBeNull();
+  fireEvent.click(screen.getByRole('button', { name: /One more thing/ }));
+  expect(screen.getByRole('dialog', { name: 'Your course quizzes, faster.' })).toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: /Let’s study/ }));
+  expect(screen.queryByRole('dialog')).toBeNull();
 });

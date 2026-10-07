@@ -30,6 +30,11 @@ import { daysUntilExam } from '../../Components/Common/upgradeCopy';
 import UpgradeModal from '../../Components/Common/UpgradeModal';
 import ManageSubscriptionModal from '../../Components/Common/ManageSubscriptionModal';
 import UsageBadge from '../../Components/Common/UsageBadge';
+import MemberWelcomeModal from '../../Components/Common/MemberWelcomeModal';
+import useMemberWelcome from './useMemberWelcome';
+import useProductAnnouncement from './useProductAnnouncement';
+import ProductAnnouncementModal from '../../Components/Common/ProductAnnouncementModal';
+import { PRODUCT_ANNOUNCEMENTS } from '../../config/productAnnouncements';
 import { cleanTopicLabel } from '../../Components/Common/upgradeCopy';
 
 const UsageContext = createContext(null);
@@ -53,6 +58,9 @@ export const useUsageLimit = () => {
 export function UsageProvider({ children }) {
   const { currentUser, userProfile } = useAuth() || {};
   const uid = currentUser?.uid || null;
+  const currentUidRef = useRef(uid);
+  currentUidRef.current = uid;
+  const membershipRevision = useRef(0);
 
   // Onboarding signals for personalizing the upgrade modal (all optional).
   const studyGoal = userProfile?.onboarding?.studyGoal || null;
@@ -67,6 +75,26 @@ export function UsageProvider({ children }) {
   // cancellations get the exit survey. Rendered here so the account screen
   // and the Pro upgrade screen open the same one.
   const [showManage, setShowManage] = useState(false);
+  const [previewWelcome, setPreviewWelcome] = useState(() =>
+    process.env.NODE_ENV === 'development'
+      && new URLSearchParams(window.location.search).get('preview') === 'member-welcome');
+  const [previewAnnouncement, setPreviewAnnouncement] = useState(() =>
+    process.env.NODE_ENV === 'development'
+      && new URLSearchParams(window.location.search).get('preview') === 'product-announcement');
+
+  const onMembershipProfile = useCallback((profile) => {
+    membershipRevision.current += 1;
+    const q = deriveQuota(profile.usage);
+    setUsage({ tier: q.tier, windowStart: q.windowStart, count: q.used });
+    const p = derivePlanQuota(profile.planUsage, q.tier);
+    setPlanUsage({ windowStart: p.windowStart, count: p.used });
+  }, []);
+  const { welcome, dismiss: dismissWelcome, profile: membershipProfile } = useMemberWelcome(uid, onMembershipProfile);
+  const { announcement, dismiss: dismissAnnouncement } = useProductAnnouncement(uid, membershipProfile, !!welcome);
+
+  useEffect(() => {
+    if (welcome || announcement) { setShowUpgrade(false); setShowManage(false); }
+  }, [welcome, announcement]);
   const usageRef = useRef(usage);
   usageRef.current = usage;
 
@@ -182,7 +210,11 @@ export function UsageProvider({ children }) {
       setPlanUsage({ windowStart: 0, count: 0 });
       return;
     }
+    const revision = membershipRevision.current;
     const [q, p] = await Promise.all([getQuota(uid), getPlanQuota(uid)]);
+    // An older read must not undo an activation that the live listener has
+    // already confirmed, or update quota after an account switch.
+    if (currentUidRef.current !== uid || membershipRevision.current !== revision) return;
     setUsage({ tier: q.tier, windowStart: q.windowStart, count: q.used });
     setPlanUsage({ windowStart: p.windowStart, count: p.used });
   }, [uid]);
@@ -374,6 +406,19 @@ export function UsageProvider({ children }) {
         examDate={examDate}
         proSince={userProfile?.billing?.proSince || null}
       />
+      {(welcome || previewWelcome) && (
+        <MemberWelcomeModal
+          key={welcome ? `${welcome.uid}:${welcome.key}` : 'preview'}
+          onClose={welcome ? dismissWelcome : () => setPreviewWelcome(false)}
+        />
+      )}
+      {!welcome && !previewWelcome && (announcement || previewAnnouncement) && (
+        <ProductAnnouncementModal
+          key={announcement ? `${uid}:${announcement.id}` : 'preview-announcement'}
+          announcement={announcement || PRODUCT_ANNOUNCEMENTS[0]}
+          onClose={announcement ? dismissAnnouncement : () => setPreviewAnnouncement(false)}
+        />
+      )}
     </UsageContext.Provider>
   );
 }

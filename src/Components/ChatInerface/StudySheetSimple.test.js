@@ -2,7 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import StudySheetSimple from './StudySheetSimple';
 import { legacyStudySheet, sheetFilename } from './studySheetModel';
-import { updateStudySheetMessage, savedStudySheetMessage } from '../../Services/studySheetEvents';
+import { updateStudySheetMessage, savedStudySheetMessage, studySheetFromFirestore } from '../../Services/studySheetEvents';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ i18n: { language: 'en' } }) }));
 const sheet = { version: 2, title: 'Kidney filtration', subtitle: 'Only the requested markers', summary: 'Compare the markers and explain their role.', language: 'english',
@@ -74,11 +74,36 @@ test('retry clears partial structured and text content and completion persists t
   const next = updateStudySheetMessage(updateStudySheetMessage(header, section), section);
   expect(next.studySheet.sections).toHaveLength(1);
   const complete = updateStudySheetMessage(next, { status: 'study_sheet_complete', studySheet: sheet, content: 'Final explanation' });
-  expect(savedStudySheetMessage(complete).studySheet).toEqual(sheet);
+  // Saved shape differs only in table rows, and decodes back to the original.
+  expect(studySheetFromFirestore(savedStudySheetMessage(complete).studySheet)).toEqual(sheet);
   expect(savedStudySheetMessage(complete).isStreaming).toBeUndefined();
 });
 
 test('PDF names retain accents and remove unsafe filename characters', () => {
   expect(sheetFilename('Évaluation rénale / filtrations?')).toBe('Évaluation_rénale_filtrations.pdf');
   expect(sheetFilename()).toBe('Study_sheet.pdf');
+});
+
+// Firestore rejects an array directly inside an array. Every structured sheet
+// failed to save until 2026-10-06 because table rows were exactly that.
+const hasNestedArray = (value, insideArray = false) => {
+  if (Array.isArray(value)) return insideArray || value.some(v => hasNestedArray(v, true));
+  if (value && typeof value === 'object') return Object.values(value).some(v => hasNestedArray(v, false));
+  return false;
+};
+
+test('a saved sheet contains no nested arrays or undefined values, so Firestore accepts it', () => {
+  const saved = savedStudySheetMessage({ id: 's1', topic: 'Kidney filtration', content: 'x',
+    studySheet: { ...sheet, subtitle: undefined } });
+  expect(hasNestedArray(sheet)).toBe(true);
+  expect(hasNestedArray(saved)).toBe(false);
+  expect(JSON.stringify(saved.studySheet)).not.toContain('subtitle');
+  expect(saved.studySheet.sections[0].blocks[1].rows[0]).toEqual({ cells: ['A', 'Explanation A'] });
+});
+
+test('a sheet read back from Firestore renders its table exactly as when it streamed', () => {
+  const stored = savedStudySheetMessage({ id: 's1', topic: 'Kidney filtration', content: 'x', studySheet: sheet }).studySheet;
+  render(<StudySheetSimple studySheet={stored} />);
+  expect(screen.getByRole('rowheader', { name: 'A' })).toBeTruthy();
+  expect(screen.getByText('Explanation B')).toBeTruthy();
 });

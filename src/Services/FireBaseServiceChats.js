@@ -165,7 +165,9 @@ const SaveFileMetaData = async (chatId, newFileMetaData, downloadURL, wordCount)
   const fileDocRef = doc(db, "chats", chatId, "uploads", newFileMetaData.id);
   await setDoc(fileDocRef, {
     ...newFileMetaData,
-    downloadURL,
+    // File processing completes before the background Storage upload, so its
+    // URL may not exist yet. Firestore accepts null, but rejects undefined.
+    downloadURL: downloadURL ?? newFileMetaData.downloadURL ?? null,
     wordCount: wordCount || 0,
     uploadedAt: serverTimestamp()
   });

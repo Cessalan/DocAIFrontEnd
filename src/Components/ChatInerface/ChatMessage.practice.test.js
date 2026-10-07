@@ -1,6 +1,7 @@
 import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 import ChatMessage from './ChatMessage';
+import { applyStreamError } from './streamErrorMessage';
 
 jest.mock('react-markdown', () => ({ __esModule: true, default: () => null }));
 jest.mock('remark-gfm', () => ({ __esModule: true, default: () => {} }));
@@ -44,4 +45,15 @@ test('saved flashcards in the main chat use the new focused review', () => {
   fireEvent.click(screen.getByRole('button', { name: /Start review/ }));
   expect(screen.getByRole('dialog', { name: 'Flashcard review' })).toBeInTheDocument();
   expect(screen.getByRole('heading', { name: 'Recall this idea?' })).toBeInTheDocument();
+});
+
+test('a material error after quiz setup is visible in the chat and offers retry', () => {
+  const retry=jest.fn();
+  const messages=applyStreamError([{id:'intro',role:'assistant',content:'Preparing your quiz'}],{
+    messageId:'missing-placeholder',code:'material_support',
+    message:'Could not read notes.pdf. Please upload a clearer copy.',retryText:'Generate a quiz'});
+  render(<ChatMessage message={messages[1]} onRetryMessage={retry} />);
+  expect(screen.getByRole('alert')).toHaveTextContent('Could not read notes.pdf');
+  fireEvent.click(screen.getByRole('button',{name:/chat.retry/}));
+  expect(retry).toHaveBeenCalledWith(messages[1]);
 });

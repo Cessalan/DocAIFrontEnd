@@ -22,7 +22,7 @@
    disagree, this line promises a mix the next batch doesn't deliver.
    ══════════════════════════════════════════════════════════════════════ */
 
-export const FORMATS = ['mcq', 'sata', 'casestudy'];
+export const FORMATS = ['mcq', 'sata', 'casestudy', 'true_false', 'matrix', 'unfoldingcase'];
 export const DEFAULT_FORMATS = ['mcq', 'sata'];
 export const DIFFICULTIES = ['easy', 'medium', 'hard'];
 

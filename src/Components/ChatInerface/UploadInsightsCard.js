@@ -43,6 +43,11 @@ const BAND_DOT = {
 const UploadInsightsCard = ({
   topics = [],
   insights = [],
+  // [{title, subtopics, outcomes}] — the document's own chapters with the
+  // subtopics each one teaches. `topics` are the chapter titles; this is
+  // what lets the card say what sits under each instead of a flat list of
+  // leaf labels. Absent on messages saved before 2026-10-06.
+  mainTopics = [],
   fileCount = 0,
   disabled = false,
   onContinue,
@@ -53,6 +58,29 @@ const UploadInsightsCard = ({
     () => rankUploadTopics({ topics, insights, max: 6 }),
     [topics, insights]
   );
+
+  const subtopicsFor = useMemo(() => {
+    const byTitle = new Map(
+      (Array.isArray(mainTopics) ? mainTopics : [])
+        .filter(g => g && g.title)
+        .map(g => [String(g.title).toLowerCase(), (g.subtopics || []).filter(Boolean)])
+    );
+    return (topic) => byTitle.get(String(topic).toLowerCase()) || [];
+  }, [mainTopics]);
+
+  // Subtopics come straight from the analysis, never composed here. Up to five
+  // are shown; "+N" says the rest exist without padding the card.
+  const renderSubtopics = (topic) => {
+    const subs = subtopicsFor(topic);
+    if (subs.length === 0) return null;
+    const shown = subs.slice(0, 5);
+    const more = subs.length - shown.length;
+    return (
+      <span className="upload-insights__subtopics">
+        {shown.join(' · ')}{more > 0 ? ` · +${more}` : ''}
+      </span>
+    );
+  };
 
   // Logged once per funnel: a card that re-renders four times would otherwise
   // report four views and understate every rate below it by 4x.
@@ -119,6 +147,7 @@ const UploadInsightsCard = ({
           {ranked.topics.map(item => (
             <li key={item.topic} className="upload-insights__topic">
               <span className="upload-insights__topic-name">{item.topic}</span>
+              {renderSubtopics(item.topic)}
             </li>
           ))}
         </ul>
@@ -135,6 +164,7 @@ const UploadInsightsCard = ({
               {items.map(item => (
                 <li key={item.topic} className="upload-insights__topic">
                   <span className="upload-insights__topic-name">{item.topic}</span>
+                  {renderSubtopics(item.topic)}
                   {/* The reason is what turns a coloured list into evidence.
                       Rendered from a key the model chose — never composed here. */}
                   <span className="upload-insights__topic-reason">

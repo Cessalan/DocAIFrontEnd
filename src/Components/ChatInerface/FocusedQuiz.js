@@ -10,11 +10,14 @@ import { appendUniqueQuestions, initialPracticeSettings, normalizePracticeQuesti
 import { settingsWithProfile } from './practiceProfileModel';
 import PracticeSettingsLine from './PracticeSettingsLine';
 import PrintQuizButton from './PrintQuizButton';
+import PracticePlanSummary from './PracticePlanSummary';
 import '../StudyMode/StudyMode.css';
 import './FocusedQuiz.css';
 
 import { usePaperTransition } from './paperTransition';
 import PaperShimmer from './PaperShimmer';
+import QuizWait from './QuizWait';
+import { scopeSubtopics } from './quizWaitModel';
 import PaperSurface from './PaperSurface';
 
 export function PracticeShimmer() {
@@ -132,7 +135,8 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
     batchRef.current = { controller }; setExtending(true); setBatchError('');
     try {
       await streamPracticeBatch(pending, q => update(previous => ({ ...previous,
-        questions: appendUniqueQuestions(previous.questions || [], [q]) })), controller.signal);
+        questions: appendUniqueQuestions(previous.questions || [], [q]) })), controller.signal,
+        plan => update(previous => ({ ...previous, settings: { ...previous.settings, plan_id: plan.id, practice_plan: plan } })));
       update({ pendingBatch: null });
     } catch (error) {
       if (error.name !== 'AbortError') { setBatchError(error.message); if (error.status === 429) { update({ pendingBatch: null }); openUpgrade(); } }
@@ -176,6 +180,11 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
 
   const content = useMemo(() => ({ questions, _expectedTotal: target,
     _isStreaming: !readOnly && (!!message.isStreaming || extending || (target > loaded && !batchError)) }), [questions, target, message.isStreaming, extending, loaded, batchError, readOnly]);
+  // Lines for the waiting screen: the backend's real stage, and subtopics
+  // from her material that are inside this quiz's scope (quizWaitModel).
+  const waitSubtopics = useMemo(() => scopeSubtopics(message.quizTopic || practiceProfile?.scope,
+    practiceProfile?.sourceTopicGroups), [message.quizTopic, practiceProfile?.scope, practiceProfile?.sourceTopicGroups]);
+  const waitTotal = message.expectedTotal || target;
   const isCase = ['casestudy', 'ordering', 'bowtie'].includes(current?.questionType);
   const tutorPanel = <TutorDiscussionPanel {...{ animateTutor, history, busy, tutorError, questionIndex, active, isCase, readOnly, setTutorOpen, send, tutorBottom, questionPane, text, setText, current, t }} />;
   return createPortal(<section ref={paper.ref} className={`focused-quiz study-mode-container paper-sheet ${isCase ? 'has-case has-tutor' : tutorOpen ? 'has-tutor' : ''} ${paper.className}`} hidden={!visible} inert={closing ? true : undefined} data-paper={paper.mode} aria-label="Focused quiz practice"
@@ -185,14 +194,16 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
       <PracticeSettingsLine profile={practiceProfile} guess={practice.settings.question_types} onChange={onPracticeProfileChange} readOnly={readOnly} /></div>
       <div className="practice-header-actions"><PrintQuizButton questions={questions} topic={message.quizTopic || message.topic} />
         <button type="button" onClick={closePractice}>← Back to chat</button></div></header>
+    <div className="paper-page"><PracticePlanSummary plan={practice.settings.practice_plan} /></div>
     {notice && <div className="practice-notice" role="status">{notice}<button onClick={() => setNotice('')} aria-label="Dismiss notice">×</button></div>}
     {readOnly && <div className="practice-notice">This is another user's conversation. Make your own copy to answer and discuss it. Uploaded source files are not copied.
       {onCopyCreated && <button disabled={copying} onClick={async () => { setCopying(true); try { const id = await copyPracticeToOwnChat(message, questions); onCopyCreated(id); } catch (error) { setSaveError(error.message); } finally { setCopying(false); } }}>{copying ? 'Creating your practice…' : 'Practice in my own chat'}</button>}</div>}
     {saveError && <div className="practice-error" role="alert">{saveError} <button onClick={persist}>Retry save</button></div>}
     <div className="practice-work paper-page"><div className="practice-question" ref={questionPane}>
-      {loaded === 0 ? <PracticeShimmer /> : <StudyQuizCard content={content} savedProgress={initialSnapshot.current}
+      {loaded === 0 ? (message.isStreaming ? <QuizWait stage={message.generationStage || 'writing'} total={waitTotal} subtopics={waitSubtopics} /> : null)
+        : <StudyQuizCard content={content} savedProgress={initialSnapshot.current}
         practiceMode onHint={() => send('Give me a small hint')} onQuestionContext={onContext} onSnapshot={readOnly ? undefined : onSnapshot} onAnswer={readOnly ? undefined : onAnswer}
-        renderLoading={() => <PracticeShimmer />} onContinue={closePractice} />}
+        renderLoading={() => <QuizWait stage="writing" current={loaded + 1} total={target} subtopics={waitSubtopics} />} onContinue={closePractice} />}
       {loaded > 0 && !isCase && <button className="practice-help" onClick={() => { setAnimateTutor(true); setTutorOpen(value => !value); }}>{tutorOpen ? 'Close discussion' : 'Discuss this question'}</button>}
       {batchError && <div className="practice-error" role="alert">{batchError}<button disabled={extending} onClick={() => extend()}>Retry batch</button></div>}
       {!message.isStreaming && loaded === 0 && <div className="practice-error">No questions arrived. Return to chat to retry your request.</div>}

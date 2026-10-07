@@ -1,4 +1,6 @@
 // Both chat and PDF consume this model. Saved plain-text sheets remain readable.
+import { studySheetFromFirestore } from '../../Services/studySheetEvents';
+
 export function legacyStudySheet(topic, content, language = 'english') {
   const sheet = { version: 1, title: topic || (language === 'french' ? 'Fiche de révision' : 'Study sheet'),
     subtitle: '', summary: '', language, sources: [], sections: [] };
@@ -48,8 +50,9 @@ export function legacyStudySheet(topic, content, language = 'english') {
 }
 
 export function resolveStudySheet(studySheet, topic, content, language) {
+  // Saved sheets store table rows as {cells}; see studySheetForFirestore.
   return studySheet?.version === 2 && Array.isArray(studySheet.sections)
-    ? studySheet : legacyStudySheet(topic, content, language);
+    ? studySheetFromFirestore(studySheet) : legacyStudySheet(topic, content, language);
 }
 
 export function sourceLabel(source, french = false) {

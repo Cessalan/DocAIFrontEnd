@@ -50,3 +50,14 @@ test('the card can print the questions loaded so far, but not while they are sti
   render(<PracticeLaunchCard message={{ ...fiftyRequested, isStreaming: true }} questions={questions} onOpen={() => {}} />);
   expect(screen.queryByRole('button', { name: 'quizPrint.buttonTitle' })).toBeNull();
 });
+
+test('a finished practice shows its first-try score on the card', () => {
+  const five = questions.slice(0, 5);
+  const done = { id: 'done', quizTopic: 'Examen primaire', requestedTotal: 5, practice: { settings: { requested_total: 5 },
+    firstAnswers: { 0: { isCorrect: true }, 1: { isCorrect: false }, 2: { isCorrect: true }, 3: { isCorrect: false }, 4: { isCorrect: false } },
+    answers: Object.fromEntries(five.map((_, i) => [i, { isCorrect: true }])) } };
+  render(<PracticeLaunchCard message={done} questions={five} onOpen={() => {}} />);
+  // Retries fixed every answer, but the card reports first tries.
+  expect(screen.getByText('2 of 5 right first time')).toBeInTheDocument();
+  expect(screen.queryByText('5 questions ready')).toBeNull();
+});

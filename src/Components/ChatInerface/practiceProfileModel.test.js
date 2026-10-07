@@ -14,7 +14,7 @@ test('with nothing saved and no guess, ordering is not a default (mirrors the ba
 });
 
 test('excluding everything still leaves one format', () => {
-  expect(effectiveFormats({ excludedFormats: ['mcq', 'sata', 'casestudy'] })).toEqual(['mcq']);
+  expect(effectiveFormats({ excludedFormats: ['mcq', 'sata', 'casestudy', 'true_false', 'matrix', 'unfoldingcase'] })).toEqual(['mcq']);
 });
 
 test('the summary says what was remembered, in reading order', () => {
@@ -34,14 +34,14 @@ test('pasted notes are named as the source', () => {
 test('switching ordering off by hand saves the list and the exclusion', () => {
   const profile = toggleFormat({}, 'casestudy', false, { now: new Date('2026-09-29T00:00:00Z') });
   expect(profile.formats).toEqual(['mcq', 'sata']);
-  expect(profile.excludedFormats).toEqual(['casestudy']);
+  expect(profile.excludedFormats).toEqual(['casestudy', 'true_false', 'matrix', 'unfoldingcase']);
   expect(profile.updatedBy).toBe('student');
 });
 
 test('switching ordering back on re-enables it', () => {
   const profile = toggleFormat(noOrdering, 'casestudy', true);
   expect(profile.formats).toEqual(['mcq', 'sata', 'casestudy']);
-  expect(profile.excludedFormats).toEqual([]);
+  expect(profile.excludedFormats).toEqual(['true_false', 'matrix', 'unfoldingcase']);
 });
 
 test('a toggle starts from what the line shows, including the formats the quiz already uses', () => {

@@ -12,3 +12,12 @@
 body.dark-mode .practice-debrief button,body.dark-mode .practice-debrief-review { background:rgba(184,165,212,.1); border-color:rgba(184,165,212,.2); }
 .practice-debrief-next { margin:14px 0 0; }
 .practice-debrief-error { margin:10px 0 0; font-size:13px; opacity:.8; }
+.practice-debrief > div[aria-live="polite"] p + p { margin-top:10px; }
+.practice-debrief-actions { align-items:center; }
+.practice-debrief .practice-debrief-primary { background:var(--primary-coral); border-color:transparent; color:#fff; font-weight:600; }
+.practice-debrief .practice-debrief-primary:hover:not(:disabled) { background:var(--primary-coral-hover); }
+.practice-debrief .practice-debrief-link { background:none; border:none; padding:10px 4px; text-decoration:underline; text-underline-offset:3px; opacity:.75; }
+.practice-debrief .practice-debrief-link:hover:not(:disabled) { background:none; opacity:1; }
+body.dark-mode .practice-debrief .practice-debrief-primary { background:var(--dark-accent); color:#1f1b24; border-color:transparent; }
+body.dark-mode .practice-debrief .practice-debrief-primary:hover:not(:disabled) { background:var(--dark-accent-hover); }
+body.dark-mode .practice-debrief .practice-debrief-link { background:none; border:none; }

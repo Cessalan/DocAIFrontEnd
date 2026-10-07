@@ -197,3 +197,14 @@ body.dark-mode .upload-insights__cta:hover:not(:disabled) {
     transform: none;
   }
 }
+
+/* Subtopics under a main topic — the document's own chapter structure,
+   rendered as one quiet line so the chapter title stays the thing you read. */
+.upload-insights__subtopics {
+  display: block;
+  margin-top: 2px;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: #6b6b6b;
+}
+body.dark-mode .upload-insights__subtopics { color: #9a9a9a; }

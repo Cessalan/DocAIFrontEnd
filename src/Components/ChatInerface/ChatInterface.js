@@ -23,7 +23,7 @@ import ChatMessage from './ChatMessage';
 import FocusedQuiz from './FocusedQuiz';
 import ChatSendButton from './ChatSendButton';
 import { completePractice, createReviewQuiz, savePracticeProfile, subscribePracticeProfile } from '../../Services/PracticeService';
-import { buildCoverage, collectPracticeItems, nextPractice } from './practiceCoverageModel';
+import { buildCoverage, collectPracticeItems, missedQuestions, nextPractice } from './practiceCoverageModel';
 import { placePracticeDebriefs } from './practiceMessageOrder';
 import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
@@ -98,6 +98,7 @@ import StudyGuideGenerator from './StudyGuideGenerator.js';
 import StudySheetLivePreview from './StudySheetLivePreview.js';
 // StudySheetSimple is lazy-loaded — see the code-splitting block below the imports.
 import { updateStudySheetMessage, savedStudySheetMessage } from '../../Services/studySheetEvents';
+import { applyStreamError } from './streamErrorMessage';
 import StickyQuizProgress from './StickyQuizProgress';
 // DISABLED: Suggested prompts feature - see comment where component was rendered
 // import SuggestedPrompts from './SuggestedPrompts';
@@ -619,8 +620,21 @@ const ChatInterface = ({
   const canWritePractice = !!currentUser?.uid && !viewAllChatsMode &&
     practiceOwner?.chatId === currentChatID && practiceOwner.uid === currentUser.uid;
   const practiceItems = useMemo(() => collectPracticeItems(chatMessages), [chatMessages]);
-  const practiceNext = useMemo(() => nextPractice(buildCoverage(practiceItems, practiceProfile?.sourceTopics || [])),
-    [practiceItems, practiceProfile?.sourceTopics]);
+  const practiceNext = useMemo(() => nextPractice(buildCoverage(practiceItems, practiceProfile?.sourceTopics || [],
+    practiceProfile?.sourceTopicGroups || [])),
+    [practiceItems, practiceProfile?.sourceTopics, practiceProfile?.sourceTopicGroups]);
+  // First-try misses per quiz, as stored. The review card offers to redo THIS
+  // quiz's misses, not the weakest topic across the whole chat, so the number
+  // on the button is the number of questions she just got wrong.
+  const mistakesByQuiz = useMemo(() => {
+    const byQuiz = new Map();
+    for (const item of practiceItems) {
+      if (!item.messageId) continue;
+      if (!byQuiz.has(item.messageId)) byQuiz.set(item.messageId, []);
+      byQuiz.get(item.messageId).push(item);
+    }
+    return new Map([...byQuiz].map(([id, items]) => [id, missedQuestions(items)]));
+  }, [practiceItems]);
   const latestDebriefId = useMemo(() => {
     for (let i = chatMessages.length - 1; i >= 0; i -= 1) if (chatMessages[i].type === 'practice_debrief') return chatMessages[i].id;
     return null;
@@ -1185,6 +1199,7 @@ const ChatInterface = ({
           // NOTE: post_upload_actions should only be preserved if NOT YET in Firebase
           // Once saved to Firebase, let Firebase be the source of truth for ordering
           const shouldPreserve =
+            (msg.error && notInFirebase) ||
             (msg.type === 'upload_loading' && msg.isLoading === true) ||
             (msg.isStreaming === true) ||
             (msg.type === 'post_upload_actions' && notInFirebase) ||
@@ -1395,6 +1410,13 @@ const ChatInterface = ({
     let quizMessageId = null; // Track quiz bubble
     let webSourcesMessageId = null; // Track web-sources panel bubble (school-specific exam research)
     let studySheetMessageId = null;
+    // Questions this stream has already delivered, and the quiz metadata the
+    // backend sent with them. If the stream then dies (a later slot the
+    // material cannot support, a dropped socket), these are finalized and
+    // saved exactly as quiz_complete would have — the student keeps what she
+    // was already answering instead of watching the quiz vanish.
+    let deliveredQuizQuestions = [];
+    let quizStreamMeta = {};
 
     try {
       // Use WebSocket with all your current logic
@@ -1419,12 +1441,32 @@ const ChatInterface = ({
           if (statusUpdate.status === "error") {
             console.error("❌ Stream error from backend:", statusUpdate.message);
             cleanupStreamingThrottle();
+            const partialQuiz = deliveredQuizQuestions.length > 0;
+            // Only leave the focused quiz when there is nothing in it to keep.
+            if (!partialQuiz && (quizMessageId || isQuizGeneratingRef.current)) setQuizFocused(false);
             isQuizGeneratingRef.current = true; // stream_complete may still follow — skip empty-save path
             setStreamingStatus(null);
             setIsStreaming(false);
             setIsAiTyping(false);
             if (studySheetMessageId && studySheetStreamRef.current?.id === studySheetMessageId) {
               interruptStudySheet(statusUpdate.message);
+              return;
+            }
+
+            if (partialQuiz) {
+              // The questions on screen are real and the server has already
+              // metered them (the practice budget is settled in a `finally`).
+              // Persist them as a finished quiz, then show the error under it.
+              const targetMessageId = quizMessageId || streamingMessageId;
+              handleQuizComplete(deliveredQuizQuestions, targetMessageId, updatedChatId, quizStreamMeta);
+              refreshQuota();
+              setChatMessages(prev => applyStreamError(prev, {
+                messageId: targetMessageId,
+                relatedIds: [empatheticMessageId, streamingMessageId],
+                code: statusUpdate.code,
+                message: statusUpdate.message,
+                retryText: messageToSend,
+              }));
               return;
             }
 
@@ -1437,25 +1479,13 @@ const ChatInterface = ({
               return;
             }
 
-            setChatMessages(prev =>
-              prev.map(msg =>
-                msg.id === streamingMessageId
-                  ? {
-                      ...msg,
-                      content: streamingContentRef.current || '',
-                      error: true,
-                      // A watchdog timeout reads differently from a crash:
-                      // nothing went wrong that we saw, the answer just never
-                      // came. Say that rather than blaming a generic error.
-                      errorKey: statusUpdate.code === 'timeout'
-                        ? 'chat.timeoutError'
-                        : 'chat.streamError',
-                      retryText: messageToSend,
-                      isStreaming: false
-                    }
-                  : msg
-              )
-            );
+            setChatMessages(prev => applyStreamError(prev, {
+              messageId: quizMessageId || streamingMessageId,
+              relatedIds: [empatheticMessageId, streamingMessageId],
+              code: statusUpdate.code,
+              message: statusUpdate.message,
+              retryText: messageToSend,
+            }));
             return;
           }
 
@@ -1582,14 +1612,18 @@ const ChatInterface = ({
               const filtered = prev.filter(msg => msg.id !== streamingMessageId);
               devLog("   - Messages after filter:", filtered.length);
 
-              return [...filtered, {
+              const bubble = {
                 id: empatheticMessageId,
                 role: 'assistant',
                 content: '',
                 type: 'text', // Regular text message
                 isStreaming: true,
                 timestamp: new Date()
-              }];
+              };
+              // The quiz may already be open from a stage event; the note that
+              // introduces it still reads before it in the chat.
+              const quizAt = quizMessageId ? filtered.findIndex(msg => msg.id === quizMessageId) : -1;
+              return quizAt >= 0 ? [...filtered.slice(0, quizAt), bubble, ...filtered.slice(quizAt)] : [...filtered, bubble];
             });
 
             devLog('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
@@ -1638,13 +1672,43 @@ const ChatInterface = ({
             return;
           }
 
+          // Real stages before the first question (see quizWaitModel). The quiz
+          // opens on the FIRST of them rather than at quiz_generating, so the
+          // student waits on a screen that says what is happening instead of a
+          // typing dot in the chat. Creating the bubble here (not converting the
+          // placeholder) lets an empathetic message still be inserted before it.
+          if (statusUpdate.status === 'material_analyzing' || statusUpdate.status === 'quiz_planning') {
+            const stage = statusUpdate.status === 'material_analyzing' ? 'reading' : 'choosing';
+            isQuizGeneratingRef.current = true;
+            if (!quizMessageId) quizMessageId = `quiz-${Date.now()}`;
+            const id = quizMessageId;
+            setChatMessages(prev => (prev.some(msg => msg.id === id)
+              ? prev.map(msg => (msg.id === id ? { ...msg, generationStage: stage,
+                  expectedTotal: statusUpdate.total || msg.expectedTotal } : msg))
+              : [...prev.filter(msg => msg.id !== streamingMessageId), {
+                  id, role: 'assistant', type: 'quiz', content: '', quizData: [], isStreaming: true,
+                  generationStage: stage, expectedTotal: statusUpdate.total || undefined, timestamp: new Date()
+                }]));
+            if (statusUpdate.message) setStreamingStatus({ status: 'generating_quiz', message: statusUpdate.message });
+            return;
+          }
+          if (statusUpdate.status === 'practice_plan_ready') {
+            setStreamingStatus({ status: 'generating_quiz', message: statusUpdate.plan?.summary });
+            return;
+          }
           // Quiz generation progress
           if (statusUpdate.status === "quiz_generating") {
             devLog("generating quiz streaming");
             isQuizGeneratingRef.current = true;
+            quizStreamMeta = {
+              requested_total: statusUpdate.requested_total || quizStreamMeta.requested_total,
+              quiz_topic: statusUpdate.quiz_topic || quizStreamMeta.quiz_topic,
+              quiz_settings: statusUpdate.quiz_settings || quizStreamMeta.quiz_settings,
+            };
 
-            // If empathetic message exists, create a SECOND bubble for quiz
-            if (empatheticMessageId) {
+            // If empathetic message exists, create a SECOND bubble for quiz.
+            // A bubble created early by a stage event is updated the same way.
+            if (empatheticMessageId || quizMessageId) {
               // Only set quizMessageId ONCE (first time)
               if (!quizMessageId) {
                 quizMessageId = `quiz-${Date.now()}`;
@@ -1660,6 +1724,10 @@ const ChatInterface = ({
                       ? {
                         ...msg,
                         content: statusUpdate.message,
+                        requestedTotal: statusUpdate.requested_total || msg.requestedTotal,
+                        quizTopic: statusUpdate.quiz_topic || msg.quizTopic,
+                        practice: { ...msg.practice, settings: statusUpdate.quiz_settings || msg.practice?.settings },
+                        generationStage: 'writing',
                         expectedTotal: statusUpdate.total || msg.expectedTotal || 4,
                         generatingCurrent: statusUpdate.current || msg.generatingCurrent || 0
                       }
@@ -1677,6 +1745,7 @@ const ChatInterface = ({
                   requestedTotal: statusUpdate.requested_total,
                   quizTopic: statusUpdate.quiz_topic,
                   practice: { settings: statusUpdate.quiz_settings },
+                  generationStage: 'writing',
                   expectedTotal: statusUpdate.total || 4,
                   generatingCurrent: statusUpdate.current || 0,
                   isStreaming: true,
@@ -1698,6 +1767,7 @@ const ChatInterface = ({
                       requestedTotal: statusUpdate.requested_total || msg.requestedTotal,
                       quizTopic: statusUpdate.quiz_topic || msg.quizTopic,
                       practice: { ...msg.practice, settings: statusUpdate.quiz_settings || msg.practice?.settings },
+                      generationStage: 'writing',
                       expectedTotal: statusUpdate.total || 4,
                       generatingCurrent: statusUpdate.current || 0,
                       isStreaming: true
@@ -1717,6 +1787,7 @@ const ChatInterface = ({
           // Individual quiz question ready
           if (statusUpdate.status === "quiz_question") {
             devLog("📝 Quiz question received:", statusUpdate.total_so_far);
+            if (statusUpdate.question) deliveredQuizQuestions = [...deliveredQuizQuestions, statusUpdate.question];
 
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
@@ -2164,6 +2235,7 @@ const ChatInterface = ({
       );
     } catch (error) {
       console.error("WebSocket streaming error:", error);
+      if (quizMessageId || isQuizGeneratingRef.current) setQuizFocused(false);
 
       // Clean up throttle on error
       cleanupStreamingThrottle();
@@ -2173,19 +2245,11 @@ const ChatInterface = ({
 
       if (studySheetMessageId && studySheetStreamRef.current?.id === studySheetMessageId) interruptStudySheet();
 
-      setChatMessages(prev =>
-        prev.map(msg =>
-          msg.id === streamingMessageId
-            ? {
-              ...msg,
-              content: '',
-              error: true,
-              retryText: messageToSend,
-              isStreaming: false
-            }
-            : msg
-        )
-      );
+      setChatMessages(prev => applyStreamError(prev, {
+        messageId: quizMessageId || streamingMessageId,
+        relatedIds: [empatheticMessageId, streamingMessageId],
+        retryText: messageToSend,
+      }));
 
       setIsAiTyping(false);
       setConnectionStatus('error');
@@ -3043,9 +3107,9 @@ const ChatInterface = ({
           size: trackedFile?.size || 0,
           type: trackedFile?.type || '',
           status: 'completed',
-          downloadURL: fileData.firebase_url,
+          downloadURL: fileData.firebase_url || null,
           uploadedAt: Date.now(),
-          wordCount: fileData.word_count
+          wordCount: fileData.word_count || 0
         };
       });
 
@@ -3207,8 +3271,10 @@ const ChatInterface = ({
         const newInsight = {
           filename: update.filename,
           topics: update.topics || [],
+          mainTopics: update.mainTopics || [],
           concepts: update.concepts || [],
           documentType: update.document_type,
+          analysis: update.analysis || null,
           // Classification skills the document actually teaches (nursing process,
           // Maslow, ABCDE...). Detected server-side from the full text against a
           // closed set; [] means this document teaches none, which is the common
@@ -3530,6 +3596,10 @@ const ChatInterface = ({
             // sent these on this event; nothing read them until the insights
             // card needed something truthful to say about each topic.
             insights: update.insights || [],
+            // Document chapters with their subtopics, so the card can show
+            // "Primary survey: airway, breathing, circulation" instead of a
+            // flat list of leaf labels (2026-10-06).
+            mainTopics: update.main_topics || [],
             filenames: update.filenames || [],
             fileCount: update.file_count || (update.filenames || []).length || 0,
             actions: update.actions || [],
@@ -5345,10 +5415,10 @@ const ChatInterface = ({
                   >
                     <defs>
                       <linearGradient id="metallicPurple" x1="0%" y1="0%" x2="100%" y2="100%">
-                        <stop offset="0%" stop-color="#e6c7ff" />
-                        <stop offset="25%" stop-color="#c89aff" />
-                        <stop offset="60%" stop-color="#9a57ff" />
-                        <stop offset="100%" stop-color="#5b1bcc" />
+                        <stop offset="0%" stopColor="#e6c7ff" />
+                        <stop offset="25%" stopColor="#c89aff" />
+                        <stop offset="60%" stopColor="#9a57ff" />
+                        <stop offset="100%" stopColor="#5b1bcc" />
                       </linearGradient>
                     </defs>
 
@@ -5515,6 +5585,7 @@ const ChatInterface = ({
                         autoInvestigate
                         topics={message.topics || []}
                         insights={message.insights || []}
+                        mainTopics={message.mainTopics || []}
                         filenames={message.filenames || []}
                         fileCount={message.fileCount || (message.filenames || []).length || 0}
                         language={(i18n?.language || 'en').split('-')[0]}
@@ -5742,6 +5813,7 @@ const ChatInterface = ({
                       onOpenPractice={openFocusedQuiz}
                       onRetryDebrief={handleSessionComplete}
                       practiceNext={message.id === latestDebriefId ? practiceNext : null}
+                      practiceMistakes={message.type === 'practice_debrief' ? mistakesByQuiz.get(message.sourceQuizId) || [] : undefined}
                       onRedoMistakes={canWritePractice ? handleRedoMistakes : undefined}
                       onSendMessage={stableHandleSendMessage}
                       onRetryMessage={handleRetryMessage}

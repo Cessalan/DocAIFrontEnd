@@ -1,0 +1,9 @@
+.practice-plan { margin: 12px 0 18px; color: var(--entry-ink, inherit); font-size: 13px; line-height: 1.5; }
+.practice-plan summary { cursor: pointer; font-weight: 500; }
+.practice-plan p { margin: 10px 0; }
+.practice-plan ul { list-style: none; padding: 0; margin: 10px 0; }
+.practice-plan li { display: flex; justify-content: space-between; gap: 16px; padding: 5px 0; }
+.practice-plan li span:first-child { overflow-wrap: anywhere; }
+.practice-plan li span:last-child { flex-shrink: 0; font-variant-numeric: tabular-nums; }
+.practice-plan-note { color: var(--entry-muted, inherit); }
+.practice-plan summary:focus-visible { outline: 2px solid var(--entry-accent, currentColor); outline-offset: 3px; }

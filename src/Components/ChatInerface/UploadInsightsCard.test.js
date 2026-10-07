@@ -117,4 +117,32 @@ describe('UploadInsightsCard', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(onContinue).toHaveBeenCalled();
   });
+
+  test('lists each main topic with the subtopics the document teaches under it', () => {
+    render(
+      <UploadInsightsCard
+        topics={['Primary survey', 'Secondary survey']}
+        insights={[insight('Primary survey', 5), insight('Secondary survey', 2)]}
+        mainTopics={[
+          { title: 'Primary survey', subtopics: ['Airway', 'Breathing', 'Circulation', 'Disability', 'Exposure', 'Adjuncts'] },
+          { title: 'Secondary survey', subtopics: ['MIST history'] },
+        ]}
+        fileCount={1}
+        onContinue={() => {}}
+      />
+    );
+
+    expect(screen.getByText('Primary survey')).toBeInTheDocument();
+    // Five shown, the sixth counted rather than padded onto the card.
+    expect(screen.getByText('Airway · Breathing · Circulation · Disability · Exposure · +1')).toBeInTheDocument();
+    expect(screen.getByText('MIST history')).toBeInTheDocument();
+  });
+
+  test('renders exactly as before when a saved message has no main topics', () => {
+    render(
+      <UploadInsightsCard topics={['Charting']} insights={[]} fileCount={1} onContinue={() => {}} />
+    );
+    expect(screen.getByText('Charting')).toBeInTheDocument();
+    expect(document.querySelector('.upload-insights__subtopics')).toBeNull();
+  });
 });

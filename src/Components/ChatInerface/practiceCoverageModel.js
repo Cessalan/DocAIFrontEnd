@@ -92,12 +92,25 @@ export function collectPracticeItems(messages = []) {
  * the names she recognises, and a heading nothing has touched shows up as
  * untested instead of simply not existing.
  */
-export function buildCoverage(items = [], sourceTopics = []) {
+export function buildCoverage(items = [], sourceTopics = [], sourceTopicGroups = []) {
   const keys = sourceTopics.filter(Boolean).map(String);
   const topics = new Map(keys.map(label => [label, { label, fromSource: true, generated: 0, attempted: 0, correctFirst: 0, missed: [] }]));
+  // Source topics are main topics ("Examen primaire"); questions are tagged
+  // with the subtopic they test ("C — Circulation"). Without this map a quiz
+  // on Circulation counted as untouched primary survey, and the review told
+  // her she had not practised the thing she had just practised (2026-10-06).
+  // Exact label match only: the analysis tags both from the same goal record,
+  // and a fuzzy match here could file a question under the wrong chapter.
+  const norm = value => String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+  const parentOf = new Map();
+  for (const group of (Array.isArray(sourceTopicGroups) ? sourceTopicGroups : [])) {
+    const title = keys.find(key => norm(key) === norm(group?.title));
+    if (!title) continue;
+    for (const sub of group.subtopics || []) if (!parentOf.has(norm(sub))) parentOf.set(norm(sub), title);
+  }
   for (const item of items) {
     if (!item.topic) continue; // never invent a bucket for an unlabelled question
-    const key = findMatchingTopicKey(item.topic, [...topics.keys()]);
+    const key = parentOf.get(norm(item.topic)) || findMatchingTopicKey(item.topic, [...topics.keys()]);
     if (!topics.has(key)) topics.set(key, { label: key, fromSource: false, generated: 0, attempted: 0, correctFirst: 0, missed: [] });
     const entry = topics.get(key);
     entry.generated += 1;
