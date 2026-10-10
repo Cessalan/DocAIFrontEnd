@@ -13,6 +13,7 @@ import ExamDebriefPrompt from "./Components/ExamDebrief/ExamDebriefPrompt";
 import DevExamDebriefPill from "./Components/ExamDebrief/DevExamDebriefPill";
 import DevUploadsPill from "./Components/Common/DevUploadsPill";
 import DevToolsDock from "./Components/Common/DevToolsDock";
+import DevGapOfferPill from "./Components/Common/DevGapOfferPill";
 import StudyInspectorLink from './Components/Admin/StudyInspectorLink';
 import SelectionProvider from "./Components/Selection/useTextSelection";
 import { useAuth } from "./Contexts/AuthContext/AuthContext";
@@ -354,6 +355,9 @@ function ChatLayout() {
           <StudyInspectorLink chatId={selectedChatId} className="dev-onboarding-preview-trigger">Open plan timeline ↗</StudyInspectorLink>
           {/* Opens the post-exam conversation on demand. */}
           <DevExamDebriefPill docked />
+          {/* Opens the upgrade window with the format-gap offer, which a Pro
+              account and the blocked paywall preview can never show. */}
+          <DevGapOfferPill docked />
         </DevToolsDock>
       )}
     </div>

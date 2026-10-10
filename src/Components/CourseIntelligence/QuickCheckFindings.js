@@ -2,12 +2,19 @@ import React, { useEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { buildVerdict, describeVerdictFinding } from '../StudyMode/readinessVerdict';
 import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
+import { gapFromVerdict } from '../Common/gapOfferModel';
 
 // Findings are free for every tier. This surface neither checks nor changes
 // entitlement; the existing plan and question gates still own continuation.
+// The one commercial element is a quiet line under the findings that names
+// her format gap and opens the offer. It never blocks anything, and it is
+// absent for Pro accounts and whenever the verdict found no format gap.
 export default function QuickCheckFindings({ answers, lead, funnelId, children }) {
   const { t } = useTranslation();
+  const { isPro, openUpgrade } = useUsageLimit();
   const verdict = useMemo(() => buildVerdict(answers), [answers]);
+  const gap = useMemo(() => (isPro ? null : gapFromVerdict(verdict)), [isPro, verdict]);
   const logged = useRef(false);
   useEffect(() => {
     if (!verdict || logged.current) return;
@@ -57,6 +64,16 @@ export default function QuickCheckFindings({ answers, lead, funnelId, children }
         <summary>{t('courseStudio.findingsMore', { count: verdict.findings.length - 2 })}</summary>
         <ul className="cs-findings-list">{verdict.findings.slice(2).map((finding, index) => renderFinding(finding, index + 2))}</ul>
       </details>}
+    </section>}
+    {gap && <section className="cs-findings-offer">
+      <p>{t('upgrade.gap.offerLine', {
+        standard: gap.standard.correct, standardTotal: gap.standard.total,
+        hard: gap.hard.correct, hardTotal: gap.hard.total,
+      })}</p>
+      <button type="button" className="cs-findings-offer-link"
+        onClick={() => openUpgrade('gap', { trigger: 'weakness_insight', reachedStep: 'readiness_findings', gap })}>
+        {t('upgrade.gap.offerCta')} <span aria-hidden="true">→</span>
+      </button>
     </section>}
     <section className="cs-findings-next">
       <span className="cs-findings-next-icon" aria-hidden="true">↗</span>

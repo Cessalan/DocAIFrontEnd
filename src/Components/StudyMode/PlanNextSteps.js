@@ -26,7 +26,7 @@ const stepPurpose = (node, index, nodes, fr) => {
   return copy[node.type]?.[fr ? 1 : 0] || getStepTopicLabel(node.label) || node.type;
 };
 
-export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progress = null }) {
+export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progress = null, busy = false }) {
   const { t, i18n } = useTranslation();
   const fr = i18n.language.startsWith('fr');
   const listRef = useRef(null);
@@ -64,11 +64,15 @@ export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progre
         {index === 0 && node.type === 'lesson' && <ReviewReason reason={node.reviewReason} compact />}
         {progress && (node.status === 'done' || progress.completedId === node.id) && <span className="plan-next-steps__completed">{fr ? 'Terminé' : 'Completed'}</span>}
       </div>
-      {index === 0 && !progress && <div className="plan-next-steps__action"><button type="button" className="study-modal-start study-modal-start--inline" onClick={onStart}>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <polygon points="5 3 19 12 5 21 5 3" />
-        </svg>
-        {t('study.planFirstBadge', 'Start here')}
+      {index === 0 && !progress && <div className="plan-next-steps__action"><button type="button"
+        className={`study-modal-start study-modal-start--inline${busy ? ' is-busy' : ''}`} onClick={onStart}
+        disabled={busy} aria-busy={busy || undefined}>
+        {busy
+          ? <span className="study-modal-start__spinner" aria-hidden="true" />
+          : <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>}
+        {busy ? t('study.openingFirstStep', 'Opening your first step…') : t('study.planFirstBadge', 'Start here')}
       </button><small>{fr ? `Environ ${getNodeEstimate(node.type)} min pour commencer` : `About ${getNodeEstimate(node.type)} min to start`}</small></div>}
     </li>)}
     {reserveCount > 0 && <li className="study-modal-plan-more">{t('study.planReserveNote', '+{{count}} more, unlocked when you finish these', { count: reserveCount })}</li>}

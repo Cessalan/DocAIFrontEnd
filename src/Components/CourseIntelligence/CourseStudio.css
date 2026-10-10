@@ -320,6 +320,13 @@
 .cs-findings-next h4 { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; margin: 0 0 7px; color: var(--cs-muted); }
 .cs-findings-next strong { display: block; font-size: 16px; line-height: 1.4; margin-bottom: 8px; color: var(--cs-accent); }
 .cs-findings-next p { margin: 0; font-size: 12px; line-height: 1.6; color: var(--cs-ink); }
+/* The weak-areas offer: one quiet line under the findings, not a card or a
+   button, so "start my plan" stays the main action on this screen. */
+.cs-findings-offer { border-top: 1px solid var(--ci-border); padding: 14px 0 16px; }
+.cs-findings-offer p { margin: 0 0 4px; font-size: 13px; line-height: 1.55; color: var(--cs-ink); }
+.cs-findings-offer-link { background: none; border: 0; padding: 0; font: inherit; font-size: 13px; font-weight: 600; color: var(--cs-accent); cursor: pointer; text-align: left; }
+.cs-findings-offer-link:hover { text-decoration: underline; }
+.cs-findings-offer-link:focus-visible { outline: 2px solid var(--cs-accent); outline-offset: 2px; border-radius: 4px; }
 .cs-findings-footnote { margin-top: 18px; color: var(--cs-muted); font-size: 11px; line-height: 1.5; }
 .cs-findings-footnote p { margin: 3px 0; }
 .cs-brief.is-result:has(.cs-findings) .cs-primary-action { margin-top: 22px; }

@@ -18,6 +18,7 @@ import { getStepTopicLabel } from './planFormatting';
 import { buildFirstBlock, isRealNode } from './firstBlock';
 
 import LockedPlanPreview from './LockedPlanPreview';
+import AutoHeight from './AutoHeight';
 import PlanNextSteps from './PlanNextSteps';
 import { FUNNEL, logFunnelStep, logFunnelStepOnce, logPaywall } from '../../Services/FunnelService';
 import { devWarn } from '../../Services/devLogger';
@@ -155,21 +156,6 @@ const StartStudyModal = ({
     });
     return unsubscribe;
   }, [isOpen, chatId, phase, t]);
-
-  // Rotating loading messages
-  const [loadingMsgIndex, setLoadingMsgIndex] = useState(0);
-  const loadingMessages = t('study.loadingMessages', { returnObjects: true });
-  const messagesArray = Array.isArray(loadingMessages) ? loadingMessages : [];
-
-  useEffect(() => {
-    if (phase !== 'loading' || messagesArray.length === 0) return;
-    // Start from a random index so it feels fresh each time
-    setLoadingMsgIndex(Math.floor(Math.random() * messagesArray.length));
-    const interval = setInterval(() => {
-      setLoadingMsgIndex(prev => (prev + 1) % messagesArray.length);
-    }, 3500);
-    return () => clearInterval(interval);
-  }, [phase, messagesArray.length]);
 
   // Reset on open
   useEffect(() => {
@@ -310,6 +296,9 @@ const StartStudyModal = ({
         ...(startImmediately ? { onboardingVersion: 'practice_first_v1', via: 'quick_check_offer' } : {}),
       });
       setPhase('done');
+      // Let the card fade before study mode takes the screen, so the two
+      // read as one motion rather than a cut.
+      await new Promise(resolve => setTimeout(resolve, 260));
       if (onStart) onStart(studyState);
     } catch (err) {
       console.error('Error creating study session:', err);
@@ -390,8 +379,12 @@ const StartStudyModal = ({
   const docCount = uploadedDocs.length;
 
   // ── Render ────────────────────────────────────────────────
+  const journeyPhases = ['loading', 'plan_preview', 'starting', 'done'];
+  const showJourney = journeyPhases.includes(phase) ||
+    (phase === 'idle' && autoStart && !hasAutoStarted && !error && uploadedDocs.length > 0);
+
   return (
-    <div className="study-modal-overlay" onClick={phase === 'idle' ? safeClose : undefined}>
+    <div className={`study-modal-overlay${phase === 'done' ? ' is-leaving' : ''}`} onClick={phase === 'idle' ? safeClose : undefined}>
       <div className="study-modal" onClick={e => e.stopPropagation()}>
 
         {/* Close — available while idle, generating, or previewing the plan.
@@ -410,72 +403,28 @@ const StartStudyModal = ({
           </button>
         )}
 
-        {/* ── LOADING ──
-            Shows the planner's real decisions as they land, falling back to
-            the rotating messages until the first one arrives. The adaptation
-            is the thing worth paying for, and this is the only moment the
-            student can actually watch it happen. */}
-        {phase === 'loading' && (
-          <div className="study-modal-content">
-            <div className="study-modal-mascot">
-              <MascotComponent size={80} isActive={true} />
-            </div>
-            <h2 className="study-modal-title">{courseIntelligence ? t('courseStudio.preparingPlan') : t('study.preparingJourney', 'Preparing Your Journey')}</h2>
-            {courseIntelligence && <p className="study-modal-description">{t('courseStudio.planSubtitle')}</p>}
-
-            {thinking.length > 0 ? (
-              <ul className="study-modal-thinking">
-                {thinking.map((line, i) => {
-                  const isLast = i === thinking.length - 1;
-                  return (
-                    <li
-                      key={line.key}
-                      className={`study-modal-thinking__item${isLast ? ' is-active' : ' is-done'}`}
-                      style={{ animationDelay: `${Math.min(i, 4) * 60}ms` }}
-                    >
-                      <span className="study-modal-thinking__mark" aria-hidden="true">
-                        {isLast ? (
-                          <span className="study-modal-thinking__pulse" />
-                        ) : (
-                          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor"
-                               strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round"
-                               width="11" height="11">
-                            <polyline points="2.5 7.5 5.5 10.5 11.5 4" />
-                          </svg>
-                        )}
-                      </span>
-                      <span className="study-modal-thinking__text">{line.text}</span>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <div className="study-modal-progress">
-                <div className="study-modal-loader">
-                  <div className="study-modal-loader-dot" />
-                  <div className="study-modal-loader-dot" />
-                  <div className="study-modal-loader-dot" />
-                </div>
-                <p className="study-modal-step" key={loadingMsgIndex}>
-                  {messagesArray.length > 0
-                    ? messagesArray[loadingMsgIndex]
-                    : t('study.analyzingDocs', 'Analyzing your documents...')}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* ── PLAN PREVIEW ── shown the moment plan_ready arrives so the user
-             sees their actual path while createStudySession finishes saving */}
-        {phase === 'plan_preview' && pathResult && (
-          <PlanPreviewPane
-            pathResult={pathResult}
-            calibrated={Boolean(courseIntelligence && diagnostic)}
-            chatId={chatId}
-            onStart={handleStartFromPreview}
-            t={t}
-          />
+        {/* ── JOURNEY: loading -> plan -> saving, one surface ──
+            These used to be three separate screens of different sizes, so the
+            card snapped small -> big -> small and then vanished (2026-10-08).
+            Now the planner's notes and a skeleton of the steps show from the
+            first frame, the real steps replace the skeleton in place, and
+            saving happens on the start button. AutoHeight animates every
+            change in size. An auto-started modal shows this from its very
+            first render, so the confirm screen never flashes. */}
+        {showJourney && (
+          <AutoHeight>
+            <PlanJourney
+              phase={phase}
+              thinking={thinking}
+              pathResult={pathResult}
+              courseIntelligence={courseIntelligence}
+              calibrated={Boolean(courseIntelligence && diagnostic)}
+              chatId={chatId}
+              onStart={handleStartFromPreview}
+              Mascot={MascotComponent}
+              t={t}
+            />
+          </AutoHeight>
         )}
 
         {/* ── LOCKED PREVIEW ── out of plan quota. She sees the plan she
@@ -501,26 +450,8 @@ const StartStudyModal = ({
           />
         )}
 
-        {/* ── STARTING ── user tapped "Let's go" but session save hadn't
-             finished yet. Brief hand-off state. */}
-        {phase === 'starting' && (
-          <div className="study-modal-content">
-            <div className="study-modal-mascot">
-              <MascotComponent size={80} isActive={true} />
-            </div>
-            <h2 className="study-modal-title">{t('study.savingJourney', 'Saving your journey…')}</h2>
-            <div className="study-modal-progress">
-              <div className="study-modal-loader">
-                <div className="study-modal-loader-dot" />
-                <div className="study-modal-loader-dot" />
-                <div className="study-modal-loader-dot" />
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* ── IDLE (initial confirm screen) ── */}
-        {phase === 'idle' && (
+        {phase === 'idle' && !showJourney && (
           <>
             <div className="study-modal-content">
               <div className="study-modal-mascot">
@@ -637,7 +568,94 @@ const NODE_TYPE_META = {
   exam:      { icon: '📝', actionEn: 'practice exam on', actionFr: 'un examen blanc sur' }
 };
 
-const PlanPreviewPane = ({ pathResult, chatId, onStart, t, calibrated = false }) => {
+function planTitles(pathResult, t) {
+  const archetype = pathResult.archetype;
+  const daysToExam = pathResult.days_to_exam;
+  const shapeTitle =
+    archetype === 'sprint'
+      ? (daysToExam === 0
+          ? t('study.planSprintToday', 'Your exam is today — here’s the plan')
+          : daysToExam === 1
+            ? t('study.planSprintTomorrow', 'Your exam is tomorrow — here’s the plan')
+            : t('study.planSprintSoon', 'Your exam is in {{days}} days — here’s the plan', { days: daysToExam }))
+      : archetype === 'focus'
+        ? t('study.planFocusTitle', 'Built for your exam in {{days}} days', { days: daysToExam })
+        : t('study.planReadyTitle', 'Your path is ready');
+  const shapeNote =
+    archetype === 'sprint'
+      ? t('study.planSprintNote', 'No new material — we find your gaps and drill them.')
+      : archetype === 'focus'
+        ? t('study.planFocusNote', 'We check what you know first, then rebuild the weak spots.')
+        : null;
+  return { shapeTitle, shapeNote };
+}
+
+// The steps' shape before the plan arrives: same rows, same rhythm, so the
+// real steps land where the skeleton already was.
+const PlanSkeleton = ({ rows = 4 }) => (
+  <ul className="study-modal-plan-list plan-skeleton" aria-hidden="true">
+    {Array.from({ length: rows }, (_, i) => (
+      <li key={i} className="plan-skeleton__row" style={{ animationDelay: `${i * 90}ms` }}>
+        <span className="plan-skeleton__icon" />
+        <span className="plan-skeleton__lines">
+          <span className="plan-skeleton__line is-short" />
+          <span className="plan-skeleton__line" />
+        </span>
+      </li>
+    ))}
+  </ul>
+);
+
+const PlanJourney = ({ phase, thinking, pathResult, courseIntelligence, calibrated, chatId, onStart, Mascot, t }) => {
+  const planReady = Boolean(pathResult?.nodes?.length);
+  const saving = phase === 'starting' || phase === 'done';
+  const title = planReady
+    ? planTitles(pathResult, t).shapeTitle
+    : courseIntelligence ? t('courseStudio.preparingPlan') : t('study.preparingJourney', 'Preparing Your Journey');
+  // A first line from the first frame, so the list grows instead of a loader
+  // being swapped for a list when the planner's first decision lands.
+  const lines = thinking.length > 0
+    ? thinking
+    : [{ key: 'reading', text: t('study.thinkReading', 'Reading your material…') }];
+
+  return (
+    <div className={`study-modal-content plan-journey${planReady ? ' is-ready' : ''}`}>
+      <div className={`plan-journey__mascot${planReady ? ' is-gone' : ''}`} aria-hidden={planReady}>
+        <Mascot size={72} isActive={!planReady} />
+      </div>
+      <h2 className="study-modal-title plan-journey__title" key={planReady ? 'ready' : 'preparing'}>{title}</h2>
+      {!planReady && courseIntelligence && <p className="study-modal-description">{t('courseStudio.planSubtitle')}</p>}
+
+      <ul className={`study-modal-thinking plan-journey__trail${planReady ? ' is-folded' : ''}`} aria-live="polite">
+        {lines.map((line, i) => {
+          const isLast = i === lines.length - 1;
+          const active = isLast && !planReady;
+          return (
+            <li key={line.key}
+              className={`study-modal-thinking__item${active ? ' is-active' : ' is-done'}${planReady && !isLast ? ' is-tucked' : ''}`}
+              style={{ animationDelay: `${Math.min(i, 4) * 60}ms` }}>
+              <span className="study-modal-thinking__mark" aria-hidden="true">
+                {active ? <span className="study-modal-thinking__pulse" /> : (
+                  <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="2.4"
+                    strokeLinecap="round" strokeLinejoin="round" width="11" height="11">
+                    <polyline points="2.5 7.5 5.5 10.5 11.5 4" />
+                  </svg>
+                )}
+              </span>
+              <span className="study-modal-thinking__text">{line.text}</span>
+            </li>
+          );
+        })}
+      </ul>
+
+      {planReady
+        ? <PlanPreviewPane pathResult={pathResult} calibrated={calibrated} chatId={chatId} onStart={onStart} t={t} saving={saving} embedded />
+        : <PlanSkeleton />}
+    </div>
+  );
+};
+
+const PlanPreviewPane = ({ pathResult, chatId, onStart, t, calibrated = false, saving = false, embedded = false }) => {
   // The session persists the first block, not the whole path — so the preview
   // has to quote the block. Showing "17 steps · 58 min" over a plan that saves
   // 6 of them for later is both an over-ask and a promise we don't keep.
@@ -681,35 +699,11 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t, calibrated = false })
       ? t('study.firstCardsReady', 'Your first cards are ready')
       : t('study.firstLessonReady', 'Your first lesson is ready');
 
-  // ── Deadline-shaped plans ─────────────────────────────────────────────
-  // The backend now picks a plan SHAPE from days-to-exam (sprint / focus /
-  // master). Naming it here is what makes the reshaping legible — otherwise
-  // the student just sees "a plan" and never learns that the exam date they
-  // entered did anything, which is why only 27.8% of plans carry one.
-  const archetype = pathResult.archetype;
-  const daysToExam = pathResult.days_to_exam;
-
-  const shapeTitle =
-    archetype === 'sprint'
-      ? (daysToExam === 0
-          ? t('study.planSprintToday', 'Your exam is today — here’s the plan')
-          : daysToExam === 1
-            ? t('study.planSprintTomorrow', 'Your exam is tomorrow — here’s the plan')
-            : t('study.planSprintSoon', 'Your exam is in {{days}} days — here’s the plan', { days: daysToExam }))
-      : archetype === 'focus'
-        ? t('study.planFocusTitle', 'Built for your exam in {{days}} days', { days: daysToExam })
-        : t('study.planReadyTitle', 'Your path is ready');
-
-  const shapeNote =
-    archetype === 'sprint'
-      ? t('study.planSprintNote', 'No new material — we find your gaps and drill them.')
-      : archetype === 'focus'
-        ? t('study.planFocusNote', 'We check what you know first, then rebuild the weak spots.')
-        : null;
+  const { shapeTitle, shapeNote } = planTitles(pathResult, t);
 
   return (
-    <div className="study-modal-content study-modal-plan-preview">
-      <h2 className="study-modal-title">{shapeTitle}</h2>
+    <div className={embedded ? 'study-modal-plan-preview plan-journey__plan' : 'study-modal-content study-modal-plan-preview'}>
+      {!embedded && <h2 className="study-modal-title">{shapeTitle}</h2>}
 
       {shapeNote && (
         <p className="study-modal-plan-shape">{shapeNote}</p>
@@ -724,7 +718,7 @@ const PlanPreviewPane = ({ pathResult, chatId, onStart, t, calibrated = false })
         </p>
       )}
 
-      <PlanNextSteps nodes={realNodes} reserveCount={reserveCount} onStart={onStart} />
+      <PlanNextSteps nodes={realNodes} reserveCount={reserveCount} onStart={onStart} busy={saving} />
 
       {minutes ? (
         <p className="study-modal-plan-meta">

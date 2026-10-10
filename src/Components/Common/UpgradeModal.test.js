@@ -140,3 +140,42 @@ describe('UpgradeModal (blocked, question gate)', () => {
     expect(screen.queryByText('You were practicing')).toBeNull();
   });
 });
+
+describe('UpgradeModal (her format gap)', () => {
+  const base = { isOpen: true, onClose: () => {}, limit: 50, used: 20, remaining: 30, msUntilReset: 1000 };
+  const practice = {
+    source: 'practice', standard: { correct: 52, total: 59 }, hard: { correct: 9, total: 38 }, weakest: 'sata',
+    rows: [
+      { format: 'mcq', correct: 52, total: 59, pct: 88 },
+      { format: 'sata', correct: 2, total: 8, pct: 25 },
+    ],
+  };
+
+  test('names her weakest format and shows her own percentages', () => {
+    render(<UpgradeModal {...base} gap={practice} />);
+    expect(screen.getByText('Stop losing points on select-all')).toBeInTheDocument();
+    expect(screen.getByText('88%')).toBeInTheDocument();
+    expect(screen.getByText('25%')).toBeInTheDocument();
+    expect(screen.getByText('From 59 multiple choice and 38 harder questions you answered')).toBeInTheDocument();
+  });
+
+  test('a readiness-check gap is stated as counts, never percentages', () => {
+    const { baseElement } = render(<UpgradeModal {...base} reason="gap" gap={{ source: 'check', standard: { correct: 4, total: 4 }, hard: { correct: 1, total: 4 } }} />);
+    expect(screen.getByText('Stop losing points on the harder questions')).toBeInTheDocument();
+    expect(screen.getByText('4 of 4')).toBeInTheDocument();
+    expect(screen.getByText('1 of 4')).toBeInTheDocument();
+    const values = [...baseElement.querySelectorAll('.upgrade-gap-value')].map(el => el.textContent);
+    expect(values).toEqual(['4 of 4', '1 of 4']);
+  });
+
+  test('a limit that stopped her keeps its own message, gap or not', () => {
+    render(<UpgradeModal {...base} remaining={0} gap={practice} />);
+    expect(screen.getByText("Don't stop now.")).toBeInTheDocument();
+    expect(screen.queryByText('Stop losing points on select-all')).toBeNull();
+  });
+
+  test('no gap: the ordinary offer, unchanged', () => {
+    render(<UpgradeModal {...base} />);
+    expect(screen.queryByText(/Stop losing points/)).toBeNull();
+  });
+});

@@ -34,6 +34,10 @@ import {
 } from '../../utils/quizScoring';
 import './SATAQuestion.css';
 import useGlossary from '../Glossary/useGlossary';
+import MethodWalkthrough from './MethodWalkthrough';
+import { toIndices, shouldAutoOpen, recordAutoOpen } from './walkthroughModel';
+import { explanationLead, verdictDetail } from './sataFeedbackModel';
+import { fetchQuizWalkthrough } from '../../Services/FastAPICalls';
 
 // ============================================
 // CONSTANTS
@@ -182,7 +186,7 @@ function SATAQuestion({
   // ----------------------------------------
   // Hooks & State
   // ----------------------------------------
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
   const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
@@ -202,6 +206,12 @@ function SATAQuestion({
   // Store option feedback for visual display
   const [optionFeedback, setOptionFeedback] = useState([]);
 
+  // The explanation opens on request (sataFeedbackModel.explanationLead).
+  const [rationaleOpen, setRationaleOpen] = useState(false);
+
+  // "Show me how" (MethodWalkthrough). status: idle | loading | ready | unavailable
+  const [walkthrough, setWalkthrough] = useState({ status: 'idle', data: null, open: false });
+
   // ----------------------------------------
   // Derived Values
   // ----------------------------------------
@@ -211,6 +221,29 @@ function SATAQuestion({
     if (!quiz) return [];
     return Array.isArray(quiz.answer) ? quiz.answer : [quiz.answer];
   }, [quiz]);
+
+  const verdict = useMemo(
+    () => (scoreResult ? verdictDetail(quiz?.options || [], scoreResult.breakdown) : null),
+    [scoreResult, quiz]
+  );
+
+  // The walkthrough speaks in plain option text and answer-key indices.
+  const plainOptions = useMemo(() => (quiz?.options || []).map(stripLetterPrefix), [quiz]);
+  const correctIndices = useMemo(() => toIndices(quiz?.options || [], correctAnswers), [quiz, correctAnswers]);
+  const selectedIndices = useMemo(() => toIndices(quiz?.options || [], selectedOptions), [quiz, selectedOptions]);
+
+  // Generation takes several seconds, so this starts the moment an answer
+  // comes back wrong; the "Show me how" tap then reuses the same request.
+  const requestWalkthrough = useCallback(() => {
+    if (!quiz?.question || !correctIndices.length) return Promise.resolve(null);
+    return fetchQuizWalkthrough(quiz.question, plainOptions, correctIndices, i18n.language);
+  }, [quiz, plainOptions, correctIndices, i18n.language]);
+
+  const openWalkthrough = useCallback(async () => {
+    setWalkthrough((w) => ({ ...w, open: true, status: w.data ? 'ready' : 'loading' }));
+    const data = await requestWalkthrough();
+    setWalkthrough((w) => (w.open ? { ...w, data, status: data ? 'ready' : 'unavailable' } : w));
+  }, [requestWalkthrough]);
 
   // Check if current selection meets minimum requirement
   const canSubmit = selectedOptions.length >= MIN_SELECTIONS;
@@ -257,6 +290,8 @@ function SATAQuestion({
       setScoreResult(null);
       setOptionFeedback([]);
     }
+    setWalkthrough({ status: 'idle', data: null, open: false });
+    setRationaleOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizQuestionId, quizIndex]); // Only depend on stable identifiers, not object references
 
@@ -309,6 +344,17 @@ function SATAQuestion({
     // Calculate NCLEX-style score
     const result = calculateSATAScore(selectedOptions, correctAnswers, 'partial');
     setScoreResult(result);
+
+    // Missed: start writing the walkthrough while she reads the feedback.
+    // The first misses on this device open it on their own, because a
+    // button inside the feedback box was easy to miss (owner, 2026-10-10).
+    if (!result.isFullyCorrect && !reviewMode) {
+      requestWalkthrough();
+      if (shouldAutoOpen()) {
+        recordAutoOpen();
+        openWalkthrough();
+      }
+    }
 
     // Get feedback for each option
     const feedback = getSATAOptionFeedback(quiz.options, selectedOptions, correctAnswers);
@@ -388,28 +434,21 @@ function SATAQuestion({
     const feedback = optionFeedback.find(f => f.option === optionText);
     if (!feedback) return null;
 
-    switch (feedback.status) {
-      case 'correct':
-        return (
-          <span className="sata-icon checkmark" aria-label={t('sata.correctlySelected')}>
-            <CheckmarkIcon />
-          </span>
-        );
-      case 'incorrect':
-        return (
-          <span className="sata-icon x-mark" aria-label={t('sata.incorrectlySelected')}>
-            <XMarkIcon />
-          </span>
-        );
-      case 'missed':
-        return (
-          <span className="sata-icon missed" aria-label={t('sata.shouldHaveSelected')}>
-            <MissedIcon />
-          </span>
-        );
-      default:
-        return null;
-    }
+    // A small icon plus a word, instead of filling the whole row green or
+    // red: the rows read as a calm result, and each state has its own shape
+    // and word, so it never depends on colour alone (owner, 2026-10-10).
+    const status = {
+      correct: { icon: <CheckmarkIcon />, iconClass: 'checkmark', label: t('sata.status.right') },
+      incorrect: { icon: <XMarkIcon />, iconClass: 'x-mark', label: t('sata.status.wrong') },
+      missed: { icon: <MissedIcon />, iconClass: 'missed', label: t('sata.status.missed') },
+    }[feedback.status];
+    if (!status) return null;
+    return (
+      <span className={`sata-status is-${feedback.status}`}>
+        <span className={`sata-icon ${status.iconClass}`} aria-hidden="true">{status.icon}</span>
+        <span className="sata-status-label">{status.label}</span>
+      </span>
+    );
   };
 
   // ----------------------------------------
@@ -534,49 +573,47 @@ function SATAQuestion({
 
         {/* Feedback Section - Combined score and rationale */}
         {showFeedback && scoreResult && (
-          <div className={`sata-feedback ${scoreResult.isFullyCorrect ? 'correct' : scoreResult.percentage >= 50 ? 'partial' : 'incorrect'}`}>
-            <div className="feedback-header">
-              <span className={`feedback-status ${scoreResult.isFullyCorrect ? 'correct' : scoreResult.percentage >= 50 ? 'partial' : 'incorrect'}`}>
+          <div className="sata-feedback sata-feedback--calm">
+            {/* The result in one sentence that names the letters. Replaces the
+                tinted box and three count pills, which competed with the
+                "Show me how" button for attention (owner, 2026-10-10). */}
+            <p className={`sata-verdict ${scoreResult.isFullyCorrect ? 'correct' : scoreResult.percentage >= 50 ? 'partial' : 'incorrect'}`}>
+              <strong>
                 {scoreResult.isFullyCorrect
-                  ? `✓ ${t('quiz.thatsRight')}`
+                  ? t('quiz.thatsRight')
                   : scoreResult.percentage >= 50
-                    ? `◐ ${t('sata.partialCredit')}`
-                    : `✗ ${t('quiz.notQuite')}`
-                }
-              </span>
-              <span className="feedback-score">
-                {scoreResult.score}/{scoreResult.maxScore}
-              </span>
-            </div>
+                    ? t('sata.partialCredit')
+                    : t('quiz.notQuite')}
+                {' '}{scoreResult.score}/{scoreResult.maxScore}.
+              </strong>
+              {verdict && <span> {t(verdict.key, verdict.values)}</span>}
+            </p>
 
-            {/* Breakdown Legend */}
-            <div className="sata-breakdown">
-              {scoreResult.breakdown.correctSelections.length > 0 && (
-                <div className="breakdown-item correct">
-                  <span className="breakdown-icon">✓</span>
-                  <span className="breakdown-label">{t('sata.correctlySelected')}: </span>
-                  <span className="breakdown-count">{scoreResult.breakdown.correctSelections.length}</span>
-                </div>
-              )}
-              {scoreResult.breakdown.incorrectSelections.length > 0 && (
-                <div className="breakdown-item incorrect">
-                  <span className="breakdown-icon">✗</span>
-                  <span className="breakdown-label">{t('sata.incorrectlySelected')}: </span>
-                  <span className="breakdown-count">{scoreResult.breakdown.incorrectSelections.length}</span>
-                </div>
-              )}
-              {scoreResult.breakdown.missedCorrect.length > 0 && (
-                <div className="breakdown-item missed">
-                  <span className="breakdown-icon">○</span>
-                  <span className="breakdown-label">{t('sata.shouldHaveSelected')}: </span>
-                  <span className="breakdown-count">{scoreResult.breakdown.missedCorrect.length}</span>
-                </div>
-              )}
-            </div>
+            {/* "Show me how": teaches the select-all method on this question.
+                Above the explanation, not below it: below a scrolling rationale
+                it was a small link nobody saw (owner, 2026-10-10). */}
+            {!scoreResult.isFullyCorrect && correctIndices.length > 0 && !walkthrough.open && (
+              <button type="button" className="sata-walkthrough-trigger" onClick={openWalkthrough}>
+                <span className="sata-walkthrough-icon" aria-hidden="true">▶</span>
+                <span>
+                  <strong>{t('walkthrough.trigger')}</strong>
+                  <small>{t('walkthrough.triggerSub')}</small>
+                </span>
+              </button>
+            )}
 
-            {/* Justification/Rationale */}
-            {quiz.justification && (
-              <div className="feedback-rationale-container">
+            {/* Justification/Rationale: a one-line lead that expands, instead of
+                a scrolling box inside the feedback box. */}
+            {quiz.justification && !rationaleOpen && (
+              <p className="sata-explanation-lead">
+                {explanationLead(sanitizeJustification(quiz.justification))}{' '}
+                <button type="button" className="sata-explanation-toggle" onClick={() => setRationaleOpen(true)}>
+                  {t('sata.fullExplanation')}
+                </button>
+              </p>
+            )}
+            {quiz.justification && rationaleOpen && (
+              <div className="feedback-rationale-container is-open">
                 <div
                   ref={rationaleRef}
                   className="feedback-rationale-content"
@@ -584,7 +621,27 @@ function SATAQuestion({
                   data-selectable="true"
                   dangerouslySetInnerHTML={{ __html: sanitizeJustification(quiz.justification) }}
                 />
+                <button type="button" className="sata-explanation-toggle" onClick={() => setRationaleOpen(false)}>
+                  {t('sata.hideExplanation')}
+                </button>
               </div>
+            )}
+
+            {walkthrough.open && walkthrough.status === 'loading' && (
+              <p className="sata-walkthrough-status" aria-live="polite">{t('walkthrough.loading')}</p>
+            )}
+            {walkthrough.open && walkthrough.status === 'unavailable' && (
+              <p className="sata-walkthrough-status" aria-live="polite">{t('walkthrough.unavailable')}</p>
+            )}
+            {walkthrough.open && walkthrough.status === 'ready' && walkthrough.data && (
+              <MethodWalkthrough
+                question={quiz.question}
+                options={plainOptions}
+                correctIndices={correctIndices}
+                selectedIndices={selectedIndices}
+                walkthrough={walkthrough.data}
+                onClose={() => setWalkthrough((w) => ({ ...w, open: false }))}
+              />
             )}
           </div>
         )}
@@ -592,7 +649,9 @@ function SATAQuestion({
         {/* Next Button */}
         {showFeedback && onNext && (
           <button
-            className="sata-next-btn"
+            // On a miss "Show me how" is the one filled action; Next steps
+            // back to an outlined button so the two don't compete.
+            className={`sata-next-btn${scoreResult && !scoreResult.isFullyCorrect ? ' is-quiet' : ''}`}
             onClick={onNext}
             type="button"
           >

@@ -15150,3 +15150,101 @@ body.dark-mode .study-mode-container { --paper-skeleton-bg: rgba(255, 255, 255, 
   .study-loading-premium__preview .paper-skeleton.title { height: 34px; }
   .study-loading-premium__preview .paper-skeleton.option { height: 38px; }
 }
+
+/* ═══════════════════════════════════════════════════════════════════
+   Plan journey (2026-10-08): loading -> plan -> saving on ONE surface.
+   Every change in size is animated by AutoHeight; everything here only
+   decides what appears, folds or fades inside it.
+   ═══════════════════════════════════════════════════════════════════ */
+.plan-journey { display: flex; flex-direction: column; }
+
+.plan-journey__mascot {
+  max-height: 96px;
+  margin-bottom: 12px;
+  transition: max-height 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.28s ease,
+              transform 0.42s cubic-bezier(0.2, 0.8, 0.2, 1), margin 0.42s ease;
+}
+.plan-journey__mascot.is-gone {
+  max-height: 0;
+  margin-bottom: 0;
+  opacity: 0;
+  transform: scale(0.85);
+  pointer-events: none;
+}
+
+.plan-journey__title { animation: journeyTitleIn 0.38s ease both; }
+@keyframes journeyTitleIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* The planner's notes fold to their last line once the plan is ready. */
+.plan-journey__trail .study-modal-thinking__item {
+  max-height: 60px;
+  transition: max-height 0.4s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.25s ease, margin 0.4s ease;
+}
+.plan-journey__trail .study-modal-thinking__item.is-tucked {
+  max-height: 0;
+  opacity: 0;
+  margin-bottom: -10px;
+  overflow: hidden;
+}
+.plan-journey__trail.is-folded { margin-bottom: 10px; }
+
+/* Skeleton of the steps: same rows and rhythm as the real list. */
+.plan-skeleton { margin-top: 14px; }
+.plan-skeleton::before { opacity: 0.45; }
+.plan-skeleton__row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 6px 4px 6px 0;
+  animation: journeyTitleIn 0.4s ease both;
+}
+.plan-skeleton__icon,
+.plan-skeleton__line {
+  background: linear-gradient(90deg, rgba(232, 141, 125, 0.08) 25%, rgba(232, 141, 125, 0.18) 45%, rgba(232, 141, 125, 0.08) 65%);
+  background-size: 300% 100%;
+  animation: planSkeletonSweep 1.6s ease-in-out infinite;
+}
+.plan-skeleton__icon { position: relative; z-index: 1; width: 32px; height: 32px; border-radius: 50%; flex-shrink: 0; }
+.plan-skeleton__lines { display: flex; flex-direction: column; gap: 7px; flex: 1; }
+.plan-skeleton__line { display: block; height: 10px; border-radius: 6px; width: 78%; }
+.plan-skeleton__line.is-short { width: 34%; height: 8px; }
+.plan-skeleton__row:nth-child(2) .plan-skeleton__line:not(.is-short) { width: 64%; }
+.plan-skeleton__row:nth-child(3) .plan-skeleton__line:not(.is-short) { width: 71%; }
+.plan-skeleton__row:nth-child(4) .plan-skeleton__line:not(.is-short) { width: 56%; }
+@keyframes planSkeletonSweep {
+  from { background-position: 100% 0; }
+  to { background-position: 0 0; }
+}
+
+.plan-journey__plan { display: flex; flex-direction: column; gap: 14px; text-align: left; animation: journeyTitleIn 0.35s ease both; }
+
+/* Saving happens on the start button instead of a separate screen. */
+.study-modal-start.is-busy { cursor: progress; opacity: 0.9; }
+.study-modal-start__spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #ffffff;
+  animation: studyStartSpin 0.8s linear infinite;
+}
+@keyframes studyStartSpin { to { transform: rotate(360deg); } }
+
+/* Hand-off: the card fades as study mode takes over. */
+.study-modal-overlay.is-leaving { opacity: 0; transition: opacity 0.26s ease; }
+.study-modal-overlay.is-leaving .study-modal { transform: scale(0.985); transition: transform 0.26s ease; }
+
+body.dark-mode .plan-skeleton__icon,
+body.dark-mode .plan-skeleton__line {
+  background-image: linear-gradient(90deg, rgba(184, 165, 212, 0.08) 25%, rgba(184, 165, 212, 0.2) 45%, rgba(184, 165, 212, 0.08) 65%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plan-journey__mascot, .plan-journey__trail .study-modal-thinking__item { transition: none; }
+  .plan-journey__title, .plan-skeleton__row, .plan-journey__plan { animation: none; }
+  .plan-skeleton__icon, .plan-skeleton__line { animation: none; }
+  .study-modal-overlay.is-leaving, .study-modal-overlay.is-leaving .study-modal { transition: none; }
+}

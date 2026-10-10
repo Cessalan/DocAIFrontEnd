@@ -1008,3 +1008,88 @@ body.dark-mode .sata-container .feedback-rationale-container {
     border-width: 3px;
   }
 }
+
+/* ============================================
+   CALM FEEDBACK (2026-10-10)
+   One filled action per moment. On a miss the "Show me how" button is the
+   only filled control; the verdict is one sentence, the explanation a lead
+   that expands, Next an outlined button. Owner: "everything competes for
+   attention".
+   ============================================ */
+
+.sata-container .sata-feedback--calm,
+.sata-container .sata-feedback--calm.correct,
+.sata-container .sata-feedback--calm.partial,
+.sata-container .sata-feedback--calm.incorrect {
+  background: transparent;
+  border: 0;
+  border-top: 1px solid var(--q-border);
+  border-radius: 0;
+  padding: 14px 0 0;
+}
+
+.sata-verdict { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--q-text-soft); }
+.sata-verdict strong { font-weight: 700; }
+.sata-verdict.correct strong { color: var(--q-good-strong); }
+.sata-verdict.partial strong { color: var(--q-miss-strong); }
+.sata-verdict.incorrect strong { color: var(--q-bad-strong); }
+body.dark-mode .sata-verdict.correct strong { color: #6ee7a8; }
+body.dark-mode .sata-verdict.partial strong { color: #f0c274; }
+
+.sata-explanation-lead { margin: 10px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--q-text-soft); }
+.sata-explanation-toggle {
+  background: none; border: 0; padding: 0; cursor: pointer;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--q-text);
+  text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--q-border);
+}
+.sata-explanation-toggle:hover { text-decoration-color: currentColor; }
+.sata-explanation-toggle:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; border-radius: 3px; }
+
+.sata-container .feedback-rationale-container.is-open { margin-top: 10px; background: transparent; border: 0; padding: 0; }
+body.dark-mode .sata-container .feedback-rationale-container.is-open { background: transparent; }
+.sata-container .feedback-rationale-container.is-open .feedback-rationale-content { max-height: none; overflow: visible; padding-right: 0; }
+.sata-container .feedback-rationale-container.is-open .sata-explanation-toggle { margin-top: 8px; }
+
+.sata-next-btn.is-quiet {
+  display: block; width: auto; margin: 16px 0 0 auto; padding: 9px 18px;
+  background: transparent; color: var(--q-text);
+  border: 1.5px solid var(--q-border); border-radius: 999px; box-shadow: none;
+  font-family: inherit; font-size: 14.5px; font-weight: 600;
+}
+.sata-next-btn.is-quiet:hover { transform: none; box-shadow: none; border-color: var(--q-accent-line); }
+
+/* Revealed rows stay plain cards. The result is the small icon and word on
+   the right (.sata-status), not a green/red/amber fill and glow on the whole
+   row, which shouted louder than the walkthrough button (owner, 2026-10-10). */
+.sata-container .sata-option.correct,
+.sata-container .sata-option.incorrect,
+.sata-container .sata-option.missed {
+  background: var(--q-card);
+  border: 1px solid var(--q-border);
+  border-width: 1px;
+  box-shadow: none;
+}
+.sata-container .sata-letter.correct,
+.sata-container .sata-letter.incorrect,
+.sata-container .sata-letter.missed {
+  background: var(--q-sunken);
+  color: var(--q-text-soft);
+  border-color: var(--q-border);
+  box-shadow: none;
+}
+.sata-container .sata-option.correct .sata-checkbox,
+.sata-container .sata-option.incorrect .sata-checkbox,
+.sata-container .sata-option.missed .sata-checkbox { color: var(--q-text-soft); }
+
+.sata-status { flex: none; display: inline-flex; align-items: center; gap: 6px; margin-left: auto; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+.sata-status .sata-icon { width: 18px; height: 18px; min-width: 18px; margin-left: 0; }
+.sata-status.is-correct { color: var(--q-good-strong); }
+.sata-status.is-incorrect { color: var(--q-bad-strong); }
+.sata-status.is-missed { color: var(--q-miss-strong); }
+body.dark-mode .sata-status.is-correct { color: #6ee7a8; }
+body.dark-mode .sata-status.is-missed { color: #f0c274; }
+
+@media (max-width: 480px) {
+  .sata-status-label { display: none; }
+  .sata-status .sata-icon { width: 20px; height: 20px; min-width: 20px; }
+}

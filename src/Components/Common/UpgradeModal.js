@@ -112,7 +112,7 @@ const UpgradeModal = ({
   isOpen, onClose, limit = 50, used = 0, remaining = Infinity, msUntilReset = 0,
   user = {}, studyGoal = null, examDate = null, topic = null, isPro = false,
   reason = null, planLimit = 3, plansRemaining = Infinity, planMsUntilReset = 0,
-  onManageSubscription = null,
+  onManageSubscription = null, gap = null,
 }) => {
   const { t } = useTranslation();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -236,10 +236,20 @@ const UpgradeModal = ({
       ? t('upgrade.examTomorrow', 'tomorrow')
       : t('upgrade.examInDays', 'in {{days}} days', { days: daysAway });
 
+  // Her own format gap, when one was found (Common/gapOfferModel.js). Only on
+  // an offer she chose to open: a limit that stopped her keeps its own copy,
+  // because "why did this stop me" comes before "what should I fix".
+  const showGap = Boolean(gap) && !isUploadGate && !isPlanGate && !blocked;
+  const gapFormatName = (format) => t(`upgrade.gap.format.${format}`);
+
   // Headline: interruption first when we actually blocked them, goal-based
   // aspiration when they opened this themselves.
   let title;
-  if (isUploadGate) {
+  if (showGap) {
+    title = gap.weakest
+      ? t('upgrade.gap.title', { format: gapFormatName(gap.weakest) })
+      : t('upgrade.gap.titleHard');
+  } else if (isUploadGate) {
     title = t('upgrade.titleUpload', 'Bring all your notes.');
   } else if (isPlanReady) {
     // She has just seen what her check found. Sell the fix; don't start a
@@ -258,7 +268,11 @@ const UpgradeModal = ({
   }
 
   let subtitle;
-  if (isUploadGate) {
+  if (showGap) {
+    subtitle = examSoon
+      ? t('upgrade.gap.bodyExam', { when: whenLabel })
+      : t('upgrade.gap.body');
+  } else if (isUploadGate) {
     subtitle = examSoon
       ? t('upgrade.bodyUploadExam', "Free covers one upload per chat. Your exam is {{when}} — Pro lets you add every lecture and handout for it, and practise across all of them at once.", { when: whenLabel })
       : t('upgrade.bodyUpload', 'Free covers one upload per chat. Pro lets you add every lecture, slide deck and handout for the same exam — and practise across all of them at once.');
@@ -383,8 +397,48 @@ const UpgradeModal = ({
           </div>
         )}
 
-        {/* Momentum they already have — theirs to keep or to drop. */}
-        {(used > 0 || examSoon) && (
+        {/* Where she stands, from her own answers. A readiness check is a
+            handful of questions, so it is stated as counts; saved practice
+            has enough behind it for percentages. */}
+        {showGap && (
+          <div className="upgrade-gap">
+            <ul className="upgrade-gap-rows">
+              {(gap.source === 'practice'
+                ? gap.rows
+                : [
+                    { format: 'mcq', ...gap.standard },
+                    { format: 'hard', ...gap.hard },
+                  ]
+              ).map((row) => {
+                const share = row.total ? row.correct / row.total : 0;
+                return (
+                  <li key={row.format} className={`upgrade-gap-row${row.format === 'mcq' ? '' : ' is-weak'}`}>
+                    <span className="upgrade-gap-name">
+                      {t(`upgrade.gap.row.${row.format}`)}
+                    </span>
+                    <span className="upgrade-gap-track" aria-hidden="true">
+                      <span className="upgrade-gap-fill" style={{ width: `${Math.round(share * 100)}%` }} />
+                    </span>
+                    <span className="upgrade-gap-value">
+                      {gap.source === 'practice'
+                        ? `${row.pct}%`
+                        : t('upgrade.gap.count', { correct: row.correct, total: row.total })}
+                    </span>
+                  </li>
+                );
+              })}
+            </ul>
+            <p className="upgrade-gap-source">
+              {gap.source === 'practice'
+                ? t('upgrade.gap.sourcePractice', { standard: gap.standard.total, hard: gap.hard.total })
+                : t('upgrade.gap.sourceCheck', { count: gap.standard.total + gap.hard.total })}
+            </p>
+          </div>
+        )}
+
+        {/* Momentum they already have — theirs to keep or to drop. The gap
+            block above already names the exam, so it stands in for this. */}
+        {!showGap && (used > 0 || examSoon) && (
           <div className="upgrade-stats">
             {used > 0 && (
               <span className="upgrade-stat">

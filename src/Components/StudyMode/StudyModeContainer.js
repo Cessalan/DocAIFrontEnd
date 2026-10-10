@@ -2035,8 +2035,16 @@ const StudyModeContainer = ({
     );
   }
 
+  // A new plan opens straight onto its first step. Until the auto-start
+  // effect has launched it, the overview used to render for a moment: the
+  // whole plan dashboard flashed between the plan card and the first step
+  // (2026-10-08). Show the step view's own loading state instead, so the
+  // launch lands in the same view with nothing in between.
+  const autoLaunching = autoStart && !viewOnly && view === 'overview'
+    && !hasAutoStartedNodeRef.current && completedCount === 0;
+
   // Render overview (Duolingo-style path)
-  if (view === 'overview') {
+  if (view === 'overview' && !autoLaunching) {
     return (
       <>
         {/* Dev mode indicator */}
@@ -2149,11 +2157,12 @@ const StudyModeContainer = ({
             {activeNode && realNodes.some(node => node.id === activeNode.id) && <p className="study-arrival-step" ref={arrivalHeadingRef} tabIndex={-1}>
               {language.startsWith('fr') ? 'Étape' : 'Step'} {realNodes.findIndex(node => node.id === activeNode.id) + 1} {language.startsWith('fr') ? 'sur' : 'of'} {realNodes.length} · {formatNodeType(activeNode.type, t)}
             </p>}
-            {isLoadingContent ? (
+            {isLoadingContent || autoLaunching ? (
               <StudyLoadingScreen
                 nodeType={activeNode?.type || 'lesson'}
                 onRetry={activeNode ? () => handleStartNode(activeNode) : undefined}
                 onBack={() => {
+                  hasAutoStartedNodeRef.current = true; // leaving the hold goes to the plan
                   setIsLoadingContent(false);
                   setContentError(null);
                   setView('overview');

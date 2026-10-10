@@ -48,6 +48,7 @@ export const TRIGGER_LABELS = {
   upload_gate: 'Upload gate',
   question_throttle: 'Question limit',
   account_menu: 'Account menu',
+  weakness_insight: 'Weak-areas offer',
   plan_ready: 'Plan preview',
   plan_quota: 'Plan limit',
   manual: 'Other',

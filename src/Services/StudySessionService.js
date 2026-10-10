@@ -1618,6 +1618,23 @@ export default {
  * read produce the same card, and a rejected promise here would take down an
  * upload over a missing analytics nicety.
  */
+/**
+ * Every chat's per-format scores for one user: an array of the `formats` maps
+ * on users/{uid}/studyPerformance/*. Read by the upgrade offer, which names
+ * her format gap (Common/gapOfferModel.js). Empty array on any failure, so a
+ * failed read shows the ordinary offer rather than an error.
+ */
+export const getPracticeFormatMaps = async (userId) => {
+  try {
+    if (!userId) return [];
+    const snap = await getDocs(collection(db, 'users', userId, 'studyPerformance'));
+    return snap.docs.map((d) => d.data()?.formats).filter(Boolean);
+  } catch (error) {
+    devLog('Practice formats unavailable for the upgrade offer:', error?.message);
+    return [];
+  }
+};
+
 export const getAggregateTopicPerformance = async () => {
   try {
     const userId = auth.currentUser?.uid;

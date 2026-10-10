@@ -27,6 +27,9 @@ import { buildCoverage, collectPracticeItems, missedQuestions, nextPractice } fr
 import { placePracticeDebriefs } from './practiceMessageOrder';
 import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
+import ComposerUploads from './ComposerUploads';
+import ComposerSuggestions from './ComposerSuggestions';
+import { anyUploading, applyUploadEvent, markAll, newComposerFile } from './composerUploadModel';
 import PostUploadActions from './PostUploadActions';
 import FirstUploadWowCard from './FirstUploadWowCard';
 // FileViewerModal is lazy-loaded — see the code-splitting block below the imports.
@@ -509,6 +512,17 @@ const ChatInterface = ({
   const [connectionStatus, setConnectionStatus] = useState('disconnected');
 
   const studySheetStreamRef = useRef(null);
+  // Files attached in the message box and the suggestions shown above it
+  // once they are all ready (composerUploadModel.js). Plain attaches only:
+  // drill, study-plan and pre-picked-action uploads keep their own flow.
+  const [composerFiles, setComposerFiles] = useState([]);
+  const composerFilesRef = useRef([]);
+  composerFilesRef.current = composerFiles;
+  const composerChatIdRef = useRef(null);
+  const [uploadSuggestions, setUploadSuggestions] = useState(null);
+  const plainUploadRef = useRef(false);
+  const uploadPromiseRef = useRef(null);
+  const sentDuringUploadRef = useRef(false);
   const interruptStudySheet = useCallback((message) => {
     const current = studySheetStreamRef.current;
     if (!current?.isStreaming) return false;
@@ -550,6 +564,11 @@ const ChatInterface = ({
   }, []);
   useEffect(() => {
     setFocusedQuizId(null); setQuizFocused(false); autoOpenedQuizzes.current.clear();
+    if (composerChatIdRef.current && composerChatIdRef.current !== currentChatID) {
+      composerChatIdRef.current = null;
+      setComposerFiles([]);
+      setUploadSuggestions(null);
+    }
   }, [currentChatID]);
   useEffect(() => {
     if (copiedPracticeChat.current === currentChatID) {
@@ -1313,6 +1332,7 @@ const ChatInterface = ({
 
     // clear the state of suggested prompts
     setSuggestedPrompts([]);
+    setUploadSuggestions(null);
 
     const messageToSend = customPrompt ?? userInputText;
     if (messageToSend.trim() === '') return;
@@ -1341,12 +1361,22 @@ const ChatInterface = ({
       hidden: hideUserMessage, // Mark as hidden for rendering
     };
 
+    // Files in the message box travel with this message, like ChatGPT.
+    const attached = composerFilesRef.current.filter(f => f.status !== 'error');
+    if (attached.length) {
+      if (!hideUserMessage) newUserMessage.attachments = attached.map(f => ({ name: f.name, kind: f.kind }));
+      setComposerFiles([]);
+    }
+    const waitingOnFiles = Boolean(uploadPromiseRef.current);
+    if (waitingOnFiles) sentDuringUploadRef.current = true;
+
     const streamingMessageId = `streaming-${Date.now()}`;
     const placeholderMessage = {
       id: streamingMessageId,
       role: 'assistant',
       content: '',
       isStreaming: true,
+      statusText: waitingOnFiles ? t('composerUpload.reading') : null,
       timestamp: new Date()
     };
 
@@ -1419,12 +1449,19 @@ const ChatInterface = ({
     let quizStreamMeta = {};
 
     try {
+      // Sent while files were still loading: the request waits for them so
+      // the answer can use them, and the placeholder says why it is waiting.
+      if (uploadPromiseRef.current) {
+        await uploadPromiseRef.current;
+        setChatMessages(prev => prev.map(msg => (msg.id === streamingMessageId ? { ...msg, statusText: null } : msg)));
+      }
+
       // Use WebSocket with all your current logic
       await ask_llm_websocket(
         currentLanguage,
         messageToSend,
         formatChatHistory(historyOverride || chatMessages),
-        formatFilesForAPI(uploadedFilesList),
+        formatFilesForAPI(uploadedFilesListRef.current || uploadedFilesList),
         targetChatId,
 
         // Status callback - handles all your current status updates
@@ -3004,6 +3041,24 @@ const ChatInterface = ({
     });
     logFunnelStep(FUNNEL.UPLOAD_STARTED);
 
+    // A plain attach lives in the message box: chips with a progress ring,
+    // nothing posted into the chat, and the composer stays usable while it
+    // loads (2026-10-08). Drill, study-plan and pre-picked-action uploads
+    // keep their in-chat flow.
+    const plainAttach = !window._pendingDrill && !window._pendingStudyJourney && !pendingStudyActionRef.current;
+    plainUploadRef.current = plainAttach;
+    let finishUpload = () => {};
+    let thisUpload = null;
+    if (plainAttach) {
+      sentDuringUploadRef.current = false;
+      setUploadSuggestions(null);
+      composerChatIdRef.current = resolvedChatId;
+      setComposerFiles(prev => [...prev.filter(f => f.status !== 'error'),
+        ...files.map(file => newComposerFile(file, uuidv4()))]);
+      thisUpload = new Promise(resolve => { finishUpload = resolve; });
+      uploadPromiseRef.current = thisUpload;
+    }
+
     // Track files by name for UI updates
     const fileTracker = new Map();
 
@@ -3022,8 +3077,8 @@ const ChatInterface = ({
     // ========================================
     // 🆕 CREATE LOADING MESSAGE IMMEDIATELY (BEFORE API CALL)
     // ========================================
-    const loadingMsgId = uuidv4();
-    uploadMessageIdRef.current = loadingMsgId;  // Set ref FIRST!
+    const loadingMsgId = plainAttach ? null : uuidv4();
+    uploadMessageIdRef.current = loadingMsgId;  // Set ref FIRST! (null: no card)
     uploadInsightsAccumulatorRef.current = [];  // 🆕 Reset accumulator
 
     const loadingMessage = {
@@ -3040,7 +3095,7 @@ const ChatInterface = ({
       language: currentLanguage
     };
 
-    setChatMessages(prev => [...prev, loadingMessage]);
+    if (!plainAttach) setChatMessages(prev => [...prev, loadingMessage]);
     devLog(`📦 Created loading message BEFORE upload: ${loadingMsgId}`);
     devLog(`   File count: ${files.length}`);
 
@@ -3080,7 +3135,7 @@ const ChatInterface = ({
       ]));
     }
 
-    setLoadingState('fileUpload', true);
+    if (!plainAttach) setLoadingState('fileUpload', true);
 
     try {
       // Upload files with progress tracking
@@ -3114,6 +3169,7 @@ const ChatInterface = ({
       });
 
       setUploadedFilesList(prev => [...prev, ...completedFiles]);
+      if (plainAttach) setComposerFiles(prev => markAll(prev, 'ready'));
 
       // Save metadata to Firestore for each file
       for (const file of completedFiles) {
@@ -3136,6 +3192,10 @@ const ChatInterface = ({
       setLoadingState('fileUpload', false);
       setLoadingState('fileEmbedding', false);
       setIsUploadAnalyzing(false);
+      if (plainAttach) {
+        setComposerFiles(prev => markAll(prev, 'error'));
+        setFileErrorToast(t('composerUpload.failed'));
+      }
 
       // Flip the upload loading box into a visible error state so a failed,
       // timed-out, or dropped upload can never leave the spinner running forever.
@@ -3172,6 +3232,10 @@ const ChatInterface = ({
           : msg
       ));
     }
+
+    // A message sent while this upload ran has been waiting on it.
+    finishUpload();
+    if (thisUpload && uploadPromiseRef.current === thisUpload) uploadPromiseRef.current = null;
 
     // Reset the input so the same file can be re-selected.
     // iOS Safari requires '' (null is a no-op on WebKit).
@@ -3223,6 +3287,7 @@ const ChatInterface = ({
   // Progress handler - add this as a new function in your component
   const handleUploadProgress = (update, fileTracker, chatId) => {
     devLog('📦 Upload progress:', update.type, update);
+    if (plainUploadRef.current) setComposerFiles(prev => applyUploadEvent(prev, update));
 
     switch (update.type) {
       case 'batch_start':
@@ -3260,7 +3325,8 @@ const ChatInterface = ({
 
         const msgId = uploadMessageIdRef.current;
         if (!msgId) {
-          console.error('⚠️ No uploadMessageId - this should never happen now!');
+          // A plain attach has no in-chat card to fill; its chip tracks progress.
+          if (!plainUploadRef.current) console.error('⚠️ No uploadMessageId - this should never happen now!');
           devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           return;
         }
@@ -3346,7 +3412,8 @@ const ChatInterface = ({
         break;
 
       case 'embedding_start':
-        setLoadingState('fileEmbedding', true);
+        // A plain attach keeps the composer usable while it embeds.
+        if (!plainUploadRef.current) setLoadingState('fileEmbedding', true);
         // Find file by file_id and update stage
         for (const [name, data] of fileTracker.entries()) {
           if (data.fileId === update.file_id) {
@@ -3407,7 +3474,7 @@ const ChatInterface = ({
 
         const completeMsgId = uploadMessageIdRef.current;
         if (!completeMsgId) {
-          console.warn('⚠️ No uploadMessageId found for completion');
+          if (!plainUploadRef.current) console.warn('⚠️ No uploadMessageId found for completion');
           devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           return;
         }
@@ -3724,6 +3791,16 @@ const ChatInterface = ({
           }
         }
 
+        // Plain attach: nothing is posted into the chat. The actions wait
+        // above the message box until every file is ready, unless she has
+        // already said what she wants while it loaded.
+        if (plainUploadRef.current) {
+          if (!sentDuringUploadRef.current) {
+            setUploadSuggestions({ topics: update.topics || [], filenames: update.filenames || [] });
+          }
+          break;
+        }
+
         // Create a new assistant message with the friendly text + actions
         const postUploadMsgId = `post-upload-${Date.now()}`;
         const postUploadMsg = {
@@ -3886,6 +3963,7 @@ const ChatInterface = ({
   // old `showActions: false`, which hid the whole menu and left the student
   // with no record of what they'd clicked.
   const markPostUploadChoice = (messageId, actionId) => {
+    if (!messageId) return; // picked from the composer suggestions
     setChatMessages(prev => prev.map(msg =>
       msg.id === messageId ? { ...msg, selectedAction: actionId } : msg
     ));
@@ -4009,6 +4087,21 @@ const ChatInterface = ({
     devLog('🎯 Calling handleSendNewUserMessage...');
     await handleSendNewUserMessage(null, promptToSend);
     devLog('🎯 handleSendNewUserMessage completed');
+  };
+
+  // A suggestion above the message box. The study plan uses every file in
+  // the chat, not only the last upload; the rest reuse the action handler.
+  const handleUploadSuggestion = (actionId) => {
+    const picked = uploadSuggestions;
+    setUploadSuggestions(null);
+    if (actionId === 'studyjourney') {
+      setPendingStudyDocs((uploadedFilesListRef.current || []).map((file, idx) => ({
+        id: file.id || `doc-${idx}`, name: file.name, filename: file.name,
+      })));
+      setShowStartStudyModal(true);
+      return;
+    }
+    handlePostUploadAction(actionId, { id: null, topics: picked?.topics || [], filenames: picked?.filenames || [] });
   };
 
   // Handle quiz mode selection from the modal
@@ -6100,6 +6193,10 @@ const ChatInterface = ({
             </div>
           ) : (
           <div className="input-wrapper-container">
+            {uploadSuggestions && !anyUploading(composerFiles) && !isSystemBusy && (
+              <ComposerSuggestions onPick={handleUploadSuggestion} />
+            )}
+            <ComposerUploads files={composerFiles} />
             {/* Textarea */}
             <textarea
               ref={textareaRef}

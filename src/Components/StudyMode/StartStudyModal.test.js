@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, act } from '@testing-library/react';
+import { render, screen, fireEvent, act, waitFor } from '@testing-library/react';
 import '../../i18n/i18n';
 import StartStudyModal from './StartStudyModal';
 import { start_study_journey, plan_study_path } from '../../Services/FastAPICalls';
@@ -66,7 +66,8 @@ describe('an accepted quick-check plan opens the first activity', () => {
     expect(createStudySession).toHaveBeenCalledWith('c1', path, ['d1']);
     expect(mockUsage.requirePlanQuota).toHaveBeenCalledTimes(1);
     expect(mockUsage.consumePlan).toHaveBeenCalledTimes(1);
-    expect(onStart).toHaveBeenCalledWith(state);
+    // Study mode takes over after the card's short fade (one motion, not a cut).
+    await waitFor(() => expect(onStart).toHaveBeenCalledWith(state));
     expect(screen.queryByText('Start my first activity')).toBeNull();
   });
 
@@ -77,7 +78,7 @@ describe('an accepted quick-check plan opens the first activity', () => {
     const onStart = jest.fn();
     render(<StartStudyModal {...props} startImmediately onStart={onStart} />);
     await act(async () => { await Promise.resolve(); });
-    expect(onStart).toHaveBeenCalledWith(state);
+    await waitFor(() => expect(onStart).toHaveBeenCalledWith(state));
     expect(createStudySession).toHaveBeenCalledTimes(1);
   });
 
@@ -150,5 +151,41 @@ describe('StartStudyModal — the locked verdict button', () => {
     mockUsage = { ...mockUsage, canCreatePlan: true };
     await act(async () => { rerender(<StartStudyModal {...props} />); });
     expect(start_study_journey).toHaveBeenCalledTimes(1);
+  });
+});
+
+// 2026-10-08: loading, plan and saving used to be three screens of different
+// sizes, and an auto-started modal flashed its confirm screen first. Now one
+// card grows from planner notes and a skeleton into the real steps.
+describe('plan generation is one continuous card', () => {
+  const path = { nodes: [{ id: 'lesson-1', type: 'lesson', label: 'Cardiac', status: 'todo' }], archetype: 'master' };
+
+  test('no confirm flash, then notes and skeleton, then the real steps in place', async () => {
+    let finish;
+    start_study_journey.mockReturnValue({ planPromise: new Promise(resolve => { finish = resolve; }) });
+    const { container } = render(<StartStudyModal {...props} />);
+    expect(screen.queryByText('Begin Journey')).toBeNull();
+    expect(screen.getByText('Reading your material…')).toBeInTheDocument();
+    expect(container.querySelector('.plan-skeleton')).not.toBeNull();
+
+    await act(async () => { finish(path); await Promise.resolve(); });
+    expect(container.querySelector('.plan-skeleton')).toBeNull();
+    expect(container.querySelectorAll('.plan-journey')).toHaveLength(1);
+    expect(screen.getByRole('button', { name: /Start here/ })).toBeInTheDocument();
+  });
+
+  test('saving happens on the start button, not on a separate screen', async () => {
+    let save;
+    start_study_journey.mockReturnValue({ planPromise: Promise.resolve(path) });
+    createStudySession.mockReturnValue(new Promise(resolve => { save = resolve; }));
+    const onStart = jest.fn();
+    const { container } = render(<StartStudyModal {...props} onStart={onStart} />);
+    await act(async () => { await Promise.resolve(); });
+    fireEvent.click(screen.getByRole('button', { name: /Start here/ }));
+    const button = screen.getByRole('button', { name: /Opening your first step/ });
+    expect(button).toBeDisabled();
+    expect(container.querySelectorAll('.study-modal-plan-item').length).toBeGreaterThan(0);
+    await act(async () => { save({ path, activeNodeId: 'lesson-1' }); await Promise.resolve(); });
+    await waitFor(() => expect(onStart).toHaveBeenCalled());
   });
 });

@@ -1,0 +1,211 @@
+/* MethodWalkthrough: renders inside .sata-container, so every colour comes
+   from that card's --q-* tokens and follows its dark mode. Motion is
+   decorative only; prefers-reduced-motion removes it without losing a step. */
+
+.mw {
+  margin-top: 14px;
+  padding: 16px;
+  border-radius: 12px;
+  background: var(--q-card);
+  border: 1px solid var(--q-border);
+  color: var(--q-text);
+  animation: mwIn 0.3s ease-out;
+}
+@keyframes mwIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+.mw-stages { display: flex; gap: 6px; list-style: none; margin: 0 0 12px; padding: 0; }
+.mw-stages li {
+  font-size: 12px; padding: 3px 10px; border-radius: 999px;
+  color: var(--q-text-soft); border: 1px solid var(--q-border);
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.mw-stages li.on { background: var(--q-accent-dark); border-color: var(--q-accent-dark); color: #fff; }
+
+.mw-coach { margin: 0 0 12px; font-size: 15px; line-height: 1.5; min-height: 22px; }
+
+.mw-stem { margin: 0 0 12px; font-size: 14.5px; line-height: 1.6; color: var(--q-text-soft); }
+.mw-fact {
+  color: inherit; border-radius: 4px; padding: 0 3px;
+  background-image: linear-gradient(var(--q-accent-soft), var(--q-accent-soft));
+  background-repeat: no-repeat; background-size: 0% 100%; background-color: transparent;
+  transition: background-size 1.2s ease, color 0.5s;
+}
+.mw-fact-n { display: none; margin-right: 3px; font-size: 12px; font-weight: 700; }
+.mw-fact.is-lit { background-size: 100% 100%; color: var(--q-accent-text); font-weight: 600; }
+.mw-fact.is-lit .mw-fact-n { display: inline; }
+
+/* The reasoning drawn from the highlighted detail: labelled steps that hang
+   off the question paragraph, revealed one at a time. */
+.mw-premise { margin: -2px 0 14px; display: grid; gap: 6px; }
+.mw-premise-row {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; align-items: baseline;
+  padding: 8px 12px; border-radius: 10px; background: var(--q-sunken);
+  opacity: 0; transform: translateY(6px); transition: opacity 0.6s, transform 0.6s;
+}
+.mw-premise-row.is-shown { opacity: 1; transform: none; }
+.mw-premise dt { display: flex; align-items: baseline; gap: 6px; font-size: 12.5px; font-weight: 600; color: var(--q-text-soft); }
+.mw-premise-n { color: var(--q-accent-text); font-weight: 700; font-size: 14px; }
+.mw-premise dd { margin: 0; font-size: 14.5px; line-height: 1.5; color: var(--q-text); }
+.mw-premise-row.is-ask { background: var(--q-accent-soft); border: 1px dashed var(--q-accent-line); }
+.mw-premise-row.is-ask dd strong { color: var(--q-accent-text); }
+@media (max-width: 480px) {
+  .mw-premise-row { grid-template-columns: 1fr; gap: 2px; }
+}
+
+.mw-options { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.mw-opt {
+  padding: 10px 12px; border-radius: 10px; border: 1px solid var(--q-border);
+  font-size: 14px; opacity: 0.6; transition: opacity 0.3s, border-color 0.3s, box-shadow 0.3s;
+}
+.mw-opt.is-done, .mw-opt.is-active { opacity: 1; }
+.mw-opt.is-active { border-color: var(--q-accent); box-shadow: 0 0 0 3px var(--q-accent-soft); }
+.mw-opt.is-shaking { animation: mwShake 0.35s; }
+@keyframes mwShake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+
+.mw-opt-row { display: flex; align-items: center; gap: 10px; }
+.mw-opt-row > span:nth-child(2) { flex: 1; min-width: 0; }
+.mw-opt-letter {
+  flex: none; width: 22px; height: 22px; border-radius: 6px; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 700; background: var(--q-sunken); color: var(--q-text-soft);
+}
+.mw-uses {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  font-size: 14px; font-weight: 700; color: var(--q-accent-text); margin-right: 2px;
+}
+.mw-verdict {
+  flex: none; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px;
+  transform: scale(0); transition: transform 0.35s var(--q-ease);
+}
+.mw-verdict.is-in { transform: scale(1); }
+.mw-verdict.is-yes { background: var(--q-good-soft); color: var(--q-good-strong); }
+.mw-verdict.is-no { background: var(--q-sunken); color: var(--q-text-soft); }
+
+.mw-chain { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 8px; font-size: 13px; }
+.mw-link {
+  padding: 3px 9px; border-radius: 999px; background: var(--q-sunken); color: var(--q-text);
+  animation: mwLink 0.35s ease-out;
+}
+.mw-arrow { color: var(--q-text-muted); animation: mwFade 0.35s ease-out; }
+.mw-link { display: inline-flex; align-items: center; gap: 6px; }
+.mw-step {
+  flex: none; width: 16px; height: 16px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; background: var(--q-accent-soft); color: var(--q-accent-text);
+}
+/* "Thinking" before each reasoning step of the demonstration. */
+.mw-thinking { display: inline-flex; gap: 4px; padding: 6px 10px; border-radius: 999px; background: var(--q-sunken); }
+.mw-thinking i { width: 6px; height: 6px; border-radius: 50%; background: var(--q-text-muted); animation: mwDot 1s infinite ease-in-out; }
+.mw-thinking i:nth-child(2) { animation-delay: 0.15s; }
+.mw-thinking i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes mwDot { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
+@keyframes mwLink { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; transform: none; } }
+@keyframes mwFade { from { opacity: 0; } to { opacity: 1; } }
+
+.mw-next, .mw-answer button {
+  border-radius: 999px; padding: 10px 14px; font-size: 14px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--q-border); background: var(--q-surface); color: var(--q-text);
+}
+.mw-next { width: 100%; margin-top: 12px; }
+.mw-next:hover, .mw-answer button:hover:not(:disabled) { border-color: var(--q-accent-line); }
+.mw-answer { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.mw-answer button:disabled { opacity: 0.5; cursor: default; }
+.mw-next:focus-visible, .mw-answer button:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+
+.mw-method { margin: 12px 0 0; font-size: 14px; font-weight: 600; color: var(--q-accent-text); }
+
+/* The "Show me how" trigger inside the select-all feedback: a real button
+   above the explanation, so it is seen before the long rationale. */
+.sata-walkthrough-trigger {
+  display: flex; align-items: center; gap: 12px; width: 100%;
+  margin: 12px 0 4px; padding: 12px 14px; border-radius: 12px; cursor: pointer;
+  text-align: left; font: inherit; color: #fff;
+  background: linear-gradient(135deg, var(--q-accent) 0%, var(--q-accent-dark) 100%);
+  border: 0; box-shadow: 0 4px 14px var(--q-accent-line);
+  transition: transform 0.2s, box-shadow 0.2s;
+  animation: mwPulse 1.6s ease-out 0.5s 1;
+}
+.sata-walkthrough-trigger:hover { transform: translateY(-1px); box-shadow: 0 6px 18px var(--q-accent-line); }
+.sata-walkthrough-trigger:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 3px; }
+.sata-walkthrough-trigger strong { display: block; font-size: 15px; color: #fff; }
+.sata-walkthrough-trigger small { display: block; font-size: 12.5px; color: rgba(255, 255, 255, 0.85); margin-top: 1px; }
+.sata-walkthrough-icon {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  background: rgba(255, 255, 255, 0.22); color: #fff; font-size: 11px; padding-left: 2px;
+}
+@keyframes mwPulse {
+  0% { box-shadow: 0 0 0 0 var(--q-accent-line); }
+  70% { box-shadow: 0 0 0 12px rgba(232, 141, 125, 0); }
+  100% { box-shadow: 0 4px 14px var(--q-accent-line); }
+}
+.sata-walkthrough-status { margin: 10px 0 0; font-size: 13px; color: var(--q-text-soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  .mw, .mw-opt.is-shaking, .mw-link, .mw-arrow, .sata-walkthrough-trigger, .mw-thinking i { animation: none; }
+  .mw-fact, .mw-premise-row, .mw-verdict, .mw-opt, .mw-stages li { transition: none; }
+}
+
+/* Dark mode: the app's lavender accent, as on its other main dark-mode
+   buttons ("Review practice"). Coral-red here sat under the red "Not quite"
+   and beside red "Wrong pick" labels and read as part of the bad news; green
+   would read as "correct" (owner, 2026-10-10). Dark text, because white on
+   lavender is too low-contrast. The walkthrough inside follows the same
+   accent so the button and what it opens look like one thing. */
+body.dark-mode .sata-walkthrough-trigger {
+  /* The card's own materials: its dark surface with a faint lavender tint
+     and a thin lavender outline, like the answer rows. A solid lavender slab
+     stood out but read as pasted on (owner, 2026-10-10); the play icon is now
+     the one solid accent, so the eye still lands here first. */
+  background: rgba(184, 165, 212, 0.1);
+  border: 1px solid rgba(184, 165, 212, 0.45);
+  color: var(--q-text);
+  box-shadow: none;
+  animation-name: mwPulseDark;
+}
+body.dark-mode .sata-walkthrough-trigger:hover {
+  background: rgba(184, 165, 212, 0.16);
+  border-color: rgba(184, 165, 212, 0.7);
+  box-shadow: none;
+}
+body.dark-mode .sata-walkthrough-trigger strong { color: var(--dark-accent-light, #d4c8e8); }
+body.dark-mode .sata-walkthrough-trigger small { color: var(--q-text-soft); }
+body.dark-mode .sata-walkthrough-icon { background: var(--dark-accent, #b8a5d4); color: #1a1a1a; }
+body.dark-mode .sata-walkthrough-trigger:focus-visible { outline-color: var(--dark-accent, #b8a5d4); }
+@keyframes mwPulseDark {
+  0% { box-shadow: 0 0 0 0 rgba(184, 165, 212, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(184, 165, 212, 0); }
+  100% { box-shadow: none; }
+}
+
+body.dark-mode .mw {
+  --q-accent: var(--dark-accent, #b8a5d4);
+  --q-accent-dark: var(--dark-accent, #b8a5d4);
+  --q-accent-text: var(--dark-accent-light, #d4c8e8);
+  --q-accent-soft: rgba(184, 165, 212, 0.16);
+  --q-accent-line: rgba(184, 165, 212, 0.4);
+}
+body.dark-mode .mw-stages li.on { color: #1a1a1a; }
+
+/* ── Part badges and the reasoning line (2026-10-10, "make it cleaner") ──
+   One crisp badge style for the question's parts; the reasoning reads as
+   plain text joined by quiet arrows instead of a row of numbered pills. */
+.mw-badge {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--q-accent-dark); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+  vertical-align: 1px;
+}
+body.dark-mode .mw-badge { background: var(--dark-accent, #b8a5d4); color: #1a1a1a; }
+
+.mw-fact-n { margin-right: 5px; }
+.mw-fact-n .mw-badge { width: 16px; height: 16px; font-size: 10px; }
+.mw-fact.is-lit .mw-fact-n { display: inline-flex; vertical-align: 1px; }
+
+.mw-premise dt { gap: 8px; align-items: center; }
+
+.mw-chain { gap: 4px 8px; font-size: 13.5px; line-height: 1.5; align-items: baseline; }
+.mw-link { padding: 0; background: none; border-radius: 0; color: var(--q-text); }
+.mw-arrow { color: var(--q-accent-text); opacity: 0.6; font-weight: 600; }
+.mw-uses { margin-right: 4px; align-self: center; }
+.mw-thinking { padding: 4px 8px; }

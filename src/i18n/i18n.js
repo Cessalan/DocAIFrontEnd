@@ -18,6 +18,7 @@ const resources = {
       'practiceEntry.fromQuestions': 'From your questions',
       'practiceEntry.help': 'A hint if you need one',
       quizPrint: { button: 'Print / PDF', buttonTitle: 'Print this quiz or save it as a PDF', preparing: 'Preparing…', kicker: 'Practice quiz', untitled: 'Nursing practice quiz', questions_one: '{{count}} question', questions_other: '{{count}} questions', single_one: '{{count}} multiple choice', single_other: '{{count}} multiple choice', multi_one: '{{count}} select all that apply', multi_other: '{{count}} select all that apply', case_one: '{{count}} case study', case_other: '{{count}} case studies', instructions: 'Choose the one best answer unless the question says otherwise. The answer key and rationales start on a new page.', selectAll: 'Select all that apply', orderHint: 'Number these 1 to {{count}} in the order you would act', chart: 'Client chart', patient: 'Client', setting: 'Setting', nursesNotes: 'Nurses’ notes', vitalSigns: 'Vital signs', labResults: 'Lab results', keyTitle: 'Answer key and rationales', keyIntro: 'Cover this page while you work.', correctOrder: 'Correct order', yourAnswer: 'You chose {{answer}}', noAnswer: 'You skipped this one', yourResult: 'On screen you answered {{answered}} of {{total}} and got {{correct}} right.', noKey: 'See rationale', correct: 'Correct', incorrect: 'Incorrect', previewTitle: 'Print preview', previewHint: 'This is exactly what will print. Choose Save as PDF in the print dialog to keep a copy.', print: 'Print / Save as PDF', close: 'Close', footerTagline: 'Make your own practice from your course notes at nursequizai.com', disclaimer: 'For study use. Always follow your program and facility protocols.', page: 'Page', of: 'of' },
+      composerUpload: { uploading: '{{name}}, uploading', ready: '{{name}}, ready', failedFile: '{{name}} could not be read', failed: 'That file could not be read. Try uploading it again.', reading: 'Reading your files…', suggestionsLabel: 'What to do with your files' },
       quizWait: { reading: 'Reading your notes', choosing: 'Choosing the ideas worth testing', writing_one: 'Writing your question', writing_other: 'Writing your {{count}} questions', writingOne: 'Writing question {{current}} of {{total}}', fromNotes: 'From your notes: {{topic}}', readingSlow: 'A long document takes a little longer the first time. Later quizzes on it start faster.', slow: 'Still writing. Your first question opens here the moment it is ready.' },
       practiceEntry: { label: 'Quiz practice', title: 'A little practice, a clearer mind', ready_one: '{{count}} question ready', ready_other: '{{count}} questions ready', tutor: 'Tutor included', preparing: 'Preparing your questions…', progress: 'Questions answered', saved: 'Your place is saved', pace: 'At your own pace', start: 'Start practice', resume: 'Resume practice', open: 'Open practice', review: 'Review practice', firstTry: '{{correct}} of {{count}} right first time', noteSet: 'a {{count}}-question practice on…', readyOf: '{{loaded}} of {{count}} ready · more load as you go' },
       // Practice settings remembered per chat (practiceProfileModel.js) and the
@@ -145,6 +146,21 @@ const resources = {
 
       // Upgrade / monetization modal
       upgrade: {
+        // Her own format gap (Common/gapOfferModel.js). Counts from the
+        // readiness check, percentages from saved practice. No em dashes.
+        gap: {
+          title: "Stop losing points on {{format}}",
+          titleHard: "Stop losing points on the harder questions",
+          body: "Here's where you stand on your own material:",
+          bodyExam: "Your exam is {{when}}. Here's where you stand on your own material:",
+          count: "{{correct}} of {{total}}",
+          sourcePractice: "From {{standard}} multiple choice and {{hard}} harder questions you answered",
+          sourceCheck: "From your readiness check, {{count}} questions. An early signal.",
+          offerLine: "That {{hard}} of {{hardTotal}} is the gap Pro drills without limits, from your own notes.",
+          offerCta: "Practise unlimited select-all and prioritization",
+          format: { sata: "select-all", casestudy: "case studies", matrix: "matrix questions" },
+          row: { mcq: "Multiple choice", sata: "Select-all", casestudy: "Case study", matrix: "Matrix", hard: "Harder formats" }
+        },
         title: "Study without limits",
         titleNclex: "Pass your NCLEX with room to spare",
         titleCourse: "Ace your course exam",
@@ -666,6 +682,7 @@ const resources = {
       postUpload: {
         // Action button labels
         checkmeLabel: "Check my understanding",
+        studyjourneyLabel: "Build a study plan",
         quizLabel: "Quiz me",
         flashcardsLabel: "Create flashcards",
         studysheetLabel: "Study sheet",
@@ -1335,7 +1352,58 @@ const resources = {
       },
 
       // SATA (Select All That Apply) Questions
+      // "Show me how" on a missed select-all (ChatInerface/MethodWalkthrough.js).
+      // Plain, short lines a tired student reads at a glance. No em dashes.
+      walkthrough: {
+        trigger: "Show me how to solve it",
+        triggerSub: "A 1-minute walkthrough of this question",
+        label: "How to solve this question",
+        loading: "Reading the question…",
+        unavailable: "The walkthrough isn't available for this question. The explanation above still applies.",
+        stage: { watch: "Watch", together: "Together", yours: "Your turn" },
+        intro: "Before the options, break the question down.",
+        factFind: "Reading the question…",
+        thinking: "Let me think this through…",
+        apply: "Ask the test question of this option.",
+        demoVerdict: "So the answer is {{verdict}}.",
+        fact: "That gives one question to ask every option.",
+        premise: { means: "That means", ask: "So ask each option" },
+        showMe: "Show me",
+        breakDown: "Break down the question",
+        breakingDown: "Breaking it down: what's wrong, what could go wrong, what you're asked.",
+        evaluateOption: "Watch me evaluate option {{letter}}",
+        tryOption: "Now you try option {{letter}}",
+        role: { problem: "The problem", risk: "The risk", task: "What you're asked" },
+        watchMe: "Watch me use it",
+        demo: "You got this one right. Here's the thinking.",
+        demoMissed: "Watch the question work on this one.",
+        nextTogether: "Next one together",
+        togetherMissed: "You got this one wrong. Ask the question.",
+        together: "Now you. Ask the question.",
+        yours: "Your turn. Same question, one option at a time.",
+        keepGoing: "Keep going.",
+        notQuite: "Not quite. {{hint}}",
+        answerYes: "Yes",
+        answerNo: "No",
+        yes: "Yes",
+        no: "No",
+        done: "{{right}} of {{total}} right on the first try. Use the same question on your next select-all.",
+        doneAll: "All {{total}} right on the first try. You never had to guess how many to pick.",
+        method: "One fact, one question, every option.",
+        close: "Back to the question"
+      },
       sata: {
+        // Calm feedback (SATAQuestion + sataFeedbackModel). No em dashes.
+        verdict: {
+          extra_one: "You picked one extra: {{letters}}.",
+          extra_other: "You picked {{count}} extras: {{letters}}.",
+          missed_one: "You missed {{letters}}.",
+          missed_other: "You missed {{letters}}.",
+          both: "You picked {{extra}} by mistake and missed {{missed}}."
+        },
+        fullExplanation: "Full explanation",
+        status: { right: "Right", wrong: "Wrong pick", missed: "Missed" },
+        hideExplanation: "Hide explanation",
         instructions: "Select all that apply",
         submitAnswer: "Submit Answer",
         selectAtLeast: "Select at least one option",
@@ -1748,6 +1816,8 @@ const resources = {
         thinkMaster: "Plenty of time — building full coverage",
         thinkHardest: "Putting {{topics}} first — you said it's the hardest",
         thinkBuilding: "Building your steps…",
+        thinkReading: "Reading your material…",
+        openingFirstStep: "Opening your first step…",
         planSprintToday: "Your exam is today — here's the plan",
         planSprintTomorrow: "Your exam is tomorrow — here's the plan",
         planSprintSoon: "Your exam is in {{days}} days — here's the plan",
@@ -2568,6 +2638,7 @@ const resources = {
       'practiceEntry.fromQuestions': 'À partir de tes questions',
       'practiceEntry.help': 'Un indice si tu en as besoin',
       quizPrint: { button: 'Imprimer / PDF', buttonTitle: 'Imprimer ce quiz ou l’enregistrer en PDF', preparing: 'Préparation…', kicker: 'Quiz d’entraînement', untitled: 'Quiz d’entraînement en soins infirmiers', questions_one: '{{count}} question', questions_other: '{{count}} questions', single_one: '{{count}} à choix unique', single_other: '{{count}} à choix unique', multi_one: '{{count}} à choix multiples', multi_other: '{{count}} à choix multiples', case_one: '{{count}} étude de cas', case_other: '{{count}} études de cas', instructions: 'Choisis la meilleure réponse, sauf indication contraire. Le corrigé et les justifications commencent sur une nouvelle page.', selectAll: 'Coche toutes les bonnes réponses', orderHint: 'Numérote de 1 à {{count}} dans l’ordre où tu agirais', chart: 'Dossier du client', patient: 'Client', setting: 'Milieu', nursesNotes: 'Notes infirmières', vitalSigns: 'Signes vitaux', labResults: 'Résultats de laboratoire', keyTitle: 'Corrigé et justifications', keyIntro: 'Cache cette page pendant que tu travailles.', correctOrder: 'Ordre correct', yourAnswer: 'Tu as choisi {{answer}}', noAnswer: 'Tu as passé cette question', yourResult: 'À l’écran, tu as répondu à {{answered}} sur {{total}} et réussi {{correct}}.', noKey: 'Voir la justification', correct: 'Bonne réponse', incorrect: 'Mauvaise réponse', previewTitle: 'Aperçu avant impression', previewHint: 'Voici exactement ce qui sera imprimé. Choisis Enregistrer en PDF dans la boîte d’impression pour garder une copie.', print: 'Imprimer / Enregistrer en PDF', close: 'Fermer', footerTagline: 'Crée ta propre pratique à partir de tes notes de cours sur nursequizai.com', disclaimer: 'Pour l’étude. Suis toujours les protocoles de ton programme et de ton établissement.', page: 'Page', of: 'sur' },
+      composerUpload: { uploading: '{{name}}, téléversement en cours', ready: '{{name}}, prêt', failedFile: '{{name}} n’a pas pu être lu', failed: 'Ce fichier n’a pas pu être lu. Réessaie de le téléverser.', reading: 'Lecture de tes fichiers…', suggestionsLabel: 'Que faire avec tes fichiers' },
       quizWait: { reading: 'Lecture de tes notes', choosing: 'Choix des notions à tester', writing_one: 'Rédaction de ta question', writing_other: 'Rédaction de tes {{count}} questions', writingOne: 'Rédaction de la question {{current}} sur {{total}}', fromNotes: 'Tiré de tes notes : {{topic}}', readingSlow: 'Un long document prend un peu plus de temps la première fois. Les quiz suivants démarrent plus vite.', slow: 'Rédaction en cours. Ta première question s’ouvrira ici dès qu’elle sera prête.' },
       practiceEntry: { label: 'Quiz d’entraînement', title: 'Un peu de pratique pour y voir plus clair', ready_one: '{{count}} question prête', ready_other: '{{count}} questions prêtes', tutor: 'Tuteur inclus', preparing: 'Préparation des questions…', progress: 'Questions répondues', saved: 'Ta progression est sauvegardée', pace: 'À ton rythme', start: 'Commencer', resume: 'Reprendre', open: 'Ouvrir le quiz', review: 'Revoir le quiz', firstTry: '{{correct}} sur {{count}} justes du premier coup', noteSet: 'une pratique de {{count}} questions sur…', readyOf: '{{loaded}} sur {{count}} prêtes · la suite arrive au fil des réponses' },
       practiceProfile: { aria: 'Réglages d’entraînement mémorisés pour cette conversation', fromFile: 'D’après {{name}}', fromFiles: 'D’après tes {{count}} fichiers', fromNotes: 'D’après tes notes collées', formats: '{{list}}', noOrdering: 'pas de questions à remettre en ordre', emphasis: '{{text}}', difficulty: { easy: 'plus facile', medium: 'difficulté moyenne', hard: 'plus difficile' }, format: { mcq: 'Choix multiple', sata: 'Sélection multiple', casestudy: 'Remise en ordre', true_false: 'Vrai / faux', matrix: 'Matrice', unfoldingcase: 'Cas évolutif' }, adjust: 'Modifier', done: 'Terminé', typesHeading: 'Types de questions', difficultyHeading: 'Difficulté', level: { easy: 'Plus facile', medium: 'Moyenne', hard: 'Plus difficile' }, lastFormat: 'Garde au moins un type de question.', saved: 'Enregistré pour cette conversation. Les prochaines questions le suivront.', saveFailed: 'Ce changement n’a pas pu être enregistré. Réessaie.' },
@@ -2690,6 +2761,19 @@ const resources = {
 
       // Upgrade / monetization modal
       upgrade: {
+        gap: {
+          title: "Arrête de perdre des points sur {{format}}",
+          titleHard: "Arrête de perdre des points sur les questions plus difficiles",
+          body: "Voici où tu en es sur ta propre matière :",
+          bodyExam: "Ton examen est {{when}}. Voici où tu en es sur ta propre matière :",
+          count: "{{correct}} sur {{total}}",
+          sourcePractice: "D'après {{standard}} questions à choix multiple et {{hard}} questions plus difficiles auxquelles tu as répondu",
+          sourceCheck: "D'après ton bilan de préparation, {{count}} questions. Un premier signal.",
+          offerLine: "Ce {{hard}} sur {{hardTotal}}, c'est l'écart que Pro te fait travailler sans limite, à partir de tes propres notes.",
+          offerCta: "Entraîne-toi sans limite aux sélections multiples et à la priorisation",
+          format: { sata: "les sélections multiples", casestudy: "les études de cas", matrix: "les questions matricielles" },
+          row: { mcq: "Choix multiple", sata: "Sélection multiple", casestudy: "Étude de cas", matrix: "Matrice", hard: "Formats plus difficiles" }
+        },
         title: "Étudie sans limites",
         titleNclex: "Réussis ton NCLEX avec de la marge",
         titleCourse: "Cartonne à ton examen",
@@ -3202,6 +3286,7 @@ const resources = {
 
       postUpload: {
         // Action button labels
+        studyjourneyLabel: "Créer un plan d’étude",
         checkmeLabel: "Vérifie ma compréhension",
         quizLabel: "Quiz",
         flashcardsLabel: "Créer des cartes mémoire",
@@ -3824,7 +3909,55 @@ const resources = {
       },
 
       // SATA (Select All That Apply) Questions
+      walkthrough: {
+        trigger: "Montre-moi comment la résoudre",
+        triggerSub: "Une explication pas à pas d'une minute",
+        label: "Comment résoudre cette question",
+        loading: "Lecture de la question…",
+        unavailable: "L'explication pas à pas n'est pas disponible pour cette question. L'explication ci-dessus reste valable.",
+        stage: { watch: "Regarde", together: "Ensemble", yours: "À toi" },
+        intro: "Avant les options, décortique la question.",
+        factFind: "Je lis la question…",
+        thinking: "Laisse-moi réfléchir…",
+        apply: "Pose la question test à cette option.",
+        demoVerdict: "Donc la réponse est {{verdict}}.",
+        fact: "Ça donne une seule question à poser à chaque option.",
+        premise: { means: "Ça veut dire", ask: "Pose à chaque option" },
+        showMe: "Montre-moi",
+        breakDown: "Décortiquer la question",
+        breakingDown: "Je décortique : ce qui ne va pas, ce qui pourrait mal tourner, ce qu'on te demande.",
+        evaluateOption: "Regarde-moi évaluer l'option {{letter}}",
+        tryOption: "À toi : option {{letter}}",
+        role: { problem: "Le problème", risk: "Le risque", task: "Ce qu'on te demande" },
+        watchMe: "Regarde-moi l'utiliser",
+        demo: "Tu avais bon sur celle-ci. Voici le raisonnement.",
+        demoMissed: "Regarde la question en action sur celle-ci.",
+        nextTogether: "La suivante ensemble",
+        togetherMissed: "Tu t'es trompé(e) sur celle-ci. Pose la question.",
+        together: "À toi. Pose la question.",
+        yours: "À toi. Même question, une option à la fois.",
+        keepGoing: "Continue.",
+        notQuite: "Pas tout à fait. {{hint}}",
+        answerYes: "Oui",
+        answerNo: "Non",
+        yes: "Oui",
+        no: "Non",
+        done: "{{right}} sur {{total}} du premier coup. Utilise la même question à ta prochaine sélection multiple.",
+        doneAll: "Les {{total}} du premier coup. Tu n'as jamais eu à deviner combien en choisir.",
+        method: "Un fait, une question, chaque option.",
+        close: "Retour à la question"
+      },
       sata: {
+        verdict: {
+          extra_one: "Tu as choisi une option en trop : {{letters}}.",
+          extra_other: "Tu as choisi {{count}} options en trop : {{letters}}.",
+          missed_one: "Tu as oublié {{letters}}.",
+          missed_other: "Tu as oublié {{letters}}.",
+          both: "Tu as choisi {{extra}} par erreur et oublié {{missed}}."
+        },
+        fullExplanation: "Explication complète",
+        status: { right: "Correct", wrong: "Mauvais choix", missed: "Oublié" },
+        hideExplanation: "Masquer l'explication",
         instructions: "Sélectionnez toutes les réponses applicables",
         submitAnswer: "Soumettre la réponse",
         selectAtLeast: "Sélectionnez au moins une option",
@@ -4233,6 +4366,8 @@ const resources = {
         thinkMaster: "Tu as le temps — couverture complète",
         thinkHardest: "{{topics}} en premier — tu as dit que c'est le plus difficile",
         thinkBuilding: "Construction de tes étapes…",
+        thinkReading: "Lecture de ton matériel…",
+        openingFirstStep: "Ouverture de ta première étape…",
         planSprintToday: "Ton examen est aujourd'hui — voici le plan",
         planSprintTomorrow: "Ton examen est demain — voici le plan",
         planSprintSoon: "Ton examen est dans {{days}} jours — voici le plan",

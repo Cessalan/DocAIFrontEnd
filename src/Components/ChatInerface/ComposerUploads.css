@@ -1,0 +1,231 @@
+/* ═══════════════════════════════════════════════════════════════════
+   Composer uploads and suggestions (2026-10-08).
+   One signal per file: a thin ring around its glyph. Warm coral in light
+   mode, lavender in dark, matching the app's accent in each.
+   ═══════════════════════════════════════════════════════════════════ */
+
+.composer-uploads {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.composer-upload {
+  --ring: var(--primary-coral, #e88d7d);
+  --ring-track: rgba(232, 141, 125, 0.18);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 260px;
+  padding: 4px 14px 4px 4px;
+  border-radius: 999px;
+  background: var(--bg-cream, #fdf8f3);
+  border: 1px solid rgba(232, 141, 125, 0.16);
+  animation: composer-upload-in 0.42s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.composer-upload__icon {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+}
+.composer-upload__ring { position: absolute; inset: 0; }
+.composer-upload__track {
+  fill: none;
+  stroke: var(--ring-track);
+  stroke-width: 1.6;
+  transition: opacity 0.5s ease;
+}
+.composer-upload__fill {
+  fill: none;
+  stroke: var(--ring);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  transition: stroke-dashoffset 0.35s ease-out, opacity 0.5s ease 0.15s;
+}
+
+.composer-upload__glyph {
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(232, 141, 125, 0.14);
+  color: var(--primary-coral-dark, #c46a5a);
+  transition: transform 0.45s cubic-bezier(0.2, 1.6, 0.4, 1);
+}
+.composer-upload__glyph svg { width: 12px; height: 12px; }
+.kind-slides .composer-upload__glyph { background: rgba(217, 119, 6, 0.14); color: #b45309; }
+.kind-doc .composer-upload__glyph { background: rgba(65, 105, 225, 0.12); color: #3b5bc4; }
+.kind-sheet .composer-upload__glyph { background: rgba(5, 150, 105, 0.13); color: #047857; }
+.kind-image .composer-upload__glyph { background: rgba(139, 92, 246, 0.13); color: #6d4bd1; }
+
+.composer-upload__name {
+  font-size: 13px;
+  color: var(--text-primary, #3d3d3d);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: color 0.35s ease;
+}
+.composer-upload.is-loading .composer-upload__name { color: var(--text-secondary, #6b6b6b); }
+
+/* Ready: the ring has done its job and leaves; the glyph settles in place. */
+.composer-upload.is-ready .composer-upload__fill,
+.composer-upload.is-ready .composer-upload__track { opacity: 0; }
+.composer-upload.is-ready .composer-upload__glyph { transform: scale(1.22); }
+
+.composer-upload.is-error { --ring: #d64545; --ring-track: rgba(214, 69, 69, 0.18); }
+.composer-upload.is-error .composer-upload__name { color: var(--text-muted, #999); text-decoration: line-through; }
+
+/* ── Suggestions above the message box ───────────────────────────── */
+.composer-suggestions {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: calc(100% + 12px);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  z-index: 2;
+}
+
+.composer-suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px 6px 6px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  font: inherit;
+  font-size: 13px;
+  color: #2f2f2f;
+  cursor: pointer;
+  animation: composer-upload-in 0.4s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  transition: transform 0.18s ease, border-color 0.18s ease;
+}
+.composer-suggestion:hover:not(:disabled) { transform: translateY(-1px); }
+.composer-suggestion:active:not(:disabled) { transform: translateY(0) scale(0.98); }
+.composer-suggestion:disabled { opacity: 0.55; cursor: default; }
+.composer-suggestion:focus-visible { outline: 2px solid var(--primary-coral, #e88d7d); outline-offset: 2px; }
+
+.composer-suggestion__icon {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.composer-suggestion__icon svg { width: 14px; height: 14px; }
+
+/* Same pastels as the action buttons they replace (PostUploadActions.css). */
+.suggestion-studyjourney { background: #ffe4d9; }
+.suggestion-studyjourney:hover:not(:disabled) { border-color: rgba(232, 141, 125, 0.5); }
+.suggestion-studyjourney .composer-suggestion__icon { background: rgba(232, 141, 125, 0.32); color: #c46a5a; }
+.suggestion-checkme { background: #ccf2ec; }
+.suggestion-checkme:hover:not(:disabled) { border-color: rgba(13, 148, 136, 0.4); }
+.suggestion-checkme .composer-suggestion__icon { background: rgba(45, 212, 191, 0.28); color: #0d9488; }
+.suggestion-quiz { background: #d4f0fc; }
+.suggestion-quiz:hover:not(:disabled) { border-color: rgba(65, 105, 225, 0.4); }
+.suggestion-quiz .composer-suggestion__icon { background: rgba(100, 149, 237, 0.3); color: #4169e1; }
+.suggestion-studysheet { background: #fff3c4; }
+.suggestion-studysheet:hover:not(:disabled) { border-color: rgba(217, 119, 6, 0.4); }
+.suggestion-studysheet .composer-suggestion__icon { background: rgba(255, 193, 7, 0.35); color: #d97706; }
+.suggestion-flashcards { background: #ffd6e0; }
+.suggestion-flashcards:hover:not(:disabled) { border-color: rgba(219, 39, 119, 0.4); }
+.suggestion-flashcards .composer-suggestion__icon { background: rgba(255, 105, 180, 0.25); color: #db2777; }
+
+/* ── Reply waiting on the files ──────────────────────────────────── */
+.message-status-shimmer {
+  display: inline-block;
+  font-size: 14px;
+  background: linear-gradient(90deg, var(--text-secondary, #6b6b6b) 0%, var(--text-secondary, #6b6b6b) 40%,
+    var(--primary-coral-light, #f4a896) 50%, var(--text-secondary, #6b6b6b) 60%, var(--text-secondary, #6b6b6b) 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: composer-status-sweep 2.2s linear infinite;
+}
+
+/* ── Files on the student's own message ──────────────────────────── */
+.message-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+.message-attachment {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 240px;
+  padding: 3px 10px 3px 3px;
+  border-radius: 999px;
+  background: var(--bg-cream, #fdf8f3);
+  border: 1px solid rgba(232, 141, 125, 0.16);
+  font-size: 12px;
+  color: var(--text-secondary, #6b6b6b);
+}
+.message-attachment .composer-upload__glyph { position: static; width: 20px; height: 20px; inset: auto; }
+.message-attachment .composer-upload__glyph svg { width: 11px; height: 11px; }
+.message-attachment span:last-child { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+@keyframes composer-upload-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+@keyframes composer-status-sweep {
+  from { background-position: 100% 0; }
+  to { background-position: -150% 0; }
+}
+
+@media (max-width: 600px) {
+  .composer-suggestions {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding-bottom: 2px;
+  }
+  .composer-suggestions::-webkit-scrollbar { display: none; }
+  .composer-suggestion { flex-shrink: 0; }
+  .composer-upload { max-width: 200px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer-upload, .composer-suggestion { animation: none; }
+  .composer-upload__fill, .composer-upload__glyph, .composer-suggestion { transition: none; }
+  .message-status-shimmer { animation: none; background: none; -webkit-text-fill-color: currentColor; color: var(--text-secondary, #6b6b6b); }
+}
+
+/* ── Dark mode: lavender accent, same structure ──────────────────── */
+body.dark-mode .composer-upload,
+body.dark-mode .message-attachment {
+  --ring: var(--dark-accent, #b8a5d4);
+  --ring-track: rgba(184, 165, 212, 0.2);
+  background: rgba(255, 255, 255, 0.04);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.08));
+}
+body.dark-mode .composer-upload__name { color: #f0f0f0; }
+body.dark-mode .composer-upload.is-loading .composer-upload__name,
+body.dark-mode .message-attachment { color: #a8a8a8; }
+body.dark-mode .composer-upload__glyph { background: rgba(184, 165, 212, 0.16); color: var(--dark-accent-light, #d4c8e8); }
+body.dark-mode .kind-slides .composer-upload__glyph { background: rgba(251, 191, 36, 0.14); color: #fcd34d; }
+body.dark-mode .kind-doc .composer-upload__glyph { background: rgba(147, 197, 253, 0.14); color: #93c5fd; }
+body.dark-mode .kind-sheet .composer-upload__glyph { background: rgba(110, 231, 183, 0.13); color: #6ee7b7; }
+body.dark-mode .kind-image .composer-upload__glyph { background: rgba(196, 181, 253, 0.15); color: #c4b5fd; }
+body.dark-mode .composer-upload.is-error { --ring: #f87171; --ring-track: rgba(248, 113, 113, 0.2); }
+body.dark-mode .composer-suggestion { color: #1f1f1f; }
+body.dark-mode .suggestion-studyjourney { background: #f6cbbd; }
+body.dark-mode .suggestion-checkme { background: #a8e6db; }
+body.dark-mode .suggestion-quiz { background: #b5dff2; }
+body.dark-mode .suggestion-studysheet { background: #f5e3a3; }
+body.dark-mode .suggestion-flashcards { background: #f5bccb; }
+body.dark-mode .composer-suggestion:focus-visible { outline-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .message-status-shimmer {
+  background-image: linear-gradient(90deg, #a8a8a8 0%, #a8a8a8 40%, var(--dark-accent-light, #d4c8e8) 50%, #a8a8a8 60%, #a8a8a8 100%);
+}

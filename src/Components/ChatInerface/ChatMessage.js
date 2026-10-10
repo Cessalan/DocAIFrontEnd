@@ -3,6 +3,7 @@ import ReactMarkDown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import ChatQuizStream from "./ChatQuizStream";
 import PracticeLaunchCard from './PracticeLaunchCard';
+import { KindGlyph } from './ComposerUploads';
 import PracticeDebrief from './PracticeDebrief';
 import FlashcardPractice from './FlashcardPractice';
 import SummaryDisplay from "./ChatSummary";
@@ -536,6 +537,18 @@ const ChatMessage = ({
           </div>
         )}
 
+        {/* Files sent with this message from the message box. */}
+        {isUser && Array.isArray(message.attachments) && message.attachments.length > 0 && (
+          <div className="message-attachments">
+            {message.attachments.map((file, index) => (
+              <span key={`${file.name}-${index}`} className={`message-attachment kind-${file.kind || 'text'}`} title={file.name}>
+                <span className="composer-upload__glyph" aria-hidden="true"><KindGlyph kind={file.kind} /></span>
+                <span>{file.name}</span>
+              </span>
+            ))}
+          </div>
+        )}
+
         {/* Regular Text Message */}
         {!(isAI && message.error) && !parsedQuizData && !parsedFlashcardData && message.type !== "studysheet" && message.type !== 'practice_debrief' && (
           <div className={isAI ? "message-text" : isEditing ? "message-edit-mode" : "user-text user-text-markdown"}>
@@ -581,6 +594,10 @@ const ChatMessage = ({
               )
             ) : (
               <div className={`ai-message-wrapper ${message.isStreaming ? 'streaming' : 'complete'}`}>
+                {/* Waiting on files she sent before they finished loading. */}
+                {message.isStreaming && !message.content && message.statusText && (
+                  <span className="message-status-shimmer" role="status">{message.statusText}</span>
+                )}
                 {/* A half-streamed fence would parse into a garbled graph, so
                     diagrams are only promoted once the answer has landed. */}
                 <ReactMarkDown

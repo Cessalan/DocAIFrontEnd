@@ -36,6 +36,24 @@ import useProductAnnouncement from './useProductAnnouncement';
 import ProductAnnouncementModal from '../../Components/Common/ProductAnnouncementModal';
 import { PRODUCT_ANNOUNCEMENTS } from '../../config/productAnnouncements';
 import { cleanTopicLabel } from '../../Components/Common/upgradeCopy';
+import { gapFromPractice } from '../../Components/Common/gapOfferModel';
+import { getPracticeFormatMaps } from '../../Services/StudySessionService';
+import { devLog } from '../../Services/devLogger';
+
+// Dev preview only (simulateGapOffer): fictional scores shaped like the
+// 2026-10-09 payer's, for accounts with no gap of their own.
+const DEV_SAMPLE_GAPS = {
+  practice: {
+    source: 'practice', standard: { correct: 52, total: 59 }, hard: { correct: 9, total: 38 }, weakest: 'matrix',
+    rows: [
+      { format: 'mcq', correct: 52, total: 59, pct: 88 },
+      { format: 'sata', correct: 2, total: 8, pct: 25 },
+      { format: 'casestudy', correct: 7, total: 22, pct: 32 },
+      { format: 'matrix', correct: 0, total: 8, pct: 0 },
+    ],
+  },
+  check: { source: 'check', standard: { correct: 4, total: 4 }, hard: { correct: 1, total: 4 } },
+};
 
 const UsageContext = createContext(null);
 
@@ -49,7 +67,7 @@ export const useUsageLimit = () => {
       msUntilReset: 0, requireQuota: () => true, consume: async () => {}, refresh: async () => {},
       planLimit: 0, plansUsed: 0, plansRemaining: Infinity, canCreatePlan: true,
       planMsUntilReset: 0, requirePlanQuota: () => true, consumePlan: async () => {},
-      openUpgrade: () => {}, simulateLimit: () => {}, openManageSubscription: () => {},
+      openUpgrade: () => {}, simulateLimit: () => {}, simulateGapOffer: () => {}, openManageSubscription: () => {},
     };
   }
   return ctx;
@@ -113,6 +131,13 @@ export function UsageProvider({ children }) {
   // "you hit a limit" loses the only context that makes the offer feel like
   // a continuation instead of a toll booth. Null = card is not rendered.
   const [upgradeTopic, setUpgradeTopic] = useState(null);
+
+  // Her own format gap ("89% multiple choice, 22% select-all"), when the
+  // evidence supports one. Set by the weak-areas offer from her readiness
+  // check, or from saved practice when she opens the offer herself. Null =
+  // the modal shows its ordinary copy. See Common/gapOfferModel.js.
+  const [upgradeGap, setUpgradeGap] = useState(null);
+  const practiceGapRef = useRef(null);
 
   // ── Dev-only paywall preview ─────────────────────────────────────────────
   // The paywall is the hardest surface in the app to reach deliberately: you
@@ -194,6 +219,10 @@ export function UsageProvider({ children }) {
         // Now that the exam date is stored as a parseable ISO string, this is
         // the field that says whether urgency copy was even available.
         examDaysAway: daysUntilExam(examDate),
+        // Whether the offer named her format gap, and from which evidence.
+        // The whole point of the gap copy is to beat the generic pitch; this
+        // is the field that lets the paywall tracker say whether it does.
+        gapShown: ctx?.gap ? ctx.gap.source : null,
         // Which surface she was on. /c/{chatId} in practice, so it doubles as
         // a chat correlation key without threading chatId through the context.
         path: typeof window !== 'undefined' ? window.location?.pathname || null : null,
@@ -233,6 +262,18 @@ export function UsageProvider({ children }) {
 
   // Live quota view derived against the current tick.
   const quota = useMemo(() => deriveQuota(usage, now), [usage, now]);
+
+  // Saved per-format scores, read ahead of time so a voluntary open can name
+  // her gap without the copy changing under her after the modal appears.
+  // Free accounts only; refreshed after each open so new practice counts.
+  const loadPracticeGap = useCallback(async () => {
+    if (!uid) { practiceGapRef.current = null; return; }
+    practiceGapRef.current = gapFromPractice(await getPracticeFormatMaps(uid));
+  }, [uid]);
+  useEffect(() => {
+    if (uid && !quota.isPro) loadPracticeGap();
+    else practiceGapRef.current = null;
+  }, [uid, quota.isPro, loadPracticeGap]);
 
   // Only tick (1s) while a countdown is actually visible — i.e. the modal is
   // open or the free bucket is empty. Avoids re-rendering the whole app tree
@@ -295,6 +336,26 @@ export function UsageProvider({ children }) {
     setShowUpgrade(true);
   }, []);
 
+  // Dev-only: open the gap offer as a free, NOT blocked student would see it
+  // (the gap copy never shows on a blocked window, so simulateLimit cannot
+  // reach it). 'practice' uses this account's real saved scores when they
+  // show a gap, else a sample; 'check' uses sample readiness-check counts.
+  // Nothing is written; only the modal's props are substituted.
+  const simulateGapOffer = useCallback(async (source = 'practice') => {
+    if (process.env.NODE_ENV !== 'development') return;
+    let gap = DEV_SAMPLE_GAPS.check;
+    if (source === 'practice') {
+      const real = uid ? gapFromPractice(await getPracticeFormatMaps(uid)) : null;
+      devLog(real ? '🧪 Gap offer: your real saved scores' : '🧪 Gap offer: no real gap on this account, using sample scores');
+      gap = real || DEV_SAMPLE_GAPS.practice;
+    }
+    setDevSim({ used: 20, remaining: 30, plansRemaining: 3, msUntilReset: 5 * 24 * 60 * 60 * 1000, planMsUntilReset: 11 * 24 * 60 * 60 * 1000 });
+    setUpgradeReason(source === 'check' ? 'gap' : null);
+    setUpgradeTopic(null);
+    setUpgradeGap(gap);
+    setShowUpgrade(true);
+  }, [uid]);
+
   // Charge one plan. Call AFTER createStudySession succeeds — the preview
   // flow is deliberately side-effect-free, so an abandoned preview is free.
   const consumePlan = useCallback(async () => {
@@ -345,14 +406,21 @@ export function UsageProvider({ children }) {
      */
     openUpgrade: (reason = null, ctx = null) => {
       const normalizedReason = typeof reason === 'string' ? reason : null;
-      recordPaywallView(ctx?.trigger || normalizedReason || 'manual', normalizedReason, ctx);
+      // A gap travels with the weak-areas offer; a voluntary open (no reason:
+      // account menu, upsell links) uses her saved practice instead. Gates
+      // with a reason of their own never get one: they say why she stopped.
+      const gap = ctx?.gap || (normalizedReason === null ? practiceGapRef.current : null);
+      recordPaywallView(ctx?.trigger || normalizedReason || 'manual', normalizedReason, { ...ctx, gap });
       setUpgradeReason(normalizedReason);
       setUpgradeTopic(cleanTopicLabel(ctx?.topic));
+      setUpgradeGap(gap || null);
       setShowUpgrade(true);
+      loadPracticeGap();
     },
     simulateLimit,
+    simulateGapOffer,
     openManageSubscription: () => setShowManage(true),
-  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan, simulateLimit, recordPaywallView]);
+  }), [quota, planQuota, requireQuota, consume, refresh, requirePlanQuota, consumePlan, simulateLimit, simulateGapOffer, recordPaywallView, loadPracticeGap]);
 
   return (
     <UsageContext.Provider value={value}>
@@ -367,8 +435,10 @@ export function UsageProvider({ children }) {
             // Nobody blocked her — she tapped the meter and asked to see the
             // offer. Two of the traceable checkout-openers arrived this way,
             // so pull is a real channel and must not be filed under "wall".
-            recordPaywallView('badge', null, null);
-            setUpgradeReason(null); setUpgradeTopic(null); setShowUpgrade(true);
+            const gap = practiceGapRef.current;
+            recordPaywallView('badge', null, { gap });
+            setUpgradeReason(null); setUpgradeTopic(null); setUpgradeGap(gap); setShowUpgrade(true);
+            loadPracticeGap();
           }}
         />
       )}
@@ -384,16 +454,17 @@ export function UsageProvider({ children }) {
             paywallOpenRef.current = false;
             if (!quota.isPro) logFunnelStep(FUNNEL.PAYWALL_DISMISSED, { reason: upgradeReason || 'none' });
           }
-          setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setDevSim(null);
+          setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setUpgradeGap(null); setDevSim(null);
         }}
         reason={upgradeReason}
         topic={upgradeTopic}
+        gap={upgradeGap}
         limit={quota.limit}
         used={devSim ? devSim.used : quota.used}
-        remaining={devSim ? 0 : quota.remaining}
+        remaining={devSim ? (devSim.remaining ?? 0) : quota.remaining}
         msUntilReset={devSim ? devSim.msUntilReset : quota.msUntilReset}
         planLimit={planQuota.limit}
-        plansRemaining={devSim ? 0 : planQuota.remaining}
+        plansRemaining={devSim ? (devSim.plansRemaining ?? 0) : planQuota.remaining}
         planMsUntilReset={devSim ? devSim.planMsUntilReset : planQuota.msUntilReset}
         user={{ uid: currentUser?.uid, email: currentUser?.email }}
         studyGoal={studyGoal}

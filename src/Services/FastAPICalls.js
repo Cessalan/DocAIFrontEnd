@@ -2087,6 +2087,40 @@ export const fetchQuizRationale = async (question, options, correctIndex, langua
   return await response.json();
 };
 
+// Quiz walkthrough: the "Show me how" teaching layer for a missed select-all
+// question (NQBackEnd2/services/quiz_walkthrough.py). The backend is handed the
+// stored answer key and returns null when its explanation disagreed with it,
+// so null is a normal answer: the card keeps today's explanation.
+//
+// One promise per question, kept for the session: the select-all card starts
+// the request the moment an answer comes back wrong (generation takes several
+// seconds), and the "Show me how" tap reuses the same promise instead of
+// starting a second request.
+const walkthroughRequests = new Map();
+export const fetchQuizWalkthrough = (question, options, correctIndices, language = 'en') => {
+  if (!question || !question.trim()) return Promise.resolve(null);
+  if (!Array.isArray(options) || options.length < 2 || options.length > 8) return Promise.resolve(null);
+  if (!Array.isArray(correctIndices) || !correctIndices.length) return Promise.resolve(null);
+  const lang = (language || 'en').split('-')[0].toLowerCase();
+  const key = [lang, question.trim(), options.join('|'), [...correctIndices].sort().join(',')].join('#');
+  if (walkthroughRequests.has(key)) return walkthroughRequests.get(key);
+  const request = fetch(`${FAST_API_BASE}/quiz/walkthrough`, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify({ question: question.trim(), options, correct_indices: correctIndices, language: lang }),
+  })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => data?.walkthrough || null)
+    .catch(() => null)
+    .then((walkthrough) => {
+      // A failure is not remembered, so a later tap can try again.
+      if (!walkthrough) walkthroughRequests.delete(key);
+      return walkthrough;
+    });
+  walkthroughRequests.set(key, request);
+  return request;
+};
+
 export const fetchExplain = async (text, context = "chat", language = null) => {
   if (!text || !text.trim()) return null;
 
