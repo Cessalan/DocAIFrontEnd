@@ -1,0 +1,191 @@
+/* OrderWalkthrough ("Who first?"): renders inside .case-study-container, so
+   every colour comes from that card's --q-* tokens and follows its dark mode.
+   One quiet accent, no red or green fills: a wrong tap is "not yet", told in
+   the same calm material as everything else. Motion is decorative only;
+   prefers-reduced-motion removes it without losing a step. */
+
+.ow {
+  margin-top: 14px;
+  padding: 18px;
+  border-radius: 14px;
+  background: var(--q-card);
+  border: 1px solid var(--q-border);
+  color: var(--q-text);
+  animation: owIn 0.4s ease-out;
+}
+@keyframes owIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+
+.ow-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
+.ow-stages { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; flex-wrap: wrap; }
+.ow-stages li {
+  font-size: 12px; padding: 3px 10px; border-radius: 999px;
+  color: var(--q-text-soft); border: 1px solid var(--q-border);
+  transition: background 0.4s, color 0.4s, border-color 0.4s;
+}
+.ow-stages li.on { background: var(--q-accent-dark); border-color: var(--q-accent-dark); color: #fff; }
+.ow-close {
+  flex: none; width: 30px; height: 30px; border-radius: 50%; border: 1px solid transparent;
+  background: none; color: var(--q-text-muted); font-size: 20px; line-height: 1; cursor: pointer;
+}
+.ow-close:hover { color: var(--q-text); border-color: var(--q-border); }
+.ow-close:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+
+.ow-coach { margin: 0 0 14px; font-size: 16px; line-height: 1.5; font-weight: 600; min-height: 24px; }
+
+/* The case, kept on screen the whole time: chart, then what is asked. */
+.ow-case {
+  margin: 0 0 12px; padding: 12px 14px; border-radius: 12px;
+  background: var(--q-sunken); font-size: 14.5px; line-height: 1.65; color: var(--q-text-soft);
+}
+.ow-chart, .ow-question { margin: 0; }
+.ow-question { margin-top: 8px; color: var(--q-text); font-weight: 500; }
+.ow-fact {
+  color: inherit; border-radius: 4px; padding: 0;
+  background-image: linear-gradient(var(--q-accent-soft), var(--q-accent-soft));
+  background-repeat: no-repeat; background-size: 0% 100%; background-color: transparent;
+  transition: background-size 1.2s ease, color 0.6s;
+}
+.ow-fact.is-lit { padding: 1px 3px; background-size: 100% 100%; color: var(--q-accent-text); font-weight: 600; }
+.ow-fact .ow-badge { width: 16px; height: 16px; font-size: 10px; margin-right: 4px; vertical-align: 1px; }
+
+.ow-badge {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  width: 18px; height: 18px; border-radius: 50%;
+  background: var(--q-accent-dark); color: #fff;
+  font-size: 11px; font-weight: 700; line-height: 1; font-variant-numeric: tabular-nums;
+}
+
+.ow-parts { margin: 0 0 14px; display: grid; gap: 6px; }
+.ow-part {
+  display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; align-items: baseline;
+  padding: 8px 12px; border-radius: 10px; border: 1px solid var(--q-border);
+  opacity: 0; transform: translateY(6px); transition: opacity 0.7s, transform 0.7s;
+}
+.ow-part.is-shown { opacity: 1; transform: none; }
+.ow-part dt { display: flex; align-items: center; gap: 8px; font-size: 12.5px; font-weight: 600; color: var(--q-text-soft); }
+.ow-part dd { margin: 0; font-size: 14.5px; line-height: 1.5; }
+
+/* The ladder: most urgent on the left. The rung being placed is lit; rungs
+   already climbed stay readable; the rest wait quietly. */
+.ow-ladder { margin: 0 0 12px; animation: owFade 0.6s ease-out; }
+.ow-ladder-title { display: block; font-size: 12px; color: var(--q-text-muted); margin-bottom: 6px; }
+.ow-ladder ol { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; list-style: none; margin: 0; padding: 0; }
+.ow-ladder ol { gap: 6px; }
+.ow-ladder li {
+  position: relative; font-size: 13px; padding: 4px 11px; border-radius: 999px; color: var(--q-text-soft);
+  border: 1px solid var(--q-border); background: var(--q-surface);
+  transition: color 0.4s, background 0.4s, border-color 0.4s;
+}
+/* Each chevron hangs off the rung before it, so a ladder that wraps on a
+   phone ends its first line with "Understand ›" instead of opening the next
+   line with a stray "›". */
+.ow-ladder li:not(:last-child) { margin-right: 12px; }
+.ow-ladder li:not(:last-child)::after {
+  content: '›'; position: absolute; right: -13px; top: 50%; transform: translateY(-52%);
+  color: var(--q-text-muted); font-size: 14px;
+}
+.ow-ladder li.is-climbed { color: var(--q-accent-text); border-color: var(--q-accent-line); }
+.ow-ladder li.is-current { color: var(--q-accent-text); background: var(--q-accent-soft); border-color: var(--q-accent-line); font-weight: 600; }
+
+.ow-items { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.ow-item {
+  display: flex; align-items: center; gap: 12px; width: 100%; box-sizing: border-box;
+  padding: 11px 12px; border-radius: 12px; border: 1px solid var(--q-border);
+  background: var(--q-surface); color: var(--q-text); font: inherit; font-size: 14.5px; line-height: 1.45; text-align: left;
+  transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+}
+.ow-item.is-pickable { cursor: pointer; }
+.ow-item.is-pickable:hover { border-color: var(--q-accent-line); }
+.ow-item.is-pickable:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+.ow-item.is-latest { border-color: var(--q-accent-line); box-shadow: 0 0 0 3px var(--q-accent-soft); }
+.ow-item.is-shaking { animation: owShake 0.4s; }
+@keyframes owShake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+.ow-slot {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 1.5px dashed var(--q-border); color: var(--q-text-soft);
+  font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums;
+  transition: background 0.4s, border-color 0.4s, color 0.4s;
+}
+.ow-item.is-placed .ow-slot { border-style: solid; border-color: var(--q-accent-dark); background: var(--q-accent-dark); color: #fff; animation: owPop 0.45s ease-out; }
+@keyframes owPop { 0% { transform: scale(0.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+.ow-item-text { flex: 1; min-width: 0; }
+.ow-tag {
+  flex: none; max-width: 38%; text-align: right;
+  font-size: 12.5px; line-height: 1.35; color: var(--q-accent-text);
+  animation: owFade 0.5s ease-out;
+}
+
+/* Where the explanation lives: the demonstration, each reason, each nudge. */
+.ow-think {
+  margin-top: 12px; padding: 12px 14px; border-radius: 12px;
+  background: var(--q-accent-soft); border: 1px solid var(--q-accent-line);
+  font-size: 14.5px; line-height: 1.6; animation: owFade 0.5s ease-out;
+}
+.ow-think p { margin: 0; animation: owFade 0.6s ease-out; }
+.ow-think p + p { margin-top: 4px; }
+.ow-think.is-nudge { background: var(--q-sunken); border-color: var(--q-border); }
+.ow-rule {
+  display: inline-block; margin-bottom: 4px;
+  font-size: 12px; font-weight: 600; color: var(--q-accent-text); letter-spacing: 0.01em;
+}
+.ow-dots { display: inline-flex; gap: 4px; padding: 6px 0 2px; }
+.ow-dots i { width: 6px; height: 6px; border-radius: 50%; background: var(--q-text-muted); animation: owDot 1s infinite ease-in-out; }
+.ow-dots i:nth-child(2) { animation-delay: 0.15s; }
+.ow-dots i:nth-child(3) { animation-delay: 0.3s; }
+@keyframes owDot { 0%, 80%, 100% { opacity: 0.3; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-2px); } }
+@keyframes owFade { from { opacity: 0; } to { opacity: 1; } }
+
+.ow-next {
+  width: 100%; margin-top: 14px; border-radius: 999px; padding: 11px 14px;
+  font: inherit; font-size: 14.5px; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--q-accent-line); background: var(--q-surface); color: var(--q-accent-text);
+  animation: owFade 0.5s ease-out;
+}
+.ow-next:hover { background: var(--q-accent-soft); }
+.ow-next:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+
+.ow-end { margin-top: 14px; animation: owFade 0.6s ease-out; }
+.ow-then { margin: 0 0 10px; font-size: 14.5px; line-height: 1.6; padding-top: 12px; border-top: 1px solid var(--q-border); }
+.ow-then-label { display: block; font-size: 12px; font-weight: 600; color: var(--q-text-muted); margin-bottom: 2px; }
+.ow-method { margin: 0; font-size: 14.5px; font-weight: 600; color: var(--q-accent-text); }
+
+/* The stage: while open, the walkthrough is the whole card. On a wide card
+   the chart and its breakdown sit beside the ladder and the actions, so she
+   reads the chart while she places, without scrolling between them. */
+.case-walkthrough-stage { container-type: inline-size; scroll-margin-top: 12px; }
+.case-walkthrough-stage .ow { margin-top: 4px; }
+.ow-body { display: block; }
+@container (min-width: 820px) {
+  .ow-body { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 20px; align-items: start; }
+  .ow-left { position: sticky; top: 12px; }
+  .ow-parts { margin-bottom: 0; }
+}
+
+@media (max-width: 480px) {
+  .ow { padding: 14px; }
+  .ow-part { grid-template-columns: 1fr; gap: 2px; }
+  .ow-item { flex-wrap: wrap; }
+  .ow-tag { max-width: none; flex-basis: 100%; text-align: left; padding-left: 38px; margin-top: -4px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ow, .ow-item.is-shaking, .ow-item.is-placed .ow-slot, .ow-tag, .ow-think, .ow-think p, .ow-dots i,
+  .ow-next, .ow-end, .ow-ladder { animation: none; }
+  .ow-fact, .ow-part, .ow-ladder li, .ow-stages li, .ow-item, .ow-slot { transition: none; }
+}
+
+/* Dark mode: the app's lavender accent on the card's own materials, as for
+   the select-all walkthrough. Dark text on solid lavender, which is too pale
+   for white. */
+body.dark-mode .ow {
+  --q-accent: var(--dark-accent, #b8a5d4);
+  --q-accent-dark: var(--dark-accent, #b8a5d4);
+  --q-accent-text: var(--dark-accent-light, #d4c8e8);
+  --q-accent-soft: rgba(184, 165, 212, 0.14);
+  --q-accent-line: rgba(184, 165, 212, 0.4);
+}
+body.dark-mode .ow-stages li.on,
+body.dark-mode .ow-badge,
+body.dark-mode .ow-item.is-placed .ow-slot { color: #1a1a1a; }

@@ -320,7 +320,7 @@ const UpgradeModal = ({
     if (plan.id === 'semester') {
       return {
         name: t('upgrade.planNameSemester', 'Semester Pass'),
-        tag: t('upgrade.planTagSemester', 'One payment, covers your term'),
+        tag: t('upgrade.planTagSemester', 'Renews every 4 months, cancel anytime'),
         amount,
         metaPrimary: t('upgrade.metaPerMonths', '{{currency}} / {{count}} months', { currency: cur, count: plan.intervalCount }),
         metaSecondary: [equiv, save].filter(Boolean).join(' · '),

@@ -215,7 +215,7 @@ const resources = {
         planNameSemester: "Semester Pass",
         planNameAnnual: "Annual",
         badgePopular: "Most popular",
-        planTagSemester: "One payment, covers your term",
+        planTagSemester: "Renews every 4 months, cancel anytime",
         planTagAnnual: "Lowest price per month",
         // Price metadata: what currency, how often, and only then the per-month
         // equivalent. The big number is always the actual charge.
@@ -1391,6 +1391,68 @@ const resources = {
         doneAll: "All {{total}} right on the first try. You never had to guess how many to pick.",
         method: "One fact, one question, every option.",
         close: "Back to the question"
+      },
+      // "Who first?" on a missed ordering question (ChatInerface/OrderWalkthrough.js).
+      // Calm and plain: nothing here scolds. Ladder, rung and rule ids mirror
+      // NQBackEnd2/services/order_walkthrough.py. No em dashes.
+      orderWalkthrough: {
+        trigger: "Show me how to order it",
+        triggerSub: "Who goes first, step by step, on this question",
+        label: "How to order this question",
+        loading: "Reading the chart…",
+        unavailable: "There's no walkthrough for this question. The explanation still applies.",
+        closeLabel: "Close the walkthrough",
+        stage: { watch: "Watch", together: "Together", yours: "Your turn" },
+        intro: "Ordering questions are hard. Let's work this one out together, one step at a time.",
+        reading: "Reading the chart…",
+        breakdown: "First, what's going on with this patient?",
+        labelling: "Now, what does each action do here?",
+        ladderIntro: "The most urgent need goes first. Climb the ladder from the left.",
+        startBreakdown: "Start with the chart",
+        startLabels: "Look at the actions",
+        startWatch: "Watch me find number 1",
+        watch: "Watch me find number 1.",
+        together: "Now you, with me. What comes next?",
+        notYet: "Not yet. Take another look.",
+        yours: "The rest are yours. Tap them in order.",
+        keepGoing: "Good. Now number {{n}}.",
+        lastOne: "Only one left, so it goes last.",
+        nudgeFallback: "Something still has to come before this one. Which rung is it on?",
+        done: "{{right}} of {{total}} on the first try. The ladder gets quicker every time you use it.",
+        doneAll: "Every step on the first try. That's the ladder working.",
+        doneShort: "That's the order, rung by rung.",
+        thenLabel: "Your answer earlier",
+        then: "You had “{{hers}}” at number {{n}}.",
+        method: "Most urgent need first, one rung at a time.",
+        close: "Back to the question",
+        role: { problem: "The problem", risk: "The risk", task: "What you're asked" },
+        ladderTitle: {
+          abc: "What's most at risk, most urgent first",
+          process: "The nursing steps, in order",
+          barriers: "What blocks the message, first to last",
+          procedure: "The procedure, in order",
+          maslow: "Needs, most basic first"
+        },
+        rung: {
+          airway: "Airway", breathing: "Breathing", circulation: "Circulation", safety: "Safety",
+          comfort: "Comfort", teaching: "Teaching", assess: "Assess", act: "Act", report: "Report",
+          record: "Record", teach: "Teach", hear: "Hear", focus: "Focus", understand: "Understand",
+          check: "Check", prepare: "Prepare", protect: "Protect", perform: "Perform", confirm: "Confirm",
+          body: "Body", belonging: "Belonging", esteem: "Esteem", growth: "Growth"
+        },
+        rule: {
+          abc: "Rule: airway, breathing, circulation first",
+          maslow: "Rule: body needs before feelings",
+          assess_first: "Rule: assess before you act",
+          unstable_first: "Rule: unstable before stable",
+          acute_first: "Rule: new and sudden before chronic",
+          safety_first: "Rule: safety first",
+          barrier_first: "Rule: remove what blocks the message first",
+          prepare_first: "Rule: prepare before you perform",
+          treat_before_record: "Rule: treat before you record",
+          teach_last: "Rule: teach once the patient is ready",
+          sequence: "Rule: each step needs the one before"
+        }
       },
       sata: {
         // Calm feedback (SATAQuestion + sataFeedbackModel). No em dashes.
@@ -2825,7 +2887,7 @@ const resources = {
         planNameSemester: "Forfait session",
         planNameAnnual: "Annuel",
         badgePopular: "Le plus populaire",
-        planTagSemester: "Un seul paiement, toute ta session",
+        planTagSemester: "Renouvelé tous les 4 mois, annulable en tout temps",
         planTagAnnual: "Le plus bas prix par mois",
         metaPerMonth: "{{currency}} / mois",
         metaPerMonths: "{{currency}} / {{count}} mois",
@@ -3946,6 +4008,65 @@ const resources = {
         doneAll: "Les {{total}} du premier coup. Tu n'as jamais eu à deviner combien en choisir.",
         method: "Un fait, une question, chaque option.",
         close: "Retour à la question"
+      },
+      orderWalkthrough: {
+        trigger: "Montre-moi comment les ordonner",
+        triggerSub: "Qui passe en premier, étape par étape, sur cette question",
+        label: "Comment ordonner cette question",
+        loading: "Lecture du dossier…",
+        unavailable: "Pas de démonstration pour cette question. L'explication reste valable.",
+        closeLabel: "Fermer la démonstration",
+        stage: { watch: "Regarde", together: "Ensemble", yours: "À toi" },
+        intro: "Les questions d'ordre sont difficiles. On va résoudre celle-ci ensemble, une étape à la fois.",
+        reading: "Lecture du dossier…",
+        breakdown: "D'abord, que se passe-t-il chez ce patient ?",
+        labelling: "Maintenant, que fait chaque action ici ?",
+        ladderIntro: "Le besoin le plus urgent passe en premier. Monte l'échelle depuis la gauche.",
+        startBreakdown: "Commencer par le dossier",
+        startLabels: "Regarder les actions",
+        startWatch: "Regarde-moi trouver le numéro 1",
+        watch: "Regarde-moi trouver le numéro 1.",
+        together: "À toi, avec moi. Qu'est-ce qui vient ensuite ?",
+        notYet: "Pas encore. Regarde à nouveau.",
+        yours: "La suite est à toi. Touche-les dans l'ordre.",
+        keepGoing: "Bien. Maintenant le numéro {{n}}.",
+        lastOne: "Il n'en reste qu'une, elle va en dernier.",
+        nudgeFallback: "Quelque chose doit encore passer avant celle-ci. Sur quel échelon est-elle ?",
+        done: "{{right}} sur {{total}} du premier coup. L'échelle devient plus rapide chaque fois que tu t'en sers.",
+        doneAll: "Chaque étape du premier coup. C'est l'échelle qui fonctionne.",
+        doneShort: "Voilà l'ordre, échelon par échelon.",
+        thenLabel: "Ta réponse tout à l'heure",
+        then: "Tu avais « {{hers}} » en numéro {{n}}.",
+        method: "Le besoin le plus urgent d'abord, un échelon à la fois.",
+        close: "Retour à la question",
+        role: { problem: "Le problème", risk: "Le risque", task: "Ce qu'on te demande" },
+        ladderTitle: {
+          abc: "Ce qui est le plus à risque, le plus urgent d'abord",
+          process: "Les étapes infirmières, dans l'ordre",
+          barriers: "Ce qui bloque le message, du premier au dernier",
+          procedure: "La procédure, dans l'ordre",
+          maslow: "Les besoins, les plus essentiels d'abord"
+        },
+        rung: {
+          airway: "Voies respiratoires", breathing: "Respiration", circulation: "Circulation", safety: "Sécurité",
+          comfort: "Confort", teaching: "Enseignement", assess: "Évaluer", act: "Agir", report: "Signaler",
+          record: "Documenter", teach: "Enseigner", hear: "Entendre", focus: "Se concentrer", understand: "Comprendre",
+          check: "Vérifier", prepare: "Préparer", protect: "Protéger", perform: "Réaliser", confirm: "Confirmer",
+          body: "Corps", belonging: "Appartenance", esteem: "Estime", growth: "Accomplissement"
+        },
+        rule: {
+          abc: "Règle : voies respiratoires, respiration, circulation d'abord",
+          maslow: "Règle : besoins du corps avant les émotions",
+          assess_first: "Règle : évaluer avant d'agir",
+          unstable_first: "Règle : instable avant stable",
+          acute_first: "Règle : nouveau et soudain avant chronique",
+          safety_first: "Règle : la sécurité d'abord",
+          barrier_first: "Règle : retirer d'abord ce qui bloque le message",
+          prepare_first: "Règle : préparer avant de réaliser",
+          treat_before_record: "Règle : traiter avant de documenter",
+          teach_last: "Règle : enseigner quand le patient est prêt",
+          sequence: "Règle : chaque étape a besoin de la précédente"
+        }
       },
       sata: {
         verdict: {

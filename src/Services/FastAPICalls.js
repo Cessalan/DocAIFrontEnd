@@ -2121,6 +2121,36 @@ export const fetchQuizWalkthrough = (question, options, correctIndices, language
   return request;
 };
 
+// Order walkthrough: "Who first?" on a missed ordering question
+// (NQBackEnd2/services/order_walkthrough.py). `items` are the action texts in
+// the STORED correct order; `chart` is the plain-text notes the student saw,
+// which breakdown quotes are checked against. Null is a normal answer (the
+// model would not defend the key), and, as above, one promise per question.
+const orderWalkthroughRequests = new Map();
+export const fetchOrderWalkthrough = ({ question, chart = '', vitals = '', items, language = 'en' }) => {
+  if (!question || !question.trim()) return Promise.resolve(null);
+  if (!Array.isArray(items) || items.length < 3 || items.length > 8) return Promise.resolve(null);
+  const lang = (language || 'en').split('-')[0].toLowerCase();
+  const key = [lang, question.trim(), chart, items.join('|')].join('#');
+  if (orderWalkthroughRequests.has(key)) return orderWalkthroughRequests.get(key);
+  const request = fetch(`${FAST_API_BASE}/quiz/order-walkthrough`, {
+    method: "POST",
+    headers: header,
+    body: JSON.stringify({
+      question: question.trim(), chart: chart.slice(0, 4000), vitals: vitals.slice(0, 2000), items, language: lang,
+    }),
+  })
+    .then((response) => (response.ok ? response.json() : null))
+    .then((data) => data?.walkthrough || null)
+    .catch(() => null)
+    .then((walkthrough) => {
+      if (!walkthrough) orderWalkthroughRequests.delete(key);
+      return walkthrough;
+    });
+  orderWalkthroughRequests.set(key, request);
+  return request;
+};
+
 export const fetchExplain = async (text, context = "chat", language = null) => {
   if (!text || !text.trim()) return null;
 

@@ -41,6 +41,11 @@ import {
 import { calculateOrderingScore } from '../../utils/quizScoring';
 import './CaseStudyQuestion.css';
 import useGlossary from '../Glossary/useGlossary';
+import OrderWalkthrough from './OrderWalkthrough';
+import { chartText, isUsable, shouldAutoOpen, recordAutoOpen } from './orderWalkthroughModel';
+import { fetchOrderWalkthrough } from '../../Services/FastAPICalls';
+import { clarityEvent } from '../../Services/ClarityService';
+import './MethodWalkthrough.css';
 
 // ============================================
 // CONSTANTS
@@ -175,7 +180,7 @@ function CaseStudyQuestion({
   tutorPanel,
   onOpenTutor
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
   const { rationaleRef, rationaleHandlers, popover: glossaryPopover } = useGlossary();
@@ -196,6 +201,9 @@ function CaseStudyQuestion({
   const [revealed, setRevealed] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [scoreResult, setScoreResult] = useState(null);
+
+  // "Who first?" (OrderWalkthrough). status: idle | loading | ready | unavailable
+  const [walkthrough, setWalkthrough] = useState({ status: 'idle', data: null, open: false });
 
   // Track initialization to prevent re-init during same question
   const initializedQuizRef = useRef(null);
@@ -275,6 +283,54 @@ function CaseStudyQuestion({
     }).filter(Boolean); // Remove nulls
   }, [quiz?.correctOrder, normalizedOptions]);
 
+  // The walkthrough is handed the key's texts in order and the chart she saw,
+  // as plain text, which is what its quotes are checked against.
+  const walkthroughInput = useMemo(() => {
+    const textOf = Object.fromEntries(normalizedOptions.map((o) => [o.id, o.text]));
+    return {
+      question: quiz?.question || '',
+      chart: chartText(quiz?.caseStudy?.nursesNotes),
+      vitals: chartText(`${quiz?.caseStudy?.vitalSigns || ''} ${quiz?.caseStudy?.labResults || ''}`),
+      items: correctOrder.map((id) => textOf[id]).filter(Boolean),
+    };
+  }, [quiz, normalizedOptions, correctOrder]);
+
+  // Generation takes several seconds, so it starts the moment an order comes
+  // back wrong; the button then reuses the same request.
+  const requestWalkthrough = useCallback(() => {
+    if (walkthroughInput.items.length !== correctOrder.length) return Promise.resolve(null);
+    return fetchOrderWalkthrough({ ...walkthroughInput, language: i18n?.language });
+  }, [walkthroughInput, correctOrder.length, i18n?.language]);
+
+  // Settle the request whether or not the walkthrough is open, so the button
+  // only ever offers what can be delivered: when the backend declines (it
+  // would not defend the key), the button quietly goes away. An auto-opened
+  // walkthrough that is declined closes quietly too, since she never asked;
+  // one she tapped for says so. `asked` is the question the request was for,
+  // so an answer arriving after she has moved on is ignored.
+  const walkthroughFor = useRef(null);
+  const settleWalkthrough = useCallback((asked) => (data) => {
+    if (walkthroughFor.current !== asked) return;
+    const usable = isUsable(data, correctOrder.length) ? data : null;
+    // How often the "never be wrong" rule withholds one: the cost of honesty.
+    clarityEvent(usable ? 'order_walkthrough_ready' : 'order_walkthrough_declined');
+    setWalkthrough((w) => ({
+      ...w, data: usable, status: usable ? 'ready' : 'unavailable', open: w.open && (!!usable || !w.auto),
+    }));
+  }, [correctOrder.length]);
+
+  const openWalkthrough = useCallback((auto = false) => {
+    walkthroughFor.current = quiz?.question;
+    setWalkthrough((w) => ({ ...w, open: true, auto, status: w.data ? 'ready' : w.status === 'unavailable' ? 'unavailable' : 'loading' }));
+    requestWalkthrough().then(settleWalkthrough(quiz?.question));
+  }, [requestWalkthrough, settleWalkthrough, quiz?.question]);
+
+  const walkthroughOnStage = walkthrough.open && walkthrough.status === 'ready' && !!walkthrough.data;
+  const walkthroughStageRef = useRef(null);
+  useEffect(() => {
+    if (walkthroughOnStage) walkthroughStageRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  }, [walkthroughOnStage]);
+
   // Progress bar style
   const progressStyle = useMemo(() => {
     if (totalQuestions === 0) return { width: '0%' };
@@ -312,6 +368,8 @@ function CaseStudyQuestion({
 
     // Mark as initialized
     initializedQuizRef.current = quizId;
+    setWalkthrough({ status: 'idle', data: null, open: false });
+    walkthroughFor.current = null;
 
     if (previousAnswer && previousAnswer.userOrder) {
       // Restore previous answer order
@@ -379,6 +437,19 @@ function CaseStudyQuestion({
       setShowFeedback(true);
     }, 300);
 
+    // Missed: start writing the walkthrough while she reads the feedback. The
+    // first misses on a device open it on their own, as for select-all.
+    if (!result.isFullyCorrect && !reviewMode && correctOrder.length >= 3) {
+      if (shouldAutoOpen()) {
+        recordAutoOpen();
+        openWalkthrough(true);
+      } else {
+        walkthroughFor.current = quiz.question;
+        setWalkthrough((w) => ({ ...w, status: 'loading' }));
+        requestWalkthrough().then(settleWalkthrough(quiz.question));
+      }
+    }
+
     // Call parent callback
     if (onAnswerSelect) {
       onAnswerSelect({
@@ -395,7 +466,7 @@ function CaseStudyQuestion({
         timestamp: new Date()
       });
     }
-  }, [revealed, quiz, items, correctOrder, quizIndex, onAnswerSelect]);
+  }, [revealed, quiz, items, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough]);
 
   // ----------------------------------------
   // Early Return
@@ -478,6 +549,19 @@ function CaseStudyQuestion({
           </div>
         )}
 
+        {walkthroughOnStage ? (
+          <div className="case-walkthrough-stage" ref={walkthroughStageRef}>
+            <OrderWalkthrough
+              question={walkthroughInput.question}
+              chart={walkthroughInput.chart}
+              items={normalizedOptions}
+              keyIds={correctOrder}
+              herOrder={items.map((item) => item.id)}
+              walkthrough={walkthrough.data}
+              onClose={() => setWalkthrough((w) => ({ ...w, open: false }))}
+            />
+          </div>
+        ) : (<>
         <div className="case-mobile-switch" aria-label="Case view"><button type="button" aria-pressed={mobileView === 'chart'} onClick={() => setMobileView('chart')}>{t('caseStudy.patientFile', 'Patient chart')}</button><button type="button" aria-pressed={mobileView === 'answer'} onClick={() => setMobileView('answer')}>{t('caseStudy.yourDecision', 'Your answer')}</button></div>
         <div className={`case-split-layout case-view-${mobileView}`}>
         <div className="case-reference-pane">
@@ -582,8 +666,26 @@ function CaseStudyQuestion({
               </span>
             </div>
 
-            {/* Show correct order if not fully correct */}
-            {!scoreResult.isFullyCorrect && (
+            {!scoreResult.isFullyCorrect && correctOrder.length >= 3 && !walkthrough.open && walkthrough.status !== 'unavailable' && (
+              <button type="button" className="sata-walkthrough-trigger" onClick={() => openWalkthrough()}>
+                <span className="sata-walkthrough-icon" aria-hidden="true">▶</span>
+                <span>
+                  <strong>{t('orderWalkthrough.trigger')}</strong>
+                  <small>{t('orderWalkthrough.triggerSub')}</small>
+                </span>
+              </button>
+            )}
+            {walkthrough.open && walkthrough.status === 'loading' && (
+              <p className="sata-walkthrough-status" aria-live="polite">{t('orderWalkthrough.loading')}</p>
+            )}
+            {walkthrough.open && walkthrough.status === 'unavailable' && (
+              <p className="sata-walkthrough-status" aria-live="polite">{t('orderWalkthrough.unavailable')}</p>
+            )}
+
+            {/* Show correct order if not fully correct. While the walkthrough
+                is open it is the one thing on screen; the comparison and the
+                explanation come back when she closes it. */}
+            {!scoreResult.isFullyCorrect && !(walkthrough.open && walkthrough.status !== 'unavailable') && (
               <div className="case-order-comparison">
                 <section><p className="correct-order-label">{t('caseStudy.yourOrder', 'Your order')}</p><ol className="correct-order-list">{items.map(item => <li key={item.id} className="correct-order-item">{item.text}</li>)}</ol></section>
               <section className="correct-order-section">
@@ -601,7 +703,7 @@ function CaseStudyQuestion({
             )}
 
             {/* Justification */}
-            {quiz.justification && (
+            {quiz.justification && !(walkthrough.open && walkthrough.status !== 'unavailable') && (
               <div className="feedback-rationale-container">
                 <div
                   ref={rationaleRef}
@@ -629,6 +731,7 @@ function CaseStudyQuestion({
           </button>
         )}
         </div></div>
+        </>)}
       </div>
       {glossaryPopover}
     </div>
