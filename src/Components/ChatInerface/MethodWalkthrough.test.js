@@ -40,10 +40,11 @@ it('walks watch, together and your turn on her own miss', () => {
     selectedIndices={[0, 2]} walkthrough={DATA} onClose={onClose} />);
 
   expect(clarityEvent).toHaveBeenCalledWith('walkthrough_opened');
-  expect(screen.getByText('Before the options, break the question down.')).toBeInTheDocument();
+  expect(screen.getByText(/Press play and I'll break this question down/)).toBeInTheDocument();
   expect(screen.getByText('digoxin 0.25 mg daily').tagName).toBe('MARK');
 
-  fireEvent.click(screen.getByText('Break down the question'));
+  // "Watch" is the play button that starts it (owner, 2026-10-11).
+  fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
   // Staged: it reads first, then each part in turn, then the test question.
   expect(screen.getByText('Reading the question…')).toBeInTheDocument();
   expect(screen.queryByText('Watch me evaluate option A')).toBeNull();

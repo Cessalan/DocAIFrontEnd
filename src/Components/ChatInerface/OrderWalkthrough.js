@@ -202,15 +202,30 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
   const labelsShown = phase === 'intro' || phase === 'breakdown' ? 0 : phase === 'labels' ? Math.min(step, items.length) : items.length;
   const ladderShown = phase === 'steps' || phase === 'end' || (phase === 'labels' && step > items.length);
   const picking = phase === 'steps' && position > 0 && position < keyIds.length - 1 && !busy;
+  // Play starts the walkthrough; once it is running, each step has its own
+  // button below, so a second control for the same step would compete.
+  const playAction = phase === 'intro' ? startBreakdown : null;
   const noteInfo = note ? info[note.id] : null;
 
   return (
     <section className="ow" aria-label={t('orderWalkthrough.label')}>
       <div className="ow-top">
-        <ol className="ow-stages" aria-hidden="true">
-          {[STAGE.WATCH, STAGE.TOGETHER, STAGE.YOURS].map((s) => (
-            <li key={s} className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`orderWalkthrough.stage.${s}`)}</li>
-          ))}
+        {/* "Watch" is the play button whenever the next step is one to watch.
+            A real student read the breakdown and went straight to Next
+            Question, past a start button at the bottom (Clarity, 2026-10-11):
+            the way in now looks like what it does, and sits where the
+            walkthrough begins. */}
+        <ol className="ow-stages">
+          {[STAGE.WATCH, STAGE.TOGETHER, STAGE.YOURS].map((s) => (s === STAGE.WATCH && playAction ? (
+            <li key={s} className="mw-stage-play">
+              <button type="button" className="mw-play" onClick={playAction}>
+                <span className="mw-play-icon" aria-hidden="true" />
+                {t(`orderWalkthrough.stage.${s}`)}
+              </button>
+            </li>
+          ) : (
+            <li key={s} aria-hidden="true" className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`orderWalkthrough.stage.${s}`)}</li>
+          )))}
         </ol>
         <button type="button" className="ow-close" onClick={onClose} aria-label={t('orderWalkthrough.closeLabel')}>×</button>
       </div>
@@ -297,9 +312,6 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
         </div>
       )}
 
-      {phase === 'intro' && (
-        <button type="button" className="ow-next" onClick={startBreakdown}>{t('orderWalkthrough.startBreakdown')}</button>
-      )}
       {phase === 'breakdown' && step > parts.length && (
         <button type="button" className="ow-next" onClick={startLabels}>{t('orderWalkthrough.startLabels')}</button>
       )}

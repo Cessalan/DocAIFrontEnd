@@ -29,6 +29,8 @@ const WALK = {
 
 const submitWrong = async () => {
   render(<CaseStudyQuestion quiz={quiz} onAnswerSelect={() => {}} onNext={() => {}} />);
+  // Tap to order, deliberately wrong: notify before assessing.
+  ['Notify the provider', 'Assess vital signs', 'Give oxygen as ordered'].forEach((text) => fireEvent.click(screen.getByText(text)));
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit Order' })); });
   await act(async () => { jest.advanceTimersByTime(400); });
 };
@@ -43,6 +45,12 @@ afterEach(() => {
   jest.useRealTimers();
   window.localStorage.clear();
 });
+
+// Each tap a second apart: the card ignores a second tap within 350 ms (rows
+// move under the finger after a tap), and tests tap faster than any person.
+let fakeNow = 0;
+beforeEach(() => { jest.spyOn(Date, 'now').mockImplementation(() => (fakeNow += 1000)); });
+afterEach(() => { Date.now.mockRestore?.(); });
 
 it('sends the key in order and the chart as plain text', async () => {
   fetchOrderWalkthrough.mockResolvedValue(WALK);

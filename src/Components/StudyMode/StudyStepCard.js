@@ -6,6 +6,7 @@ import StudyFlashcardCard from './StudyFlashcardCard';
 import StudyAudioCard from './StudyAudioCard';
 import StudyMindmapCard from './StudyMindmapCard';
 import StudyExamCard from './StudyExamCard';
+import { ROLE as TONIGHT_ROLE, tonightRole } from './tonightPlanModel';
 
 /**
  * StudyStepCard - Routes to the correct card component based on node type
@@ -165,6 +166,7 @@ const StudyStepCard = ({
           onContinue={onContinue}
           onExit={onExit}
           viewOnly={viewOnly}
+          teachOnMiss={tonightRole(node)?.role === TONIGHT_ROLE.FIX}
         />
       );
 

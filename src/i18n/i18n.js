@@ -599,6 +599,10 @@ const resources = {
         labResults: "Laboratory Results",
         noData: "No data available for this tab.",
         dragHint: "Drag and drop to arrange in the correct order",
+        tapInstructions: "Tap the actions in the order you would do them. Tap a numbered one to take it back.",
+        tapNext: "Which comes number {{number}}?",
+        tapRemove: "Take back action {{number}}",
+        tapProgress: "{{placed}} of {{total}} placed",
         submitOrder: "Submit Order",
         partialCredit: "Partial Credit",
         correctOrder: "Correct Order:"
@@ -1361,7 +1365,7 @@ const resources = {
         loading: "Reading the question…",
         unavailable: "The walkthrough isn't available for this question. The explanation above still applies.",
         stage: { watch: "Watch", together: "Together", yours: "Your turn" },
-        intro: "Before the options, break the question down.",
+        intro: "Press play and I'll break this question down, then solve it with you.",
         factFind: "Reading the question…",
         thinking: "Let me think this through…",
         apply: "Ask the test question of this option.",
@@ -1395,6 +1399,62 @@ const resources = {
       // "Who first?" on a missed ordering question (ChatInerface/OrderWalkthrough.js).
       // Calm and plain: nothing here scolds. Ladder, rung and rule ids mirror
       // NQBackEnd2/services/order_walkthrough.py. No em dashes.
+      // Tonight's plan (StudyMode/TonightPlan.js, tonightPlanModel.js): the
+      // exam-is-close plan as open-ended rounds. Honest numbers only, the
+      // caveat once, nothing scolds. No em dashes.
+      tonight: {
+        title: "Tonight's plan",
+        why: "Your exam is close, so we work on what's costing you the most points, one at a time. When one is fixed, the next one starts. Keep going as long as you like.",
+        examToday: "Exam today",
+        examTomorrow: "Exam tomorrow",
+        examInDays_one: "Exam in {{count}} day",
+        examInDays_other: "Exam in {{count}} days",
+        roundName: "Round {{n}} · {{name}}",
+        nextRound: "Next: round {{n}} · {{name}}",
+        outcomeShort: { fixed: "Fixed", better: "Better", notYet: "Not yet", tooFew: "Checked", measured: "Checked" },
+        earlier: "Earlier {{score}}",
+        now: "now {{score}}",
+        onCheck: "{{score}} on the check",
+        stepsLabel: "Steps in this round",
+        step: { learn: "Learn and practise", learnTopic: "Key points", check: "Check it worked" },
+        ctaCheck: "Check it worked",
+        ctaContinue: "Continue round {{n}}",
+        ctaStart: "Start round {{n}}",
+        preparing: "Getting it ready…",
+        stop: "Stop for tonight",
+        hintFirst: "You can stop after any round. Nothing is lost.",
+        hintStop: "You can stop after any round. Nothing is lost.",
+        between: {
+          practised: "Practice done: {{score}} right.",
+          learned: "Key points done.",
+          next: "Now a few new questions, to check it worked. The practice you just did doesn't count toward this."
+        },
+        outcome: {
+          fixed: { title: "That got better tonight.", body: "Strong on brand-new questions. On to the next weak spot, or stop here." },
+          solid: { title: "That's solid.", body: "Strong on brand-new questions. On to the next weak spot, or stop here." },
+          better: { title: "Better. Not there yet.", body: "It moved in the right direction." },
+          notYet: { title: "Not yet.", body: "That's normal for this kind of question, and it doesn't mean you can't get it." },
+          tooFew: { title: "Too few answers to tell.", body: "Let's keep going. We'll know more after the next round." },
+          measured: { title: "Here's where you stand.", body: "Now we work on the weakest part first." }
+        },
+        caveat: "Small numbers, so this shows a direction, not a guarantee.",
+        skill: { sata: "Select-all questions", priority: "Who goes first" },
+        target: { find: "Finding your weak spot", mixed: "Mixed review" },
+        reason: {
+          weakest: "Your next weakest: {{correct}} of {{total}} right so far.",
+          retry: "Same thing again, a little easier, with the method first.",
+          mixed: "Nothing weak left to fix. A mixed review keeps it all fresh.",
+          mixedHarder: "Harder questions this time.",
+          find: "A short check first, to find where you're losing points."
+        },
+        node: {
+          find: "Find what's costing you points",
+          fix: "Round {{n}} · Learn and practise: {{skill}}",
+          check: "Round {{n}} · Check it worked",
+          topicLesson: "Round {{n}} · {{topic}}: the key points",
+          mixed: "Round {{n}} · Mixed review"
+        }
+      },
       orderWalkthrough: {
         trigger: "Show me how to order it",
         triggerSub: "Who goes first, step by step, on this question",
@@ -1403,7 +1463,7 @@ const resources = {
         unavailable: "There's no walkthrough for this question. The explanation still applies.",
         closeLabel: "Close the walkthrough",
         stage: { watch: "Watch", together: "Together", yours: "Your turn" },
-        intro: "Ordering questions are hard. Let's work this one out together, one step at a time.",
+        intro: "Ordering questions are hard. Press play and we'll work this one out together, one step at a time.",
         reading: "Reading the chart…",
         breakdown: "First, what's going on with this patient?",
         labelling: "Now, what does each action do here?",
@@ -3267,6 +3327,10 @@ const resources = {
         labResults: "Résultats de laboratoire",
         noData: "Aucune donnée disponible pour cet onglet.",
         dragHint: "Glissez et déposez pour organiser dans le bon ordre",
+        tapInstructions: "Touche les actions dans l'ordre où tu les ferais. Touche une action numérotée pour la retirer.",
+        tapNext: "Laquelle vient en numéro {{number}} ?",
+        tapRemove: "Retirer l'action {{number}}",
+        tapProgress: "{{placed}} sur {{total}} placées",
         submitOrder: "Soumettre l'ordre",
         partialCredit: "Crédit partiel",
         correctOrder: "Ordre correct :"
@@ -3978,7 +4042,7 @@ const resources = {
         loading: "Lecture de la question…",
         unavailable: "L'explication pas à pas n'est pas disponible pour cette question. L'explication ci-dessus reste valable.",
         stage: { watch: "Regarde", together: "Ensemble", yours: "À toi" },
-        intro: "Avant les options, décortique la question.",
+        intro: "Appuie sur lecture : je décortique la question, puis on la résout ensemble.",
         factFind: "Je lis la question…",
         thinking: "Laisse-moi réfléchir…",
         apply: "Pose la question test à cette option.",
@@ -4009,6 +4073,59 @@ const resources = {
         method: "Un fait, une question, chaque option.",
         close: "Retour à la question"
       },
+      tonight: {
+        title: "Ton plan de ce soir",
+        why: "Ton examen approche, alors on travaille sur ce qui te coûte le plus de points, un à la fois. Quand un point est réglé, le suivant commence. Continue aussi longtemps que tu veux.",
+        examToday: "Examen aujourd'hui",
+        examTomorrow: "Examen demain",
+        examInDays_one: "Examen dans {{count}} jour",
+        examInDays_other: "Examen dans {{count}} jours",
+        roundName: "Tour {{n}} · {{name}}",
+        nextRound: "Ensuite : tour {{n}} · {{name}}",
+        outcomeShort: { fixed: "Réglé", better: "Mieux", notYet: "Pas encore", tooFew: "Vérifié", measured: "Vérifié" },
+        earlier: "Tout à l'heure {{score}}",
+        now: "maintenant {{score}}",
+        onCheck: "{{score}} à la vérification",
+        stepsLabel: "Étapes de ce tour",
+        step: { learn: "Apprendre et pratiquer", learnTopic: "Points clés", check: "Vérifier que ça a marché" },
+        ctaCheck: "Vérifier que ça a marché",
+        ctaContinue: "Continuer le tour {{n}}",
+        ctaStart: "Commencer le tour {{n}}",
+        preparing: "Préparation…",
+        stop: "Arrêter pour ce soir",
+        hintFirst: "Tu peux t'arrêter après n'importe quel tour. Rien n'est perdu.",
+        hintStop: "Tu peux t'arrêter après n'importe quel tour. Rien n'est perdu.",
+        between: {
+          practised: "Pratique terminée : {{score}} de bonnes réponses.",
+          learned: "Points clés terminés.",
+          next: "Maintenant quelques nouvelles questions, pour vérifier que ça a marché. La pratique que tu viens de faire ne compte pas ici."
+        },
+        outcome: {
+          fixed: { title: "Ça s'est amélioré ce soir.", body: "Solide sur des questions toutes nouvelles. On passe au point faible suivant, ou tu t'arrêtes ici." },
+          solid: { title: "C'est solide.", body: "Solide sur des questions toutes nouvelles. On passe au point faible suivant, ou tu t'arrêtes ici." },
+          better: { title: "Mieux. Pas encore tout à fait.", body: "Ça avance dans la bonne direction." },
+          notYet: { title: "Pas encore.", body: "C'est normal pour ce type de question, et ça ne veut pas dire que tu n'y arriveras pas." },
+          tooFew: { title: "Trop peu de réponses pour le dire.", body: "Continuons. On en saura plus après le prochain tour." },
+          measured: { title: "Voici où tu en es.", body: "Maintenant on travaille d'abord la partie la plus faible." }
+        },
+        caveat: "Petits nombres : ça montre une direction, pas une garantie.",
+        skill: { sata: "Questions à choix multiples (toutes les réponses)", priority: "Qui passe en premier" },
+        target: { find: "Trouver ton point faible", mixed: "Révision mélangée" },
+        reason: {
+          weakest: "Ton prochain point faible : {{correct}} sur {{total}} jusqu'ici.",
+          retry: "La même chose, un peu plus facile, avec la méthode d'abord.",
+          mixed: "Plus de point faible à régler. Une révision mélangée garde tout frais.",
+          mixedHarder: "Des questions plus difficiles cette fois.",
+          find: "D'abord une courte vérification, pour trouver où tu perds des points."
+        },
+        node: {
+          find: "Trouver ce qui te coûte des points",
+          fix: "Tour {{n}} · Apprendre et pratiquer : {{skill}}",
+          check: "Tour {{n}} · Vérifier que ça a marché",
+          topicLesson: "Tour {{n}} · {{topic}} : les points clés",
+          mixed: "Tour {{n}} · Révision mélangée"
+        }
+      },
       orderWalkthrough: {
         trigger: "Montre-moi comment les ordonner",
         triggerSub: "Qui passe en premier, étape par étape, sur cette question",
@@ -4017,7 +4134,7 @@ const resources = {
         unavailable: "Pas de démonstration pour cette question. L'explication reste valable.",
         closeLabel: "Fermer la démonstration",
         stage: { watch: "Regarde", together: "Ensemble", yours: "À toi" },
-        intro: "Les questions d'ordre sont difficiles. On va résoudre celle-ci ensemble, une étape à la fois.",
+        intro: "Les questions d'ordre sont difficiles. Appuie sur lecture et on résout celle-ci ensemble, une étape à la fois.",
         reading: "Lecture du dossier…",
         breakdown: "D'abord, que se passe-t-il chez ce patient ?",
         labelling: "Maintenant, que fait chaque action ici ?",

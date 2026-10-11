@@ -819,7 +819,11 @@ export const plan_study_path = async (chat_id, upload_ids, user_preferences = {}
     // a null diagnostic does.
     courseContext: options.courseContext || null,
     courseIntelligence: options.courseIntelligence || null,
-    quickCheckId: options.quickCheckId || null
+    quickCheckId: options.quickCheckId || null,
+    // This client builds Tonight's plan itself (StudyMode/tonightPlanModel.js),
+    // so for an exam that is close the backend skips planning and
+    // prefetching a sprint path that would be thrown away.
+    tonightPlan: true
   });
 
   try {
@@ -974,7 +978,11 @@ export const start_study_journey = (chat_id, upload_ids, user_preferences = {}, 
     // the reveal just promised.
     courseContext: options.courseContext || null,
     courseIntelligence: options.courseIntelligence || null,
-    quickCheckId: options.quickCheckId || null
+    quickCheckId: options.quickCheckId || null,
+    // This client builds Tonight's plan itself (StudyMode/tonightPlanModel.js),
+    // so for an exam that is close the backend skips planning and
+    // prefetching a sprint path that would be thrown away.
+    tonightPlan: true
   });
 
   const settleFirstNode = (value) => {

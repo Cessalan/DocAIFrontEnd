@@ -214,13 +214,29 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
   const partsShown = phase === 'intro' ? 0 : phase === 'fact' ? Math.min(factStep, parts.length) : parts.length;
   const lensShown = phase !== 'intro' && (phase !== 'fact' || factStep > parts.length);
   const nextLetter = LETTERS[plan.order[position + 1]] || '';
+  const startSteps = () => { setPhase('steps'); setPosition(0); };
+  // Play starts the walkthrough; once it is running, each step has its own
+  // button below, so a second control for the same step would compete.
+  const playAction = phase === 'intro' ? showFact : null;
 
   return (
     <section className="mw" aria-label={t('walkthrough.label')}>
-      <ol className="mw-stages" aria-hidden="true">
-        {[STAGE.WATCH, STAGE.TOGETHER, STAGE.YOURS].map((s) => (
-          <li key={s} className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`walkthrough.stage.${s}`)}</li>
-        ))}
+      {/* "Watch" is the play button whenever the next step is one to watch.
+          A real student read the breakdown and went straight to Next
+          Question, past a start button at the bottom (Clarity, 2026-10-11):
+          the way in now looks like what it does, and sits where the
+          walkthrough begins. */}
+      <ol className="mw-stages">
+        {[STAGE.WATCH, STAGE.TOGETHER, STAGE.YOURS].map((s) => (s === STAGE.WATCH && playAction ? (
+          <li key={s} className="mw-stage-play">
+            <button type="button" className="mw-play" onClick={playAction}>
+              <span className="mw-play-icon" aria-hidden="true" />
+              {t(`walkthrough.stage.${s}`)}
+            </button>
+          </li>
+        ) : (
+          <li key={s} aria-hidden="true" className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`walkthrough.stage.${s}`)}</li>
+        )))}
       </ol>
 
       <p className="mw-coach" aria-live="polite">{coach}</p>
@@ -283,11 +299,8 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
         })}
       </ul>
 
-      {phase === 'intro' && (
-        <button type="button" className="mw-next" onClick={showFact}>{t('walkthrough.breakDown')}</button>
-      )}
       {phase === 'fact' && factStep >= parts.length + 2 && (
-        <button type="button" className="mw-next" onClick={() => { setPhase('steps'); setPosition(0); }}>{t('walkthrough.evaluateOption', { letter: LETTERS[plan.order[0]] || 'A' })}</button>
+        <button type="button" className="mw-next" onClick={startSteps}>{t('walkthrough.evaluateOption', { letter: LETTERS[plan.order[0]] || 'A' })}</button>
       )}
       {phase === 'steps' && position === 0 && settled[current] && (
         <button type="button" className="mw-next" onClick={advance}>{t('walkthrough.tryOption', { letter: nextLetter })}</button>

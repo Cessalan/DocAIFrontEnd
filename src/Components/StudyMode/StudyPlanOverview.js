@@ -413,6 +413,10 @@ const StudyPlanOverview = ({
   onStartPhase2,
   onExtendBlock,
   onDrillGaps,
+  // Tonight's plan (TonightPanel). When present it IS the plan's "what now":
+  // it takes the place of the urgency dashboard, today's mission and the
+  // block ending, because rounds replace all three.
+  tonightPanel = null,
   isDev = false
 }) => {
   const { t, i18n } = useTranslation();
@@ -965,7 +969,9 @@ const StudyPlanOverview = ({
           `.sov3-readiness__generating` block — that animation is
           intentional and part of the build flow.
           ────────────────────────────────────────────── */}
-      {!hasPhase2Nodes && (() => {
+      {tonightPanel}
+
+      {!tonightPanel && !hasPhase2Nodes && (() => {
           const snap = buildReadinessSnapshot(scoredTopics);
           if (!snap.hasData) return null;
 
@@ -1059,7 +1065,7 @@ const StudyPlanOverview = ({
 
       {/* ── The ending. Shown in place of today's mission once the block is
              done, because there is no mission left to show. ── */}
-      {blockComplete && (
+      {!tonightPanel && blockComplete && (
         <BlockCompleteCard
           completedCount={completedCount}
           reserveCount={reserveCount}
@@ -1069,7 +1075,7 @@ const StudyPlanOverview = ({
       )}
 
       {/* ── Today's mission — the near, finishable, DATED goal ── */}
-      {totalNodes > 0 && !blockComplete && (
+      {!tonightPanel && totalNodes > 0 && !blockComplete && (
         <TodaySessionCard
           schedule={schedule}
           projection={projection}

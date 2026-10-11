@@ -69,6 +69,12 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
       difficulty: node.difficulty || 1,
       ...(node.topic ? { topic: node.topic, topicKey: node.topicKey || null } : {}),
       ...(node.reviewReason ? { reviewReason: node.reviewReason } : {}),
+      // A node's own exam settings. Tonight's plan forces each round's format
+      // through these; without them the node stops at the config modal and
+      // asks her to choose what the plan already chose (same reason as in
+      // insertNodeAfterCurrent below).
+      ...(node.examConfig ? { examConfig: node.examConfig } : {}),
+      ...(node.adaptive ? { adaptive: true, reason: node.reason || '' } : {}),
       status: !isRealNode(node) ? 'banner' : (isActive ? 'active' : 'locked'),
       messageId: null // Will be set when content is generated
     });
@@ -128,6 +134,9 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
           plannedTotal: plannedTotal
         },
         askedHashes: [], // Anti-repeat tracking
+        // Tonight's plan: its rounds and the evidence they are chosen from
+        // (StudyMode/tonightPlanModel.js). Absent on every other plan.
+        ...(pathResult.tonight ? { tonight: pathResult.tonight } : {}),
         lastActionAt: serverTimestamp(),
         // Day 1 of the dated plan. ISO string rather than serverTimestamp()
         // so buildStudySchedule can read it on this very render instead of
@@ -153,6 +162,7 @@ export const createStudySession = async (chatId, pathResult, uploadIds = []) => 
         totalNodes: nodesWithIds.length,
         estimatedMinutes: studyData.study.path.estimatedMinutes
       },
+      ...(pathResult.tonight ? { tonight: pathResult.tonight } : {}),
       askedHashes: [],
       startedAt: studyData.study.startedAt
     };
@@ -255,7 +265,9 @@ export const getStudySession = async (chatId) => {
       askedHashes: data.study?.askedHashes || [],
       currentPhase: data.study?.currentPhase || 1,
       totalPhases: data.study?.totalPhases || 1,
-      startedAt: data.study?.startedAt || null // Day 1 anchor for the dated plan
+      startedAt: data.study?.startedAt || null, // Day 1 anchor for the dated plan
+      // Tonight's plan rounds (tonightPlanModel.js); null on every other plan.
+      tonight: data.study?.tonight || null
     };
   } catch (error) {
     console.error('❌ Error fetching study session:', error);
@@ -437,6 +449,73 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
  * @param {Object} newNodeDef - Node definition { type, label, tags, difficulty, adaptive }
  * @returns {Promise<Object>} - { insertedNode, updatedNodes }
  */
+/** An inserted (adaptive) node, from its definition. The field list is an
+ *  explicit whitelist: anything not listed is dropped. */
+const buildInsertedNode = (newNodeDef, phase, status) => ({
+  id: `adaptive-${uuidv4().slice(0, 8)}`,
+  type: newNodeDef.type,
+  label: newNodeDef.label,
+  tags: newNodeDef.tags || [],
+  difficulty: newNodeDef.difficulty || 1,
+  adaptive: true,
+  reason: newNodeDef.reason || '',
+  ...(newNodeDef.detour ? { detour: newNodeDef.detour } : {}),
+  // The subject, kept apart from the display label. Generation reads it
+  // first; without it an inserted node is generated from its label
+  // ("Testing a theory: …"), which is not a topic at all. See nodeTopic.js.
+  ...(newNodeDef.topic ? { topic: newNodeDef.topic } : {}),
+  status,
+  messageId: null,
+  // Carry phase from current node so it appears in the right section
+  phase: phase || 1,
+  // Node-specified length, omitted unless the caller asked for one. Without
+  // it in this list the single-question pattern experiment quietly became a
+  // full-length quiz.
+  ...(newNodeDef.num_questions ? { num_questions: newNodeDef.num_questions } : {}),
+  // Pre-decided mini-test settings. Set by the post-node recommendation,
+  // whose whole claim is that NurseQuiz already chose the format — a node
+  // that arrives without this stops at the config modal and asks her to
+  // choose it herself, which contradicts the copy that got her here.
+  ...(newNodeDef.examConfig ? { examConfig: newNodeDef.examConfig } : {})
+});
+
+/**
+ * Tonight's plan: close the step she just finished and put the next round's
+ * steps right after it (the first active, the rest locked), saving the
+ * round state in the same write so the plan and its rounds cannot disagree.
+ */
+export const insertRoundAfterCurrent = async (chatId, currentNodeId, nodeDefs, tonight) => {
+  const docRef = doc(db, 'chats', chatId);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) throw new Error('Study session not found');
+  const nodes = [...docSnap.data().study.path.nodes];
+  const currentIndex = nodes.findIndex(n => n.id === currentNodeId);
+  if (currentIndex === -1) throw new Error(`Node ${currentNodeId} not found`);
+  nodes[currentIndex] = {
+    ...nodes[currentIndex],
+    status: 'done',
+    completedAt: nodes[currentIndex].completedAt || new Date().toISOString()
+  };
+  const phase = nodes[currentIndex].phase;
+  const inserted = nodeDefs.map((def, i) => buildInsertedNode(def, phase, i === 0 ? 'active' : 'locked'));
+  nodes.splice(currentIndex + 1, 0, ...inserted);
+  await updateDoc(docRef, {
+    'study.path.nodes': nodes,
+    'study.path.activeNodeId': inserted[0].id,
+    'study.path.totalNodes': nodes.filter(n => n.type !== 'section_banner').length,
+    'study.tonight': tonight,
+    'study.lastActionAt': serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  clarityEvent('tonight_round_started');
+  return { insertedNodes: inserted, updatedNodes: nodes };
+};
+
+/** Save the tonight state alone (a round closed, nothing inserted). */
+export const saveTonightState = async (chatId, tonight) => {
+  await updateDoc(doc(db, 'chats', chatId), { 'study.tonight': tonight, updatedAt: serverTimestamp() });
+};
+
 export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) => {
   try {
     const docRef = doc(db, 'chats', chatId);
@@ -468,34 +547,7 @@ export const insertNodeAfterCurrent = async (chatId, currentNodeId, newNodeDef) 
     };
 
     // Build the new node with a unique ID and active status
-    const insertedNode = {
-      id: `adaptive-${uuidv4().slice(0, 8)}`,
-      type: newNodeDef.type,
-      label: newNodeDef.label,
-      tags: newNodeDef.tags || [],
-      difficulty: newNodeDef.difficulty || 1,
-      adaptive: true,
-      reason: newNodeDef.reason || '',
-      ...(newNodeDef.detour ? { detour: newNodeDef.detour } : {}),
-      // The subject, kept apart from the display label. Generation reads it
-      // first; without it an inserted node is generated from its label
-      // ("Testing a theory: …"), which is not a topic at all. See nodeTopic.js.
-      ...(newNodeDef.topic ? { topic: newNodeDef.topic } : {}),
-      status: 'active',
-      messageId: null,
-      // Carry phase from current node so it appears in the right section
-      phase: nodes[currentIndex].phase || 1,
-      // Node-specified length, omitted unless the caller asked for one. The
-      // fields here are an explicit whitelist, so anything not listed is
-      // silently dropped — which is how the single-question pattern
-      // experiment quietly became a full-length quiz.
-      ...(newNodeDef.num_questions ? { num_questions: newNodeDef.num_questions } : {}),
-      // Pre-decided mini-test settings. Set by the post-node recommendation,
-      // whose whole claim is that NurseQuiz already chose the format — a node
-      // that arrives without this stops at the config modal and asks her to
-      // choose it herself, which contradicts the copy that got her here.
-      ...(newNodeDef.examConfig ? { examConfig: newNodeDef.examConfig } : {})
-    };
+    const insertedNode = buildInsertedNode(newNodeDef, nodes[currentIndex].phase, 'active');
 
     // Splice the new node right after the current one
     nodes.splice(currentIndex + 1, 0, insertedNode);
@@ -1563,6 +1615,8 @@ export default {
   updateNodeStatus,
   completeNodeAndAdvance,
   insertNodeAfterCurrent,
+  insertRoundAfterCurrent,
+  saveTonightState,
   addAskedHash,
   pauseStudySession,
   resumeStudySession,

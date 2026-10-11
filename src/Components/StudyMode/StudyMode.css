@@ -15079,17 +15079,6 @@ body.dark-mode .nt3-note {
   padding: 20px;
 }
 
-/* The selected order already appears above; avoid repeating it in a second
-   narrow column next to the correction. */
-.study-step-card .case-study-container .case-order-comparison {
-  grid-template-columns: minmax(0, 1fr);
-  gap: 0;
-}
-
-.study-step-card .case-study-container .case-order-comparison > section:first-child {
-  display: none;
-}
-
 .study-step-card .case-study-container .case-study-submit-btn,
 .study-step-card .case-study-container .case-study-next-btn {
   position: static;

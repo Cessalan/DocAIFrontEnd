@@ -10,6 +10,11 @@ import StudyStepCard from './StudyStepCard';
 import StudyPlanOverview from './StudyPlanOverview';
 import QuizMasterySummary from './QuizMasterySummary';
 import NodeTransition from './NodeTransition';
+import { TonightPanel, TonightRoundView } from './TonightPlan';
+import {
+  ROLE as TONIGHT_ROLE, tonightRole, examEvidence, completeRound, startRound, currentRound, pickTarget,
+  roundNodes, tally as tonightTally,
+} from './tonightPlanModel';
 import PlanAdvance from './PlanAdvance';
 import { hasUsableStudyContent } from './planAdvanceReadiness';
 import NurseQuizMascot from '../QuizRoom/NurseQuizMascot';
@@ -39,6 +44,8 @@ import {
   updateNodeStatus,
   completeNodeAndAdvance,
   insertNodeAfterCurrent,
+  insertRoundAfterCurrent,
+  saveTonightState,
   addAskedHash,
   saveNodeContent,
   getNodeContent,
@@ -204,6 +211,23 @@ const StudyModeContainer = ({
   const [mindmapMessage, setMindmapMessage] = useState('');
   const [askedHashes, setAskedHashes] = useState([]);
   const [isComplete, setIsComplete] = useState(false);
+
+  // Tonight's plan (tonightPlanModel.js): its rounds, the between-steps
+  // screen, and the fix step's answers, held until the round's check closes
+  // the round (the fix step is taught, so it feeds the evidence, never the
+  // result).
+  const [tonight, setTonight] = useState(studyState?.tonight || null);
+  const [tonightView, setTonightView] = useState(null); // { mode: 'between'|'result', round, fixTally }
+  const [tonightBusy, setTonightBusy] = useState(false);
+  const tonightFixRef = useRef([]);
+  useEffect(() => { setTonight(studyState?.tonight || null); }, [chatId, studyState?.tonight]);
+  const daysToExam = useMemo(() => {
+    if (!examDate) return null;
+    const ms = new Date(examDate).getTime();
+    if (Number.isNaN(ms)) return null;
+    const days = Math.ceil((ms - Date.now()) / 86400000);
+    return days >= 0 ? days : null;
+  }, [examDate]);
 
   // Review confirmation modal state for completed nodes
   const [showReviewConfirm, setShowReviewConfirm] = useState(false);
@@ -1227,7 +1251,29 @@ const StudyModeContainer = ({
         setReadinessDelta(delta);
       }).catch(() => setReadinessDelta(null));
     }
-  }, [viewOnly, handleAdvanceNode, chatId, examDate, studyState, isReviewingNode, activeNode, currentContent]);
+
+    // Tonight's plan: a finished fix step leads to its check; a finished
+    // check closes the round and shows its result, instead of the usual
+    // transition and its recommendations (the round already decided what
+    // comes next).
+    const tonightStep = tonightRole(activeNode);
+    if (tonight && tonightStep && !isReviewingNode) {
+      const entries = examEvidence(latestQuizProgressRef.current?.answers, activeNode?.topic);
+      if (tonightStep.role === TONIGHT_ROLE.FIX) {
+        tonightFixRef.current = entries;
+        setTonightView({ mode: 'between', round: currentRound(tonight), fixTally: entries.length ? tonightTally(entries) : null });
+      } else {
+        const closed = completeRound(tonight, entries, tonightFixRef.current);
+        tonightFixRef.current = [];
+        setTonight(closed);
+        saveTonightState(chatId, closed).catch(error => console.error('Could not save the tonight round:', error));
+        const round = closed.rounds[closed.rounds.length - 1];
+        if (round?.outcome) clarityEvent(`tonight_round_${round.outcome}`);
+        setTonightView({ mode: 'result', round });
+      }
+      setView('tonight');
+    }
+  }, [viewOnly, handleAdvanceNode, chatId, examDate, studyState, isReviewingNode, activeNode, currentContent, tonight]);
 
   // Lightweight analytics sink — currently logs in dev. Wire this to
   // a real provider (PostHog, Amplitude, GA) later without touching
@@ -1382,6 +1428,46 @@ const StudyModeContainer = ({
       if (scope === advanceScopeRef.current) { setIsLoadingPractice(false); advanceLockRef.current = false; }
     }
   }, [chatId, activeNodeId, handleStartNode]);
+
+  // ── Tonight's plan: the next round, or stopping for tonight ─────────
+  // A round is inserted after the step she just finished, in one write with
+  // the round state, then its first step launches. Works from the round
+  // result screen and from the plan overview after she stopped.
+  const handleTonightNextRound = useCallback(async () => {
+    if (!tonight || advanceLockRef.current) return;
+    advanceLockRef.current = true;
+    setTonightBusy(true);
+    try {
+      const next = startRound(tonight);
+      const defs = roundNodes(currentRound(next), t);
+      const anchor = activeNodeId
+        || [...nodesRef.current].reverse().find(node => node.type !== 'section_banner')?.id;
+      const { insertedNodes, updatedNodes } = await insertRoundAfterCurrent(chatId, anchor, defs, next);
+      const first = insertedNodes[0];
+      setTonight(next);
+      setNodes(updatedNodes);
+      setIsComplete(false);
+      setActiveNodeId(first.id);
+      setActiveNode(first);
+      setCurrentContent(null);
+      setTonightView(null);
+      const outcome = await handleStartNode(first);
+      if (outcome === 'blocked') setView('overview');
+    } catch (error) {
+      console.error('❌ Could not start the next round:', error);
+      setTonightView(null);
+      setView('overview');
+    } finally {
+      advanceLockRef.current = false;
+      setTonightBusy(false);
+    }
+  }, [tonight, activeNodeId, chatId, t, handleStartNode]);
+
+  const handleTonightStop = useCallback(async () => {
+    clarityEvent('tonight_stopped');
+    setTonightView(null);
+    await handleAdvanceNode();
+  }, [handleAdvanceNode]);
 
   // ── Transition screen: user submitted custom request ──────────────
   const handleTransitionCustomRequest = useCallback(async (userText, context = {}) => {
@@ -1960,6 +2046,29 @@ const StudyModeContainer = ({
   };
 
   // Render transition screen (post-node decision moment)
+  if (!planAdvance && view === 'tonight' && tonightView && tonight) {
+    const result = tonightView.mode === 'result';
+    return (
+      <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
+        <StudyModeHeader
+          unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
+          unitSubtitle={studyState?.path?.unitSubtitle || ''}
+        />
+        <TonightRoundView
+          mode={tonightView.mode}
+          round={tonightView.round}
+          fixTally={tonightView.fixTally}
+          nextTarget={result ? pickTarget(tonight) : null}
+          evidence={tonight.evidence}
+          busy={tonightBusy || isAdvancing}
+          onContinue={() => { setTonightView(null); handleTransitionContinue(); }}
+          onNextRound={handleTonightNextRound}
+          onStop={handleTonightStop}
+        />
+      </div>
+    );
+  }
+
   if (planAdvance || view === 'transition') {
     return (
       <div className={`study-mode-container study-mode-focused ${sidebarOpen ? 'sidebar-open' : 'sidebar-collapsed'}`}>
@@ -2080,6 +2189,18 @@ const StudyModeContainer = ({
           onStartPhase2={handleStartPhase2}
           onExtendBlock={handleExtendBlock}
           onDrillGaps={handleDrillGaps}
+          tonightPanel={tonight ? (
+            <TonightPanel
+              tonight={tonight}
+              nodes={nodes}
+              activeNodeId={activeNodeId}
+              daysToExam={daysToExam}
+              nextTarget={currentRound(tonight) ? null : pickTarget(tonight)}
+              busy={tonightBusy}
+              onOpenNode={handleNodeSelect}
+              onNextRound={handleTonightNextRound}
+            />
+          ) : null}
           isDev={isDev}
         />
 

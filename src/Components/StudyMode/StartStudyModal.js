@@ -16,6 +16,7 @@ import { createStudySession, waitForQuickCheckSave } from '../../Services/StudyS
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { getStepTopicLabel } from './planFormatting';
 import { buildFirstBlock, isRealNode } from './firstBlock';
+import { isTonightPlan, buildTonightPath } from './tonightPlanModel';
 
 import LockedPlanPreview from './LockedPlanPreview';
 import AutoHeight from './AutoHeight';
@@ -223,10 +224,12 @@ const StartStudyModal = ({
       const path = await planPromise;
       if (launchVersion !== launchVersionRef.current) return;
 
-      if (!path?.nodes?.length) throw new Error('Failed to generate study path');
+      // A Tonight's plan arrives with no steps by design: round 1 is built here.
+      if (!path?.nodes?.length && !isTonightPlan(path)) throw new Error('Failed to generate study path');
 
-      setPathResult(path);
-      if (startImmediately) await commitPlan(path);
+      const plan = adoptPlan(path);
+      setPathResult(plan);
+      if (startImmediately) await commitPlan(plan);
       else setPhase('plan_preview');
     } catch (err) {
       if (launchVersion !== launchVersionRef.current) return;
@@ -254,9 +257,10 @@ const StartStudyModal = ({
           { courseContext, courseIntelligence, quickCheckId }
         );
         if (launchVersion !== launchVersionRef.current) return;
-        if (!path?.nodes?.length) throw new Error('Failed to generate study path');
-        setPathResult(path);
-        if (startImmediately) await commitPlan(path);
+        if (!path?.nodes?.length && !isTonightPlan(path)) throw new Error('Failed to generate study path');
+        const plan = adoptPlan(path);
+        setPathResult(plan);
+        if (startImmediately) await commitPlan(plan);
         else setPhase('plan_preview');
       } catch (fallbackErr) {
         if (launchVersion !== launchVersionRef.current) return;
@@ -268,6 +272,11 @@ const StartStudyModal = ({
       if (launchVersion === launchVersionRef.current) generatingRef.current = false;
     }
   };
+
+  // An exam-is-tomorrow plan becomes Tonight's plan here, where the plan
+  // arrives, so the preview and the commit show the same steps
+  // (tonightPlanModel.js). Every other plan passes through unchanged.
+  const adoptPlan = (path) => (isTonightPlan(path) ? buildTonightPath(path, readiness?.answers || [], t) : path);
 
   // Save only after an explicit offer/preview acceptance, then enter activity 1.
   const commitPlan = async (path) => {
@@ -292,6 +301,7 @@ const StartStudyModal = ({
       logFunnelStep(FUNNEL.PLAN_STARTED, {
         nodeCount: path?.nodes?.length || 0,
         archetype: path?.archetype || null,
+        ...(path?.tonight ? { tonight: true, tonightFirst: path.tonight.rounds?.[0]?.skill || path.tonight.rounds?.[0]?.kind } : {}),
         ...(readiness?.funnelId ? { funnelId: readiness.funnelId } : {}),
         ...(startImmediately ? { onboardingVersion: 'practice_first_v1', via: 'quick_check_offer' } : {}),
       });

@@ -5,7 +5,8 @@
  *
  * NGN (Next Generation NCLEX) style case study question with:
  * - Tabbed clinical data (Nurses' Notes, Vital Signs, Lab Results)
- * - Drag-and-drop reordering for answers
+ * - Tap-to-order answers (drag and arrows were replaced 2026-10-11: one
+ *   student spent two minutes of arrow taps placing six actions)
  * - NCLEX-style scoring
  *
  * Props:
@@ -178,7 +179,8 @@ function CaseStudyQuestion({
   previousAnswer = null,
   onOpenModal,
   tutorPanel,
-  onOpenTutor
+  onOpenTutor,
+  forceWalkthrough = false
 }) {
   const { t, i18n } = useTranslation();
 
@@ -196,6 +198,21 @@ function CaseStudyQuestion({
   const [activeTab, setActiveTab] = useState(TAB_KEYS.NURSES_NOTES);
   const [mobileView, setMobileView] = useState('chart');
   const [items, setItems] = useState([]);
+  // Tap to order: the ids she has placed, first to last. Replaced drag and
+  // the step-at-a-time arrows: a real student spent two minutes and dozens of
+  // arrow taps placing six actions (Clarity, 2026-10-11). Tapping in the
+  // order she would do them is one tap per action, the same on a phone, and
+  // is how the "Who first?" walkthrough already asks her to place them.
+  const [placed, setPlaced] = useState([]);
+  // After a tap the rows move, so a different action slides under her finger.
+  // A second tap that fast is the same tap bouncing, not a choice.
+  const lastTapRef = useRef(0);
+  const tapOnce = (fn) => () => {
+    const now = Date.now();
+    if (now - lastTapRef.current < 350) return;
+    lastTapRef.current = now;
+    fn();
+  };
 
   // Track if answer has been submitted
   const [revealed, setRevealed] = useState(false);
@@ -368,6 +385,7 @@ function CaseStudyQuestion({
 
     // Mark as initialized
     initializedQuizRef.current = quizId;
+    setPlaced([]);
     setWalkthrough({ status: 'idle', data: null, open: false });
     walkthroughFor.current = null;
 
@@ -424,11 +442,16 @@ function CaseStudyQuestion({
 
   const handleSubmit = useCallback(() => {
     if (revealed || !quiz) return;
+    if (placed.length !== normalizedOptions.length) return;
 
     setRevealed(true);
 
+    // Her tapped order is the answer, and becomes the list the reveal shows.
+    const ordered = placed.map(id => normalizedOptions.find(option => option.id === id)).filter(Boolean);
+    setItems(ordered);
+
     // Calculate score
-    const userOrder = items.map(item => item.id);
+    const userOrder = ordered.map(item => item.id);
     const result = calculateOrderingScore(userOrder, correctOrder, 'partial');
     setScoreResult(result);
 
@@ -440,8 +463,11 @@ function CaseStudyQuestion({
     // Missed: start writing the walkthrough while she reads the feedback. The
     // first misses on a device open it on their own, as for select-all.
     if (!result.isFullyCorrect && !reviewMode && correctOrder.length >= 3) {
-      if (shouldAutoOpen()) {
-        recordAutoOpen();
+      // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
+      // miss even after the first-time auto-opens are used up, because a
+      // fix round that doesn't teach is just the drill that never worked.
+      if (forceWalkthrough || shouldAutoOpen()) {
+        if (!forceWalkthrough) recordAutoOpen();
         openWalkthrough(true);
       } else {
         walkthroughFor.current = quiz.question;
@@ -466,7 +492,7 @@ function CaseStudyQuestion({
         timestamp: new Date()
       });
     }
-  }, [revealed, quiz, items, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough]);
+  }, [revealed, quiz, placed, normalizedOptions, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough, forceWalkthrough]);
 
   // ----------------------------------------
   // Early Return
@@ -590,11 +616,41 @@ function CaseStudyQuestion({
         {/* Instructions */}
         {!revealed && (
           <div className="case-study-hint">
-            {t('caseStudy.orderInstructions', 'Place the first action at the top. Drag the handle or use the arrows.')}
+            {t('caseStudy.tapInstructions', 'Tap the actions in the order you would do them. Tap a numbered one to take it back.')}
           </div>
         )}
 
-        {/* Drag and Drop Area */}
+        {/* Tap to order, until she submits */}
+        {!revealed && (
+          <div className="case-study-drag-area case-tap-area">
+            {placed.map((id, index) => {
+              const item = normalizedOptions.find(option => option.id === id);
+              if (!item) return null;
+              return (
+                <button key={id} type="button" className="case-study-drag-item case-tap-item is-placed"
+                  onClick={tapOnce(() => setPlaced(current => current.filter(other => other !== id)))}
+                  aria-label={t('caseStudy.tapRemove', 'Take back action {{number}}', { number: index + 1 })}>
+                  <span className="case-priority-number">{index + 1}</span>
+                  <span className="drag-item-text">{item.text}</span>
+                  <span className="case-tap-undo" aria-hidden="true">×</span>
+                </button>
+              );
+            })}
+            {placed.length > 0 && placed.length < normalizedOptions.length && (
+              <p className="case-tap-next">{t('caseStudy.tapNext', 'Which comes number {{number}}?', { number: placed.length + 1 })}</p>
+            )}
+            {normalizedOptions.filter(option => !placed.includes(option.id)).map(item => (
+              <button key={item.id} type="button" className="case-study-drag-item case-tap-item"
+                onClick={tapOnce(() => setPlaced(current => (current.includes(item.id) ? current : [...current, item.id])))}>
+                <span className="case-tap-slot" aria-hidden="true" />
+                <span className="drag-item-text">{item.text}</span>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Her order, marked, after she submits */}
+        {revealed && (
         <div className="case-study-drag-area">
           <DndContext
             sensors={sensors}
@@ -625,16 +681,19 @@ function CaseStudyQuestion({
             </SortableContext>
           </DndContext>
         </div>
+        )}
 
         {/* Submit Button */}
         {!revealed && !reviewMode && (
           <button
-            className="case-study-submit-btn enabled"
+            className={`case-study-submit-btn ${placed.length === normalizedOptions.length && placed.length > 0 ? 'enabled' : 'disabled'}`}
             onClick={handleSubmit}
-            disabled={!items.length}
+            disabled={!placed.length || placed.length !== normalizedOptions.length}
             type="button"
           >
-            {t('caseStudy.submitOrder', 'Submit Order')}
+            {placed.length === normalizedOptions.length
+              ? t('caseStudy.submitOrder', 'Submit Order')
+              : t('caseStudy.tapProgress', '{{placed}} of {{total}} placed', { placed: placed.length, total: normalizedOptions.length })}
           </button>
         )}
 
@@ -682,25 +741,10 @@ function CaseStudyQuestion({
               <p className="sata-walkthrough-status" aria-live="polite">{t('orderWalkthrough.unavailable')}</p>
             )}
 
-            {/* Show correct order if not fully correct. While the walkthrough
-                is open it is the one thing on screen; the comparison and the
-                explanation come back when she closes it. */}
-            {!scoreResult.isFullyCorrect && !(walkthrough.open && walkthrough.status !== 'unavailable') && (
-              <div className="case-order-comparison">
-                <section><p className="correct-order-label">{t('caseStudy.yourOrder', 'Your order')}</p><ol className="correct-order-list">{items.map(item => <li key={item.id} className="correct-order-item">{item.text}</li>)}</ol></section>
-              <section className="correct-order-section">
-                <p className="correct-order-label">
-                  {t('caseStudy.correctOrder', 'Correct Order:')}
-                </p>
-                <ol className="correct-order-list">
-                  {correctOrder.map(id => (
-                    <li key={id} className="correct-order-item">
-                      {normalizedOptions.find(item => item.id === id)?.text || id}
-                    </li>
-                  ))}
-                </ol>
-              </section></div>
-            )}
+            {/* No side-by-side "your order / correct order" lists: the marked
+                list above already shows each action with its expected number,
+                and repeating it as two more lists only made the card longer
+                (owner, 2026-10-11). */}
 
             {/* Justification */}
             {quiz.justification && !(walkthrough.open && walkthrough.status !== 'unavailable') && (

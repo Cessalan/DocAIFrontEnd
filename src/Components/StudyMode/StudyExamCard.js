@@ -30,6 +30,7 @@ const StudyExamCard = ({
   onContinue,        // When exam is complete
   onExit,            // Exit exam
   viewOnly = false,
+  teachOnMiss = false, // Tonight's plan fix step: her first miss opens the walkthrough
 }) => {
   const { t } = useTranslation();
 
@@ -43,6 +44,7 @@ const StudyExamCard = ({
   const [currentIndex, setCurrentIndex] = useState(savedProgress?.currentIndex || 0);
   const [answers, setAnswers] = useState(savedProgress?.answers || {}); // { [index]: answerData }
   const [showFeedback, setShowFeedback] = useState(false);
+  const [taught, setTaught] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const [showCelebration, setShowCelebration] = useState(false);
 
@@ -160,6 +162,9 @@ const StudyExamCard = ({
   // ── SATA / CaseStudy answer handler ──
   const handleComplexAnswer = (answerData) => {
     setShowFeedback(true);
+    // Teach once per step: after the first walkthrough she has the method,
+    // and every later miss still offers it through the button.
+    if (teachOnMiss && !answerData.isCorrect) setTaught(true);
 
     if (answerData.isCorrect) playCorrectSound();
     else playIncorrectSound();
@@ -369,6 +374,7 @@ const StudyExamCard = ({
           onAnswerSelect={handleComplexAnswer}
           onNext={handleNext}
           isLastQuestion={isLastQuestion}
+          forceWalkthrough={teachOnMiss && !taught}
           inModal={false}
         />
       )}
@@ -382,6 +388,7 @@ const StudyExamCard = ({
           onAnswerSelect={handleComplexAnswer}
           onNext={handleNext}
           isLastQuestion={isLastQuestion}
+          forceWalkthrough={teachOnMiss && !taught}
           inModal={false}
         />
       )}

@@ -59,7 +59,7 @@ it('breaks the chart down, labels the actions, then climbs the ladder with her',
   expect(screen.getByText(/Ordering questions are hard/)).toBeInTheDocument();
 
   // 1. The chart: each deciding detail lit and explained, in turn.
-  fireEvent.click(screen.getByText('Start with the chart'));
+  fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
   expect(screen.getByText('Reading the chart…')).toBeInTheDocument();
   expect(screen.queryByText('Look at the actions')).toBeNull();
   flush();
@@ -117,7 +117,7 @@ it('can be closed at any point', () => {
 
 it('does not take taps while the tutor is placing number 1', () => {
   renderIt();
-  fireEvent.click(screen.getByText('Start with the chart')); flush();
+  fireEvent.click(screen.getByRole('button', { name: 'Watch' })); flush();
   fireEvent.click(screen.getByText('Look at the actions')); flush();
   fireEvent.click(screen.getByText('Watch me find number 1'));
   // Rows are not buttons during the demonstration.

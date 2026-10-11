@@ -181,7 +181,8 @@ function SATAQuestion({
   inModal = false,
   reviewMode = false,
   previousAnswer = null,
-  onOpenModal
+  onOpenModal,
+  forceWalkthrough = false
 }) {
   // ----------------------------------------
   // Hooks & State
@@ -350,8 +351,11 @@ function SATAQuestion({
     // button inside the feedback box was easy to miss (owner, 2026-10-10).
     if (!result.isFullyCorrect && !reviewMode) {
       requestWalkthrough();
-      if (shouldAutoOpen()) {
-        recordAutoOpen();
+      // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
+      // miss even after the first-time auto-opens are used up, because a
+      // fix round that doesn't teach is just the drill that never worked.
+      if (forceWalkthrough || shouldAutoOpen()) {
+        if (!forceWalkthrough) recordAutoOpen();
         openWalkthrough();
       }
     }

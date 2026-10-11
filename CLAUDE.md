@@ -169,6 +169,8 @@ the `plan_onboarding` chat message:
 
 Pure logic is deliberately extracted into small tested modules next to the container — `studySchedule.js`, `readinessDelta.js`, `firstBlock.js`, `nodeReadout.js`, `knowledgeMapModel.js`, `coachMessageModel.js`, `studyHistoryModel.js`, `examNudgeModel.js`, `readinessProjection.js`, plus `Services/conceptLedger.js`. **Follow this pattern**: new derivation logic goes in a sibling `*.js` with a `*.test.js`, not inline in the component. The file headers explain *why* each exists, usually citing a specific bug or measured funnel — read the header before changing the maths.
 
+**Tonight's plan** (2026-10-10): when the planner returns `archetype: 'sprint'` (exam 2 days away or less), `StartStudyModal.adoptPlan` replaces its topic tests with round 1 of open-ended rounds (`tonightPlanModel.js`, `TonightPlan.js`). Each round is a taught fix step (exam node; her first miss opens the walkthrough via `teachOnMiss` → `forceWalkthrough`) then a check on new questions, with an honest before/after; the next round is chosen from `study.tonight.evidence` and inserted with `insertRoundAfterCurrent`, for as long as she wants. Round steps carry `tonight:*` tags, and the container shows `TonightRoundView` instead of `NodeTransition` after them. The backend is unchanged: it still plans (and prefetches the first step of) the sprint path, which is now unused; it rides the in-memory path as `plannerNodes` and is not saved.
+
 Notably, the dated schedule and readiness numbers are **derived per render, never persisted**, and `conceptLedger` keys on the LLM-produced concept label rather than question text (a missing key is skipped, never fabricated).
 
 ## Conventions

@@ -745,38 +745,6 @@ body.dark-mode .case-study-container .feedback-score {
   color: var(--q-text);
 }
 
-/* Correct order list */
-.correct-order-section {
-  margin-bottom: 12px;
-  padding: 12px;
-  background: rgba(255, 255, 255, 0.5);
-  border-radius: 8px;
-}
-
-body.dark-mode .correct-order-section {
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.correct-order-label {
-  font-family: 'Kalam', 'Patrick Hand', cursive;
-  font-size: 13px;
-  font-weight: 700;
-  color: var(--q-accent-text);
-  margin: 0 0 6px;
-}
-
-.correct-order-list {
-  margin: 0;
-  padding-left: 20px;
-  font-size: 13px;
-  color: var(--q-text);
-  line-height: 1.6;
-}
-
-.correct-order-item {
-  padding: 2px 0;
-}
-
 /* Rationale */
 /* Neutral surface — see the note in SATAQuestion.css */
 .case-study-container .feedback-rationale-container {
@@ -985,20 +953,6 @@ body.dark-mode .case-study-container .feedback-rationale-container {
   padding: 4px 14px;
 }
 
-.case-study-container.in-modal .correct-order-section {
-  padding: 14px;
-  margin-bottom: 16px;
-}
-
-.case-study-container.in-modal .correct-order-label {
-  font-size: 14px;
-  margin-bottom: 10px;
-}
-
-.case-study-container.in-modal .correct-order-list {
-  font-size: 14px;
-}
-
 .case-study-container.in-modal .feedback-rationale-content {
   max-height: 220px;
   font-size: 14px;
@@ -1189,6 +1143,32 @@ body.dark-mode .case-study-container .feedback-rationale-container {
 .case-move-controls button:hover:not(:disabled) { background: var(--q-accent-soft); color: var(--q-accent-text); }
 .case-move-controls button:disabled { opacity: .22; cursor: default; }
 .case-study-container button:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 3px; }
+/* Tap to order (CaseStudyQuestion.js). Placed actions rise to the top with
+   their number; the rest wait below with an empty slot. Buttons, so they get
+   the item look without the grab cursor or touch locking of the drag list. */
+.case-study-container button.case-tap-item {
+  width: 100%; text-align: left; font: inherit; color: var(--q-text); cursor: pointer;
+  touch-action: manipulation; user-select: none;
+}
+.case-study-container button.case-tap-item.is-placed { border-color: var(--q-accent-line); background: var(--q-accent-soft); }
+.case-study-container button.case-tap-item.is-placed .case-priority-number {
+  background: var(--q-accent-dark); color: #fff; animation: caseTapPop 0.35s ease-out;
+}
+.case-tap-slot {
+  flex: 0 0 30px; height: 30px; border-radius: 50%; box-sizing: border-box;
+  border: 1.5px dashed var(--q-border);
+}
+.case-study-container button.case-tap-item:not(.is-placed):hover .case-tap-slot { border-color: var(--q-accent); }
+.case-tap-undo { flex: none; color: var(--q-text-muted); font-size: 18px; line-height: 1; padding: 0 2px; }
+.case-study-container button.case-tap-item.is-placed:hover .case-tap-undo { color: var(--q-accent-text); }
+.case-tap-next { margin: 4px 2px 0; font-size: 13px; color: var(--q-text-soft); }
+@keyframes caseTapPop { 0% { transform: scale(0.6); } 70% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .case-study-container button.case-tap-item.is-placed .case-priority-number { animation: none; } }
+body.dark-mode .case-study-container button.case-tap-item.is-placed .case-priority-number { color: #1a1a1a; }
+/* The empty slot is the "tap me" cue; the card's hairline border vanishes on
+   the dark surface. */
+body.dark-mode .case-tap-slot { border-color: rgba(255, 255, 255, 0.32); }
+
 /* Submit: the split layout needs it auto-width and right-aligned (full width
    across the answer pane reads as a banner), but everything ELSE about it must
    match `.study-continue-btn` and `.sata-submit-btn`, which are identical to
@@ -1213,11 +1193,9 @@ body.dark-mode .case-study-container .feedback-rationale-container {
   font-weight: 700;
   box-shadow: 3px 4px 0 rgba(196, 106, 90, 0.4), 0 4px 12px rgba(232, 141, 125, 0.3);
 }
-.case-order-comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; text-align: left; }
-.case-study-container .case-order-comparison .correct-order-section { margin: 0; }
 .case-study-container .case-study-feedback { border: 0; background: var(--q-sunken); padding: 24px; border-radius: 16px; text-align: left; }
 body.dark-mode .case-study-container, [data-theme="dark"] .case-study-container, .dark .case-study-container { --q-sunken: #292826; --q-text: #eee9df; --q-text-soft: #bdb7ad; --q-accent: #c7b8de; --q-accent-text: #c7b8de; --q-accent-soft: rgba(199,184,222,.09); --q-accent-line: rgba(199,184,222,.2); }
-@media (max-width: 720px) { .case-chart-grid, .case-order-comparison { grid-template-columns: minmax(0,1fr); } .case-chart-nursesNotes { grid-row: auto; } .case-study-container .case-study-drag-item { flex-wrap: wrap; gap: 8px; padding: 13px; } .case-move-controls { margin-left: auto; } .case-study-container .drag-item-text { flex-basis: calc(100% - 70px); } }
+@media (max-width: 720px) { .case-chart-grid { grid-template-columns: minmax(0,1fr); } .case-chart-nursesNotes { grid-row: auto; } .case-study-container .case-study-drag-item { flex-wrap: wrap; gap: 8px; padding: 13px; } .case-move-controls { margin-left: auto; } .case-study-container .drag-item-text { flex-basis: calc(100% - 70px); } }
 @media (prefers-reduced-motion: reduce) { .case-study-container .case-study-drag-item { transition: none !important; } }
 
 /* Keep the reference chart and the decision in separate, bounded panes. */
