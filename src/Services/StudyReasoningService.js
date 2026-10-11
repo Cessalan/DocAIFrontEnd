@@ -10,8 +10,12 @@ async function nodeMessage(chatId, nodeId) {
   return result.docs[0];
 }
 export async function loadReasoning(chatId, nodeId, index) {
-  const message = await nodeMessage(chatId, nodeId);
-  const discussion = await getDoc(doc(message.ref, 'reasoningDiscussions', String(index)));
+  // A quiz renders while its node is still streaming, before the node message
+  // is saved. No message yet means no discussion yet, not an error: treating it
+  // as one put "could not load" under the first questions of every quiz.
+  const result = await getDocs(query(collection(db, 'chats', chatId, 'messages'), where('nodeId', '==', nodeId), limit(1)));
+  if (result.empty) return [];
+  const discussion = await getDoc(doc(result.docs[0].ref, 'reasoningDiscussions', String(index)));
   return discussion.data()?.history || [];
 }
 export async function saveReasoning(chatId, nodeId, index, history) {

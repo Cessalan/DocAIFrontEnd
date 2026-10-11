@@ -1,5 +1,5 @@
-import { loadNodeReasoning, saveReasoning, saveReasoningSummary } from './StudyReasoningService';
-import { getDocs, setDoc, where } from 'firebase/firestore';
+import { loadNodeReasoning, loadReasoning, saveReasoning, saveReasoningSummary } from './StudyReasoningService';
+import { getDoc, getDocs, setDoc, where } from 'firebase/firestore';
 
 jest.mock('../Firebase/config', () => ({ auth: {}, db: 'db' }));
 jest.mock('firebase/firestore', () => ({
@@ -18,6 +18,18 @@ test('loads only this node and removes source bulk and unsupported roles', async
   expect(await loadNodeReasoning('chat', 'node')).toEqual([{ question_index: 2, history: [{ role: 'user', content: 'My explanation' }] }]);
   expect(where).toHaveBeenCalledWith('nodeId', '==', 'node');
   expect(getDocs.mock.calls[1][0]).toBe('chats/chat/messages/message/reasoningDiscussions');
+});
+
+test('a question whose node is not saved yet has an empty discussion, not an error', async () => {
+  getDocs.mockResolvedValueOnce({ empty: true, docs: [] });
+  expect(await loadReasoning('chat', 'node', 0)).toEqual([]);
+  expect(getDoc).not.toHaveBeenCalled();
+});
+
+test('a saved discussion still loads', async () => {
+  getDocs.mockResolvedValueOnce(message);
+  getDoc.mockResolvedValueOnce({ data: () => ({ history: [{ role: 'user', content: 'Why B?' }] }) });
+  expect(await loadReasoning('chat', 'node', 3)).toEqual([{ role: 'user', content: 'Why B?' }]);
 });
 
 test('finishing a node waits for its outstanding discussion save', async () => {
