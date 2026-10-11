@@ -6,6 +6,13 @@
       "runtimeExecutable": "npm",
       "runtimeArgs": ["start"],
       "port": 3000
+    },
+    {
+      "name": "nqbackend",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": ["/c", "cd /d C:\\Users\\Billion\\Desktop\\NQBackEnd\\NQBackEnd2 && venv\\Scripts\\python.exe -X utf8 -m uvicorn main:app --port 8000"],
+      "port": 8000,
+      "url": "http://127.0.0.1:8000"
     }
   ]
 }

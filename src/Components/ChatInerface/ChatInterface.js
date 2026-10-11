@@ -1174,6 +1174,17 @@ const ChatInterface = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chatId]);
 
+  // The backend renames the chat after an upload (generate_and_save_chat_title).
+  // The title above is read once on open, so without this the header kept the
+  // placeholder while the sidebar already showed the real name.
+  useEffect(() => {
+    if (!currentChatID) return undefined;
+    return onSnapshot(doc(db, "chats", currentChatID), (snap) => {
+      const title = snap.data()?.title;
+      if (title) setChatTitle(title);
+    }, () => {});
+  }, [currentChatID]);
+
   // Load messages from Firebase
   useEffect(() => {
     if (!currentChatID) {
@@ -2921,8 +2932,9 @@ const ChatInterface = ({
 
     const newChat = {
       userId: user.uid,
-      title: "Nouveau Chat",
-      description: "Nouvelle conversation",
+      // Same words as the sidebar's "New study session" button, in her language.
+      title: t('side.newChat', 'New study session'),
+      description: t('side.newChat', 'New study session'),
       updatedAt: serverTimestamp()
     };
 
@@ -4421,6 +4433,17 @@ const ChatInterface = ({
       const wowConfig = getWowEffectConfig(studyGoal, reviewFormat);
       if (wowConfig) {
         devLog('Triggering Quick Start action:', wowConfig.actionId);
+
+        // A plan is built from her notes, and right after signup there are
+        // none yet and often no chat either. Opening the plan modal here sent
+        // chat_id: null and showed a new student a raw 422 on her first
+        // screen. Open the upload door instead; her choice is already on her
+        // profile and the first-upload card offers the plan once notes exist.
+        if (wowConfig.actionId === 'studyjourney' &&
+            (!currentChatIDRef.current || !uploadedFilesListRef.current?.length)) {
+          setExamPrepExpanded(true);
+          return;
+        }
 
         const topic = studyGoal === 'NCLEX Prep' || userStage === 'Final Semester/NCLEX Prep'
           ? 'NCLEX Preparation'

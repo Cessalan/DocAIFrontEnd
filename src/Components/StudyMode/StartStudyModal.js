@@ -184,6 +184,11 @@ const StartStudyModal = ({
   // tailored quick-check offer. Closing during generation cancels either flow.
   const handleStartJourney = async () => {
     if (generatingRef.current || committingRef.current) return;
+    // No chat means no notes to plan from; the server can only refuse (422).
+    if (!chatId) {
+      setError(t('study.errorGenerating', 'Failed to create study path. Please try again.'));
+      return;
+    }
     const launchVersion = ++launchVersionRef.current;
     // ── The plan gate, relocated ──────────────────────────────────────
     // A study path plus its first node is the most expensive call in the
@@ -265,7 +270,8 @@ const StartStudyModal = ({
       } catch (fallbackErr) {
         if (launchVersion !== launchVersionRef.current) return;
         console.error('Error starting study journey (fallback):', fallbackErr);
-        setError(fallbackErr.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
+        // The server's text is for the console, not for her.
+        setError(t('study.errorGenerating', 'Failed to create study path. Please try again.'));
         setPhase('idle');
       }
     } finally {
@@ -312,7 +318,7 @@ const StartStudyModal = ({
       if (onStart) onStart(studyState);
     } catch (err) {
       console.error('Error creating study session:', err);
-      setError(err.message || t('study.errorGenerating', 'Failed to create study path. Please try again.'));
+      setError(t('study.errorGenerating', 'Failed to create study path. Please try again.'));
       setPhase('plan_preview');
       committingRef.current = false;
     }

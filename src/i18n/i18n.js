@@ -686,7 +686,7 @@ const resources = {
       postUpload: {
         // Action button labels
         checkmeLabel: "Check my understanding",
-        studyjourneyLabel: "Build a study plan",
+        studyjourneyLabel: "Study for my exam",
         quizLabel: "Quiz me",
         flashcardsLabel: "Create flashcards",
         studysheetLabel: "Study sheet",
@@ -3412,7 +3412,7 @@ const resources = {
 
       postUpload: {
         // Action button labels
-        studyjourneyLabel: "Créer un plan d’étude",
+        studyjourneyLabel: "Réviser pour mon examen",
         checkmeLabel: "Vérifie ma compréhension",
         quizLabel: "Quiz",
         flashcardsLabel: "Créer des cartes mémoire",

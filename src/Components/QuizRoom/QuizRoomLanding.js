@@ -6,7 +6,9 @@ import BrainMascot from './BrainMascot';
 import { FlagStrip } from '../Common/CountryFlags';
 import SchoolMarquee from '../Common/SchoolMarquee';
 import { ReactComponent as HeartLogo } from '../../assets/favicon.svg';
-import { setPendingFiles } from '../../utils/pendingUploadStore';
+// Aliased: this component has its own `pendingFiles` state, whose setter used
+// to shadow this import, so the handoff to /c silently stored nothing.
+import { setPendingFiles as storePendingFiles } from '../../utils/pendingUploadStore';
 import './QuizRoomLanding.css';
 // Import the login prompt styles from DedicatedQuizPage
 import './DedicatedQuizPage.css';
@@ -339,7 +341,7 @@ const QuizRoomLanding = () => {
       };
 
       // Store File objects in memory — avoids iOS sessionStorage 5MB limit
-      setPendingFiles(fileArray, meta);
+      storePendingFiles(fileArray, meta);
 
       setUploadPhase('idle');
       navigate('/c');
@@ -368,7 +370,7 @@ const QuizRoomLanding = () => {
         })),
         timestamp: Date.now()
       };
-      setPendingFiles(files, meta);
+      storePendingFiles(files, meta);
       return true;
     } catch (error) {
       console.error('Failed to store pending files:', error);

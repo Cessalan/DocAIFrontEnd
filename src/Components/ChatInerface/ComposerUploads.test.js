@@ -36,7 +36,7 @@ test('suggestions put the study plan first and pass the picked action', () => {
   render(<ComposerSuggestions onPick={pick} />);
   const buttons = screen.getAllByRole('button');
   expect(buttons.map(b => b.textContent)).toEqual(
-    ['Build a study plan', 'Check my understanding', 'Quiz me', 'Study sheet', 'Create flashcards']);
+    ['Study for my exam', 'Check my understanding', 'Quiz me', 'Study sheet', 'Create flashcards']);
   fireEvent.click(screen.getByRole('button', { name: 'Quiz me' }));
   expect(pick).toHaveBeenCalledWith('quiz');
   expect(UPLOAD_SUGGESTIONS[0]).toBe('studyjourney');
@@ -45,5 +45,5 @@ test('suggestions put the study plan first and pass the picked action', () => {
 test('suggestions are translated', () => {
   i18n.changeLanguage('fr');
   render(<ComposerSuggestions onPick={() => {}} />);
-  expect(screen.getByRole('button', { name: 'Créer un plan d’étude' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Réviser pour mon examen' })).toBeInTheDocument();
 });
