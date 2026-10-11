@@ -180,7 +180,10 @@ function CaseStudyQuestion({
   onOpenModal,
   tutorPanel,
   onOpenTutor,
-  forceWalkthrough = false
+  forceWalkthrough = false,
+  // Exam conditions (StudyQuizCard): recorded without a verdict, so a miss
+  // must not start or open the "Who first?" walkthrough either.
+  deferFeedback = false
 }) {
   const { t, i18n } = useTranslation();
 
@@ -462,7 +465,7 @@ function CaseStudyQuestion({
 
     // Missed: start writing the walkthrough while she reads the feedback. The
     // first misses on a device open it on their own, as for select-all.
-    if (!result.isFullyCorrect && !reviewMode && correctOrder.length >= 3) {
+    if (!result.isFullyCorrect && !reviewMode && !deferFeedback && correctOrder.length >= 3) {
       // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
       // miss even after the first-time auto-opens are used up, because a
       // fix round that doesn't teach is just the drill that never worked.
@@ -492,7 +495,7 @@ function CaseStudyQuestion({
         timestamp: new Date()
       });
     }
-  }, [revealed, quiz, placed, normalizedOptions, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough, forceWalkthrough]);
+  }, [revealed, quiz, placed, normalizedOptions, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough, forceWalkthrough, deferFeedback]);
 
   // ----------------------------------------
   // Early Return
@@ -692,7 +695,8 @@ function CaseStudyQuestion({
             type="button"
           >
             {placed.length === normalizedOptions.length
-              ? t('caseStudy.submitOrder', 'Submit Order')
+              ? (deferFeedback ? (isLastQuestion ? t('examMode.finish', 'Finish exam') : t('examMode.next', 'Next question'))
+                : t('caseStudy.submitOrder', 'Submit Order'))
               : t('caseStudy.tapProgress', '{{placed}} of {{total}} placed', { placed: placed.length, total: normalizedOptions.length })}
           </button>
         )}

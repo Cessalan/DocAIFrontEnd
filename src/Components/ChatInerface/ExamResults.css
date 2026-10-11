@@ -1,0 +1,43 @@
+/* End of an exam (ExamResults.js). Lists with hairline dividers and drawn
+   marks; uses the focused quiz's --practice-* tokens, which switch for dark. */
+.exam-results { max-width:700px; margin:0 auto; padding:8px 0 40px; color:var(--practice-ink, #332b2b); }
+.exam-results-kicker { margin:0 0 4px; font-size:12px; color:var(--practice-muted, #766d6a); }
+.exam-results-score { margin:0; font-size:26px; font-weight:600; line-height:1.25; }
+.exam-results-sub { margin:4px 0 14px; font-size:14px; color:var(--practice-muted, #766d6a); }
+.exam-results-section { margin-top:28px; }
+.exam-results-section h3 { margin:0 0 6px; font-size:13px; font-weight:600; color:var(--practice-muted, #766d6a); }
+.exam-results-section ul { list-style:none; margin:0; padding:0; }
+.exam-results-section li { display:grid; grid-template-columns:minmax(0,1fr) auto auto; gap:12px; align-items:center;
+  padding:10px 0; border-top:1px solid var(--practice-line, #eadfdb); font-size:14px; }
+.exam-results-section li:first-child { border-top:0; }
+.exam-row-name { min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.exam-row-count { font-size:12.5px; color:var(--practice-muted, #766d6a); white-space:nowrap; }
+
+.exam-marks { display:inline-flex; flex-wrap:wrap; gap:4px; max-width:100%; }
+.exam-mark { display:inline-block; width:9px; height:9px; border-radius:50%; border:1.5px solid var(--primary-coral, #e88d7d); box-sizing:border-box; flex-shrink:0; }
+.exam-mark.is-right { background:var(--primary-coral, #e88d7d); }
+.exam-mark.is-partial { background:linear-gradient(90deg, var(--primary-coral, #e88d7d) 50%, transparent 50%); }
+.exam-mark.is-missed { background:transparent; }
+.exam-results > .exam-marks .exam-mark { width:11px; height:11px; }
+
+.exam-miss { border-top:1px solid var(--practice-line, #eadfdb); padding:10px 0; }
+.exam-miss:first-of-type { border-top:0; }
+.exam-miss summary { display:flex; gap:8px; align-items:baseline; cursor:pointer; font-size:14px; line-height:1.45; list-style:none; }
+.exam-miss summary::-webkit-details-marker { display:none; }
+.exam-miss summary .exam-mark { margin-top:5px; }
+.exam-miss-number { color:var(--practice-muted, #766d6a); flex-shrink:0; }
+.exam-miss dl { margin:10px 0 4px 17px; display:grid; grid-template-columns:auto minmax(0,1fr); gap:6px 14px; font-size:13.5px; line-height:1.45; }
+.exam-miss dt { color:var(--practice-muted, #766d6a); }
+.exam-miss dd { margin:0; }
+.exam-results-back { margin-top:32px; }
+
+body.dark-mode .exam-mark { border-color:var(--dark-accent, #b8a5d4); }
+body.dark-mode .exam-mark.is-right { background:var(--dark-accent, #b8a5d4); }
+body.dark-mode .exam-mark.is-partial { background:linear-gradient(90deg, var(--dark-accent, #b8a5d4) 50%, transparent 50%); }
+
+@media (max-width: 600px) {
+  .exam-results-score { font-size:22px; }
+  .exam-results-section li { grid-template-columns:minmax(0,1fr) auto; }
+  .exam-results-section li .exam-marks { grid-column:1 / -1; order:3; }
+  .exam-miss dl { grid-template-columns:1fr; margin-left:0; }
+}

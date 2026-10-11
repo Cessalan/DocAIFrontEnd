@@ -21,6 +21,7 @@ import {
 // Components
 import ChatMessage from './ChatMessage';
 import FocusedQuiz from './FocusedQuiz';
+import { requestText } from './requestBriefModel';
 import ChatSendButton from './ChatSendButton';
 import { completePractice, createReviewQuiz, savePracticeProfile, subscribePracticeProfile } from '../../Services/PracticeService';
 import { buildCoverage, collectPracticeItems, missedQuestions, nextPractice } from './practiceCoverageModel';
@@ -29,7 +30,7 @@ import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
 import ComposerUploads from './ComposerUploads';
 import ComposerSuggestions from './ComposerSuggestions';
-import { anyUploading, applyUploadEvent, markAll, newComposerFile } from './composerUploadModel';
+import { anyUploading, applyUploadEvent, markAll, newComposerFile, uploadFailureKind } from './composerUploadModel';
 import PostUploadActions from './PostUploadActions';
 import FirstUploadWowCard from './FirstUploadWowCard';
 // FileViewerModal is lazy-loaded — see the code-splitting block below the imports.
@@ -1744,11 +1745,44 @@ const ChatInterface = ({
             setStreamingStatus({ status: 'generating_quiz', message: statusUpdate.plan?.summary });
             return;
           }
+          // Her request, read back to her before any material is read
+          // (backend services/request_brief). It opens the quiz screen, so
+          // the first thing she sees is what she asked for, in her words.
+          if (statusUpdate.status === 'quiz_brief' && statusUpdate.brief) {
+            isQuizGeneratingRef.current = true;
+            if (!quizMessageId) quizMessageId = `quiz-${Date.now()}`;
+            const id = quizMessageId;
+            const { brief } = statusUpdate;
+            quizStreamMeta = { ...quizStreamMeta, brief };
+            setChatMessages(prev => (prev.some(msg => msg.id === id)
+              ? prev.map(msg => (msg.id === id ? { ...msg, brief, requestedTotal: brief.total || msg.requestedTotal } : msg))
+              : [...prev.filter(msg => msg.id !== streamingMessageId || msg.content), {
+                  id, role: 'assistant', type: 'quiz', content: '', quizData: [], isStreaming: true,
+                  generationStage: 'reading', brief, requestedTotal: brief.total, timestamp: new Date()
+                }]));
+            return;
+          }
+          // What her plan covers, and the blueprint behind the request
+          // (services/planned_practice). Both tick lines of the brief.
+          if (statusUpdate.status === 'quiz_allowance' || statusUpdate.status === 'quiz_plan') {
+            const key = statusUpdate.status === 'quiz_plan' ? 'requestPlan' : 'requestAllowance';
+            const value = statusUpdate.status === 'quiz_plan' ? statusUpdate.plan
+              : { requested: statusUpdate.requested, allowed: statusUpdate.allowed, pro: !!statusUpdate.pro, batch: statusUpdate.batch };
+            quizStreamMeta = { ...quizStreamMeta, [key]: value };
+            if (quizMessageId) {
+              const id = quizMessageId;
+              setChatMessages(prev => prev.map(msg => (msg.id === id ? { ...msg, [key]: value } : msg)));
+            }
+            return;
+          }
           // Quiz generation progress
           if (statusUpdate.status === "quiz_generating") {
             devLog("generating quiz streaming");
             isQuizGeneratingRef.current = true;
+            // Spread first: the brief, plan and allowance that arrived before
+            // this event must survive it, or the saved quiz loses her request.
             quizStreamMeta = {
+              ...quizStreamMeta,
               requested_total: statusUpdate.requested_total || quizStreamMeta.requested_total,
               quiz_topic: statusUpdate.quiz_topic || quizStreamMeta.quiz_topic,
               quiz_settings: statusUpdate.quiz_settings || quizStreamMeta.quiz_settings,
@@ -1876,7 +1910,7 @@ const ChatInterface = ({
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
 
-            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, statusUpdate);
+            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, { ...quizStreamMeta, ...statusUpdate });
             setStreamingStatus(null);
             // Charge per question: a 3-question quiz costs 3, a 20-question quiz costs 20.
             if (statusUpdate.quota_charged) refreshQuota();
@@ -2665,6 +2699,12 @@ const ChatInterface = ({
       mergedQuizData.length
     );
 
+    // Her request and what it delivers (requestBriefModel.js), kept with the
+    // quiz so a reopened practice still shows what she asked for. Only the
+    // fields the stream sent: Firestore rejects undefined values.
+    const requestFields = JSON.parse(JSON.stringify({
+      brief: metadata.brief, requestPlan: metadata.requestPlan, requestAllowance: metadata.requestAllowance }));
+
     // ✅ Update UI state with merged data
     // Only update quiz messages or placeholders - don't convert other message types
     setChatMessages(prev =>
@@ -2681,6 +2721,7 @@ const ChatInterface = ({
             requestedTotal: metadata.requested_total || msg.requestedTotal || mergedQuizData.length,
             quizTopic: metadata.quiz_topic || msg.quizTopic || '',
             practice: { ...msg.practice, settings: metadata.quiz_settings || msg.practice?.settings || {} },
+            ...requestFields,
             content: currentLanguage === 'fr' ? `Voici votre quiz (${quizData.length} questions)` : `Here's your quiz (${quizData.length} questions)`,
             isStreaming: false,
             timestamp: new Date()
@@ -2712,6 +2753,7 @@ const ChatInterface = ({
       requestedTotal: metadata.requested_total || mergedQuizData.length,
       quizTopic: metadata.quiz_topic || '',
       practice: { settings: metadata.quiz_settings || {} },
+      ...requestFields,
       content: currentLanguage === 'fr' ? `Votre quiz (${quizData.length} questions)` : `Your quiz (${quizData.length} questions)`,
       isStreaming: false,
       timestamp: new Date()
@@ -3206,7 +3248,7 @@ const ChatInterface = ({
       setIsUploadAnalyzing(false);
       if (plainAttach) {
         setComposerFiles(prev => markAll(prev, 'error'));
-        setFileErrorToast(t('composerUpload.failed'));
+        setFileErrorToast(t({ file: 'composerUpload.failed', busy: 'composerUpload.failedBusy', ourSide: 'composerUpload.failedOurSide' }[uploadFailureKind(error)]));
       }
 
       // Flip the upload loading box into a visible error state so a failed,
@@ -5000,7 +5042,8 @@ const ChatInterface = ({
           message={chatMessages.find(m => m.id === focusedQuizId)} visible={quizFocused && !isStudyMode} launchOrigin={practiceOrigin}
           onPracticeChange={practice => setChatMessages(previous => previous.map(message => message.id === focusedQuizId ? { ...message, practice } : message))}
           onExit={closeFocusedQuiz} onSessionComplete={handleSessionComplete}
-          practiceProfile={practiceProfile} onPracticeProfileChange={canWritePractice ? handlePracticeProfileChange : undefined} />
+          practiceProfile={practiceProfile} onPracticeProfileChange={canWritePractice ? handlePracticeProfileChange : undefined}
+          requestWords={requestText(chatMessages, focusedQuizId)} />
       )}
       <ProgressDashboard />
 

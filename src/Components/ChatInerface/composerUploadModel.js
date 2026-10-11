@@ -97,3 +97,15 @@ export function displayProgress(entry, now = Date.now()) {
   const elapsed = Math.max(0, now - entry.stageAt);
   return entry.floor + room * (1 - Math.exp(-elapsed / CREEP_MS));
 }
+
+/* Which message a failed upload gets (2026-10-11). Every failure used to say
+   "That file could not be read", including our server being unreachable, so a
+   student blamed her own PDF for our outage. Only the backend's
+   `processing_failed` (it opened the file and could not process it) is about
+   her file; `capacity` is us being busy; everything else (fetch failed, the
+   stream went silent or dropped, a non-2xx response) is our side. */
+export function uploadFailureKind(error) {
+  if (error?.code === 'processing_failed') return 'file';
+  if (error?.code === 'capacity') return 'busy';
+  return 'ourSide';
+}

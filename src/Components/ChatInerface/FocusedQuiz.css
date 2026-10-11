@@ -190,3 +190,8 @@ body.dark-mode .focused-quiz {
   .focused-quiz.has-case .case-answer-pane { overflow: auto; }
   .focused-quiz.has-case .case-chart-scroll { overflow: auto; }
 }
+
+/* Exam conditions line under the practice title (FocusedQuiz examMode). */
+.practice-header .practice-exam-line { display:block; margin-top:6px; color:var(--practice-muted); font-size:12px; }
+.practice-header .practice-exam-toggle { border:0; background:none; padding:0; color:var(--practice-ink); font:inherit; font-size:12px;
+  text-decoration:underline; text-underline-offset:2px; cursor:pointer; }

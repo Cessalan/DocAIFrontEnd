@@ -23,7 +23,7 @@ test('a ready file draws a full ring; a failed one is marked', () => {
   const { container } = render(<ComposerUploads files={[file('a.pdf', 'ready'), file('b.docx', 'error')]} />);
   const [ready] = container.querySelectorAll('.composer-upload__fill');
   expect(Number(ready.getAttribute('stroke-dashoffset'))).toBeCloseTo(0, 5);
-  expect(screen.getByLabelText('b.docx could not be read')).toHaveClass('is-error');
+  expect(screen.getByLabelText('b.docx did not upload')).toHaveClass('is-error');
 });
 
 test('no files, no strip', () => {

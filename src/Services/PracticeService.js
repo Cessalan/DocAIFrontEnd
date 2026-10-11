@@ -36,7 +36,7 @@ export async function completePractice(body) {
   return (await check(await fetch(`${API_BASE_URL}/quiz/debrief`, { method: 'POST', headers: await headers(), body: JSON.stringify(body) }))).json();
 }
 
-export async function streamPracticeBatch(body, onQuestion, signal, onPlan) {
+export async function streamPracticeBatch(body, onQuestion, signal, onPlan, onEvent) {
   const response = await check(await fetch(`${API_BASE_URL}/quiz/practice-stream`, { method: 'POST', headers: await headers(), body: JSON.stringify(body), signal }));
   const reader = response.body.getReader(), decoder = new TextDecoder();
   let buffer = '', complete = false;
@@ -46,6 +46,8 @@ export async function streamPracticeBatch(body, onQuestion, signal, onPlan) {
     if (data.status === 'error') throw new Error(data.message);
     if (data.status === 'question_ready') onQuestion(data.question);
     if (data.status === 'practice_plan_ready') onPlan?.(data.plan);
+    // The backend made this batch harder because she was getting most right.
+    if (data.status === 'quiz_escalated') onEvent?.(data);
     if (data.status === 'quiz_complete') complete = true;
   };
   try {

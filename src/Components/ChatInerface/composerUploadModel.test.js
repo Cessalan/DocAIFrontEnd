@@ -1,4 +1,4 @@
-import { applyUploadEvent, anyUploading, displayProgress, fileKind, markAll, newComposerFile, STAGE_FLOOR } from './composerUploadModel';
+import { applyUploadEvent, anyUploading, displayProgress, fileKind, markAll, newComposerFile, STAGE_FLOOR, uploadFailureKind } from './composerUploadModel';
 
 const start = () => [newComposerFile({ name: 'Evaluation ABCDE.pdf' }, 'a'), newComposerFile({ name: 'Week 3.pptx' }, 'b')];
 
@@ -56,4 +56,13 @@ test('markAll finishes or fails only the files still uploading', () => {
   const files = [{ ...start()[0], status: 'error' }, start()[1]];
   expect(markAll(files, 'ready').map(f => f.status)).toEqual(['error', 'ready']);
   expect(markAll(files, 'error').map(f => f.status)).toEqual(['error', 'error']);
+});
+
+test('only a processing failure blames the file', () => {
+  const coded = code => Object.assign(new Error('x'), { code });
+  expect(uploadFailureKind(coded('processing_failed'))).toBe('file');
+  expect(uploadFailureKind(coded('capacity'))).toBe('busy');
+  expect(uploadFailureKind(new TypeError('Failed to fetch'))).toBe('ourSide');
+  expect(uploadFailureKind(new Error('Upload timed out - the connection went silent'))).toBe('ourSide');
+  expect(uploadFailureKind(undefined)).toBe('ourSide');
 });

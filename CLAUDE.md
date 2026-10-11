@@ -163,6 +163,30 @@ the `plan_onboarding` chat message:
   (`insights → first lesson → quick check → exam date`) intact, including the
   derived diagnostic. That fallback is covered by most of `PlanOnboarding.test.js`.
 
+### Requested practice (ask → plan → check), 2026-10-11
+
+A chat quiz asked for in words is held to her words. A Pro student asked four
+times for a hard "full exam on both these chapters with medications questions"
+and got 5 easy questions each time; 88 of 139 sized requests that month got
+fewer questions than asked. Now:
+
+- **Brief.** NQBackEnd2 `services/request_brief.py` keeps her requirements in
+  her own words (scope, focus, rule, style), read by keywords plus the intent
+  analyzer's `practice_changes.requirements`, saved on `practiceProfile.brief`
+  and merged, never overwritten, across messages. An exam request with no
+  number is 50 questions, shown as assumed and changeable.
+- **Plan.** `services/practice_plan.py` + `planned_practice.py` plan the request
+  over her whole analysed material (every goal of every file, not a 12k
+  retrieval) and schedule slots prefix-stably, so a 50 is the first 50 of a 100
+  and batches of 10 are written by index (`request_plan` in quiz settings).
+- **Check.** `services/requirement_check.py` judges every question against her
+  rules/style/focus (Haiku 5.5), rewrites once, and records `verified` per
+  requirement. Gaps are computed from counts, never written by a model.
+- **Frontend.** `quiz_brief` opens the quiz screen with `RequestBrief` (ticks
+  only on backend events, `requestBriefModel.js`); `questionTag` names a
+  requirement only when verified; exam requests run under exam conditions
+  (`StudyQuizCard deferFeedback`) and end on `ExamResults`.
+
 ### Study mode
 
 `StudyModeContainer` orchestrates: a plan is a list of nodes (`lesson`, `quiz`, `flashcard`, `mindmap`, `audio`, `exam`, plus non-node `banner` headers). Only the *first block* of the planner's output goes live (`firstBlock.js`); the rest is held in reserve and appended later, because a plan the student can finish is the point.
@@ -194,6 +218,7 @@ Changing either side alone will break the UI in ways tests won't catch:
 - `FREE_LIMIT` / `WINDOW_MS` in `Services/UsageService.js` mirror the same names in `NQBackEnd2/services/usage_guard.py`, which re-checks the quota server-side (`check_quota` in `main.py`, unit reservation in `practice_api.py`). If they drift, the UI and the server disagree about when a student is out of questions. The public SEO pages (`public/free-ai-for-nursing-students.html`, `public/nclex-question-generator.html`) also state the number in body copy and FAQ structured data.
 - The chat's practice memory, `chats/{chatId}.practiceProfile` (2026-09-29). The backend writes it (`NQBackEnd2/services/practice_profile.py`, applied in the orchestrator, `/quiz/practice-stream`, the tutor's `configure` and plan quiz types); the frontend reads it live and lets the student edit formats and difficulty (`ChatInerface/practiceProfileModel.js`). `FORMATS`, `DEFAULT_FORMATS` (`mcq`+`sata`; `casestudy` IS the ordering question and is opt-in) and `effectiveFormats` must match `effective_formats` there, or the settings line promises a mix the next batch doesn't deliver. Exclusions only ever come from the student's own words or her edit, never from a model's guess. Coverage and "next practice" are derived per render from saved answers (`practiceCoverageModel.js`), never stored.
 - The "Who first?" ordering walkthrough (2026-10-10): `LADDER_RUNGS` and `RULES` in `ChatInerface/orderWalkthroughModel.js` mirror `LADDERS` and `RULES` in `NQBackEnd2/services/order_walkthrough.py`. The backend owns the ids and rung counts, the frontend the words (`orderWalkthrough.ladder*`/`rung`/`rule` in i18n). A ladder or rule the frontend doesn't know makes the walkthrough unavailable (`isUsable`), never half-rendered. Like the select-all walkthrough, the model is handed the stored order and never decides it; it is withheld (`walkthrough: null`) when the model won't defend the key or its rungs contradict it. Add a ladder on the backend only after the frontend can name it.
+- Requested practice: `PLANNED_BATCH` (10) in `NQBackEnd2/services/practice_api.py` against `batchSize` in `ChatInerface/practiceModel.js`; the `quiz_brief` / `quiz_plan` / `quiz_allowance` event shapes against `requestBriefModel.js`; and the brief item kinds (`count, scope, focus, style, difficulty, format, rule, conditions, unsupported`) in `request_brief.py` against `LINE_ORDER`. A kind the frontend doesn't know is not rendered. Gap kinds (`none`, `file`, `scope`) come from `practice_plan.validate_selection`.
 - Stripe prices in `src/config/billing.js` are **display only**; the authoritative price is in Stripe. `usage.tier` is flipped exclusively by the backend webhook.
 - `NODE_MINUTES` (and its `|| 4` fallback) in `StudyMode/planFormatting.js` mirrors `NODE_MINUTES` / `NODE_MINUTES_DEFAULT` in `NQBackEnd2/services/email_campaigns.py`. The email promises "about 4 minutes" for the first step; if the tables drift, the product contradicts that number on the first screen she lands on. `tests/test_email_campaigns.py` reads the real `planFormatting.js` and fails on drift, so this one is actually enforced — as long as the frontend file stays on the same machine.
 - `isRealNode` in `StudyMode/firstBlock.js` (`type !== 'section_banner'`) mirrors `NON_STEP_NODE_TYPES` in `email_campaigns.py`. Step counts quoted in email come from it. The email side originally filtered `"banner"` — a type the planner never emits — so every section header counted as a step and the mail overstated the work to exactly the students who had not started because it looked long.

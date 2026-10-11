@@ -182,7 +182,10 @@ function SATAQuestion({
   reviewMode = false,
   previousAnswer = null,
   onOpenModal,
-  forceWalkthrough = false
+  forceWalkthrough = false,
+  // Exam conditions (StudyQuizCard): the answer is recorded without a
+  // verdict, so a miss must not start or open a walkthrough either.
+  deferFeedback = false
 }) {
   // ----------------------------------------
   // Hooks & State
@@ -349,7 +352,7 @@ function SATAQuestion({
     // Missed: start writing the walkthrough while she reads the feedback.
     // The first misses on this device open it on their own, because a
     // button inside the feedback box was easy to miss (owner, 2026-10-10).
-    if (!result.isFullyCorrect && !reviewMode) {
+    if (!result.isFullyCorrect && !reviewMode && !deferFeedback) {
       requestWalkthrough();
       // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
       // miss even after the first-time auto-opens are used up, because a
@@ -365,7 +368,7 @@ function SATAQuestion({
     setOptionFeedback(feedback);
 
     // Haptic feedback on good score
-    if (result.percentage >= 80 && navigator.vibrate) {
+    if (!deferFeedback && result.percentage >= 80 && navigator.vibrate) {
       navigator.vibrate(50);
     }
 
@@ -559,7 +562,7 @@ function SATAQuestion({
             disabled={!canSubmit}
             type="button"
           >
-            {t('sata.submitAnswer')}
+            {deferFeedback ? (isLastQuestion ? t('examMode.finish', 'Finish exam') : t('examMode.next', 'Next question')) : t('sata.submitAnswer')}
             {canSubmit && <span className="submit-count">({selectedOptions.length} {t('sata.selected')})</span>}
           </button>
         )}

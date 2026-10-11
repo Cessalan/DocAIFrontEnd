@@ -6,7 +6,11 @@ import { v4 as uuid } from 'uuid';
 import StudyQuizCard from '../StudyMode/StudyQuizCard';
 import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 import { askPracticeTutor, savePractice, streamPracticeBatch, copyPracticeToOwnChat } from '../../Services/PracticeService';
-import { appendUniqueQuestions, initialPracticeSettings, normalizePracticeQuestion, permittedTotal } from './practiceModel';
+import { appendUniqueQuestions, batchSize, initialPracticeSettings, normalizePracticeQuestion, permittedTotal, requestedPracticeTotal } from './practiceModel';
+import RequestBrief from './RequestBrief';
+import { questionTag } from './requestBriefModel';
+import ExamResults from './ExamResults';
+import { examComplete } from './examResultsModel';
 import { settingsWithProfile } from './practiceProfileModel';
 import PracticeSettingsLine from './PracticeSettingsLine';
 import PrintQuizButton from './PrintQuizButton';
@@ -25,7 +29,7 @@ export function PracticeShimmer() {
 }
 
 export default function FocusedQuiz({ message, chatId, visible, onExit, onPracticeChange, readOnly = false, onCopyCreated, launchOrigin, onSessionComplete,
-  practiceProfile = null, onPracticeProfileChange }) {
+  practiceProfile = null, onPracticeProfileChange, requestWords = '' }) {
   const { i18n, t } = useTranslation();
   const { remaining, isPro, refresh, openUpgrade } = useUsageLimit();
   const [practice, setPractice] = useState(() => ({ questions: [], answers: {}, discussions: {}, ...message.practice, settings: initialPracticeSettings(message) }));
@@ -94,6 +98,35 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
     if (JSON.stringify(next) === JSON.stringify(settingsRef.current)) return;
     settingsRef.current = next; update({ settings: next });
   }, [practiceProfile, readOnly, update]);
+  // The quiz opens on the stream's first stage event, before the backend has
+  // said how many questions she asked for (see requestedPracticeTotal). When
+  // the stream's total arrives while open, adopt it. Once per new total, so a
+  // smaller total she later sets through the tutor is not bumped back up on
+  // every render.
+  const streamTotal = message.requestedTotal;
+  const adoptedTotal = useRef(streamTotal);
+  useEffect(() => {
+    if (readOnly || !streamTotal || adoptedTotal.current === streamTotal) return;
+    adoptedTotal.current = streamTotal;
+    const streamed = message.practice?.settings || {};
+    const next = { ...settingsRef.current, requested_total: requestedPracticeTotal(message, settingsRef.current),
+      scope: settingsRef.current.scope || streamed.scope || '' };
+    settingsRef.current = next; update({ settings: next });
+  }, [streamTotal, message, readOnly, update]);
+  // The quiz screen opens on the brief, before the stream's settings exist.
+  // Keys only the stream knows (the blueprint, exam conditions, the mode the
+  // first batch was written in) are adopted when they arrive, never overwritten.
+  const streamedSettings = message.practice?.settings;
+  useEffect(() => {
+    if (readOnly || !streamedSettings) return;
+    const missing = {};
+    for (const key of ['request_plan', 'exam', 'quiz_mode', 'focus_topic']) {
+      if (streamedSettings[key] !== undefined && settingsRef.current[key] === undefined) missing[key] = streamedSettings[key];
+    }
+    if (!Object.keys(missing).length) return;
+    const next = { ...settingsRef.current, ...missing };
+    settingsRef.current = next; update({ settings: next });
+  }, [streamedSettings, readOnly, update]);
   const questionRef = useRef(questions); questionRef.current = questions;
   const quotaRef = useRef({ remaining, isPro }); quotaRef.current = { remaining, isPro };
   const onContext = useCallback(context => setActive(previous => {
@@ -127,21 +160,27 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
     const total = permittedTotal(settings.requested_total, qs.length, quota.remaining, quota.isPro);
     if (total <= qs.length && !practiceRef.current.pendingBatch) { if (!quota.isPro && quota.remaining <= 0) openUpgrade(); return; }
     const controller = new AbortController();
+    // Her first-try results so far: a student getting most of a hard request
+    // right is written a harder next batch (backend request_brief.escalation).
+    const firsts = Object.values(practiceRef.current.firstAnswers || {}).filter(a => typeof a?.isCorrect === 'boolean');
+    const performance = { answered: firsts.length, correct: firsts.filter(a => a.isCorrect).length };
     const pending = practiceRef.current.pendingBatch || {
       chat_id: chatId, request_id: uuid(), topic: message.quizTopic || message.topic || qs[0]?.topic || 'Uploaded course material',
-      count: Math.min(5, total - qs.length), settings, existing_questions: qs.map(q => q.question), language: i18n.language
+      count: Math.min(batchSize(settings), total - qs.length), settings: { ...settings, performance },
+      existing_questions: qs.map(q => q.question), language: i18n.language
     };
     update({ pendingBatch: pending });
     batchRef.current = { controller }; setExtending(true); setBatchError('');
     try {
       await streamPracticeBatch(pending, q => update(previous => ({ ...previous,
         questions: appendUniqueQuestions(previous.questions || [], [q]) })), controller.signal,
-        plan => update(previous => ({ ...previous, settings: { ...previous.settings, plan_id: plan.id, practice_plan: plan } })));
+        plan => update(previous => ({ ...previous, settings: { ...previous.settings, plan_id: plan.id, practice_plan: plan } })),
+        event => setNotice(t('requestBrief.escalated', { correct: event.correct, count: event.answered })));
       update({ pendingBatch: null });
     } catch (error) {
       if (error.name !== 'AbortError') { setBatchError(error.message); if (error.status === 429) { update({ pendingBatch: null }); openUpgrade(); } }
     } finally { batchRef.current = null; setExtending(false); refresh(); }
-  }, [readOnly, message.isStreaming, message.quizTopic, message.topic, chatId, i18n.language, update, refresh, openUpgrade]);
+  }, [readOnly, message.isStreaming, message.quizTopic, message.topic, chatId, i18n.language, update, refresh, openUpgrade, t]);
   useEffect(() => {
     if (!visible || extending || batchError || message.isStreaming || !loaded) return;
     if (practiceRef.current.pendingBatch || (target > loaded && loaded - questionIndex <= 3)) extend();
@@ -185,13 +224,47 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   const waitSubtopics = useMemo(() => scopeSubtopics(message.quizTopic || practiceProfile?.scope,
     practiceProfile?.sourceTopicGroups), [message.quizTopic, practiceProfile?.scope, practiceProfile?.sourceTopicGroups]);
   const waitTotal = message.expectedTotal || target;
+  // Her request as she sees it: the brief the backend read back, with the
+  // size she picked herself if she changed an assumed full exam.
+  const chosenTotal = practice.settings.chosen_total;
+  const brief = useMemo(() => {
+    if (!message.brief) return null;
+    if (!chosenTotal) return message.brief;
+    return { ...message.brief, total: chosenTotal, items: (message.brief.items || []).map(item =>
+      (item.kind === 'count' ? { ...item, value: chosenTotal, assumed: false } : item)) };
+  }, [message.brief, chosenTotal]);
+  const changeTotal = useCallback(size => {
+    if (readOnly) return;
+    const next = { ...settingsRef.current, chosen_total: size, requested_total: size };
+    settingsRef.current = next; update({ settings: next });
+  }, [readOnly, update]);
+  const tag = questionTag(current, message.brief);
+  // Exam conditions (she asked for an exam): answers are recorded without a
+  // verdict and the score, breakdown and review come at the end. One tap
+  // switches to answers as she goes; the tutor waits until then, since
+  // discussing a question would reveal it.
+  const isExam = practice.settings.exam === true || (practice.settings.exam === undefined && message.brief?.exam === true);
+  const examMode = isExam && !practice.settings.exam_reveal;
+  const examDone = isExam && !message.isStreaming && !extending && loaded >= target && examComplete(questions, practice.answers, target);
+  const toggleReveal = useCallback(() => {
+    if (readOnly) return;
+    const next = { ...settingsRef.current, exam_reveal: !settingsRef.current.exam_reveal };
+    settingsRef.current = next; update({ settings: next });
+  }, [readOnly, update]);
   const isCase = ['casestudy', 'ordering', 'bowtie'].includes(current?.questionType);
   const tutorPanel = <TutorDiscussionPanel {...{ animateTutor, history, busy, tutorError, questionIndex, active, isCase, readOnly, setTutorOpen, send, tutorBottom, questionPane, text, setText, current, t }} />;
   return createPortal(<section ref={paper.ref} className={`focused-quiz study-mode-container paper-sheet ${isCase ? 'has-case has-tutor' : tutorOpen ? 'has-tutor' : ''} ${paper.className}`} hidden={!visible} inert={closing ? true : undefined} data-paper={paper.mode} aria-label="Focused quiz practice"
     onAnimationEnd={paper.handleAnimationEnd}>
     <PaperSurface mode={paper.mode} />
     <header className="practice-header paper-page"><div><strong>{message.quizTopic || 'Your practice'}</strong><span>{loaded} ready · {target} questions{!isPro ? ` · ${remaining} remaining in your allowance` : ''}</span>
-      <PracticeSettingsLine profile={practiceProfile} guess={practice.settings.question_types} onChange={onPracticeProfileChange} readOnly={readOnly} /></div>
+      <PracticeSettingsLine profile={practiceProfile} guess={practice.settings.question_types} onChange={onPracticeProfileChange} readOnly={readOnly} />
+      {brief && loaded > 0 && <RequestBrief compact brief={brief} plan={message.requestPlan} allowance={message.requestAllowance}
+        questions={questions} words={requestWords} onUpgrade={openUpgrade} />}
+      {isExam && loaded > 0 && !examDone && <span className="practice-exam-line">
+        {examMode && <>{t('examMode.conditionsOn')} · </>}
+        {!readOnly && <button type="button" className="practice-exam-toggle" onClick={toggleReveal}>
+          {examMode ? t('examMode.showAsYouGo') : t('examMode.backToConditions')}</button>}
+      </span>}</div>
       <div className="practice-header-actions"><PrintQuizButton questions={questions} topic={message.quizTopic || message.topic} />
         <button type="button" onClick={closePractice}>← Back to chat</button></div></header>
     <div className="paper-page"><PracticePlanSummary plan={practice.settings.practice_plan} /></div>
@@ -200,15 +273,19 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
       {onCopyCreated && <button disabled={copying} onClick={async () => { setCopying(true); try { const id = await copyPracticeToOwnChat(message, questions); onCopyCreated(id); } catch (error) { setSaveError(error.message); } finally { setCopying(false); } }}>{copying ? 'Creating your practice…' : 'Practice in my own chat'}</button>}</div>}
     {saveError && <div className="practice-error" role="alert">{saveError} <button onClick={persist}>Retry save</button></div>}
     <div className="practice-work paper-page"><div className="practice-question" ref={questionPane}>
-      {loaded === 0 ? (message.isStreaming ? <QuizWait stage={message.generationStage || 'writing'} total={waitTotal} subtopics={waitSubtopics} /> : null)
+      {loaded > 0 && tag && !examDone && <p className="request-question-tag">{tag}</p>}
+      {examDone ? <ExamResults questions={questions} answers={practice.answers} brief={message.brief} onBack={closePractice} />
+        : loaded === 0 ? (message.isStreaming ? <QuizWait stage={message.generationStage || 'writing'} total={waitTotal} subtopics={waitSubtopics}
+          brief={brief} plan={message.requestPlan} allowance={message.requestAllowance} words={requestWords}
+          onChangeTotal={brief && !readOnly ? changeTotal : undefined} onUpgrade={openUpgrade} /> : null)
         : <StudyQuizCard content={content} savedProgress={initialSnapshot.current}
-        practiceMode onHint={() => send('Give me a small hint')} onQuestionContext={onContext} onSnapshot={readOnly ? undefined : onSnapshot} onAnswer={readOnly ? undefined : onAnswer}
+        practiceMode deferFeedback={examMode} onHint={() => send('Give me a small hint')} onQuestionContext={onContext} onSnapshot={readOnly ? undefined : onSnapshot} onAnswer={readOnly ? undefined : onAnswer}
         renderLoading={() => <QuizWait stage="writing" current={loaded + 1} total={target} subtopics={waitSubtopics} />} onContinue={closePractice} />}
-      {loaded > 0 && !isCase && <button className="practice-help" onClick={() => { setAnimateTutor(true); setTutorOpen(value => !value); }}>{tutorOpen ? 'Close discussion' : 'Discuss this question'}</button>}
+      {loaded > 0 && !isCase && !examMode && !examDone && <button className="practice-help" onClick={() => { setAnimateTutor(true); setTutorOpen(value => !value); }}>{tutorOpen ? 'Close discussion' : 'Discuss this question'}</button>}
       {batchError && <div className="practice-error" role="alert">{batchError}<button disabled={extending} onClick={() => extend()}>Retry batch</button></div>}
       {!message.isStreaming && loaded === 0 && <div className="practice-error">No questions arrived. Return to chat to retry your request.</div>}
     </div>
-    {(isCase || tutorOpen) && tutorPanel}
+    {(isCase || tutorOpen) && !examMode && !examDone && tutorPanel}
     </div>
   </section>, document.body);
 }

@@ -9,7 +9,7 @@ export function gradeMatrix(question, selections) {
     isCorrect: rows.length > 0 && score === rows.length, percentage: rows.length ? Math.round(score / rows.length * 100) : 0 };
 }
 
-export default function MatrixQuestion({ quiz, previousAnswer, onAnswerSelect, onNext, isLastQuestion, viewOnly = false }) {
+export default function MatrixQuestion({ quiz, previousAnswer, onAnswerSelect, onNext, isLastQuestion, viewOnly = false, deferFeedback = false }) {
   const { t } = useTranslation();
   const group = useId();
   const [selections, setSelections] = useState(previousAnswer?.selectedRows || {});
@@ -80,7 +80,8 @@ export default function MatrixQuestion({ quiz, previousAnswer, onAnswerSelect, o
     </div>
     {!submitted && !viewOnly && <div className="matrix-actions">
       <span>{t('matrix.progress', { count: rows.filter(row => selections[row.id]).length, total: rows.length, defaultValue: '{{count}} of {{total}} rows answered' })}</span>
-      <button type="button" className="study-continue-btn" disabled={!complete} onClick={submit}>{t('matrix.check', 'Check answers')}</button>
+      <button type="button" className="study-continue-btn" disabled={!complete} onClick={submit}>
+        {deferFeedback ? (isLastQuestion ? t('examMode.finish', 'Finish exam') : t('examMode.next', 'Next question')) : t('matrix.check', 'Check answers')}</button>
     </div>}
     {(submitted || viewOnly) && <button type="button" className="study-continue-btn" onClick={onNext}>
       {isLastQuestion ? t('matrix.finish', 'Finish') : t('matrix.next', 'Next question')}

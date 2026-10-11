@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import PaperShimmer from './PaperShimmer';
+import RequestBrief from './RequestBrief';
 import { waitCopy, ROTATE_MS } from './quizWaitModel';
 import './QuizWait.css';
 
@@ -8,8 +9,12 @@ import './QuizWait.css';
  * The quiz's waiting screen: a shimmering line naming the real stage
  * (see quizWaitModel), a quieter line from her own notes, and the paper
  * skeleton underneath so the first question lands where the wait was.
+ *
+ * When the quiz was asked for in words, her request comes first
+ * (RequestBrief): what she asked, ticked as the backend plans it.
  */
-export default function QuizWait({ stage = 'writing', total = 0, current = 0, subtopics = [] }) {
+export default function QuizWait({ stage = 'writing', total = 0, current = 0, subtopics = [], brief = null, plan = null,
+  allowance = null, words = '', onChangeTotal, onUpgrade }) {
   const { t } = useTranslation();
   const startedAt = useRef(Date.now());
   const [now, setNow] = useState(() => Date.now());
@@ -21,11 +26,13 @@ export default function QuizWait({ stage = 'writing', total = 0, current = 0, su
     return () => clearInterval(timer);
   }, []);
 
-  const { headline, detail } = waitCopy({ stage, total, current, subtopics, elapsedMs: now - startedAt.current });
+  const { headline, detail } = waitCopy({ stage, total, current, subtopics, elapsedMs: now - startedAt.current, planned: !!brief });
   const headlineText = t(headline.key, headline.vars);
   const detailText = detail ? t(detail.key, detail.vars) : '';
 
   return <div className="quiz-wait">
+    {brief && <RequestBrief brief={brief} plan={plan} allowance={allowance} words={words}
+      onChangeTotal={onChangeTotal} onUpgrade={onUpgrade} />}
     {/* Only the stage is announced; the rotating detail would be read out every few seconds. */}
     <p className="quiz-wait-headline" role="status" aria-live="polite" key={headlineText}>
       <span className="quiz-wait-shimmer">{headlineText}</span>

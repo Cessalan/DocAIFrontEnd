@@ -15,6 +15,31 @@ const getExt = (name = '') => {
 const TEXT_EXTS = new Set(['txt', 'md', 'markdown', 'csv', 'json', 'log']);
 const PDF_EXTS = new Set(['pdf']);
 
+// Same check as ChatLayout's "Viewing as" banner: a dev build or localhost.
+const IS_DEV = process.env.NODE_ENV === 'development' || window.location.hostname === 'localhost';
+
+/**
+ * Save a file under its own name. A plain <a download> is ignored for a
+ * cross-origin Storage URL (the browser just opens it), so the bytes are
+ * fetched and saved from a blob URL; if that fails, the file opens instead.
+ */
+async function downloadFile(file) {
+  try {
+    const response = await fetch(file.downloadURL);
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const url = URL.createObjectURL(await response.blob());
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = file.name || 'download';
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (e) {
+    window.open(file.downloadURL, '_blank', 'noopener,noreferrer');
+  }
+}
+
 const MIN_SCALE = 0.5;
 const MAX_SCALE = 2.5;
 const SCALE_STEP = 0.15;
@@ -58,6 +83,7 @@ const FileViewerModal = ({ file, onClose }) => {
   const [error, setError] = useState(null);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.0);
+  const [downloading, setDownloading] = useState(false);
 
   const ext = useMemo(() => getExt(file?.name || ''), [file]);
   const isText = TEXT_EXTS.has(ext);
@@ -139,6 +165,22 @@ const FileViewerModal = ({ file, onClose }) => {
             )}
           </div>
           <div className="fv-header__actions">
+            {IS_DEV && (
+              <button
+                type="button"
+                className="fv-icon-btn"
+                onClick={async () => { setDownloading(true); await downloadFile(file); setDownloading(false); }}
+                disabled={downloading}
+                title="Download (dev)"
+                aria-label="Download"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </button>
+            )}
             <a
               className="fv-icon-btn"
               href={file.downloadURL}

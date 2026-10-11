@@ -27,7 +27,12 @@ import { fetchQuizRationale } from '../../Services/FastAPICalls';
    rewards — the completion celebration is only a couple of items away. */
 const QUIZ_MILESTONE_MIN_SET = 8;
 
-const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor }) => {
+// `deferFeedback`: exam conditions (FocusedQuiz, 2026-10-11). An answer is
+// recorded and the quiz moves on without revealing right or wrong, without a
+// sound, and without the walkthrough a miss would start; FocusedQuiz shows the
+// score and the review at the end. A student who asked for "a full exam"
+// asked to be tested, not taught question by question.
+const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor, deferFeedback = false }) => {
   const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -668,18 +673,39 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
     </svg>
   );
 
+  const normalizeCorrect = (value) => (typeof value === 'number'
+    ? value
+    : typeof value === 'string'
+      ? (/^[A-Fa-f]$/.test(value) ? value.toUpperCase().charCodeAt(0) - 65 : parseInt(value, 10))
+      : -1);
+
+  // Exam conditions: the choice is hers until she moves on, then it is
+  // recorded without a verdict and the next question opens.
+  const commitDeferredChoice = () => {
+    if (selectedIndex === null || selectedIndex === undefined) return;
+    const correct = selectedIndex === normalizeCorrect(questions[currentQueuePosition]?.correctIndex);
+    const newStatuses = { ...questionStatuses, [currentQueuePosition]: correct ? 'correct' : 'incorrect' };
+    setQuestionStatuses(newStatuses);
+    if (onAnswer) {
+      onAnswer({
+        selectedIndex,
+        isCorrect: correct,
+        questionIndex: currentQueuePosition,
+        deferred: true,
+        progress: { matrixAnswers: reasoningAnswers, questionStatuses: newStatuses, firstAttemptStatuses: newStatuses,
+          queueIndex, isReviewRound: false }
+      });
+    }
+    handleNextQuestion();
+  };
+
   const handleOptionClick = (index) => {
     if (showFeedback) return; // Already answered
+    if (deferFeedback) { setSelectedIndex(index); return; }
 
     // Get the current correct index at click time (avoid stale closure)
     const currentCorrectIndex = questions[currentQueuePosition]?.correctIndex;
-    const normalizedCorrect = typeof currentCorrectIndex === 'number'
-      ? currentCorrectIndex
-      : typeof currentCorrectIndex === 'string'
-        ? (/^[A-Fa-f]$/.test(currentCorrectIndex)
-            ? currentCorrectIndex.toUpperCase().charCodeAt(0) - 65
-            : parseInt(currentCorrectIndex, 10))
-        : -1;
+    const normalizedCorrect = normalizeCorrect(currentCorrectIndex);
 
     console.log('🎯 Option clicked:', {
       clickedIndex: index,
@@ -743,6 +769,23 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
     if (showFeedback) return;
 
     const correct = !!answerData?.isCorrect;
+    if (deferFeedback) {
+      // Recorded, never revealed: the component unmounts as the next
+      // question opens in the same render, before its feedback can show.
+      const newStatuses = { ...questionStatuses, [currentQueuePosition]: correct ? 'correct' : 'incorrect' };
+      setReasoningAnswers(previous => ({ ...previous, [currentQueuePosition]: answerData }));
+      setQuestionStatuses(newStatuses);
+      if (onAnswer) {
+        onAnswer({
+          ...answerData, selectedIndex: null, questionType: answerData?.questionType || 'sata', isCorrect: correct,
+          questionIndex: currentQueuePosition, deferred: true,
+          progress: { matrixAnswers: { ...reasoningAnswers, [currentQueuePosition]: answerData }, questionStatuses: newStatuses,
+            firstAttemptStatuses: newStatuses, queueIndex, isReviewRound: false }
+        });
+      }
+      handleNextQuestion();
+      return;
+    }
     setReasoningAnswers(previous => ({ ...previous, [currentQueuePosition]: answerData }));
     setIsCorrect(correct);
     setShowFeedback(true);
@@ -855,6 +898,9 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
       // with a single wrong answer would fall through to nothing and strand
       // the student on the last question with no button.
       if (isDiagnostic || practiceMode) {
+        // Exam conditions end on FocusedQuiz's results, not a celebration
+        // that would congratulate a score she has not seen.
+        if (deferFeedback) return;
         setShowCompletionCelebration(true);
         playCelebrationSound();
         return;
@@ -962,6 +1008,10 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
 
   // Check if there are more questions in the queue OR more are being streamed
   const hasMoreQuestions = queueIndex < questionQueue.length - 1;
+  // Under exam conditions the last question is the last of the exam she asked
+  // for, not the last one loaded so far: "Finish exam" on question 10 of 50
+  // while the next ten are being written would read as the end.
+  const lastInView = deferFeedback ? queueIndex + 1 >= expectedTotal : queueIndex >= questionQueue.length - 1;
   const moreQuestionsExpected = isStreaming && totalQuestions < expectedTotal;
   const shouldShowContinueButton = hasMoreQuestions || moreQuestionsExpected;
 
@@ -1166,14 +1216,14 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
               <MatrixQuestion key={currentQueuePosition + ':' + isReviewRound} quiz={currentQuestion}
                 previousAnswer={practiceMode ? currentQuestion.userSelection : !isReviewRound ? reasoningAnswers[currentQueuePosition] : null}
                 onAnswerSelect={handleComplexAnswer} onNext={handleNextQuestion} viewOnly={viewOnly}
-                isLastQuestion={queueIndex >= questionQueue.length - 1} />
+                isLastQuestion={lastInView} deferFeedback={deferFeedback} />
             ) : isCaseStudy ? (
               <CaseStudyQuestion key={`${currentQueuePosition}-${isReviewRound}`}
                 tutorPanel={caseStudyTutor} onOpenTutor={onCaseTutor}
                 quiz={currentQuestion} quizIndex={queueIndex} totalQuestions={expectedTotal || totalQuestions}
                 previousAnswer={practiceMode ? currentQuestion.userSelection : null}
                 onAnswerSelect={handleComplexAnswer} onNext={handleNextQuestion}
-                isLastQuestion={queueIndex >= questionQueue.length - 1} inModal={false} />
+                isLastQuestion={lastInView} inModal={false} deferFeedback={deferFeedback} />
             ) : isSata ? (
               /* SATA renders its whole question — stem, multi-select options,
                  submit and feedback — so it replaces the MCQ body rather than
@@ -1189,8 +1239,9 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
                 onAnswerSelect={handleComplexAnswer}
                 previousAnswer={practiceMode ? currentQuestion.userSelection : null}
                 onNext={handleNextQuestion}
-                isLastQuestion={queueIndex >= questionQueue.length - 1}
+                isLastQuestion={lastInView}
                 inModal={false}
+                deferFeedback={deferFeedback}
               />
             ) : (
             <>
@@ -1232,7 +1283,14 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
             {/* "I don't know" button - below options, hidden after feedback.
                 On the diagnostic it's phrased forward-looking ("Not sure yet")
                 — same signal, none of the finality. */}
-            {!showFeedback && !viewOnly && (
+            {deferFeedback && !showFeedback && !viewOnly && (
+              <button className="study-continue-btn study-exam-next" onClick={commitDeferredChoice}
+                disabled={selectedIndex === null || selectedIndex === undefined}>
+                {queueIndex + 1 >= expectedTotal ? t('examMode.finish', 'Finish exam') : t('examMode.next', 'Next question')}
+              </button>
+            )}
+
+            {!showFeedback && !viewOnly && !deferFeedback && (
               <button className="study-quiz-idk-btn" onClick={handleDontKnow}>
                 <HelpCircleIcon />
                 {isDiagnostic

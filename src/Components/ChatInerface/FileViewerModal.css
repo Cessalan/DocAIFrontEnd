@@ -149,6 +149,11 @@ body.dark-mode {
   color: var(--fv-text);
 }
 
+.fv-icon-btn:disabled {
+  opacity: 0.5;
+  cursor: progress;
+}
+
 /* Body */
 .fv-body {
   flex: 1;

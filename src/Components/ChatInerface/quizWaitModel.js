@@ -53,11 +53,13 @@ export function scopeSubtopics(quizTopic, groups = [], limit = 8) {
  *   headline: the stage, always present.
  *   detail:   a subtopic from her notes, rotating; or the slow-stage note.
  */
-export function waitCopy({ stage = 'writing', elapsedMs = 0, total = 0, current = 0, subtopics = [] } = {}) {
+export function waitCopy({ stage = 'writing', elapsedMs = 0, total = 0, current = 0, subtopics = [], planned = false } = {}) {
   const known = WAIT_STAGES.includes(stage) ? stage : 'writing';
   let headline;
-  if (known === 'reading') headline = { key: 'quizWait.reading' };
-  else if (known === 'choosing') headline = { key: 'quizWait.choosing' };
+  // A requested practice (`planned`) reads every file and plans across all
+  // of it, so it says so; a quick quiz still reads "your notes".
+  if (known === 'reading') headline = { key: planned ? 'quizWait.readingAll' : 'quizWait.reading' };
+  else if (known === 'choosing') headline = { key: planned ? 'quizWait.planning' : 'quizWait.choosing' };
   else if (current > 0 && total > 0) headline = { key: 'quizWait.writingOne', vars: { current, total } };
   else headline = { key: 'quizWait.writing', vars: { count: total > 0 ? total : 1 } };
 

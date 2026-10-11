@@ -1,0 +1,67 @@
+/* Her request, read back (RequestBrief.js). A quiet list with hairline
+   dividers: the marks carry the state, the copy carries the specifics. Uses
+   the focused quiz's --practice-* tokens, which already switch for dark mode. */
+.request-brief { max-width:700px; margin:0 auto 22px; color:var(--practice-ink, #332b2b); }
+.request-brief-head { display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:6px; }
+.request-brief-label { font-size:12px; letter-spacing:.02em; color:var(--practice-muted, #766d6a); }
+.request-brief-hide, .request-brief-action { border:0; background:none; padding:0; color:var(--practice-muted, #766d6a);
+  font:inherit; font-size:12px; text-decoration:underline; text-underline-offset:2px; cursor:pointer; }
+.request-brief-hide:hover, .request-brief-action:hover { color:var(--practice-ink, #332b2b); }
+.request-brief-words { margin:0 0 14px; padding:0; font-size:15px; line-height:1.5; font-style:italic;
+  color:var(--practice-ink, #332b2b); display:-webkit-box; -webkit-line-clamp:3; -webkit-box-orient:vertical; overflow:hidden; }
+.request-brief-words::before { content:'\201C'; } .request-brief-words::after { content:'\201D'; }
+.request-brief-lines { list-style:none; margin:0; padding:0; }
+.request-brief-line { display:flex; gap:12px; align-items:flex-start; padding:10px 0; border-top:1px solid var(--practice-line, #eadfdb);
+  animation:request-brief-in .35s ease both; }
+.request-brief-line:first-child { border-top:0; }
+.request-brief-body { display:flex; flex-direction:column; gap:2px; min-width:0; align-items:flex-start; }
+.request-brief-text { font-size:14px; line-height:1.4; }
+.request-brief-detail { font-size:12.5px; line-height:1.4; color:var(--practice-muted, #766d6a); }
+.request-brief-line.is-gap .request-brief-text, .request-brief-line.is-unsupported .request-brief-text { color:var(--practice-muted, #766d6a); }
+.request-brief-sizes { display:flex; gap:6px; margin-top:4px; }
+.request-brief-sizes button { border:1px solid var(--practice-line, #eadfdb); background:var(--practice-paper, #fff); color:var(--practice-ink, #332b2b);
+  border-radius:8px; padding:4px 10px; font:inherit; font-size:12px; cursor:pointer; }
+.request-brief-sizes button[aria-pressed="true"] { border-color:var(--primary-coral, #e88d7d); }
+
+.request-brief-mark { flex:0 0 16px; width:16px; height:16px; margin-top:2px; fill:none; stroke-width:1.4; stroke-linecap:round; stroke-linejoin:round; }
+.request-brief-mark.is-done circle { fill:var(--primary-coral, #e88d7d); stroke:var(--primary-coral, #e88d7d); }
+.request-brief-mark.is-done path { stroke:#fff; stroke-width:1.7; }
+.request-brief-mark.is-pending circle { stroke:var(--practice-muted, #766d6a); stroke-dasharray:3 2.2; animation:request-brief-turn 2.4s linear infinite; transform-origin:8px 8px; }
+.request-brief-mark.is-note circle { stroke:var(--practice-muted, #766d6a); }
+.request-brief-mark.is-note path { stroke:var(--practice-muted, #766d6a); }
+.request-brief-mark.is-note .dot { fill:var(--practice-muted, #766d6a); stroke:none; }
+.request-brief-line.is-planned .request-brief-mark.is-done, .request-brief-line.is-checked .request-brief-mark.is-done { animation:request-brief-tick .3s ease both; }
+
+/* The one-line version inside a running quiz. */
+.request-brief-compact { display:flex; gap:10px; align-items:baseline; max-width:100%; border:0; background:none; padding:0; margin:6px 0 0;
+  color:var(--practice-muted, #766d6a); font:inherit; font-size:12px; text-align:left; cursor:pointer; min-width:0; }
+.request-brief-compact-label { flex-shrink:0; color:var(--practice-ink, #332b2b); text-decoration:underline; text-underline-offset:2px; }
+.request-brief-compact-summary { white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; }
+.request-brief.is-open { margin:12px 0 0; padding:14px 16px; border:1px solid var(--practice-line, #eadfdb); border-radius:12px; background:var(--practice-paper, #fff); }
+
+/* The tag under one question: where it came from, what it was planned for. */
+.request-question-tag { max-width:700px; margin:0 auto 8px; font-size:12px; color:var(--practice-muted, #766d6a); }
+
+@keyframes request-brief-in { from { opacity:0; transform:translateY(3px); } to { opacity:1; transform:none; } }
+@keyframes request-brief-tick { from { transform:scale(.6); opacity:.4; } to { transform:none; opacity:1; } }
+@keyframes request-brief-turn { to { transform:rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .request-brief-line, .request-brief-mark { animation:none !important; }
+}
+
+body.dark-mode .request-brief-mark.is-done circle { fill:var(--dark-accent, #b8a5d4); stroke:var(--dark-accent, #b8a5d4); }
+body.dark-mode .request-brief-mark.is-done path { stroke:#1e1b1c; }
+body.dark-mode .request-brief-sizes button[aria-pressed="true"] { border-color:var(--dark-accent, #b8a5d4); }
+
+@media (max-width: 600px) {
+  .request-brief-words { font-size:14px; }
+  .request-brief.is-open { padding:12px; }
+}
+
+/* Inside the practice header, whose `.practice-header span` rule (block,
+   muted, top margin) is meant for its own subtitle, not for these. */
+.practice-header .request-brief span, .practice-header .request-brief-compact span { margin-top:0; }
+.practice-header .request-brief-compact-label, .practice-header .request-brief-text { color:var(--practice-ink, #332b2b); }
+.practice-header .request-brief-text { font-size:14px; }
+.practice-header .request-brief-detail { font-size:12.5px; }
+.practice-header .request-brief-compact-label { display:inline; }
