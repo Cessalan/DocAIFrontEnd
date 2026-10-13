@@ -588,6 +588,8 @@ function CaseStudyQuestion({
               herOrder={items.map((item) => item.id)}
               walkthrough={walkthrough.data}
               onClose={() => setWalkthrough((w) => ({ ...w, open: false }))}
+              onNext={revealed ? onNext : undefined}
+              nextLabel={`${isLastQuestion ? t('quiz.viewResults') : t('quiz.nextQuestion')} →`}
             />
           </div>
         ) : (<>
@@ -738,8 +740,18 @@ function CaseStudyQuestion({
                 </span>
               </button>
             )}
+            {/* A card, not a grey line: "Reading the chart…" in small text
+                under the score read as a stuck card while the rationale was
+                hidden (owner, 2026-10-13). */}
             {walkthrough.open && walkthrough.status === 'loading' && (
-              <p className="sata-walkthrough-status" aria-live="polite">{t('orderWalkthrough.loading')}</p>
+              <div className="ow-loading" role="status" aria-live="polite">
+                <span className="ow-loading-icon" aria-hidden="true">▶</span>
+                <span className="ow-loading-text">
+                  <strong>{t('orderWalkthrough.loadingTitle')}</strong>
+                  <small>{t('orderWalkthrough.loadingSub')}</small>
+                </span>
+                <span className="ow-loading-bar" aria-hidden="true"><i /></span>
+              </div>
             )}
             {walkthrough.open && walkthrough.status === 'unavailable' && (
               <p className="sata-walkthrough-status" aria-live="polite">{t('orderWalkthrough.unavailable')}</p>

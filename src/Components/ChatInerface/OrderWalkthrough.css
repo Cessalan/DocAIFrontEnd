@@ -29,6 +29,36 @@
 }
 .ow-close:hover { color: var(--q-text); border-color: var(--q-border); }
 .ow-close:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+.ow-top-actions { display: flex; align-items: center; gap: 6px; flex: none; }
+.ow-skip {
+  border: 1px solid var(--q-accent-line); border-radius: 999px; padding: 6px 14px;
+  background: var(--q-surface); color: var(--q-accent-text);
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; white-space: nowrap;
+}
+.ow-skip:hover { background: var(--q-accent-soft); }
+.ow-skip:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+
+/* Loading: the walkthrough is on its way, said loudly enough to be seen. */
+.ow-loading {
+  position: relative; overflow: hidden; display: flex; align-items: center; gap: 12px;
+  margin: 12px 0 4px; padding: 14px 14px 18px; border-radius: 12px;
+  background: var(--q-accent-soft); border: 1px solid var(--q-accent-line);
+}
+.ow-loading-icon {
+  flex: none; width: 30px; height: 30px; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center; padding-left: 2px;
+  background: var(--q-accent); color: #fff; font-size: 11px;
+  animation: owPulse 1.4s ease-in-out infinite;
+}
+.ow-loading-text strong { display: block; font-size: 15px; color: var(--q-accent-text); }
+.ow-loading-text small { display: block; font-size: 12.5px; color: var(--q-text-soft); margin-top: 1px; }
+.ow-loading-bar { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: var(--q-accent-line); }
+.ow-loading-bar i {
+  position: absolute; top: 0; bottom: 0; left: 0; width: 35%; background: var(--q-accent);
+  animation: owSlide 1.3s ease-in-out infinite;
+}
+@keyframes owPulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.88); opacity: 0.75; } }
+@keyframes owSlide { from { transform: translateX(-100%); } to { transform: translateX(290%); } }
 
 .ow-coach { margin: 0 0 14px; font-size: 16px; line-height: 1.5; font-weight: 600; min-height: 24px; }
 
@@ -145,6 +175,15 @@
 }
 .ow-next:hover { background: var(--q-accent-soft); }
 .ow-next:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+/* The end: moving on is the main action, the question stays one tap away. */
+.ow-next.is-primary { background: var(--q-accent); border-color: var(--q-accent); color: #fff; }
+.ow-next.is-primary:hover { filter: brightness(0.95); }
+.ow-back {
+  display: block; margin: 10px auto 0; padding: 6px 10px; border: 0; background: none; cursor: pointer;
+  font: inherit; font-size: 14px; color: var(--q-text-soft); text-decoration: underline; text-underline-offset: 3px;
+}
+.ow-back:hover { color: var(--q-accent-text); }
+.ow-back:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; border-radius: 6px; }
 
 .ow-end { margin-top: 14px; animation: owFade 0.6s ease-out; }
 .ow-then { margin: 0 0 10px; font-size: 14.5px; line-height: 1.6; padding-top: 12px; border-top: 1px solid var(--q-border); }
@@ -172,14 +211,15 @@
 
 @media (prefers-reduced-motion: reduce) {
   .ow, .ow-item.is-shaking, .ow-item.is-placed .ow-slot, .ow-tag, .ow-think, .ow-think p, .ow-dots i,
-  .ow-next, .ow-end, .ow-ladder { animation: none; }
+  .ow-next, .ow-end, .ow-ladder, .ow-loading-icon, .ow-loading-bar i { animation: none; }
   .ow-fact, .ow-part, .ow-ladder li, .ow-stages li, .ow-item, .ow-slot { transition: none; }
 }
 
 /* Dark mode: the app's lavender accent on the card's own materials, as for
    the select-all walkthrough. Dark text on solid lavender, which is too pale
    for white. */
-body.dark-mode .ow {
+body.dark-mode .ow,
+body.dark-mode .ow-loading {
   --q-accent: var(--dark-accent, #b8a5d4);
   --q-accent-dark: var(--dark-accent, #b8a5d4);
   --q-accent-text: var(--dark-accent-light, #d4c8e8);
@@ -188,4 +228,6 @@ body.dark-mode .ow {
 }
 body.dark-mode .ow-stages li.on,
 body.dark-mode .ow-badge,
-body.dark-mode .ow-item.is-placed .ow-slot { color: #1a1a1a; }
+body.dark-mode .ow-item.is-placed .ow-slot,
+body.dark-mode .ow-next.is-primary,
+body.dark-mode .ow-loading-icon { color: #1a1a1a; }

@@ -73,8 +73,10 @@ const highlight = (text, parts, litCount) => {
  * @param {string[]} keyIds     the stored correct order
  * @param {string[]} herOrder   the order she submitted
  * @param {object} walkthrough  the validated backend response
+ * @param {function} [onNext]   moves the card on; offered at the end when given
+ * @param {string} [nextLabel]  the card's own label for moving on
  */
-export default function OrderWalkthrough({ question, chart, items, keyIds, herOrder, walkthrough, onClose }) {
+export default function OrderWalkthrough({ question, chart, items, keyIds, herOrder, walkthrough, onClose, onNext, nextLabel }) {
   const { t } = useTranslation();
   // The backend's items are in KEY order; index them by item id.
   const info = useMemo(() => Object.fromEntries(keyIds.map((id, k) => [id, walkthrough.items[k]])), [keyIds, walkthrough]);
@@ -227,7 +229,16 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
             <li key={s} aria-hidden="true" className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`orderWalkthrough.stage.${s}`)}</li>
           )))}
         </ol>
-        <button type="button" className="ow-close" onClick={onClose} aria-label={t('orderWalkthrough.closeLabel')}>×</button>
+        {/* Moving on never waits for the walkthrough to finish: it takes the
+            whole card, so without this the only way forward was to close it
+            and find Next under the rationale (owner, 2026-10-13). The end
+            screen has its own, larger Next. */}
+        <div className="ow-top-actions">
+          {onNext && phase !== 'end' && (
+            <button type="button" className="ow-skip" onClick={onNext}>{nextLabel}</button>
+          )}
+          <button type="button" className="ow-close" onClick={onClose} aria-label={t('orderWalkthrough.closeLabel')}>×</button>
+        </div>
       </div>
 
       <p className="ow-coach" aria-live="polite">{coach}</p>
@@ -329,7 +340,18 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
             </p>
           )}
           <p className="ow-method">{walkthrough.method_line || t('orderWalkthrough.method')}</p>
-          <button type="button" className="ow-next" onClick={onClose}>{t('orderWalkthrough.close')}</button>
+          {/* Next question here, not only on the card underneath: closing
+              brought back a long rationale with Next below it, and students
+              finished the walkthrough and could not find the way on
+              (owner, 2026-10-11). */}
+          {onNext ? (
+            <>
+              <button type="button" className="ow-next is-primary" onClick={onNext}>{nextLabel}</button>
+              <button type="button" className="ow-back" onClick={onClose}>{t('orderWalkthrough.close')}</button>
+            </>
+          ) : (
+            <button type="button" className="ow-next" onClick={onClose}>{t('orderWalkthrough.close')}</button>
+          )}
         </div>
       )}
       </div>

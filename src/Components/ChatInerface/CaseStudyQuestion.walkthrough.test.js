@@ -75,11 +75,35 @@ it('opens on the whole card and gives the card back when closed', async () => {
   await submitWrong();
   await act(async () => { fireEvent.click(screen.getByText('Show me how to order it')); });
   expect(screen.getByText(/Ordering questions are hard/)).toBeInTheDocument();
-  expect(screen.queryByRole('button', { name: /Next question/i })).toBeNull();
+  // Moving on doesn't wait for the walkthrough to finish.
+  expect(screen.getByRole('button', { name: /Next question/i })).toBeInTheDocument();
   expect(screen.queryByText('Assess, then act, then report.')).toBeNull();
   fireEvent.click(screen.getByLabelText('Close the walkthrough'));
   expect(screen.getByText('Assess, then act, then report.')).toBeInTheDocument();
   expect(screen.getByText('Show me how to order it')).toBeInTheDocument();
+});
+
+it('ends on Next question, so finishing the walkthrough moves her on', async () => {
+  fetchOrderWalkthrough.mockResolvedValue(WALK);
+  const next = jest.fn();
+  render(<CaseStudyQuestion quiz={quiz} onAnswerSelect={() => {}} onNext={next} />);
+  ['Notify the provider', 'Assess vital signs', 'Give oxygen as ordered'].forEach((text) => fireEvent.click(screen.getByText(text)));
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit Order' })); });
+  await act(async () => { jest.advanceTimersByTime(400); });
+  await act(async () => { fireEvent.click(screen.getByText('Show me how to order it')); });
+  const play = async (name) => {
+    await act(async () => { fireEvent.click(screen.getByRole('button', { name })); });
+    await act(async () => { jest.advanceTimersByTime(20000); });
+  };
+  await play('Watch');
+  await play('Look at the actions');
+  await play('Watch me find number 1');
+  // Number 2 is hers; the last places itself.
+  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Give oxygen as ordered/ })); });
+  await act(async () => { jest.advanceTimersByTime(20000); });
+  fireEvent.click(screen.getByRole('button', { name: /Next Question/i }));
+  expect(next).toHaveBeenCalledTimes(1);
+  expect(screen.getByRole('button', { name: 'Back to the question' })).toBeInTheDocument();
 });
 
 it('auto-opens on a first miss, and closes quietly if the backend declines', async () => {
@@ -87,9 +111,9 @@ it('auto-opens on a first miss, and closes quietly if the backend declines', asy
   let resolve;
   fetchOrderWalkthrough.mockReturnValue(new Promise((r) => { resolve = r; }));
   await submitWrong();
-  expect(screen.getByText('Reading the chart…')).toBeInTheDocument();
+  expect(screen.getByText('Building your walkthrough')).toBeInTheDocument();
   await act(async () => { resolve(null); });
-  expect(screen.queryByText('Reading the chart…')).toBeNull();
+  expect(screen.queryByText('Building your walkthrough')).toBeNull();
   expect(screen.queryByText(/There's no walkthrough/)).toBeNull();
   expect(screen.queryByText('Show me how to order it')).toBeNull();
 });
