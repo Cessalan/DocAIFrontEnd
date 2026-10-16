@@ -104,7 +104,30 @@ export function displayProgress(entry, now = Date.now()) {
    `processing_failed` (it opened the file and could not process it) is about
    her file; `capacity` is us being busy; everything else (fetch failed, the
    stream went silent or dropped, a non-2xx response) is our side. */
+/* The backend now names a file it can't read (NQBackEnd2 core/file_format.py,
+   2026-10-14), and each name carries something she can DO. Telling her "try
+   again" for an old .ppt is how one student retried three times in twenty
+   seconds. A code missing here falls back to the generic file message. */
+export const FORMAT_FAILURES = {
+  legacy_office: 'legacy',
+  not_a_document: 'damaged',
+  unreadable_document: 'unreadable',
+  unsupported_type: 'type',
+};
+
+/** i18n key per failure kind; every message takes an optional {{name}}. */
+export const UPLOAD_FAILURE_KEYS = {
+  file: 'composerUpload.failed',
+  busy: 'composerUpload.failedBusy',
+  ourSide: 'composerUpload.failedOurSide',
+  legacy: 'composerUpload.failedLegacy',
+  damaged: 'composerUpload.failedDamaged',
+  unreadable: 'composerUpload.failedUnreadable',
+  type: 'composerUpload.failedType',
+};
+
 export function uploadFailureKind(error) {
+  if (FORMAT_FAILURES[error?.code]) return FORMAT_FAILURES[error.code];
   if (error?.code === 'processing_failed') return 'file';
   if (error?.code === 'capacity') return 'busy';
   return 'ourSide';

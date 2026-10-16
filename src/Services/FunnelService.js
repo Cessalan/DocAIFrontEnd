@@ -58,6 +58,12 @@ const COLLECTION = "funnelEvents";
 export const FUNNEL = Object.freeze({
   UPLOAD_STARTED: 'upload_started',
   UPLOAD_COMPLETED: 'upload_completed',
+  // Why it didn't complete (Services/uploadFailure.js). FAILED is logged by a
+  // page that saw the error; INTERRUPTED by pagehide or, on the next load, by
+  // a marker the dead page left behind. One upload can produce both
+  // INTERRUPTED rows: count distinct funnelId, never rows.
+  UPLOAD_FAILED: 'upload_failed',
+  UPLOAD_INTERRUPTED: 'upload_interrupted',
   // Course intelligence. The context form runs alongside the upload rather
   // than in front of it, so CONTEXT_SHOWN and UPLOAD_STARTED land within a
   // second of each other — the gap worth watching is SHOWN -> SUBMITTED, and

@@ -1,4 +1,4 @@
-import { applyUploadEvent, anyUploading, displayProgress, fileKind, markAll, newComposerFile, STAGE_FLOOR, uploadFailureKind } from './composerUploadModel';
+import { applyUploadEvent, anyUploading, displayProgress, fileKind, markAll, newComposerFile, STAGE_FLOOR, uploadFailureKind, FORMAT_FAILURES, UPLOAD_FAILURE_KEYS } from './composerUploadModel';
 
 const start = () => [newComposerFile({ name: 'Evaluation ABCDE.pdf' }, 'a'), newComposerFile({ name: 'Week 3.pptx' }, 'b')];
 
@@ -65,4 +65,18 @@ test('only a processing failure blames the file', () => {
   expect(uploadFailureKind(new TypeError('Failed to fetch'))).toBe('ourSide');
   expect(uploadFailureKind(new Error('Upload timed out - the connection went silent'))).toBe('ourSide');
   expect(uploadFailureKind(undefined)).toBe('ourSide');
+});
+
+test('a file the backend names gets the instruction for that file', () => {
+  const coded = code => Object.assign(new Error('x'), { code });
+  expect(uploadFailureKind(coded('legacy_office'))).toBe('legacy');
+  expect(uploadFailureKind(coded('not_a_document'))).toBe('damaged');
+  expect(uploadFailureKind(coded('unreadable_document'))).toBe('unreadable');
+  expect(uploadFailureKind(coded('unsupported_type'))).toBe('type');
+  expect(uploadFailureKind(coded('some_future_code'))).toBe('ourSide');
+});
+
+test('every failure kind has a message key', () => {
+  const kinds = ['file', 'busy', 'ourSide', ...Object.values(FORMAT_FAILURES)];
+  kinds.forEach(kind => expect(UPLOAD_FAILURE_KEYS[kind]).toMatch(/^composerUpload\./));
 });

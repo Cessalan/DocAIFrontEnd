@@ -234,7 +234,7 @@ const UPLOAD_FIRST_BYTE_TIMEOUT_MS = 120000;
 const UPLOAD_STALL_TIMEOUT_MS = 45000;
 const UPLOAD_OVERALL_TIMEOUT_MS = 300000;
 
-export const upload_files_with_progress = async (files, chatId, onProgress,language) => {
+export const upload_files_with_progress = async (files, chatId, onProgress, language, { clientUploadId } = {}) => {
   // Normalize language to base code (e.g., 'fr-FR' -> 'fr')
   const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
   devLog('📤 Upload language:', language, '-> normalized:', normalizedLang);
@@ -247,17 +247,33 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
   formData.append('chat_id', chatId);
   formData.append('user_id', auth.currentUser?.uid || 'anonymous');
   formData.append('language', normalizedLang)
+  // Lets a failed upload's funnel row be matched to its Cloud Run log lines.
+  if (clientUploadId) formData.append('client_upload_id', clientUploadId);
+
+  // What we knew when it failed, attached to the thrown error as
+  // `error.upload` (Services/uploadFailure.js turns it into a funnel row).
+  const startedAt = Date.now();
+  const diag = {
+    phase: 'sending', timer: null, status: null, endedEarly: false,
+    lastEvent: null, eventsSeen: 0, filesCompleted: 0, wasHidden: false,
+    totalBytes: files.reduce((sum, f) => sum + (f.size || 0), 0),
+  };
+  const onVisibility = () => { if (document.hidden) diag.wasHidden = true; };
+  if (typeof document !== 'undefined') {
+    if (document.hidden) diag.wasHidden = true;
+    document.addEventListener('visibilitychange', onVisibility);
+  }
 
   // Abort the request when the server goes silent (Safari/proxy drops,
   // backend crash mid-stream) so the UI gets a real error instead of
   // showing "uploading" forever.
   const controller = new AbortController();
   let stallTimer = null;
-  const armStallTimer = (ms) => {
+  const armStallTimer = (ms, timer) => {
     clearTimeout(stallTimer);
-    stallTimer = setTimeout(() => controller.abort(), ms);
+    stallTimer = setTimeout(() => { diag.timer = timer; controller.abort(); }, ms);
   };
-  const overallTimer = setTimeout(() => controller.abort(), UPLOAD_OVERALL_TIMEOUT_MS);
+  const overallTimer = setTimeout(() => { diag.timer = 'overall'; controller.abort(); }, UPLOAD_OVERALL_TIMEOUT_MS);
 
   const results = {
     files: new Map(),
@@ -278,6 +294,8 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       return;
     }
     if (update.type === 'heartbeat') return; // keep-alive only, not a UI event
+    diag.lastEvent = update.type || null;
+    diag.eventsSeen += 1;
     if (onProgress) onProgress(update);
     if (update.type === 'error') {
       const batchError = new Error(update.message || 'Upload failed');
@@ -288,6 +306,7 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       results.files.set(update.file_id, update);
       results.totalWords += update.word_count || 0;
       results.completed += 1;
+      diag.filesCompleted = results.completed;
     }
     if (update.type === 'all_complete') {
       results.allComplete = true;
@@ -295,7 +314,7 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
   };
 
   try {
-    armStallTimer(UPLOAD_FIRST_BYTE_TIMEOUT_MS);
+    armStallTimer(UPLOAD_FIRST_BYTE_TIMEOUT_MS, 'first_byte');
 
     // Send request
     const response = await fetch(`${FAST_API_BASE}/chat/upload-files`, {
@@ -304,7 +323,9 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       signal: controller.signal
     });
 
+    diag.phase = 'streaming';
     if (!response.ok) {
+      diag.status = response.status;
       const errorText = await response.text();
       throw new Error(`Upload failed: ${response.statusText} - ${errorText}`);
     }
@@ -316,11 +337,11 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
       const decoder = new TextDecoder();
       let buffer = '';
 
-      armStallTimer(UPLOAD_STALL_TIMEOUT_MS);
+      armStallTimer(UPLOAD_STALL_TIMEOUT_MS, 'stall');
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
-        armStallTimer(UPLOAD_STALL_TIMEOUT_MS);
+        armStallTimer(UPLOAD_STALL_TIMEOUT_MS, 'stall');
 
         buffer += decoder.decode(value, { stream: true });
         const lines = buffer.split('\n');
@@ -343,20 +364,28 @@ export const upload_files_with_progress = async (files, chatId, onProgress,langu
     // A stream that ended without all_complete means the server died mid-way
     // (deploy, crash, proxy timeout). Surface it instead of pretending success.
     if (!results.allComplete) {
+      diag.endedEarly = true;
       throw new Error('Upload connection lost before completion');
     }
 
     return results;
 
   } catch (error) {
-    if (error.name === 'AbortError') {
-      throw new Error('Upload timed out - the connection went silent');
-    }
-    console.error('Upload error in FastAPICalls:', error);
-    throw error;
+    const failure = error.name === 'AbortError'
+      ? new Error('Upload timed out - the connection went silent')
+      : error;
+    failure.upload = {
+      ...diag,
+      elapsedMs: Date.now() - startedAt,
+      online: typeof navigator !== 'undefined' ? navigator.onLine : null,
+      connection: (typeof navigator !== 'undefined' && navigator.connection?.effectiveType) || null,
+    };
+    if (failure === error) console.error('Upload error in FastAPICalls:', error);
+    throw failure;
   } finally {
     clearTimeout(stallTimer);
     clearTimeout(overallTimer);
+    if (typeof document !== 'undefined') document.removeEventListener('visibilitychange', onVisibility);
   }
 };
 // A title is cosmetic, so this call gets a hard ceiling. Without one, a slow

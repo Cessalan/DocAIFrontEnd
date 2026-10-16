@@ -1,6 +1,7 @@
 import './LoadingMessageBox.css';
 import StethoscopeScanningDocIcon from './StethoscopeScanningDocIcon';
 import { useTranslation } from 'react-i18next';
+import { FORMAT_FAILURES, UPLOAD_FAILURE_KEYS } from './composerUploadModel';
 
 /**
  * LoadingMessageBox - Shows real-time file upload insights in chat
@@ -102,9 +103,14 @@ const LoadingMessageBox = ({
           ======================================== */}
       {error && (
         <div className="upload-error-hint">
-          {errorCode === 'capacity'
-            ? t('loading.uploadOverloadedHint')
-            : t('loading.uploadFailedHint')}
+          {FORMAT_FAILURES[errorCode]
+            // The file is the problem and retrying won't change it: say what to do.
+            ? t(UPLOAD_FAILURE_KEYS[FORMAT_FAILURES[errorCode]], {
+                name: filenames.length === 1 ? filenames[0] : t('composerUpload.oneOfYourFiles'),
+              })
+            : errorCode === 'capacity'
+              ? t('loading.uploadOverloadedHint')
+              : t('loading.uploadFailedHint')}
         </div>
       )}
 

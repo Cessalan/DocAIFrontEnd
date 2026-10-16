@@ -30,7 +30,7 @@ import GhostLoader from './GhostLoader';
 import LoadingMessageBox from './LoadingMessageBox';
 import ComposerUploads from './ComposerUploads';
 import ComposerSuggestions from './ComposerSuggestions';
-import { anyUploading, applyUploadEvent, markAll, newComposerFile, uploadFailureKind } from './composerUploadModel';
+import { anyUploading, applyUploadEvent, markAll, newComposerFile, uploadFailureKind, FORMAT_FAILURES, UPLOAD_FAILURE_KEYS } from './composerUploadModel';
 import PostUploadActions from './PostUploadActions';
 import FirstUploadWowCard from './FirstUploadWowCard';
 // FileViewerModal is lazy-loaded — see the code-splitting block below the imports.
@@ -136,6 +136,7 @@ import { coerceDate, calendarDaysBetween } from '../StudyMode/studySchedule';
 
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
 import { FUNNEL, startFunnel, logFunnelStep, logFunnelStepOnce, getFunnelId } from '../../Services/FunnelService';
+import { describeUploadFailure, markUploadStarted, touchUpload, markUploadEnded, takeInterruptedUploads } from '../../Services/uploadFailure';
 import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
 import DrillExamDate from '../ExamDrill/DrillExamDate';
@@ -400,6 +401,20 @@ const ChatInterface = ({
       window.removeEventListener('focus', onFocus);
     };
   }, []); // eslint-disable-line react-hooks/exhaustive-deps -- refs read inside handlers stay fresh
+
+  // Uploads a previous page started and never finished (closed, reloaded,
+  // killed in the background). Reported once, here, from the marker it left;
+  // markers young enough to belong to another open tab are left alone.
+  useEffect(() => {
+    let store = null;
+    try { store = window.localStorage; } catch { return; }
+    takeInterruptedUploads(store).forEach(({ funnelId, ageMs, ...entry }) => {
+      logFunnelStep(FUNNEL.UPLOAD_INTERRUPTED, {
+        ...entry, funnelId, via: 'next_load', reportedAfterMs: ageMs,
+        elapsedMs: entry.lastEventAt ? entry.lastEventAt - entry.startedAt : null,
+      });
+    });
+  }, []);
 
   // Auto-dismiss file error toast after 5 seconds
   useEffect(() => {
@@ -3095,6 +3110,30 @@ const ChatInterface = ({
     });
     logFunnelStep(FUNNEL.UPLOAD_STARTED);
 
+    // If this page dies mid-upload (tab closed, reload, iOS killing a
+    // backgrounded tab) no catch block runs and the failure would be a missing
+    // row. Leave a marker the next load reports, and try once on pagehide.
+    const uploadFunnelId = getFunnelId();
+    const uploadStartedAt = Date.now();
+    // Reading localStorage throws when site data is blocked; uploads go on.
+    const uploadStore = (() => { try { return window.localStorage; } catch { return null; } })();
+    markUploadStarted(uploadStore, uploadFunnelId, {
+      startedAt: uploadStartedAt,
+      fileCount: files.length,
+      totalBytes: files.reduce((sum, f) => sum + (f.size || 0), 0),
+      entryPoint: window._pendingDrill ? 'drill'
+        : window._pendingStudyJourney ? 'study_journey'
+        : pendingStudyActionRef.current ? 'preselected_action'
+        : 'attach',
+    });
+    const onUploadPageHide = () => {
+      touchUpload(uploadStore, uploadFunnelId, { pageHiddenAt: Date.now() });
+      logFunnelStep(FUNNEL.UPLOAD_INTERRUPTED, {
+        funnelId: uploadFunnelId, via: 'pagehide', elapsedMs: Date.now() - uploadStartedAt,
+      });
+    };
+    window.addEventListener('pagehide', onUploadPageHide);
+
     // A plain attach lives in the message box: chips with a progress ring,
     // nothing posted into the chat, and the composer stays usable while it
     // loads (2026-10-08). Drill, study-plan and pre-picked-action uploads
@@ -3196,8 +3235,12 @@ const ChatInterface = ({
       const results = await upload_files_with_progress(
         files,
         resolvedChatId,
-        (update) => handleUploadProgress(update, fileTracker, resolvedChatId),
-        currentLanguage
+        (update) => {
+          touchUpload(uploadStore, uploadFunnelId, { lastEvent: update.type, lastEventAt: Date.now() });
+          handleUploadProgress(update, fileTracker, resolvedChatId);
+        },
+        currentLanguage,
+        { clientUploadId: uploadFunnelId }
       );
 
       // All files completed
@@ -3243,12 +3286,13 @@ const ChatInterface = ({
 
     } catch (error) {
       console.error('Upload error:', error);
+      logFunnelStep(FUNNEL.UPLOAD_FAILED, { funnelId: uploadFunnelId, ...describeUploadFailure(error) });
       setLoadingState('fileUpload', false);
       setLoadingState('fileEmbedding', false);
       setIsUploadAnalyzing(false);
       if (plainAttach) {
         setComposerFiles(prev => markAll(prev, 'error'));
-        setFileErrorToast(t({ file: 'composerUpload.failed', busy: 'composerUpload.failedBusy', ourSide: 'composerUpload.failedOurSide' }[uploadFailureKind(error)]));
+        setFileErrorToast(t(UPLOAD_FAILURE_KEYS[uploadFailureKind(error)], { name: files.length === 1 ? files[0].name : t('composerUpload.oneOfYourFiles') }));
       }
 
       // Flip the upload loading box into a visible error state so a failed,
@@ -3286,6 +3330,10 @@ const ChatInterface = ({
           : msg
       ));
     }
+
+    // Ended either way, and the outcome is logged: no longer "in flight".
+    window.removeEventListener('pagehide', onUploadPageHide);
+    markUploadEnded(uploadStore, uploadFunnelId);
 
     // A message sent while this upload ran has been waiting on it.
     finishUpload();
@@ -3504,6 +3552,12 @@ const ChatInterface = ({
 
       case 'file_error':
         console.error(`❌ File error: ${update.filename}`, update.message);
+        // One file of several that the backend can't read: the rest still
+        // upload, so the batch never fails and she'd never learn why this one
+        // is missing from her plan. Name it and say what to do with it.
+        if (FORMAT_FAILURES[update.code]) {
+          setFileErrorToast(t(UPLOAD_FAILURE_KEYS[FORMAT_FAILURES[update.code]], { name: update.filename || t('composerUpload.oneOfYourFiles') }));
+        }
         setChatMessages(prev => prev.map(msg =>
           msg.file?.name === update.filename
             ? {
