@@ -190,11 +190,51 @@ describe('recommendation', () => {
     expect(rec.node.examConfig.customInstructions).toContain('Which action first?');
   });
 
-  it('escalates a clean run into a scenario rather than repeating it', () => {
+  it('moves a clean run on to the next step instead of a harder lap of the same topic', () => {
     const rec = readout({ result: quizResult(5, 5), bucket: 'mastered' }).recommendation;
+    expect(rec.kind).toBe('continue');
+    expect(rec.node).toBeNull();
+    expect(rec.title).toBe('Airway management');
+  });
+
+  it('a clean run moves on even when a plan-wide pattern exists', () => {
+    const rec = readout({ result: quizResult(5, 5), bucket: 'mastered', debrief: patternDebrief(3) }).recommendation;
+    expect(rec.kind).toBe('continue');
+  });
+
+  it('keeps the scenario stretch for a clean run at the end of the plan', () => {
+    const rec = readout({ result: quizResult(5, 5), bucket: 'mastered', nextNode: null }).recommendation;
     expect(rec.kind).toBe('harder');
     expect(rec.cta).toBe('Challenge me →');
     expect(rec.node.examConfig.questionTypes).toEqual(['casestudy']);
+  });
+
+  describe('the detour cap (60% of plans never left topic 1, 2026-10-13)', () => {
+    it('offers one fix on a topic', () => {
+      const rec = readout({ result: quizResult(2, 5), bucket: 'gaps', detoursTaken: 0 }).recommendation;
+      expect(rec.kind).toBe('fix');
+    });
+
+    it('moves on once the topic has had its extra step', () => {
+      for (const over of [{ result: quizResult(2, 5), bucket: 'gaps' }, { result: quizResult(1, 5), bucket: 'tough' },
+        { debrief: patternDebrief(3) }, { debrief: patternDebrief(2) }]) {
+        const rec = readout({ ...over, detoursTaken: 1 }).recommendation;
+        expect(rec.kind).toBe('continue');
+        expect(rec.node).toBeNull();
+        expect(rec.testSkill).toBeNull();
+        expect(rec.rationale).toContain('extra practice');
+      }
+    });
+
+    it('a finished drill never recommends another drill', () => {
+      const rec = readout({ result: quizResult(1, 3), bucket: 'tough', node: { id: 'd', type: 'exam', adaptive: true } }).recommendation;
+      expect(rec.kind).toBe('continue');
+    });
+
+    it('still offers practice at the end of the plan, where moving on is impossible', () => {
+      const rec = readout({ result: quizResult(2, 5), bucket: 'gaps', detoursTaken: 3, nextNode: null }).recommendation;
+      expect(rec.node).not.toBeNull();
+    });
   });
 
   it('continues the plan when nothing warrants a detour', () => {
@@ -215,7 +255,7 @@ describe('recommendation', () => {
       readout({ debrief: patternDebrief(2) }),
       readout({ debrief: patternDebrief(3) }),
       readout({ result: quizResult(1, 5), bucket: 'tough' }),
-      readout({ result: quizResult(5, 5), bucket: 'mastered' }),
+      readout({ result: quizResult(5, 5), bucket: 'mastered', nextNode: null }),
       readout(),
     ].map((r) => r.recommendation.cta);
     expect(new Set(ctas).size).toBe(ctas.length);

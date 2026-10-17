@@ -52,3 +52,11 @@
   .nt-result .nt2-insight { padding: 16px; }
   .nt-result .nt2-primary.node-transition__btn--choice { flex-wrap: wrap; padding: 17px; }
 }
+
+/* "Move on" under the recommendation (NodeTransition): always there when the
+   button would add a same-topic step, as a quiet text link, not a rival button. */
+.nt3-move-on { display:block; margin:10px auto 0; padding:6px 8px; border:0; background:none; cursor:pointer;
+  font:inherit; font-size:14px; color:var(--text-secondary, #6b6b6b); text-decoration:underline; text-underline-offset:3px; }
+.nt3-move-on:hover { color:var(--text-primary, #3d3d3d); }
+body.dark-mode .nt3-move-on { color:#b9b0c9; }
+body.dark-mode .nt3-move-on:hover { color:#f0ecf7; }

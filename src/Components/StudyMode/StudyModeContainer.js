@@ -30,7 +30,8 @@ import { usePaperTransition } from '../ChatInerface/paperTransition';
 import PaperSurface from '../ChatInerface/PaperSurface';
 import '../ChatInerface/paperTransition.css';
 import { computeReadinessDelta } from './readinessDelta';
-import { resolveNodeTopic, testedSkills as findTestedSkills } from './nodeTopic';
+import { countDetours, resolveNodeTopic, testedSkills as findTestedSkills } from './nodeTopic';
+import { topicHandoff, topicJourney } from './topicJourneyModel';
 import { buildExperimentNode } from './nodeReadout';
 import { getTopicProgress, savePracticeAttempt } from '../../Services/TopicProgressService';
 import { PracticeAttemptRecord } from '../../Services/topicProgressModel';
@@ -2102,6 +2103,11 @@ const StudyModeContainer = ({
           onTestTheory={handleTestTheory}
           testedSkills={testedSkillsInPlan}
           nodeTopic={activeNodeTopic}
+          detoursTaken={countDetours(nodes, activeNodeTopic)}
+          topicHandoff={topicHandoff(
+            topicJourney({ nodes, reserveNodes: studyState?.reserve?.nodes, topicProgress,
+              activeNodeId: activeNode?.id, finishedNodeId: activeNode?.id }),
+            activeNodeTopic, getNextPlannedNode(), nodes.concat(studyState?.reserve?.nodes || []))}
           isAdvancing={isAdvancing}
           isLoadingPractice={isLoadingPractice}
           isLoadingCustom={isLoadingCustom}

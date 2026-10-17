@@ -1,4 +1,4 @@
-import { resolveNodeTopic, testedSkills } from './nodeTopic';
+import { countDetours, resolveNodeTopic, testedSkills } from './nodeTopic';
 
 /* Shapes taken from the two real plans that produced the loop (2026-09-13 and
    2026-09-22): plan nodes keep the subject in tags[0], inserted nodes carry
@@ -76,5 +76,28 @@ describe('testedSkills', () => {
   it('is empty for a plan with no experiments', () => {
     expect(testedSkills([plan[1]])).toEqual([]);
     expect(testedSkills(undefined)).toEqual([]);
+  });
+});
+
+describe('countDetours', () => {
+  const nodes = [
+    { id: 'a', type: 'quiz', tags: ['Heart failure'], status: 'done' },
+    { id: 'b', type: 'exam', label: 'Focused drill: Heart failure', topic: 'Heart failure', adaptive: true, tags: ['adaptive', 'source:a'] },
+    { id: 'c', type: 'quiz', tags: ['Angina'] },
+    { id: 'd', type: 'exam', topic: 'Angina', adaptive: true, tags: ['tonight', 'tonight:round:1'] },
+  ];
+
+  it('counts the extra steps already on a topic', () => {
+    expect(countDetours(nodes, 'Heart failure')).toBe(1);
+    expect(countDetours(nodes, 'heart failure ')).toBe(1);
+  });
+
+  it("does not count Tonight's plan rounds, which repeat by design", () => {
+    expect(countDetours(nodes, 'Angina')).toBe(0);
+  });
+
+  it('is zero without a topic or nodes', () => {
+    expect(countDetours(nodes, '')).toBe(0);
+    expect(countDetours(undefined, 'Angina')).toBe(0);
   });
 });

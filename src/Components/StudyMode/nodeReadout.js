@@ -31,6 +31,16 @@ import { findMatchingTopicKey } from '../../Services/StudySessionService';
 export const DRILL_QUESTIONS = 3;
 
 /**
+ * Extra steps a topic may get before the plan moves on. One fix is help; a
+ * second, third and fortieth is a trap: 60% of active plans never left their
+ * first topic while the single button kept inserting same-topic drills
+ * (production read, 2026-10-13). Past the cap the recommendation is always to
+ * continue, and the missed concepts are not lost: the plan's later topic
+ * tests and the exam node cover them again.
+ */
+export const MAX_DETOURS_PER_TOPIC = 1;
+
+/**
  * Skill keys exactly as the debrief reports them (BUCKET_NAME in main.py's
  * node_debrief). Constants because they choose the drill FORMAT — a typo here
  * silently downgrades a targeted drill to plain multiple choice, which is the
@@ -198,6 +208,7 @@ export const buildNodeReadout = ({
   node,
   nodeTopic,
   estimateMinutes,
+  detoursTaken = 0,
   t,
 }) => {
   // `nodeTopic` is the subject resolved from the plan; `result.topic` is the
@@ -290,8 +301,30 @@ export const buildNodeReadout = ({
 
   let recommendation;
 
+  const continueRec = (rationale) => ({
+    kind: 'continue',
+    title: nextNode.label || t('transition.recNextFallback', 'The next step in your plan'),
+    rationale,
+    cta: t('transition.ctaKeep', 'Keep building →'),
+    meta: t('study.nodeType.' + nextNode.type, nextNode.type) + ' · ~' + est(nextNode.type) + ' min',
+    node: null,
+    testSkill: null,
+  });
+
+  // The cap comes first: past it, no insight earns another same-topic step.
+  // A finished detour counts too, so a drill never recommends a drill.
+  const detourCapReached = !!nextNode && ((node && node.adaptive === true) || detoursTaken >= MAX_DETOURS_PER_TOPIC);
+
   const reasoningFocus = debrief?.reasoningFocus;
-  if (reasoningFocus?.skill && reasoningFocus?.learner_quote && !experimentConfirmed) {
+  if (detourCapReached) {
+    recommendation = continueRec(t('transition.recMoveOnWhy',
+      "You've had extra practice on this already. Moving on keeps the rest of your exam covered."));
+  } else if (bucket === 'mastered' && nextNode) {
+    // 100% earns the next step, not a harder lap of this topic or a drill on
+    // a plan-wide pattern she just showed she can handle here. The stretch
+    // further down is kept for the end of the plan, where nothing is next.
+    recommendation = continueRec(t('transition.recNextWhy', "You're solid here — this is what it builds into."));
+  } else if (reasoningFocus?.skill && reasoningFocus?.learner_quote && !experimentConfirmed) {
     const format = ['mcq', 'sata', 'casestudy', 'matrix'].includes(reasoningFocus.question_type) ? reasoningFocus.question_type : 'mcq';
     caption = t('transition.reasoningCaption', 'A point from our discussion to try independently.');
     recommendation = {

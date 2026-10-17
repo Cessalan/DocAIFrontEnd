@@ -517,6 +517,12 @@ function handleWebSocketMessage(message, onStatusUpdate, onTokenReceived, onStre
       devLog('🏓 Received pong - connection alive');
       break;
 
+    case 'heartbeat':
+      // A slow quiz batch saying it is still working (QUIZ_HEARTBEAT_S in
+      // NQBackEnd2/services/practice_api.py). Its only job is the watchdog
+      // kick above: before it, a batch silent for STALL_MS was cancelled.
+      break;
+
     default:
       console.warn('Unknown WebSocket message type:', type);
   }

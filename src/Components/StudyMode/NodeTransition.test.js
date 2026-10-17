@@ -280,3 +280,28 @@ test('reasoning debrief names the discussion and starts its targeted practice', 
   }));
   expect(get_node_debrief.mock.calls.at(-1)[1]).toMatchObject({ node_id: 'node-1', items: expect.arrayContaining([expect.objectContaining({ question_index: 4, correct: false })]) });
 });
+
+describe('NodeTransition — never locked into one topic (2026-10-13)', () => {
+  beforeEach(() => jest.clearAllMocks());
+  const weak = { questionStatuses: { 0: 'correct', 1: 'correct', 2: 'incorrect', 3: 'incorrect', 4: 'incorrect' } };
+
+  test('a recommended drill always comes with a way to move on', async () => {
+    get_node_debrief.mockResolvedValue(noPattern(0));
+    const { onContinue, onPracticeMore, onAnalytics } = setup({ quizProgress: weak });
+    const moveOn = await screen.findByRole('button', { name: /Move on: Airway management/ });
+    fireEvent.click(moveOn);
+    expect(onContinue).toHaveBeenCalledTimes(1);
+    expect(onPracticeMore).not.toHaveBeenCalled();
+    expect(onAnalytics).toHaveBeenCalledWith('transition_move_on_clicked', expect.any(Object));
+  });
+
+  test('once the topic has had its extra step, the main button moves on', async () => {
+    get_node_debrief.mockResolvedValue(noPattern(0));
+    const { onContinue, onPracticeMore } = setup({ quizProgress: weak, detoursTaken: 1 });
+    await waitFor(() => expect(get_node_debrief).toHaveBeenCalled());
+    expect(screen.queryByRole('button', { name: /Move on:/ })).not.toBeInTheDocument();
+    fireEvent.click(await screen.findByRole('button', { name: /Continue with/ }));
+    expect(onContinue).toHaveBeenCalledTimes(1);
+    expect(onPracticeMore).not.toHaveBeenCalled();
+  });
+});

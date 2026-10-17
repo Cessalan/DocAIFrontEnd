@@ -1,0 +1,32 @@
+/* Topics across the plan (TopicJourney.js), on Tonight's plan's surfaces
+   (TonightPlan.css). A quiet list with hairline dividers; the marks carry the
+   state: filled done, ringed current, empty to come. */
+.tj-topics { list-style: none; margin: 4px 0 0; padding: 0; }
+.tj-topic { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid rgba(100, 100, 100, 0.12); }
+.tj-topic:first-child { border-top: 0; }
+.tj-topic b { font-weight: 600; font-size: 15px; }
+.tj-topic .tn-result { font-size: 14px; }
+.tj-topic.is-upcoming b { font-weight: 500; color: var(--text-secondary, #6b6b6b); }
+.tj-note { display: block; margin-top: 2px; font-size: 13px; color: var(--text-secondary, #6b6b6b); }
+.tj-more { margin: 6px 0 0 24px; font-size: 13px; color: var(--text-muted, #999); }
+
+.tj-mark { flex: 0 0 12px; width: 12px; height: 12px; margin-top: 4px; border-radius: 50%;
+  border: 1.5px solid var(--text-muted, #bbb); box-sizing: border-box; }
+.tj-mark.is-done { background: var(--primary-coral, #e88d7d); border-color: var(--primary-coral, #e88d7d); }
+.tj-mark.is-current { border: 3px solid var(--primary-coral, #e88d7d); }
+
+/* After a step that finishes a topic (NodeTransition). */
+.tj-handoff { margin: 4px 0 16px; padding: 12px 14px; border-radius: 12px; background: rgba(232, 141, 125, 0.08); }
+.tj-handoff p { margin: 0; }
+.tj-handoff__done { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+.tj-handoff__done .tj-mark { margin-top: 0; }
+.tj-handoff .tn-result { margin: 4px 0 0 20px; font-size: 14px; }
+.tj-handoff__next { margin: 6px 0 0 20px !important; font-size: 14px; color: var(--text-secondary, #6b6b6b); }
+
+body.dark-mode .tj-topic { border-top-color: rgba(255, 255, 255, 0.08); }
+body.dark-mode .tj-note, body.dark-mode .tj-handoff__next, body.dark-mode .tj-topic.is-upcoming b { color: #b5b5b5; }
+body.dark-mode .tj-more { color: #a0a0a0; }
+body.dark-mode .tj-mark { border-color: #777; }
+body.dark-mode .tj-mark.is-done { background: var(--dark-accent, #b8a5d4); border-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tj-mark.is-current { border-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tj-handoff { background: rgba(200, 180, 220, 0.1); }

@@ -11,6 +11,8 @@ import { buildStudySchedule } from './studySchedule';
 // node labels the same way — two copies would silently drift apart.
 import { projectReadiness, normalizeTopic } from './readinessProjection';
 import './StudyMode.css';
+import { TopicJourneyPanel } from './TopicJourney';
+import { topicJourney } from './topicJourneyModel';
 
 /* ──────────────────────────────────────────────────────────
    Helper: extract the base topic from a node label by
@@ -432,6 +434,8 @@ const StudyPlanOverview = ({
     () => nodes.filter(n => n.type !== 'section_banner'),
     [nodes]
   );
+  const journey = useMemo(() => topicJourney({ nodes, reserveNodes: studyState?.reserve?.nodes, topicProgress }),
+    [nodes, studyState?.reserve?.nodes, topicProgress]);
   const completedCount = realNodes.filter(n => n.status === 'done').length;
   const totalNodes = realNodes.length;
 
@@ -970,6 +974,9 @@ const StudyPlanOverview = ({
           intentional and part of the build flow.
           ────────────────────────────────────────────── */}
       {tonightPanel}
+
+      {/* Where she is across topics, the way Tonight's plan shows rounds. */}
+      {!tonightPanel && <TopicJourneyPanel journey={journey} />}
 
       {!tonightPanel && !hasPhase2Nodes && (() => {
           const snap = buildReadinessSnapshot(scoredTopics);

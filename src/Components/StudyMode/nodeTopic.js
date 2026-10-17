@@ -80,6 +80,30 @@ export const resolveNodeTopic = (node, nodes = []) => {
 };
 
 /**
+ * How many extra (adaptive) steps the plan already holds on this topic.
+ *
+ * The transition screen's one button used to insert another same-topic step
+ * after nearly every result, and the step it inserted ended on the same
+ * screen: 101 of 168 active plans (60%) never left their first topic, with
+ * students pressing it 8 to 42 times ("Harder: Focused drill: ..."), and a Pro
+ * student cancelled the day she upgraded because "it isn't moving on to the
+ * other important aspect" (2026-10-12). The readout caps detours with this
+ * count. Tonight's plan rounds are adaptive by design and are not detours.
+ *
+ * @param {Array} nodes
+ * @param {string} topic
+ * @returns {number}
+ */
+export const countDetours = (nodes = [], topic = '') => {
+  const key = String(topic || '').trim().toLowerCase();
+  if (!key) return 0;
+  const list = Array.isArray(nodes) ? nodes : [];
+  return list.filter((node) => node && node.adaptive === true
+    && !(Array.isArray(node.tags) && node.tags.some((tag) => typeof tag === 'string' && tag.startsWith('tonight')))
+    && resolveNodeTopic(node, list).trim().toLowerCase() === key).length;
+};
+
+/**
  * Skills that already have an experiment node in this plan, whatever its
  * status. A skill is tested once: a second identical experiment proves nothing
  * the first didn't, and offering it after every node is what produced the loop.

@@ -18,6 +18,7 @@ import {
 } from '../../Services/StudyReminderService';
 import './StudyMode.css';
 import './NodeResult.css';
+import { TopicHandoff } from './TopicJourney';
 
 const ReadinessGain = ({ value, label }) => {
   const [displayed, setDisplayed] = useState(() => (
@@ -128,6 +129,8 @@ const NodeTransition = ({
   onTestTheory,      // (skill) => insert a single question built around the pattern
   testedSkills,      // skills already given an experiment in this plan (never re-offered)
   nodeTopic,         // the node's subject, resolved from the plan (label may be decorated)
+  detoursTaken = 0,  // extra steps the plan already holds on this topic (nodeTopic.countDetours)
+  topicHandoff = null, // {done, next, nextNumber, total} when this step finished a topic (topicJourneyModel)
   priorPerformance,  // studyPerformance snapshot taken BEFORE this node started
   topicProgress = null,
 }) => {
@@ -783,9 +786,10 @@ const NodeTransition = ({
       node,
       nodeTopic,
       estimateMinutes: getEstimate,
+      detoursTaken,
       t,
     });
-  }, [result, bucket, debrief, experimentConfirmed, nextNode, priorPerformance, onTestTheory, testedSkills, node, nodeTopic, t]);
+  }, [result, bucket, debrief, experimentConfirmed, nextNode, priorPerformance, onTestTheory, testedSkills, node, nodeTopic, detoursTaken, t]);
 
   // ── Determine remediation node type based on severity ───────────────
   const remediationType = useMemo(() => {
@@ -1549,6 +1553,10 @@ const NodeTransition = ({
              comes from buildNodeReadout, still changes with what was found,
              and now arrives as the button she presses instead of as a
              paragraph she reads first. */}
+        {/* A finished topic, said the way Tonight's plan closes a round:
+            what was done, how it went (only when comparable), what is next. */}
+        <TopicHandoff handoff={topicHandoff} />
+
         <div className="nt3-rec">
           <button
             className="node-transition__btn node-transition__btn--choice nt2-primary"
@@ -1576,6 +1584,15 @@ const NodeTransition = ({
               </>
             )}
           </button>
+          {/* Whenever the button would add a step on this topic, she can
+              always move on instead. Without this the only way forward was
+              the button, and it kept inserting same-topic drills. */}
+          {nextNode && (recommendation?.node || recommendation?.testSkill) && !isAdvancing && !isLoadingPractice && (
+            <button type="button" className="nt3-move-on"
+              onClick={() => { onAnalytics?.('transition_move_on_clicked', { kind: recommendation.kind, score_bucket: bucket }); onContinue(); }}>
+              {t('transition.moveOnNext', { label: nextNode.label || t(`study.nodeType.${nextNode.type}`, nextNode.type), defaultValue: 'Move on: {{label}} →' })}
+            </button>
+          )}
         </div>
 
         {/* ── The alternative, offered as a sentence rather than a rival ──
