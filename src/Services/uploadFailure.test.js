@@ -64,6 +64,7 @@ test('describeUploadFailure carries what the upload knew, nulls where it knew no
     errorMessage: 'Upload timed out - the connection went silent',
     phase: 'streaming', lastEvent: 'embedding_progress', eventsSeen: 14, filesCompleted: 2,
     totalBytes: 9e6, elapsedMs: 118000, wasHidden: false, online: true, connection: '4g',
+    staged: null, stagingError: null,
   });
   expect(describeUploadFailure(new Error('x')).phase).toBeNull();
   expect(describeUploadFailure(new Error('y'.repeat(500))).errorMessage).toHaveLength(200);

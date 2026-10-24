@@ -113,6 +113,8 @@ export const FORMAT_FAILURES = {
   not_a_document: 'damaged',
   unreadable_document: 'unreadable',
   unsupported_type: 'type',
+  // Over MAX_UPLOAD_FILE_BYTES (Services/storageUpload.js), refused before upload.
+  file_too_large: 'tooLarge',
 };
 
 /** i18n key per failure kind; every message takes an optional {{name}}. */
@@ -124,6 +126,7 @@ export const UPLOAD_FAILURE_KEYS = {
   damaged: 'composerUpload.failedDamaged',
   unreadable: 'composerUpload.failedUnreadable',
   type: 'composerUpload.failedType',
+  tooLarge: 'composerUpload.failedTooLarge',
 };
 
 export function uploadFailureKind(error) {

@@ -18,12 +18,18 @@
 const BACKEND_CODES = new Set([
   'capacity', 'processing_failed',
   'legacy_office', 'not_a_document', 'unreadable_document', 'unsupported_type',
+  'file_too_large',
 ]);
 
 /** A short, groupable reason. Pure. */
 export function uploadFailureReason(error) {
   const upload = error?.upload || {};
   if (BACKEND_CODES.has(error?.code)) return error.code;
+  // Failed while writing to Firebase Storage (Services/storageUpload.js),
+  // before the backend was called: `storage/unauthorized`, our own timeout...
+  if (upload.phase === 'staging') {
+    return `staging_${String(error?.code || 'unknown').replace(/^storage\//, '')}`;
+  }
   if (upload.timer === 'first_byte') return 'first_byte_timeout';
   if (upload.timer === 'stall') return 'stall_timeout';
   if (upload.timer === 'overall') return 'overall_timeout';
@@ -56,6 +62,9 @@ export function describeUploadFailure(error) {
     wasHidden: upload.wasHidden ?? null,
     online: upload.online ?? null,
     connection: upload.connection || null,
+    // Whether the files reached Storage, and why not when they fell back.
+    staged: upload.staged ?? null,
+    stagingError: upload.stagingError || null,
   };
 }
 
@@ -64,10 +73,11 @@ export function describeUploadFailure(error) {
 // ---------------------------------------------------------------------------
 
 export const IN_FLIGHT_KEY = 'nqUploadsInFlight';
-// Every live upload ends within the 300s overall timeout in FastAPICalls. A
-// marker younger than this may belong to an upload running in ANOTHER tab, so
-// it is left alone rather than reported as interrupted.
-export const INTERRUPTED_AFTER_MS = 6 * 60 * 1000;
+// Every live upload ends within STAGING_TIMEOUT_MS (10 min, storageUpload.js)
+// plus the 300s overall timeout in FastAPICalls. A marker younger than this
+// may belong to an upload running in ANOTHER tab, so it is left alone rather
+// than reported as interrupted.
+export const INTERRUPTED_AFTER_MS = 16 * 60 * 1000;
 // A marker this old is not worth reporting: the row would land weeks late.
 export const FORGET_AFTER_MS = 7 * 24 * 60 * 60 * 1000;
 

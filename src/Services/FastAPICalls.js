@@ -1,7 +1,8 @@
 import { loadNodeReasoning, saveReasoningSummary } from './StudyReasoningService';
 import { auth } from '../Firebase/config';
 import { API_BASE_URL } from './config';
-import { devLog } from './devLogger';
+import { devLog, devWarn } from './devLogger';
+import { canSendDirect, oversizedFiles, stageFilesInStorage } from './storageUpload';
 
 const FAST_API_BASE = API_BASE_URL;
 const header = {"Content-Type": "application/json"};
@@ -239,11 +240,7 @@ export const upload_files_with_progress = async (files, chatId, onProgress, lang
   const normalizedLang = language ? language.split('-')[0].toLowerCase() : 'en';
   devLog('📤 Upload language:', language, '-> normalized:', normalizedLang);
 
-  // Prepare FormData
   const formData = new FormData();
-  files.forEach(file => {
-    formData.append('files', file); // 'files' plural matches backend
-  });
   formData.append('chat_id', chatId);
   formData.append('user_id', auth.currentUser?.uid || 'anonymous');
   formData.append('language', normalizedLang)
@@ -254,9 +251,10 @@ export const upload_files_with_progress = async (files, chatId, onProgress, lang
   // `error.upload` (Services/uploadFailure.js turns it into a funnel row).
   const startedAt = Date.now();
   const diag = {
-    phase: 'sending', timer: null, status: null, endedEarly: false,
+    phase: 'staging', timer: null, status: null, endedEarly: false,
     lastEvent: null, eventsSeen: 0, filesCompleted: 0, wasHidden: false,
     totalBytes: files.reduce((sum, f) => sum + (f.size || 0), 0),
+    staged: false, stagingError: null,
   };
   const onVisibility = () => { if (document.hidden) diag.wasHidden = true; };
   if (typeof document !== 'undefined') {
@@ -269,11 +267,11 @@ export const upload_files_with_progress = async (files, chatId, onProgress, lang
   // showing "uploading" forever.
   const controller = new AbortController();
   let stallTimer = null;
+  let overallTimer = null;
   const armStallTimer = (ms, timer) => {
     clearTimeout(stallTimer);
     stallTimer = setTimeout(() => { diag.timer = timer; controller.abort(); }, ms);
   };
-  const overallTimer = setTimeout(() => { diag.timer = 'overall'; controller.abort(); }, UPLOAD_OVERALL_TIMEOUT_MS);
 
   const results = {
     files: new Map(),
@@ -314,6 +312,28 @@ export const upload_files_with_progress = async (files, chatId, onProgress, lang
   };
 
   try {
+    // Files go to Firebase Storage first (Services/storageUpload.js): past
+    // Cloud Run's 32 MiB request limit, and resumable across a locked phone.
+    // The backend timers below start only once they are stored, since a big
+    // deck on a phone can take longer to send than the whole old budget.
+    if (oversizedFiles(files).length) {
+      const tooLarge = new Error('File is too large');
+      tooLarge.code = 'file_too_large';
+      throw tooLarge;
+    }
+    try {
+      const names = await stageFilesInStorage(files, chatId);
+      formData.append('storage_files', JSON.stringify(names));
+      diag.staged = true;
+    } catch (stagingError) {
+      diag.stagingError = stagingError?.code || 'unknown';
+      // A small batch still fits the old one-request path.
+      if (!canSendDirect(files)) throw stagingError;
+      devWarn('📤 Storage upload failed, sending directly:', diag.stagingError);
+      files.forEach(file => formData.append('files', file)); // 'files' plural matches backend
+    }
+    diag.phase = 'sending';
+    overallTimer = setTimeout(() => { diag.timer = 'overall'; controller.abort(); }, UPLOAD_OVERALL_TIMEOUT_MS);
     armStallTimer(UPLOAD_FIRST_BYTE_TIMEOUT_MS, 'first_byte');
 
     // Send request
