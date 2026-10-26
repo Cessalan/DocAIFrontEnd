@@ -33,63 +33,58 @@ beforeEach(() => {
 });
 afterEach(() => jest.useRealTimers());
 
-it('walks watch, together and your turn on her own miss', () => {
+it('plays the whole method by itself, like a video, then offers a replay', () => {
   const onClose = jest.fn();
   // She picked 0 and 2: right on 0, wrong on 1 (missed) and 2 (picked).
   render(<MethodWalkthrough question={QUESTION} options={OPTIONS} correctIndices={KEY}
     selectedIndices={[0, 2]} walkthrough={DATA} onClose={onClose} />);
 
+  // It starts on its own: no play button, nothing to answer.
   expect(clarityEvent).toHaveBeenCalledWith('walkthrough_opened');
-  expect(screen.getByText(/Press play and I'll break this question down/)).toBeInTheDocument();
+  expect(screen.getByText('Reading the question…')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Yes' })).toBeNull();
   expect(screen.getByText('digoxin 0.25 mg daily').tagName).toBe('MARK');
 
-  // "Watch" is the play button that starts it (owner, 2026-10-11).
-  fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
-  // Staged: it reads first, then each part in turn, then the test question.
-  expect(screen.getByText('Reading the question…')).toBeInTheDocument();
-  expect(screen.queryByText('Watch me evaluate option A')).toBeNull();
-  flush();
+  // Staged: each part in turn, then the test question.
+  act(() => { jest.advanceTimersByTime(1000 + 1800 * 2); });
   expect(screen.getByText('That gives one question to ask every option.')).toBeInTheDocument();
-  expect(screen.getByText('The problem')).toBeInTheDocument();
   expect(screen.getByText('digoxin slows the heart')).toBeInTheDocument();
-  expect(screen.getByText("What you're asked")).toBeInTheDocument();
   expect(screen.getByText('So ask each option')).toBeInTheDocument();
-  // Both parts are highlighted and numbered in the question itself.
   expect([...document.querySelectorAll('mark.mw-fact.is-lit')].map((m) => m.textContent))
     .toEqual(['1digoxin 0.25 mg daily', '2Which actions should the nurse take']);
-  expect(screen.getByText('Does this protect a slowed heart?')).toBeInTheDocument();
 
-  // Watch: the tutor demonstrates on the option she got right (0).
-  fireEvent.click(screen.getByText('Watch me evaluate option A'));
-  // The demonstration thinks out loud before each step.
+  // Option A is worked through slowly, thinking out loud first.
+  act(() => { jest.advanceTimersByTime(1600 + 1000); });
   expect(screen.getByText('Let me think this through…')).toBeInTheDocument();
-  flush();
-  expect(screen.getByText('So the answer is Yes.')).toBeInTheDocument();
+  for (let i = 0; i < 6; i += 1) flush();
+
+  // Every option played through, then the end.
   expect(screen.getByText('Real rate')).toBeInTheDocument();
-  expect(screen.getByText('needed first')).toBeInTheDocument();
-  // No part badge on the option's reasoning: the words already say why.
-  expect(document.querySelector('.mw-uses')).toBeNull();
-
-  // Together: her miss (1) comes next, with a hint on a wrong tap.
-  fireEvent.click(screen.getByText('Now you try option B'));
-  expect(screen.getByText('You got this one wrong. Ask the question.')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'No' }));
-  expect(screen.getByText('Not quite. The heart is already slow.')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'Yes' }));
-  for (let i = 0; i < 6; i += 1) flush();
   expect(screen.getByText('Already slow')).toBeInTheDocument();
-
-  // Your turn: the last option. It was a wrong pick, so the tutor names it.
-  expect(screen.getByText('You got this one wrong. Ask the question.')).toBeInTheDocument();
-  fireEvent.click(screen.getByRole('button', { name: 'No' }));
-  for (let i = 0; i < 6; i += 1) flush();
-
-  // 1 of 2: option 1 needed a second try, option 2 did not.
-  expect(screen.getByText('1 of 2 right on the first try. Use the same question on your next select-all.')).toBeInTheDocument();
+  expect(screen.getByText('Meal timing')).toBeInTheDocument();
+  expect(screen.getByText('Every option, judged one at a time with the same question.')).toBeInTheDocument();
   expect(screen.getByText('One fact, one question, every option.')).toBeInTheDocument();
   expect(clarityEvent).toHaveBeenCalledWith('walkthrough_completed');
-  fireEvent.click(screen.getByText('Back to the question'));
+
+  // Watch again starts it over.
+  fireEvent.click(screen.getByRole('button', { name: 'Watch again' }));
+  expect(screen.getByText('Reading the question…')).toBeInTheDocument();
+  expect(screen.queryByText('Meal timing')).toBeNull();
+
+  fireEvent.click(screen.getByLabelText('Close the replay'));
   expect(onClose).toHaveBeenCalled();
+});
+
+it('names an option she got wrong while it plays', () => {
+  render(<MethodWalkthrough question={QUESTION} options={OPTIONS} correctIndices={KEY}
+    selectedIndices={[0, 2]} walkthrough={DATA} onClose={() => {}} />);
+  const seen = new Set();
+  for (let ms = 0; ms < 40000; ms += 100) {
+    act(() => { jest.advanceTimersByTime(100); });
+    seen.add(document.querySelector('.mw-coach').textContent);
+  }
+  expect(seen.has('Option B is one you got wrong. Same question.')).toBe(true);
+  expect(seen.has('Option C is one you got wrong. Same question.')).toBe(true);
 });
 
 it('never highlights a part that is not in the question', () => {

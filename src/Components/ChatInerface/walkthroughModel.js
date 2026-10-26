@@ -45,6 +45,24 @@ export const stageAt = (position) =>
 export const isRightCall = (index, saidYes, correctIndices = []) =>
   correctIndices.includes(index) === Boolean(saidYes);
 
+/**
+ * The one line shown on the missed card itself, before any replay: the test
+ * question to ask of every option, and why her first wrong call fails it.
+ * Students clicked straight through the full walkthrough (owner, 2026-10-25),
+ * so the method has to be readable in five seconds without opening anything.
+ *
+ * @returns {null | { test: string, letter: string|null, reason: string|null }}
+ */
+export const ruleLine = (walkthrough, correctIndices = [], selectedIndices = []) => {
+  const test = String(walkthrough?.test_question || '').trim();
+  if (!test) return null;
+  const options = walkthrough.options || [];
+  const { missed } = planWalkthrough(options.length, correctIndices, selectedIndices);
+  const slip = missed.find((i) => (options[i]?.chain || []).length > 0);
+  if (slip === undefined) return { test, letter: null, reason: null };
+  return { test, letter: 'ABCDEFGH'[slip], reason: options[slip].chain.join(' → ') };
+};
+
 /** "A) Check the pulse" and "Check the pulse" are the same option. */
 const bare = (text) => String(text || '').replace(/^[A-Ha-h][).:-]\s*/, '').trim().toLowerCase();
 

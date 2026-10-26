@@ -1,5 +1,5 @@
 import {
-  STAGE, LADDER_RUNGS, RULES, stageAt, chartText, isUsable, firstSlip, isRightPick, ladderState,
+  STAGE, LADDER_RUNGS, RULES, stageAt, chartText, isUsable, firstSlip, slipRule, isRightPick, ladderState,
   shouldAutoOpen, recordAutoOpen, AUTO_OPEN_TIMES,
 } from './orderWalkthroughModel';
 
@@ -98,5 +98,19 @@ describe('first-time auto-open', () => {
   it('never auto-opens without storage', () => {
     expect(shouldAutoOpen(null)).toBe(false);
     expect(shouldAutoOpen({ getItem: () => { throw new Error('blocked'); } })).toBe(false);
+  });
+});
+
+describe('slipRule', () => {
+  const walk = { items: KEY.map((id, k) => ({ rule: k === 1 ? 'barrier_first' : 'sequence', why_here: `why ${id}` })) };
+  it('gives the rule and reason for the slot she first got wrong', () => {
+    expect(slipRule(walk, KEY, HERS)).toEqual({ rule: 'barrier_first', why: 'why quiet' });
+  });
+  it('is null when her order is right', () => {
+    expect(slipRule(walk, KEY, KEY)).toBeNull();
+  });
+  it('is null for a rule this side does not know', () => {
+    const odd = { items: walk.items.map((it) => ({ ...it, rule: 'made_up' })) };
+    expect(slipRule(odd, KEY, HERS)).toBeNull();
   });
 });

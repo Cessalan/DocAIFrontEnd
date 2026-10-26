@@ -107,6 +107,9 @@ export const FUNNEL = Object.freeze({
   CHECKOUT_STARTED: 'checkout_started',
   PLAN_STARTED: 'plan_started',
   FLOW_ABANDONED: 'flow_abandoned',
+  // Signup picked "NCLEX Prep" and was sent to /nclex instead of the upload
+  // door. Before 2026-10-25, 1 of 104 such signups ever reached it.
+  NCLEX_ROUTED: 'nclex_routed_from_onboarding',
 });
 
 /**

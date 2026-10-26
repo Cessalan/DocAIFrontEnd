@@ -113,6 +113,36 @@
 
 .mw-method { margin: 12px 0 0; font-size: 14px; font-weight: 600; color: var(--q-accent-text); }
 
+/* The replay plays itself: the coach line and a close button share the top
+   row, and the end offers "Back to the question" and "Watch again". */
+.mw-top { display: flex; align-items: flex-start; gap: 10px; }
+.mw-top .mw-coach { flex: 1; min-width: 0; }
+.mw-close {
+  flex: none; width: 28px; height: 28px; border-radius: 50%; cursor: pointer;
+  border: 1px solid var(--q-border); background: var(--q-surface); color: var(--q-text-soft);
+  font-size: 17px; line-height: 1; display: inline-flex; align-items: center; justify-content: center;
+}
+.mw-close:hover { border-color: var(--q-accent-line); color: var(--q-text); }
+.mw-close:focus-visible, .mw-replay:focus-visible { outline: 2px solid var(--q-accent); outline-offset: 2px; }
+.mw-end-actions { display: flex; align-items: center; gap: 12px; margin-top: 12px; }
+.mw-end-actions .mw-next { margin-top: 0; flex: 1; }
+.mw-replay {
+  flex: none; border: 0; background: none; padding: 8px 4px; cursor: pointer;
+  font: inherit; font-size: 14px; font-weight: 600; color: var(--q-accent-text);
+}
+.mw-replay:hover { text-decoration: underline; }
+
+/* The method in one line on the missed card, before any replay. */
+.q-rule-line {
+  margin: 10px 0 0; padding: 10px 12px; border-radius: 10px;
+  background: var(--q-accent-soft); border-left: 3px solid var(--q-accent);
+  font-size: 14px; line-height: 1.5; color: var(--q-text);
+}
+.q-rule-line strong { color: var(--q-accent-text); }
+.q-rule-why { display: block; margin-top: 2px; color: var(--q-text-soft); }
+body.dark-mode .q-rule-line { background: rgba(184, 165, 212, 0.12); border-left-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .q-rule-line strong { color: var(--dark-accent-light, #d4c8e8); }
+
 /* "Watch" as a play button (both walkthroughs). The one filled control in
    the walkthrough until it is pressed, with a slow pulse so it is found;
    then it goes back to being a plain stage label. */

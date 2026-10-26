@@ -14,6 +14,12 @@ jest.mock('../../Contexts/AuthContext/AuthContext', () => ({
   })
 }));
 jest.mock('../../Services/UserService', () => ({ createUserProfile: jest.fn() }));
+const mockNavigate = jest.fn();
+jest.mock('react-router-dom', () => ({ useNavigate: () => mockNavigate }), { virtual: true });
+jest.mock('../../Services/FunnelService', () => ({
+  FUNNEL: { NCLEX_ROUTED: 'nclex_routed_from_onboarding' },
+  logFunnelStep: jest.fn()
+}));
 
 describe('OnboardingModal', () => {
   beforeEach(() => {
@@ -30,7 +36,7 @@ describe('OnboardingModal', () => {
     await act(async () => { jest.advanceTimersByTime(180); });
   };
 
-  it('preserves the original answers, saves discovery source, and starts with the saved choices', async () => {
+  it('sends an NCLEX Prep signup to /nclex instead of the upload door', async () => {
     const onStart = jest.fn();
     window.addEventListener('onQuickStartSession', onStart);
     try {
@@ -52,9 +58,28 @@ describe('OnboardingModal', () => {
           referralSource: 'chatgpt'
         }
       }));
+      fireEvent.click(screen.getByRole('button', { name: /onboarding.successButtons.startNclex/ }));
+      expect(mockNavigate).toHaveBeenCalledWith('/nclex');
+      expect(onStart).not.toHaveBeenCalled();
+    } finally {
+      window.removeEventListener('onQuickStartSession', onStart);
+    }
+  });
+
+  it('starts a course-exam signup with the saved choices', async () => {
+    const onStart = jest.fn();
+    window.addEventListener('onQuickStartSession', onStart);
+    try {
+      render(<OnboardingModal />);
+      await choose('onboarding.options.courseExam');
+      await choose('onboarding.options.stage2');
+      await choose('onboarding.options.formatPractice');
+      await choose('onboarding.options.skipText');
+      await choose('onboarding.options.referralChatGPT');
       fireEvent.click(screen.getByRole('button', { name: /onboarding.successButtons.startSession/ }));
       expect(onStart).toHaveBeenCalledTimes(1);
       expect(onStart.mock.calls[0][0].detail.formData.referralSource).toBe('chatgpt');
+      expect(mockNavigate).not.toHaveBeenCalled();
     } finally {
       window.removeEventListener('onQuickStartSession', onStart);
     }

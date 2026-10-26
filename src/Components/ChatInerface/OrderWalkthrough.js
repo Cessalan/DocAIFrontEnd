@@ -1,26 +1,26 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  LADDER_RUNGS, STAGE, stageAt, firstSlip, isRightPick, ladderState,
-} from './orderWalkthroughModel';
+import { LADDER_RUNGS, firstSlip, ladderState } from './orderWalkthroughModel';
 import { clarityEvent } from '../../Services/ClarityService';
 import './OrderWalkthrough.css';
 
 /**
- * OrderWalkthrough — "Who first?" on a missed ordering question.
+ * OrderWalkthrough — the replay behind "Watch how to order it" on a missed
+ * ordering question.
  *
- * Teaches the ladder by climbing it on the question she just missed: the
- * chart's deciding details light up and are explained, each action is
- * labelled with what it does for this patient, then the tutor places number 1
- * thinking out loud (watch), number 2 is hers with a nudge if she reaches too
- * early (together), and the rest are hers (your turn). The order and the
- * marking come from orderWalkthroughModel.js and the stored key; the words
- * from NQBackEnd2/services/order_walkthrough.py.
+ * Plays like a short video, climbing the ladder on the question she just
+ * missed: the chart's deciding details light up and are explained, each
+ * action is labelled with what it does for this patient, the tutor thinks out
+ * loud and places number 1, then every other action places itself in turn
+ * with its rule and reason. Nothing to tap. It used to make her place number 2
+ * onward herself, and students clicked straight through it (owner,
+ * 2026-10-25); the rule for her first slip now also sits as one line on the
+ * card itself (orderWalkthroughModel `slipRule`). The order comes from the
+ * stored key; the words from NQBackEnd2/services/order_walkthrough.py.
  *
  * Tone (owner, 2026-10-10: "safe, premium, empathetic, easy to assimilate yet
- * clear"): one thing happens at a time, nothing is red, a wrong tap is "not
- * yet" plus a question that points back, and the end names exactly what she
- * did earlier and why, once.
+ * clear"): one thing happens at a time, nothing is red, and the end names
+ * exactly what she did earlier and why, once.
  *
  * Renders inside the case-study card and uses its --q-* tokens, so dark mode
  * is inherited. prefers-reduced-motion removes the pacing, never a step.
@@ -30,11 +30,10 @@ const PACE = {
   read: 1000,        // a beat before the first detail lights up
   part: 1800,        // each detail of the chart, highlighted and explained
   label: 650,        // each action's label, in turn
-  ready: 900,        // before the next button appears
+  ready: 900,        // between one stage and the next
   dots: 900,         // "thinking" before each line of the demonstration
   line: 1700,        // reading one line of the demonstration
-  settle: 700,       // a placed action settling into its number
-  last: 1300,        // before the final action places itself
+  hold: 2600,        // reading the reason for a placed action before the next
 };
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -85,69 +84,35 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
   const rungs = LADDER_RUNGS[walkthrough.ladder] || [];
   const slip = useMemo(() => firstSlip(keyIds, herOrder), [keyIds, herOrder]);
 
-  // phase: intro → breakdown → labels → steps → end
-  const [phase, setPhase] = useState('intro');
+  // phase: breakdown → labels → steps → end. It starts playing as soon as it opens.
+  const [phase, setPhase] = useState('breakdown');
   const [step, setStep] = useState(0);              // staged reveal counter within breakdown / labels
   const [placed, setPlaced] = useState([]);         // ids, in the order placed
-  const [thinking, setThinking] = useState(null);   // { lines, pending } while the demonstration plays
-  const [note, setNote] = useState(null);           // { kind: 'why' | 'nudge', id }
-  const [shake, setShake] = useState(null);
-  const [busy, setBusy] = useState(false);
+  const [thinking, setThinking] = useState(null);   // { lines, pending } while number 1 is thought through
+  const [noteId, setNoteId] = useState(null);       // the action whose rule and reason are shown
   const placedRef = useRef([]);                     // `placed`, readable from timers
-  const firstTry = useRef({});
   const timers = useRef([]);
 
-  useEffect(() => {
-    clarityEvent('order_walkthrough_opened');
-    const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
-  }, []);
   const later = (fn, ms) => { timers.current.push(setTimeout(fn, reducedMotion() ? 0 : ms)); };
-
   const position = placed.length;
-  const stage = phase === 'steps' ? stageAt(Math.min(position, keyIds.length - 1)) : null;
   const ladder = ladderState(keyIds.map((id) => info[id]), position);
 
-  const startBreakdown = () => {
-    setPhase('breakdown');
-    setStep(0);
-    let at = PACE.read;
-    for (let k = 1; k <= parts.length; k += 1) { later(() => setStep(k), at); at += PACE.part; }
-    later(() => setStep(parts.length + 1), at - PACE.part + PACE.ready);
-  };
-
-  const startLabels = () => {
-    setPhase('labels');
-    setStep(0);
-    let at = PACE.read / 2;
-    items.forEach((_, k) => { later(() => setStep(k + 1), at); at += PACE.label; });
-    later(() => setStep(items.length + 1), at + PACE.ready - PACE.label);
-  };
-
-  /** Place `id` in the next slot, then, if one action is left, let it place
-   *  itself: choosing from one is not a choice. */
-  const place = (id, after) => {
-    const next = [...placedRef.current, id];
-    placedRef.current = next;
-    setPlaced(next);
-    if (next.length === keyIds.length - 1) {
-      const lastId = keyIds[keyIds.length - 1];
-      setBusy(true);
-      later(() => {
-        placedRef.current = [...next, lastId];
-        setPlaced(placedRef.current);
-        setNote({ kind: 'why', id: lastId });
-        later(() => { setBusy(false); setPhase('end'); clarityEvent('order_walkthrough_completed'); }, PACE.line);
-      }, PACE.last);
+  /** Place the action that belongs at `pos`, show why, then the next. */
+  const autoPlace = (pos) => {
+    const id = keyIds[pos];
+    placedRef.current = [...placedRef.current, id];
+    setPlaced(placedRef.current);
+    setNoteId(id);
+    if (pos + 1 >= keyIds.length) {
+      later(() => { setPhase('end'); clarityEvent('order_walkthrough_completed'); }, PACE.hold);
       return;
     }
-    after?.();
+    later(() => autoPlace(pos + 1), PACE.hold);
   };
 
-  /** The demonstration: number 1, thought through out loud, line by line. */
+  /** Number 1, thought through out loud line by line, then the climb. */
   const startSteps = () => {
     setPhase('steps');
-    setBusy(true);
     const lines = walkthrough.first_thinking || [];
     let at = 0;
     lines.forEach((_, n) => {
@@ -156,83 +121,65 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
       later(() => setThinking({ lines: n + 1, pending: false }), at);
       at += PACE.line;
     });
-    later(() => {
-      place(keyIds[0]);
-      setNote({ kind: 'why', id: keyIds[0] });
-      later(() => setBusy(false), PACE.settle);
-    }, at);
+    later(() => { setThinking(null); autoPlace(0); }, at);
   };
 
-  const pick = (id) => {
-    if (phase !== 'steps' || busy || placed.includes(id) || position === 0) return;
-    if (isRightPick(keyIds, position, id)) {
-      if (firstTry.current[position] === undefined) firstTry.current[position] = true;
-      setThinking(null);
-      setNote({ kind: 'why', id });
-      setBusy(true);
-      place(id, () => later(() => setBusy(false), PACE.settle));
-    } else {
-      firstTry.current[position] = false;
-      setShake(id);
-      later(() => setShake(null), 450);
-      setNote({ kind: 'nudge', id });
-    }
+  const startLabels = () => {
+    setPhase('labels');
+    setStep(0);
+    let at = PACE.read / 2;
+    items.forEach((_, k) => { later(() => setStep(k + 1), at); at += PACE.label; });
+    later(() => setStep(items.length + 1), at);
+    later(startSteps, at + PACE.ready + PACE.read);
   };
 
-  // Her own placements: number 2 up to the second-to-last.
-  const herSlots = Array.from({ length: Math.max(0, keyIds.length - 2) }, (_, k) => k + 1);
-  const rightFirst = herSlots.filter((k) => firstTry.current[k]).length;
+  const play = () => {
+    setPhase('breakdown');
+    setStep(0);
+    let at = PACE.read;
+    for (let k = 1; k <= parts.length; k += 1) { later(() => setStep(k), at); at += PACE.part; }
+    later(startLabels, at + PACE.ready);
+  };
+
+  const replay = () => {
+    timers.current.splice(0).forEach(clearTimeout);
+    placedRef.current = [];
+    setPlaced([]);
+    setThinking(null);
+    setNoteId(null);
+    play();
+  };
+
+  useEffect(() => {
+    clarityEvent('order_walkthrough_opened');
+    play();
+    const pending = timers.current;
+    return () => pending.splice(0).forEach(clearTimeout);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const coach = (() => {
-    if (phase === 'intro') return t('orderWalkthrough.intro');
     if (phase === 'breakdown') return step === 0 ? t('orderWalkthrough.reading') : t('orderWalkthrough.breakdown');
     if (phase === 'labels') return step <= items.length ? t('orderWalkthrough.labelling') : t('orderWalkthrough.ladderIntro');
-    if (phase === 'end') {
-      if (!herSlots.length) return t('orderWalkthrough.doneShort');
-      return rightFirst === herSlots.length
-        ? t('orderWalkthrough.doneAll')
-        : t('orderWalkthrough.done', { right: rightFirst, total: herSlots.length });
-    }
+    if (phase === 'end') return t('orderWalkthrough.doneShort');
     if (position === 0) return t('orderWalkthrough.watch');
-    if (note?.kind === 'nudge') return t('orderWalkthrough.notYet');
-    if (position === keyIds.length - 1) return t('orderWalkthrough.lastOne');
-    if (position === 1) return t('orderWalkthrough.together');
-    return position === 2 ? t('orderWalkthrough.yours') : t('orderWalkthrough.keepGoing', { n: position + 1 });
+    if (position === keyIds.length) return t('orderWalkthrough.lastOne');
+    return t('orderWalkthrough.autoNext', { n: position });
   })();
 
-  const partsLit = phase === 'intro' ? 0 : phase === 'breakdown' ? Math.min(step, parts.length) : parts.length;
-  const labelsShown = phase === 'intro' || phase === 'breakdown' ? 0 : phase === 'labels' ? Math.min(step, items.length) : items.length;
+  const partsLit = phase === 'breakdown' ? Math.min(step, parts.length) : parts.length;
+  const labelsShown = phase === 'breakdown' ? 0 : phase === 'labels' ? Math.min(step, items.length) : items.length;
   const ladderShown = phase === 'steps' || phase === 'end' || (phase === 'labels' && step > items.length);
-  const picking = phase === 'steps' && position > 0 && position < keyIds.length - 1 && !busy;
-  // Play starts the walkthrough; once it is running, each step has its own
-  // button below, so a second control for the same step would compete.
-  const playAction = phase === 'intro' ? startBreakdown : null;
-  const noteInfo = note ? info[note.id] : null;
+  const noteInfo = noteId ? info[noteId] : null;
 
   return (
     <section className="ow" aria-label={t('orderWalkthrough.label')}>
       <div className="ow-top">
-        {/* "Watch" is the play button whenever the next step is one to watch.
-            A real student read the breakdown and went straight to Next
-            Question, past a start button at the bottom (Clarity, 2026-10-11):
-            the way in now looks like what it does, and sits where the
-            walkthrough begins. */}
-        <ol className="ow-stages">
-          {[STAGE.WATCH, STAGE.TOGETHER, STAGE.YOURS].map((s) => (s === STAGE.WATCH && playAction ? (
-            <li key={s} className="mw-stage-play">
-              <button type="button" className="mw-play" onClick={playAction}>
-                <span className="mw-play-icon" aria-hidden="true" />
-                {t(`orderWalkthrough.stage.${s}`)}
-              </button>
-            </li>
-          ) : (
-            <li key={s} aria-hidden="true" className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`orderWalkthrough.stage.${s}`)}</li>
-          )))}
-        </ol>
-        {/* Moving on never waits for the walkthrough to finish: it takes the
-            whole card, so without this the only way forward was to close it
-            and find Next under the rationale (owner, 2026-10-13). The end
-            screen has its own, larger Next. */}
+        <p className="ow-coach" aria-live="polite">{coach}</p>
+        {/* Moving on never waits for the replay to finish: it takes the whole
+            card, so without this the only way forward was to close it and find
+            Next under the rationale (owner, 2026-10-13). The end screen has
+            its own, larger Next. */}
         <div className="ow-top-actions">
           {onNext && phase !== 'end' && (
             <button type="button" className="ow-skip" onClick={onNext}>{nextLabel}</button>
@@ -240,8 +187,6 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
           <button type="button" className="ow-close" onClick={onClose} aria-label={t('orderWalkthrough.closeLabel')}>×</button>
         </div>
       </div>
-
-      <p className="ow-coach" aria-live="polite">{coach}</p>
 
       <div className="ow-body">
       <div className="ow-left">
@@ -278,56 +223,38 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
       )}
 
       {/* Placed actions rise to the top in their order, so the answer builds
-          from the top down as she climbs; the rest wait below in the order
-          the card showed them. */}
+          from the top down as the ladder is climbed; the rest wait below in
+          the order the card showed them. */}
       <ul className="ow-items">
         {[...placed.map((id) => items.find((it) => it.id === id)), ...items.filter((it) => !placed.includes(it.id))].map((it) => {
           const k = items.indexOf(it);
           const slot = placed.indexOf(it.id);
-          const canPick = picking && slot < 0;
-          const Row = canPick ? 'button' : 'div';
           return (
             <li key={it.id}>
-              <Row
-                type={canPick ? 'button' : undefined}
-                className={`ow-item${slot >= 0 ? ' is-placed' : ''}${canPick ? ' is-pickable' : ''}${shake === it.id ? ' is-shaking' : ''}${slot === position - 1 && phase === 'steps' ? ' is-latest' : ''}`}
-                onClick={canPick ? () => pick(it.id) : undefined}
-              >
+              <div className={`ow-item${slot >= 0 ? ' is-placed' : ''}${slot === position - 1 && phase === 'steps' ? ' is-latest' : ''}`}>
                 <span className="ow-slot" aria-hidden={slot < 0}>{slot >= 0 ? slot + 1 : ''}</span>
                 <span className="ow-item-text">{it.text}</span>
                 {k < labelsShown && <span className="ow-tag">{info[it.id]?.label}</span>}
-              </Row>
+              </div>
             </li>
           );
         })}
       </ul>
 
-      {/* The thinking: the demonstration as it happens, then the reason for
-          each placement, or a nudge when she reaches too early. One place,
-          under the list, so her eyes know where the explanation lives. */}
-      {phase === 'steps' && position === 0 && thinking && (
+      {/* The thinking: number 1 worked out loud, then the rule and reason for
+          each placement. One place, under the list, so her eyes know where
+          the explanation lives. */}
+      {phase === 'steps' && thinking && (
         <div className="ow-think" aria-live="polite">
           {(walkthrough.first_thinking || []).slice(0, thinking.lines).map((line, n) => <p key={n}>{line}</p>)}
           {thinking.pending && <span className="ow-dots" aria-hidden="true"><i /><i /><i /></span>}
         </div>
       )}
-      {(phase === 'steps' || phase === 'end') && noteInfo && !(position === 0) && (
-        <div className={`ow-think${note.kind === 'nudge' ? ' is-nudge' : ''}`} aria-live="polite" key={`${note.kind}-${note.id}-${position}`}>
-          {note.kind === 'why' && (
-            <>
-              <span className="ow-rule">{t(`orderWalkthrough.rule.${noteInfo.rule}`)}</span>
-              <p>{noteInfo.why_here}</p>
-            </>
-          )}
-          {note.kind === 'nudge' && <p>{noteInfo.nudge || t('orderWalkthrough.nudgeFallback')}</p>}
+      {phase === 'steps' && noteInfo && (
+        <div className="ow-think" aria-live="polite" key={`why-${noteId}`}>
+          <span className="ow-rule">{t(`orderWalkthrough.rule.${noteInfo.rule}`)}</span>
+          <p>{noteInfo.why_here}</p>
         </div>
-      )}
-
-      {phase === 'breakdown' && step > parts.length && (
-        <button type="button" className="ow-next" onClick={startLabels}>{t('orderWalkthrough.startLabels')}</button>
-      )}
-      {phase === 'labels' && step > items.length && (
-        <button type="button" className="ow-next" onClick={startSteps}>{t('orderWalkthrough.startWatch')}</button>
       )}
 
       {phase === 'end' && (
@@ -352,6 +279,7 @@ export default function OrderWalkthrough({ question, chart, items, keyIds, herOr
           ) : (
             <button type="button" className="ow-next" onClick={onClose}>{t('orderWalkthrough.close')}</button>
           )}
+          <button type="button" className="mw-replay" onClick={replay}>{t('orderWalkthrough.replay')}</button>
         </div>
       )}
       </div>

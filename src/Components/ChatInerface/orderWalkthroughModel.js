@@ -88,6 +88,21 @@ export const firstSlip = (keyIds = [], herIds = []) => {
   return { position: at, hers: herIds[at], right: keyIds[at] };
 };
 
+/**
+ * The one line shown on the missed card itself, before any replay: the rule
+ * for the slot she first got wrong, and why the right action goes there.
+ * Null when there is no slip or the walkthrough has nothing for that action.
+ *
+ * @returns {null | { rule: string, why: string }}
+ */
+export const slipRule = (walkthrough, keyIds = [], herIds = []) => {
+  const slip = firstSlip(keyIds, herIds);
+  if (!slip) return null;
+  const item = walkthrough?.items?.[keyIds.indexOf(slip.right)];
+  if (!item?.why_here || !RULES.includes(item.rule)) return null;
+  return { rule: item.rule, why: item.why_here };
+};
+
 /** Her tap while slot `position` is open: right only if it is the key's item there. */
 export const isRightPick = (keyIds, position, id) => keyIds[position] === id;
 

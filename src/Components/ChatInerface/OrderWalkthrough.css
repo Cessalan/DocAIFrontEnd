@@ -231,3 +231,9 @@ body.dark-mode .ow-badge,
 body.dark-mode .ow-item.is-placed .ow-slot,
 body.dark-mode .ow-next.is-primary,
 body.dark-mode .ow-loading-icon { color: #1a1a1a; }
+
+/* The replay plays itself: the coach line shares the top row with Next and
+   close, and the end adds "Watch again". */
+.ow-top { align-items: flex-start; }
+.ow-top .ow-coach { flex: 1; min-width: 0; margin: 0; }
+.ow-end .mw-replay { display: block; margin: 6px auto 0; }

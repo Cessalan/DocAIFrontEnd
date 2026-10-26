@@ -4094,18 +4094,22 @@ const ChatInterface = ({
       ? messageData.topics.join(', ')
       : 'the uploaded material';
 
-    // Quiz action - directly generate knowledge quiz using the document (no modal)
+    // Quiz action - directly generate an NCLEX-style quiz from the document (no modal).
+    // This was a knowledge (recall) quiz until 2026-10-18. Over the previous 90
+    // days 88 students typed a request for NCLEX/clinical/case-study questions
+    // and 3 for factual ones, while all 87 clicks on this button got recall. The
+    // prompt is worded positively on purpose: the knowledge one ("..., not
+    // clinical scenarios") was read as a request FOR clinical scenarios.
     if (actionId === 'quiz') {
-      devLog('🎯 Generating knowledge quiz directly from document');
+      devLog('🎯 Generating NCLEX-style quiz directly from document');
 
       // Mark which chip was chosen. The menu stays visible with the rest
       // greyed out, so the history shows what the student picked.
       markPostUploadChoice(messageData.id, actionId);
 
-      // Generate knowledge quiz prompt - backend will use document content by default
-      const quizPrompt = t('postUpload.knowledgeQuizPrompt', {
+      const quizPrompt = t('postUpload.nclexQuizPrompt', {
         topics: topicsStr,
-        defaultValue: `Quiz me on ${topicsStr} using the content from my document.`
+        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}, with clinical scenarios testing judgment.`
       });
 
       await handleSendNewUserMessage(null, quizPrompt);
@@ -4240,7 +4244,7 @@ const ChatInterface = ({
     } else {
       quizPrompt = t('postUpload.nclexQuizPrompt', {
         topics: topicsStr,
-        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}. Use clinical scenarios testing judgment.`
+        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}, with clinical scenarios testing judgment.`
       });
     }
 
@@ -4270,7 +4274,7 @@ const ChatInterface = ({
     if (actionId === 'quiz') {
       const quizPrompt = t('postUpload.nclexQuizPrompt', {
         topics: topicsStr,
-        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}. Use clinical scenarios testing judgment.`
+        defaultValue: `Generate an NCLEX-style quiz about ${topicsStr}, with clinical scenarios testing judgment.`
       });
       devLog('🎯 Auto-triggering quiz with NCLEX mode');
       await handleSendNewUserMessage(null, quizPrompt);

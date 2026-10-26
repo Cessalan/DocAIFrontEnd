@@ -1,38 +1,41 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { planWalkthrough, stageAt, STAGE, isRightCall } from './walkthroughModel';
+import { planWalkthrough } from './walkthroughModel';
 import { clarityEvent } from '../../Services/ClarityService';
 import './MethodWalkthrough.css';
 
 /**
- * MethodWalkthrough — "Show me how" on a missed select-all question.
+ * MethodWalkthrough — the replay behind "Watch how to solve it" on a missed
+ * select-all question.
  *
- * Teaches one method by doing it, not by explaining it: the key fact in the
- * question lights up, becomes a single test question, and each option is run
- * through that test with a short reasoning chain that builds link by link
- * before its yes/no lands. The tutor does one option she already got right
- * (watch), she does the next with a hint (together), then the rest alone
- * (your turn). Order and marking come from walkthroughModel.js; the words come
- * from NQBackEnd2/services/quiz_walkthrough.py, already checked there against
- * the answer key.
+ * Plays like a short video: the question is broken down, becomes a single test
+ * question, and every option is run through that test top to bottom, each
+ * reasoning chain building link by link before its yes/no lands. Nothing to
+ * tap. It used to make her answer each option herself (watch, together, your
+ * turn), and students clicked straight through it (owner, 2026-10-25); the
+ * method now also sits as one line on the card itself (walkthroughModel
+ * `ruleLine`), so this is the optional longer look. Order comes from
+ * walkthroughModel.js; the words from NQBackEnd2/services/quiz_walkthrough.py,
+ * already checked there against the answer key.
  *
  * Renders inside the select-all card, so it uses that card's --q-* colour
  * tokens and inherits its dark mode. Motion is skipped under
- * prefers-reduced-motion: every step still works, just without animation.
+ * prefers-reduced-motion: it lands straight on the finished replay.
  */
 
-/* Pacing. The tutor's demonstration is slow on purpose: it is a worked
-   example, and a worked example only teaches if she can watch the thinking
-   happen (owner, 2026-10-10: "there should be time to really see"). Her own
-   turns are quicker, since by then she has done the thinking herself. */
+/* Pacing. The first option is slow on purpose: it is a worked example, and a
+   worked example only teaches if she can watch the thinking happen (owner,
+   2026-10-10: "there should be time to really see"). The rest keep the same
+   rhythm a little faster, since the method is the same each time. */
 const PACE = {
   demo: { think: 1100, focus: 1300, dots: 800, read: 1500, verdict: 700 },
-  turn: { think: 0, focus: 0, dots: 250, read: 600, verdict: 300 },
+  replay: { think: 0, focus: 0, dots: 450, read: 1100, verdict: 500 },
 };
+// The pause on a settled option before the next one starts.
+const HOLD = { demo: 1600, replay: 900 };
 // Breaking the question down: a beat of reading, then each part highlighted
-// and explained in turn, then the test question, then the next button.
+// and explained in turn, then the test question, then the options.
 const FACT_PACE = { read: 1000, part: 1800, ask: 1600, ready: 1000 };
-const TURN_ADVANCE_MS = 650;
 const reducedMotion = () =>
   typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
@@ -83,37 +86,28 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
     () => planWalkthrough(options.length, correctIndices, selectedIndices),
     [options.length, correctIndices, selectedIndices]
   );
-  // phase: intro → fact → steps → end
-  const [phase, setPhase] = useState('intro');
+  // phase: fact → steps → end. It starts playing as soon as it opens.
+  const [phase, setPhase] = useState('fact');
   const [position, setPosition] = useState(0);
   const [settled, setSettled] = useState({});      // option index → true once its chain has played
   const [playing, setPlaying] = useState(null);     // { index, links } while a chain builds
-  const [shake, setShake] = useState(null);
-  const [coachNote, setCoachNote] = useState(null);
-  const [factStep, setFactStep] = useState(0);      // 0 reading, 1 fact lit, 2 lens in, 3 ready
-  const [demoNote, setDemoNote] = useState(null);   // thinking | apply | verdict, during the demonstration
-  const firstTry = useRef({});
+  const [factStep, setFactStep] = useState(0);      // 0 reading, 1..n parts shown, n+1 test question
+  const [demoNote, setDemoNote] = useState(null);   // thinking | apply | verdict, on the first option
   const timers = useRef([]);
 
-  useEffect(() => {
-    clarityEvent('walkthrough_opened');
-    const pending = timers.current;
-    return () => pending.forEach(clearTimeout);
-  }, []);
   const later = (fn, ms) => { timers.current.push(setTimeout(fn, reducedMotion() ? 0 : ms)); };
-
-  const current = plan.order[position];
   const parts = useMemo(() => partsOf(walkthrough), [walkthrough]);
-  const stage = phase === 'steps' ? stageAt(position) : STAGE.WATCH;
-  const info = (i) => walkthrough.options[i] || { chain: [], hint: '' };
+  const current = plan.order[position];
+  const info = (i) => walkthrough.options[i] || { chain: [] };
 
   /** Build option i's reasoning step by step, each step preceded by
-   *  "thinking" dots, then land its verdict. `pace` is 'demo' or 'turn'. */
-  const playChain = (i, then, pace = 'turn') => {
+   *  "thinking" dots, then land its verdict. `pace` is 'demo' or 'replay'. */
+  const playChain = (i, then, pace) => {
     const p = PACE[pace];
     const links = info(i).chain.length;
     let at = 0;
     setPlaying({ index: i, links: 0, pending: false });
+    setDemoNote(null);
     if (pace === 'demo') {
       setDemoNote('thinking');
       at += p.think;
@@ -135,10 +129,24 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
     }, Math.max(at, 0));
   };
 
+  /** Every option, top to bottom, the first one slowest. */
+  const playFrom = (pos) => {
+    setPosition(pos);
+    const pace = pos === 0 ? 'demo' : 'replay';
+    playChain(plan.order[pos], () => later(() => {
+      if (pos + 1 >= plan.order.length) {
+        setPhase('end');
+        clarityEvent('walkthrough_completed');
+      } else {
+        playFrom(pos + 1);
+      }
+    }, HOLD[pace]), pace);
+  };
+
   /** Break the question down, staged: read, then each part in turn (its
-   *  highlight and its meaning together), then the test question, then the
-   *  button. factStep: 0 reading, 1..n parts shown, n+1 test question, n+2 ready. */
-  const showFact = () => {
+   *  highlight and its meaning together), then the test question, then
+   *  every option. */
+  const play = () => {
     setPhase('fact');
     setFactStep(0);
     let at = FACT_PACE.read;
@@ -147,99 +155,61 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
       at += FACT_PACE.part;
     }
     later(() => setFactStep(parts.length + 1), at);
-    at += FACT_PACE.ask;
-    later(() => setFactStep(parts.length + 2), at);
+    at += FACT_PACE.ask + FACT_PACE.ready;
+    later(() => {
+      setPhase('steps');
+      if (plan.order.length) playFrom(0);
+      else setPhase('end');
+    }, at);
   };
 
-  const advance = () => {
-    setCoachNote(null);
-    if (position + 1 >= plan.order.length) {
-      setPhase('end');
-      clarityEvent('walkthrough_completed');
-    } else {
-      setPosition(position + 1);
-    }
+  const replay = () => {
+    timers.current.splice(0).forEach(clearTimeout);
+    setSettled({});
+    setPlaying(null);
+    setDemoNote(null);
+    setPosition(0);
+    play();
   };
 
-  // The demonstration plays itself.
   useEffect(() => {
-    if (phase === 'steps' && position === 0 && current !== undefined && !settled[current] && !playing) playChain(current, undefined, 'demo');
+    clarityEvent('walkthrough_opened');
+    play();
+    const pending = timers.current;
+    return () => pending.splice(0).forEach(clearTimeout);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [phase, position]);
+  }, []);
 
-  const answer = (saidYes) => {
-    if (playing || current === undefined) return;
-    if (isRightCall(current, saidYes, correctIndices)) {
-      if (firstTry.current[current] === undefined) firstTry.current[current] = true;
-      setCoachNote(null);
-      playChain(current, () => later(advance, TURN_ADVANCE_MS), 'turn');
-    } else {
-      firstTry.current[current] = false;
-      setShake(current);
-      later(() => setShake(null), 400);
-      setCoachNote(t('walkthrough.notQuite', { hint: info(current).hint }));
-    }
-  };
-
+  const letter = LETTERS[current] || '';
   const coach = (() => {
-    if (coachNote) return coachNote;
-    if (phase === 'intro') return t('walkthrough.intro');
     if (phase === 'fact') {
       if (factStep === 0) return t('walkthrough.factFind');
       if (factStep <= parts.length) return t('walkthrough.breakingDown');
       return t('walkthrough.fact');
     }
-    if (phase === 'end') {
-      const steps = plan.order.slice(1);
-      const right = steps.filter((i) => firstTry.current[i]).length;
-      return right === steps.length
-        ? t('walkthrough.doneAll', { total: steps.length })
-        : t('walkthrough.done', { right, total: steps.length });
-    }
-    if (stage === STAGE.WATCH) {
+    if (phase === 'end') return t('walkthrough.replayDone');
+    if (position === 0) {
       if (demoNote === 'thinking') return t('walkthrough.thinking');
       if (demoNote === 'apply') return t('walkthrough.apply');
       if (demoNote === 'verdict') {
         return t('walkthrough.demoVerdict', { verdict: correctIndices.includes(current) ? t('walkthrough.yes') : t('walkthrough.no') });
       }
-      return plan.missed.includes(current) ? t('walkthrough.demoMissed') : t('walkthrough.demo');
     }
-    if (stage === STAGE.TOGETHER) return plan.missed.includes(current) ? t('walkthrough.togetherMissed') : t('walkthrough.together');
-    // Top to bottom, so her mistakes come up wherever they sit: name them.
-    if (plan.missed.includes(current)) return t('walkthrough.togetherMissed');
-    return position === 2 ? t('walkthrough.yours') : t('walkthrough.keepGoing');
+    return plan.missed.includes(current)
+      ? t('walkthrough.replayMissed', { letter })
+      : t('walkthrough.replayOption', { letter });
   })();
 
   // How many breakdown parts are on screen, and whether the test question is.
-  const partsShown = phase === 'intro' ? 0 : phase === 'fact' ? Math.min(factStep, parts.length) : parts.length;
-  const lensShown = phase !== 'intro' && (phase !== 'fact' || factStep > parts.length);
-  const nextLetter = LETTERS[plan.order[position + 1]] || '';
-  const startSteps = () => { setPhase('steps'); setPosition(0); };
-  // Play starts the walkthrough; once it is running, each step has its own
-  // button below, so a second control for the same step would compete.
-  const playAction = phase === 'intro' ? showFact : null;
+  const partsShown = phase === 'fact' ? Math.min(factStep, parts.length) : parts.length;
+  const lensShown = phase !== 'fact' || factStep > parts.length;
 
   return (
     <section className="mw" aria-label={t('walkthrough.label')}>
-      {/* "Watch" is the play button whenever the next step is one to watch.
-          A real student read the breakdown and went straight to Next
-          Question, past a start button at the bottom (Clarity, 2026-10-11):
-          the way in now looks like what it does, and sits where the
-          walkthrough begins. */}
-      <ol className="mw-stages">
-        {[STAGE.WATCH, STAGE.TOGETHER, STAGE.YOURS].map((s) => (s === STAGE.WATCH && playAction ? (
-          <li key={s} className="mw-stage-play">
-            <button type="button" className="mw-play" onClick={playAction}>
-              <span className="mw-play-icon" aria-hidden="true" />
-              {t(`walkthrough.stage.${s}`)}
-            </button>
-          </li>
-        ) : (
-          <li key={s} aria-hidden="true" className={(phase === 'end' ? s === STAGE.YOURS : s === stage) ? 'on' : ''}>{t(`walkthrough.stage.${s}`)}</li>
-        )))}
-      </ol>
-
-      <p className="mw-coach" aria-live="polite">{coach}</p>
+      <div className="mw-top">
+        <p className="mw-coach" aria-live="polite">{coach}</p>
+        <button type="button" className="mw-close" onClick={onClose} aria-label={t('walkthrough.closeLabel')}>×</button>
+      </div>
 
       <p className="mw-stem">{highlightStem(question, parts, partsShown)}</p>
 
@@ -270,7 +240,7 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
           const chain = info(i).chain;
           const shown = done ? chain.length : building ? playing.links : 0;
           return (
-            <li key={i} className={`mw-opt${active ? ' is-active' : ''}${done ? ' is-done' : ''}${shake === i ? ' is-shaking' : ''}`}>
+            <li key={i} className={`mw-opt${active ? ' is-active' : ''}${done ? ' is-done' : ''}`}>
               <div className="mw-opt-row">
                 <span className="mw-opt-letter" aria-hidden="true">{LETTERS[i]}</span>
                 <span>{text}</span>
@@ -299,22 +269,13 @@ export default function MethodWalkthrough({ question, options, correctIndices, s
         })}
       </ul>
 
-      {phase === 'fact' && factStep >= parts.length + 2 && (
-        <button type="button" className="mw-next" onClick={startSteps}>{t('walkthrough.evaluateOption', { letter: LETTERS[plan.order[0]] || 'A' })}</button>
-      )}
-      {phase === 'steps' && position === 0 && settled[current] && (
-        <button type="button" className="mw-next" onClick={advance}>{t('walkthrough.tryOption', { letter: nextLetter })}</button>
-      )}
-      {phase === 'steps' && position > 0 && (
-        <div className="mw-answer">
-          <button type="button" onClick={() => answer(true)} disabled={!!playing}>{t('walkthrough.answerYes')}</button>
-          <button type="button" onClick={() => answer(false)} disabled={!!playing}>{t('walkthrough.answerNo')}</button>
-        </div>
-      )}
       {phase === 'end' && (
         <>
           <p className="mw-method">{walkthrough.method_line || t('walkthrough.method')}</p>
-          <button type="button" className="mw-next" onClick={onClose}>{t('walkthrough.close')}</button>
+          <div className="mw-end-actions">
+            <button type="button" className="mw-next" onClick={onClose}>{t('walkthrough.close')}</button>
+            <button type="button" className="mw-replay" onClick={replay}>{t('walkthrough.replay')}</button>
+          </div>
         </>
       )}
     </section>

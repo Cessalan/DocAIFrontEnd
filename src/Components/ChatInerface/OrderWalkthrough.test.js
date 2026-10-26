@@ -52,59 +52,49 @@ const renderIt = (onClose = jest.fn()) => render(
     walkthrough={DATA} onClose={onClose} />
 );
 
-it('breaks the chart down, labels the actions, then climbs the ladder with her', () => {
+it('breaks the chart down, labels the actions, then climbs the whole ladder by itself', () => {
   const onClose = jest.fn();
   renderIt(onClose);
   expect(clarityEvent).toHaveBeenCalledWith('order_walkthrough_opened');
-  expect(screen.getByText(/Ordering questions are hard/)).toBeInTheDocument();
 
-  // 1. The chart: each deciding detail lit and explained, in turn.
-  fireEvent.click(screen.getByRole('button', { name: 'Watch' }));
+  // 1. It starts on its own with the chart: each deciding detail lit and explained.
   expect(screen.getByText('Reading the chart…')).toBeInTheDocument();
-  expect(screen.queryByText('Look at the actions')).toBeNull();
-  flush();
+  act(() => { jest.advanceTimersByTime(1000 + 1800 * 2); });
   expect([...document.querySelectorAll('mark.ow-fact.is-lit')].map((m) => m.textContent))
     .toEqual(['1He is hard of hearing', '2The unit is noisy and busy']);
   expect(screen.getByText('Nothing reaches him until he can hear.')).toBeInTheDocument();
 
-  // 2. What each action does, then the ladder.
-  fireEvent.click(screen.getByText('Look at the actions'));
-  flush();
-  expect(screen.getByText('Is the room quiet?')).toBeInTheDocument();
-  expect(screen.getByText('What blocks the message, first to last')).toBeInTheDocument();
-  expect(screen.getByText('Hear')).toBeInTheDocument();
+  // 2..5: let it play, watching what it says along the way.
+  const seen = new Set();
+  for (let ms = 0; ms < 60000; ms += 100) {
+    act(() => { jest.advanceTimersByTime(100); });
+    seen.add(document.querySelector('.ow-coach').textContent);
+    document.querySelectorAll('.ow-think p').forEach((p) => seen.add(p.textContent));
+    document.querySelectorAll('.ow-tag').forEach((p) => seen.add(p.textContent));
+  }
+  expect(seen.has('Is the room quiet?')).toBe(true);
+  expect(seen.has('Watch me find number 1.')).toBe(true);
+  expect(seen.has('Can Mr. Lee hear you right now, before any teaching?')).toBe(true);
+  expect(seen.has('Hearing aids come first: without sound, nothing else reaches him.')).toBe(true);
+  expect(seen.has('Number 2.')).toBe(true);
+  expect(seen.has('A quieter room cuts the noise that blocks his hearing.')).toBe(true);
 
-  // 3. Watch: the tutor thinks out loud and places number 1.
-  fireEvent.click(screen.getByText('Watch me find number 1'));
-  expect(screen.queryByText('Rule: remove what blocks the message first')).toBeNull();
-  flush();
-  expect(within(row("Ensure Mr. Lee's hearing aids are in place and working")).getByText('1')).toBeInTheDocument();
-  expect(screen.getByText('Hearing aids come first: without sound, nothing else reaches him.')).toBeInTheDocument();
-  expect(screen.getByText('Now you, with me. What comes next?')).toBeInTheDocument();
-
-  // 4. Together: her real mistake, the interpreter too early, gets a nudge, not a red mark.
-  fireEvent.click(row('Arrange for a certified medical interpreter'));
-  expect(screen.getByText('Not yet. Take another look.')).toBeInTheDocument();
-  expect(screen.getByText('An interpreter helps with words. Can he hear them over the announcements?')).toBeInTheDocument();
-  expect(within(row('Arrange for a certified medical interpreter')).queryByText('2')).toBeNull();
-  fireEvent.click(row('Move Mr. Lee to a quieter area and reduce background noise'));
-  expect(screen.getByText('A quieter room cuts the noise that blocks his hearing.')).toBeInTheDocument();
-  flush();
-
-  // 5. Your turn: the rest in order; the last one places itself.
-  fireEvent.click(row('Arrange for a certified medical interpreter'));
-  flush();
-  fireEvent.click(row('Provide written instructions in both English and Mandarin'));
-  flush();
+  // Rows are never buttons: nothing to tap.
+  expect(row('Move Mr. Lee to a quieter area and reduce background noise').tagName).toBe('DIV');
   expect(within(row('Use teach-back technique to confirm understanding')).getByText('5')).toBeInTheDocument();
   expect(clarityEvent).toHaveBeenCalledWith('order_walkthrough_completed');
 
-  // 6. The end names what she did earlier and why, once.
-  expect(screen.getByText('2 of 3 on the first try. The ladder gets quicker every time you use it.')).toBeInTheDocument();
+  // The end names what she did earlier and why, once.
   expect(screen.getByText(/You had “Arrange for a certified medical interpreter” at number 2\./)).toBeInTheDocument();
   expect(screen.getByText(/A quieter room cuts the noise/, { selector: '.ow-then' })).toBeInTheDocument();
   expect(screen.getByText('Climb the ladder: remove barriers, teach, then check.')).toBeInTheDocument();
-  fireEvent.click(screen.getByText('Back to the question'));
+
+  // Watch again starts it over.
+  fireEvent.click(screen.getByRole('button', { name: 'Watch again' }));
+  expect(screen.getByText('Reading the chart…')).toBeInTheDocument();
+  expect(within(row("Ensure Mr. Lee's hearing aids are in place and working")).queryByText('1')).toBeNull();
+
+  fireEvent.click(screen.getByLabelText('Close the walkthrough'));
   expect(onClose).toHaveBeenCalled();
 });
 
@@ -113,13 +103,4 @@ it('can be closed at any point', () => {
   renderIt(onClose);
   fireEvent.click(screen.getByLabelText('Close the walkthrough'));
   expect(onClose).toHaveBeenCalled();
-});
-
-it('does not take taps while the tutor is placing number 1', () => {
-  renderIt();
-  fireEvent.click(screen.getByRole('button', { name: 'Watch' })); flush();
-  fireEvent.click(screen.getByText('Look at the actions')); flush();
-  fireEvent.click(screen.getByText('Watch me find number 1'));
-  // Rows are not buttons during the demonstration.
-  expect(row('Move Mr. Lee to a quieter area and reduce background noise').tagName).toBe('DIV');
 });

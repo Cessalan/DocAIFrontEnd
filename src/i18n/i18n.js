@@ -708,7 +708,7 @@ const resources = {
         mindmapPrompt: "Create a concept map for: {{topics}}",
         // Quiz mode-specific prompts
         knowledgeQuizPrompt: "Generate a knowledge test quiz about {{topics}}. Use direct factual questions, not clinical scenarios.",
-        nclexQuizPrompt: "Generate an NCLEX-style quiz about {{topics}}. Use multiple choice questions (MCQ format) with clinical scenarios testing judgment. Do not use case study format."
+        nclexQuizPrompt: "Generate an NCLEX-style quiz about {{topics}}, with clinical scenarios testing judgment."
       },
 
       // Plan Onboarding (3-question gate before study plan generation,
@@ -1323,7 +1323,8 @@ const resources = {
           default: "Your profile is set up. Ready to generate a custom {{reviewFormat}} session for a {{userStage}} student?"
         },
         successButtons: {
-          startSession: "Start My First Session"
+          startSession: "Start My First Session",
+          startNclex: "Start NCLEX Practice"
         }
       },
 
@@ -1365,8 +1366,14 @@ const resources = {
       // "Show me how" on a missed select-all (ChatInerface/MethodWalkthrough.js).
       // Plain, short lines a tired student reads at a glance. No em dashes.
       walkthrough: {
-        trigger: "Show me how to solve it",
-        triggerSub: "A 1-minute walkthrough of this question",
+        trigger: "Watch how to solve it",
+        triggerSub: "A 1-minute replay of this question",
+        ruleAsk: "Ask of every option:",
+        replayOption: "Same question for option {{letter}}.",
+        replayMissed: "Option {{letter}} is one you got wrong. Same question.",
+        replayDone: "Every option, judged one at a time with the same question.",
+        replay: "Watch again",
+        closeLabel: "Close the replay",
         label: "How to solve this question",
         loading: "Reading the question…",
         unavailable: "The walkthrough isn't available for this question. The explanation above still applies.",
@@ -1462,7 +1469,9 @@ const resources = {
         }
       },
       orderWalkthrough: {
-        trigger: "Show me how to order it",
+        trigger: "Watch how to order it",
+        autoNext: "Number {{n}}.",
+        replay: "Watch again",
         triggerSub: "Who goes first, step by step, on this question",
         label: "How to order this question",
         loading: "Reading the chart…",
@@ -3441,7 +3450,7 @@ const resources = {
         mindmapPrompt: "Crée un schéma conceptuel pour : {{topics}}",
         // Quiz mode-specific prompts
         knowledgeQuizPrompt: "Génère un quiz de connaissances sur {{topics}}. Utilise des questions factuelles directes, pas de scénarios cliniques.",
-        nclexQuizPrompt: "Génère un quiz de style NCLEX sur {{topics}}. Utilise des questions à choix multiples (format QCM) avec des scénarios cliniques testant le jugement. Ne pas utiliser le format étude de cas."
+        nclexQuizPrompt: "Génère un quiz de style NCLEX sur {{topics}}, avec des scénarios cliniques testant le jugement."
       },
 
       // Plan Onboarding (3-question gate before study plan generation,
@@ -4009,7 +4018,8 @@ const resources = {
           default: "Votre profil est configuré. Prêt à générer une session **{{reviewFormat}}** personnalisée pour un étudiant en **{{userStage}}** ?"
         },
         successButtons: {
-          startSession: "Commencer ma première session"
+          startSession: "Commencer ma première session",
+          startNclex: "Commencer la pratique NCLEX"
         }
       },
 
@@ -4049,8 +4059,14 @@ const resources = {
 
       // SATA (Select All That Apply) Questions
       walkthrough: {
-        trigger: "Montre-moi comment la résoudre",
-        triggerSub: "Une explication pas à pas d'une minute",
+        trigger: "Regarde comment la résoudre",
+        triggerSub: "Une démonstration d'une minute sur cette question",
+        ruleAsk: "Pose à chaque option :",
+        replayOption: "Même question pour l'option {{letter}}.",
+        replayMissed: "Tu t'es trompée sur l'option {{letter}}. Même question.",
+        replayDone: "Chaque option, jugée une à une avec la même question.",
+        replay: "Revoir",
+        closeLabel: "Fermer la démonstration",
         label: "Comment résoudre cette question",
         loading: "Lecture de la question…",
         unavailable: "L'explication pas à pas n'est pas disponible pour cette question. L'explication ci-dessus reste valable.",
@@ -4140,7 +4156,9 @@ const resources = {
         }
       },
       orderWalkthrough: {
-        trigger: "Montre-moi comment les ordonner",
+        trigger: "Regarde comment les ordonner",
+        autoNext: "Numéro {{n}}.",
+        replay: "Revoir",
         triggerSub: "Qui passe en premier, étape par étape, sur cette question",
         label: "Comment ordonner cette question",
         loading: "Lecture du dossier…",

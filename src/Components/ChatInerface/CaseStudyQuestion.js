@@ -43,7 +43,7 @@ import { calculateOrderingScore } from '../../utils/quizScoring';
 import './CaseStudyQuestion.css';
 import useGlossary from '../Glossary/useGlossary';
 import OrderWalkthrough from './OrderWalkthrough';
-import { chartText, isUsable, shouldAutoOpen, recordAutoOpen } from './orderWalkthroughModel';
+import { chartText, isUsable, slipRule } from './orderWalkthroughModel';
 import { fetchOrderWalkthrough } from '../../Services/FastAPICalls';
 import { clarityEvent } from '../../Services/ClarityService';
 import './MethodWalkthrough.css';
@@ -346,6 +346,13 @@ function CaseStudyQuestion({
   }, [requestWalkthrough, settleWalkthrough, quiz?.question]);
 
   const walkthroughOnStage = walkthrough.open && walkthrough.status === 'ready' && !!walkthrough.data;
+
+  // The rule for her first slip in one line on the card, from the prefetched
+  // walkthrough. `items` is her submitted order.
+  const rule = useMemo(
+    () => (walkthrough.data ? slipRule(walkthrough.data, correctOrder, items.map((item) => item.id)) : null),
+    [walkthrough.data, correctOrder, items]
+  );
   const walkthroughStageRef = useRef(null);
   useEffect(() => {
     if (walkthroughOnStage) walkthroughStageRef.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
@@ -463,14 +470,15 @@ function CaseStudyQuestion({
       setShowFeedback(true);
     }, 300);
 
-    // Missed: start writing the walkthrough while she reads the feedback. The
-    // first misses on a device open it on their own, as for select-all.
+    // Missed: start writing the walkthrough while she reads the feedback. Its
+    // rule for her first slip becomes the one-line rule on the card; the
+    // replay itself waits for her tap (it used to open on its own for the
+    // first misses, and students clicked straight through it, owner 2026-10-25).
     if (!result.isFullyCorrect && !reviewMode && !deferFeedback && correctOrder.length >= 3) {
       // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
-      // miss even after the first-time auto-opens are used up, because a
-      // fix round that doesn't teach is just the drill that never worked.
-      if (forceWalkthrough || shouldAutoOpen()) {
-        if (!forceWalkthrough) recordAutoOpen();
+      // miss, because a fix round that doesn't teach is just the drill that
+      // never worked.
+      if (forceWalkthrough) {
         openWalkthrough(true);
       } else {
         walkthroughFor.current = quiz.question;
@@ -730,6 +738,14 @@ function CaseStudyQuestion({
                 {scoreResult.correctPositions}/{scoreResult.totalItems}
               </span>
             </div>
+
+            {/* The rule in one line, readable without opening anything. */}
+            {!scoreResult.isFullyCorrect && rule && (
+              <p className="q-rule-line">
+                <strong>{t(`orderWalkthrough.rule.${rule.rule}`)}</strong>
+                <span className="q-rule-why">{rule.why}</span>
+              </p>
+            )}
 
             {!scoreResult.isFullyCorrect && correctOrder.length >= 3 && !walkthrough.open && walkthrough.status !== 'unavailable' && (
               <button type="button" className="sata-walkthrough-trigger" onClick={() => openWalkthrough()}>

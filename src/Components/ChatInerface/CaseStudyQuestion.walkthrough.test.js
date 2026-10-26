@@ -38,13 +38,8 @@ const submitWrong = async () => {
 beforeEach(() => {
   jest.useFakeTimers();
   fetchOrderWalkthrough.mockReset();
-  // Auto-open already used on this "device", so the button is the way in.
-  window.localStorage.setItem('nqOrderWalkthroughAutoOpened', '2');
 });
-afterEach(() => {
-  jest.useRealTimers();
-  window.localStorage.clear();
-});
+afterEach(() => jest.useRealTimers());
 
 // Each tap a second apart: the card ignores a second tap within 350 ms (rows
 // move under the finger after a tap), and tests tap faster than any person.
@@ -65,7 +60,7 @@ it('sends the key in order and the chart as plain text', async () => {
 it('never offers a walkthrough the backend declined', async () => {
   fetchOrderWalkthrough.mockResolvedValue(null);
   await submitWrong();
-  expect(screen.queryByText('Show me how to order it')).toBeNull();
+  expect(screen.queryByText('Watch how to order it')).toBeNull();
   // The explanation is still there.
   expect(screen.getByText('Assess, then act, then report.')).toBeInTheDocument();
 });
@@ -73,14 +68,14 @@ it('never offers a walkthrough the backend declined', async () => {
 it('opens on the whole card and gives the card back when closed', async () => {
   fetchOrderWalkthrough.mockResolvedValue(WALK);
   await submitWrong();
-  await act(async () => { fireEvent.click(screen.getByText('Show me how to order it')); });
-  expect(screen.getByText(/Ordering questions are hard/)).toBeInTheDocument();
+  await act(async () => { fireEvent.click(screen.getByText('Watch how to order it')); });
+  expect(screen.getByText('Reading the chart…')).toBeInTheDocument();
   // Moving on doesn't wait for the walkthrough to finish.
   expect(screen.getByRole('button', { name: /Next question/i })).toBeInTheDocument();
   expect(screen.queryByText('Assess, then act, then report.')).toBeNull();
   fireEvent.click(screen.getByLabelText('Close the walkthrough'));
   expect(screen.getByText('Assess, then act, then report.')).toBeInTheDocument();
-  expect(screen.getByText('Show me how to order it')).toBeInTheDocument();
+  expect(screen.getByText('Watch how to order it')).toBeInTheDocument();
 });
 
 it('ends on Next question, so finishing the walkthrough moves her on', async () => {
@@ -90,30 +85,26 @@ it('ends on Next question, so finishing the walkthrough moves her on', async () 
   ['Notify the provider', 'Assess vital signs', 'Give oxygen as ordered'].forEach((text) => fireEvent.click(screen.getByText(text)));
   await act(async () => { fireEvent.click(screen.getByRole('button', { name: 'Submit Order' })); });
   await act(async () => { jest.advanceTimersByTime(400); });
-  await act(async () => { fireEvent.click(screen.getByText('Show me how to order it')); });
-  const play = async (name) => {
-    await act(async () => { fireEvent.click(screen.getByRole('button', { name })); });
-    await act(async () => { jest.advanceTimersByTime(20000); });
-  };
-  await play('Watch');
-  await play('Look at the actions');
-  await play('Watch me find number 1');
-  // Number 2 is hers; the last places itself.
-  await act(async () => { fireEvent.click(screen.getByRole('button', { name: /Give oxygen as ordered/ })); });
-  await act(async () => { jest.advanceTimersByTime(20000); });
+  await act(async () => { fireEvent.click(screen.getByText('Watch how to order it')); });
+  // It plays to the end by itself.
+  for (let i = 0; i < 8; i += 1) await act(async () => { jest.advanceTimersByTime(20000); });
   fireEvent.click(screen.getByRole('button', { name: /Next Question/i }));
   expect(next).toHaveBeenCalledTimes(1);
   expect(screen.getByRole('button', { name: 'Back to the question' })).toBeInTheDocument();
 });
 
-it('auto-opens on a first miss, and closes quietly if the backend declines', async () => {
-  window.localStorage.clear();
-  let resolve;
-  fetchOrderWalkthrough.mockReturnValue(new Promise((r) => { resolve = r; }));
+it('shows the rule for her first slip on the card, without opening anything', async () => {
+  fetchOrderWalkthrough.mockResolvedValue(WALK);
   await submitWrong();
-  expect(screen.getByText('Building your walkthrough')).toBeInTheDocument();
-  await act(async () => { resolve(null); });
+  // She put "Notify the provider" first; assessing belongs there.
+  expect(screen.getByText('Rule: assess before you act')).toBeInTheDocument();
+  expect(screen.getByText('Assess first.')).toBeInTheDocument();
+  expect(screen.queryByText('Reading the chart…')).toBeNull();
+});
+
+it('no longer opens the replay on its own after a miss', async () => {
+  fetchOrderWalkthrough.mockResolvedValue(WALK);
+  await submitWrong();
   expect(screen.queryByText('Building your walkthrough')).toBeNull();
-  expect(screen.queryByText(/There's no walkthrough/)).toBeNull();
-  expect(screen.queryByText('Show me how to order it')).toBeNull();
+  expect(screen.getByText('Watch how to order it')).toBeInTheDocument();
 });

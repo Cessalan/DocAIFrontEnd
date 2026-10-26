@@ -1,4 +1,4 @@
-import { isRightCall, planWalkthrough, stageAt, STAGE, toIndices, shouldAutoOpen, recordAutoOpen, AUTO_OPEN_TIMES } from './walkthroughModel';
+import { isRightCall, planWalkthrough, ruleLine, stageAt, STAGE, toIndices, shouldAutoOpen, recordAutoOpen, AUTO_OPEN_TIMES } from './walkthroughModel';
 
 describe('planWalkthrough', () => {
   // Digoxin: key A, B, D. She picked A, D, E (missed B, wrongly picked E).
@@ -54,5 +54,33 @@ describe('first-time auto-open', () => {
   it('never auto-opens when storage is unavailable', () => {
     expect(shouldAutoOpen(null)).toBe(false);
     expect(shouldAutoOpen({ getItem: () => { throw new Error('blocked'); } })).toBe(false);
+  });
+});
+
+describe('ruleLine', () => {
+  const walk = {
+    test_question: 'Does this protect a slowed heart?',
+    options: [
+      { chain: ['Real rate', 'needed first'] },
+      { chain: ['Already slow', 'do not slow more'] },
+      { chain: ['Meal timing', 'not protective'] },
+    ],
+  };
+  it('names the test and her first wrong call, top to bottom', () => {
+    // Key A, B. She picked A, C: B missed, C wrongly picked. B comes first.
+    expect(ruleLine(walk, [0, 1], [0, 2])).toEqual({
+      test: 'Does this protect a slowed heart?', letter: 'B', reason: 'Already slow → do not slow more',
+    });
+  });
+  it('skips a slip with no reasoning to show', () => {
+    const thin = { ...walk, options: [walk.options[0], { chain: [] }, walk.options[2]] };
+    expect(ruleLine(thin, [0, 1], [0, 2]).letter).toBe('C');
+  });
+  it('still gives the test when no slip has reasoning', () => {
+    expect(ruleLine({ test_question: 'Q?', options: [] }, [0], [])).toEqual({ test: 'Q?', letter: null, reason: null });
+  });
+  it('is null without a test question', () => {
+    expect(ruleLine({ options: walk.options }, [0], [1])).toBeNull();
+    expect(ruleLine(null)).toBeNull();
   });
 });

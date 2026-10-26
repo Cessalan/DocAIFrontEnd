@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../Contexts/AuthContext/AuthContext';
 import { createUserProfile } from '../../Services/UserService';
+import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
 import { SCHOOL_COUNT } from '../Common/schoolWall';
 import './Onboarding.css';
 
@@ -58,6 +60,8 @@ const OnboardingModal = ({ preview = false, onClose }) => {
     const transitionTimer = useRef(null);
     const headingRef = useRef(null);
     const isDevelopment = process.env.NODE_ENV === 'development';
+    const navigate = useNavigate();
+    const isNclex = formData.studyGoal === 'NCLEX Prep';
 
     useEffect(() => () => window.clearTimeout(transitionTimer.current), []);
     useEffect(() => { headingRef.current?.focus(); }, [step]);
@@ -113,6 +117,14 @@ const OnboardingModal = ({ preview = false, onClose }) => {
             return;
         }
         setIsProfileComplete(true);
+        // An NCLEX candidate has no course files to upload, and the upload door
+        // hid /nclex from them: 1 of 104 NCLEX signups (09-07 to 10-25) ever
+        // answered an NCLEX question.
+        if (isNclex) {
+            logFunnelStep(FUNNEL.NCLEX_ROUTED, { userStage: formData.userStage || null });
+            navigate('/nclex');
+            return;
+        }
         window.dispatchEvent(new CustomEvent('onQuickStartSession', { detail: { formData } }));
     };
 
@@ -256,7 +268,7 @@ const OnboardingModal = ({ preview = false, onClose }) => {
                             </div>
                         </div>
                         <button className="onboarding-start-btn onboarding-upload-btn" onClick={handleStartLearning}>
-                            {preview ? 'Close preview' : t('onboarding.successButtons.startSession')} <span aria-hidden="true">→</span>
+                            {preview ? 'Close preview' : t(isNclex ? 'onboarding.successButtons.startNclex' : 'onboarding.successButtons.startSession')} <span aria-hidden="true">→</span>
                         </button>
                     </div>
                 )}

@@ -26,7 +26,7 @@
  * @version 1.1.0
  */
 
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   calculateSATAScore,
@@ -35,7 +35,7 @@ import {
 import './SATAQuestion.css';
 import useGlossary from '../Glossary/useGlossary';
 import MethodWalkthrough from './MethodWalkthrough';
-import { toIndices, shouldAutoOpen, recordAutoOpen } from './walkthroughModel';
+import { toIndices, ruleLine } from './walkthroughModel';
 import { explanationLead, verdictDetail } from './sataFeedbackModel';
 import { fetchQuizWalkthrough } from '../../Services/FastAPICalls';
 
@@ -243,11 +243,23 @@ function SATAQuestion({
     return fetchQuizWalkthrough(quiz.question, plainOptions, correctIndices, i18n.language);
   }, [quiz, plainOptions, correctIndices, i18n.language]);
 
+  // The question a request was made for, so an answer arriving after she has
+  // moved on is ignored.
+  const walkthroughFor = useRef(null);
   const openWalkthrough = useCallback(async () => {
+    const asked = quiz?.question;
+    walkthroughFor.current = asked;
     setWalkthrough((w) => ({ ...w, open: true, status: w.data ? 'ready' : 'loading' }));
     const data = await requestWalkthrough();
+    if (walkthroughFor.current !== asked) return;
     setWalkthrough((w) => (w.open ? { ...w, data, status: data ? 'ready' : 'unavailable' } : w));
-  }, [requestWalkthrough]);
+  }, [requestWalkthrough, quiz?.question]);
+
+  // The method in one line on the card, from the prefetched walkthrough.
+  const rule = useMemo(
+    () => (walkthrough.data ? ruleLine(walkthrough.data, correctIndices, selectedIndices) : null),
+    [walkthrough.data, correctIndices, selectedIndices]
+  );
 
   // Check if current selection meets minimum requirement
   const canSubmit = selectedOptions.length >= MIN_SELECTIONS;
@@ -295,6 +307,7 @@ function SATAQuestion({
       setOptionFeedback([]);
     }
     setWalkthrough({ status: 'idle', data: null, open: false });
+    walkthroughFor.current = null;
     setRationaleOpen(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizQuestionId, quizIndex]); // Only depend on stable identifiers, not object references
@@ -350,16 +363,21 @@ function SATAQuestion({
     setScoreResult(result);
 
     // Missed: start writing the walkthrough while she reads the feedback.
-    // The first misses on this device open it on their own, because a
-    // button inside the feedback box was easy to miss (owner, 2026-10-10).
+    // Its test question becomes the one-line rule on the card; the replay
+    // itself waits for her tap (it used to open on its own for the first
+    // misses, and students clicked straight through it, owner 2026-10-25).
     if (!result.isFullyCorrect && !reviewMode && !deferFeedback) {
-      requestWalkthrough();
       // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
-      // miss even after the first-time auto-opens are used up, because a
-      // fix round that doesn't teach is just the drill that never worked.
-      if (forceWalkthrough || shouldAutoOpen()) {
-        if (!forceWalkthrough) recordAutoOpen();
+      // miss, because a fix round that doesn't teach is just the drill that
+      // never worked.
+      if (forceWalkthrough) {
         openWalkthrough();
+      } else {
+        const asked = quiz.question;
+        walkthroughFor.current = asked;
+        requestWalkthrough().then((data) => {
+          if (data && walkthroughFor.current === asked) setWalkthrough((w) => ({ ...w, data }));
+        });
       }
     }
 
@@ -596,6 +614,14 @@ function SATAQuestion({
               {verdict && <span> {t(verdict.key, verdict.values)}</span>}
             </p>
 
+            {/* The method in one line, readable without opening anything. */}
+            {!scoreResult.isFullyCorrect && rule && !walkthrough.open && (
+              <p className="q-rule-line">
+                <strong>{t('walkthrough.ruleAsk')}</strong> {rule.test}
+                {rule.letter && <span className="q-rule-why">{rule.letter}: {rule.reason}</span>}
+              </p>
+            )}
+
             {/* "Show me how": teaches the select-all method on this question.
                 Above the explanation, not below it: below a scrolling rationale
                 it was a small link nobody saw (owner, 2026-10-10). */}
@@ -656,9 +682,9 @@ function SATAQuestion({
         {/* Next Button */}
         {showFeedback && onNext && (
           <button
-            // On a miss "Show me how" is the one filled action; Next steps
-            // back to an outlined button so the two don't compete.
-            className={`sata-next-btn${scoreResult && !scoreResult.isFullyCorrect ? ' is-quiet' : ''}`}
+            // Next is the main action again: the rule line teaches on the
+            // card, and the replay is optional (owner, 2026-10-25).
+            className="sata-next-btn"
             onClick={onNext}
             type="button"
           >
