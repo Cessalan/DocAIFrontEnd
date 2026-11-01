@@ -122,3 +122,63 @@ describe('WebSocketManager silent-response watchdog', () => {
     expect(other).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Keepalive only while the chat is in use. Unconditional pings kept every open
+ * tab's socket alive (the server counts a ping as activity) and Cloud Run
+ * billed CPU for all of it. A request in flight must still be kept alive no
+ * matter how long it runs: that is the upload/long-quiz fix.
+ */
+describe('WebSocketManager keepalive', () => {
+  let mgr;
+  let ws;
+  const pings = () => ws.send.mock.calls.filter(([m]) => JSON.parse(m).type === 'ping').length;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mgr = new WebSocketManager();
+    ws = { readyState: WebSocket.OPEN, send: jest.fn() };
+    jest.spyOn(console, 'warn').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    mgr.stopKeepalive('chat-1');
+    mgr.clearActiveStream('chat-1');
+    jest.useRealTimers();
+    jest.restoreAllMocks();
+  });
+
+  test('pings for the first minutes after the socket opens', () => {
+    mgr.startKeepalive('chat-1', ws);
+    jest.advanceTimersByTime(4 * 60 * 1000);
+    expect(pings()).toBe(2);
+  });
+
+  test('stops pinging once the chat has been idle for 5 minutes', () => {
+    mgr.startKeepalive('chat-1', ws);
+    jest.advanceTimersByTime(5 * 60 * 1000);
+    const before = pings();
+    jest.advanceTimersByTime(30 * 60 * 1000);
+    expect(pings()).toBe(before);
+  });
+
+  test('keeps pinging for as long as a request is in flight', () => {
+    mgr.startKeepalive('chat-1', ws);
+    mgr.setActiveStream('chat-1', jest.fn());
+    // Keep the watchdog fed so the stream stays active, as a long upload would.
+    for (let i = 0; i < 15; i += 1) {
+      jest.advanceTimersByTime(60 * 1000);
+      mgr.kickWatchdog('chat-1', true);
+    }
+    expect(pings()).toBeGreaterThanOrEqual(7);
+  });
+
+  test('resumes pinging when the student comes back', () => {
+    mgr.startKeepalive('chat-1', ws);
+    jest.advanceTimersByTime(20 * 60 * 1000);
+    const idle = pings();
+    mgr.markActivity('chat-1');
+    jest.advanceTimersByTime(2 * 60 * 1000);
+    expect(pings()).toBe(idle + 1);
+  });
+});

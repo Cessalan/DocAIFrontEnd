@@ -8,10 +8,18 @@ import { devLog } from './devLogger';
 // - Opens connection on first message
 // - Connection stays open for 5 minutes of inactivity (server-side timeout)
 // - Enables rapid follow-up requests (quiz after upload, mindmap after chat)
-// - Keepalive pings every 2 minutes to prevent premature closure
+// - Keepalive pings every 2 minutes while the chat is in use (see KEEPALIVE_ACTIVE_WINDOW_MS)
 // ============================================================================
 
 const KEEPALIVE_INTERVAL = 120000; // 2 minutes - send ping to keep connection alive
+
+// Pings only while the chat is in use: a request in flight, or real traffic
+// (a message sent or a non-pong frame received) in the last 5 minutes. The
+// server counts a ping as activity, so unconditional pings kept every open
+// tab's socket alive forever and Cloud Run billed CPU the whole time: ~400
+// CPU-hours for ~12.5k requests in Oct 2026. Once pings stop, the server's
+// 300s CONNECTION_IDLE_TIMEOUT closes the socket and the next message reopens it.
+const KEEPALIVE_ACTIVE_WINDOW_MS = 5 * 60 * 1000;
 
 // ============================================================================
 // SILENT-RESPONSE WATCHDOG
@@ -52,10 +60,24 @@ export class WebSocketManager {
     this.activeStreams = new Map();
     // chat_id -> { timer, sawProgress } for the watchdog above.
     this.watchdogs = new Map();
+    // chat_id -> ms timestamp of the last real (non-ping/pong) traffic.
+    this.lastActivity = new Map();
+  }
+
+  markActivity(chatId) {
+    this.lastActivity.set(chatId, Date.now());
+  }
+
+  // Whether the keepalive should ping: see KEEPALIVE_ACTIVE_WINDOW_MS.
+  shouldKeepAlive(chatId) {
+    if (this.activeStreams.has(chatId)) return true;
+    const last = this.lastActivity.get(chatId);
+    return last !== undefined && Date.now() - last < KEEPALIVE_ACTIVE_WINDOW_MS;
   }
 
   setActiveStream(chatId, notify) {
     this.activeStreams.set(chatId, notify);
+    this.markActivity(chatId);
     this.armWatchdog(chatId, false);
   }
 
@@ -118,6 +140,7 @@ export class WebSocketManager {
    * FIRST_RESPONSE_MS to STALL_MS. No-op when no request is in flight.
    */
   kickWatchdog(chatId, substantive) {
+    this.markActivity(chatId);
     const wd = this.watchdogs.get(chatId);
     if (!wd) return;
     this.armWatchdog(chatId, wd.sawProgress || Boolean(substantive));
@@ -214,8 +237,12 @@ export class WebSocketManager {
     // Clear any existing interval
     this.stopKeepalive(chatId);
 
+    this.markActivity(chatId); // opening the socket is itself activity
     const interval = setInterval(() => {
       if (ws.readyState === WebSocket.OPEN) {
+        // Idle: skip the ping and let the server's idle timeout close the
+        // socket. Keep the interval so pings resume if activity does.
+        if (!this.shouldKeepAlive(chatId)) return;
         try {
           ws.send(JSON.stringify({ type: 'ping' }));
           devLog(`🏓 Sent keepalive ping for chat ${chatId}`);
@@ -247,6 +274,7 @@ export class WebSocketManager {
       
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify(message));
+        if (message?.type !== 'ping') this.markActivity(chatId);
         return true;
       } else {
         throw new Error('WebSocket not ready');
