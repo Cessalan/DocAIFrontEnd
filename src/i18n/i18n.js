@@ -281,6 +281,14 @@ const resources = {
         portalOpening: "Opening…",
         signOut: "Sign out"
       },
+      // Failed renewal notice (PaymentIssueBanner)
+      paymentIssue: {
+        title: "Your card didn't go through",
+        bodyRetry: "Pro is still on. Stripe tries again on {{date}}. Update your card so it goes through.",
+        body: "Pro is still on for now. Update your card so it stays that way.",
+        fix: "Update card",
+        later: "Later"
+      },
       // Manage subscription + exit survey (ManageSubscriptionModal)
       cancelSurvey: {
         chooseTitle: "Manage your subscription",
@@ -3025,6 +3033,14 @@ const resources = {
         manageHint: "Change de forfait, mets à jour ta carte ou annule — via le portail sécurisé Stripe.",
         portalOpening: "Ouverture…",
         signOut: "Se déconnecter"
+      },
+      // Renouvellement refusé (PaymentIssueBanner)
+      paymentIssue: {
+        title: "Votre carte n'est pas passée",
+        bodyRetry: "Pro reste actif. Stripe réessaiera le {{date}}. Mettez votre carte à jour pour que le paiement passe.",
+        body: "Pro reste actif pour l'instant. Mettez votre carte à jour pour le garder.",
+        fix: "Mettre à jour la carte",
+        later: "Plus tard"
       },
       // Gérer l'abonnement + questionnaire de départ (ManageSubscriptionModal)
       cancelSurvey: {

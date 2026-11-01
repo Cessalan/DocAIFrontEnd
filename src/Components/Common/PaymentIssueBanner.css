@@ -1,0 +1,66 @@
+/* Bottom-left, where free accounts see the usage badge (Pro never does).
+   Moves clear of the open sidebar instead of covering its footer. */
+.payment-issue {
+  position: fixed;
+  bottom: 16px;
+  left: 16px;
+  z-index: 1200;
+  width: min(340px, calc(100vw - 32px));
+  padding: 14px 16px 12px;
+  border-radius: 14px;
+  border: 1px solid var(--glass-border, rgba(232, 141, 125, 0.18));
+  border-left: 3px solid var(--primary-coral-dark, #c46a5a);
+  background: var(--glass-bg, rgba(255, 254, 249, 0.97));
+  box-shadow: 0 8px 24px rgba(100, 80, 60, 0.14);
+  color: var(--text-primary, #2d2d2d);
+  font-size: 13.5px;
+  line-height: 1.45;
+}
+body:has(.sidebar.open) .payment-issue { left: 336px; }
+
+.payment-issue-title { margin: 0 0 4px; font-weight: 700; font-size: 14px; }
+.payment-issue-body { margin: 0 0 12px; color: var(--text-secondary, #6b6b6b); }
+
+.payment-issue-actions { display: flex; align-items: center; gap: 12px; }
+.payment-issue-fix {
+  padding: 8px 14px;
+  border: none;
+  border-radius: 9px;
+  background: var(--primary-coral-dark, #c46a5a);
+  color: #fff;
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+}
+.payment-issue-fix:hover:not(:disabled) { background: var(--primary-coral, #e88d7d); }
+.payment-issue-fix:disabled { opacity: 0.7; cursor: default; }
+.payment-issue-later {
+  padding: 4px 2px;
+  border: none;
+  background: none;
+  color: var(--text-secondary, #6b6b6b);
+  font-size: 13px;
+  cursor: pointer;
+}
+.payment-issue-later:hover { color: var(--text-primary, #2d2d2d); text-decoration: underline; }
+.payment-issue-fix:focus-visible,
+.payment-issue-later:focus-visible { outline: 2px solid var(--primary-coral, #e88d7d); outline-offset: 2px; }
+
+body.dark-mode .payment-issue {
+  background: var(--dark-bg-elevated, #262626);
+  border-color: var(--dark-border, rgba(255, 255, 255, 0.1));
+  border-left-color: var(--dark-accent, #b8a5d4);
+  color: #ececec;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+body.dark-mode .payment-issue-body,
+body.dark-mode .payment-issue-later { color: #b8b8b8; }
+body.dark-mode .payment-issue-later:hover { color: #ececec; }
+body.dark-mode .payment-issue-fix { background: var(--dark-accent, #b8a5d4); color: #1c1c1c; }
+body.dark-mode .payment-issue-fix:hover:not(:disabled) { background: var(--dark-accent-hover, #a894c9); }
+
+/* Phones: full width, above mobile bottom bars; the sidebar is an overlay. */
+@media (max-width: 640px) {
+  .payment-issue,
+  body:has(.sidebar.open) .payment-issue { left: 12px; bottom: 76px; width: calc(100vw - 24px); }
+}

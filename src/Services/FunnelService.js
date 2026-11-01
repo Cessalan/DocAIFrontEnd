@@ -105,6 +105,10 @@ export const FUNNEL = Object.freeze({
   PAYWALL_DISMISSED: 'paywall_dismissed',
   PAYWALL_CTA_CLICKED: 'paywall_cta_clicked',
   CHECKOUT_STARTED: 'checkout_started',
+  // Renewal failed (billing.paymentIssue). SHOWN once per session, CLICKED
+  // when she heads to Stripe; recovery itself arrives as a billingEvents row.
+  PAYMENT_ISSUE_SHOWN: 'payment_issue_shown',
+  PAYMENT_ISSUE_CLICKED: 'payment_issue_clicked',
   PLAN_STARTED: 'plan_started',
   FLOW_ABANDONED: 'flow_abandoned',
   // Signup picked "NCLEX Prep" and was sent to /nclex instead of the upload

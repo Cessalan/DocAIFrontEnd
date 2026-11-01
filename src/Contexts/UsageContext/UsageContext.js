@@ -31,6 +31,8 @@ import UpgradeModal from '../../Components/Common/UpgradeModal';
 import ManageSubscriptionModal from '../../Components/Common/ManageSubscriptionModal';
 import UsageBadge from '../../Components/Common/UsageBadge';
 import MemberWelcomeModal from '../../Components/Common/MemberWelcomeModal';
+import PaymentIssueBanner from '../../Components/Common/PaymentIssueBanner';
+import { paymentIssueFrom } from '../../Components/Common/paymentIssueModel';
 import useMemberWelcome from './useMemberWelcome';
 import useProductAnnouncement from './useProductAnnouncement';
 import ProductAnnouncementModal from '../../Components/Common/ProductAnnouncementModal';
@@ -109,6 +111,16 @@ export function UsageProvider({ children }) {
   }, []);
   const { welcome, dismiss: dismissWelcome, profile: membershipProfile } = useMemberWelcome(uid, onMembershipProfile);
   const { announcement, dismiss: dismissAnnouncement } = useProductAnnouncement(uid, membershipProfile, !!welcome);
+
+  // Failed renewal, from the same live profile listener, so the notice
+  // disappears by itself once Stripe confirms the new card.
+  const paymentIssue = useMemo(() => {
+    if (process.env.NODE_ENV === 'development'
+        && new URLSearchParams(window.location.search).get('preview') === 'payment-issue') {
+      return { invoiceUrl: null, nextAttemptAt: Date.now() + 2 * 86400000, key: 'preview' };
+    }
+    return paymentIssueFrom(membershipProfile);
+  }, [membershipProfile]);
 
   useEffect(() => {
     if (welcome || announcement) { setShowUpgrade(false); setShowManage(false); }
@@ -442,6 +454,7 @@ export function UsageProvider({ children }) {
           }}
         />
       )}
+      {uid && paymentIssue && <PaymentIssueBanner issue={paymentIssue} />}
       <UpgradeModal
         isOpen={showUpgrade}
         // Simulating always shows the FREE-user pitch. Without this a Pro
