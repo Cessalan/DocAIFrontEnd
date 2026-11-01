@@ -32,6 +32,9 @@ import '../../index.css';
 import { useTranslation } from 'react-i18next';
 import { examCountdown } from './examCountdown';
 
+// Most recent chats that get a file-count badge; older ones show none.
+const FILE_COUNT_LIMIT = 15;
+
 const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewModeChange, impersonatedUid, onImpersonateUser, onStopImpersonating }) => {
   const navigate = useNavigate();
 
@@ -247,9 +250,12 @@ const SideBar = ({ user, activeChatId, onChatSelected, onCloseSidebar, onViewMod
       }));
       setChats(updatedChats);
 
-      // Only load file counts for NEW chats (prevents repeated Storage calls on every Firestore update)
-      if (updatedChats.length > 0) {
-        await loadFileCountsForNewChats(updatedChats);
+      // Only load file counts for NEW chats (prevents repeated Storage calls on every Firestore update).
+      // Each count is a Storage list plus a getDownloadURL per file. Over every chat in the
+      // database (dev "view all" / impersonation) that was ~1M billed operations a day on
+      // dev days, ~$60/month (Nov 2026). So: own chats only, and only the top of the list.
+      if (updatedChats.length > 0 && !impersonatedUid && !viewAllChats) {
+        await loadFileCountsForNewChats(updatedChats.slice(0, FILE_COUNT_LIMIT));
       }
     });
 
