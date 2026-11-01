@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
 import { auth } from '../../Firebase/config';
 import { onAuthStateChanged } from 'firebase/auth';
+import { phIdentify, phReset } from '../../Services/PostHogService';
 
 // Create a context for authentication
 const AuthContext = React.createContext();
@@ -40,6 +41,7 @@ export function AuthProvider({ children }) {
     if (user) {
       // User is signed in
       setCurrentUser({ ...user });
+      phIdentify(user);
       setIsUserLoggedIn(true);
 
       // Check for user profile in Firestore
@@ -63,6 +65,7 @@ export function AuthProvider({ children }) {
     } else {
       // User is signed out
       setCurrentUser(null);
+      phReset();
       setUserProfile(null);
       setIsProfileComplete(false);
       setIsUserLoggedIn(false);

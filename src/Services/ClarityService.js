@@ -19,13 +19,16 @@
  * a study session.
  */
 
+import { phCapture } from './PostHogService';
+
 const ready = () => typeof window !== 'undefined' && typeof window.clarity === 'function';
 
 /** Clarity caps tag values at 255 chars; trim rather than drop. */
 const clip = (value) => String(value).slice(0, 255);
 
 /** Record a named moment in the session. Filter: Custom events. */
-export const clarityEvent = (name) => {
+export const clarityEvent = (name, props) => {
+  phCapture(name, props);
   try {
     if (ready() && name) window.clarity('event', name);
   } catch { /* Analytics must never interrupt learning. */ }
@@ -56,6 +59,6 @@ const FUNNEL_TAGS = {
 };
 
 export const clarityFunnelStep = (step, props = {}) => {
-  clarityEvent(step);
+  clarityEvent(step, props);
   Object.entries(FUNNEL_TAGS).forEach(([field, tag]) => clarityTag(tag, props[field]));
 };
