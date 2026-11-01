@@ -750,7 +750,6 @@ const QuizRoomLanding = () => {
                     words={[
                       t('landing.typewriter.quiz', 'quizzes.'),
                       t('landing.typewriter.flashcards', 'flashcards.'),
-                      t('landing.typewriter.mindmaps', 'concept maps.'),
                       t('landing.typewriter.audio', 'audio.'),
                       t('landing.typewriter.studysheet', 'study sheets.'),
                       t('landing.typewriter.success', 'success.')

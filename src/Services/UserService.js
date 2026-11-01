@@ -104,7 +104,8 @@ export const getWowEffectConfig = (studyGoal, reviewFormat) => {
         };
     }
 
-    if (reviewFormat === 'Practice Questions') {
+    // Concept maps were retired 2026-10-31; students who picked them get the study journey.
+    if (reviewFormat === 'Practice Questions' || reviewFormat === 'Visual Concept Maps') {
         // Study Journey for all "track progress" users - it's our best feature for this
         return {
             actionId: 'studyjourney',
@@ -113,14 +114,6 @@ export const getWowEffectConfig = (studyGoal, reviewFormat) => {
         };
     }
 
-    if (reviewFormat === 'Visual Concept Maps') {
-        return {
-            actionId: 'mindmap',
-            messageKey: 'wowEffect.mindmap',
-            ctaKey: 'wowEffect.cta.mindmap'
-        };
-    }
-    
     if (reviewFormat === 'Audio Summaries') {
         return {
             actionId: 'audio',

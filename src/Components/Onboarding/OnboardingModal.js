@@ -217,7 +217,6 @@ const OnboardingModal = ({ preview = false, onClose }) => {
                             {step === 3 && <div className="onboarding-options">
                                 {option('onboarding.options.formatPractice', 'reviewFormat', 'Practice Questions')}
                                 {option('onboarding.options.formatFlashcards', 'reviewFormat', 'Flashcards')}
-                                {option('onboarding.options.formatConcept', 'reviewFormat', 'Visual Concept Maps')}
                                 {option('onboarding.options.formatAudio', 'reviewFormat', 'Audio Summaries')}
                             </div>}
                             {step === 4 && <>
