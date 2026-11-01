@@ -26,7 +26,11 @@ export const initPostHog = () => {
       person_profiles: 'identified_only',
       capture_pageview: 'history_change', // SPA route changes count as pageviews
       autocapture: true,
-      disable_session_recording: true, // Clarity already records sessions
+      // Recordings are read by Claude Code through the PostHog MCP to see what
+      // actually happened when a student says it "doesn't work". Typed text is
+      // masked: students paste notes and type their email into these inputs.
+      session_recording: { maskAllInputs: true },
+      capture_exceptions: true,
     });
     started = true;
   } catch { /* Analytics must never interrupt learning. */ }

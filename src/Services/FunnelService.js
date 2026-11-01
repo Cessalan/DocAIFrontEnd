@@ -205,7 +205,8 @@ export const logFunnelStep = (step, props = {}) => {
     };
 
     devLog(`📊 ${step}`, props);
-    clarityFunnelStep(step, row);
+    // createdAt is a Firestore sentinel, meaningless outside Firestore.
+    clarityFunnelStep(step, { ...row, createdAt: undefined });
 
     return addDoc(collection(db, COLLECTION), row).catch((err) => {
       // Best-effort: a lost row is a gap in a chart, not a broken study session.
