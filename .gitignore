@@ -24,3 +24,6 @@ yarn-error.log*
 
 firebase.json
 config.js
+
+# rendered TikTok videos and review frames (regenerate with marketing/tiktok/render.js)
+marketing/tiktok/out/
