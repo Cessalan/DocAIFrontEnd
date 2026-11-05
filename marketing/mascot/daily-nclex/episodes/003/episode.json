@@ -1,0 +1,16 @@
+{
+  "number": 3,
+  "topic": "New antibiotic teaching (select all that apply)",
+  "voiceLine": "New antibiotic prescription. Which of these do you teach? Select all that apply.",
+  "card": [
+    { "text": "Teaching a new antibiotic Rx.", "style": "body", "at": 0 },
+    { "text": "Select all that apply.", "style": "question", "at": 2 },
+    { "text": "A. Take it exactly as prescribed", "style": "option", "at": 2 },
+    { "text": "B. Don't share it with anyone", "style": "option", "at": 2 },
+    { "text": "C. Save leftovers for next time", "style": "option", "at": 2 },
+    { "text": "D. Stop once you feel better", "style": "option", "at": 2 },
+    { "text": "E. Report rash or trouble breathing", "style": "option", "at": 2 }
+  ],
+  "answer": "A, B and E. Saving leftovers (C) and stopping early (D) are unsafe; E covers allergic reaction and anaphylaxis.",
+  "nurseReviewed": false
+}

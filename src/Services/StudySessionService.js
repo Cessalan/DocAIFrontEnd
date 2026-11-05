@@ -267,7 +267,9 @@ export const getStudySession = async (chatId) => {
       totalPhases: data.study?.totalPhases || 1,
       startedAt: data.study?.startedAt || null, // Day 1 anchor for the dated plan
       // Tonight's plan rounds (tonightPlanModel.js); null on every other plan.
-      tonight: data.study?.tonight || null
+      tonight: data.study?.tonight || null,
+      // The last plan change proposed after a quiz, accepted or not (adaptPathAfterNode).
+      lastAdaptation: data.study?.lastAdaptation || null
     };
   } catch (error) {
     console.error('❌ Error fetching study session:', error);
@@ -388,9 +390,10 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
       completedAt: nodes[currentIndex].completedAt || new Date().toISOString()
     };
 
-    // Find next non-banner node (skip section_banner pseudo-nodes)
+    // Find next non-banner node (skip section_banner pseudo-nodes, and
+    // reviews the adaptive plan cut — see adaptPathAfterNode)
     let nextIndex = currentIndex + 1;
-    while (nextIndex < nodes.length && nodes[nextIndex].type === 'section_banner') {
+    while (nextIndex < nodes.length && (nodes[nextIndex].type === 'section_banner' || nodes[nextIndex].status === 'skipped')) {
       nextIndex++;
     }
     const hasNextNode = nextIndex < nodes.length;
@@ -434,6 +437,131 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
     console.error('❌ Error completing node:', error);
     throw error;
   }
+};
+
+/** Only the shape planAdaptModel promises, minus anything Firestore rejects. */
+const adaptationRecord = (fromNodeId, changes, accepted) => ({
+  at: new Date().toISOString(),
+  fromNodeId,
+  accepted,
+  changes: JSON.parse(JSON.stringify(changes || [])),
+});
+
+/**
+ * She accepted the plan change proposed after a quiz (planAdaptModel.js):
+ * close the quiz, write the proposed path and reserve, open the next step,
+ * and record what changed and why — all in ONE write, so the plan and its
+ * explanation can never disagree.
+ *
+ * The proposal was computed from the plan as it was when the quiz ended. If
+ * the saved plan has moved since (another tab, a stale screen), applying it
+ * would drop or duplicate steps, so this throws `stale_adaptation` instead
+ * and the caller advances the ordinary way.
+ *
+ * @param {string} chatId
+ * @param {string} finishedNodeId - the quiz just finished
+ * @param {{nodes, reserve, changes}} proposal
+ * @returns {Promise<{nodes, nextNodeId, isComplete, reserveCount}>}
+ */
+export const adaptPathAfterNode = async (chatId, finishedNodeId, proposal) => {
+  const docRef = doc(db, 'chats', chatId);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) throw new Error('Study session not found');
+  const study = docSnap.data().study || {};
+  const saved = study.path?.nodes || [];
+  const savedReserve = study.reserve?.nodes || [];
+
+  const added = new Set((proposal.nodes || []).filter(n => !saved.some(s => s.id === n.id)).map(n => n.id));
+  const sameSet = (a, b) => a.length === b.length && a.every(id => b.includes(id));
+  const proposedBase = proposal.nodes.filter(n => !added.has(n.id)).map(n => n.id);
+  if (!sameSet(saved.map(n => n.id), proposedBase)
+    || !sameSet(savedReserve.map(n => n.id), (proposal.reserve || []).map(n => n.id))
+    || saved.find(n => n.id === finishedNodeId)?.status === 'done') {
+    throw new Error('stale_adaptation');
+  }
+
+  // Each changed step keeps its own change, so the plan overview can still say
+  // why it is there (or crossed out) after a reload, until she starts it.
+  const at = new Date().toISOString();
+  const changeById = new Map((proposal.changes || []).filter(c => !c.inReserve).map(c => [c.nodeId, c]));
+  const nodes = proposal.nodes.map(n => {
+    if (n.id === finishedNodeId) return { ...n, status: 'done', completedAt: n.completedAt || at };
+    const change = changeById.get(n.id);
+    if (change) return { ...n, adaptChange: JSON.parse(JSON.stringify({ kind: change.kind, reason: change.reason, at })) };
+    // A reason from an earlier change would now describe old numbers.
+    if (n.adaptChange && n.status !== 'done') { const { adaptChange, ...rest } = n; return rest; }
+    return n;
+  });
+  const finishedIndex = nodes.findIndex(n => n.id === finishedNodeId);
+  const nextIndex = nodes.findIndex((n, i) => i > finishedIndex && isRealNode(n)
+    && n.status !== 'done' && n.status !== 'skipped');
+  if (nextIndex !== -1) nodes[nextIndex] = { ...nodes[nextIndex], status: 'active' };
+  const nextNodeId = nextIndex === -1 ? null : nodes[nextIndex].id;
+  const reserve = proposal.reserve || [];
+  const reserveCount = reserve.filter(isRealNode).length;
+
+  await updateDoc(docRef, {
+    'study.path.nodes': nodes,
+    'study.path.activeNodeId': nextNodeId,
+    'study.path.totalNodes': nodes.filter(n => isRealNode(n) && n.status !== 'skipped').length,
+    'study.reserve.nodes': reserve,
+    'study.reserve.remaining': reserveCount,
+    'study.status': nextNodeId ? 'active' : 'completed',
+    'study.lastAdaptation': adaptationRecord(finishedNodeId, proposal.changes, true),
+    'study.lastActionAt': serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+  clarityEvent('study_node_completed');
+  clarityEvent('study_node_completed_quiz');
+  clarityEvent('study_plan_adapted');
+  if (!nextNodeId) clarityEvent('study_plan_finished');
+  return { nodes, nextNodeId, isComplete: !nextNodeId, reserveCount };
+};
+
+/**
+ * "Do it anyway": a review the adaptive plan cut goes back in the plan as an
+ * ordinary step. If nothing was left to do (the plan had finished around it),
+ * it becomes the active step so she can start it straight away.
+ *
+ * @returns {Promise<{nodes, activeNodeId}>} activeNodeId only when it changed
+ */
+export const restoreSkippedStep = async (chatId, nodeId) => {
+  const docRef = doc(db, 'chats', chatId);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) throw new Error('Study session not found');
+  const study = docSnap.data().study || {};
+  const nodes = [...(study.path?.nodes || [])];
+  const index = nodes.findIndex(n => n.id === nodeId);
+  if (index === -1 || nodes[index].status !== 'skipped') throw new Error(`Node ${nodeId} is not skipped`);
+  const { skippedReason, ...rest } = nodes[index];
+  const activeIndex = nodes.findIndex(n => n.status === 'active');
+  const hasActive = activeIndex !== -1;
+  const restored = { ...rest, status: hasActive ? 'locked' : 'active', restoredFrom: 'skipped' };
+  if (hasActive && index < activeIndex) {
+    // Behind her, it would never be reached: advancing only moves forward.
+    // It becomes the step after the one she's on.
+    nodes.splice(index, 1);
+    nodes.splice(activeIndex, 0, restored);
+  } else {
+    nodes[index] = restored;
+  }
+  await updateDoc(docRef, {
+    'study.path.nodes': nodes,
+    'study.path.totalNodes': nodes.filter(n => isRealNode(n) && n.status !== 'skipped').length,
+    ...(hasActive ? {} : { 'study.path.activeNodeId': nodeId, 'study.status': 'active' }),
+    updatedAt: serverTimestamp()
+  });
+  clarityEvent('study_skipped_step_restored');
+  return { nodes, activeNodeId: hasActive ? null : nodeId };
+};
+
+/** She kept her plan. Recorded so the same proposal is never shown twice. */
+export const declineAdaptation = async (chatId, finishedNodeId, changes) => {
+  await updateDoc(doc(db, 'chats', chatId), {
+    'study.lastAdaptation': adaptationRecord(finishedNodeId, changes, false),
+    updatedAt: serverTimestamp()
+  });
+  clarityEvent('study_plan_adaptation_declined');
 };
 
 /**
@@ -653,7 +781,8 @@ export const getStudyProgress = async (chatId) => {
     }
 
     // Use the new structure (session.path.nodes instead of session.study.path.nodes)
-    const nodes = session.path?.nodes || [];
+    // A review the adaptive plan cut is neither done nor left (firstBlock.isCountedStep).
+    const nodes = (session.path?.nodes || []).filter(n => n.status !== 'skipped');
     const completedNodes = nodes.filter(n => n.status === 'done').length;
     const activeNode = nodes.find(n => n.status === 'active');
     const currentIndex = nodes.findIndex(n => n.status === 'active');
@@ -908,6 +1037,7 @@ export const saveQuizProgress = async (chatId, messageId, progress) => {
     if (progress.questionStatuses) progressData.questionStatuses = progress.questionStatuses;
     if (progress.firstAttemptStatuses) progressData.firstAttemptStatuses = progress.firstAttemptStatuses;
     if (progress.firstAttemptAnswers) progressData.firstAttemptAnswers = progress.firstAttemptAnswers;
+    if (progress.firstAttemptChoices) progressData.firstAttemptChoices = progress.firstAttemptChoices;
     if (progress.answers) progressData.answers = progress.answers;
     if (progress.isReviewRound !== undefined) progressData.isReviewRound = progress.isReviewRound;
     if (progress.queueIndex !== undefined) progressData.queueIndex = progress.queueIndex;
@@ -1046,6 +1176,13 @@ export const appendStudyHistory = async (chatId, entry) => {
       total: Number(entry.total) || 0,
       pct: entry.total ? Math.round((entry.correct / entry.total) * 100) : 0,
       missed: (entry.missed || []).filter(Boolean).slice(0, 5),
+      // Each first-attempt miss with what she chose (see missEvidence.js).
+      // Rebuilt field by field: Firestore rejects undefined inside arrays.
+      misses: (entry.misses || []).slice(0, 5).map((miss) => ({
+        concept: miss.concept || null,
+        format: miss.format || 'mcq',
+        chosen: miss.chosen ?? null,
+      })),
       conclusion: entry.conclusion || null,
     };
 
@@ -1614,6 +1751,9 @@ export default {
   updateStudyPath,
   updateNodeStatus,
   completeNodeAndAdvance,
+  adaptPathAfterNode,
+  declineAdaptation,
+  restoreSkippedStep,
   insertNodeAfterCurrent,
   insertRoundAfterCurrent,
   saveTonightState,

@@ -38,3 +38,18 @@ body .plan-next-steps.is-travelling .study-modal-plan-item.is-first .study-modal
 @keyframes plan-detour-enter { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 @media (prefers-reduced-motion: reduce) { .plan-next-steps.is-travelling .study-modal-plan-item[data-entering-detour] { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .plan-next-steps.is-travelling::after, .plan-next-steps.is-travelling .study-modal-plan-item { transition: none; } }
+.plan-next-steps .study-modal-plan-item.is-skipped .study-modal-plan-label { text-decoration: line-through; color: #999; }
+.plan-next-steps .study-modal-plan-item.is-skipped .study-modal-plan-icon { opacity: .45; }
+.dark-mode .plan-next-steps .study-modal-plan-item.is-skipped .study-modal-plan-label { color: #8d8d8d; }
+
+/* A proposed plan change (planAdaptCopy.js): the reason sits only under the
+   step that changed, an added step fades in, and the slide itself is set
+   inline by PlanNextSteps when a step changes place. */
+.plan-next-steps__why { font-size: 11px; line-height: 1.4; color: #a2503f; margin-top: 2px; animation: plan-why-enter 500ms ease-out 400ms both; }
+.dark-mode .plan-next-steps__why { color: #d4c8e8; }
+.plan-next-steps.is-travelling .study-modal-plan-item[data-added] { animation: plan-step-added 700ms ease-out 300ms both; }
+@keyframes plan-why-enter { from { opacity: 0; } to { opacity: 1; } }
+@keyframes plan-step-added { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
+@media (prefers-reduced-motion: reduce) {
+  .plan-next-steps__why, .plan-next-steps.is-travelling .study-modal-plan-item[data-added] { animation: none; }
+}

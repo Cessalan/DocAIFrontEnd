@@ -15237,3 +15237,23 @@ body.dark-mode .plan-skeleton__line {
   .plan-skeleton__icon, .plan-skeleton__line { animation: none; }
   .study-modal-overlay.is-leaving, .study-modal-overlay.is-leaving .study-modal { transition: none; }
 }
+
+/* A review the adaptive plan cut (planAdaptModel.js). It stays in its
+   section so she can see what was dropped, and quietly offers it back;
+   the restore is a text button, not a second Start. */
+.sov3-step--skipped { cursor: default; }
+.sov3-step--skipped .sov3-step__label { text-decoration: line-through; color: #999; }
+.sov3-step--skipped .sov3-step__icon { opacity: .45; }
+.sov3-step__restore-btn { border: 1px solid #bb8373; background: transparent; color: #8a5446; padding: 6px 12px; border-radius: 8px; font-size: 12px; cursor: pointer; white-space: nowrap; }
+.sov3-step__restore-btn:hover { background: rgba(232, 141, 125, .08); }
+.sov3-step__restore-btn:focus-visible { outline: 2px solid #bb8373; outline-offset: 2px; }
+body.dark-mode .sov3-step--skipped .sov3-step__label { color: #8d8d8d; }
+body.dark-mode .sov3-step__restore-btn { border-color: #b8a5d4; color: #d4c8e8; }
+body.dark-mode .sov3-step__restore-btn:hover { background: rgba(184, 165, 212, .1); }
+
+/* Why a step changed (planAdaptCopy.js), kept under it until she starts it,
+   and when the plan last changed from her answers. */
+.sov3-step__why { display: block; font-size: 12px; line-height: 1.4; color: #a2503f; white-space: normal; }
+.sov3-adapted-note { margin: 8px 0 0; font-size: 13px; color: var(--text-secondary, #6b6b6b); }
+body.dark-mode .sov3-step__why { color: #d4c8e8; }
+body.dark-mode .sov3-adapted-note { color: #bbb; }

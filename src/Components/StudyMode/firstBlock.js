@@ -39,6 +39,15 @@ export const FIRST_BLOCK_SIZE = 6;
 /** Section banners are headers, not work — they never count toward the block. */
 export const isRealNode = (node) => !!node && node.type !== 'section_banner';
 
+/**
+ * A step that counts toward her plan: real, and not a review the adaptive plan
+ * cut (`status: 'skipped'`, see planAdaptModel.js). Progress, the dated
+ * schedule and "what's next" read this. A skipped review is never work she
+ * did, and never work left; it stays in the list only so she can see it was
+ * cut and bring it back.
+ */
+export const isCountedStep = (node) => isRealNode(node) && node.status !== 'skipped';
+
 /** How many actual learning nodes are in a list. */
 export const countRealNodes = (nodes = []) => nodes.filter(isRealNode).length;
 

@@ -84,6 +84,21 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
     savedProgress?.firstAttemptStatuses || {}
   );
 
+  // What she picked on her first attempt, per question: the option index,
+  // -1 for "I don't know", or the selected options for select-all. A status
+  // only says she missed; a step built to fix the miss needs the answer she
+  // actually chose. A ref, not state, so every save sees the latest value
+  // without re-rendering. Never overwritten once recorded.
+  const firstAttemptChoicesRef = useRef(savedProgress?.firstAttemptChoices || {});
+  const recordChoice = (position, choice) => {
+    if (isReviewRound || position in firstAttemptChoicesRef.current) return;
+    firstAttemptChoicesRef.current = { ...firstAttemptChoicesRef.current, [position]: choice ?? null };
+  };
+  const report = (answerData) => onAnswer({
+    ...answerData,
+    ...(answerData.progress ? { progress: { ...answerData.progress, firstAttemptChoices: firstAttemptChoicesRef.current } } : {})
+  });
+
   // Track if we're in review round
   const [isReviewRound, setIsReviewRound] = useState(() =>
     savedProgress?.isReviewRound || false
@@ -201,6 +216,9 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
         setIsReviewRound(savedProgress.isReviewRound || false);
         if (savedProgress.firstAttemptStatuses) {
           setFirstAttemptStatuses(savedProgress.firstAttemptStatuses);
+        }
+        if (savedProgress.firstAttemptChoices) {
+          firstAttemptChoicesRef.current = savedProgress.firstAttemptChoices;
         }
 
         // Rebuild the queue based on saved state
@@ -686,8 +704,9 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
     const correct = selectedIndex === normalizeCorrect(questions[currentQueuePosition]?.correctIndex);
     const newStatuses = { ...questionStatuses, [currentQueuePosition]: correct ? 'correct' : 'incorrect' };
     setQuestionStatuses(newStatuses);
+    recordChoice(currentQueuePosition, selectedIndex);
     if (onAnswer) {
-      onAnswer({
+      report({
         selectedIndex,
         isCorrect: correct,
         questionIndex: currentQueuePosition,
@@ -734,10 +753,11 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
       [currentQueuePosition]: correct ? 'correct' : 'incorrect'
     };
     setQuestionStatuses(newStatuses);
+    recordChoice(currentQueuePosition, index);
 
     // Notify parent with progress for saving
     if (onAnswer) {
-      onAnswer({
+      report({
         selectedIndex: index,
         isCorrect: correct,
         questionIndex: currentQueuePosition,
@@ -775,8 +795,9 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
       const newStatuses = { ...questionStatuses, [currentQueuePosition]: correct ? 'correct' : 'incorrect' };
       setReasoningAnswers(previous => ({ ...previous, [currentQueuePosition]: answerData }));
       setQuestionStatuses(newStatuses);
+      recordChoice(currentQueuePosition, answerData?.selectedOptions);
       if (onAnswer) {
-        onAnswer({
+        report({
           ...answerData, selectedIndex: null, questionType: answerData?.questionType || 'sata', isCorrect: correct,
           questionIndex: currentQueuePosition, deferred: true,
           progress: { matrixAnswers: { ...reasoningAnswers, [currentQueuePosition]: answerData }, questionStatuses: newStatuses,
@@ -801,9 +822,10 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
       [currentQueuePosition]: correct ? 'correct' : 'incorrect'
     };
     setQuestionStatuses(newStatuses);
+    recordChoice(currentQueuePosition, answerData?.selectedOptions);
 
     if (onAnswer) {
-      onAnswer({
+      report({
         ...answerData,
         selectedIndex: null,
         questionType: answerData?.questionType || 'sata',
@@ -850,10 +872,11 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
       [currentQueuePosition]: 'incorrect'
     };
     setQuestionStatuses(newStatuses);
+    recordChoice(currentQueuePosition, -1);
 
     // Notify parent — isCorrect: false so performance tracking penalizes
     if (onAnswer) {
-      onAnswer({
+      report({
         selectedIndex: null,
         isCorrect: false,
         questionIndex: currentQueuePosition,
@@ -936,7 +959,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
 
         // Save progress when entering review round
         if (onAnswer) {
-          onAnswer({
+          report({
             selectedIndex: null,
             isCorrect: null,
             questionIndex: null,
@@ -963,7 +986,7 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
 
       // Save progress after advancing
       if (onAnswer) {
-        onAnswer({
+        report({
           selectedIndex: null,
           isCorrect: null,
           questionIndex: null,

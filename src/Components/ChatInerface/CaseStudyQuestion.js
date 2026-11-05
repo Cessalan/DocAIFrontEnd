@@ -24,21 +24,6 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
 import { calculateOrderingScore } from '../../utils/quizScoring';
 import './CaseStudyQuestion.css';
 import useGlossary from '../Glossary/useGlossary';
@@ -68,14 +53,6 @@ function ChartIcon({ kind }) {
   </svg>;
 }
 
-function DragHandleIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-      <path d="M8 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm8-12a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm0 6a2 2 0 1 1-4 0 2 2 0 0 1 4 0z" />
-    </svg>
-  );
-}
-
 function CheckmarkIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -102,58 +79,24 @@ function ExpandIcon() {
 }
 
 // ============================================
-// SORTABLE ITEM COMPONENT
+// MARKED ROW (after she submits)
 // ============================================
 
-// ============================================
-// SORTABLE ITEM COMPONENT
-// ============================================
-
-function SortableItem({ id, item, index, isRevealed, correctPosition, isCorrectPosition, onMove, total, t }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id, disabled: isRevealed });
-
-  // Only apply Y-axis transform to prevent horizontal movement
-  const style = {
-    transform: transform ? `translate3d(0, ${transform.y}px, 0)` : undefined,
-    transition,
-    opacity: 1,
-    zIndex: isDragging ? 1000 : 1,
-  };
-
-  let itemClass = 'case-study-drag-item';
-  if (isDragging) itemClass += ' dragging';
-  if (isRevealed) {
-    itemClass += isCorrectPosition ? ' correct' : ' incorrect';
-  }
-
+// Her submitted order, one row per action with its verdict. Static on purpose:
+// answering is tap-to-order (2026-10-11), and the drag grip this row used to
+// keep, faded and inert, read as something to grab (dead clicks, PostHog
+// 2026-11-04).
+function MarkedItem({ item, index, correctPosition, isCorrectPosition, t }) {
   return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      className={itemClass}
-    >
+    <div className={`case-study-drag-item ${isCorrectPosition ? 'correct' : 'incorrect'}`}>
       <span className="case-priority-number">{index + 1}</span>
-      <button type="button" className="drag-handle" {...attributes} {...listeners} disabled={isRevealed} aria-label={t('caseStudy.moveAction', 'Drag action {{number}}', { number: index + 1 })}><DragHandleIcon /></button>
       <span className="drag-item-text">{item.text}</span>
 
-      {!isRevealed && <div className="case-move-controls">
-        <button type="button" disabled={index === 0} onClick={() => onMove(index, -1)} aria-label={t('caseStudy.moveUp', 'Move action {{number}} up', { number: index + 1 })}>↑</button>
-        <button type="button" disabled={index === total - 1} onClick={() => onMove(index, 1)} aria-label={t('caseStudy.moveDown', 'Move action {{number}} down', { number: index + 1 })}>↓</button>
-      </div>}
-      {isRevealed && (
-        <span className={`drag-item-status ${isCorrectPosition ? 'correct' : 'incorrect'}`}>
-          {isCorrectPosition ? <CheckmarkIcon /> : <XMarkIcon />}
-        </span>
-      )}
+      <span className={`drag-item-status ${isCorrectPosition ? 'correct' : 'incorrect'}`}>
+        {isCorrectPosition ? <CheckmarkIcon /> : <XMarkIcon />}
+      </span>
 
-      {isRevealed && !isCorrectPosition && correctPosition !== undefined && (
+      {!isCorrectPosition && correctPosition !== undefined && correctPosition >= 0 && (
         <span className="drag-item-correct-pos">
           {t('caseStudy.expectedPosition', 'Expected #{{number}}', { number: correctPosition + 1 })}
         </span>
@@ -227,21 +170,6 @@ function CaseStudyQuestion({
 
   // Track initialization to prevent re-init during same question
   const initializedQuizRef = useRef(null);
-
-  // ----------------------------------------
-  // DnD Sensors
-  // ----------------------------------------
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, {
-      activationConstraint: {
-        distance: 8,
-      },
-    }),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
 
   // ----------------------------------------
   // Derived Values
@@ -364,9 +292,6 @@ function CaseStudyQuestion({
     return { width: `${((quizIndex + 1) / totalQuestions) * 100}%` };
   }, [quizIndex, totalQuestions]);
 
-  // Memoize item IDs for SortableContext
-  const itemIds = useMemo(() => items.map(item => item.id), [items]);
-
   // Determine which tabs have content (vitalSigns/labResults are optional)
   const availableTabs = useMemo(() => {
     if (!quiz?.caseStudy) return [];
@@ -423,32 +348,6 @@ function CaseStudyQuestion({
   // ----------------------------------------
   // Handlers
   // ----------------------------------------
-
-  const handleDragEnd = useCallback((event) => {
-    const { active, over } = event;
-
-    // Only process if we have valid active and over targets
-    if (!active || !over) {
-      return;
-    }
-
-    // Only reorder if dropped on a different item
-    if (active.id !== over.id) {
-      setItems((prevItems) => {
-        const oldIndex = prevItems.findIndex(item => item.id === active.id);
-        const newIndex = prevItems.findIndex(item => item.id === over.id);
-
-        // Safety check: ensure both indices are valid
-        if (oldIndex === -1 || newIndex === -1) {
-          return prevItems;
-        }
-
-        const newItems = arrayMove(prevItems, oldIndex, newIndex);
-        return newItems;
-      });
-    } else {
-    }
-  }, []);
 
   const handleSubmit = useCallback(() => {
     if (revealed || !quiz) return;
@@ -665,34 +564,19 @@ function CaseStudyQuestion({
         {/* Her order, marked, after she submits */}
         {revealed && (
         <div className="case-study-drag-area">
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={itemIds}
-              strategy={verticalListSortingStrategy}
-            >
-              {items.map((item, index) => {
-                const feedback = getItemFeedback(item.id, index);
-                return (
-                  <SortableItem
-                    key={item.id}
-                    id={item.id}
-                    item={item}
-                    index={index}
-                    isRevealed={revealed}
-                    t={t}
-                    total={items.length}
-                    onMove={(position, direction) => setItems(current => arrayMove(current, position, position + direction))}
-                    correctPosition={feedback.correctPosition}
-                    isCorrectPosition={feedback.isCorrectPosition}
-                  />
-                );
-              })}
-            </SortableContext>
-          </DndContext>
+          {items.map((item, index) => {
+            const feedback = getItemFeedback(item.id, index);
+            return (
+              <MarkedItem
+                key={item.id}
+                item={item}
+                index={index}
+                t={t}
+                correctPosition={feedback.correctPosition}
+                isCorrectPosition={feedback.isCorrectPosition}
+              />
+            );
+          })}
         </div>
         )}
 

@@ -19,3 +19,16 @@ test('extends the original first pass after resuming a partly completed quiz', (
     firstAttemptStatuses: { 0: 'incorrect', 1: 'correct' },
   }) }));
 });
+
+test('saves her first-attempt choice alongside the status, keeping choices from before a resume', () => {
+  const onAnswer = jest.fn();
+  render(<StudyQuizCard content={{ questions: [
+    { question: 'Earlier question', options: ['One', 'Two'], correctIndex: 0 },
+    { question: 'Resumed question', options: ['Answer A', 'Answer B'], correctIndex: 0 },
+  ] }} savedProgress={{ questionStatuses: { 0: 'incorrect' }, firstAttemptStatuses: { 0: 'incorrect' },
+    firstAttemptChoices: { 0: 1 }, queueIndex: 1, isReviewRound: false }} onAnswer={onAnswer} />);
+  fireEvent.click(screen.getByText('Answer B'));
+  expect(onAnswer).toHaveBeenCalledWith(expect.objectContaining({ selectedIndex: 1, progress: expect.objectContaining({
+    firstAttemptChoices: { 0: 1, 1: 1 },
+  }) }));
+});

@@ -114,6 +114,18 @@ export const FUNNEL = Object.freeze({
   // Signup picked "NCLEX Prep" and was sent to /nclex instead of the upload
   // door. Before 2026-10-25, 1 of 104 such signups ever reached it.
   NCLEX_ROUTED: 'nclex_routed_from_onboarding',
+  // Adaptive plan (StudyMode/planAdaptTelemetry.js). Logged in study mode,
+  // outside any upload funnel: join on chatId + fromNodeId, not funnelId.
+  // FAILED is an accepted change refused because the plan moved under it.
+  PLAN_CHANGE_PROPOSED: 'plan_change_proposed',
+  PLAN_CHANGE_ACCEPTED: 'plan_change_accepted',
+  PLAN_CHANGE_DECLINED: 'plan_change_declined',
+  PLAN_CHANGE_FAILED: 'plan_change_failed',
+  SKIPPED_STEP_RESTORED: 'skipped_step_restored',
+  ADAPTED_STEP_STARTED: 'adapted_step_started',
+  ADAPTED_STEP_COMPLETED: 'adapted_step_completed',
+  // The first scored step after a mix-up lesson on its topic: did the fix work.
+  MIXUP_FOLLOWUP_SCORED: 'mixup_followup_scored',
 });
 
 /**

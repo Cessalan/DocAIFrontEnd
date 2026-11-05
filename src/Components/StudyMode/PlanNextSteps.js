@@ -26,13 +26,43 @@ const stepPurpose = (node, index, nodes, fr) => {
   return copy[node.type]?.[fr ? 1 : 0] || getStepTopicLabel(node.label) || node.type;
 };
 
-export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progress = null, busy = false }) {
+/**
+ * `reasons` ({ [nodeId]: line }) and `addedIds` come from a proposed plan
+ * change (planAdaptCopy.js): a reason shows only under a step that changed,
+ * and an added step fades in. With `animateReorder`, a step that changes
+ * place slides from its old position to its new one (measured before and
+ * after the render), so she watches the plan move instead of finding it
+ * rearranged.
+ */
+export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progress = null, busy = false,
+  reasons = null, addedIds = null, animateReorder = false }) {
   const { t, i18n } = useTranslation();
   const fr = i18n.language.startsWith('fr');
   const listRef = useRef(null);
   const [highlight, setHighlight] = useState(null);
   const isTravelling = !!progress;
   const activeId = progress?.activeId;
+  const positionsRef = useRef(new Map());
+  useLayoutEffect(() => {
+    const list = listRef.current;
+    if (!list) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const next = new Map();
+    list.querySelectorAll('[data-node-id]').forEach((item) => {
+      const id = item.getAttribute('data-node-id');
+      const top = item.offsetTop;
+      next.set(id, top);
+      const before = positionsRef.current.get(id);
+      if (!animateReorder || reduce || before == null || before === top) return;
+      item.style.transition = 'none';
+      item.style.transform = `translateY(${before - top}px)`;
+      requestAnimationFrame(() => {
+        item.style.transition = 'transform 900ms cubic-bezier(.45, 0, .2, 1)';
+        item.style.transform = '';
+      });
+    });
+    positionsRef.current = next;
+  });
   useLayoutEffect(() => {
     if (!isTravelling || !listRef.current) return undefined;
     const list = listRef.current;
@@ -49,8 +79,9 @@ export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progre
   return <ul ref={listRef} className={`study-modal-plan-list plan-next-steps${progress ? ' is-travelling' : ''}`}
     style={progress && highlight ? { '--active-top': `${highlight.top}px`, '--active-height': `${highlight.height}px` } : undefined}>
     {nodes.map((node, index) => <li key={node.id || index}
-      className={`study-modal-plan-item${index === 0 ? ' is-first' : ''}${node.detour ? ' is-detour' : ''}${progress?.activeId === node.id ? ' is-current' : ''}${progress && (node.status === 'done' || progress.completedId === node.id) ? ' is-finished' : ''}`}
+      className={`study-modal-plan-item${index === 0 ? ' is-first' : ''}${node.detour ? ' is-detour' : ''}${node.status === 'skipped' ? ' is-skipped' : ''}${progress?.activeId === node.id ? ' is-current' : ''}${progress && (node.status === 'done' || progress.completedId === node.id) ? ' is-finished' : ''}`}
       aria-current={progress?.activeId === node.id ? 'step' : undefined}
+      data-node-id={node.id || undefined} data-added={addedIds?.includes(node.id) || undefined}
       data-type={node.type} data-entering-detour={progress?.detourId === node.id || undefined} style={{ animationDelay: `${index * 70}ms` }}>
       <span className="study-modal-plan-icon" aria-hidden="true">{getStudyNodeIcon(node.type)}
         {progress && (node.status === 'done' || progress.completedId === node.id) && <span className="plan-next-steps__check">✓</span>}
@@ -62,6 +93,7 @@ export default function PlanNextSteps({ nodes, reserveCount = 0, onStart, progre
         {index > 0 && topicKey(node) !== topicKey(nodes[index - 1]) &&
           <small className="plan-next-steps__topic">{topicLabel(node)}</small>}
         {index === 0 && node.type === 'lesson' && <ReviewReason reason={node.reviewReason} compact />}
+        {reasons?.[node.id] && <small className="plan-next-steps__why">{reasons[node.id]}</small>}
         {progress && (node.status === 'done' || progress.completedId === node.id) && <span className="plan-next-steps__completed">{fr ? 'Terminé' : 'Completed'}</span>}
       </div>
       {index === 0 && !progress && <div className="plan-next-steps__action"><button type="button"

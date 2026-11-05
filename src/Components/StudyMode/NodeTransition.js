@@ -19,6 +19,8 @@ import {
 import './StudyMode.css';
 import './NodeResult.css';
 import { TopicHandoff } from './TopicJourney';
+import { collectMisses, firstChoices } from './missEvidence';
+import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
 
 const ReadinessGain = ({ value, label }) => {
   const [displayed, setDisplayed] = useState(() => (
@@ -126,6 +128,7 @@ const NodeTransition = ({
   onConfirmCustom,   // () => confirm the echoed custom node
   onCancelCustom,    // () => cancel the custom request
   onAnalytics,       // (event, payload) => fire analytics (no-op safe)
+  adaptFollowUp,     // { mixupNodeId, fromNodeId, ... } when this step tests a mix-up lesson
   onTestTheory,      // (skill) => insert a single question built around the pattern
   testedSkills,      // skills already given an experiment in this plan (never re-offered)
   nodeTopic,         // the node's subject, resolved from the plan (label may be decorated)
@@ -198,6 +201,7 @@ const NodeTransition = ({
         incorrect,
         scorePercent,
         missedQuestions,
+        misses: collectMisses(content.questions, statuses, firstChoices(quizProgress)),
         topic: node.label
       };
     }
@@ -872,8 +876,16 @@ const NodeTransition = ({
           correct: score?.got ?? 0,
           total: score?.total ?? 0,
           missed: result.missedConcepts || [],
+          misses: result.misses || [],
           conclusion: feedback?.conclusionKey || null,
         });
+        // The adaptive plan's own test: her score on the first scored step
+        // after a mix-up lesson, against the quiz it came from (that row's
+        // fromPct, joined on fromNodeId).
+        if (adaptFollowUp && score?.total) {
+          logFunnelStep(FUNNEL.MIXUP_FOLLOWUP_SCORED, { chatId, ...adaptFollowUp, topic: result.topic,
+            correct: score.got ?? 0, total: score.total, pct: Math.round(((score.got ?? 0) / score.total) * 100) });
+        }
       } catch (err) {
         // A missing history line costs a nice sentence, never the screen.
         console.warn('History feedback unavailable:', err);

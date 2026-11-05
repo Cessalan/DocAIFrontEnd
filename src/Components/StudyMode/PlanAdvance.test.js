@@ -68,3 +68,27 @@ test('distinguishes a subject change, missing local node, and session completion
   rerender(<PlanAdvance nodes={nodes} fromId="c" confirmed isComplete />);
   expect(screen.getByText('Session complete')).toBeInTheDocument();
 });
+
+test('a proposed plan change waits for her answer', () => {
+  const onAcceptChange = jest.fn();
+  const onKeepPlan = jest.fn();
+  const proposal = { nodes: [nodes[0], { id: 'm', type: 'lesson', topic: 'ABCDE', label: 'The mix-up from this quiz: ABCDE', adaptive: true }, nodes[2]],
+    changes: [{ kind: 'mixup', nodeId: 'm', topic: 'ABCDE', reason: { chosen: 'Open the airway last' } }] };
+  render(<PlanAdvance nodes={nodes} fromId="a" confirmed={false} proposal={proposal} onAcceptChange={onAcceptChange} onKeepPlan={onKeepPlan} />);
+  // Her plan as it is first, then the change, so the steps visibly move.
+  expect(screen.getByText('Reading your answers…')).toBeInTheDocument();
+  expect(screen.queryByText('You chose “Open the airway last”')).not.toBeInTheDocument();
+  act(() => { jest.advanceTimersByTime(900); });
+  expect(screen.getByText('Your plan can change after this quiz')).toBeInTheDocument();
+  expect(screen.getByText('You chose “Open the airway last”')).toBeInTheDocument();
+  expect(screen.getByText('1 step added from your answers')).toBeInTheDocument();
+  fireEvent.click(screen.getByText('Keep my plan'));
+  expect(onKeepPlan).toHaveBeenCalled();
+  fireEvent.click(screen.getByText('Update my plan'));
+  expect(onAcceptChange).toHaveBeenCalled();
+});
+
+test('says the plan was updated once she accepts', () => {
+  render(<PlanAdvance nodes={nodes} fromId="a" toId="b" confirmed adaptedChanges={[{ kind: 'mixup' }]} />);
+  expect(screen.getByText('Plan updated')).toBeInTheDocument();
+});

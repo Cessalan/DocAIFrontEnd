@@ -1,0 +1,13 @@
+{
+  "number": 1,
+  "topic": "Dosage calculation: oral suspension",
+  "voiceLine": "Amoxicillin 250 milligrams ordered. You have 125 milligrams per 5 mL. How many mL do you give?",
+  "voiceNote": "voice.mp3 is voice-with-opener.mp3 trimmed at 1.98s to drop \"Nursing students, quick one!\" (no new credits).",
+  "card": [
+    { "text": "Ordered: amoxicillin 250 mg PO", "style": "body", "at": 0 },
+    { "text": "Available: 125 mg / 5 mL", "style": "body", "at": 1 },
+    { "text": "How many mL do you give?", "style": "question", "at": 2 }
+  ],
+  "answer": "10 mL. 250 mg ÷ 125 mg × 5 mL = 10 mL.",
+  "nurseReviewed": false
+}

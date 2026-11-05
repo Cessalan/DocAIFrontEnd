@@ -73,3 +73,12 @@ describe('topicHandoff', () => {
     expect(topicHandoff(journey, 'Coronary artery disease', reserveNodes[0], all)).toBeNull();
   });
 });
+
+test('a review the adaptive plan cut is not a step of its topic', () => {
+  const journey = topicJourney({ nodes: [
+    { id: 'a', type: 'lesson', topic: 'ABCDE', status: 'skipped' },
+    { id: 'b', type: 'quiz', topic: 'ABCDE', status: 'done' },
+    { id: 'c', type: 'lesson', topic: 'Cardiac', status: 'active' },
+  ], activeNodeId: 'c' });
+  expect(journey.topics[0]).toMatchObject({ key: 'abcde', status: 'done' });
+});

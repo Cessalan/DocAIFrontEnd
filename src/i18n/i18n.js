@@ -2420,6 +2420,35 @@ const resources = {
         couldUseRefresh: "One more pass"
       },
 
+      // Adaptive plan: changes proposed after a quiz (planAdaptModel.js)
+      planAdapt: {
+        mixupLabel: "The mix-up from this quiz: {{topic}}",
+        returnLabel: "Quick check: {{topic}}",
+        restore: "Do it anyway",
+        updatedToday: "Plan updated today from your answers",
+        updatedNote: "Plan updated {{when}} from your answers",
+        format: { mcq: "single answer", sata: "select-all", casestudy: "case study", matrix: "matrix" },
+        why: {
+          mixup: "You chose “{{chosen}}”",
+          format: "Now {{format}}: {{correct}} of {{total}} there, {{bestCorrect}} of {{bestTotal}} on {{best}}",
+          skipCheck: "Skipped: {{correct}} of {{total}} in your readiness check",
+          skipPractice: "Skipped: {{correct}} of {{total}} in practice",
+          return: "Last practised {{day}}: {{correct}} of {{total}}",
+          movedUp: "Moved up: {{correct}} of {{total}} so far",
+          movedDown: "Moved later: {{correct}} of {{total}} so far"
+        },
+        summary: {
+          added_one: "1 step added from your answers",
+          added_other: "{{count}} steps added from your answers",
+          addedRemoved_one: "1 step added from your answers, {{removed}} removed",
+          addedRemoved_other: "{{count}} steps added from your answers, {{removed}} removed",
+          removed_one: "1 step removed: you already know it",
+          removed_other: "{{count}} steps removed: you already know them",
+          reshaped_one: "1 step changed from your answers",
+          reshaped_other: "{{count}} steps changed from your answers"
+        }
+      },
+
       // NodeTransition — post-node decision screen
       transition: {
         // Exit
@@ -5112,6 +5141,35 @@ const resources = {
         ctaCompleteSub: "~{{min}} min · pour tout rassembler",
         ctaCompleteSubGeneric: "Pour tout rassembler",
         couldUseRefresh: "Une passe de plus"
+      },
+
+      // Parcours adaptatif : changements proposés après un quiz (planAdaptModel.js)
+      planAdapt: {
+        mixupLabel: "La confusion de ce quiz : {{topic}}",
+        returnLabel: "Vérification rapide : {{topic}}",
+        restore: "Le faire quand même",
+        updatedToday: "Parcours mis à jour aujourd’hui à partir de tes réponses",
+        updatedNote: "Parcours mis à jour {{when}} à partir de tes réponses",
+        format: { mcq: "réponse unique", sata: "sélection multiple", casestudy: "étude de cas", matrix: "matrice" },
+        why: {
+          mixup: "Tu as choisi « {{chosen}} »",
+          format: "En {{format}} : {{correct}} sur {{total}}, contre {{bestCorrect}} sur {{bestTotal}} en {{best}}",
+          skipCheck: "Retiré : {{correct}} sur {{total}} à ton bilan de préparation",
+          skipPractice: "Retiré : {{correct}} sur {{total}} en pratique",
+          return: "Dernière pratique {{day}} : {{correct}} sur {{total}}",
+          movedUp: "Avancé : {{correct}} sur {{total}} jusqu’ici",
+          movedDown: "Reporté : {{correct}} sur {{total}} jusqu’ici"
+        },
+        summary: {
+          added_one: "1 étape ajoutée à partir de tes réponses",
+          added_other: "{{count}} étapes ajoutées à partir de tes réponses",
+          addedRemoved_one: "1 étape ajoutée à partir de tes réponses, {{removed}} retirée(s)",
+          addedRemoved_other: "{{count}} étapes ajoutées à partir de tes réponses, {{removed}} retirée(s)",
+          removed_one: "1 étape retirée : tu la maîtrises déjà",
+          removed_other: "{{count}} étapes retirées : tu les maîtrises déjà",
+          reshaped_one: "1 étape modifiée à partir de tes réponses",
+          reshaped_other: "{{count}} étapes modifiées à partir de tes réponses"
+        }
       },
 
       // NodeTransition — écran de décision post-nœud

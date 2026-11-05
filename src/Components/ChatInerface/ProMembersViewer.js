@@ -150,7 +150,7 @@ const ProMembersViewer = ({ onClose, onImpersonateUser }) => {
             examDate: toDate(c.examDate),
             updatedAt: toDate(c.updatedAt),
             done: nodes.filter((n) => n.status === 'done' || n.status === 'completed').length,
-            total: nodes.length
+            total: nodes.filter((n) => n.status !== 'skipped').length
           };
         })
         .sort((a, b) => (b.updatedAt?.getTime() || 0) - (a.updatedAt?.getTime() || 0));

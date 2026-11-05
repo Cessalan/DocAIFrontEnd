@@ -13,6 +13,8 @@ import { projectReadiness, normalizeTopic } from './readinessProjection';
 import './StudyMode.css';
 import { TopicJourneyPanel } from './TopicJourney';
 import { topicJourney } from './topicJourneyModel';
+import { isCountedStep } from './firstBlock';
+import { changeReason, whenLabel } from './planAdaptCopy';
 
 /* ──────────────────────────────────────────────────────────
    Helper: extract the base topic from a node label by
@@ -68,7 +70,7 @@ const buildSections = (nodes, topics, insightsData) => {
   let prevTopic = null;
 
   const finalize = (sec) => {
-    const allDone = sec.steps.every(s => s.status === 'done');
+    const allDone = sec.steps.every(s => s.status === 'done' || s.status === 'skipped');
     const anyActive = sec.steps.some(s => s.status === 'active');
     sec.status = allDone ? 'complete' : anyActive ? 'active' : 'locked';
     sec.performance = getSectionPerformance(sec.name, insightsData);
@@ -415,6 +417,8 @@ const StudyPlanOverview = ({
   onStartPhase2,
   onExtendBlock,
   onDrillGaps,
+  // Bring back a review the adaptive plan cut ("Do it anyway").
+  onRestoreStep,
   // Tonight's plan (TonightPanel). When present it IS the plan's "what now":
   // it takes the place of the urgency dashboard, today's mission and the
   // block ending, because rounds replace all three.
@@ -430,14 +434,20 @@ const StudyPlanOverview = ({
   // whose pinned `now` is only stable if its deps are.
   const nodes = useMemo(() => studyState?.path?.nodes || [], [studyState?.path?.nodes]);
   const topics = useMemo(() => studyState?.path?.topics || [], [studyState?.path?.topics]);
+  // Steps that count: a review the adaptive plan cut is shown in its section,
+  // crossed out, but never counted as done or as left to do (firstBlock.js).
   const realNodes = useMemo(
-    () => nodes.filter(n => n.type !== 'section_banner'),
+    () => nodes.filter(isCountedStep),
     [nodes]
   );
   const journey = useMemo(() => topicJourney({ nodes, reserveNodes: studyState?.reserve?.nodes, topicProgress }),
     [nodes, studyState?.reserve?.nodes, topicProgress]);
   const completedCount = realNodes.filter(n => n.status === 'done').length;
   const totalNodes = realNodes.length;
+  const lastAdaptedAt = useMemo(() => nodes.reduce((latest, n) => {
+    const at = n.adaptChange?.at;
+    return at && (!latest || at > latest) ? at : latest;
+  }, null), [nodes]);
 
   // ── Derive sections + milestones from flat nodes array ──
   const { sections, renderOrder } = useMemo(
@@ -568,7 +578,8 @@ const StudyPlanOverview = ({
     const isActive = step.status === 'active';
     const isDone = step.status === 'done';
     const isLocked = step.status === 'locked';
-    const canClick = !isLocked || isDev;
+    const isSkipped = step.status === 'skipped';
+    const canClick = !isSkipped && (!isLocked || isDev);
     const topicLabel = getStepTopicLabel(step.label);
     const nodeProgress = step.nodeProgress || 0;
 
@@ -580,6 +591,7 @@ const StudyPlanOverview = ({
           isActive ? 'sov3-step--active' : '',
           isDone ? 'sov3-step--done' : '',
           isLocked ? 'sov3-step--locked' : '',
+          isSkipped ? 'sov3-step--skipped' : '',
           step.adaptive ? 'sov3-step--adaptive' : '',
         ].filter(Boolean).join(' ')}
         onClick={canClick ? (e) => { e.stopPropagation(); onNodeSelect(step); } : undefined}
@@ -598,6 +610,10 @@ const StudyPlanOverview = ({
               : formatNodeType(step.type, t)}
           </span>
           <span className="sov3-step__label">{topicLabel}</span>
+          {!isDone && step.adaptChange && (() => {
+            const why = changeReason(step.adaptChange, { t, language });
+            return why ? <span className="sov3-step__why">{why}</span> : null;
+          })()}
         </div>
         <div className="sov3-step__action">
           {isDone && (
@@ -619,6 +635,14 @@ const StudyPlanOverview = ({
             <span className="sov3-step__step-num">
               {t('study.stepN', 'Step {{n}}', { n: (stepNumber ?? 0) + 1 })}
             </span>
+          )}
+          {isSkipped && onRestoreStep && (
+            <button
+              className="sov3-step__restore-btn"
+              onClick={(e) => { e.stopPropagation(); onRestoreStep(step); }}
+            >
+              {t('planAdapt.restore', 'Do it anyway')}
+            </button>
           )}
         </div>
       </div>
@@ -686,10 +710,10 @@ const StudyPlanOverview = ({
             )}
             {isActive && (
               <p className="sov3-card__summary">
-                {doneSteps} {t('study.of', 'of')} {section.steps.length} {t('study.done', 'done')}
+                {doneSteps} {t('study.of', 'of')} {section.steps.filter(isCountedStep).length} {t('study.done', 'done')}
                 {' · '}
                 {t('study.aboutMinutes', '~{{min}} min', {
-                  min: estimateMinutes(section.steps.filter(s => s.status !== 'done')),
+                  min: estimateMinutes(section.steps.filter(s => s.status !== 'done' && s.status !== 'skipped')),
                 })}
               </p>
             )}
@@ -977,6 +1001,17 @@ const StudyPlanOverview = ({
 
       {/* Where she is across topics, the way Tonight's plan shows rounds. */}
       {!tonightPanel && <TopicJourneyPanel journey={journey} />}
+
+      {/* When the plan last changed from her answers: the line that answers
+          "is this plan still current?", which is what re-uploads were for. */}
+      {!tonightPanel && lastAdaptedAt && (
+        <p className="sov3-adapted-note">
+          {new Date(lastAdaptedAt).toDateString() === new Date().toDateString()
+            ? t('planAdapt.updatedToday', 'Plan updated today from your answers')
+            : t('planAdapt.updatedNote', { when: whenLabel(lastAdaptedAt, { language }) || '',
+              defaultValue: 'Plan updated {{when}} from your answers' })}
+        </p>
+      )}
 
       {!tonightPanel && !hasPhase2Nodes && (() => {
           const snap = buildReadinessSnapshot(scoredTopics);

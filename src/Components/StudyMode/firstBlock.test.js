@@ -3,6 +3,7 @@ import {
   buildFirstBlock,
   extendWithReserve,
   countRealNodes,
+  isCountedStep,
   FIRST_BLOCK_SIZE
 } from './firstBlock';
 
@@ -126,5 +127,15 @@ describe('extendWithReserve', () => {
 
     expect(first.addedCount).toBe(FIRST_BLOCK_SIZE);
     expect(first.reserveCount).toBe(20 - FIRST_BLOCK_SIZE);
+  });
+});
+
+describe('isCountedStep', () => {
+  it('counts real steps but not headers or reviews the adaptive plan cut', () => {
+    expect(isCountedStep({ type: 'quiz', status: 'locked' })).toBe(true);
+    expect(isCountedStep({ type: 'quiz', status: 'done' })).toBe(true);
+    expect(isCountedStep({ type: 'lesson', status: 'skipped' })).toBe(false);
+    expect(isCountedStep({ type: 'section_banner' })).toBe(false);
+    expect(isCountedStep(null)).toBe(false);
   });
 });

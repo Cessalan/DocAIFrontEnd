@@ -1,0 +1,16 @@
+{
+  "number": 2,
+  "topic": "Antibiotic resistance: patient teaching",
+  "voiceLine": "Your patient has a virus. They want antibiotics, just in case. What do you say?",
+  "card": [
+    { "text": "Viral URI. Client asks for an", "style": "body", "at": 0 },
+    { "text": "antibiotic \"just in case.\"", "style": "body", "at": 1 },
+    { "text": "Best nurse response?", "style": "question", "at": 2 },
+    { "text": "A. \"I'll get you one, just in case.\"", "style": "option", "at": 2 },
+    { "text": "B. \"Antibiotics don't treat viruses.\"", "style": "option", "at": 2 },
+    { "text": "C. \"Use your leftover antibiotics.\"", "style": "option", "at": 2 },
+    { "text": "D. \"Start one if the fever lasts.\"", "style": "option", "at": 2 }
+  ],
+  "answer": "B. Antibiotics act on bacteria, not viruses. Taking them when not needed adds side effects and drives antibiotic resistance. A and D promote inappropriate use; C is self-medicating with leftovers.",
+  "nurseReviewed": false
+}

@@ -1,10 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { getStepTopicLabel, formatNodeType } from './planFormatting';
 import PlanNextSteps from './PlanNextSteps';
+import { isCountedStep } from './firstBlock';
+import { CHANGE } from './planAdaptModel';
+import { reasonsById, changeSummary } from './planAdaptCopy';
 import './PlanAdvance.css';
 
-export default function PlanAdvance({ nodes, fromId, toId, confirmed, isComplete = false, reserveCount = 0, ready = false, error = false, elapsed = false, onOpenNow, onBack, detour = false, returnId }) {
+export default function PlanAdvance({ nodes, fromId, toId, confirmed, isComplete = false, reserveCount = 0, ready = false, error = false, elapsed = false, onOpenNow, onBack, detour = false, returnId, proposal = null, adaptedChanges = null, onAcceptChange, onKeepPlan, busy = false }) {
   const { t, i18n } = useTranslation();
   const fr = i18n.language.startsWith('fr');
   const [moved, setMoved] = useState(false);
@@ -15,14 +18,51 @@ export default function PlanAdvance({ nodes, fromId, toId, confirmed, isComplete
     const timer = setTimeout(() => setMoved(true), reducedMotion ? 0 : 1100);
     return () => clearTimeout(timer);
   }, [confirmed, fromId, toId]);
+  // A proposal is shown in two beats: her plan as it is, then the proposed one,
+  // so the steps visibly move (PlanNextSteps animates the reorder) rather than
+  // arriving already rearranged.
+  const [staged, setStaged] = useState(false);
+  useEffect(() => {
+    if (!proposal) { setStaged(false); return undefined; }
+    const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const timer = setTimeout(() => setStaged(true), reducedMotion ? 0 : 900);
+    return () => clearTimeout(timer);
+  }, [proposal]);
+  const changes = proposal?.changes || adaptedChanges;
+  const reasons = useMemo(() => (changes ? reasonsById(changes, { t, language: i18n.language }) : null),
+    [changes, t, i18n.language]);
+  const addedIds = useMemo(() => (changes || [])
+    .filter(change => change.kind === CHANGE.MIXUP || change.kind === CHANGE.RETURN).map(change => change.nodeId), [changes]);
+  const summary = changes ? changeSummary(changes, t) : null;
   const current = nodes.find(node => node.id === fromId);
   const next = nodes.find(node => node.id === toId);
-  const toIndex = nodes.findIndex(node => node.id === toId);
+  // A review the plan cut is shown but is not a step (firstBlock.isCountedStep).
+  const counted = nodes.filter(isCountedStep);
+  const stepNumber = counted.findIndex(node => node.id === toId) + 1;
   const returnNode = nodes.find(node => node.id === returnId);
   const topic = node => node?.topic || getStepTopicLabel(node?.label);
   const sameTopic = next && String(next.topicKey || topic(next)).toLowerCase() === String(current?.topicKey || topic(current)).toLowerCase();
+  // A plan change proposed after a quiz (planAdaptModel.js): nothing is saved
+  // until she picks one of the two buttons.
+  if (proposal) {
+    const proposed = proposal.nodes.filter(node => node.type !== 'section_banner');
+    return <section className="plan-advance study-modal-plan-preview is-proposal" aria-label={fr ? 'Ton parcours' : 'Your study path'}>
+      <h2 aria-live="polite">{staged
+        ? (fr ? 'Ton parcours peut changer après ce quiz' : 'Your plan can change after this quiz')
+        : (fr ? 'Lecture de tes réponses…' : 'Reading your answers…')}</h2>
+      <p className="plan-advance__next">{' '}</p>
+      <PlanNextSteps nodes={staged ? proposed : nodes} reserveCount={reserveCount} progress={{ activeId: fromId, completedId: null }}
+        reasons={staged ? reasons : null} addedIds={staged ? addedIds : null} animateReorder />
+      <p role="status">{staged && summary ? summary : ' '}</p>
+      <div className="plan-advance__actions plan-advance__actions--choice">
+        <button type="button" onClick={onKeepPlan} disabled={busy}>{fr ? 'Garder mon parcours' : 'Keep my plan'}</button>
+        <button type="button" className="plan-advance__primary" onClick={onAcceptChange} disabled={busy}>{fr ? 'Mettre à jour mon parcours' : 'Update my plan'}</button>
+      </div>
+    </section>;
+  }
   const heading = !confirmed ? (detour ? (fr ? 'Ajout d’une pratique ciblée…' : 'Adding focused practice…') : (fr ? 'Enregistrement de ta progression…' : 'Saving your progress…'))
     : isComplete ? (fr ? 'Séance terminée' : 'Session complete')
+      : adaptedChanges ? (fr ? 'Parcours mis à jour' : 'Plan updated')
       : detour ? (fr ? 'Un petit détour pour travailler ce point' : 'A quick detour to practise this weak spot')
       : current?.detour && next ? (fr ? 'Pratique terminée. Retour au parcours.' : 'Practice complete. Back to your plan.')
       : !next ? (fr ? 'Ouverture de la suite du parcours' : 'Opening the next part of your plan')
@@ -36,8 +76,9 @@ export default function PlanAdvance({ nodes, fromId, toId, confirmed, isComplete
       ? `${fr ? 'Puis retour au parcours' : 'Then back to your plan'}: ${formatNodeType(returnNode.type, t)} · ${topic(returnNode)}`
       : (fr ? 'Une dernière pratique ciblée avant de terminer.' : 'One focused practice step before you finish.'))
       : confirmed && next ? `${fr ? 'Ensuite' : 'Next'}: ${formatNodeType(next.type, t)} · ${topic(next)}` : '\u00a0'}</p>
-    <PlanNextSteps nodes={nodes} reserveCount={reserveCount} progress={{ activeId: moved ? toId || fromId : fromId, completedId: moved ? fromId : null, detourId: detour ? toId : null, returnId }} />
-    <p role="status">{confirmed && next ? (fr ? `Étape ${toIndex + 1} sur ${nodes.length}` : `Step ${toIndex + 1} of ${nodes.length}`) : '\u00a0'}</p>
+    <PlanNextSteps nodes={nodes} reserveCount={reserveCount} progress={{ activeId: moved ? toId || fromId : fromId, completedId: moved ? fromId : null, detourId: detour ? toId : null, returnId }}
+      reasons={adaptedChanges ? reasons : null} />
+    <p role="status">{confirmed && next ? (fr ? `Étape ${stepNumber} sur ${counted.length}` : `Step ${stepNumber} of ${counted.length}`) : '\u00a0'}</p>
     {confirmed && next && <div className="plan-advance__actions">
       <span role="status" className="plan-advance__preparing">
         {!ready && !error && <span className="plan-advance__loading-dots" aria-hidden="true"><i /><i /><i /></span>}

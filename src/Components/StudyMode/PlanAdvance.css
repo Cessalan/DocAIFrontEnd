@@ -21,3 +21,8 @@
 @keyframes plan-advance-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 @media (prefers-reduced-motion: reduce) { .plan-advance, .plan-advance.is-confirmed { animation: none; } }
 @media (max-width: 480px) { .plan-advance { padding: 20px; } }
+/* A proposed plan change: the two answers sit together, the update first in weight. */
+.plan-advance__actions--choice { justify-content: flex-end; }
+.plan-advance__actions--choice button:disabled { opacity: .6; cursor: default; }
+.plan-advance__actions .plan-advance__primary { background: #c46a5a; border-color: #c46a5a; color: #fff; }
+.dark-mode .plan-advance__actions .plan-advance__primary { background: #b8a5d4; border-color: #b8a5d4; color: #1a1a1a; }

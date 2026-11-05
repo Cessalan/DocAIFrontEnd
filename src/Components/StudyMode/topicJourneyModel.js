@@ -30,7 +30,7 @@ export const STATUS = { DONE: 'done', CURRENT: 'current', UPCOMING: 'upcoming' }
 
 export const topicKey = (value) => String(value || '').trim().replace(/\s+/g, ' ').toLowerCase();
 
-const isPlanStep = (node) => node && node.type !== 'section_banner' && node.adaptive !== true
+const isPlanStep = (node) => node && node.type !== 'section_banner' && node.adaptive !== true && node.status !== 'skipped'
   && !(Array.isArray(node.tags) && node.tags.some((tag) => typeof tag === 'string' && tag.startsWith('tonight')));
 
 const score = (row) => (row && row.answered > 0 ? { correct: row.correct || 0, total: row.answered } : null);

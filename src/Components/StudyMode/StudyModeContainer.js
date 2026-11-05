@@ -44,6 +44,9 @@ import { studyPlanTags } from './studyClarityTags';
 import {
   updateNodeStatus,
   completeNodeAndAdvance,
+  adaptPathAfterNode,
+  declineAdaptation,
+  restoreSkippedStep,
   insertNodeAfterCurrent,
   insertRoundAfterCurrent,
   saveTonightState,
@@ -61,6 +64,11 @@ import {
   extendStudyPath,
   getStudySession
 } from '../../Services/StudySessionService';
+import { adaptPlan } from './planAdaptModel';
+import { isCountedStep } from './firstBlock';
+import { collectMisses, firstChoices } from './missEvidence';
+import { adaptedStepProps, firstAttemptScore, mixupFollowUp, proposalProps } from './planAdaptTelemetry';
+import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
 import './StudyMode.css';
 
 // Dev mode flag - only true in development builds
@@ -298,9 +306,12 @@ const StudyModeContainer = ({
   const advanceLockRef = useRef(false);
   const [planAdvance, setPlanAdvance] = useState(null);
   const advanceScopeRef = useRef(null);
+  // The plan change on screen, waiting for "Update my plan" / "Keep my plan".
+  const pendingAdaptationRef = useRef(null);
   const advancePauseRef = useRef(null);
   useEffect(() => {
     advanceScopeRef.current = {};
+    pendingAdaptationRef.current = null;
     setPlanAdvance(null);
     setIsAdvancing(false);
     advanceLockRef.current = false;
@@ -367,9 +378,10 @@ const StudyModeContainer = ({
   // Calculate progress (exclude section_banner pseudo-nodes)
   const realNodes = nodes.filter(n => n.type !== 'section_banner');
   firstRealNodeIdRef.current = realNodes[0]?.id || null;
-  const completedCount = realNodes.filter(n => n.status === 'done').length;
+  const countedNodes = realNodes.filter(isCountedStep);
+  const completedCount = countedNodes.filter(n => n.status === 'done').length;
   const currentStep = completedCount + 1;
-  const totalSteps = realNodes.length;
+  const totalSteps = countedNodes.length;
 
   // Label the Clarity recording with where she stood when she opened this
   // plan. Once per plan per page load: Clarity keeps every value a tag is
@@ -393,6 +405,15 @@ const StudyModeContainer = ({
         || ''
       ) || null
     : null;
+
+  // A started, finished or restored step the adaptive plan made. Planner
+  // steps write nothing. Started fires again when she reopens a step, so
+  // read it as distinct nodeId, not rows.
+  const logAdaptedStep = useCallback((step, node) => {
+    if (viewOnly) return;
+    const props = adaptedStepProps({ chatId, node });
+    if (props) logFunnelStep(step, props);
+  }, [chatId, viewOnly]);
 
   // Handle starting/loading a node's content.
   //
@@ -418,6 +439,7 @@ const StudyModeContainer = ({
       if (!viewOnly) {
         clarityEvent('study_node_started');
         clarityEvent('study_node_started_exam');
+        logAdaptedStep(FUNNEL.ADAPTED_STEP_STARTED, node);
       }
       /* A node that arrives with its own config was built by the post-node
          recommendation, which already told her what it was going to do and
@@ -454,6 +476,7 @@ const StudyModeContainer = ({
     if (!viewOnly) {
       clarityEvent('study_node_started');
       clarityEvent(`study_node_started_${node.type || 'unknown'}`);
+      logAdaptedStep(FUNNEL.ADAPTED_STEP_STARTED, node);
     }
 
     // ── Diagnostic detection ──────────────────────────────────────────
@@ -806,7 +829,7 @@ const StudyModeContainer = ({
     } finally {
       setIsLoadingContent(false);
     }
-  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t, requireQuota, consumeGeneration, takeLaunchOrigin]);
+  }, [chatId, askedHashes, language, onCloseSidebar, viewOnly, t, requireQuota, consumeGeneration, takeLaunchOrigin, logAdaptedStep]);
 
   // Auto-launch the first node if requested
   const hasAutoStartedNodeRef = useRef(false);
@@ -1163,6 +1186,7 @@ const StudyModeContainer = ({
 
     try {
       const result = await completeNodeAndAdvance(chatId, activeNodeId);
+      logAdaptedStep(FUNNEL.ADAPTED_STEP_COMPLETED, nodesRef.current.find(n => n.id === activeNodeId));
 
       setNodes(prev => prev.map(n => {
         // Mirror the completedAt stamp completeNodeAndAdvance just wrote, so
@@ -1198,7 +1222,7 @@ const StudyModeContainer = ({
     } catch (error) {
       console.error('❌ Error advancing to next node:', error);
     }
-  }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases]);
+  }, [chatId, activeNodeId, onComplete, currentPhase, totalPhases, logAdaptedStep]);
 
   // Handle continue to next node — shows transition screen instead of
   // advancing immediately. The optional `info` object lets cards report
@@ -1284,6 +1308,37 @@ const StudyModeContainer = ({
     // TODO: forward to real analytics when provider is added
   }, []);
 
+  /**
+   * The plan change to propose after the quiz she just finished, or null
+   * (planAdaptModel.js). Read fresh from Firestore rather than from studyState,
+   * which goes stale once a block is extended — a proposal built on a stale
+   * reserve would be refused by adaptPathAfterNode. Any failure here is null:
+   * proposing a change is never allowed to stop her moving on.
+   */
+  const proposeAdaptation = useCallback(async () => {
+    try {
+      if (viewOnly || isReviewingNode || tonight || activeNode?.type !== 'quiz') return null;
+      const progress = latestQuizProgressRef.current;
+      const questions = currentContent?.questions;
+      if (!progress || !questions?.length) return null;
+      const [session, performance] = await Promise.all([getStudySession(chatId), getStudyPerformance(chatId)]);
+      if (!session?.path?.nodes || session.lastAdaptation?.fromNodeId === activeNodeId) return null;
+      return adaptPlan({
+        nodes: session.path.nodes,
+        reserve: session.reserve?.nodes || [],
+        finishedNodeId: activeNodeId,
+        misses: collectMisses(questions, progress.firstAttemptStatuses || progress.questionStatuses, firstChoices(progress)),
+        formats: performance?.formats,
+        topicProgress,
+        history: performance?.history,
+        t,
+      });
+    } catch (error) {
+      console.error('Could not build a plan change:', error);
+      return null;
+    }
+  }, [chatId, activeNodeId, activeNode, currentContent, viewOnly, isReviewingNode, tonight, topicProgress, t]);
+
   // ── Transition screen: user chose "Move on" ────────────────────────
   // Advances to next node AND immediately launches it (no overview stop)
   //
@@ -1291,7 +1346,13 @@ const StudyModeContainer = ({
   // two Firestore round trips before the next node's content even starts
   // loading, so without a pending state the card sits frozen after the tap —
   // which is exactly what showed up as dead clicks on this button.
-  const handleTransitionContinue = useCallback(async () => {
+  //
+  // After a quiz, "Move on" first asks planAdaptModel whether the plan should
+  // change. If it should, the advance screen shows the proposal and stops;
+  // she answers with "Update my plan" (`choice: 'accept'`) or "Keep my plan"
+  // (`'decline'`), which come back through here. Nothing is written until
+  // she answers.
+  const advanceFromTransition = useCallback(async (choice = null) => {
     // Re-entrancy guard: a second tap while the first is in flight would
     // complete the *next* node (activeNodeId has already moved on) and silently
     // skip it. The disabled button covers the UI; this covers the race.
@@ -1299,13 +1360,51 @@ const StudyModeContainer = ({
     advanceLockRef.current = true;
     setIsAdvancing(true);
     const scope = advanceScopeRef.current;
-    const pathSnapshot = nodesRef.current.filter(node => node.type !== 'section_banner');
+    let pathSnapshot = nodesRef.current.filter(node => node.type !== 'section_banner');
+    const pending = choice ? pendingAdaptationRef.current : null;
+    pendingAdaptationRef.current = null;
+    const finishedNode = nodesRef.current.find(n => n.id === activeNodeId);
+    const changeProps = (proposal) => proposalProps({ chatId, fromNodeId: activeNodeId, proposal,
+      score: firstAttemptScore(latestQuizProgressRef.current?.firstAttemptStatuses || latestQuizProgressRef.current?.questionStatuses) });
     setPlanAdvance({ nodes: pathSnapshot, fromId: activeNodeId, toId: null, confirmed: false });
 
     try {
-      const result = await completeNodeAndAdvance(chatId, activeNodeId);
+      if (!choice) {
+        const proposal = await proposeAdaptation();
+        if (advanceScopeRef.current !== scope) return;
+        if (proposal) {
+          pendingAdaptationRef.current = proposal;
+          logFunnelStep(FUNNEL.PLAN_CHANGE_PROPOSED, changeProps(proposal));
+          setPlanAdvance({ nodes: pathSnapshot, fromId: activeNodeId, toId: null, confirmed: false, proposal });
+          return;
+        }
+      }
+
+      let result = null;
+      let adaptedNodes = null;
+      if (choice === 'accept' && pending) {
+        try {
+          result = await adaptPathAfterNode(chatId, activeNodeId, pending);
+          adaptedNodes = result.nodes;
+          setReserveRemaining(result.reserveCount);
+          logFunnelStep(FUNNEL.PLAN_CHANGE_ACCEPTED, changeProps(pending));
+        } catch (error) {
+          // The plan moved under the proposal (another tab, a stale screen):
+          // advance the ordinary way rather than write a plan nobody saw.
+          console.warn('Plan change not applied, advancing without it:', error);
+          logFunnelStep(FUNNEL.PLAN_CHANGE_FAILED, { ...changeProps(pending), error: error?.message || null });
+        }
+      } else if (choice === 'decline' && pending) {
+        logFunnelStep(FUNNEL.PLAN_CHANGE_DECLINED, changeProps(pending));
+        declineAdaptation(chatId, activeNodeId, pending.changes)
+          .catch(error => console.error('Could not record the kept plan:', error));
+      }
+      if (!result) result = await completeNodeAndAdvance(chatId, activeNodeId);
+      logAdaptedStep(FUNNEL.ADAPTED_STEP_COMPLETED, finishedNode);
       if (advanceScopeRef.current !== scope) return;
-      setPlanAdvance({ nodes: pathSnapshot, fromId: activeNodeId, toId: result.nextNodeId, confirmed: true, isComplete: result.isComplete });
+      if (adaptedNodes) pathSnapshot = adaptedNodes.filter(node => node.type !== 'section_banner');
+      setPlanAdvance({ nodes: pathSnapshot, fromId: activeNodeId, toId: result.nextNodeId, confirmed: true, isComplete: result.isComplete,
+        ...(adaptedNodes ? { adaptedChanges: pending.changes } : {}) });
       // The content request runs during this readable pause, not after it.
       const timer = setTimeout(() => {
         if (advanceScopeRef.current === scope) setPlanAdvance(previous => previous ? { ...previous, elapsed: true } : null);
@@ -1313,8 +1412,10 @@ const StudyModeContainer = ({
       }, 4500);
       advancePauseRef.current = { timer };
 
-      // Update local node statuses
-      setNodes(prev => prev.map(n => {
+      // Update local node statuses. An accepted change already carries the
+      // whole new path, statuses included.
+      if (adaptedNodes) setNodes(adaptedNodes);
+      else setNodes(prev => prev.map(n => {
         // Mirror the completedAt stamp completeNodeAndAdvance just wrote, so
         // today's mission counts this node immediately instead of waiting for
         // the doc to round-trip.
@@ -1342,7 +1443,7 @@ const StudyModeContainer = ({
         setActiveNodeId(result.nextNodeId);
         setCurrentContent(null);
 
-        const nextNode = nodesRef.current.find(n => n.id === result.nextNodeId);
+        const nextNode = (adaptedNodes || nodesRef.current).find(n => n.id === result.nextNodeId);
 
         if (!nextNode) {
           // Server advanced to a node our local plan doesn't know about yet
@@ -1372,7 +1473,23 @@ const StudyModeContainer = ({
         setIsAdvancing(false);
       }
     }
-  }, [chatId, activeNodeId, handleStartNode]);
+  }, [chatId, activeNodeId, handleStartNode, proposeAdaptation, logAdaptedStep]);
+
+  /** "Do it anyway" on a review the adaptive plan cut: it goes back in the plan. */
+  const handleRestoreStep = useCallback(async (step) => {
+    try {
+      const { nodes: restored, activeNodeId: nextActive } = await restoreSkippedStep(chatId, step.id);
+      logAdaptedStep(FUNNEL.SKIPPED_STEP_RESTORED, step);
+      setNodes(restored);
+      if (nextActive) { setActiveNodeId(nextActive); setIsComplete(false); }
+    } catch (error) {
+      console.error('Could not bring the step back:', error);
+    }
+  }, [chatId, logAdaptedStep]);
+
+  const handleTransitionContinue = useCallback(() => advanceFromTransition(null), [advanceFromTransition]);
+  const handleAcceptAdaptation = useCallback(() => advanceFromTransition('accept'), [advanceFromTransition]);
+  const handleDeclineAdaptation = useCallback(() => advanceFromTransition('decline'), [advanceFromTransition]);
 
   // ── Transition screen: user chose "Practice More" ─────────────────
   const handleTransitionPractice = useCallback(async (remediationNodeDef) => {
@@ -2077,7 +2194,7 @@ const StudyModeContainer = ({
           unitTitle={studyState?.path?.unitTitle || activeNode?.label || 'Study Session'}
           unitSubtitle={studyState?.path?.unitSubtitle || ''}
         />
-        {planAdvance ? <PlanAdvance {...planAdvance} ready={nextActivityReady} error={contentError && activeNode?.id === planAdvance.toId} onOpenNow={openPreparedActivity} onBack={() => { setPlanAdvance(null); setView('overview'); }} reserveCount={reserveRemaining ?? studyState?.reserve?.remaining ?? 0} /> : <NodeTransition
+        {planAdvance ? <PlanAdvance {...planAdvance} ready={nextActivityReady} error={contentError && activeNode?.id === planAdvance.toId} onOpenNow={openPreparedActivity} onBack={() => { setPlanAdvance(null); setView('overview'); }} reserveCount={reserveRemaining ?? studyState?.reserve?.remaining ?? 0} onAcceptChange={handleAcceptAdaptation} onKeepPlan={handleDeclineAdaptation} busy={isAdvancing} /> : <NodeTransition
           chatId={chatId}
           topicProgress={topicProgress}
           node={activeNode}
@@ -2100,6 +2217,7 @@ const StudyModeContainer = ({
           onCustomRequest={handleTransitionCustomRequest}
           onExit={handleExitStudy}
           onAnalytics={handleTransitionAnalytics}
+          adaptFollowUp={viewOnly ? null : mixupFollowUp(nodes, activeNodeId)}
           onTestTheory={handleTestTheory}
           testedSkills={testedSkillsInPlan}
           nodeTopic={activeNodeTopic}
@@ -2182,6 +2300,7 @@ const StudyModeContainer = ({
         )}
         <StudyPlanOverview
           studyState={currentStudyState}
+          onRestoreStep={handleRestoreStep}
           topicProgress={topicProgress}
           examDate={examDate}
           examName={examName}
