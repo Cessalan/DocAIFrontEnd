@@ -23,6 +23,7 @@ import PaperShimmer from './PaperShimmer';
 import QuizWait from './QuizWait';
 import { scopeSubtopics } from './quizWaitModel';
 import PaperSurface from './PaperSurface';
+import { clarityEvent } from '../../Services/ClarityService';
 
 export function PracticeShimmer() {
   return <PaperShimmer className="practice-shimmer" />;
@@ -143,13 +144,20 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
   const onSnapshot = useCallback(snapshot => update(previous => ({ ...previous, snapshot })), [update]);
   const onAnswer = useCallback(answer => {
     if (answer.questionIndex == null || answer.isCorrect == null) return;
+    // First try only, like practice.firstAnswers: a retry is not a new answer.
+    if (!practiceRef.current.firstAnswers?.[answer.questionIndex]) {
+      clarityEvent('chat_quiz_answered', {
+        chatId, questionIndex: answer.questionIndex, isCorrect: answer.isCorrect,
+        format: questionRef.current[answer.questionIndex]?.questionType || null,
+      });
+    }
     update(previous => ({ ...previous, firstAnswers: { ...previous.firstAnswers, [answer.questionIndex]: previous.firstAnswers?.[answer.questionIndex] || {
       ...answer, selectedOption: questionRef.current[answer.questionIndex]?.options?.[answer.selectedIndex],
     } }, answers: { ...previous.answers, [answer.questionIndex]: {
       ...answer, progress: undefined, selectedOption: questionRef.current[answer.questionIndex]?.options?.[answer.selectedIndex],
       timestamp: new Date().toISOString()
     } } }));
-  }, [update]);
+  }, [update, chatId]);
   const addTurn = useCallback((index, turn) => update(previous => ({ ...previous,
     discussions: { ...previous.discussions, [index]: [...(previous.discussions?.[index] || []), turn] }
   })), [update]);
@@ -193,6 +201,7 @@ export default function FocusedQuiz({ message, chatId, visible, onExit, onPracti
     if (!tutorOpen) setAnimateTutor(true);
     setTutorOpen(true); setBusy(true); setTutorError(''); setText('');
     addTurn(index, { role: 'user', content: value });
+    clarityEvent('chat_quiz_tutor_asked', { chatId, questionIndex: index });
     try {
       const response = await askPracticeTutor({ chat_id: chatId, message: value, question,
         selection: practiceRef.current.answers?.[index] || { selectedIndex: active?.selectedIndex },

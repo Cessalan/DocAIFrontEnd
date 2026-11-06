@@ -59,6 +59,7 @@ import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 
 // Services
 import { formatDate, formatFileSize } from '../../Services/Formatting.js';
+import { clarityEvent } from '../../Services/ClarityService';
 import {
   AppendToChat,
   SaveFileMetaData,
@@ -1397,6 +1398,19 @@ const ChatInterface = ({
     const waitingOnFiles = Boolean(uploadPromiseRef.current);
     if (waitingOnFiles) sentDuringUploadRef.current = true;
 
+    // Chat was invisible to PostHog until 2026-11-06: only study-plan and
+    // NCLEX events were forwarded, so a student who only ever quizzed in chat
+    // looked like an inactive account. `automated` separates button prompts
+    // (hidden user message) from words she typed.
+    clarityEvent('chat_message_sent', {
+      chatId: currentChatID || null,
+      automated: hideUserMessage,
+      chars: messageToSend.length,
+      attachments: attached.length,
+      hasFiles: (uploadedFilesListRef.current || []).length > 0,
+      firstMessage: !chatMessages.some(m => m.role === 'user'),
+    });
+
     const streamingMessageId = `streaming-${Date.now()}`;
     const placeholderMessage = {
       id: streamingMessageId,
@@ -1506,6 +1520,12 @@ const ChatInterface = ({
             console.error("❌ Stream error from backend:", statusUpdate.message);
             cleanupStreamingThrottle();
             const partialQuiz = deliveredQuizQuestions.length > 0;
+            clarityEvent('chat_reply_failed', {
+              chatId: targetChatId,
+              partialQuiz,
+              questionsDelivered: deliveredQuizQuestions.length,
+              reason: String(statusUpdate.message || '').slice(0, 200),
+            });
             // Only leave the focused quiz when there is nothing in it to keep.
             if (!partialQuiz && (quizMessageId || isQuizGeneratingRef.current)) setQuizFocused(false);
             isQuizGeneratingRef.current = true; // stream_complete may still follow — skip empty-save path
@@ -1926,6 +1946,10 @@ const ChatInterface = ({
             const targetMessageId = quizMessageId || streamingMessageId;
 
             handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, { ...quizStreamMeta, ...statusUpdate });
+            clarityEvent('chat_quiz_delivered', {
+              chatId: targetChatId,
+              questions: statusUpdate.quiz_data?.length || 0,
+            });
             setStreamingStatus(null);
             // Charge per question: a 3-question quiz costs 3, a 20-question quiz costs 20.
             if (statusUpdate.quota_charged) refreshQuota();
