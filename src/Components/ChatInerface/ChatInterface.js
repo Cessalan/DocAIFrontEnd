@@ -137,6 +137,7 @@ import { coerceDate, calendarDaysBetween } from '../StudyMode/studySchedule';
 
 import { getActiveStudySession, getStudySession } from '../../Services/StudySessionService';
 import { FUNNEL, startFunnel, logFunnelStep, logFunnelStepOnce, getFunnelId } from '../../Services/FunnelService';
+import { hasFinishedStep, uploadGateDecision } from './uploadGateModel';
 import { describeUploadFailure, markUploadStarted, touchUpload, markUploadEnded, takeInterruptedUploads } from '../../Services/uploadFailure';
 import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '../../Services/UserService';
 import { devLog } from '../../Services/devLogger';
@@ -459,6 +460,34 @@ const ChatInterface = ({
   const [studyDiagnostic, setStudyDiagnostic] = useState(null);
   const [isStudyMode, setIsStudyMode] = useState(false);
   const [studyState, setStudyState] = useState(null);
+
+  /**
+   * The free one-upload-per-chat paywall (uploadGateModel.js). Returns true
+   * when it opened the paywall instead of letting the upload through.
+   * `logDeferred` is off for the picker click, so one upload that the old rule
+   * would have blocked is counted once, when the files actually arrive.
+   */
+  const shouldBlockUpload = ({ logDeferred = true } = {}) => {
+    const decision = uploadGateDecision({
+      isPro,
+      filesInChat: uploadedFilesListRef.current.length,
+      finishedStep: hasFinishedStep({
+        uid: currentUser?.uid,
+        profile: userProfile,
+        chatNodes: studyState?.path?.nodes,
+      }),
+    });
+    if (decision === 'gate') {
+      // trigger is what separates this HARD BLOCK from a voluntary badge
+      // tap in the funnel data — both used to arrive as openUpgrade(null).
+      openUpgrade('upload', { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
+      return true;
+    }
+    if (decision === 'defer' && logDeferred) {
+      logFunnelStep(FUNNEL.UPLOAD_GATE_DEFERRED, { filesInChat: uploadedFilesListRef.current.length });
+    }
+    return false;
+  };
   const [studyAutoStart, setStudyAutoStart] = useState(false);
   const [pendingStudyDocs, setPendingStudyDocs] = useState([]);
   const [pendingStudyTopics, setPendingStudyTopics] = useState([]);
@@ -3085,12 +3114,10 @@ const ChatInterface = ({
     // Continue with only supported files
     const files = supportedFiles;
 
-    // Free plan: one upload per chat. If this chat already has a file, block
-    // the second upload and pitch Pro instead.
-    if (!isPro && uploadedFilesListRef.current.length > 0) {
-      // trigger is what separates this HARD BLOCK from a voluntary badge
-      // tap in the funnel data — both used to arrive as openUpgrade(null).
-      openUpgrade('upload', { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
+    // Free plan: one upload per chat, but only once she has finished a plan
+    // step (uploadGateModel.js says why). The picker path runs the same check
+    // in openFileUploadDialog; this one also covers drag-and-drop.
+    if (shouldBlockUpload()) {
       if (e.target) e.target.value = '';
       return;
     }
@@ -4864,13 +4891,7 @@ const ChatInterface = ({
   const hasMessages = chatMessages.length > 0;
   devLog('🎮 Render state:', { isGameChat, hasMessages, messageCount: chatMessages.length, gameState });
   const openFileUploadDialog = () => {
-    // Free plan: one upload per chat — pitch Pro instead of opening the picker.
-    if (!isPro && uploadedFilesListRef.current.length > 0) {
-      // trigger is what separates this HARD BLOCK from a voluntary badge
-      // tap in the funnel data — both used to arrive as openUpgrade(null).
-      openUpgrade('upload', { topic: currentChatTitleRef.current, trigger: 'upload_gate' });
-      return;
-    }
+    if (shouldBlockUpload({ logDeferred: false })) return;
     documentFileInputRef.current?.click();
   };
 

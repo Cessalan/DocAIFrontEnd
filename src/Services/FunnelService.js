@@ -64,6 +64,10 @@ export const FUNNEL = Object.freeze({
   // INTERRUPTED rows: count distinct funnelId, never rows.
   UPLOAD_FAILED: 'upload_failed',
   UPLOAD_INTERRUPTED: 'upload_interrupted',
+  // The old one-upload-per-chat rule would have shown the paywall here, but
+  // she has not finished a plan step yet, so the upload went through
+  // (ChatInerface/uploadGateModel.js). Compare with upload_gate paywall views.
+  UPLOAD_GATE_DEFERRED: 'upload_gate_deferred',
   // Course intelligence. The context form runs alongside the upload rather
   // than in front of it, so CONTEXT_SHOWN and UPLOAD_STARTED land within a
   // second of each other — the gap worth watching is SHOWN -> SUBMITTED, and

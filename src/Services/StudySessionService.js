@@ -28,6 +28,7 @@ import {
 import { v4 as uuidv4 } from 'uuid';
 import { devLog } from './devLogger';
 import { clarityEvent } from './ClarityService';
+import { rememberStepFinished } from '../Components/ChatInerface/uploadGateModel';
 import { buildFirstBlock, extendWithReserve, isRealNode } from '../Components/StudyMode/firstBlock';
 import { estimateMinutes } from '../Components/StudyMode/planFormatting';
 
@@ -420,6 +421,16 @@ export const completeNodeAndAdvance = async (chatId, currentNodeId) => {
       'study.lastActionAt': serverTimestamp(),
       updatedAt: serverTimestamp()
     });
+
+    // Account-level "she has finished a step", read by the upload gate
+    // (uploadGateModel). Best effort: a failure here must not fail the step.
+    const uid = data.userId || auth.currentUser?.uid;
+    if (uid) {
+      rememberStepFinished(uid);
+      Promise.resolve()
+        .then(() => updateDoc(doc(db, 'users', uid), { 'activation.lastStepAt': serverTimestamp() }))
+        .catch((err) => devLog('activation stamp skipped:', err?.message));
+    }
 
     devLog('✅ Node completed, advanced to:', nextNodeId || 'STUDY COMPLETE');
     // One generic event to count, one per type to tell lessons from quizzes.
