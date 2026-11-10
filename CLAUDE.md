@@ -96,8 +96,11 @@ made here.
 - `services/email_campaigns.py` decides who gets mailed. Its rule: *no student
   is mailed unless we can state something true and specific about her*, so a
   selector returns candidates carrying their own personalisation and drops
-  anyone whose evidence is too thin. Four campaigns: `winback_gap`,
-  `plan_unstarted`, `exam_countdown`, `announcement`.
+  anyone whose evidence is too thin. Five campaigns: `winback_gap`,
+  `plan_unstarted`, `exam_countdown`, `checkout_recovery`, `announcement`.
+  `checkout_recovery` reads Stripe Checkout Sessions, mails once per student
+  from 2 hours to 45 days after an abandoned session, skips anyone who has ever
+  paid, and links back to the same Payment Link with `client_reference_id`.
 - `services/email_announcements.py` is the only **authored** copy — the same
   words to everybody, so nothing in it can be verified per recipient. Content
   is code, not Firestore, partly for review and partly because `emailLog` and

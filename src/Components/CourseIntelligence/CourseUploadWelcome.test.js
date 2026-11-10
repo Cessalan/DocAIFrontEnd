@@ -42,4 +42,10 @@ describe('CourseUploadWelcome', () => {
     expect(container.querySelector('.cs-upload-welcome__shimmer')).toBeTruthy();
     expect(screen.getByText('Your course notes give this quick check its focus.')).toBeTruthy();
   });
+
+  it('asks for the notes again, with no retry, when nothing came through', () => {
+    render(<CourseUploadWelcome materialsReady failed nothingToRead onRetry={jest.fn()} />);
+    expect(screen.getByText(/Upload them again to start/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+  });
 });

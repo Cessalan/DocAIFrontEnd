@@ -382,6 +382,20 @@ export const normalizeReport = (raw) => {
   return hasAnything ? report : null;
 };
 
+/**
+ * The backend answered, and its report says her notes held nothing: no
+ * files, no topics. Not a failed investigation: there was nothing to
+ * investigate, so retrying asks the same empty question again. One student
+ * pressed Retry 13 times in 90 seconds on a chat whose upload had failed
+ * (2026-11-02), under copy that told her not to upload again. A missing
+ * report (null) is NOT this: that is a stream that broke, and retry is right.
+ */
+export const reportHasNoMaterial = (raw) => {
+  if (!raw || typeof raw !== 'object') return false;
+  const materials = raw.uploaded_material_insights || {};
+  return !(Number(materials.file_count) > 0) && !(Number(materials.topic_count) > 0);
+};
+
 // ─────────────────────────────────────────────────────────────────────
 // WHAT THE REPORT IS ALLOWED TO SAY
 // ─────────────────────────────────────────────────────────────────────

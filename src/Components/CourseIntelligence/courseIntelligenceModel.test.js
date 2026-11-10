@@ -4,6 +4,7 @@ import {
   initialTimeline,
   reduceTimeline,
   normalizeReport,
+  reportHasNoMaterial,
   cleanCitations,
   hasPublicFindings,
   emptyResearchReason,
@@ -372,5 +373,22 @@ describe('reveal stats', () => {
     const stats = revealStats({ report: null, daysToExam: 5 });
     expect(stats.topicCount).toBe(0);
     expect(stats.sessionCount).toBe(0);
+  });
+});
+
+describe('reportHasNoMaterial', () => {
+  it('is true when the report says her notes held no files and no topics', () => {
+    expect(reportHasNoMaterial({ uploaded_material_insights: { file_count: 0, topic_count: 0 } })).toBe(true);
+    expect(reportHasNoMaterial({ priority_topics: [] })).toBe(true);
+  });
+
+  it('is false when any material arrived', () => {
+    expect(reportHasNoMaterial({ uploaded_material_insights: { file_count: 1, topic_count: 0 } })).toBe(false);
+    expect(reportHasNoMaterial({ uploaded_material_insights: { file_count: 0, topic_count: 3 } })).toBe(false);
+  });
+
+  it('is false for a missing report: that is a broken stream, and retry is right', () => {
+    expect(reportHasNoMaterial(null)).toBe(false);
+    expect(reportHasNoMaterial(undefined)).toBe(false);
   });
 });

@@ -172,6 +172,20 @@ describe('PlanOnboarding', () => {
     expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
   });
 
+  it('does not offer a retry that cannot work when her notes held nothing', async () => {
+    // The backend answered with a report of an empty chat: no files, no
+    // topics. Retrying asks the same empty question (13 times, 2026-11-02).
+    mockRun(() => Promise.resolve({
+      course_information: {}, uploaded_material_insights: { file_count: 0, topic_count: 0, topics: [] },
+      priority_topics: [], study_strategy: {}, research_ran: false, research_enabled: false,
+    }));
+    render(<PlanOnboarding autoInvestigate chatId="empty-chat" filenames={['Week 8.pptx']} />);
+    await flush();
+    expect(screen.getByText(/Nothing came through from your notes/)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Try again' })).toBeNull();
+    expect(screen.queryByText(/Try again without uploading again/)).toBeNull();
+  });
+
   it('shows findings, offers an optional date, then starts the tailored plan', async () => {
     let emit;
     run_course_intelligence.mockImplementation(({ onEvent }) => {

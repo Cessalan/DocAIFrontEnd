@@ -11,7 +11,7 @@ export const TypedLine = ({ text, delay = 0 }) => (
   </span>
 );
 
-export function CourseUploadWelcome({ materialsReady = false, preparingCheck = false, failed = false, onRetry }) {
+export function CourseUploadWelcome({ materialsReady = false, preparingCheck = false, failed = false, nothingToRead = false, onRetry }) {
   const { t } = useTranslation();
   const titleId = useId();
   const [elapsed, setElapsed] = useState(0);
@@ -39,11 +39,11 @@ export function CourseUploadWelcome({ materialsReady = false, preparingCheck = f
       </li>)}
     </ol>
     <div className="cs-upload-welcome__activity">
-      <p role="status" className="cs-upload-welcome__status"><span className={failed ? undefined : 'cs-upload-welcome__shimmer'}>{t(failed ? 'courseStudio.transformFailed' : `courseStudio.${statusKey}`)}</span></p>
+      <p role="status" className="cs-upload-welcome__status"><span className={failed ? undefined : 'cs-upload-welcome__shimmer'}>{t(failed ? (nothingToRead ? 'courseStudio.nothingToRead' : 'courseStudio.transformFailed') : `courseStudio.${statusKey}`)}</span></p>
       {!failed && <p className="cs-upload-welcome__hint" key={messageIndex}>{t(`courseStudio.uploadHint${messageIndex + 1}`)}</p>}
     </div>
     {!failed && elapsed >= 30 && <p role="status" className="cs-upload-welcome__slow">{t('courseStudio.uploadLongWait')}</p>}
-    {failed && onRetry && <button type="button" className="course-context__cta cs-button" onClick={onRetry}>{t('courseStudio.retryQuestion')}</button>}
+    {failed && !nothingToRead && onRetry && <button type="button" className="course-context__cta cs-button" onClick={onRetry}>{t('courseStudio.retryQuestion')}</button>}
   </section>;
 }
 

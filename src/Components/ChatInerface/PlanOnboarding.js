@@ -14,6 +14,7 @@ import {
   normalizeReport,
   leadTopics,
   plannerTopics,
+  reportHasNoMaterial,
 } from '../CourseIntelligence/courseIntelligenceModel';
 import { calibrationQuestions } from '../CourseIntelligence/courseCalibrationModel';
 import { run_course_intelligence } from '../../Services/CourseIntelligenceService';
@@ -95,6 +96,8 @@ const PlanOnboarding = ({
   const [previewReport, setPreviewReport] = useState(null);
   const [seedQuiz, setSeedQuiz] = useState(() => resume ? { questions: resume.progress.questions } : null);
   const [intelligenceFailed, setIntelligenceFailed] = useState(false);
+  // The report came back saying her notes held nothing. Retry cannot help.
+  const [nothingToRead, setNothingToRead] = useState(false);
   const [retryAttempt, setRetryAttempt] = useState(0);
   const runRef = useRef(null);
   const startedRef = useRef(false);
@@ -205,9 +208,11 @@ const PlanOnboarding = ({
         const normalized = normalizeReport(raw) || normalizeReport(rawReportRef.current);
         if (!normalized) {
           devLog('🔎 Course intelligence returned nothing usable — falling back');
+          const noMaterial = reportHasNoMaterial(raw);
+          setNothingToRead(noMaterial);
           setIntelligenceFailed(true);
           setPhase(autoInvestigate ? 'retry' : 'insights');
-          logFunnelStep(FUNNEL.INTELLIGENCE_FAILED, { reason: 'empty_report' });
+          logFunnelStep(FUNNEL.INTELLIGENCE_FAILED, { reason: noMaterial ? 'no_material' : 'empty_report' });
           return;
         }
         rawReportRef.current = raw || rawReportRef.current;
@@ -427,8 +432,8 @@ const PlanOnboarding = ({
       {(phase === 'intelligence' || phase === 'retry') && !seedQuiz && (autoInvestigate ?
         <CourseUploadWelcome materialsReady={materialsReady}
           preparingCheck={timeline.transformation?.state === 'building' || timeline.transformation?.state === 'ready'}
-          failed={phase === 'retry'} onRetry={() => {
-          setTimeline(initialTimeline()); setIntelligenceFailed(false); setRetryAttempt(attempt => attempt + 1); setPhase('intelligence');
+          failed={phase === 'retry'} nothingToRead={nothingToRead} onRetry={() => {
+          setTimeline(initialTimeline()); setIntelligenceFailed(false); setNothingToRead(false); setRetryAttempt(attempt => attempt + 1); setPhase('intelligence');
         }} /> :
         <CourseIntelligenceTimeline
           timeline={timeline}

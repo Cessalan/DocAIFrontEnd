@@ -60,6 +60,7 @@ import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
 // Services
 import { formatDate, formatFileSize } from '../../Services/Formatting.js';
 import { clarityEvent } from '../../Services/ClarityService';
+import { isUploadOnScreen, ownsSharedUploadState } from './uploadRouting';
 import {
   AppendToChat,
   SaveFileMetaData,
@@ -642,6 +643,9 @@ const ChatInterface = ({
   const planOnboardingIdRef = useRef(null);
   // 🆕 Track insights accumulation to avoid race conditions
   const uploadInsightsAccumulatorRef = useRef([]);
+  // The upload started most recently (see uploadCtx in handleFileSelect).
+  // Shared refs are only cleared by the upload that still owns them.
+  const activeUploadRef = useRef(null);
   // Track the latest requested chat ID to prevent stale async responses
   const latestRequestedChatIdRef = useRef(null);
   // Track pre-selected study action (ref for async callback access)
@@ -3279,6 +3283,33 @@ const ChatInterface = ({
       ]));
     }
 
+    // Everything this upload's progress events need, owned by this upload.
+    // The refs above are shared by every upload in this component, and the
+    // component is not remounted when she opens another chat. So a student who
+    // clicked "+New study session" while her notes were still processing had
+    // the finished upload land in the NEW, empty chat: its plan card ran the
+    // course report there and came back empty (2 of 3 empty reports,
+    // 2026-11-03/04), and a second upload started in the new chat overwrote
+    // the first one's card and insights. Events now read this, not the refs.
+    // The entry flags are taken here and cleared, so the next upload starts
+    // from what she picks next, not from this one's leftovers.
+    const uploadCtx = {
+      chatId: resolvedChatId,
+      loadingMsgId,
+      onboardingId: window._pendingStudyJourney ? planOnboardingIdRef.current : null,
+      insights: [],
+      summary: null,
+      filenames: files.map(f => f.name),
+      fileCount: files.length,
+      plainAttach,
+      drill: Boolean(window._pendingDrill),
+      studyJourney: Boolean(window._pendingStudyJourney),
+      language: currentLanguage,
+    };
+    activeUploadRef.current = uploadCtx;
+    window._pendingDrill = false;
+    window._pendingStudyJourney = false;
+
     if (!plainAttach) setLoadingState('fileUpload', true);
 
     try {
@@ -3288,7 +3319,7 @@ const ChatInterface = ({
         resolvedChatId,
         (update) => {
           touchUpload(uploadStore, uploadFunnelId, { lastEvent: update.type, lastEventAt: Date.now() });
-          handleUploadProgress(update, fileTracker, resolvedChatId);
+          handleUploadProgress(update, fileTracker, resolvedChatId, uploadCtx);
         },
         currentLanguage,
         { clientUploadId: uploadFunnelId }
@@ -3348,8 +3379,12 @@ const ChatInterface = ({
 
       // Flip the upload loading box into a visible error state so a failed,
       // timed-out, or dropped upload can never leave the spinner running forever.
-      const failedMsgId = uploadMessageIdRef.current;
-      if (failedMsgId) {
+      // Only this upload's own cards, and only while its chat is on screen:
+      // the ids are unique, so a stray update elsewhere would match nothing,
+      // but another chat's state is not this upload's to touch.
+      const failedOnScreen = isUploadOnScreen(uploadCtx.chatId, currentChatIDRef.current);
+      const failedMsgId = uploadCtx.loadingMsgId;
+      if (failedMsgId && failedOnScreen) {
         setChatMessages(prev => prev.map(msg =>
           msg.id === failedMsgId && msg.type === 'upload_loading'
             ? { ...msg, isLoading: false, error: true, errorCode: error.code }
@@ -3358,17 +3393,23 @@ const ChatInterface = ({
       }
       // Tell the coach card too. Without this it waits forever for materials
       // that are never coming, showing a timeline that cannot finish.
-      const strandedOnboardId = planOnboardingIdRef.current;
-      if (strandedOnboardId) {
+      const strandedOnboardId = uploadCtx.onboardingId;
+      if (strandedOnboardId && failedOnScreen) {
         setChatMessages(prev => prev.map(msg =>
           msg.id === strandedOnboardId && msg.type === 'plan_onboarding'
             ? { ...msg, uploadFailed: true, materialsReady: true }
             : msg
         ));
-        planOnboardingIdRef.current = null;
       }
-      uploadMessageIdRef.current = null;
-      uploadInsightsAccumulatorRef.current = [];
+      if (ownsSharedUploadState(uploadCtx, activeUploadRef.current)) {
+        planOnboardingIdRef.current = null;
+        uploadMessageIdRef.current = null;
+        uploadInsightsAccumulatorRef.current = [];
+        // Nothing arrived, so the route she picked still stands: a retry
+        // from the same chat goes the same way (study plan, drill).
+        if (uploadCtx.studyJourney) window._pendingStudyJourney = true;
+        if (uploadCtx.drill) window._pendingDrill = true;
+      }
 
       // Mark all uploading files as error
       setChatMessages(prev => prev.map(msg =>
@@ -3438,18 +3479,32 @@ const ChatInterface = ({
   }, [shouldProcessPendingUpload, pendingUploadFiles, onPendingUploadProcessed, goToStudyMode, onStudyModeTriggered]);
 
   // Progress handler - add this as a new function in your component
-  const handleUploadProgress = (update, fileTracker, chatId) => {
+  const handleUploadProgress = (update, fileTracker, chatId, ctx = null) => {
+    // `ctx` is this upload's own state (uploadCtx in handleFileSelect). The
+    // shared refs are only a fallback for a caller that has none. Card updates
+    // go to the screen only while this upload's chat is the one open; what
+    // must survive (the finished card, the plan card) is written to ITS chat
+    // in Firestore either way, and she finds it there when she goes back.
+    const upload = ctx || {
+      chatId, loadingMsgId: uploadMessageIdRef.current, onboardingId: planOnboardingIdRef.current,
+      insights: uploadInsightsAccumulatorRef.current, summary: null, filenames: [], fileCount: 0,
+      plainAttach: plainUploadRef.current, drill: Boolean(window._pendingDrill),
+      studyJourney: Boolean(window._pendingStudyJourney), language: currentLanguage,
+    };
+    const onScreen = isUploadOnScreen(chatId, currentChatIDRef.current);
+    const setHere = onScreen ? setChatMessages : () => {};
+    const owns = ownsSharedUploadState(ctx, activeUploadRef.current);
     devLog('📦 Upload progress:', update.type, update);
-    if (plainUploadRef.current) setComposerFiles(prev => applyUploadEvent(prev, update));
+    if (upload.plainAttach) setComposerFiles(prev => applyUploadEvent(prev, update));
 
     switch (update.type) {
       case 'batch_start':
         devLog(`🚀 Starting upload of ${update.total_files} files`);
         // Loading message already created in handleFileSelect!
         // Just update fileCount and filenames if needed
-        const batchMsgId = uploadMessageIdRef.current;
+        const batchMsgId = upload.loadingMsgId;
         if (batchMsgId) {
-          setChatMessages(prev => prev.map(msg =>
+          setHere(prev => prev.map(msg =>
             msg.id === batchMsgId && msg.type === 'upload_loading'
               ? { ...msg, fileCount: update.total_files, filenames: update.filenames }
               : msg
@@ -3476,10 +3531,10 @@ const ChatInterface = ({
         devLog(`   Topics:`, update.topics);
         devLog(`   Concepts:`, update.concepts);
 
-        const msgId = uploadMessageIdRef.current;
+        const msgId = upload.loadingMsgId;
         if (!msgId) {
           // A plain attach has no in-chat card to fill; its chip tracks progress.
-          if (!plainUploadRef.current) console.error('⚠️ No uploadMessageId - this should never happen now!');
+          if (!upload.plainAttach) console.error('⚠️ No uploadMessageId - this should never happen now!');
           devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           return;
         }
@@ -3504,17 +3559,17 @@ const ChatInterface = ({
         devLog(`   Created insight object:`, newInsight);
 
         // CRITICAL: Check ref BEFORE push
-        devLog(`   🔍 Accumulator BEFORE push:`, uploadInsightsAccumulatorRef.current.length, 'items');
-        devLog(`   🔍 Accumulator contents BEFORE:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+        devLog(`   🔍 Accumulator BEFORE push:`, upload.insights.length, 'items');
+        devLog(`   🔍 Accumulator contents BEFORE:`, upload.insights.map(i => i.filename));
 
-        uploadInsightsAccumulatorRef.current.push(newInsight);
+        upload.insights.push(newInsight);
 
         // CRITICAL: Check ref AFTER push
-        devLog(`   ✅ Accumulator AFTER push:`, uploadInsightsAccumulatorRef.current.length, 'items');
-        devLog(`   ✅ Accumulator contents AFTER:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+        devLog(`   ✅ Accumulator AFTER push:`, upload.insights.length, 'items');
+        devLog(`   ✅ Accumulator contents AFTER:`, upload.insights.map(i => i.filename));
 
         // Update state with ALL accumulated insights (prevents race)
-        setChatMessages(prev => {
+        setHere(prev => {
           devLog(`   🔍 setChatMessages called`);
           devLog(`   🔍 Total messages in state:`, prev.length);
 
@@ -3522,11 +3577,11 @@ const ChatInterface = ({
             if (msg.id === msgId && msg.type === 'upload_loading') {
               devLog(`   ✅ Found upload_loading message!`);
               devLog(`   📊 Current insights in message:`, msg.insights?.length || 0);
-              devLog(`   📊 New insights from ref:`, uploadInsightsAccumulatorRef.current.length);
+              devLog(`   📊 New insights from ref:`, upload.insights.length);
 
               return {
                 ...msg,
-                insights: [...uploadInsightsAccumulatorRef.current]  // Use ref as source of truth
+                insights: [...upload.insights]  // Use ref as source of truth
               };
             }
             return msg;
@@ -3543,12 +3598,15 @@ const ChatInterface = ({
         devLog(`📝 Upload summary received:`, update.summary);
 
         setUploadSummary(update.summary);
+        upload.summary = update.summary;
+        if (update.filenames?.length) upload.filenames = update.filenames;
+        if (update.file_count) upload.fileCount = update.file_count;
 
-        const summaryMsgId = uploadMessageIdRef.current;
+        const summaryMsgId = upload.loadingMsgId;
 
         // Add summary to the loading message but KEEP showing all insights
         // Do NOT transition yet - wait for all_complete
-        setChatMessages(prev => prev.map(msg => {
+        setHere(prev => prev.map(msg => {
           if (msg.id === summaryMsgId && msg.type === 'upload_loading') {
             devLog('📝 Adding summary to loading message (still showing all insights)');
             return {
@@ -3566,7 +3624,7 @@ const ChatInterface = ({
 
       case 'embedding_start':
         // A plain attach keeps the composer usable while it embeds.
-        if (!plainUploadRef.current) setLoadingState('fileEmbedding', true);
+        if (!upload.plainAttach) setLoadingState('fileEmbedding', true);
         // Find file by file_id and update stage
         for (const [name, data] of fileTracker.entries()) {
           if (data.fileId === update.file_id) {
@@ -3609,7 +3667,7 @@ const ChatInterface = ({
         if (FORMAT_FAILURES[update.code]) {
           setFileErrorToast(t(UPLOAD_FAILURE_KEYS[FORMAT_FAILURES[update.code]], { name: update.filename || t('composerUpload.oneOfYourFiles') }));
         }
-        setChatMessages(prev => prev.map(msg =>
+        setHere(prev => prev.map(msg =>
           msg.file?.name === update.filename
             ? {
               ...msg,
@@ -3631,19 +3689,39 @@ const ChatInterface = ({
 
         setIsUploadAnalyzing(false);
 
-        const completeMsgId = uploadMessageIdRef.current;
+        const completeMsgId = upload.loadingMsgId;
         if (!completeMsgId) {
-          if (!plainUploadRef.current) console.warn('⚠️ No uploadMessageId found for completion');
+          if (!upload.plainAttach) console.warn('⚠️ No uploadMessageId found for completion');
           devLog(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
           return;
         }
 
         devLog(`   Message ID: ${completeMsgId}`);
-        devLog(`   🔍 Accumulator final count: ${uploadInsightsAccumulatorRef.current.length}`);
-        devLog(`   🔍 Accumulator final files:`, uploadInsightsAccumulatorRef.current.map(i => i.filename));
+        devLog(`   🔍 Accumulator final count: ${upload.insights.length}`);
+        devLog(`   🔍 Accumulator final files:`, upload.insights.map(i => i.filename));
+
+        // Off screen there is no card in state to complete, and the save below
+        // lives inside the state update. Save it from what this upload kept
+        // instead: these insights are what the backend reloads to know what
+        // her notes cover, so losing them would leave the chat she returns to
+        // with nothing to build a report from.
+        if (!onScreen) {
+          window._loadingMessageSavePromise = AppendToChat(chatId, {
+            id: completeMsgId,
+            role: 'assistant',
+            type: 'upload_loading',
+            content: 'upload_insights_complete',
+            isLoading: false,
+            insights: [...upload.insights],
+            summary: upload.summary || null,
+            fileCount: upload.fileCount || update.total_files || 0,
+            filenames: upload.filenames || [],
+            language: upload.language || currentLanguage
+          }).catch(err => console.error('❌ Failed to save off-screen upload card:', err));
+        }
 
         // Mark the loading message as complete AND save to Firebase
-        setChatMessages(prev => {
+        setHere(prev => {
           devLog(`   🔍 Total messages in state: ${prev.length}`);
 
           return prev.map(msg => {
@@ -3701,9 +3779,11 @@ const ChatInterface = ({
           });
         });
 
-        // Clear refs
-        uploadMessageIdRef.current = null;
-        uploadInsightsAccumulatorRef.current = [];
+        // Clear refs, unless a newer upload has taken them over
+        if (owns) {
+          uploadMessageIdRef.current = null;
+          uploadInsightsAccumulatorRef.current = [];
+        }
 
         // PlanOnboarding (Q3 prep select) is the source of truth for firing
         // /study/start: it has the user's exam date, hardest topics, and prep
@@ -3720,9 +3800,9 @@ const ChatInterface = ({
         // Show the failure in the loading box instead of leaving it spinning.
         // (upload_files_with_progress also throws after this, but flipping here
         // keeps the UI correct even if the throw is swallowed upstream.)
-        const errorMsgId = uploadMessageIdRef.current;
+        const errorMsgId = upload.loadingMsgId;
         if (errorMsgId) {
-          setChatMessages(prev => prev.map(msg =>
+          setHere(prev => prev.map(msg =>
             msg.id === errorMsgId && msg.type === 'upload_loading'
               ? { ...msg, isLoading: false, error: true, errorCode: update.code }
               : msg
@@ -3758,9 +3838,9 @@ const ChatInterface = ({
         // the drill is a different destination entirely: no plan, no
         // onboarding card, straight into being examined on what was just
         // uploaded. First upload is still marked, so the funnel stays intact.
-        if (window._pendingDrill) {
+        if (upload.drill) {
           devLog('🎯 Drill mode — routing straight to the examiner');
-          window._pendingDrill = false;
+          if (!ctx) window._pendingDrill = false;
 
           if (currentUser?.uid && !userProfile?.hasCompletedFirstUpload) {
             markFirstUploadComplete(currentUser.uid)
@@ -3787,9 +3867,9 @@ const ChatInterface = ({
         }
 
         // Check if user clicked "Study Journey" card - skip post-upload actions and go directly to study mode
-        if (window._pendingStudyJourney) {
+        if (upload.studyJourney) {
           devLog('📚 Study Journey mode - skipping post-upload actions, going directly to study mode');
-          window._pendingStudyJourney = false;
+          if (!ctx) window._pendingStudyJourney = false;
 
           // ============================================
           // PLAN ONBOARDING — gates EVERY study-plan upload.
@@ -3811,7 +3891,7 @@ const ChatInterface = ({
           // Reuse the card created at upload start when there is one: she may
           // be mid-sentence in the exam-description box, and replacing the
           // message would throw that away and restart the flow underneath her.
-          const planOnboardMsgId = planOnboardingIdRef.current || `plan-onboarding-${Date.now()}`;
+          const planOnboardMsgId = upload.onboardingId || `plan-onboarding-${Date.now()}`;
           const planOnboardMsg = {
             id: planOnboardMsgId,
             role: 'assistant',
@@ -3836,12 +3916,12 @@ const ChatInterface = ({
             materialsReady: true,
             timestamp: Date.now()
           };
-          planOnboardingIdRef.current = null;
+          if (owns) planOnboardingIdRef.current = null;
 
           // Idempotent add: if the Firestore listener already inserted this id
           // (race: addDoc cache-write fires onSnapshot before our setState commits),
           // skip the local append so we don't end up with two cards.
-          setChatMessages(prev => {
+          setHere(prev => {
             // Upsert. The early card carries the student's half-typed course
             // context in its own state, so this merges the upload's topics in
             // rather than swapping the element and remounting the form.
@@ -3878,18 +3958,21 @@ const ChatInterface = ({
           };
 
           // Add message to chat first
-          setChatMessages(prev => [...prev, autoTriggerMsg]);
+          setHere(prev => [...prev, autoTriggerMsg]);
 
           // Save to Firebase
           AppendToChat(chatId, {
             ...autoTriggerMsg,
-            showActions: false
+            // Off screen she has not seen it run; leave the buttons for her.
+            showActions: !onScreen
           }).catch(err => console.error('❌ Failed to save auto-trigger post-upload:', err));
 
           // Trigger the pre-selected action after a short delay
-          setTimeout(() => {
-            handlePreSelectedAction(actionToTrigger, autoTriggerMsg);
-          }, 200);
+          if (onScreen) {
+            setTimeout(() => {
+              handlePreSelectedAction(actionToTrigger, autoTriggerMsg);
+            }, 200);
+          }
 
           break; // Skip the normal post-upload flow
         }
@@ -3940,7 +4023,7 @@ const ChatInterface = ({
               timestamp: Date.now()
             };
 
-            setChatMessages(prev => [...prev, wowMsg]);
+            setHere(prev => [...prev, wowMsg]);
 
             // Save to Firebase
             AppendToChat(chatId, wowMsg)
@@ -3953,8 +4036,8 @@ const ChatInterface = ({
         // Plain attach: nothing is posted into the chat. The actions wait
         // above the message box until every file is ready, unless she has
         // already said what she wants while it loaded.
-        if (plainUploadRef.current) {
-          if (!sentDuringUploadRef.current) {
+        if (upload.plainAttach) {
+          if (onScreen && !sentDuringUploadRef.current) {
             setUploadSuggestions({ topics: update.topics || [], filenames: update.filenames || [] });
           }
           break;
@@ -3975,7 +4058,7 @@ const ChatInterface = ({
         };
 
         // Add to chat messages - prevent duplicates by checking if one with same files already exists
-        setChatMessages(prev => {
+        setHere(prev => {
           // Check if a post_upload_actions message with the SAME filenames already exists
           // This prevents duplicate messages for the same upload batch, but allows
           // multiple uploads to each have their own post-upload message
