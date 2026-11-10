@@ -1642,6 +1642,10 @@ const resources = {
         // Product showcase section
         showcaseTitle: "See How It Works",
         showcaseSubtitle: "From notes to knowledge in minutes",
+        practiceTitle: "Try a real question",
+        practiceSubtitle: "No account needed. Answer it, then see the reasoning.",
+        practiceCta: "Get questions from my own notes",
+        tryQuestionLink: "No notes handy? Try a question first",
         demoLabel: "Live Demo",
         demoUpload: "Pharmacology_Notes.pdf",
         demoGenerating: "AI generating NCLEX-style quiz...",
@@ -4363,6 +4367,10 @@ const resources = {
         // Product showcase section
         showcaseTitle: "Comment ça fonctionne",
         showcaseSubtitle: "Des notes aux connaissances en quelques minutes",
+        practiceTitle: "Essaie une vraie question",
+        practiceSubtitle: "Aucun compte requis. Réponds, puis découvre le raisonnement.",
+        practiceCta: "Obtenir des questions à partir de mes notes",
+        tryQuestionLink: "Pas de notes sous la main ? Essaie d'abord une question",
         demoLabel: "Démo en direct",
         demoUpload: "Notes_Pharmacologie.pdf",
         demoGenerating: "L'IA génère un quiz style NCLEX...",

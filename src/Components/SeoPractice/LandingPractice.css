@@ -1,0 +1,114 @@
+/* .seo-mini is built to be a whole page: full height, its own background and
+   lined paper. Inside the homepage it keeps only its colors and type. */
+.landing-practice {
+  width: 100%;
+  max-width: 640px;
+  margin: 0 auto;
+  text-align: left;
+}
+
+.landing-practice .seo-mini.seo-embedded {
+  min-height: 0;
+  background: none;
+  overflow: visible;
+}
+
+.landing-practice .seo-mini.seo-embedded::before,
+.landing-practice .seo-mini.seo-embedded::after {
+  display: none;
+}
+
+.landing-practice .seo-question-card h2 {
+  font-size: 20px;
+}
+
+.landing-practice-loading {
+  min-height: 520px;
+}
+
+/* A case study needs room for the chart beside the answers. */
+.landing-practice.is-cases {
+  max-width: 1040px;
+}
+
+.landing-cases-card {
+  scroll-margin-top: 24px;
+}
+
+.landing-cases-end {
+  max-width: 640px;
+  margin: 0 auto;
+  scroll-margin-top: 24px;
+}
+
+.landing-cases-end h2 {
+  margin: 4px 0 18px;
+  font-size: 24px;
+  line-height: 1.3;
+}
+
+.landing-cases-list {
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+}
+
+.landing-cases-list li {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-top: 1px solid var(--sm-line);
+  font-size: 15px;
+}
+
+.landing-cases-list li:last-child {
+  border-bottom: 1px solid var(--sm-line);
+}
+
+/* Shape carries the result: filled right, half partly right, hollow skipped. */
+.landing-cases-mark {
+  flex: 0 0 12px;
+  width: 12px;
+  height: 12px;
+  border: 1.5px solid var(--sm-accent);
+  border-radius: 50%;
+}
+
+.landing-cases-mark.is-right {
+  background: var(--sm-accent);
+}
+
+.landing-cases-mark.is-partial {
+  background: linear-gradient(90deg, var(--sm-accent) 50%, transparent 50%);
+}
+
+.landing-cases-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.landing-cases-line {
+  color: var(--sm-muted);
+  font-size: 13px;
+  text-align: right;
+}
+
+.landing-practice .seo-rationale-footer {
+  flex-wrap: wrap;
+}
+
+@media (max-width: 600px) {
+  .landing-practice {
+    padding: 0 16px;
+    box-sizing: border-box;
+  }
+
+  .landing-practice .seo-paper {
+    padding: 24px 18px;
+  }
+
+  .landing-practice .seo-question-card h2 {
+    font-size: 18px;
+  }
+}

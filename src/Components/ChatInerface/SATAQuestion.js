@@ -185,7 +185,11 @@ function SATAQuestion({
   forceWalkthrough = false,
   // Exam conditions (StudyQuizCard): the answer is recorded without a
   // verdict, so a miss must not start or open a walkthrough either.
-  deferFeedback = false
+  deferFeedback = false,
+  // A stored walkthrough (the homepage's cases, SeoPractice/landingCases.js).
+  // Opens with no backend call and is offered even after a right answer,
+  // because there it is the demonstration, not a remedy for a miss.
+  presetWalkthrough = null
 }) {
   // ----------------------------------------
   // Hooks & State
@@ -239,9 +243,10 @@ function SATAQuestion({
   // Generation takes several seconds, so this starts the moment an answer
   // comes back wrong; the "Show me how" tap then reuses the same request.
   const requestWalkthrough = useCallback(() => {
+    if (presetWalkthrough) return Promise.resolve(presetWalkthrough);
     if (!quiz?.question || !correctIndices.length) return Promise.resolve(null);
     return fetchQuizWalkthrough(quiz.question, plainOptions, correctIndices, i18n.language);
-  }, [quiz, plainOptions, correctIndices, i18n.language]);
+  }, [presetWalkthrough, quiz, plainOptions, correctIndices, i18n.language]);
 
   // The question a request was made for, so an answer arriving after she has
   // moved on is ignored.
@@ -625,7 +630,7 @@ function SATAQuestion({
             {/* "Show me how": teaches the select-all method on this question.
                 Above the explanation, not below it: below a scrolling rationale
                 it was a small link nobody saw (owner, 2026-10-10). */}
-            {!scoreResult.isFullyCorrect && correctIndices.length > 0 && !walkthrough.open && (
+            {(!scoreResult.isFullyCorrect || presetWalkthrough) && correctIndices.length > 0 && !walkthrough.open && (
               <button type="button" className="sata-walkthrough-trigger" onClick={openWalkthrough}>
                 <span className="sata-walkthrough-icon" aria-hidden="true">▶</span>
                 <span>

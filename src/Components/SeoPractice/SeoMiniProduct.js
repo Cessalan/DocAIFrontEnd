@@ -109,7 +109,7 @@ function Metadata({ page }) {
   return null;
 }
 
-function ContinueCard({ page, value, topic, track, label, save = false, lead = false }) {
+export function ContinueCard({ page, value, topic, track, label, save = false, lead = false, bodyText = null }) {
   const navigate = useNavigate();
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
@@ -127,7 +127,8 @@ function ContinueCard({ page, value, topic, track, label, save = false, lead = f
     : page.cluster === 'HESI A2' ? 'Keep building your admission skills.'
     : page.cluster === 'Nursing HESI' ? 'Make the next set about your course.'
     : 'Make the next session about you.';
-  const body = save ? 'Save it to your NCLEX workspace, see today’s task, and start practicing in the subjects you flagged.'
+  const body = bodyText ? bodyText
+    : save ? 'Save it to your NCLEX workspace, see today’s task, and start practicing in the subjects you flagged.'
     : page.cluster === 'Nursing HESI' ? 'Have an upcoming exam? Bring your course material into NurseQuiz for practice on what you are actually studying.'
     : toNclex ? 'Your answers come with you. The first session opens on this weak spot, with new questions written around it.'
     : `Continue with ${topic || 'the concepts you want to review'}, one question at a time.`;
@@ -198,7 +199,12 @@ function PlanPractice({ page, row, value }) {
   return <><button className="seo-text-button" disabled={busy} onClick={async () => { setBusy(true); setError(''); try { const url = await continueSeo(page, value, { topic: row.subject, track: value.plan.track }); if (url) navigate(url); } catch { setError('Could not open practice. Please try again.'); } finally { setBusy(false); } }}>{busy ? 'Opening…' : 'Start this practice'} →</button>{error && <p role="alert">{error}</p>}</>;
 }
 
-export function Diagnostic({ page, initialQuestions, compact = false, autoStart = false, pool: forcedPool, onLaunch }) {
+// `embedded` is for a set sitting inside another page (the homepage). It is on
+// screen before anyone asks for it, so mounting must neither take focus from the
+// page nor count as a start; her first checked answer is the start.
+// `nextStep` replaces the signup card on the result, for a host page with more
+// to offer first; the host then owns the signup.
+export function Diagnostic({ page, initialQuestions, compact = false, autoStart = false, pool: forcedPool, onLaunch, embedded = false, nextStep = null }) {
   const available = initialQuestions || forcedPool || bankFor(page.slug);
   const sections = [...new Set(available.map(q => q.section))];
   // A fixed list (study-guide recall check) is served as-is; a page bank is
@@ -223,7 +229,7 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
   const pool = available.filter(item => chosen.includes(item.section));
   const setLength = size ? Math.min(size, pool.length) : pool.length;
   const remaining = size ? unseenCount(pool, seen) : 0;
-  useEffect(() => { if (q) prompt.current?.focus({ preventScroll: true }); }, [q]);
+  useEffect(() => { if (q && !(embedded && position === 0)) prompt.current?.focus({ preventScroll: true }); }, [q, embedded, position]);
   useEffect(() => {
     if (!finished || !result.total) return;
     let live = true;
@@ -242,10 +248,17 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
     return () => { live = false; };
   }, [finished, result.total, questions, answers, page, compact, retry]);
   useEffect(() => {
-    if (!autoStart || trackedStart.current || !questions.length) return;
+    if (!autoStart || embedded || trackedStart.current || !questions.length) return;
     trackedStart.current = true;
     trackSeo('seo_mini_product_started', page, { questionCount: questions.length, via: 'overlay' });
-  }, [autoStart, page, questions.length]);
+  }, [autoStart, embedded, page, questions.length]);
+  function check() {
+    setAnswers(value => ({ ...value, [q.id]: [...selected] }));
+    if (embedded && !trackedStart.current) {
+      trackedStart.current = true;
+      trackSeo('seo_mini_product_started', page, { questionCount: questions.length, via: 'embedded' });
+    }
+  }
   function start(list, isRetry = false, fresh = false) {
     // "Keep going" serves only unseen questions, even if fewer than a full set,
     // so the button's count is honest. A plain start always fills the set.
@@ -296,7 +309,7 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
         <strong>{result.needsWork || result.missed[0]}</strong>
         {result.missed.length > 0 && <div className="seo-tags">{result.missed.slice(0, 3).map(concept => <span key={concept}>{concept}</span>)}</div>}
       </div>}
-      <ContinueCard lead page={page} value={{ result, answers, questionIds: questions.map(item => item.id) }} topic={nextTopic} label={allCorrect ? 'Keep building in NurseQuiz' : page.conversion} />
+      {nextStep || <ContinueCard lead page={page} value={{ result, answers, questionIds: questions.map(item => item.id) }} topic={nextTopic} label={allCorrect ? 'Keep building in NurseQuiz' : page.conversion} />}
       <div className="seo-result-more">
         {result.missed.length > 0 && <button className="seo-text-button" onClick={() => start(questions.filter(item => !grade(item, answers[item.id])), true)}>Retry missed questions</button>}
         {size > 0 && pool.length > questions.length && <button className="seo-text-button" onClick={() => start(pool, false, true)}>{remaining > 0 ? `Next ${nextCount} questions` : 'Shuffle and go again'}</button>}
@@ -311,7 +324,7 @@ export function Diagnostic({ page, initialQuestions, compact = false, autoStart 
   const correct = committed && grade(q, answers[q.id]);
   return <div className="seo-paper seo-question-card"><div className="seo-question-meta"><span>{q.section} · {q.type === 'sata' ? 'Select all that apply' : 'Choose one answer'}</span><span>{position + 1} / {questions.length}</span></div><div className="seo-meter" role="progressbar" aria-label="Questions answered" aria-valuemin={0} aria-valuemax={questions.length} aria-valuenow={Object.keys(answers).length}><span style={{ width: `${Object.keys(answers).length / questions.length * 100}%` }} /></div><h2 ref={prompt} tabIndex={-1}>{q.stem}</h2>
     <fieldset disabled={committed}><legend className="seo-sr-only">Your answer</legend>{q.options.map((option, i) => <label className={`seo-answer ${selected.includes(i) ? 'selected' : ''} ${committed && q.answer.includes(i) ? 'correct' : ''} ${committed && selected.includes(i) && !q.answer.includes(i) ? 'incorrect' : ''}`} key={option}><input type={q.type === 'sata' ? 'checkbox' : 'radio'} name={`answer-${q.id}`} checked={selected.includes(i)} onChange={() => setSelected(list => q.type === 'sata' ? list.includes(i) ? list.filter(x => x !== i) : [...list, i] : [i])} /><span className="seo-answer-letter">{String.fromCharCode(65 + i)}</span><span>{option}</span>{committed && q.answer.includes(i) && <span className="seo-answer-mark" aria-hidden="true">✓</span>}{committed && selected.includes(i) && !q.answer.includes(i) && <span className="seo-answer-mark" aria-hidden="true">×</span>}</label>)}</fieldset>
-    {!committed ? <button className="seo-primary" disabled={!selected.length} onClick={() => setAnswers(value => ({ ...value, [q.id]: [...selected] }))}>Check my answer →</button> : <div className={`seo-rationale ${correct ? 'is-correct' : ''}`} role="status"><span className="seo-rationale-label">{correct ? 'Correct reasoning' : 'Review the decision'}</span><strong>{correct ? 'That’s right.' : 'Not quite—here’s the idea.'}</strong><p>{q.why}</p>{q.type === 'sata' && <p className="seo-small">This check counts a question as correct only when all correct choices—and no others—are selected.</p>}<div className="seo-rationale-footer"><a href={catalog.sources[q.source].url} target="_blank" rel="noreferrer">{catalog.sources[q.source].label} ↗</a><button className="seo-primary" onClick={next}>{position + 1 === questions.length ? 'See my takeaways' : 'Next question'} →</button></div></div>}
+    {!committed ? <button className="seo-primary" disabled={!selected.length} onClick={check}>Check my answer →</button> : <div className={`seo-rationale ${correct ? 'is-correct' : ''}`} role="status"><span className="seo-rationale-label">{correct ? 'Correct reasoning' : 'Review the decision'}</span><strong>{correct ? 'That’s right.' : 'Not quite—here’s the idea.'}</strong><p>{q.why}</p>{q.type === 'sata' && <p className="seo-small">This check counts a question as correct only when all correct choices—and no others—are selected.</p>}<div className="seo-rationale-footer"><a href={catalog.sources[q.source].url} target="_blank" rel="noreferrer">{catalog.sources[q.source].label} ↗</a><button className="seo-primary" onClick={next}>{position + 1 === questions.length ? 'See my takeaways' : 'Next question'} →</button></div></div>}
   </div>;
 }
 

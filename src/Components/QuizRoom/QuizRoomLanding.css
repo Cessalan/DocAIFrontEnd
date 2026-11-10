@@ -1628,6 +1628,50 @@
   font-size: 11px;
 }
 
+/* Quiet route to the real questions, for visitors with no file on hand. */
+.hero-try-question {
+  display: block;
+  margin-top: 14px;
+  text-align: center;
+  font-family: var(--font-main);
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.hero-try-question:hover {
+  color: var(--text-primary);
+}
+
+body.dark-mode .hero-try-question {
+  color: #b0b0b0;
+}
+
+body.dark-mode .hero-try-question:hover {
+  color: #e8e8e8;
+}
+
+#try-a-question {
+  scroll-margin-top: 24px;
+}
+
+/* The showcase container centers its children, which would shrink this to fit
+   its content; a case study needs the full width for the chart. */
+.landing-practice-slot {
+  width: 100%;
+}
+
+.landing-practice-placeholder {
+  min-height: 520px;
+}
+
+@media (max-width: 600px) {
+  #try-a-question .showcase-subtitle {
+    padding: 0 16px;
+  }
+}
+
 /* File formats with icons - outside upload zone */
 .doc-formats {
   display: flex;

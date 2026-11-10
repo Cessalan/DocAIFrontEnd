@@ -126,7 +126,11 @@ function CaseStudyQuestion({
   forceWalkthrough = false,
   // Exam conditions (StudyQuizCard): recorded without a verdict, so a miss
   // must not start or open the "Who first?" walkthrough either.
-  deferFeedback = false
+  deferFeedback = false,
+  // A stored walkthrough (the homepage's cases, SeoPractice/landingCases.js).
+  // Opens with no backend call and is offered even after a right answer,
+  // because there it is the demonstration, not a remedy for a miss.
+  presetWalkthrough = null
 }) {
   const { t, i18n } = useTranslation();
 
@@ -246,9 +250,10 @@ function CaseStudyQuestion({
   // Generation takes several seconds, so it starts the moment an order comes
   // back wrong; the button then reuses the same request.
   const requestWalkthrough = useCallback(() => {
+    if (presetWalkthrough) return Promise.resolve(presetWalkthrough);
     if (walkthroughInput.items.length !== correctOrder.length) return Promise.resolve(null);
     return fetchOrderWalkthrough({ ...walkthroughInput, language: i18n?.language });
-  }, [walkthroughInput, correctOrder.length, i18n?.language]);
+  }, [presetWalkthrough, walkthroughInput, correctOrder.length, i18n?.language]);
 
   // Settle the request whether or not the walkthrough is open, so the button
   // only ever offers what can be delivered: when the backend declines (it
@@ -373,7 +378,7 @@ function CaseStudyQuestion({
     // rule for her first slip becomes the one-line rule on the card; the
     // replay itself waits for her tap (it used to open on its own for the
     // first misses, and students clicked straight through it, owner 2026-10-25).
-    if (!result.isFullyCorrect && !reviewMode && !deferFeedback && correctOrder.length >= 3) {
+    if ((!result.isFullyCorrect || presetWalkthrough) && !reviewMode && !deferFeedback && correctOrder.length >= 3) {
       // `forceWalkthrough`: a Tonight's plan fix step teaches on her first
       // miss, because a fix round that doesn't teach is just the drill that
       // never worked.
@@ -402,7 +407,7 @@ function CaseStudyQuestion({
         timestamp: new Date()
       });
     }
-  }, [revealed, quiz, placed, normalizedOptions, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough, forceWalkthrough, deferFeedback]);
+  }, [revealed, quiz, placed, normalizedOptions, correctOrder, quizIndex, onAnswerSelect, reviewMode, requestWalkthrough, openWalkthrough, settleWalkthrough, forceWalkthrough, deferFeedback, presetWalkthrough]);
 
   // ----------------------------------------
   // Early Return
@@ -631,7 +636,7 @@ function CaseStudyQuestion({
               </p>
             )}
 
-            {!scoreResult.isFullyCorrect && correctOrder.length >= 3 && !walkthrough.open && walkthrough.status !== 'unavailable' && (
+            {(!scoreResult.isFullyCorrect || presetWalkthrough) && correctOrder.length >= 3 && !walkthrough.open && walkthrough.status !== 'unavailable' && (
               <button type="button" className="sata-walkthrough-trigger" onClick={() => openWalkthrough()}>
                 <span className="sata-walkthrough-icon" aria-hidden="true">▶</span>
                 <span>

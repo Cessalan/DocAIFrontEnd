@@ -123,6 +123,8 @@ export const PAGE_TARGETS = {
   },
   'dosage-calculation-practice-questions': { subject: 'pharmacology', area: 'Medication safety' },
   'nclex-study-plan': { subject: null },
+  // The homepage's questions (landingPracticeModel.js) span every subject.
+  'landing-practice': { subject: null },
 };
 
 /** Planner subject label (SeoPractice/model.js `subjects`) → curriculum id. */
