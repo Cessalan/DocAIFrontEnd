@@ -1,4 +1,5 @@
-import React, { Suspense, lazy } from "react";
+import React, { Suspense } from "react";
+import { lazyWithReload } from './Services/chunkReload';
 import { Routes, Route } from "react-router-dom";
 
 import ProtectedRoute from "./Components/Auth/ProtectedRoute";
@@ -14,28 +15,28 @@ import './index.css';
 // mindmap engine and the whole chat/study surface out of the first download.
 // ============================================
 
-const ChatLayout = lazy(() => import("./ChatLayout"));
-const Login = lazy(() => import("./Components/Auth/Login"));
-const Signup = lazy(() => import("./Components/Auth/SignUp"));
-const ForgotPassword = lazy(() => import("./Components/Auth/ForgotPassword"));
-const PublicQuizView = lazy(() => import("./Components/PublicQuiz/PublicQuizView"));
-const BlogList = lazy(() => import("./Components/Blog/BlogList"));
-const BlogPost = lazy(() => import("./Components/Blog/BlogPost"));
-const NclexQuestionGenerator = lazy(() => import("./Components/LandingPages/NclexQuestionGenerator"));
-const SeoMiniProduct = lazy(() => import('./Components/SeoPractice/SeoMiniProduct'));
+const ChatLayout = lazyWithReload(() => import("./ChatLayout"));
+const Login = lazyWithReload(() => import("./Components/Auth/Login"));
+const Signup = lazyWithReload(() => import("./Components/Auth/SignUp"));
+const ForgotPassword = lazyWithReload(() => import("./Components/Auth/ForgotPassword"));
+const PublicQuizView = lazyWithReload(() => import("./Components/PublicQuiz/PublicQuizView"));
+const BlogList = lazyWithReload(() => import("./Components/Blog/BlogList"));
+const BlogPost = lazyWithReload(() => import("./Components/Blog/BlogPost"));
+const NclexQuestionGenerator = lazyWithReload(() => import("./Components/LandingPages/NclexQuestionGenerator"));
+const SeoMiniProduct = lazyWithReload(() => import('./Components/SeoPractice/SeoMiniProduct'));
 const seoProductSlugs = ['nclex-study-plan', 'hesi-a2-practice-test', 'hesi-a2-study-guide', 'hesi-practice-questions', 'dosage-calculation-practice-questions', 'nursing-fundamentals-practice-questions', 'pharmacology-nclex-questions', 'cardiac-nclex-questions', 'pediatric-nclex-questions'];
 // NCLEX is its own surface, not a view inside ChatLayout: there is no chat,
 // no sidebar and no upload in it, because a candidate who has graduated has
 // no documents to talk about. It shares the adaptive modules, not the shell.
-const NclexHome = lazy(() => import("./Components/Nclex/NclexHome"));
-const NclexSubject = lazy(() => import("./Components/Nclex/NclexSubject"));
-const NclexPractice = lazy(() => import("./Components/Nclex/NclexPractice"));
-const NclexArrival = lazy(() => import("./Components/Nclex/NclexArrival"));
-const QuestionBankAdmin = lazy(() => import("./Components/Admin/QuestionBankAdmin"));
-const SatisfactionDashboard = lazy(() => import("./Components/Admin/SatisfactionDashboard"));
-const ConversationReader = lazy(() => import("./Components/Admin/ConversationReader"));
-const PaywallTracker = lazy(() => import("./Components/Admin/PaywallTracker"));
-const StudyPlanInspector = lazy(() => import('./Components/Admin/StudyPlanInspector'));
+const NclexHome = lazyWithReload(() => import("./Components/Nclex/NclexHome"));
+const NclexSubject = lazyWithReload(() => import("./Components/Nclex/NclexSubject"));
+const NclexPractice = lazyWithReload(() => import("./Components/Nclex/NclexPractice"));
+const NclexArrival = lazyWithReload(() => import("./Components/Nclex/NclexArrival"));
+const QuestionBankAdmin = lazyWithReload(() => import("./Components/Admin/QuestionBankAdmin"));
+const SatisfactionDashboard = lazyWithReload(() => import("./Components/Admin/SatisfactionDashboard"));
+const ConversationReader = lazyWithReload(() => import("./Components/Admin/ConversationReader"));
+const PaywallTracker = lazyWithReload(() => import("./Components/Admin/PaywallTracker"));
+const StudyPlanInspector = lazyWithReload(() => import('./Components/Admin/StudyPlanInspector'));
 
 /**
  * Route-level loading state. Deliberately self-contained (inline styles, brand
@@ -69,8 +70,8 @@ function RouteFallback() {
 }
 
 // Check if we're in development mode
-const AdminGuard = lazy(() => import('./Components/Admin/AdminGuard'));
-const AdminWorkspace = lazy(() => import('./Components/Admin/AdminWorkspace'));
+const AdminGuard = lazyWithReload(() => import('./Components/Admin/AdminGuard'));
+const AdminWorkspace = lazyWithReload(() => import('./Components/Admin/AdminWorkspace'));
 
 function App() {
   return (

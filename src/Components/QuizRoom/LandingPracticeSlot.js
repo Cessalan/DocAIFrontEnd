@@ -1,6 +1,7 @@
-import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useEffect, useRef, useState } from 'react';
+import { lazyWithReload } from '../../Services/chunkReload';
 
-const LandingPractice = lazy(() => import('../SeoPractice/LandingPractice'));
+const LandingPractice = lazyWithReload(() => import('../SeoPractice/LandingPractice'));
 
 /**
  * Homepage analytics that do not start an SEO acquisition record. trackSeo

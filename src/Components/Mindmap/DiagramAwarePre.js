@@ -1,9 +1,10 @@
-import React, { Suspense, lazy, useMemo } from 'react';
+import React, { Suspense, useMemo } from 'react';
+import { lazyWithReload } from '../../Services/chunkReload';
 import { parseAsciiConceptMap, looksLikeDiagram } from './asciiConceptMap';
 
 // Carries reactflow and the PDF stack. Only fetched once a message actually
 // turns out to contain a diagram.
-const ConceptMapBlock = lazy(() => import('./ConceptMapBlock'));
+const ConceptMapBlock = lazyWithReload(() => import('./ConceptMapBlock'));
 
 /** Flatten whatever react-markdown handed us for a fence into its raw text. */
 export const fenceText = (children) =>

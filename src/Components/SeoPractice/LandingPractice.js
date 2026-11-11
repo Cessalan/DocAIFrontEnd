@@ -1,10 +1,11 @@
-import React, { lazy, Suspense, useMemo, useState } from 'react';
+import React, { Suspense, useMemo, useState } from 'react';
+import { lazyWithReload } from '../../Services/chunkReload';
 import { Diagnostic } from './SeoMiniProduct';
 import { LANDING_PRACTICE_PAGE, landingPracticePool } from './landingPracticeModel';
 import './LandingPractice.css';
 
 // The real question cards are heavy, and only a visitor who asks for them pays.
-const LandingCaseRun = lazy(() => import('./LandingCaseRun'));
+const LandingCaseRun = lazyWithReload(() => import('./LandingCaseRun'));
 
 /**
  * Homepage practice: three quick questions, then the harder formats with their

@@ -1,11 +1,12 @@
-import React, { Suspense, lazy, useState } from 'react';
+import React, { Suspense, useState } from 'react';
+import { lazyWithReload } from '../../Services/chunkReload';
 import { useTranslation } from 'react-i18next';
 import './ConceptMapBlock.css';
 
 // reactflow, html2canvas and jspdf all ride along with the viewer. This module
 // is itself lazily imported by ChatMessage, but keep the split so a chat with
 // no diagram in it never pays for them.
-const MindmapViewer = lazy(() => import('./MindmapViewer'));
+const MindmapViewer = lazyWithReload(() => import('./MindmapViewer'));
 
 /**
  * ConceptMapBlock

@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo, Suspense, lazy } from 'react';
+import { useState, useRef, useEffect, useCallback, useLayoutEffect, useMemo, Suspense } from 'react';
+import { lazyWithReload } from '../../Services/chunkReload';
 import { Navigate, useNavigate } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -156,14 +157,14 @@ import { saveExamDate, noteExamDateAsked } from '../../Services/ExamDrillService
 // ============================================
 
 // react-pdf + pdfjs-dist — the single largest dependency. Opens on file preview.
-const FileViewerModal = lazy(() => import('./FileViewerModal'));
+const FileViewerModal = lazyWithReload(() => import('./FileViewerModal'));
 // Study sheets and their PDF exporter load only when requested.
-const StudySheetSimple = lazy(() => import('./StudySheetSimple.js'));
+const StudySheetSimple = lazyWithReload(() => import('./StudySheetSimple.js'));
 // reactflow + its stylesheet. Only for 'mindmap' messages.
-const ChatMindmap = lazy(() => import('./ChatMindmap'));
+const ChatMindmap = lazyWithReload(() => import('./ChatMindmap'));
 // Full-screen study surface: its own large stylesheet, plus reactflow via
 // StudyMindmapCard. Entered deliberately, so a chunk fetch costs nothing here.
-const StudyModeContainer = lazy(() => import('../StudyMode/StudyModeContainer'));
+const StudyModeContainer = lazyWithReload(() => import('../StudyMode/StudyModeContainer'));
 
 /**
  * Full-screen placeholder shown while the study-mode chunk downloads.
