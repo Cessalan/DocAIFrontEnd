@@ -93,7 +93,7 @@ import {
 import {
   ask_llm_websocket,
   closeWebSocketConnection,
-  cancelWebSocketStream,
+  stopWebSocketStream,
 } from '../../Services/WebSocketManager.js';
 
 // Styles
@@ -103,6 +103,7 @@ import './ChatInterface.css';
 import { useTranslation } from 'react-i18next';
 import StudyGuideGenerator from './StudyGuideGenerator.js';
 import StudySheetLivePreview from './StudySheetLivePreview.js';
+import StudySheetProgress from './StudySheetProgress';
 // StudySheetSimple is lazy-loaded — see the code-splitting block below the imports.
 import { updateStudySheetMessage, savedStudySheetMessage } from '../../Services/studySheetEvents';
 import { applyStreamError } from './streamErrorMessage';
@@ -672,6 +673,11 @@ const ChatInterface = ({
   const streamingThrottleRef = useRef(null);
   const streamingContentRef = useRef('');
   const streamingMessageIdRef = useRef(null);
+  // Which send is live, and on which chat. Stop bumps `gen`, so a send that
+  // was still saving her message or waiting on an upload never reaches the
+  // backend; `chatId` is the socket to close (a first message creates the
+  // chat, so currentChatID can still be the old value when stop is pressed).
+  const activeSendRef = useRef({ gen: 0, chatId: null });
 
   // Stable-callback refs: forwarding pattern for React.memo children
   const chatMessagesRef = useRef(chatMessages);
@@ -1409,6 +1415,9 @@ const ChatInterface = ({
     setIsAiTyping(true);
     setStreamingStatus(null);
     setIsStreaming(true);
+    const sendGen = activeSendRef.current.gen + 1;
+    activeSendRef.current = { gen: sendGen, chatId: currentChatID || null };
+    const wasStopped = () => activeSendRef.current.gen !== sendGen;
     // Fresh send = fresh completion state. If a previous stream errored (or a
     // quiz/audio flow set this), a stale true would skip saving THIS response.
     isQuizGeneratingRef.current = false;
@@ -1488,6 +1497,10 @@ const ChatInterface = ({
     // Fail loudly with a retry instead — this is the first message of a brand
     // new conversation, so silence here reads as "the product is broken".
     const targetChatId = updatedChatId || currentChatID;
+    // Stopped while her message was being saved: handleStopStreaming already
+    // cleared the placeholder and the typing state. Send nothing.
+    if (wasStopped()) return;
+    activeSendRef.current.chatId = targetChatId || null;
     if (!targetChatId) {
       console.error("❌ No chat id after AppendToChat — aborting send");
       setIsStreaming(false);
@@ -1528,6 +1541,7 @@ const ChatInterface = ({
       // the answer can use them, and the placeholder says why it is waiting.
       if (uploadPromiseRef.current) {
         await uploadPromiseRef.current;
+        if (wasStopped()) return;
         setChatMessages(prev => prev.map(msg => (msg.id === streamingMessageId ? { ...msg, statusText: null } : msg)));
       }
 
@@ -2131,7 +2145,7 @@ const ChatInterface = ({
           }
 
           if (["study_sheet_header", "study_sheet_section", "study_sheet_reset", "study_sheet_chunk",
-            "study_sheet_complete", "study_sheet_error"].includes(statusUpdate.status)) {
+            "study_sheet_step", "study_sheet_complete", "study_sheet_error"].includes(statusUpdate.status)) {
             const current = studySheetStreamRef.current;
             if (!current?.isStreaming || current.id !== studySheetMessageId) return;
             const next = updateStudySheetMessage(current, statusUpdate);
@@ -2386,7 +2400,10 @@ const ChatInterface = ({
           );
 
           setIsAiTyping(false);
-        }
+        },
+
+        // Stop pressed while the socket was still connecting
+        wasStopped
       );
     } catch (error) {
       console.error("WebSocket streaming error:", error);
@@ -2415,133 +2432,77 @@ const ChatInterface = ({
   // STOP STREAMING HANDLER
   // ============================================
 
+  // Stop means stop, now. Until 2026-11-11 this only asked the backend to
+  // cancel and kept listening: the backend read the request after the answer
+  // had finished, so the rest of the answer streamed in under the "stopped"
+  // one and was saved. Now the socket is cut first (stopWebSocketStream), so
+  // nothing more can arrive, and the UI is settled without waiting on anyone.
+  // Her message stays in the chat with its edit button, which re-asks.
   const handleStopStreaming = async () => {
-    // Clean up streaming throttle immediately
+    const stoppedChatId = activeSendRef.current.chatId || currentChatID;
+    // Invalidate the live send before anything else: a send that is still
+    // saving her message or waiting on an upload checks this and never asks.
+    activeSendRef.current = { gen: activeSendRef.current.gen + 1, chatId: null };
+    if (stoppedChatId) stopWebSocketStream(stoppedChatId);
+
+    // Flush what has already arrived, then drop the throttle
     cleanupStreamingThrottle();
+    interruptStudySheet();
+    isQuizGeneratingRef.current = false;
+    setIsStreaming(false);
+    setIsAiTyping(false);
+    setStreamingStatus(null);
 
-    try {
-      // Send cancel message via WebSocket
-      const success = await cancelWebSocketStream(currentChatID);
+    // A quiz or flashcard set stopped part-way keeps what it has. Read from
+    // this render's messages, not inside the state updater below: React runs
+    // updaters later (and twice in StrictMode), so a list filled in there was
+    // empty by the time it was saved.
+    const messagesToSave = chatMessages
+      .filter(msg => msg.isStreaming && (
+        (msg.type === 'quiz' && msg.quizData?.length > 0) ||
+        (msg.type === 'flashcard' && msg.flashcardData?.length > 0)
+      ))
+      .map(msg => ({
+        id: msg.id,
+        role: 'assistant',
+        type: msg.type,
+        content: msg.type === 'quiz'
+          ? `Quiz stopped - ${msg.quizData.length} questions generated`
+          : `Flashcards stopped - ${msg.flashcardData.length} cards generated`,
+        isStreaming: false,
+        stopped: true,
+        timestamp: new Date(),
+        ...(msg.type === 'quiz' ? { quizData: msg.quizData } : { flashcardData: msg.flashcardData }),
+      }));
 
-      if (success) {
-        interruptStudySheet();
-        // Update UI state
-        setIsStreaming(false);
-        setIsAiTyping(false);
-        setStreamingStatus(null);
+    // Remove or finalize streaming messages
+    setChatMessages(prev => prev.map(msg => {
+      if (!msg.isStreaming) return msg;
 
-        // Collect messages to save to Firebase BEFORE updating state
-        const messagesToSave = [];
-
-        // Remove or finalize streaming messages
-        setChatMessages(prev => {
-          const updatedMessages = prev.map(msg => {
-            if (msg.isStreaming) {
-              // Handle quiz messages - finalize with whatever was generated
-              if (msg.type === 'quiz' && msg.quizData && msg.quizData.length > 0) {
-                devLog(`🛑 Finalizing quiz with ${msg.quizData.length} questions`);
-                const finalizedMsg = {
-                  ...msg,
-                  isStreaming: false,
-                  stopped: true,
-                  content: `Quiz stopped - ${msg.quizData.length} questions generated`
-                };
-                // Queue for Firebase save
-                messagesToSave.push({
-                  type: 'quiz',
-                  id: msg.id,
-                  data: finalizedMsg
-                });
-                return finalizedMsg;
-              }
-
-              // Handle flashcard messages - finalize with whatever was generated
-              if (msg.type === 'flashcard' && msg.flashcardData && msg.flashcardData.length > 0) {
-                devLog(`🛑 Finalizing flashcards with ${msg.flashcardData.length} cards`);
-                const finalizedMsg = {
-                  ...msg,
-                  isStreaming: false,
-                  stopped: true,
-                  content: `Flashcards stopped - ${msg.flashcardData.length} cards generated`
-                };
-                // Queue for Firebase save
-                messagesToSave.push({
-                  type: 'flashcard',
-                  id: msg.id,
-                  data: finalizedMsg
-                });
-                return finalizedMsg;
-              }
-
-              // Handle mindmap messages - remove if stopped mid-generation (no partial mindmaps)
-              if (msg.type === 'mindmap') {
-                if (msg.mindmapData && msg.mindmapData.nodes && msg.mindmapData.nodes.length > 0) {
-                  devLog(`🛑 Finalizing mindmap with ${msg.mindmapData.nodes.length} nodes`);
-                  return {
-                    ...msg,
-                    isStreaming: false,
-                    stopped: true
-                  };
-                }
-                // No data yet - remove the placeholder
-                devLog(`🛑 Removing incomplete mindmap message: ${msg.id}`);
-                return null;
-              }
-
-              // Handle regular text messages - keep if has content
-              if (msg.content && msg.content.trim()) {
-                return {
-                  ...msg,
-                  isStreaming: false,
-                  stopped: true
-                };
-              }
-
-              // Empty messages with no data - remove them
-              devLog(`🛑 Removing empty streaming message: ${msg.id}`);
-              return null;
-            }
-            return msg;
-          }).filter(Boolean); // Remove null entries
-
-          return updatedMessages;
-        });
-
-        // Save stopped quiz/flashcard messages to Firebase
-        for (const msgToSave of messagesToSave) {
-          try {
-            devLog(`💾 Saving stopped ${msgToSave.type} to Firebase:`, msgToSave.id);
-            const messageForFirebase = {
-              id: msgToSave.data.id,
-              role: 'assistant',
-              type: msgToSave.type,
-              content: msgToSave.data.content,
-              isStreaming: false,
-              stopped: true,
-              timestamp: new Date()
-            };
-
-            if (msgToSave.type === 'quiz') {
-              messageForFirebase.quizData = msgToSave.data.quizData;
-            } else if (msgToSave.type === 'flashcard') {
-              messageForFirebase.flashcardData = msgToSave.data.flashcardData;
-            }
-
-            await AppendToChat(currentChatID, messageForFirebase);
-            devLog(`✅ Stopped ${msgToSave.type} saved to Firebase`);
-          } catch (saveError) {
-            console.error(`❌ Failed to save stopped ${msgToSave.type} to Firebase:`, saveError);
-          }
-        }
-      } else {
-        console.error('❌ Failed to send stop request');
+      if (msg.type === 'quiz' && msg.quizData?.length > 0) {
+        return { ...msg, isStreaming: false, stopped: true, content: `Quiz stopped - ${msg.quizData.length} questions generated` };
       }
-    } catch (error) {
-      console.error('❌ Error stopping stream:', error);
-      // Still update UI even if backend call fails
-      setIsStreaming(false);
-      setIsAiTyping(false);
-      setStreamingStatus(null);
+      if (msg.type === 'flashcard' && msg.flashcardData?.length > 0) {
+        return { ...msg, isStreaming: false, stopped: true, content: `Flashcards stopped - ${msg.flashcardData.length} cards generated` };
+      }
+      // No partial mindmaps: keep one only if it already has nodes
+      if (msg.type === 'mindmap') {
+        return msg.mindmapData?.nodes?.length > 0 ? { ...msg, isStreaming: false, stopped: true } : null;
+      }
+      // Text: keep what she already read, as it stood when she pressed stop
+      if (msg.content && msg.content.trim()) {
+        return { ...msg, isStreaming: false, stopped: true };
+      }
+      // Empty placeholder: nothing to keep
+      return null;
+    }).filter(Boolean));
+
+    for (const message of messagesToSave) {
+      try {
+        await AppendToChat(stoppedChatId, message);
+      } catch (saveError) {
+        console.error(`❌ Failed to save stopped ${message.type} to Firebase:`, saveError);
+      }
     }
   };
 
@@ -5967,8 +5928,20 @@ const ChatInterface = ({
               // STUDY SHEET MESSAGE (inline in chat)
               // ============================================
               if (message.type === 'studysheet') {
+                // The sheet is shown once, finished. Until then (or if it
+                // fails) she sees the steps being done, ticked by backend
+                // events, never a half-written sheet (studySheetProgressModel.js).
+                if (message.isStreaming || message.error) {
+                  return (
+                    <div key={message.id} className="message ai-message study-sheet-message">
+                      <div className="message-content">
+                        <StudySheetProgress message={message} />
+                      </div>
+                    </div>
+                  );
+                }
                 return (
-                  <div key={message.id} className="message ai-message study-sheet-message">
+                  <div key={message.id} className={`message ai-message study-sheet-message ${message.justFinished ? 'sheet-just-finished' : ''}`}>
                     <div className="message-content">
                       <Suspense fallback={<GhostLoader type="studysheet" />}>
                         <StudySheetSimple

@@ -1,8 +1,20 @@
 // Pure streaming reducer, shared by the transport and its regression tests.
 export function updateStudySheetMessage(message, event) {
   switch (event.status) {
-    case 'study_sheet_reset':
-      return { ...message, content: '', studySheet: null, error: null, isStreaming: true };
+    case 'study_sheet_reset': {
+      // The first draft is thrown away, but the reading and planning behind it
+      // are not redone, so those two ticks stay.
+      const { materials, plan } = message.progress || {};
+      return { ...message, content: '', studySheet: null, error: null, isStreaming: true,
+        restarted: true, progress: { ...(materials ? { materials } : {}), ...(plan ? { plan } : {}) } };
+    }
+    case 'study_sheet_step': {
+      // One step of the checklist really started or ended (see
+      // studySheetProgressModel.js). Facts ride along with the state.
+      const { status, step, state, ...facts } = event;
+      if (!step || !state) return message;
+      return { ...message, progress: { ...(message.progress || {}), [step]: { state, ...facts } } };
+    }
     case 'study_sheet_header':
       return { ...message, studySheet: event.studySheet, topic: event.studySheet.title };
     case 'study_sheet_section':
@@ -14,7 +26,10 @@ export function updateStudySheetMessage(message, event) {
     case 'study_sheet_complete':
       return { ...message, content: event.content ?? message.content,
         studySheet: event.studySheet || message.studySheet,
-        topic: event.studySheet?.title || message.topic, isStreaming: false };
+        topic: event.studySheet?.title || message.topic, isStreaming: false,
+        // Live only (never saved): lets the finished sheet ease in where the
+        // checklist was, instead of every old sheet animating on page load.
+        justFinished: true };
     case 'study_sheet_error':
       return { ...message, isStreaming: false, error: event.message };
     default:

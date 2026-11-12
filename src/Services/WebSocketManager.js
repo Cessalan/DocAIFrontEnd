@@ -115,7 +115,8 @@ export class WebSocketManager {
       // student it failed, so let it go — otherwise text streams in underneath
       // an error bubble, which is worse than either outcome alone. Best effort:
       // only when the socket is actually open, and never reconnect just to
-      // cancel. The backend honours {type: "cancel_stream"} (main.py:585).
+      // cancel. The backend honours {type: "cancel_stream"} (websocket_endpoint
+      // in NQBackEnd2/main.py cancels the running answer task).
       const ws = this.connections.get(chatId);
       if (ws && ws.readyState === WebSocket.OPEN) {
         try {
@@ -222,6 +223,12 @@ export class WebSocketManager {
       ws.onclose = (event) => {
         clearTimeout(connectionTimeout);
         devLog(`🔌 WebSocket closed for chat ${chatId}:`, event.code, event.reason);
+        // A socket we already let go of (stopStream, closeConnection, stale
+        // cleanup) closes some time later, possibly after its replacement has
+        // opened. It must not tear down the new socket's keepalive or fail the
+        // new request.
+        const current = this.connections.get(chatId);
+        if (current && current !== ws) return;
         this.stopKeepalive(chatId);
         this.connections.delete(chatId);
         // If a request was mid-flight, surface it as an error instead of
@@ -303,6 +310,9 @@ export class WebSocketManager {
   // Close connection
   closeConnection(chatId) {
     this.stopKeepalive(chatId);
+    // We are closing on purpose (chat switched, page left): nothing is
+    // waiting for this request any more, so do not report it as a failure.
+    this.clearActiveStream(chatId);
     const ws = this.connections.get(chatId);
     if (ws) {
       ws.close(1000, 'Client closing connection');
@@ -310,24 +320,37 @@ export class WebSocketManager {
     }
   }
 
-  // Cancel ongoing streaming
-  async cancelStream(chatId) {
+  /**
+   * The student pressed stop. Synchronous, and it does not depend on the
+   * backend agreeing: the listener is detached and the socket closed, so not
+   * one more frame of the stopped answer can reach the UI, and the next
+   * message opens a clean socket that cannot carry leftovers from this one.
+   *
+   * Before 2026-11-11 stop only SENT cancel_stream and kept listening. The
+   * backend read that message after the answer had finished, so the whole
+   * answer streamed in underneath the "stopped" one and was then saved.
+   *
+   * cancel_stream is still sent first: the backend cancels the generation on
+   * it (and on the disconnect that follows, whichever it sees first).
+   */
+  stopStream(chatId) {
+    devLog(`🛑 Stopping stream for chat ${chatId}`);
+    this.clearActiveStream(chatId);
+    this.stopKeepalive(chatId);
+    const ws = this.connections.get(chatId);
+    if (!ws) return false;
+    this.connections.delete(chatId);
+    // A closing socket still delivers frames that were already on the wire.
+    ws.onmessage = null;
     try {
-      devLog(`🛑 Cancelling stream for chat ${chatId}`);
-      const success = await this.sendMessage(chatId, {
-        type: 'cancel_stream',
-        chat_id: chatId
-      });
-
-      if (success) {
-        devLog(`✅ Cancel request sent for chat ${chatId}`);
-        return true;
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.send(JSON.stringify({ type: 'cancel_stream', chat_id: chatId }));
       }
-      return false;
-    } catch (error) {
-      console.error(`Failed to cancel stream for chat ${chatId}:`, error);
-      return false;
+      ws.close(1000, 'Stopped by user');
+    } catch (e) {
+      // Already closing or closed: nothing left to stop.
     }
+    return true;
   }
 }
 
@@ -343,13 +366,17 @@ export const ask_llm_websocket = async (
   chat_id,
   onStatusUpdate,
   onTokenReceived,
-  onStreamEnd
+  onStreamEnd,
+  // Optional: returns true when the student pressed stop while we were still
+  // connecting. The request is then never sent.
+  shouldAbort
 ) => {
   try {
     devLog(`🚀 Starting WebSocket chat for ${chat_id}`);
 
     // Get WebSocket connection
-    const ws = await wsManager.getConnection(chat_id);
+    await wsManager.getConnection(chat_id);
+    if (shouldAbort && shouldAbort()) return;
 
     // Register this request as the chat's in-flight stream so a dropped
     // connection can notify it (see ws.onclose -> failActiveStream).
@@ -576,10 +603,8 @@ export const closeWebSocketConnection = (chatId) => {
 // This function is kept for backward compatibility
 export const setupWebSocketKeepalive = () => null;
 
-// Cancel ongoing stream
-export const cancelWebSocketStream = async (chatId) => {
-  return await wsManager.cancelStream(chatId);
-};
+// Stop the in-flight answer for good (see WebSocketManager.stopStream)
+export const stopWebSocketStream = (chatId) => wsManager.stopStream(chatId);
 
 
 // ============================================================================

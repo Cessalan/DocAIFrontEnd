@@ -5,17 +5,9 @@ import SelectionExplainPopover from './SelectionExplainPopover';
 import { fetchExplain } from '../../Services/FastAPICalls';
 import './Selection.css';
 
-const MARK_ATTR = 'data-nq-mark';
+import { selectionSurface } from './selectionScope';
 
-function getSelectableAncestor(node) {
-  let el = node && (node.nodeType === Node.ELEMENT_NODE ? node : node.parentElement);
-  while (el) {
-    if (el.dataset && el.dataset.selectable === 'true') return el;
-    if (el.dataset && el.dataset.selectable === 'false') return null;
-    el = el.parentElement;
-  }
-  return null;
-}
+const MARK_ATTR = 'data-nq-mark';
 
 // Map a selectable container's class names to the backend's "context" hint.
 function deriveContext(el) {
@@ -156,9 +148,10 @@ export default function SelectionProvider({ children }) {
       if (!text) return;
 
       const range = sel.getRangeAt(0);
-      const startAnc = getSelectableAncestor(range.startContainer);
-      const endAnc = getSelectableAncestor(range.endContainer);
-      if (!startAnc || startAnc !== endAnc) return;
+      // Only text the AI wrote: not her own message, not a button
+      // (selectionScope.js).
+      const startAnc = selectionSurface(range);
+      if (!startAnc) return;
 
       if (marksRef.current.length) {
         unwrapMarks(marksRef.current);

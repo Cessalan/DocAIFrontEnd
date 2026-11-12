@@ -182,3 +182,58 @@ describe('WebSocketManager keepalive', () => {
     expect(pings()).toBe(idle + 1);
   });
 });
+
+/**
+ * Stop. Before 2026-11-11 stop only sent cancel_stream and kept listening; the
+ * backend read it after the answer had finished, so the whole answer arrived
+ * under the "stopped" one. Stop now has to hold without the backend's help.
+ */
+describe('WebSocketManager stopStream', () => {
+  let mgr;
+  let ws;
+
+  beforeEach(() => {
+    jest.useFakeTimers();
+    mgr = new WebSocketManager();
+    ws = { readyState: WebSocket.OPEN, send: jest.fn(), close: jest.fn() };
+    mgr.connections.set('chat-1', ws);
+  });
+
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  test('no frame of the stopped answer reaches the listener', () => {
+    const onMessage = jest.fn();
+    mgr.setupMessageListener('chat-1', onMessage);
+    mgr.setActiveStream('chat-1', jest.fn());
+
+    mgr.stopStream('chat-1');
+
+    // A closing socket can still deliver frames already on the wire.
+    if (ws.onmessage) ws.onmessage({ data: JSON.stringify({ type: 'stream_chunk', data: { answer_chunk: 'late' } }) });
+    expect(onMessage).not.toHaveBeenCalled();
+  });
+
+  test('asks the backend to cancel, then closes the socket', () => {
+    mgr.stopStream('chat-1');
+
+    expect(JSON.parse(ws.send.mock.calls[0][0]).type).toBe('cancel_stream');
+    expect(ws.close).toHaveBeenCalled();
+    expect(mgr.connections.has('chat-1')).toBe(false);
+  });
+
+  test('a stopped request is not reported as a failure, then or later', () => {
+    const notify = jest.fn();
+    mgr.setActiveStream('chat-1', notify);
+
+    mgr.stopStream('chat-1');
+    jest.advanceTimersByTime(600000);
+
+    expect(notify).not.toHaveBeenCalled();
+  });
+
+  test('stopping with no socket open is a no-op', () => {
+    expect(mgr.stopStream('chat-nobody')).toBe(false);
+  });
+});

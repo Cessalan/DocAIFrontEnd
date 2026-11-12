@@ -101,7 +101,11 @@ export default function StudySheetSimple({ topic, content = '', studySheet = nul
         : <><span className="sheet-loading-dot" />{french ? 'Préparation de votre fiche…' : 'Building your study sheet…'}</>}</div>}
       {downloadError && <p className="sheet-error" role="alert">{french ? 'Le PDF n’a pas pu être préparé. Réessayez.' : 'The PDF could not be prepared. Please try again.'}</p>}
     </header>
-    {sheet.summary && <div className="sheet-overview"><span className="sheet-callout-label">{french ? 'En un coup d’œil' : 'At a glance'}</span><p><Inline text={sheet.summary} /></p></div>}
+    {/* Highlight-to-explain covers what the AI wrote: the overview and the
+        sections. The toolbar, the section list and the sources (her own files
+        and words) stay out; buttons and disclosure toggles inside are excluded
+        by Selection/selectionScope.js. */}
+    {sheet.summary && <div className="sheet-overview" data-selectable="true"><span className="sheet-callout-label">{french ? 'En un coup d’œil' : 'At a glance'}</span><p><Inline text={sheet.summary} /></p></div>}
     {sheet.sections.length > 2 && <details className="sheet-contents">
       <summary><span>{french ? 'Voir les sections' : 'View sections'}</span><span className="sheet-contents-count">{sheet.sections.length}</span>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
@@ -113,7 +117,7 @@ export default function StudySheetSimple({ topic, content = '', studySheet = nul
         }}><span>{String(i + 1).padStart(2, '0')}</span>{readableHeading(section.title) || (french ? 'Révision' : 'Review')}</a>)}
       </nav>
     </details>}
-    <div className="study-sheet-simple-content">
+    <div className="study-sheet-simple-content" data-selectable="true">
       {sheet.sections.map((section, i) => <section className="sheet-section" id={`sheet-${id}-${section.id}`} key={section.id}>
         {section.title && <h2 className="sheet-section-heading"><button aria-expanded={!folded[section.id]} aria-controls={`sheet-${id}-${section.id}-body`}
           onClick={() => setFolded(prev => ({ ...prev, [section.id]: !prev[section.id] }))}>

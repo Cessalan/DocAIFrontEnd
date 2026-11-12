@@ -1476,6 +1476,40 @@ const resources = {
           mixed: "Round {{n}} · Mixed review"
         }
       },
+      studySheetProgress: {
+        aria: "Study sheet in preparation",
+        kicker: "Study sheet",
+        title: "Preparing your study sheet",
+        titleFailed: "This sheet could not be finished",
+        state: { done: "done", active: "in progress", pending: "not started", failed: "stopped here" },
+        materials: {
+          active: "Reading your material",
+          done: "Read your material",
+          files_one: "Pulled the relevant pages from your file",
+          files_other: "Pulled the relevant pages from your {{count}} files",
+          plusNotes: "Plus the notes you pasted",
+          notesOnly: "Read the notes you pasted",
+          none: "No files in this chat, so working from your request"
+        },
+        plan: {
+          active: "Choosing what to cover",
+          done: "Chose what to cover",
+          priorities: "Starts with what you flagged as important",
+          quizzes_one: "Includes a review of your answers on a recent quiz",
+          quizzes_other: "Includes a review of your answers on {{count}} recent quizzes"
+        },
+        write: {
+          active: "Writing your sheet",
+          done_one: "Wrote {{count}} section",
+          done_other: "Wrote {{count}} sections",
+          restarted: "The first draft came back incomplete, so it is being written again."
+        },
+        check: {
+          sourced: "Checking each fact against your material",
+          unsourced: "Checking the sheet is complete",
+          generic: "Final check"
+        }
+      },
       orderWalkthrough: {
         trigger: "Watch how to order it",
         autoNext: "Number {{n}}.",
@@ -4271,6 +4305,40 @@ const resources = {
           check: "Tour {{n}} · Vérifier que ça a marché",
           topicLesson: "Tour {{n}} · {{topic}} : les points clés",
           mixed: "Tour {{n}} · Révision mélangée"
+        }
+      },
+      studySheetProgress: {
+        aria: "Fiche de révision en préparation",
+        kicker: "Fiche de révision",
+        title: "Préparation de ta fiche de révision",
+        titleFailed: "Cette fiche n’a pas pu être terminée",
+        state: { done: "terminé", active: "en cours", pending: "pas commencé", failed: "arrêté ici" },
+        materials: {
+          active: "Lecture de tes documents",
+          done: "Documents lus",
+          files_one: "Pages utiles repérées dans ton fichier",
+          files_other: "Pages utiles repérées dans tes {{count}} fichiers",
+          plusNotes: "Ainsi que les notes que tu as collées",
+          notesOnly: "Lecture des notes que tu as collées",
+          none: "Aucun fichier dans cette conversation, donc à partir de ta demande"
+        },
+        plan: {
+          active: "Choix de ce qu’il faut couvrir",
+          done: "Contenu de la fiche choisi",
+          priorities: "Commence par ce que tu as signalé comme important",
+          quizzes_one: "Inclut un retour sur tes réponses à un quiz récent",
+          quizzes_other: "Inclut un retour sur tes réponses à {{count}} quiz récents"
+        },
+        write: {
+          active: "Rédaction de ta fiche",
+          done_one: "{{count}} section rédigée",
+          done_other: "{{count}} sections rédigées",
+          restarted: "Le premier jet est revenu incomplet, il est donc réécrit."
+        },
+        check: {
+          sourced: "Vérification de chaque fait dans tes documents",
+          unsourced: "Vérification que la fiche est complète",
+          generic: "Vérification finale"
         }
       },
       orderWalkthrough: {

@@ -415,7 +415,8 @@ const ChatMessage = ({
       )}
 
       {/* Content */}
-      <div className="message-content" data-selectable="true">
+      {/* Highlight-to-explain is for what the AI wrote, never her own message */}
+      <div className="message-content" data-selectable={isAI ? 'true' : 'false'}>
         {message.type === 'practice_debrief' && <PracticeDebrief message={message} onSendMessage={onSendMessage} onRetry={onRetryDebrief} next={practiceNext} mistakes={practiceMistakes} onRedoMistakes={onRedoMistakes} onOpenPractice={onOpenPractice} />}
         {/* Delete Button (Dev Mode + View All Chats Only) */}
         {isDevelopment && viewAllChatsMode && isHovered && onDeleteMessage && !message.isStreaming && (

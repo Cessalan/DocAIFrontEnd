@@ -1,0 +1,60 @@
+/* The checklist shown while a study sheet is prepared (StudySheetProgress.js).
+   Same paper, ink and accent as the sheet that replaces it
+   (StudySheetSimple.css), so the swap reads as one object filling in. */
+.ssp {
+  --ssp-paper: #fffefb; --ssp-ink: #3d3a37; --ssp-muted: #7f7872;
+  --ssp-line: #ebe5de; --ssp-accent: #b86c5c; --ssp-soft: #f7f2ed;
+  width: 100%; box-sizing: border-box; min-width: 0; color: var(--ssp-ink);
+  background: var(--ssp-paper); border: 1px solid var(--ssp-line); border-radius: 16px;
+  padding: 28px 32px 30px; font-size: 14px; line-height: 1.6; overflow-wrap: break-word;
+}
+.ssp *, .ssp *::before { box-sizing: border-box; }
+.ssp-kicker { display: block; color: var(--ssp-muted); font-size: 10px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; margin-bottom: 14px; }
+.ssp .ssp-title { margin: 0 0 22px; font-size: 20px; line-height: 1.35; font-weight: 500; letter-spacing: -.02em; color: var(--ssp-ink); }
+
+.ssp-steps { list-style: none; margin: 0; padding: 0; }
+.ssp-step { display: grid; grid-template-columns: 18px minmax(0, 1fr); column-gap: 13px; padding: 0 0 18px; position: relative; }
+.ssp-step:last-child { padding-bottom: 0; }
+/* The thread between boxes: one continuous line of work, not four cards. */
+.ssp-step:not(:last-child)::before { content: ''; position: absolute; left: 8.5px; top: 22px; bottom: 2px; width: 1px; background: var(--ssp-line); }
+
+.ssp-box { width: 18px; height: 18px; margin-top: 2px; border-radius: 5px; border: 1.5px solid var(--ssp-line); background: var(--ssp-paper); display: grid; place-items: center; color: #fff; position: relative; z-index: 1; transition: background-color .2s, border-color .2s; }
+.ssp-box-done { background: var(--ssp-accent); border-color: var(--ssp-accent); }
+.ssp-box-done path { stroke-dasharray: 12; stroke-dashoffset: 12; animation: ssp-draw .28s .05s ease-out forwards; }
+.ssp-box-active { border-color: var(--ssp-accent); }
+.ssp-box-active::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--ssp-accent); animation: ssp-pulse 1.4s ease-in-out infinite; }
+.ssp-box-failed { border-color: var(--ssp-muted); color: var(--ssp-muted); }
+
+.ssp .ssp-step-label { margin: 0; font-size: 14px; line-height: 22px; color: var(--ssp-ink); }
+.ssp-step-pending .ssp-step-label { color: var(--ssp-muted); }
+.ssp-step-active .ssp-step-label { font-weight: 500; }
+.ssp .ssp-step-detail { margin: 3px 0 0; font-size: 12.5px; line-height: 1.55; color: var(--ssp-muted); }
+
+.ssp-sections { list-style: none; margin: 8px 0 0; padding: 0; }
+.ssp-sections li { position: relative; padding: 2px 0 2px 18px; font-size: 12.5px; line-height: 1.55; color: var(--ssp-ink); animation: ssp-in .25s ease-out; }
+.ssp-sections li::before { content: ''; position: absolute; left: 2px; top: 8px; width: 8px; height: 4.5px; border-left: 1.5px solid var(--ssp-accent); border-bottom: 1.5px solid var(--ssp-accent); transform: rotate(-45deg); }
+
+.ssp .ssp-error { margin: 20px 0 0; padding-top: 16px; border-top: 1px solid var(--ssp-line); font-size: 13px; color: var(--ssp-ink); }
+.ssp-sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* The finished sheet eases in where the checklist was. */
+.study-sheet-message.sheet-just-finished .message-content { animation: ssp-in .32s ease-out; }
+
+@keyframes ssp-draw { to { stroke-dashoffset: 0; } }
+@keyframes ssp-pulse { 0%, 100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1); } }
+@keyframes ssp-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+body.dark-mode .ssp, [data-theme="dark"] .ssp {
+  --ssp-paper: #2c2c2c; --ssp-ink: #eeeae6; --ssp-muted: #a5a09b;
+  --ssp-line: #40403e; --ssp-accent: #c4b3d8; --ssp-soft: #333332;
+}
+body.dark-mode .ssp-box-done, [data-theme="dark"] .ssp-box-done { color: #2c2c2c; }
+
+@media (max-width: 600px) {
+  .ssp { padding: 20px 18px 22px; border-radius: 14px; }
+  .ssp .ssp-title { font-size: 18px; margin-bottom: 18px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ssp-box-done path { animation: none; stroke-dashoffset: 0; }
+  .ssp-box-active::after, .ssp-sections li, .study-sheet-message.sheet-just-finished .message-content { animation: none; }
+}
