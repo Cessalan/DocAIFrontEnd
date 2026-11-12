@@ -18,6 +18,11 @@ use that voice so the character sounds the same in every episode.
 
 ## Making a new episode
 
+Shortcut: ask Claude Code for `/pip-episode <scenario>` (for example
+`/pip-episode digoxin toxicity signs`). The skill in
+`.claude/skills/pip-episode/` does every step below, voices each episode
+once with Pip, and adds the episode to `POSTS.md`. The manual steps:
+
 1. Copy `episodes/002/episode.json` to `episodes/<number>/episode.json` and edit it:
    - `voiceLine`: what Pip says. Keep it to the question, not the answer choices
      (3-6s is ideal). End each phrase that starts a card line with `.` or `?`

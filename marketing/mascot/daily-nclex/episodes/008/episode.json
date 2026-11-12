@@ -1,0 +1,15 @@
+{
+  "number": 8,
+  "topic": "Infection control: tuberculosis",
+  "voiceLine": "Your client has active tuberculosis. Which precautions?",
+  "card": [
+    { "text": "Client with active TB.", "style": "body", "at": 0 },
+    { "text": "Which precautions?", "style": "question", "at": 1 },
+    { "text": "A. Contact", "style": "option", "at": 1 },
+    { "text": "B. Droplet", "style": "option", "at": 1 },
+    { "text": "C. Airborne", "style": "option", "at": 1 },
+    { "text": "D. Standard only", "style": "option", "at": 1 }
+  ],
+  "answer": "C. Airborne: negative-pressure room, door closed, and a fitted N95 for staff. The client wears a surgical mask when leaving the room. Remember \"My Chicken Hez TB\": measles, chickenpox, herpes zoster (disseminated), TB.",
+  "nurseReviewed": false
+}

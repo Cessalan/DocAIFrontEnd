@@ -1,0 +1,12 @@
+{
+  "number": 6,
+  "topic": "Dosage calculation: IV rate",
+  "voiceLine": "One liter of normal saline over 8 hours. What rate do you set?",
+  "card": [
+    { "text": "Ordered: 1,000 mL 0.9% NaCl IV", "style": "body", "at": 0 },
+    { "text": "to infuse over 8 hours", "style": "body", "at": 0 },
+    { "text": "Rate in mL/hr?", "style": "question", "at": 1 }
+  ],
+  "answer": "125 mL/hr. 1,000 mL ÷ 8 hr = 125 mL/hr.",
+  "nurseReviewed": false
+}

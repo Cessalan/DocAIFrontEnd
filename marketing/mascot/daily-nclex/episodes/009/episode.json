@@ -1,0 +1,15 @@
+{
+  "number": 9,
+  "topic": "Hyperkalemia: ECG changes",
+  "voiceLine": "Potassium is 6.2. Which ECG change do you expect?",
+  "card": [
+    { "text": "Serum potassium: 6.2 mEq/L", "style": "body", "at": 0 },
+    { "text": "Expected ECG change?", "style": "question", "at": 1 },
+    { "text": "A. Peaked T waves", "style": "option", "at": 1 },
+    { "text": "B. U waves", "style": "option", "at": 1 },
+    { "text": "C. Flattened T waves", "style": "option", "at": 1 },
+    { "text": "D. ST depression", "style": "option", "at": 1 }
+  ],
+  "answer": "A. High potassium peaks the T waves (tall and tented). U waves, flat T waves and ST depression (B, C, D) are the low-potassium picture.",
+  "nurseReviewed": false
+}

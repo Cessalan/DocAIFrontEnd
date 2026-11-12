@@ -1,0 +1,14 @@
+{
+  "number": 5,
+  "topic": "Prioritization: who do you see first",
+  "voiceLine": "Four clients. Who do you see first?",
+  "card": [
+    { "text": "Four clients. Who first?", "style": "question", "at": 0 },
+    { "text": "A. COPD, SpO2 90% (her baseline)", "style": "option", "at": 1 },
+    { "text": "B. Post-op, newly restless, RR 28", "style": "option", "at": 1 },
+    { "text": "C. Type 2 diabetic, glucose 180", "style": "option", "at": 1 },
+    { "text": "D. Hip fracture, pain 6/10", "style": "option", "at": 1 }
+  ],
+  "answer": "B. New restlessness with a fast respiratory rate after surgery can be early hypoxia or a pulmonary embolism: an acute change in breathing. A is at her baseline, C and D need care but are stable.",
+  "nurseReviewed": false
+}

@@ -1,0 +1,15 @@
+{
+  "number": 10,
+  "topic": "Increased ICP: positioning",
+  "voiceLine": "Increased intracranial pressure. How do you position your client?",
+  "card": [
+    { "text": "Client with increased ICP.", "style": "body", "at": 0 },
+    { "text": "Best position?", "style": "question", "at": 1 },
+    { "text": "A. Flat, supine", "style": "option", "at": 1 },
+    { "text": "B. Trendelenburg", "style": "option", "at": 1 },
+    { "text": "C. HOB 30°, head midline", "style": "option", "at": 1 },
+    { "text": "D. Prone, head turned", "style": "option", "at": 1 }
+  ],
+  "answer": "C. Head of bed at 30 degrees with the head midline helps venous drainage from the brain. Flat (A), head-down (B) and a turned or flexed neck (D) all raise ICP.",
+  "nurseReviewed": false
+}

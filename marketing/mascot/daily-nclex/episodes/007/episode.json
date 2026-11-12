@@ -1,0 +1,16 @@
+{
+  "number": 7,
+  "topic": "Hypoglycemia signs (select all that apply)",
+  "voiceLine": "Which are signs of low blood sugar? Select all that apply.",
+  "card": [
+    { "text": "Signs of hypoglycemia?", "style": "question", "at": 0 },
+    { "text": "Select all that apply.", "style": "question", "at": 1 },
+    { "text": "A. Shakiness", "style": "option", "at": 1 },
+    { "text": "B. Sweating", "style": "option", "at": 1 },
+    { "text": "C. Fruity breath", "style": "option", "at": 1 },
+    { "text": "D. Confusion", "style": "option", "at": 1 },
+    { "text": "E. Excessive urination", "style": "option", "at": 1 }
+  ],
+  "answer": "A, B and D. Shakiness and sweating are the adrenaline response; confusion is the brain short on glucose. Fruity breath (C) is DKA and excessive urination (E) is high blood sugar.",
+  "nurseReviewed": false
+}

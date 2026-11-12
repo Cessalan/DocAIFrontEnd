@@ -137,27 +137,28 @@ function main() {
   roundedRect(CARD_W, cardH, 44, 'white', 238, `${work}/card.png`);
   roundedRect(760, 92, 46, '0xE88D7D', 255, `${work}/badge.png`);
 
-  // 3. Text goes through files so quotes, colons and % never need escaping.
+  // 3. Text goes through files so quotes and colons never need escaping;
+  // expansion=none stops drawtext reading % as a format code.
   const tf = (name, text) => { fs.writeFileSync(path.join(ROOT, work, name), text); return `${work}/${name}`; };
   // Lines on the first phrase are on screen from frame 1: that frame is the
   // feed thumbnail and has to show the question, not an empty card.
   const fadeIn = (t) => (t <= VOICE_DELAY + 0.1 ? 'alpha=1'
     : `alpha='if(lt(t,${t.toFixed(2)}),0,min(1,(t-${t.toFixed(2)})/0.25))'`);
   const draws = [
-    `drawtext=fontfile=assets/outfit-800.ttf:textfile=${tf('badge.txt', ep.badge || `PIP'S DAILY NCLEX QUESTION #${num}`)}:fontcolor=white:fontsize=40:x=(w-tw)/2:y=230+(92-th)/2-4`,
+    `drawtext=expansion=none:fontfile=assets/outfit-800.ttf:textfile=${tf('badge.txt', ep.badge || `PIP'S DAILY NCLEX QUESTION #${num}`)}:fontcolor=white:fontsize=40:x=(w-tw)/2:y=230+(92-th)/2-4`,
     // Quiet brand tag at the foot of the card, on screen the whole time.
-    `drawtext=fontfile=assets/outfit-600.ttf:textfile=${tf('tag.txt', 'nursequizai.com')}:fontcolor=${COLORS.muted}:fontsize=28:x=(w-tw)/2:y=${CARD_Y + cardH - BRAND_TAG_H - 6}`,
+    `drawtext=expansion=none:fontfile=assets/outfit-600.ttf:textfile=${tf('tag.txt', 'nursequizai.com')}:fontcolor=${COLORS.muted}:fontsize=28:x=(w-tw)/2:y=${CARD_Y + cardH - BRAND_TAG_H - 6}`,
     ...placed.map((l, i) => {
       const t = l.at === 'after' ? ctaAt : Math.max(0, VOICE_DELAY + starts[l.at] - LEAD);
       const x = l.s.align === 'left' ? 120 : '(w-tw)/2';
-      return `drawtext=fontfile=assets/${l.s.font}:textfile=${tf(`l${i}.txt`, l.text)}:fontcolor=${COLORS[l.s.color]}:fontsize=${l.size}:x=${x}:y=${l.y}:${fadeIn(t)}`;
+      return `drawtext=expansion=none:fontfile=assets/${l.s.font}:textfile=${tf(`l${i}.txt`, l.text)}:fontcolor=${COLORS[l.s.color]}:fontsize=${l.size}:x=${x}:y=${l.y}:${fadeIn(t)}`;
     }),
   ];
   const endText = [
     ['outfit-800.ttf', 'brand.txt', 'NurseQuizAI', 'dark', 84, 900],
     ['outfit-600.ttf', 'cta1.txt', ep.endLine || 'Free NCLEX practice at nursequizai.com', 'coral', 46, 1020],
     ['outfit-600.ttf', 'cta2.txt', ep.endLine2 || 'Answer pinned tomorrow', 'dark', 40, 1090],
-  ].map(([f, n, txt, c, s, y]) => `drawtext=fontfile=assets/${f}:textfile=${tf(n, txt)}:fontcolor=${COLORS[c]}:fontsize=${s}:x=(w-tw)/2:y=${y}`);
+  ].map(([f, n, txt, c, s, y]) => `drawtext=expansion=none:fontfile=assets/${f}:textfile=${tf(n, txt)}:fontcolor=${COLORS[c]}:fontsize=${s}:x=(w-tw)/2:y=${y}`);
 
   const vf = [
     `[0:v][1:v]overlay=${CARD_X}:${CARD_Y}[c1]`,

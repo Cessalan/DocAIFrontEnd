@@ -1,0 +1,16 @@
+{
+  "number": 4,
+  "topic": "Digoxin: hold parameter",
+  "voiceLine": "Digoxin is due. The apical pulse is 52. What do you do?",
+  "card": [
+    { "text": "Digoxin 0.125 mg PO is due.", "style": "body", "at": 0 },
+    { "text": "Apical pulse: 52 bpm", "style": "body", "at": 1 },
+    { "text": "What do you do?", "style": "question", "at": 2 },
+    { "text": "A. Give it as ordered", "style": "option", "at": 2 },
+    { "text": "B. Hold it and notify the provider", "style": "option", "at": 2 },
+    { "text": "C. Give half the dose", "style": "option", "at": 2 },
+    { "text": "D. Give it, recheck pulse in 4 h", "style": "option", "at": 2 }
+  ],
+  "answer": "B. Hold digoxin when an adult's apical pulse is under 60 and notify the provider. Bradycardia can be an early sign of toxicity. Nurses never split or adjust the dose on their own (C).",
+  "nurseReviewed": false
+}
