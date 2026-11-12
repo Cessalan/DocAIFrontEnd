@@ -30,6 +30,12 @@ describe('explanationLead', () => {
     expect(explanationLead(html)).toBe('A and C are correct. Severe bleeding moves circulation first.');
   });
 
+  it('keeps a sentence that holds a decimal whole', () => {
+    expect(explanationLead('Early toxicity shows in the gut first. A potassium of 4.2 is normal; low potassium raises the risk.'))
+      .toBe('Early toxicity shows in the gut first. A potassium of 4.2 is normal; low potassium raises the risk.');
+    expect(explanationLead('Give 0.5 mg now. Recheck in 15 min.')).toBe('Give 0.5 mg now. Recheck in 15 min.');
+  });
+
   it('cuts a single very long sentence at a word, with an ellipsis', () => {
     const long = 'word '.repeat(80).trim() + '.';
     const lead = explanationLead(long);

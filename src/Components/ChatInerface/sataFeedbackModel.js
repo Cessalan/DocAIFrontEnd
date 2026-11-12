@@ -58,7 +58,10 @@ export const explanationLead = (html) => {
     .replace(/\s+/g, ' ')
     .trim();
   if (!text) return '';
-  const sentences = text.match(/[^.!?]+[.!?]+(\s|$)/g) || [text];
+  // A sentence ends at punctuation followed by a space or the end. Splitting on
+  // any "." dropped the start of a sentence holding a decimal: "A potassium of
+  // 4.2 is normal." used to come out as "2 is normal."
+  const sentences = text.match(/.+?[.!?]+(?=\s|$)\s*/g) || [text];
   let lead = '';
   for (const sentence of sentences) {
     if ((lead + sentence).trim().length > LEAD_MAX) break;

@@ -1,281 +1,229 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { fetchSharedQuiz } from '../../Services/QuizShareService';
-import ChatQuiz from '../ChatInerface/ChatQuiz';
-import PublicQuizResults from './PublicQuizResults';
-import './PublicQuizView.css';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
+import SATAQuestion from '../ChatInerface/SATAQuestion';
+import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
+import MatrixQuestion from '../StudyMode/MatrixQuestion';
+import { clarityEvent } from '../../Services/ClarityService';
+import {
+  fetchSharedQuiz, flagSharedQuestion, isMyShare, recordSetCompleted, recordSetStarted, saveSharedWalkthrough,
+} from '../../Services/QuizShareService';
+import { cleanWalkthrough, gradeSet, isRight, readSharedSet } from '../ShareSet/shareSetModel';
+import { isUsable } from '../ChatInerface/orderWalkthroughModel';
+import SharedMcqCard from './SharedMcqCard';
+import SharedSetResult from './SharedSetResult';
+import './SharedQuiz.css';
 
-function PublicQuizView() {
+/**
+ * /quiz/:shareId — a classmate opens a shared set.
+ *
+ * The link lands on question 1. No homepage, no upload, no account and no
+ * survey stand between a classmate and the first answer; the one sign-up
+ * prompt is on the result screen. Mobile matters most here: the link arrives
+ * in a group chat, and phones were 157 visitors to 1 finished step
+ * (2026-11-10) because the homepage asks a phone for lecture slides.
+ *
+ * Everything shown comes through readSharedSet, which strips markup: the
+ * stored document is client-writable.
+ */
+export default function PublicQuizView() {
   const { shareId } = useParams();
-  const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [quizData, setQuizData] = useState(null);
-  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState([]);
-  const [showResults, setShowResults] = useState(false);
-  const [skippedQuestions, setSkippedQuestions] = useState([]);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const saved = localStorage.getItem('publicQuizDarkMode');
-    if (saved !== null) return JSON.parse(saved);
-    // Check system preference
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  });
-
-  // Apply dark mode class to body
-  useEffect(() => {
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-    localStorage.setItem('publicQuizDarkMode', JSON.stringify(isDarkMode));
-
-    // Cleanup on unmount
-    return () => {
-      document.body.classList.remove('dark-mode');
-    };
-  }, [isDarkMode]);
-
-  useEffect(() => {
-    loadQuiz();
-  }, [shareId]);
-
-  const loadQuiz = async () => {
+  const { t } = useTranslation();
+  const [status, setStatus] = useState('loading');
+  const [set, setSet] = useState(null);
+  const [position, setPosition] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [done, setDone] = useState(false);
+  const [flagged, setFlagged] = useState({});
+  const [dark, setDark] = useState(() => {
     try {
-      setLoading(true);
-      setError(null);
-      const data = await fetchSharedQuiz(shareId);
-      setQuizData(data);
-    } catch (err) {
-      setError(err.message || "Failed to load quiz");
-    } finally {
-      setLoading(false);
-    }
-  };
+      const saved = localStorage.getItem('publicQuizDarkMode');
+      if (saved !== null) return JSON.parse(saved);
+    } catch { /* fall through to the system setting */ }
+    return !!window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  });
+  const mine = useMemo(() => isMyShare(shareId), [shareId]);
+  const top = useRef(null);
+  const startedRef = useRef(false);
+  // Walkthroughs by stored question index: saved ones from the set, plus any
+  // generated in this visit. `pending` keeps one request per question even if
+  // she retakes the set before the first answer comes back.
+  const walkthroughs = useRef({});
+  const pending = useRef({});
+  const loaders = useRef({});
 
-  const handleAnswerSelect = (answerData) => {
-    setUserAnswers(prev => {
-      const existing = prev.find(a => a.quizIndex === answerData.quizIndex);
-      if (existing) {
-        return prev.map(a => a.quizIndex === answerData.quizIndex ? answerData : a);
-      }
-      return [...prev, answerData];
-    });
+  useEffect(() => {
+    document.body.classList.toggle('dark-mode', dark);
+    try { localStorage.setItem('publicQuizDarkMode', JSON.stringify(dark)); } catch { /* private mode */ }
+    return () => document.body.classList.remove('dark-mode');
+  }, [dark]);
 
-    setSkippedQuestions(prev => prev.filter(idx => idx !== answerData.quizIndex));
-  };
+  useEffect(() => {
+    let live = true;
+    setStatus('loading');
+    fetchSharedQuiz(shareId)
+      .then((raw) => {
+        if (!live) return;
+        const read = readSharedSet(raw);
+        if (!read) { setStatus('missing'); return; }
+        walkthroughs.current = { ...read.walkthroughs };
+        setSet(read);
+        setStatus('ready');
+        document.title = read.topic ? `${read.topic} · NurseQuizAI` : 'NurseQuizAI';
+        clarityEvent('shared_quiz_opened', { questions: read.questions.length, mine, named: !!read.senderName });
+      })
+      .catch(() => live && setStatus('missing'));
+    return () => { live = false; };
+  }, [shareId, mine]);
 
-  const handleNext = () => {
-    if (currentQuizIndex < quizData.quizzes.length - 1) {
-      setCurrentQuizIndex(prev => prev + 1);
-    } else {
-      setShowResults(true);
-    }
-  };
+  useEffect(() => {
+    if (position > 0 || done) top.current?.scrollIntoView?.({ block: 'start', behavior: 'smooth' });
+  }, [position, done]);
 
-  const handleSkip = () => {
-    if (!skippedQuestions.includes(currentQuizIndex)) {
-      setSkippedQuestions(prev => [...prev, currentQuizIndex]);
-    }
-    handleNext();
-  };
+  if (status === 'loading') {
+    return <Shell dark={dark} onTheme={setDark}><div className="shared-quiz__loading" role="status" aria-label={t('shareSet.loading')}><span /><span /><span /></div></Shell>;
+  }
 
-  const handleNavigate = (index) => {
-    setCurrentQuizIndex(index);
-    setShowResults(false);
-  };
-
-  // Extract unique topics from all quizzes
-  const allTopics = useMemo(() => {
-    if (!quizData?.quizzes) return [];
-    const topics = new Set();
-    quizData.quizzes.forEach(quiz => {
-      if (quiz.topic) topics.add(quiz.topic);
-    });
-    return Array.from(topics);
-  }, [quizData]);
-
-  // Calculate user's analytics from their answers
-  const userAnalytics = useMemo(() => {
-    if (!showResults || userAnswers.length === 0) return null;
-
-    const correctAnswers = userAnswers.filter(a => a.isCorrect).length;
-    const incorrectAnswers = userAnswers.filter(a => !a.isCorrect).length;
-    const percentage = Math.round((correctAnswers / quizData.quizzes.length) * 100);
-
-    // Calculate weak and strong topics
-    const topicPerformance = {};
-    userAnswers.forEach(answer => {
-      const question = quizData.quizzes[answer.quizIndex];
-      const topic = question.topic || quizData.topic;
-
-      if (!topicPerformance[topic]) {
-        topicPerformance[topic] = { correct: 0, total: 0 };
-      }
-
-      topicPerformance[topic].total += 1;
-      if (answer.isCorrect) {
-        topicPerformance[topic].correct += 1;
-      }
-    });
-
-    const weakTopics = Object.entries(topicPerformance)
-      .filter(([_, perf]) => (perf.correct / perf.total) < 0.7)
-      .map(([topic]) => topic);
-
-    const strongTopics = Object.entries(topicPerformance)
-      .filter(([_, perf]) => (perf.correct / perf.total) >= 0.8)
-      .map(([topic]) => topic);
-
-    return {
-      totalQuestions: quizData.quizzes.length,
-      correctAnswers,
-      incorrectAnswers,
-      percentage,
-      weakTopics,
-      strongTopics
-    };
-  }, [showResults, userAnswers, quizData]);
-
-  const nursingIcons = (
-    <>
-      <div className="nursing-icon">💊</div>
-      <div className="nursing-icon">🩺</div>
-      <div className="nursing-icon">💉</div>
-      <div className="nursing-icon">💗</div>
-      <div className="nursing-icon">🏥</div>
-      <div className="nursing-icon">⚕️</div>
-      <div className="nursing-icon">🩹</div>
-      <div className="nursing-icon">💝</div>
-      <div className="nursing-icon">🌡️</div>
-      <div className="nursing-icon">💕</div>
-      <div className="nursing-icon">🧬</div>
-      <div className="nursing-icon">💜</div>
-    </>
-  );
-
-  if (loading) {
+  if (status === 'missing') {
     return (
-      <>
-        {nursingIcons}
-        <div className="public-quiz-container">
-          <div className="public-quiz-loading">
-            <div className="spinner"></div>
-            <p>Loading quiz...</p>
-          </div>
+      <Shell dark={dark} onTheme={setDark}>
+        <div className="shared-card shared-missing">
+          <p className="shared-eyebrow">{t('shareSet.missingEyebrow')}</p>
+          <h1>{t('shareSet.missingTitle')}</h1>
+          <p>{t('shareSet.missingBody')}</p>
+          <a className="shared-primary" href="/">{t('shareSet.missingCta')}</a>
         </div>
-      </>
+      </Shell>
     );
   }
 
-  if (error) {
+  const total = set.questions.length;
+  const question = set.questions[position];
+  const last = position + 1 === total;
+
+  const record = (answer) => {
+    setAnswers((all) => ({ ...all, [position]: answer }));
+    if (!startedRef.current) {
+      startedRef.current = true;
+      if (!mine) recordSetStarted(shareId);
+      clarityEvent('shared_quiz_answered', { kind: question.questionType, correct: isRight(answer), mine });
+    }
+  };
+
+  const next = () => {
+    if (!last) { setPosition((at) => at + 1); return; }
+    const result = gradeSet(set.questions, answers);
+    if (!mine) recordSetCompleted(shareId, result.missedIndices);
+    clarityEvent('shared_quiz_completed', { correct: result.correct, total: result.total, mine });
+    setDone(true);
+  };
+
+  const restart = () => { setAnswers({}); setPosition(0); setDone(false); };
+
+  const flag = () => {
+    setFlagged((all) => ({ ...all, [position]: true }));
+    flagSharedQuestion(shareId, question.index);
+    clarityEvent('shared_question_flagged', { kind: question.questionType });
+  };
+
+  if (done) {
     return (
-      <>
-        {nursingIcons}
-        <div className="public-quiz-container">
-          <div className="public-quiz-error">
-            <div className="error-icon">⚠️</div>
-            <h2>Quiz Not Found</h2>
-            <p>{error}</p>
-            <button
-              className="back-home-btn"
-              onClick={() => navigate('/')}
-            >
-              Go to Homepage
-            </button>
-          </div>
-        </div>
-      </>
+      <Shell dark={dark} onTheme={setDark}>
+        <div ref={top} />
+        <SharedSetResult set={set} answers={answers} result={gradeSet(set.questions, answers)} onRetry={restart} />
+      </Shell>
     );
   }
 
-  if (!quizData) {
-    return null;
-  }
+  // A walkthrough is generated at most once per question per shared set: the
+  // first visitor who needs it pays for the model call and it is saved on the
+  // set; every visitor after that gets the saved copy (owner, 2026-11-11). A
+  // declined or failed request is not saved, so the next visitor can try.
+  const loadWalkthrough = (item) => (fetchFresh) => {
+    const saved = walkthroughs.current[item.index];
+    if (saved) return Promise.resolve(saved);
+    if (!pending.current[item.index]) {
+      pending.current[item.index] = fetchFresh()
+        .then((fresh) => {
+          const usable = item.questionType === 'casestudy'
+            ? isUsable(fresh, item.correctOrder.length)
+            : !!cleanWalkthrough(fresh);
+          if (!usable) return fresh;
+          clarityEvent('shared_walkthrough_generated', { kind: item.questionType });
+          return saveSharedWalkthrough(shareId, item.index, fresh).then(cleanWalkthrough);
+        })
+        .then((kept) => {
+          if (kept) walkthroughs.current[item.index] = kept;
+          else delete pending.current[item.index];
+          return kept;
+        })
+        .catch(() => { delete pending.current[item.index]; return null; });
+    }
+    return pending.current[item.index];
+  };
+
+  const cardProps = {
+    quiz: question, quizIndex: position, totalQuestions: total, isLastQuestion: last,
+    onAnswerSelect: record, onNext: next,
+  };
+  // One stable loader per question, so the cards' callbacks do not change on
+  // every render.
+  if (!loaders.current[question.index]) loaders.current[question.index] = loadWalkthrough(question);
+  const walkthroughProps = { loadWalkthrough: loaders.current[question.index] };
 
   return (
-    <>
-      {nursingIcons}
-      <div className={`public-quiz-container ${isDarkMode ? 'dark' : ''}`}>
-        {/* Dark Mode Toggle - Same style as QuizRoom landing */}
-        <button
-          className="theme-toggle-btn"
-          onClick={() => setIsDarkMode(!isDarkMode)}
-          aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-        >
-          {isDarkMode ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 2V4M12 20V22M4 12H2M22 12H20M5.64 5.64L4.22 4.22M19.78 19.78L18.36 18.36M5.64 18.36L4.22 19.78M19.78 4.22L18.36 5.64" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-          )}
-        </button>
-
-        <div className="public-quiz-header">
-        <div className="brand">
-          <img src="/NQWarmLogo.png" alt="NurseQuiz AI" className="brand-logo" />
-          <h1>NurseQuiz AI</h1>
-        </div>
-        <div className="quiz-info">
-          <h2>{quizData.topic}</h2>
-          <div className="quiz-meta">
-            <span>{quizData.totalQuestions} Questions</span>
-            <span className="meta-divider">•</span>
-            <span>Shared Quiz</span>
-          </div>
-          {allTopics.length > 0 && (
-            <div className="quiz-topics">
-              <div className="topics-list">
-                {allTopics.map((topic, idx) => (
-                  <span key={idx} className="topic-tag">{topic}</span>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="public-quiz-content">
-        {showResults ? (
-          <PublicQuizResults
-            analytics={userAnalytics}
-            topic={quizData.topic}
-            totalQuestions={quizData.totalQuestions}
-          />
-        ) : (
-          <ChatQuiz
-            quiz={quizData.quizzes[currentQuizIndex]}
-            quizIndex={currentQuizIndex}
-            totalQuestions={quizData.quizzes.length}
-            allQuizzes={quizData.quizzes}
-            userAnswers={userAnswers}
-            skippedQuestions={skippedQuestions}
-            onAnswerSelect={handleAnswerSelect}
-            onNext={handleNext}
-            onSkip={handleSkip}
-            onNavigate={handleNavigate}
-            isLastQuestion={currentQuizIndex === quizData.quizzes.length - 1}
-          />
-        )}
-      </div>
-
-      <div className="public-quiz-footer">
-        <p>
-          {showResults
-            ? <>Shared via <strong>NurseQuiz AI</strong> — Your AI study companion</>
-            : <>Want to create your own AI-powered quizzes? <a href="/signup" className="signup-link">Sign up for free</a></>
-          }
+    <Shell dark={dark} onTheme={setDark}>
+      <div ref={top} className="shared-head">
+        <p className="shared-eyebrow">
+          {set.senderName ? t('shareSet.fromName', { name: set.senderName }) : t('shareSet.fromClassmate')}
         </p>
+        <div className="shared-head__row">
+          <h1>{set.topic || t('shareSet.untitled')}</h1>
+          <span className="shared-head__count">{position + 1} / {total}</span>
+        </div>
+        <div className="shared-segments" aria-hidden="true">
+          {set.questions.map((item, at) => (
+            <span key={item.index} className={
+              answers[at] ? (isRight(answers[at]) ? 'is-right' : 'is-missed') : at === position ? 'is-current' : ''
+            } />
+          ))}
+        </div>
       </div>
-    </div>
-    </>
+
+      <div className={`shared-card shared-card--${question.questionType}`}>
+        {question.questionType === 'mcq' && <SharedMcqCard key={position} {...cardProps} previousAnswer={answers[position]} />}
+        {question.questionType === 'sata' && <SATAQuestion key={position} {...cardProps} {...walkthroughProps} inModal={false} />}
+        {question.questionType === 'casestudy' && <CaseStudyQuestion key={position} {...cardProps} {...walkthroughProps} inModal={false} />}
+        {question.questionType === 'matrix' && <MatrixQuestion key={position} {...cardProps} previousAnswer={answers[position]} />}
+      </div>
+
+      {answers[position] && (
+        <p className="shared-flag">
+          {flagged[position]
+            ? t('shareSet.flagThanks')
+            : <button type="button" onClick={flag}>{t('shareSet.flag')}</button>}
+        </p>
+      )}
+    </Shell>
   );
 }
 
-export default PublicQuizView;
+function Shell({ dark, onTheme, children }) {
+  const { t } = useTranslation();
+  return (
+    <div className="shared-quiz">
+      <header className="shared-bar">
+        <a className="shared-brand" href="/" aria-label="NurseQuizAI">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true"><path fill="currentColor" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" /></svg>
+          <span>NurseQuizAI</span>
+        </a>
+        <button type="button" className="shared-theme" onClick={() => onTheme(!dark)} aria-label={dark ? t('shareSet.lightMode') : t('shareSet.darkMode')}>
+          {dark
+            ? <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4 12H2M22 12h-2M5.6 5.6 4.2 4.2M19.8 19.8l-1.4-1.4M5.6 18.4l-1.4 1.4M19.8 4.2l-1.4 1.4" /></svg>
+            : <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" /></svg>}
+        </button>
+      </header>
+      <main className="shared-main">{children}</main>
+    </div>
+  );
+}

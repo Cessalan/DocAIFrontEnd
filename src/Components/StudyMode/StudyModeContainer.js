@@ -66,6 +66,7 @@ import {
 } from '../../Services/StudySessionService';
 import { adaptPlan } from './planAdaptModel';
 import { isCountedStep } from './firstBlock';
+import ClassmatesNote from '../ShareSet/ClassmatesNote';
 import { collectMisses, firstChoices } from './missEvidence';
 import { adaptedStepProps, firstAttemptScore, mixupFollowUp, proposalProps } from './planAdaptTelemetry';
 import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
@@ -2197,6 +2198,7 @@ const StudyModeContainer = ({
         {planAdvance ? <PlanAdvance {...planAdvance} ready={nextActivityReady} error={contentError && activeNode?.id === planAdvance.toId} onOpenNow={openPreparedActivity} onBack={() => { setPlanAdvance(null); setView('overview'); }} reserveCount={reserveRemaining ?? studyState?.reserve?.remaining ?? 0} onAcceptChange={handleAcceptAdaptation} onKeepPlan={handleDeclineAdaptation} busy={isAdvancing} /> : <NodeTransition
           chatId={chatId}
           topicProgress={topicProgress}
+          viewOnly={viewOnly}
           node={activeNode}
           content={currentContent}
           quizProgress={latestQuizProgressRef.current}
@@ -2314,6 +2316,7 @@ const StudyModeContainer = ({
           onStartPhase2={handleStartPhase2}
           onExtendBlock={handleExtendBlock}
           onDrillGaps={handleDrillGaps}
+          classNote={viewOnly ? null : <ClassmatesNote chatId={chatId} />}
           tonightPanel={tonight ? (
             <TonightPanel
               tonight={tonight}

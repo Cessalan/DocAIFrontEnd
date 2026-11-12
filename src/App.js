@@ -70,6 +70,10 @@ function RouteFallback() {
 }
 
 // Check if we're in development mode
+// Development only: the share offer and classmates note with sample data.
+const ShareSetPreview = process.env.NODE_ENV === 'development'
+  ? lazyWithReload(() => import('./Components/ShareSet/ShareSetPreview'))
+  : null;
 const AdminGuard = lazyWithReload(() => import('./Components/Admin/AdminGuard'));
 const AdminWorkspace = lazyWithReload(() => import('./Components/Admin/AdminWorkspace'));
 
@@ -83,6 +87,7 @@ function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/quiz/:shareId" element={<PublicQuizView />} />
+        {ShareSetPreview && <Route path="/dev/share-set" element={<ShareSetPreview />} />}
 
         {/* Blog Routes - Public for SEO */}
         <Route path="/blog" element={<BlogList />} />

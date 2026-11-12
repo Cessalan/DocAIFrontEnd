@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import SATAQuestion from '../ChatInerface/SATAQuestion';
+import ShareSetButton from '../ShareSet/ShareSetButton';
 import CaseStudyQuestion from '../ChatInerface/CaseStudyQuestion';
 import StudyCelebration from './StudyCelebration';
 import StudyReasoning from './StudyReasoning';
@@ -25,6 +26,7 @@ import './StudyMode.css';
 const StudyExamCard = ({
   chatId, nodeId,
   content,           // { questions: [...], examConfig: {...} }
+  topic,             // The step's subject, named in a shared link
   savedProgress,     // For resume
   onAnswer,          // Per-question callback
   onContinue,        // When exam is complete
@@ -271,6 +273,7 @@ const StudyExamCard = ({
         </div>
 
         <div className="exam-header__right">
+          <ShareSetButton questions={questions} topic={topic} chatId={chatId} nodeId={nodeId} viewOnly={viewOnly} />
           {timerEnabled && !hasAnswered && (
             <span className={`exam-header__timer ${timeLeft <= 10 ? 'urgent' : ''}`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="14" height="14">

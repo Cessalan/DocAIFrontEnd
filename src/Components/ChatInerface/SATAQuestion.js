@@ -189,7 +189,11 @@ function SATAQuestion({
   // A stored walkthrough (the homepage's cases, SeoPractice/landingCases.js).
   // Opens with no backend call and is offered even after a right answer,
   // because there it is the demonstration, not a remedy for a miss.
-  presetWalkthrough = null
+  presetWalkthrough = null,
+  // Wraps the walkthrough request: called with the normal fetch, returns a
+  // promise of the walkthrough. A shared set (PublicQuiz) uses it to serve a
+  // walkthrough saved by an earlier visitor instead of generating it again.
+  loadWalkthrough = null
 }) {
   // ----------------------------------------
   // Hooks & State
@@ -245,8 +249,9 @@ function SATAQuestion({
   const requestWalkthrough = useCallback(() => {
     if (presetWalkthrough) return Promise.resolve(presetWalkthrough);
     if (!quiz?.question || !correctIndices.length) return Promise.resolve(null);
-    return fetchQuizWalkthrough(quiz.question, plainOptions, correctIndices, i18n.language);
-  }, [presetWalkthrough, quiz, plainOptions, correctIndices, i18n.language]);
+    const fetchFresh = () => fetchQuizWalkthrough(quiz.question, plainOptions, correctIndices, i18n.language);
+    return loadWalkthrough ? loadWalkthrough(fetchFresh) : fetchFresh();
+  }, [presetWalkthrough, quiz, plainOptions, correctIndices, i18n.language, loadWalkthrough]);
 
   // The question a request was made for, so an answer arriving after she has
   // moved on is ignored.

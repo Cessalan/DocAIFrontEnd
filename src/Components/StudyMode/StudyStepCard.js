@@ -7,6 +7,11 @@ import StudyAudioCard from './StudyAudioCard';
 import StudyMindmapCard from './StudyMindmapCard';
 import StudyExamCard from './StudyExamCard';
 import { ROLE as TONIGHT_ROLE, tonightRole } from './tonightPlanModel';
+import { getStepTopicLabel } from './planFormatting';
+
+// The subject a shared link names. tags[0] is the clean topic; the label can
+// carry stacked drill prefixes ("Focused drill: ...").
+const shareTopic = (node) => node?.tags?.[0] || getStepTopicLabel(node?.label || '') || null;
 
 /**
  * StudyStepCard - Routes to the correct card component based on node type
@@ -102,6 +107,7 @@ const StudyStepCard = ({
         <StudyQuizCard
           chatId={chatId}
           nodeId={node.id}
+          topic={shareTopic(node)}
           content={content}
           savedProgress={savedProgress}
           isReviewMode={isReviewMode}
@@ -160,6 +166,7 @@ const StudyStepCard = ({
         <StudyExamCard
           chatId={chatId}
           nodeId={node.id}
+          topic={shareTopic(node)}
           content={content}
           savedProgress={savedProgress}
           onAnswer={onAnswer}

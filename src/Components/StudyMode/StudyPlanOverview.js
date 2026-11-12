@@ -423,6 +423,9 @@ const StudyPlanOverview = ({
   // it takes the place of the urgency dashboard, today's mission and the
   // block ending, because rounds replace all three.
   tonightPanel = null,
+  // "3 classmates tried your set" (ShareSet/ClassmatesNote). Renders nothing
+  // until someone she shared with has finished.
+  classNote = null,
   isDev = false
 }) => {
   const { t, i18n } = useTranslation();
@@ -997,6 +1000,8 @@ const StudyPlanOverview = ({
           `.sov3-readiness__generating` block — that animation is
           intentional and part of the build flow.
           ────────────────────────────────────────────── */}
+      {classNote}
+
       {tonightPanel}
 
       {/* Where she is across topics, the way Tonight's plan shows rounds. */}

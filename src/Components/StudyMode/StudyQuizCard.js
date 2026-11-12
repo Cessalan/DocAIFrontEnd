@@ -1,3 +1,4 @@
+import ShareSetButton from '../ShareSet/ShareSetButton';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
@@ -32,7 +33,7 @@ const QUIZ_MILESTONE_MIN_SET = 8;
 // sound, and without the walkthrough a miss would start; FocusedQuiz shows the
 // score and the review at the end. A student who asked for "a full exam"
 // asked to be tested, not taught question by question.
-const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor, deferFeedback = false }) => {
+const StudyQuizCard = ({ chatId, nodeId, topic, content, savedProgress, isReviewMode = false, isDiagnostic = false, viewOnly = false, onAnswer, onRationaleFetched, onContinue, onExit, practiceMode = false, onQuestionContext, onSnapshot, renderLoading, onHint, caseStudyTutor, onCaseTutor, deferFeedback = false }) => {
   const { t, i18n } = useTranslation();
 
   // Glossary popover for clickable medical terms in rationales
@@ -1067,6 +1068,9 @@ const StudyQuizCard = ({ chatId, nodeId, content, savedProgress, isReviewMode = 
             ? t('study.calibrationTitle', 'Quick calibration')
             : practiceMode ? `${t('quiz.questionNumber', 'Question')} ${queueIndex + 1} / ${expectedTotal}` : t('study.quickCheck', 'Quick Check')}
         </h2>
+        {!practiceMode && (
+          <ShareSetButton questions={content?.questions} topic={topic} chatId={chatId} nodeId={nodeId} viewOnly={viewOnly} />
+        )}
         {onExit && (
           <button className="study-card-close-btn" onClick={onExit} title={t('study.close', 'Close')}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

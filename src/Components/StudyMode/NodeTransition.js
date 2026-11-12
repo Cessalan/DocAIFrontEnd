@@ -7,6 +7,7 @@ import { buildHistoryFeedback } from './studyHistoryModel';
 import { collectCovered, wasSkipped } from './lightReadout';
 import { ratingFromNodeResult } from './ratingContext';
 import ContentRating from '../ChatInerface/ContentRating';
+import ShareSetOffer from '../ShareSet/ShareSetOffer';
 import { appendStudyHistory, getStudyPerformance } from '../../Services/StudySessionService';
 import { selectActiveStruggles, selectResolvedConcepts } from '../../Services/conceptLedger';
 import { get_node_debrief } from '../../Services/FastAPICalls';
@@ -136,6 +137,7 @@ const NodeTransition = ({
   topicHandoff = null, // {done, next, nextNumber, total} when this step finished a topic (topicJourneyModel)
   priorPerformance,  // studyPerformance snapshot taken BEFORE this node started
   topicProgress = null,
+  viewOnly = false,    // dev view-as: a student's questions are never offered for sharing
 }) => {
   const { t, i18n } = useTranslation();
   const [showCustomInput, setShowCustomInput] = useState(false);
@@ -1635,6 +1637,20 @@ const NodeTransition = ({
             subjectId={node?.id}
             context={rating.context}
             className="content-rating--inline"
+          />
+        )}
+
+        {/* ── Send this round to her study group ──
+            Below the next step and the rating, so it never competes with
+            either. Shown after every quiz and mini-test round
+            (shareSetModel.canOfferShare). */}
+        {['quiz', 'exam'].includes(node?.type) && !viewOnly && (
+          <ShareSetOffer
+            questions={content?.questions}
+            topic={nodeTopic || node?.topic || getStepTopicLabel(result.topic)}
+            score={score ? { got: score.got, total: score.total } : null}
+            chatId={chatId}
+            nodeId={node?.id}
           />
         )}
 

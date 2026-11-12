@@ -130,7 +130,10 @@ function CaseStudyQuestion({
   // A stored walkthrough (the homepage's cases, SeoPractice/landingCases.js).
   // Opens with no backend call and is offered even after a right answer,
   // because there it is the demonstration, not a remedy for a miss.
-  presetWalkthrough = null
+  presetWalkthrough = null,
+  // Wraps the walkthrough request (see SATAQuestion): a shared set serves a
+  // walkthrough saved by an earlier visitor instead of generating it again.
+  loadWalkthrough = null
 }) {
   const { t, i18n } = useTranslation();
 
@@ -252,8 +255,9 @@ function CaseStudyQuestion({
   const requestWalkthrough = useCallback(() => {
     if (presetWalkthrough) return Promise.resolve(presetWalkthrough);
     if (walkthroughInput.items.length !== correctOrder.length) return Promise.resolve(null);
-    return fetchOrderWalkthrough({ ...walkthroughInput, language: i18n?.language });
-  }, [presetWalkthrough, walkthroughInput, correctOrder.length, i18n?.language]);
+    const fetchFresh = () => fetchOrderWalkthrough({ ...walkthroughInput, language: i18n?.language });
+    return loadWalkthrough ? loadWalkthrough(fetchFresh) : fetchFresh();
+  }, [presetWalkthrough, walkthroughInput, correctOrder.length, i18n?.language, loadWalkthrough]);
 
   // Settle the request whether or not the walkthrough is open, so the button
   // only ever offers what can be delivered: when the backend declines (it

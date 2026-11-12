@@ -1,0 +1,194 @@
+/* /quiz/:shareId — a shared set, opened by a classmate.
+
+   Same vocabulary as the plan's result card (StudyMode/NodeResult.css): paper
+   background, one white surface with 24px corners, a small tracked label, a
+   large tabular score, thin progress segments, one coral action. Dark mode is
+   the app's charcoal with the lavender accent. The select-all, ordering and
+   matrix cards bring their own stylesheets; this file frames them and styles
+   the single-answer card and the result. */
+
+.shared-quiz {
+  --sq-bg: var(--bg-cream, #fdf8f3);
+  --sq-surface: #ffffff;
+  --sq-ink: var(--text-primary, #3d3d3d);
+  --sq-muted: #707070;
+  --sq-line: rgba(60, 40, 30, 0.1);
+  --sq-accent: var(--primary-coral, #e88d7d);
+  --sq-accent-strong: var(--primary-coral-dark, #c46a5a);
+  --sq-accent-soft: rgba(232, 141, 125, 0.1);
+  --sq-on-accent: #ffffff;
+  --sq-good: #2f9e6e;
+  --sq-good-soft: rgba(47, 158, 110, 0.1);
+  --sq-track: rgba(0, 0, 0, 0.09);
+  min-height: 100vh; min-height: 100dvh;
+  background: var(--sq-bg);
+  background-image: radial-gradient(900px 420px at 50% -120px, rgba(248, 200, 196, 0.38), transparent 70%);
+  color: var(--sq-ink);
+  font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+body.dark-mode .shared-quiz {
+  --sq-bg: var(--dark-bg-primary, #1a1a1a);
+  --sq-surface: var(--dark-bg-secondary, #2f2f2f);
+  --sq-ink: #f1ecf5;
+  --sq-muted: #aaaaaa;
+  --sq-line: rgba(255, 255, 255, 0.09);
+  --sq-accent: var(--dark-accent, #b8a5d4);
+  --sq-accent-strong: var(--dark-accent-light, #d4c8e8);
+  --sq-accent-soft: rgba(184, 165, 212, 0.12);
+  --sq-on-accent: #1a1a1a;
+  --sq-good: #6fcfa8;
+  --sq-good-soft: rgba(111, 207, 168, 0.12);
+  --sq-track: rgba(255, 255, 255, 0.1);
+  background-image: radial-gradient(900px 420px at 50% -120px, rgba(184, 165, 212, 0.12), transparent 70%);
+}
+
+/* ── Top bar ── */
+.shared-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  max-width: 720px; margin: 0 auto;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) max(20px, env(safe-area-inset-right, 0px)) 6px max(20px, env(safe-area-inset-left, 0px));
+}
+.shared-brand { display: inline-flex; align-items: center; gap: 8px; text-decoration: none; color: var(--sq-ink); font-family: 'Patrick Hand', 'Kalam', cursive; font-size: 21px; line-height: 1; }
+.shared-brand svg { color: var(--primary-coral, #e88d7d); }
+.shared-theme { width: 38px; height: 38px; display: grid; place-items: center; border-radius: 50%; border: 1px solid var(--sq-line); background: var(--sq-surface); color: var(--sq-muted); cursor: pointer; transition: color .2s, border-color .2s; }
+.shared-theme:hover { color: var(--sq-ink); border-color: var(--sq-accent); }
+.shared-quiz button:focus-visible, .shared-quiz a:focus-visible { outline: 2px solid var(--sq-accent-strong); outline-offset: 2px; }
+
+.shared-main {
+  max-width: 720px; margin: 0 auto;
+  padding: 18px max(20px, env(safe-area-inset-right, 0px)) calc(56px + env(safe-area-inset-bottom, 0px)) max(20px, env(safe-area-inset-left, 0px));
+}
+
+/* ── Who sent it, what it is, where she is ── */
+.shared-eyebrow { margin: 0 0 10px; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--sq-muted); }
+.shared-head { margin-bottom: 18px; scroll-margin-top: 16px; }
+.shared-head__row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+.shared-head h1 { margin: 0; min-width: 0; font-size: 27px; font-weight: 500; letter-spacing: -.035em; line-height: 1.18; text-wrap: balance; overflow-wrap: anywhere; }
+.shared-head__count { flex-shrink: 0; font-size: 13px; color: var(--sq-muted); font-variant-numeric: tabular-nums; }
+.shared-segments { display: flex; gap: 5px; margin-top: 16px; }
+.shared-segments > span { flex: 1; height: 3px; border-radius: 4px; background: var(--sq-track); transition: background .3s; }
+.shared-segments > .is-right { background: var(--sq-good); }
+.shared-segments > .is-missed { background: var(--sq-accent); }
+.shared-segments > .is-current { background: var(--sq-muted); }
+
+/* ── The surface a question sits on ── */
+.shared-card {
+  background: var(--sq-surface); border-radius: 24px; padding: 30px;
+  box-shadow: 0 10px 40px rgba(100, 80, 60, 0.09), 0 1px 3px rgba(100, 80, 60, 0.06);
+  animation: sharedIn .32s cubic-bezier(0.22, 1, 0.36, 1);
+}
+body.dark-mode .shared-card { box-shadow: 0 10px 40px rgba(0, 0, 0, 0.35); border: 1px solid var(--sq-line); }
+/* The app's own select-all and case cards are already a surface: a second one
+   around them reads as a card inside a card. */
+.shared-card--sata, .shared-card--casestudy,
+body.dark-mode .shared-card--sata, body.dark-mode .shared-card--casestudy { padding: 0; background: transparent; box-shadow: none; border: 0; }
+.shared-card--matrix { padding: 24px 20px; }
+@keyframes sharedIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* ── Single-answer card ── */
+.shared-mcq__kind { margin: 0 0 12px; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--sq-accent-strong); }
+.shared-mcq__question { margin: 0 0 22px; font-size: 20px; font-weight: 500; line-height: 1.42; letter-spacing: -.01em; }
+.shared-mcq__options { display: flex; flex-direction: column; gap: 10px; }
+.shared-option {
+  display: flex; align-items: center; gap: 14px; width: 100%; padding: 15px 16px; text-align: left; cursor: pointer;
+  border: 1.5px solid var(--sq-line); border-radius: 16px; background: var(--sq-surface); color: var(--sq-ink);
+  font: inherit; font-size: 15.5px; line-height: 1.45;
+  transition: border-color .18s, background .18s, transform .18s, box-shadow .18s;
+}
+.shared-option:hover:not(:disabled) { border-color: var(--sq-accent); background: var(--sq-accent-soft); transform: translateY(-1px); box-shadow: 0 6px 18px rgba(232, 141, 125, 0.14); }
+.shared-option:active:not(:disabled) { transform: none; }
+.shared-option:disabled { cursor: default; }
+.shared-option__letter {
+  flex-shrink: 0; width: 30px; height: 30px; border-radius: 10px; display: grid; place-items: center;
+  background: var(--sq-track); color: var(--sq-muted); font-size: 13px; font-weight: 600; transition: background .18s, color .18s;
+}
+.shared-option:hover:not(:disabled) .shared-option__letter { background: var(--sq-accent); color: var(--sq-on-accent); }
+.shared-option__text { min-width: 0; overflow-wrap: anywhere; }
+.shared-option.is-right { border-color: var(--sq-good); background: var(--sq-good-soft); }
+.shared-option.is-right .shared-option__letter { background: var(--sq-good); color: #fff; }
+.shared-option.is-missed { border-color: var(--sq-accent); background: var(--sq-accent-soft); }
+.shared-option.is-missed .shared-option__letter { background: var(--sq-accent); color: var(--sq-on-accent); }
+.shared-option.is-rest { opacity: .55; }
+.shared-mcq__after { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--sq-line); animation: sharedIn .28s ease-out; }
+.shared-verdict { margin: 0 0 8px; font-size: 15px; font-weight: 600; color: var(--sq-accent-strong); }
+.shared-verdict.is-right { color: var(--sq-good); }
+.shared-mcq__why { margin: 0 0 20px; font-size: 15px; line-height: 1.65; white-space: pre-line; color: var(--sq-ink); }
+
+.shared-primary {
+  display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; padding: 16px 20px; border: 0; border-radius: 14px; cursor: pointer;
+  background: var(--sq-accent); color: var(--sq-on-accent); font: inherit; font-size: 15.5px; font-weight: 600; text-decoration: none;
+  transition: background .2s, transform .2s, box-shadow .2s;
+}
+.shared-primary:hover { background: var(--primary-coral-hover, #d67a6a); transform: translateY(-1px); box-shadow: 0 8px 22px rgba(232, 141, 125, 0.28); }
+body.dark-mode .shared-primary:hover { background: var(--dark-accent-light, #d4c8e8); box-shadow: none; }
+
+/* The matrix card borrows two classes from the plan's stylesheet, which this
+   page does not load. */
+.shared-card--matrix .study-quiz-question { margin: 0 0 12px; font-size: 19px; font-weight: 500; line-height: 1.45; color: var(--sq-ink); }
+.shared-card--matrix .study-continue-btn {
+  display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; margin-top: 18px; padding: 15px 20px; border: 0; border-radius: 14px;
+  background: var(--sq-accent); color: var(--sq-on-accent); font: inherit; font-size: 15.5px; font-weight: 600; cursor: pointer;
+}
+.shared-card--matrix .study-continue-btn:disabled { opacity: .45; cursor: default; }
+
+/* ── "Something wrong with this question?" ── */
+.shared-flag { margin: 16px 0 0; text-align: center; font-size: 13px; color: var(--sq-muted); }
+.shared-flag button { padding: 4px 6px; border: 0; background: none; cursor: pointer; font: inherit; color: var(--sq-muted); text-decoration: underline; text-underline-offset: 3px; }
+.shared-flag button:hover { color: var(--sq-ink); }
+
+/* ── Result ── */
+.shared-result { padding: 32px; scroll-margin-top: 16px; }
+.shared-result .shared-eyebrow { margin-bottom: 28px; }
+.shared-result__hero { display: flex; justify-content: space-between; align-items: center; gap: 24px; }
+.shared-result__intro { min-width: 0; }
+.shared-result h1 { margin: 0; font-size: 30px; font-weight: 500; letter-spacing: -.035em; line-height: 1.18; text-wrap: balance; }
+.shared-result__topic { margin: 12px 0 0; font-size: 13px; line-height: 1.6; color: var(--sq-muted); overflow-wrap: anywhere; }
+.shared-result__score { display: flex; flex-direction: column; text-align: right; flex-shrink: 0; color: var(--sq-accent-strong); }
+.shared-result__number { font-family: -apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', sans-serif; font-size: 76px; font-weight: 500; line-height: 1; letter-spacing: -.055em; font-variant-numeric: tabular-nums; }
+.shared-result__of { margin-top: 9px; font-size: 12px; color: var(--sq-muted); }
+.shared-segments--result { margin: 26px 0 0; }
+.shared-result__sender { margin: 12px 0 0; font-size: 12.5px; color: var(--sq-muted); }
+.shared-result__next { margin-top: 28px; padding: 22px; border-radius: 18px; background: var(--sq-accent-soft); border: 1px solid var(--sq-line); }
+.shared-result__label { margin: 0; font-size: 11px; letter-spacing: 1.2px; text-transform: uppercase; color: var(--sq-accent-strong); }
+.shared-result__focus { margin: 8px 0 0; font-size: 20px; font-weight: 500; letter-spacing: -.02em; line-height: 1.3; overflow-wrap: anywhere; }
+.shared-result__pitch { margin: 10px 0 18px; font-size: 14.5px; line-height: 1.6; color: var(--sq-ink); opacity: .86; }
+.shared-result__fine { margin: 12px 0 0; text-align: center; font-size: 12px; color: var(--sq-muted); }
+.shared-review { list-style: none; margin: 26px 0 0; padding: 0; }
+.shared-review li { display: flex; align-items: baseline; gap: 12px; padding: 11px 0; border-top: 1px solid var(--sq-line); font-size: 13.5px; line-height: 1.5; }
+.shared-review__mark { flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--sq-accent); transform: translateY(-1px); }
+.shared-review__mark.is-right { background: var(--sq-good); }
+.shared-review__text { flex: 1; min-width: 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.shared-review__state { flex-shrink: 0; font-size: 12px; color: var(--sq-muted); }
+.shared-result__links { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 22px; margin-top: 22px; padding-top: 18px; border-top: 1px solid var(--sq-line); }
+.shared-result__links button { padding: 6px 2px; border: 0; background: none; cursor: pointer; font: inherit; font-size: 13px; color: var(--sq-muted); text-decoration: underline; text-underline-offset: 3px; }
+.shared-result__links button:hover { color: var(--sq-ink); }
+
+/* ── Loading and a dead link ── */
+.shared-quiz__loading { display: flex; justify-content: center; gap: 8px; padding: 120px 0; }
+.shared-quiz__loading span { width: 9px; height: 9px; border-radius: 50%; background: var(--sq-accent); animation: sharedPulse 1.1s ease-in-out infinite; }
+.shared-quiz__loading span:nth-child(2) { animation-delay: .15s; }
+.shared-quiz__loading span:nth-child(3) { animation-delay: .3s; }
+@keyframes sharedPulse { 0%, 80%, 100% { opacity: .25; transform: scale(.8); } 40% { opacity: 1; transform: scale(1); } }
+.shared-missing { margin-top: 40px; text-align: left; }
+.shared-missing h1 { margin: 0 0 10px; font-size: 26px; font-weight: 500; letter-spacing: -.03em; }
+.shared-missing p:not(.shared-eyebrow) { margin: 0 0 22px; font-size: 15px; line-height: 1.6; color: var(--sq-muted); }
+
+@media (max-width: 520px) {
+  .shared-main { padding-top: 12px; }
+  .shared-head h1 { font-size: 23px; }
+  .shared-card { padding: 22px 18px; border-radius: 20px; }
+  .shared-card--sata, .shared-card--casestudy { padding: 0; }
+  .shared-card--matrix { padding: 18px 12px; }
+  .shared-mcq__question { font-size: 18px; }
+  .shared-result { padding: 24px 20px; }
+  .shared-result h1 { font-size: 25px; }
+  .shared-result__number { font-size: 60px; }
+  .shared-result__score { max-width: 38%; }
+  .shared-result__next { padding: 18px; }
+  .shared-review__state { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .shared-card, .shared-mcq__after, .shared-quiz__loading span { animation: none; }
+  .shared-option, .shared-primary, .shared-segments > span { transition: none; }
+}
