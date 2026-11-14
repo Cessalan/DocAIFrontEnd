@@ -63,6 +63,9 @@ import { formatDate, formatFileSize } from '../../Services/Formatting.js';
 import { clarityEvent } from '../../Services/ClarityService';
 import { isUploadOnScreen, ownsSharedUploadState } from './uploadRouting';
 import {
+  createSendScope, newSendRecord, parkOnLeave, screenStateFor, stopSendFor, takeParked,
+} from './sendScope';
+import {
   AppendToChat,
   SaveFileMetaData,
   GetFileMetadataByName,
@@ -321,7 +324,8 @@ const ChatInterface = ({
 
   // UI state
   const [isAiTyping, setIsAiTyping] = useState(false);
-  const [streamingStatus, setStreamingStatus] = useState(null);
+  // Read through the live send's record (sendScope.js), never from here.
+  const [, setStreamingStatus] = useState(null);
   const [isFilesModalVisible, setIsFilesModalVisible] = useState(false);
   // Empty-state exam-prep card: collapsed by default (single CTA), expands
   // to reveal the side-by-side Upload/Paste choice when the user taps it.
@@ -669,21 +673,41 @@ const ChatInterface = ({
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
 
-  // Streaming throttle refs - prevents excessive re-renders during token streaming
-  const streamingThrottleRef = useRef(null);
-  const streamingContentRef = useRef('');
-  const streamingMessageIdRef = useRef(null);
-  // Which send is live, and on which chat. Stop bumps `gen`, so a send that
-  // was still saving her message or waiting on an upload never reaches the
-  // backend; `chatId` is the socket to close (a first message creates the
-  // chat, so currentChatID can still be the old value when stop is pressed).
-  const activeSendRef = useRef({ gen: 0, chatId: null });
-
   // Stable-callback refs: forwarding pattern for React.memo children
   const chatMessagesRef = useRef(chatMessages);
   chatMessagesRef.current = chatMessages;
   const currentChatIDRef = useRef(currentChatID);
   currentChatIDRef.current = currentChatID;
+
+  // ── Live chat answers, one per chat ──────────────────────────────────────
+  // One ChatInterface serves every chat, and until 2026-11-14 its stream
+  // state was one value: an answer loading in chat A showed as loading in
+  // chat B (Stop button, disabled message box and paperclip), its late events
+  // wrote into whatever chat was open, and Stop in B closed whichever chat
+  // had sent last. Now each send owns a record (sendScope.js), the on-screen
+  // isStreaming / isAiTyping / streamingStatus mirror only the open chat's
+  // record, and an answer for a chat that is not on screen is written to
+  // that chat's parked messages, restored when she opens it again.
+  const liveSendsRef = useRef(new Map());
+  const parkedMessagesRef = useRef(new Map());
+  const screenUi = {
+    setMessages: setChatMessages,
+    setAiTyping: setIsAiTyping,
+    setStatus: setStreamingStatus,
+  };
+  const scopeSend = (record) => createSendScope(record, {
+    live: liveSendsRef.current,
+    parked: parkedMessagesRef.current,
+    currentChatId: () => currentChatIDRef.current,
+    screen: {
+      setMessages: setChatMessages,
+      setStreaming: setIsStreaming,
+      setAiTyping: setIsAiTyping,
+      setStatus: setStreamingStatus,
+      setQuizMode: (value) => { isQuizGeneratingRef.current = value; },
+      setQuizFocused,
+    },
+  });
   const debriefRequests = useRef(new Set());
   // ── Practice memory and coverage (practiceProfileModel / practiceCoverageModel) ──
   useEffect(() => {
@@ -779,53 +803,34 @@ const ChatInterface = ({
   // ============================================
 
   /**
-   * Flushes the current streaming content to the UI.
-   * Called on a throttled interval during streaming and once at the end.
+   * A throttled writer for one answer's streaming text: batches rapid token
+   * arrivals into ~14 updates a second. One per send, not one per component:
+   * two chats answering at once used to share a single buffer and timer.
+   * `cleanup` flushes what is left and stops the timer (end, error or stop).
    */
-  const flushStreamingContent = useCallback(() => {
-    const content = streamingContentRef.current;
-    const messageId = streamingMessageIdRef.current;
-
-    if (!messageId) return;
-
-    setChatMessages(prev =>
-      prev.map(msg => {
-        if (msg.id === messageId && msg.type !== 'quiz' && msg.type !== 'flashcard') {
-          return { ...msg, content, isStreaming: true };
-        }
-        return msg;
-      })
-    );
-  }, []);
-
-  /**
-   * Schedules a throttled UI update for streaming content.
-   * Batches rapid token arrivals into ~14 updates/second for smooth performance.
-   */
-  const scheduleStreamingUpdate = useCallback(() => {
-    // If no pending update, schedule one
-    if (!streamingThrottleRef.current) {
-      streamingThrottleRef.current = setTimeout(() => {
-        flushStreamingContent();
-        streamingThrottleRef.current = null;
-      }, 70); // ~14 updates/second - visually smooth, much less CPU
-    }
-  }, [flushStreamingContent]);
-
-  /**
-   * Cleanup streaming throttle state. Call when streaming ends or on error.
-   */
-  const cleanupStreamingThrottle = useCallback(() => {
-    if (streamingThrottleRef.current) {
-      clearTimeout(streamingThrottleRef.current);
-      streamingThrottleRef.current = null;
-    }
-    // Flush any remaining content
-    flushStreamingContent();
-    // Reset refs
-    streamingContentRef.current = '';
-    streamingMessageIdRef.current = null;
-  }, [flushStreamingContent]);
+  const createStreamingThrottle = (messageId, setMessages) => {
+    let timer = null;
+    let content = '';
+    const flush = () => {
+      setMessages(prev => prev.map(msg => (
+        msg.id === messageId && msg.type !== 'quiz' && msg.type !== 'flashcard'
+          ? { ...msg, content, isStreaming: true }
+          : msg
+      )));
+    };
+    return {
+      push(next) {
+        content = next;
+        if (!timer) timer = setTimeout(() => { timer = null; flush(); }, 70);
+      },
+      cleanup() {
+        if (!timer) return;
+        clearTimeout(timer);
+        timer = null;
+        flush();
+      },
+    };
+  };
 
   // COST OPTIMIZATION: Don't pre-warm WebSocket connection
   // Connect on-demand when user sends a message (handled by ask_llm_websocket)
@@ -835,15 +840,15 @@ const ChatInterface = ({
       // Mark as ready - connection will happen when user sends message
       setConnectionStatus('connected');
 
-      // Cleanup on unmount or chat change
+      // Cleanup on unmount or chat change. A chat still answering keeps its
+      // socket: closing it cancelled the answer on the server, and nothing
+      // was saved. It finishes in the background (sendScope.js) and the
+      // server closes the socket once it has been idle.
+      const leavingChatId = currentChatID;
+      const liveSends = liveSendsRef.current;
       return () => {
-        closeWebSocketConnection(currentChatID);
+        if (!liveSends.has(leavingChatId)) closeWebSocketConnection(leavingChatId);
         setConnectionStatus('disconnected');
-        // Clean up any pending streaming throttle
-        if (streamingThrottleRef.current) {
-          clearTimeout(streamingThrottleRef.current);
-          streamingThrottleRef.current = null;
-        }
       };
     }
   }, [currentChatID]);
@@ -1067,7 +1072,12 @@ const ChatInterface = ({
     // Clear messages if switching chats (not on initial load)
     if (isSwitchingChats) {
       studySheetStreamRef.current = null;
-      setChatMessages([]);
+      // An answer still coming in for the chat she is leaving keeps writing
+      // to its parked messages; the chat she opens gets back whatever was
+      // parked for it (sendScope.js).
+      const stores = { live: liveSendsRef.current, parked: parkedMessagesRef.current };
+      parkOnLeave(stores, currentChatID, chatMessagesRef.current);
+      setChatMessages(takeParked(stores, chatId));
     }
 
     // Update chat ID
@@ -1085,8 +1095,13 @@ const ChatInterface = ({
     setSuggestedPrompts([]);           // Clear suggested prompts (fixes reported bug)
     setActiveQuizProgress(null);       // Clear sticky quiz progress bar
     setActiveQuizId(null);             // Clear active quiz tracking
-    setIsAiTyping(false);              // Clear typing indicator
-    setStreamingStatus(null);          // Clear streaming status
+    // Typing / streaming / status show THIS chat's answer, if one is live,
+    // and nothing from the chat she just left.
+    const shown = screenStateFor(liveSendsRef.current, chatId);
+    setIsAiTyping(shown.aiTyping);
+    setIsStreaming(shown.streaming);
+    setStreamingStatus(shown.status);
+    isQuizGeneratingRef.current = shown.quizMode;
 
     // Clear chat type states IMMEDIATELY to prevent stale data showing.
     // Study mode is cleared here too so the brief window before getDoc resolves
@@ -1410,17 +1425,33 @@ const ChatInterface = ({
     // send is a clean no-op. (Charged on generation-complete events below.)
     if (!requireQuota({ topic: currentChatTitleRef.current })) return;
 
-    // IMMEDIATELY show loading state - don't wait for connection
+    // This answer's own record and setters (sendScope.js). From here on the
+    // names below write to THIS chat: to the screen while it is open, to its
+    // parked messages while she is looking at another chat.
+    const send = scopeSend(newSendRecord(currentChatID));
+    const {
+      setMessages: setChatMessages,
+      setStreaming: setIsStreaming,
+      setAiTyping: setIsAiTyping,
+      setStatus: setStreamingStatus,
+      setQuizMode,
+      setQuizFocused,
+      wasStopped,
+      isHere,
+    } = send;
+
+    // IMMEDIATELY show loading state - don't wait for connection.
+    // A fresh send is also a fresh completion state (quiz mode off).
     setUserInputText('');
-    setIsAiTyping(true);
-    setStreamingStatus(null);
-    setIsStreaming(true);
-    const sendGen = activeSendRef.current.gen + 1;
-    activeSendRef.current = { gen: sendGen, chatId: currentChatID || null };
-    const wasStopped = () => activeSendRef.current.gen !== sendGen;
-    // Fresh send = fresh completion state. If a previous stream errored (or a
-    // quiz/audio flow set this), a stale true would skip saving THIS response.
-    isQuizGeneratingRef.current = false;
+    send.begin();
+    // Set when THIS send's stream reports an error, so a stream_complete that
+    // may still follow skips the empty-save path. Until 2026-11-14 the error
+    // handler set isQuizGeneratingRef instead, which also feeds isSystemBusy:
+    // when no stream_complete followed (watchdog, failed connect, top-level
+    // error frame, quota_exceeded) the paperclip and message box stayed
+    // disabled in every chat until a reload ("screen freezing when I select
+    // add files and paperclip", 2026-11-10).
+    let streamErrored = false;
     interruptStudySheet();
     studySheetStreamRef.current = null;
 
@@ -1487,6 +1518,10 @@ const ChatInterface = ({
     if (!skipFirebaseSave) {
       updatedChatId = await AppendToChat(currentChatID, newUserMessage, currentLanguage);
       if (updatedChatId && updatedChatId !== currentChatID) {
+        // Her first message created the chat she is looking at. Point the ref
+        // at it now, not on the next render, or this send's first events
+        // would count as "another chat" and be parked instead of shown.
+        if (isHere()) currentChatIDRef.current = updatedChatId;
         setChatId(updatedChatId);
       }
     }
@@ -1500,7 +1535,7 @@ const ChatInterface = ({
     // Stopped while her message was being saved: handleStopStreaming already
     // cleared the placeholder and the typing state. Send nothing.
     if (wasStopped()) return;
-    activeSendRef.current.chatId = targetChatId || null;
+    send.moveTo(targetChatId);
     if (!targetChatId) {
       console.error("❌ No chat id after AppendToChat — aborting send");
       setIsStreaming(false);
@@ -1535,6 +1570,9 @@ const ChatInterface = ({
     // was already answering instead of watching the quiz vanish.
     let deliveredQuizQuestions = [];
     let quizStreamMeta = {};
+    // This answer's text throttle; Stop flushes it through the record.
+    const textThrottle = createStreamingThrottle(streamingMessageId, setChatMessages);
+    send.record.onStop = textThrottle.cleanup;
 
     try {
       // Sent while files were still loading: the request waits for them so
@@ -1566,7 +1604,7 @@ const ChatInterface = ({
           // ═══════════════════════════════════════════════════════════
           if (statusUpdate.status === "error") {
             console.error("❌ Stream error from backend:", statusUpdate.message);
-            cleanupStreamingThrottle();
+            textThrottle.cleanup();
             const partialQuiz = deliveredQuizQuestions.length > 0;
             clarityEvent('chat_reply_failed', {
               chatId: targetChatId,
@@ -1575,8 +1613,9 @@ const ChatInterface = ({
               reason: String(statusUpdate.message || '').slice(0, 200),
             });
             // Only leave the focused quiz when there is nothing in it to keep.
-            if (!partialQuiz && (quizMessageId || isQuizGeneratingRef.current)) setQuizFocused(false);
-            isQuizGeneratingRef.current = true; // stream_complete may still follow — skip empty-save path
+            if (!partialQuiz && (quizMessageId || send.record.quizMode)) setQuizFocused(false);
+            streamErrored = true; // stream_complete may still follow — skip empty-save path
+            setQuizMode(false); // never leave the composer locked
             setStreamingStatus(null);
             setIsStreaming(false);
             setIsAiTyping(false);
@@ -1590,7 +1629,7 @@ const ChatInterface = ({
               // metered them (the practice budget is settled in a `finally`).
               // Persist them as a finished quiz, then show the error under it.
               const targetMessageId = quizMessageId || streamingMessageId;
-              handleQuizComplete(deliveredQuizQuestions, targetMessageId, updatedChatId, quizStreamMeta);
+              handleQuizComplete(deliveredQuizQuestions, targetMessageId, updatedChatId, quizStreamMeta, send);
               refreshQuota();
               setChatMessages(prev => applyStreamError(prev, {
                 messageId: targetMessageId,
@@ -1811,7 +1850,7 @@ const ChatInterface = ({
           // placeholder) lets an empathetic message still be inserted before it.
           if (statusUpdate.status === 'material_analyzing' || statusUpdate.status === 'quiz_planning') {
             const stage = statusUpdate.status === 'material_analyzing' ? 'reading' : 'choosing';
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
             if (!quizMessageId) quizMessageId = `quiz-${Date.now()}`;
             const id = quizMessageId;
             setChatMessages(prev => (prev.some(msg => msg.id === id)
@@ -1832,7 +1871,7 @@ const ChatInterface = ({
           // (backend services/request_brief). It opens the quiz screen, so
           // the first thing she sees is what she asked for, in her words.
           if (statusUpdate.status === 'quiz_brief' && statusUpdate.brief) {
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
             if (!quizMessageId) quizMessageId = `quiz-${Date.now()}`;
             const id = quizMessageId;
             const { brief } = statusUpdate;
@@ -1861,7 +1900,7 @@ const ChatInterface = ({
           // Quiz generation progress
           if (statusUpdate.status === "quiz_generating") {
             devLog("generating quiz streaming");
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
             // Spread first: the brief, plan and allowance that arrived before
             // this event must survive it, or the saved quiz loses her request.
             quizStreamMeta = {
@@ -1993,7 +2032,7 @@ const ChatInterface = ({
             // Use quizMessageId if empathetic message exists, otherwise streamingMessageId
             const targetMessageId = quizMessageId || streamingMessageId;
 
-            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, { ...quizStreamMeta, ...statusUpdate });
+            handleQuizComplete(statusUpdate.quiz_data, targetMessageId, updatedChatId, { ...quizStreamMeta, ...statusUpdate }, send);
             clarityEvent('chat_quiz_delivered', {
               chatId: targetChatId,
               questions: statusUpdate.quiz_data?.length || 0,
@@ -2009,7 +2048,7 @@ const ChatInterface = ({
           // Flashcard generation progress
           if (statusUpdate.status === "flashcard_generating") {
             devLog("📇 Flashcard generation streaming started");
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
 
             const localizedFlashcardMsg = t('loading.generatingFlashcards', 'Generating flashcards...');
 
@@ -2064,7 +2103,7 @@ const ChatInterface = ({
           if (statusUpdate.status === "flashcard_complete") {
             devLog("✅ Flashcards completed");
 
-            handleFlashcardComplete(statusUpdate.flashcard_data, streamingMessageId, updatedChatId);
+            handleFlashcardComplete(statusUpdate.flashcard_data, streamingMessageId, updatedChatId, send);
             setStreamingStatus(null);
             // Charge per card generated.
             consumeGeneration(statusUpdate.flashcard_data?.length || 1);
@@ -2074,14 +2113,14 @@ const ChatInterface = ({
           // Prompts suggestions
           if (statusUpdate.status === "suggested_prompts" && statusUpdate.suggestions) {
             devLog("💡 Received suggestions:", statusUpdate.suggestions);
-            setSuggestedPrompts(statusUpdate.suggestions);
+            if (isHere()) setSuggestedPrompts(statusUpdate.suggestions);
             return;
           }
 
           // Mindmap generation started
           if (statusUpdate.status === "mindmap_generating") {
             devLog("🧠 Mindmap generation started");
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
 
             setChatMessages(prev => {
               return prev.map(msg => {
@@ -2112,7 +2151,7 @@ const ChatInterface = ({
             devLog("✅ Mindmap completed with", statusUpdate.mindmap_data?.nodes?.length, "nodes");
 
             // Single state update + Firebase save in handler (avoid duplicate setChatMessages calls)
-            handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId);
+            handleMindmapComplete(statusUpdate.mindmap_data, streamingMessageId, updatedChatId, send);
             setStreamingStatus(null);
             consumeGeneration(1); // mindmap charges a flat 1 (not question-based)
             return;
@@ -2123,7 +2162,7 @@ const ChatInterface = ({
           if (statusUpdate.status === "study_sheet_trigger" || statusUpdate.status === "study_sheet_start") {
             if (currentChatIDRef.current && currentChatIDRef.current !== targetChatId) return;
             devLog("📚 Study sheet started:", statusUpdate);
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
 
             if (!studySheetMessageId) {
               const message = {
@@ -2168,7 +2207,7 @@ const ChatInterface = ({
 
             // IMPORTANT: Set flag to skip onStreamEnd callback
             // This prevents the empty finalMessage from being saved/displayed
-            isQuizGeneratingRef.current = true;
+            setQuizMode(true);
 
             const audioOptionsId = uuidv4();
             setChatMessages(prev => {
@@ -2336,30 +2375,28 @@ const ChatInterface = ({
         (chunk) => {
           // Accumulate content in ref (no re-render)
           fullResponse = fullResponse + chunk;
-          streamingContentRef.current = fullResponse;
-          streamingMessageIdRef.current = streamingMessageId;
 
           // Clear streaming status on first content
-          if (fullResponse.length > 0 && streamingStatus) {
+          if (fullResponse.length > 0 && send.record.status) {
             setStreamingStatus(null);
           }
 
           // Schedule throttled UI update (~14/sec instead of 100+/sec)
-          scheduleStreamingUpdate();
+          textThrottle.push(fullResponse);
         },
 
         // Complete callback - handles end of stream
         async () => {
           // Clean up throttle and flush any remaining content
-          cleanupStreamingThrottle();
+          textThrottle.cleanup();
 
           setStreamingStatus(null);
           setIsStreaming(false);
 
           // Check if this was a quiz (don't save quiz as text)
-          if (isQuizGeneratingRef.current) {
+          if (send.record.quizMode || streamErrored) {
             if (studySheetMessageId && studySheetStreamRef.current?.id === studySheetMessageId) interruptStudySheet();
-            isQuizGeneratingRef.current = false;
+            setQuizMode(false);
             setIsAiTyping(false);
             return;
           }
@@ -2407,10 +2444,11 @@ const ChatInterface = ({
       );
     } catch (error) {
       console.error("WebSocket streaming error:", error);
-      if (quizMessageId || isQuizGeneratingRef.current) setQuizFocused(false);
+      if (quizMessageId || send.record.quizMode) setQuizFocused(false);
+      setQuizMode(false);
 
       // Clean up throttle on error
-      cleanupStreamingThrottle();
+      textThrottle.cleanup();
 
       setStreamingStatus(null);
       setIsStreaming(false);
@@ -2438,15 +2476,18 @@ const ChatInterface = ({
   // one and was saved. Now the socket is cut first (stopWebSocketStream), so
   // nothing more can arrive, and the UI is settled without waiting on anyone.
   // Her message stays in the chat with its edit button, which re-asks.
+  //
+  // It stops the chat on screen and only that one (sendScope.js). Until
+  // 2026-11-14 it stopped whichever chat had sent last, so Stop in one chat
+  // could cut off the answer she was waiting for in another.
   const handleStopStreaming = async () => {
-    const stoppedChatId = activeSendRef.current.chatId || currentChatID;
-    // Invalidate the live send before anything else: a send that is still
-    // saving her message or waiting on an upload checks this and never asks.
-    activeSendRef.current = { gen: activeSendRef.current.gen + 1, chatId: null };
+    // Invalidate this chat's live send before anything else: a send that is
+    // still saving her message or waiting on an upload checks this and never
+    // asks. stopSendFor also flushes the text that already arrived.
+    const stopped = stopSendFor(liveSendsRef.current, currentChatIDRef.current);
+    const stoppedChatId = stopped?.chatId || currentChatIDRef.current;
     if (stoppedChatId) stopWebSocketStream(stoppedChatId);
 
-    // Flush what has already arrived, then drop the throttle
-    cleanupStreamingThrottle();
     interruptStudySheet();
     isQuizGeneratingRef.current = false;
     setIsStreaming(false);
@@ -2695,7 +2736,10 @@ const ChatInterface = ({
     }
   }, [activeQuizId]); // Important: Add activeQuizId to dependencies
 
-  const handleQuizComplete = async (quizData, messageId, chatId, metadata = {}) => {
+  const handleQuizComplete = async (quizData, messageId, chatId, metadata = {}, ui = null) => {
+    // Write to the chat this answer belongs to (sendScope.js), not
+    // whichever chat happens to be open when it finishes.
+    const { setMessages: setChatMessages, setAiTyping: setIsAiTyping, setStatus: setStreamingStatus } = ui || screenUi;
     devLog("✅ Quiz complete, finalizing message");
     devLog("Backend sent", quizData?.length, "questions");
     setStreamingStatus(null);
@@ -2828,7 +2872,10 @@ const ChatInterface = ({
     devLog("✅ Quiz save complete!");
   };
 
-  const handleFlashcardComplete = async (flashcardData, messageId, chatId) => {
+  const handleFlashcardComplete = async (flashcardData, messageId, chatId, ui = null) => {
+    // Write to the chat this answer belongs to (sendScope.js), not
+    // whichever chat happens to be open when it finishes.
+    const { setMessages: setChatMessages, setAiTyping: setIsAiTyping, setStatus: setStreamingStatus } = ui || screenUi;
     devLog("✅ Flashcards complete, finalizing message");
     devLog("📦 Backend sent", flashcardData?.length, "flashcards");
     setStreamingStatus(null);
@@ -2895,7 +2942,10 @@ const ChatInterface = ({
     devLog("✅ Flashcard save complete!");
   };
 
-  const handleMindmapComplete = async (mindmapData, messageId, chatId) => {
+  const handleMindmapComplete = async (mindmapData, messageId, chatId, ui = null) => {
+    // Write to the chat this answer belongs to (sendScope.js), not
+    // whichever chat happens to be open when it finishes.
+    const { setMessages: setChatMessages, setAiTyping: setIsAiTyping, setStatus: setStreamingStatus } = ui || screenUi;
     devLog("✅ Mindmap complete, finalizing message");
     devLog("📦 Backend sent mindmap with", mindmapData?.nodes?.length, "nodes");
     devLog("🆔 Target messageId:", messageId);
