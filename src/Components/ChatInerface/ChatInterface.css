@@ -6422,15 +6422,14 @@ body:not(.dark-mode) .file-error-toast-close:hover {
   }
 }
 
-/* ── Path chooser: two doors, drawn as peers ─────────────────────────────
-   The plan and the drill get the same card, the same weight and the same
-   size. Only the accent differs, and each path keeps its colour across both
-   themes so the drill is always "the lavender one" — the alternative, giving
-   each theme's primary to whichever card is on the left, means the two doors
-   swap identities when the lights go out.
+/* ── Path chooser: one quiet panel, Pip on its edge ──────────────────────
+   Two rows in a single small panel. The plan is the first row and the only
+   one whose label takes the coral, which is what keeps it the default now
+   that it is no longer a big card; the drill sits under a divider with its
+   lavender icon. Row order and the accent carry the weighting
+   the card and pill used to carry with size.
 
-   Plan = coral, drill = lavender. Both already in the palette; nothing here
-   introduces a colour the app did not have. */
+   Pip sits on the top edge. The panel's top margin is the room he needs. */
 .empty-chat-state--paths {
   max-width: 880px;
 }
@@ -6443,368 +6442,163 @@ body:not(.dark-mode) .file-error-toast-close:hover {
 }
 
 .path-choice__title {
-  margin: 0 0 6px;
-  font-size: 1.55rem;
-  font-weight: 700;
-  letter-spacing: -0.015em;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
   text-align: center;
   color: var(--text-primary);
 }
 
-.path-choice__sub {
-  margin: 0 0 28px;
-  font-size: 0.97rem;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-.path-choice__cards {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
+.path-panel {
+  position: relative;
   width: 100%;
+  max-width: 400px;
+  margin-top: 70px;
+  padding: 6px;
+  background: var(--bg-paper);
+  border: 1px solid rgba(60, 40, 30, 0.1);
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(60, 40, 30, 0.04);
 }
 
-/* One door. 430px is the width the plan card already had as one of two
-   columns in an 880px shell, so demoting the drill does not resize the card
-   the student was looking at — it only removes what sat beside it. */
-.path-choice__cards--solo {
-  grid-template-columns: minmax(0, 430px);
+/* Feet overlap the border by a few pixels so he reads as sitting ON the
+   panel, not floating above it. */
+.path-panel__pip {
+  position: absolute;
+  right: 22px;
+  bottom: 100%;
+  margin-bottom: -4px;
+  pointer-events: none;
+}
+
+.path-row {
+  --row-accent: var(--primary-coral-dark);
+  --row-accent-soft: rgba(232, 141, 125, 0.12);
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 13px;
+  width: 100%;
+  padding: 12px 14px;
+  font-family: inherit;
+  text-align: left;
+  color: var(--text-primary);
+  background: transparent;
+  border: none;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: background var(--transition-fast);
+}
+
+.path-row--drill {
+  --row-accent: #8f79b8;
+  --row-accent-soft: rgba(184, 165, 212, 0.16);
+}
+
+.path-row:hover {
+  background: var(--row-accent-soft);
+}
+
+.path-row:focus-visible {
+  outline: 2px solid var(--row-accent);
+  outline-offset: -2px;
+}
+
+.path-row__icon {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  color: var(--row-accent);
 }
 
-.path-card {
+.path-row__icon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.path-row__text {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 14px;
-  padding: 30px 26px 26px;
-  text-align: center;
-  background: var(--bg-paper);
-  border: 1.5px solid var(--card-accent-border);
-  border-radius: var(--radius-lg, 18px);
-  transition: transform var(--transition-fast), box-shadow var(--transition-fast),
-    border-color var(--transition-fast);
+  gap: 2px;
+  min-width: 0;
 }
 
-.path-card:hover {
-  transform: translateY(-2px);
-  border-color: var(--card-accent);
-  box-shadow: 0 10px 28px var(--card-accent-glow);
-}
-
-.path-card--plan {
-  --card-accent: var(--primary-coral-hover);
-  --card-accent-strong: var(--primary-coral-dark);
-  --card-accent-border: rgba(232, 141, 125, 0.32);
-  --card-accent-soft: rgba(232, 141, 125, 0.12);
-  --card-accent-glow: rgba(196, 106, 90, 0.16);
-  --card-accent-ink: var(--text-white);
-}
-
-.path-card--drill {
-  --card-accent: #a894c9;
-  --card-accent-strong: #8f79b8;
-  --card-accent-border: rgba(184, 165, 212, 0.4);
-  --card-accent-soft: rgba(184, 165, 212, 0.16);
-  --card-accent-glow: rgba(140, 118, 180, 0.18);
-  --card-accent-ink: var(--text-white);
-}
-
-.path-card__icon {
+.path-row__label {
   display: flex;
   align-items: center;
-  justify-content: center;
-  width: 78px;
-  height: 78px;
-  border-radius: 50%;
-  background: var(--card-accent-soft);
-  color: var(--card-accent-strong);
-}
-
-.path-card__icon svg {
-  width: 42px;
-  height: 42px;
-}
-
-.path-card__title {
-  display: flex;
-  align-items: center;
-  justify-content: center;
   gap: 8px;
-  flex-wrap: wrap;
-  margin: 0;
-  font-size: 1.16rem;
-  font-weight: 700;
-  color: var(--card-accent-strong);
+  font-size: 0.96rem;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-/* The rule under the title, drawn on the paragraph so there is no empty
-   element to keep aligned. */
-.path-card__desc {
-  margin: 0;
-  padding-top: 16px;
-  width: 100%;
-  border-top: 1px solid var(--card-accent-border);
-  font-size: 0.94rem;
-  line-height: 1.55;
-  color: var(--text-secondary);
+.path-row--plan .path-row__label {
+  color: var(--row-accent);
 }
 
-.path-card__cta {
-  display: inline-flex;
-  min-height: 50px;
-  align-items: center;
-  justify-content: center;
-  gap: 9px;
-  width: 100%;
-  margin-top: 4px;
-  padding: 14px 22px;
-  font-family: inherit;
-  font-size: 1rem;
-  font-weight: 650;
-  color: var(--card-accent-ink);
-  background: var(--card-accent);
-  border: none;
-  /* 999px, not --radius-full: that token is 50%, which is a CIRCLE. On
-     anything wider than it is tall 50% renders an ellipse, which is what
-     this control was doing. Every other pill in the app hardcodes 999px. */
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background var(--transition-fast), transform var(--transition-fast);
-}
-
-.path-card__cta:hover {
-  background: var(--card-accent-strong);
-  transform: translateY(-1px);
-}
-
-.path-card__cta:focus-visible {
-  outline: 2px solid var(--card-accent-strong);
-  outline-offset: 3px;
-}
-
-/* Beside the title, not inside the button. In the button it cost ~50px of a
-   272px control, which pushed "Test my exam readiness" onto a second line and
-   left the two cards with CTAs of different heights. */
-.path-card__new {
-  display: inline-block;
-  padding: 2px 8px;
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  line-height: 1.6;
-  color: var(--card-accent-strong);
-  background: var(--card-accent-soft);
-  border-radius: 999px;
-}
-
-.path-card__note {
-  display: flex;
-  /* Top, not centre: the note wraps to two lines on a narrow card, and a
-     centred icon then floats beside the gap between them. */
-  align-items: flex-start;
-  justify-content: center;
-  gap: 7px;
-  margin: 0;
-  font-size: 0.82rem;
+.path-row__hint {
+  font-size: 0.8rem;
   line-height: 1.4;
   color: var(--text-muted);
 }
 
-.path-card__note svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: var(--card-accent);
-}
-
-/* ── The drill, as a secondary pill ───────────────────────────────────
-   Outlined rather than filled: the plan CTA above it is the only solid
-   button on this screen, which is what makes it read as the default. The
-   pill still carries the drill's lavender so the identity survives the
-   demotion, and it inherits those tokens from .path-card--drill rather
-   than restating them. */
-.path-drill-pill {
-  --card-accent: #a894c9;
-  --card-accent-strong: #8f79b8;
-  --card-accent-border: rgba(184, 165, 212, 0.4);
-  --card-accent-soft: rgba(184, 165, 212, 0.16);
-  display: inline-flex;
-  align-items: center;
-  gap: 9px;
-  margin: 18px auto 0;
-  padding: 9px 18px 9px 12px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--card-accent-strong);
-  background: var(--bg-paper);
-  border: 1.5px solid var(--card-accent-border);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: background var(--transition-fast), border-color var(--transition-fast),
-    transform var(--transition-fast);
-}
-
-.path-drill-pill:hover {
-  background: var(--card-accent-soft);
-  border-color: var(--card-accent);
-  transform: translateY(-1px);
-}
-
-.path-drill-pill:focus-visible {
-  outline: 2px solid var(--card-accent-strong);
-  outline-offset: 3px;
-}
-
-.path-drill-pill__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--card-accent-soft);
-  color: var(--card-accent-strong);
-}
-
-.path-drill-pill__icon svg {
-  width: 16px;
-  height: 16px;
-}
-
-.path-drill-pill__new {
-  padding: 2px 7px;
-  font-size: 0.54rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
-  line-height: 1.6;
-  color: var(--card-accent-strong);
-  background: var(--card-accent-soft);
-  border-radius: 999px;
-}
-
-.path-drill-pill__arrow {
-  flex-shrink: 0;
-  opacity: 0.75;
-}
-
-.path-drill-pill__note {
-  margin: 8px 0 0;
-  font-size: 0.79rem;
-  text-align: center;
+.path-row__arrow {
   color: var(--text-muted);
+  opacity: 0.55;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
 }
 
-/* ── Dark: same two identities, lifted off the background ─────────────── */
+.path-row:hover .path-row__arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+.path-panel__divider {
+  height: 1px;
+  margin: 5px 8px;
+  background: rgba(60, 40, 30, 0.08);
+}
+
+/* ── Dark ─────────────────────────────────────────────────────────────── */
 body.dark-mode .path-choice__title {
   color: #ededed;
 }
 
-body.dark-mode .path-choice__sub {
-  color: #9ca3af;
-}
-
-body.dark-mode .path-card {
+body.dark-mode .path-panel {
   background: var(--dark-bg-elevated);
+  border-color: var(--dark-border);
+  box-shadow: none;
 }
 
-body.dark-mode .path-card--plan {
-  --card-accent: var(--primary-coral);
-  --card-accent-strong: var(--primary-coral-light);
-  --card-accent-border: rgba(232, 141, 125, 0.28);
-  --card-accent-soft: rgba(232, 141, 125, 0.14);
-  --card-accent-glow: rgba(0, 0, 0, 0.45);
-  --card-accent-ink: #241a17;
+body.dark-mode .path-row {
+  --row-accent: var(--primary-coral-light);
+  --row-accent-soft: rgba(232, 141, 125, 0.1);
+  color: #ededed;
 }
 
-body.dark-mode .path-card--drill {
-  --card-accent: var(--dark-accent);
-  --card-accent-strong: var(--dark-accent-light);
-  --card-accent-border: rgba(184, 165, 212, 0.28);
-  --card-accent-soft: rgba(184, 165, 212, 0.14);
-  --card-accent-glow: rgba(0, 0, 0, 0.45);
-  --card-accent-ink: #17161a;
+body.dark-mode .path-row--drill {
+  --row-accent: var(--dark-accent-light);
+  --row-accent-soft: rgba(184, 165, 212, 0.12);
 }
 
-body.dark-mode .path-card__desc {
-  color: #a0a0a0;
-}
-
-body.dark-mode .path-card__note {
+body.dark-mode .path-row__hint,
+body.dark-mode .path-row__arrow {
   color: #8a8a8a;
 }
 
-body.dark-mode .path-card__new {
-  background: var(--card-accent-ink);
-  color: var(--card-accent-strong);
+body.dark-mode .path-panel__divider {
+  background: var(--dark-border);
 }
 
-body.dark-mode .path-drill-pill {
-  --card-accent: var(--dark-accent);
-  --card-accent-strong: var(--dark-accent-light);
-  --card-accent-border: rgba(184, 165, 212, 0.28);
-  --card-accent-soft: rgba(184, 165, 212, 0.14);
-  background: var(--dark-bg-elevated);
-}
-
-body.dark-mode .path-drill-pill__new {
-  background: rgba(184, 165, 212, 0.2);
-}
-
-body.dark-mode .path-drill-pill__note {
-  color: #8a8a8a;
-}
-
-/* ── Narrow: the doors stack, still as peers ──────────────────────────── */
 @media (max-width: 720px) {
-  .path-choice__cards {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 14px;
-  }
-
-  .path-choice__cards--solo {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .path-drill-pill {
-    max-width: 100%;
-  }
-
-  .path-drill-pill__label {
-    /* The label is the only part worth truncating if the pill runs out of
-       room; the icon and badge are what make it recognisable. */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
   .path-choice__title {
-    font-size: 1.3rem;
-  }
-
-  .path-card {
-    padding: 24px 20px 20px;
-    gap: 12px;
-  }
-
-  .path-card__icon {
-    width: 62px;
-    height: 62px;
-  }
-
-  .path-card__icon svg {
-    width: 34px;
-    height: 34px;
+    font-size: 1.1rem;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .path-card:hover,
-  .path-card__cta:hover,
-  .path-drill-pill:hover {
+  .path-row:hover .path-row__arrow {
     transform: none;
   }
 }

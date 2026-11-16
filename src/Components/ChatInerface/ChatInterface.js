@@ -149,6 +149,7 @@ import { markFirstUploadComplete, getWowEffectConfig, updateUserProfile } from '
 import { devLog } from '../../Services/devLogger';
 import DrillExamDate from '../ExamDrill/DrillExamDate';
 import DrillTargetIcon from '../ExamDrill/DrillTargetIcon';
+import PipPerch from '../QuizRoom/PipPerch';
 import { saveExamDate, noteExamDateAsked } from '../../Services/ExamDrillService';
 
 // ============================================
@@ -5423,26 +5424,20 @@ const ChatInterface = ({
             landing card. The countdown still surfaces inside StudyMode. */}
         {!hasMessages && isChatDataLoaded && !isGameChat && !currentExamData?.examName && (
           <div className="empty-chat-state empty-chat-state--paths">
-            {/* ── One door, plus a quieter second one ─────────────────────
+            {/* ── One quiet panel, plan first ─────────────────────────────
                 The plan is for a student who wants to be TAUGHT; the drill
                 is for one who wants to be TESTED.
 
-                These were drawn as peers — two cards, same size, same weight —
-                on the reasoning that paying users overwhelmingly took the
-                tested path (7x the exams, almost none of the lessons). That
-                reasoning conflated two populations. The users measured were
-                already inside a plan, taking its exams; the students at THIS
+                These were once drawn as peers, two cards of the same size, on
+                the reasoning that paying users overwhelmingly took the tested
+                path. That conflated two populations: the students at THIS
                 screen have uploaded nothing yet and cannot tell the two doors
-                apart, and only ~12% of them pick the drill. Asking a stranger
-                to choose between two unfamiliar things is the cost, and the
-                plan is the surface the rest of the product is built on.
+                apart, and only ~12% of them pick the drill. The plan is the
+                surface the rest of the product is built on.
 
-                So: plan as the door, drill as a pill beneath it. The drill
-                keeps its icon, its lavender identity and its NEW badge. It is
-                quieter, not hidden — and the same choice is offered again,
-                better-timed, once the plan is finished (BlockCompleteCard),
-                where "what did I still miss" is a question she can actually
-                answer.
+                So the plan is the first row and the only coral label; the
+                drill sits under the divider with its lavender icon. Quieter, not hidden, and offered again once the plan is
+                finished (BlockCompleteCard).
 
                 Both doors still go through an upload: neither is worth
                 anything until the questions come from HER material. */}
@@ -5451,86 +5446,72 @@ const ChatInterface = ({
                 <h2 className="path-choice__title">
                   {t('chat.pathTitle', 'What do you want to focus on today?')}
                 </h2>
-                <p className="path-choice__sub">
-                  {t('chat.pathSub', "Choose your path. We'll meet you where you are.")}
-                </p>
 
-                <div className="path-choice__cards path-choice__cards--solo">
-                  <article className="path-card path-card--plan">
-                    <div className="path-card__icon">
-                      <svg viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-                        <path d="M32 12L6 26L32 40L58 26L32 12Z" fill="currentColor" opacity="0.85" />
-                        <path d="M16 32V46C16 46 24 52 32 52C40 52 48 46 48 46V32" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
-                        <path d="M52 28V44" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
-                        <circle cx="52" cy="47" r="3" fill="currentColor" />
-                      </svg>
-                    </div>
-                    <h3 className="path-card__title">
-                      {t('chat.planCardTitle', 'Follow your study plan')}
-                    </h3>
-                    <p className="path-card__desc">
-                      {t('chat.planCardDesc', 'A personalized, step-by-step plan built from your notes to help you master the material.')}
-                    </p>
-                    <button
-                      className="path-card__cta"
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExamPrepExpanded(true);
-                      }}
-                    >
-                      {t('chat.prepareForExam', 'Study for exam')}
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                             strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="16" height="16">
-                          <line x1="5" y1="12" x2="19" y2="12" />
-                          <polyline points="12 5 19 12 12 19" />
-                        </svg>
-                    </button>
-                    <p className="path-card__note">
-                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8"
-                           strokeLinecap="round" strokeLinejoin="round" width="14" height="14" aria-hidden="true">
-                        <path d="M4 5a2 2 0 0 1 2-2h12a1 1 0 0 1 1 1v15a1 1 0 0 1-1 1H6a2 2 0 0 1-2-2z" />
-                        <line x1="8" y1="7" x2="15" y2="7" />
-                        <line x1="8" y1="11" x2="15" y2="11" />
-                      </svg>
-                      {t('chat.planCardNote', 'Best for building knowledge and long-term retention')}
-                    </p>
-                  </article>
+                <div className="path-panel">
+                  <PipPerch className="path-panel__pip" size={62} />
 
+                  <button
+                    className="path-row path-row--plan"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setExamPrepExpanded(true);
+                    }}
+                  >
+                    <span className="path-row__icon" aria-hidden="true">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7"
+                           strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 4 2.5 9 12 14l9.5-5L12 4Z" />
+                        <path d="M6.5 11.2V16c0 0 2.2 2.5 5.5 2.5s5.5-2.5 5.5-2.5v-4.8" />
+                        <path d="M21.5 9v5.5" />
+                      </svg>
+                    </span>
+                    <span className="path-row__text">
+                      <span className="path-row__label">
+                        {t('chat.prepareForExam', 'Study for exam')}
+                      </span>
+                      <span className="path-row__hint">
+                        {t('chat.planRowHint', 'A step-by-step plan built from your notes')}
+                      </span>
+                    </span>
+                    <svg className="path-row__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"
+                         aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </button>
+
+                  <div className="path-panel__divider" />
+
+                  <button
+                    className="path-row path-row--drill"
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      window._pendingDrill = true;
+                      documentFileInputRef.current?.click();
+                    }}
+                  >
+                    <span className="path-row__icon" aria-hidden="true">
+                      <DrillTargetIcon />
+                    </span>
+                    <span className="path-row__text">
+                      <span className="path-row__label">
+                        {t('chat.drillCardTitle', 'Find my weak spots')}
+                      </span>
+                      <span className="path-row__hint">
+                        {t('chat.drillCardNote', "Best once you've studied, to find what didn't stick")}
+                      </span>
+                    </span>
+                    <svg className="path-row__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                         strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"
+                         aria-hidden="true">
+                      <line x1="5" y1="12" x2="19" y2="12" />
+                      <polyline points="12 5 19 12 12 19" />
+                    </svg>
+                  </button>
                 </div>
-
-                {/* The drill, demoted from co-equal card to a secondary pill.
-                    Two cards of identical weight made the student choose
-                    between two things she could not yet tell apart, and the
-                    plan is the path the product is actually built around. The
-                    drill keeps its icon, its lavender identity and its badge —
-                    it is quieter, not hidden. */}
-                <button
-                  className="path-drill-pill"
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    window._pendingDrill = true;
-                    documentFileInputRef.current?.click();
-                  }}
-                >
-                  <span className="path-drill-pill__icon" aria-hidden="true">
-                    <DrillTargetIcon />
-                  </span>
-                  <span className="path-drill-pill__label">
-                    {t('chat.drillCardTitle', 'Find my weak spots')}
-                  </span>
-                  <span className="path-drill-pill__new">{t('chat.newBadge', 'New')}</span>
-                  <svg className="path-drill-pill__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="15" height="15"
-                       aria-hidden="true">
-                    <line x1="5" y1="12" x2="19" y2="12" />
-                    <polyline points="12 5 19 12 12 19" />
-                  </svg>
-                </button>
-                <p className="path-drill-pill__note">
-                  {t('chat.drillCardNote', "Best once you've studied, to find what didn't stick")}
-                </p>
               </div>
             ) : (
               /* Expanded: the plan door asks HOW the notes arrive. Unchanged

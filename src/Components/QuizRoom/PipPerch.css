@@ -1,0 +1,117 @@
+/* Pip on a panel edge: slow idle motion, nothing that pulls the eye off the
+   two rows he is sitting above. The feet stay planted; only what is above
+   them moves, so he reads as sitting rather than floating.
+
+   transform-box: fill-box makes each origin relative to the part's own
+   bounding box. Without it the origin is the SVG viewport and every part
+   swings around the top-left corner. */
+.pip-perch {
+  overflow: visible;
+  /* Sits still for most of the cycle, then two small bounces. */
+  animation: pip-bob 7s ease-in-out infinite;
+}
+
+.pip-perch__body,
+.pip-perch__eyes,
+.pip-perch__hat-top,
+.pip-perch__foot {
+  transform-box: fill-box;
+}
+
+.pip-perch__body {
+  transform-origin: 50% 100%;
+  animation: pip-breathe 3.4s ease-in-out infinite;
+}
+
+.pip-perch__eyes {
+  transform-origin: 50% 50%;
+  animation: pip-blink 4.6s infinite;
+}
+
+/* Pivot at the brim end of the cone, so the tip and pom do the swinging. */
+.pip-perch__hat-top {
+  transform-origin: 30% 100%;
+  animation: pip-hat-sway 3.4s ease-in-out infinite;
+}
+
+.pip-perch__foot {
+  transform-origin: 50% 0%;
+  animation: pip-kick 2.6s ease-in-out infinite;
+}
+
+.pip-perch__foot--right {
+  animation-delay: -1.3s;
+}
+
+.pip-perch__snow circle {
+  opacity: 0;
+  animation: pip-snow 5s linear infinite;
+}
+
+.pip-perch__snow circle:nth-child(2) {
+  animation-delay: -1.8s;
+  animation-duration: 6.2s;
+}
+
+.pip-perch__snow circle:nth-child(3) {
+  animation-delay: -3.4s;
+  animation-duration: 5.6s;
+}
+
+/* A hop when she points at either row. */
+.path-panel:has(.path-row:hover) .pip-perch,
+.pip-perch--hop {
+  animation: pip-hop 0.55s cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes pip-breathe {
+  0%, 100% { transform: scale(1, 1); }
+  50% { transform: scale(1.025, 0.972); }
+}
+
+@keyframes pip-blink {
+  0%, 93%, 100% { transform: scaleY(1); }
+  96% { transform: scaleY(0.08); }
+}
+
+@keyframes pip-hat-sway {
+  0%, 100% { transform: rotate(-3deg); }
+  50% { transform: rotate(5deg); }
+}
+
+@keyframes pip-bob {
+  0%, 78%, 100% { transform: translateY(0); }
+  84% { transform: translateY(-5px); }
+  90% { transform: translateY(0); }
+  95% { transform: translateY(-2.5px); }
+}
+
+@keyframes pip-kick {
+  0%, 100% { transform: rotate(-7deg); }
+  50% { transform: rotate(7deg); }
+}
+
+@keyframes pip-snow {
+  0% { transform: translate(0, 0); opacity: 0; }
+  15% { opacity: 0.85; }
+  70% { opacity: 0.6; }
+  100% { transform: translate(-4px, 62px); opacity: 0; }
+}
+
+@keyframes pip-hop {
+  0%, 100% { transform: translateY(0); }
+  40% { transform: translateY(-7px); }
+  70% { transform: translateY(0); }
+  85% { transform: translateY(-2px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pip-perch,
+  .pip-perch__body,
+  .pip-perch__eyes,
+  .pip-perch__hat-top,
+  .pip-perch__foot,
+  .pip-perch__snow circle {
+    animation: none;
+  }
+}
