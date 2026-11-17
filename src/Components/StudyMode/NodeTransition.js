@@ -22,6 +22,7 @@ import './NodeResult.css';
 import { TopicHandoff } from './TopicJourney';
 import { collectMisses, firstChoices } from './missEvidence';
 import { FUNNEL, logFunnelStep } from '../../Services/FunnelService';
+import { isCardRecalled, firstAnswers } from './flashcardDeckModel';
 
 const ReadinessGain = ({ value, label }) => {
   const [displayed, setDisplayed] = useState(() => (
@@ -111,7 +112,7 @@ const NodeTransition = ({
   node,              // The node that was just completed
   content,           // Content that was shown (questions, cards, etc.)
   quizProgress,      // { questionStatuses: { 0: 'correct', 1: 'incorrect', ... } }
-  flashcardProgress, // { cardStatuses: { 0: 'got_it', 1: 'need_review', ... } }
+  flashcardProgress, // { cardStatuses: { 0: 'mastered', 1: 'review', ... } }
   mindmapProgress,   // { visitedNodeIds: [], totalNodes: N }
   audioSkipped,      // True when the user tapped Skip on the audio intro
   nextNode,          // The originally planned next node (for preview)
@@ -245,16 +246,16 @@ const NodeTransition = ({
 
     // Flashcard results
     if (type === 'flashcard' && flashcardProgress?.cardStatuses && content?.cards) {
-      const statuses = flashcardProgress.cardStatuses;
+      const statuses = firstAnswers(flashcardProgress);
       const total = content.cards.length;
-      const mastered = Object.values(statuses).filter(s => s === 'got_it').length;
+      const mastered = Object.values(statuses).filter(s => isCardRecalled(s)).length;
       const needReview = total - mastered;
       const scorePercent = total > 0 ? Math.round((mastered / total) * 100) : 0;
 
       // Collect cards that needed review
       const reviewCards = [];
       Object.entries(statuses).forEach(([idx, status]) => {
-        if (status !== 'got_it' && content.cards[parseInt(idx)]) {
+        if (!isCardRecalled(status) && content.cards[parseInt(idx)]) {
           // String(): card text is LLM-generated and is not guaranteed to be
           // one. An array has a .length but no .substring, so the unguarded
           // version threw on exactly the cards ChatFlashcard crashed on. The
@@ -514,7 +515,7 @@ const NodeTransition = ({
     let items = [];
     if (isCards) {
       const cards = content?.cards;
-      const statuses = flashcardProgress?.cardStatuses;
+      const statuses = flashcardProgress?.cardStatuses ? firstAnswers(flashcardProgress) : null;
       if (!Array.isArray(cards) || !cards.length || !statuses) return undefined;
       /* Only cards she actually reached. An abandoned deck would otherwise
          report every card she never saw as one she couldn't recall, and the
@@ -522,7 +523,7 @@ const NodeTransition = ({
       items = cards
         .map((c, i) => ({
           question: String(c?.front || '').slice(0, 400),
-          correct: statuses[i] === 'got_it',
+          correct: isCardRecalled(statuses[i]),
           question_type: 'mcq',
           rationale: String(c?.back || '').slice(0, 600),
           _answered: statuses[i] != null,

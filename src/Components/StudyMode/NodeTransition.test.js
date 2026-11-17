@@ -81,7 +81,7 @@ describe('NodeTransition — the post-node readout', () => {
     const { onPracticeMore, container } = setup({
       node: { id: 'cards-zero', type: 'flashcard', label: 'ABCDE' },
       content: { cards: Array.from({ length: 5 }, () => ({ front: 'Airway', back: 'Review' })) },
-      flashcardProgress: { cardStatuses: { 0: 'need_review', 1: 'need_review', 2: 'need_review', 3: 'need_review', 4: 'need_review' } },
+      flashcardProgress: { cardStatuses: { 0: 'review', 1: 'review', 2: 'review', 3: 'review', 4: 'review' } },
     });
     expect(screen.getByText('Let’s work through this together.')).toBeInTheDocument();
     expect(screen.getByText('5 cards marked for review')).toBeInTheDocument();

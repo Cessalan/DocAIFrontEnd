@@ -1721,10 +1721,15 @@ export const generate_study_item_stream = async (
     const decoder = new TextDecoder();
     let result = null;
     let buffer = ''; // Buffer to accumulate partial SSE chunks across TCP reads
+    // A status:error from the server. Kept outside the JSON.parse try below:
+    // thrown inside it, an error whose message was not the default text was
+    // swallowed as a parse failure and the stream carried on as if healthy.
+    let streamError = null;
 
     while (true) {
       const { done, value } = await reader.read();
       if (done) break;
+      if (streamError) throw streamError;
 
       // We received data — reset the idle timer
       resetIdleTimer();
@@ -1764,12 +1769,9 @@ export const generate_study_item_stream = async (
 
               // Handle errors
               if (data.status === 'error') {
-                throw new Error(data.message || 'Streaming generation failed');
+                streamError = new Error(data.message || 'Streaming generation failed');
               }
             } catch (parseError) {
-              if (parseError.message && parseError.message.includes('Streaming generation failed')) {
-                throw parseError;
-              }
               if (line.trim().length > 10) {
                 console.warn('Failed to parse SSE chunk:', line.substring(0, 100) + '...');
               }
@@ -1798,12 +1800,19 @@ export const generate_study_item_stream = async (
                 hash: data.hash
               };
             }
+
+            if (data.status === 'error') {
+              streamError = new Error(data.message || 'Streaming generation failed');
+            }
           } catch (e) {
             console.warn('Failed to parse final SSE buffer:', buffer.substring(0, 100) + '...');
           }
         }
       }
     }
+
+    // An error is usually the last thing the server sends before closing.
+    if (streamError) throw streamError;
 
     if (idleTimer) clearTimeout(idleTimer);
     devLog(`✅ Study ${node_type} streamed successfully`);

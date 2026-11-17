@@ -541,6 +541,26 @@ const StudyModeContainer = ({
       lookDirection: 'center'
     });
 
+    // Cards that reached the screen before a stream died. She can study them,
+    // so they are saved like a finished deck. Until 2026-11-16 they were shown
+    // but never saved: the step could be finished with nothing stored behind
+    // it (a "done" flashcard step with no messageId), and reopening it asked
+    // for a whole new deck.
+    const streamedCards = [];
+    const keepStreamedDeck = async () => {
+      if (viewOnly || node.type !== 'flashcard' || streamedCards.length === 0) return;
+      try {
+        const deck = { cards: [...streamedCards] };
+        const messageId = await saveNodeContent(chatId, node.id, deck, node.type);
+        await updateNodeStatus(chatId, node.id, { messageId });
+        setNodes(prev => prev.map(n => n.id === node.id ? { ...n, messageId } : n));
+        currentMessageIdRef.current = messageId;
+        consumeGeneration(generationUnits(deck));
+      } catch (saveError) {
+        console.error('❌ Could not save the cards that arrived:', saveError);
+      }
+    };
+
     try {
       // ========================================
       // CHECK FOR SAVED CONTENT FIRST
@@ -693,6 +713,11 @@ const StudyModeContainer = ({
 
         // Handle individual flashcard arrival
         if (data.status === 'flashcard_ready' && data.flashcard) {
+          streamedCards.push({
+            front: data.flashcard.front || '',
+            back: data.flashcard.back || '',
+            topic: data.flashcard.topic || node.label
+          });
           setCurrentContent(prev => ({
             ...prev,
             cards: [...(prev?.cards || []), data.flashcard]
@@ -750,6 +775,7 @@ const StudyModeContainer = ({
           }
           return rest;
         });
+        await keepStreamedDeck();
         setMascotState({ type: 'nurse', isExcited: false, isSurprised: false, lookDirection: 'down-center' });
         return;
       }
@@ -820,6 +846,7 @@ const StudyModeContainer = ({
         }
         return rest;
       });
+      await keepStreamedDeck();
 
       setMascotState({
         type: 'nurse',

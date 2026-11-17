@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import StudyProgressBar from './StudyProgressBar';
 import StudyCelebration from './StudyCelebration';
+import { isFlashcardDeckMastered } from './flashcardDeckModel';
 import { playCorrectSound, playIncorrectSound, playCelebrationSound, playMilestoneSound, playFlipSound } from '../../utils/soundEffects';
 
 /**
@@ -74,6 +75,19 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
     savedProgress?.cardStatuses || {}
   );
 
+  // What she said the FIRST time she saw each card. cardStatuses cannot answer
+  // that: a deck only ends once every card is 'mastered', so by the result
+  // screen it always reads N of N. The result screen reports this map instead.
+  const [firstPassStatuses, setFirstPassStatuses] = useState(() =>
+    savedProgress?.firstPassStatuses || {}
+  );
+  const recordFirstPass = (status) => {
+    if (isReviewRound || firstPassStatuses[currentQueuePosition]) return firstPassStatuses;
+    const next = { ...firstPassStatuses, [currentQueuePosition]: status };
+    setFirstPassStatuses(next);
+    return next;
+  };
+
   // Queue of card indices to show (includes review cards at the end)
   const [cardQueue, setCardQueue] = useState([]);
   // Initialize queueIndex from savedProgress to show correct card immediately
@@ -132,6 +146,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
         console.log('📊 Restoring flashcard progress:', savedProgress);
 
         setCardStatuses(savedProgress.cardStatuses);
+        setFirstPassStatuses(savedProgress.firstPassStatuses || {});
         setIsReviewRound(savedProgress.isReviewRound || false);
 
         // Rebuild the queue based on saved state
@@ -191,8 +206,10 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
   // Calculate progress
   const masteredCount = Object.values(cardStatuses).filter(s => s === 'mastered').length;
 
-  // Check if all cards are mastered
-  const allMastered = masteredCount === totalCards;
+  // Check if all cards are mastered. Never while cards are still arriving:
+  // one card on screen and "Got it" is 1 of 1, which used to end the step
+  // with the rest of the deck still on its way.
+  const allMastered = isFlashcardDeckMastered({ masteredCount, totalCards, isStreaming });
 
   // Milestone calculation constants
   // IMPORTANT: Use expectedTotal (default 12) for milestone calculations, not actual cards received
@@ -344,6 +361,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
     playCorrectSound();
     const newStatuses = { ...cardStatuses, [currentQueuePosition]: 'mastered' };
     setCardStatuses(newStatuses);
+    const firstPass = recordFirstPass('mastered');
 
     if (onReview) {
       onReview({
@@ -351,6 +369,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
         cardIndex: currentQueuePosition,
         progress: {
           cardStatuses: newStatuses,
+          firstPassStatuses: firstPass,
           queueIndex: queueIndex,
           isReviewRound: isReviewRound
         }
@@ -363,6 +382,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
     playIncorrectSound();
     const newStatuses = { ...cardStatuses, [currentQueuePosition]: 'review' };
     setCardStatuses(newStatuses);
+    const firstPass = recordFirstPass('review');
 
     if (onReview) {
       onReview({
@@ -370,6 +390,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
         cardIndex: currentQueuePosition,
         progress: {
           cardStatuses: newStatuses,
+          firstPassStatuses: firstPass,
           queueIndex: queueIndex,
           isReviewRound: isReviewRound
         }
@@ -417,6 +438,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
             cardIndex: null,
             progress: {
               cardStatuses: cardStatuses,
+            firstPassStatuses: firstPassStatuses,
               queueIndex: 0,
               isReviewRound: true
             }
@@ -437,6 +459,7 @@ const StudyFlashcardCard = ({ content, savedProgress, isReviewMode = false, view
           cardIndex: null,
           progress: {
             cardStatuses: cardStatuses,
+            firstPassStatuses: firstPassStatuses,
             queueIndex: nextQueueIndex,
             isReviewRound: isReviewRound
           }

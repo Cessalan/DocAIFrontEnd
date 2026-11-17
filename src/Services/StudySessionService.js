@@ -1007,6 +1007,9 @@ export const saveFlashcardProgress = async (chatId, messageId, progress) => {
     await updateDoc(messageRef, {
       flashcardProgress: {
         cardStatuses: progress.cardStatuses || {},
+        // First answer per card; the result screen reads this, because
+        // cardStatuses is all 'mastered' by the time a deck can end.
+        firstPassStatuses: progress.firstPassStatuses || {},
         queueIndex: progress.queueIndex || 0,
         isReviewRound: progress.isReviewRound || false,
         lastUpdated: serverTimestamp()
