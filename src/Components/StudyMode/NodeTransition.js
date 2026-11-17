@@ -136,6 +136,7 @@ const NodeTransition = ({
   nodeTopic,         // the node's subject, resolved from the plan (label may be decorated)
   detoursTaken = 0,  // extra steps the plan already holds on this topic (nodeTopic.countDetours)
   topicHandoff = null, // {done, next, nextNumber, total} when this step finished a topic (topicJourneyModel)
+  topicSwitcher = null, // <TopicSwitcher/>: her other topics, one tap away (topicSwitchModel)
   priorPerformance,  // studyPerformance snapshot taken BEFORE this node started
   topicProgress = null,
   viewOnly = false,    // dev view-as: a student's questions are never offered for sharing
@@ -1169,6 +1170,8 @@ const NodeTransition = ({
             />
           )}
 
+          {topicSwitcher}
+
           {/* Subtle: customize link */}
           <button
             className="node-transition__customize-link"
@@ -1654,6 +1657,9 @@ const NodeTransition = ({
             nodeId={node?.id}
           />
         )}
+
+        {/* Her other topics. Leaving this one is her call, not only the plan's. */}
+        {topicSwitcher}
 
         {/* ── Full control, one line, no invitation to go browsing ── */}
         <button

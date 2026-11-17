@@ -199,9 +199,14 @@ describe('TodaySessionCard', () => {
 
     expect(screen.getByText("Today's mission")).toBeInTheDocument();
     expect(screen.getByText('Day 1 of 10')).toBeInTheDocument();
-    // One mission CTA. The old per-node list rendered a button-shaped row per
-    // node with only one of them live, which read as a menu with broken items.
-    expect(screen.getAllByRole('button', { name: /mission/i })).toHaveLength(1);
+    // One CTA. The old per-node list rendered a button-shaped row per node
+    // with only one of them live, which read as a menu with broken items.
+    // Since 2026-11-16 the card names the step the button opens, and the only
+    // other control is the quiet full-plan link.
+    expect(screen.getAllByRole('button', { name: 'Start' })).toHaveLength(1);
+    expect(screen.getByText(/^Next: .+, about \d+ min\.$/)).toBeInTheDocument();
+    expect(screen.getAllByRole('button')).toHaveLength(2);
+    expect(screen.getByRole('button', { name: /See full plan · 0 of \d+ steps done/ })).toBeInTheDocument();
   });
 
   it('launches the current node from the single CTA', () => {
@@ -212,7 +217,7 @@ describe('TodaySessionCard', () => {
     });
     renderCard(schedule, { onNodeSelect });
 
-    screen.getByRole('button', { name: /mission/i }).click();
+    screen.getByRole('button', { name: 'Start' }).click();
     expect(onNodeSelect).toHaveBeenCalledTimes(1);
     expect(onNodeSelect.mock.calls[0][0].id).toBe(schedule.missionNodes[0].id);
   });

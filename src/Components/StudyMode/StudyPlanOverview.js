@@ -11,8 +11,10 @@ import { buildStudySchedule } from './studySchedule';
 // node labels the same way — two copies would silently drift apart.
 import { projectReadiness, normalizeTopic } from './readinessProjection';
 import './StudyMode.css';
-import { TopicJourneyPanel } from './TopicJourney';
+import TopicCard from './TopicCard';
+import './TopicJourney.css';
 import { topicJourney } from './topicJourneyModel';
+import { sectionSwitchTargets } from './topicSwitchModel';
 import { isCountedStep } from './firstBlock';
 import { changeReason, whenLabel } from './planAdaptCopy';
 
@@ -416,6 +418,11 @@ const StudyPlanOverview = ({
   isGeneratingPhase2 = false,
   onStartPhase2,
   onExtendBlock,
+  topicOptions = [],
+  switchingTopicKey = null,
+  onSwitchTopic = null,
+  // Start one step out of order (topicSwitchModel, "any step").
+  onStartStep = null,
   onDrillGaps,
   // Bring back a review the adaptive plan cut ("Do it anyway").
   onRestoreStep,
@@ -443,7 +450,10 @@ const StudyPlanOverview = ({
     () => nodes.filter(isCountedStep),
     [nodes]
   );
-  const journey = useMemo(() => topicJourney({ nodes, reserveNodes: studyState?.reserve?.nodes, topicProgress }),
+  // "You're here" is the topic of the step she is on, which after a topic
+  // switch is no longer the first unfinished topic in plan order.
+  const journey = useMemo(() => topicJourney({ nodes, reserveNodes: studyState?.reserve?.nodes, topicProgress,
+    activeNodeId: nodes.find(n => n.status === 'active')?.id || null }),
     [nodes, studyState?.reserve?.nodes, topicProgress]);
   const completedCount = realNodes.filter(n => n.status === 'done').length;
   const totalNodes = realNodes.length;
@@ -465,6 +475,20 @@ const StudyPlanOverview = ({
   // auto-expands after a third of the plan is behind them.
   const [showFullPlan, setShowFullPlan] = useState(false);
 
+  // ── Switching topic, on the plan's own sections ──
+  // The full plan IS her topics, so a section she has not started opens to
+  // show its steps and "Study this now"; topics still held in reserve are
+  // listed after the sections (topicSwitchModel.sectionSwitchTargets).
+  const switchTargets = useMemo(
+    () => sectionSwitchTargets(sections, onSwitchTopic ? topicOptions : [], nodes.concat(studyState?.reserve?.nodes || [])),
+    [sections, topicOptions, onSwitchTopic, nodes, studyState?.reserve?.nodes]
+  );
+  const [openLaterKey, setOpenLaterKey] = useState(null);
+  const cardStepIds = useMemo(
+    () => new Set(Object.values(switchTargets.bySection).flatMap(option => (option.steps || []).map(step => step.id))),
+    [switchTargets]
+  );
+
   // ── Expand/collapse state for completed sections ──
   const [expandedSections, setExpandedSections] = useState(new Set());
   const toggleSection = (id) => {
@@ -475,13 +499,9 @@ const StudyPlanOverview = ({
     });
   };
 
-  // Momentum unlocks the full plan: past a third done, the list is a map of
-  // what they've achieved rather than a pile of what's left.
-  useEffect(() => {
-    if (totalNodes > 0 && completedCount / totalNodes >= 0.34) {
-      setShowFullPlan(true);
-    }
-  }, [completedCount, totalNodes]);
+  // (The full plan used to open by itself past a third done. It no longer
+  // does: with the list open the page named her topic three times and had
+  // three things to tap. It is one tap away, under today's card.)
 
   // ── Auto-scroll to active section on mount ──
   useEffect(() => {
@@ -527,6 +547,11 @@ const StudyPlanOverview = ({
   // the old 15-node plan never gave anyone.
   const reserveCount = studyState?.reserve?.remaining || 0;
   const blockComplete = phase1AllDone;
+  // Whether today's card (TodaySessionCard) has something to show. It is the
+  // page's one "what now"; the topics panel and the full dashboard stand in
+  // only when it is absent.
+  const todayCardShown = !tonightPanel && totalNodes > 0 && !blockComplete
+    && !schedule.allDone && schedule.missionSize > 0;
 
   // ── Narration stage progression while Phase 2 generates ──
   const [narrationIdx, setNarrationIdx] = useState(0);
@@ -582,7 +607,13 @@ const StudyPlanOverview = ({
     const isDone = step.status === 'done';
     const isLocked = step.status === 'locked';
     const isSkipped = step.status === 'skipped';
-    const canClick = !isSkipped && (!isLocked || isDev);
+    const canClick = !isSkipped && !isLocked;
+    // A step not reached yet can still be picked: the whole row starts it,
+    // and it is drawn like any other step, not dimmed as if locked.
+    // Dev accounts see exactly what students see here.
+    const pickable = isLocked && !!onStartStep;
+    // The suggested next step, labelled rather than forced.
+    const upNext = isActive && todayCardShown;
     const topicLabel = getStepTopicLabel(step.label);
     const nodeProgress = step.nodeProgress || 0;
 
@@ -593,11 +624,21 @@ const StudyPlanOverview = ({
           'sov3-step',
           isActive ? 'sov3-step--active' : '',
           isDone ? 'sov3-step--done' : '',
-          isLocked ? 'sov3-step--locked' : '',
+          isLocked && !pickable ? 'sov3-step--locked' : '',
           isSkipped ? 'sov3-step--skipped' : '',
+          pickable ? 'sov3-step--pickable' : '',
           step.adaptive ? 'sov3-step--adaptive' : '',
         ].filter(Boolean).join(' ')}
-        onClick={canClick ? (e) => { e.stopPropagation(); onNodeSelect(step); } : undefined}
+        role={canClick || pickable ? 'button' : undefined}
+        tabIndex={canClick || pickable ? 0 : undefined}
+        aria-label={pickable ? t('topicJourney.startStep', { step: formatNodeType(step.type, t), topic: topicLabel }) : undefined}
+        onKeyDown={canClick || pickable ? (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault(); e.stopPropagation();
+          if (canClick) onNodeSelect(step); else if (!switchingTopicKey) onStartStep(step);
+        } : undefined}
+        onClick={canClick ? (e) => { e.stopPropagation(); onNodeSelect(step); }
+          : pickable ? (e) => { e.stopPropagation(); if (!switchingTopicKey) onStartStep(step); } : undefined}
       >
         {/* Not-yet-reached steps keep their type icon, dimmed. A padlock here
             reads as "pay to unlock" in a freemium app — it made a fully-free
@@ -624,7 +665,10 @@ const StudyPlanOverview = ({
               {nodeProgress > 0 ? `${nodeProgress}%` : t('study.done', 'Done')}
             </span>
           )}
-          {isActive && (
+          {/* With today's card on screen its button IS this step. A second
+              filled button here was a competing call to action; the row
+              itself still opens the step. */}
+          {isActive && !todayCardShown && (
             <button
               className="sov3-step__start-btn"
               onClick={(e) => { e.stopPropagation(); onNodeSelect(step); }}
@@ -634,7 +678,13 @@ const StudyPlanOverview = ({
                 : t('study.start', 'Start')}
             </button>
           )}
-          {isLocked && !isDev && (
+          {upNext && <span className="sov3-step__up-next">{t('study.upNext', 'Up next')}</span>}
+          {/* Any step can be started out of order; the row is the control. */}
+          {pickable && (switchingTopicKey === `step:${step.id}`
+            ? <span className="sov3-step__step-num">{t('topicJourney.switching')}</span>
+            : <svg className="sov3-step__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>)}
+          {isLocked && !pickable && !isDev && (
             <span className="sov3-step__step-num">
               {t('study.stepN', 'Step {{n}}', { n: (stepNumber ?? 0) + 1 })}
             </span>
@@ -659,6 +709,28 @@ const StudyPlanOverview = ({
     const isLocked = section.status === 'locked';
     const isExpanded = isActive || expandedSections.has(section.id);
     const doneSteps = section.steps.filter(s => s.status === 'done').length;
+    // A section she has not started opens too: to see what is in it and,
+    // when it is another topic, to switch to it.
+    const canOpen = isComplete || isLocked;
+    const switchOption = switchTargets.bySection[section.id] || null;
+
+    // Another topic she can switch to: the one card used everywhere for that
+    // (TopicCard.js), so it looks and counts the same here as under "Switch
+    // topic" inside a step.
+    if (isLocked && switchOption) {
+      return (
+        <TopicCard
+          key={section.id}
+          option={switchOption}
+          eyebrow={t('study.sectionLabel', 'Section {{number}}', { number: section.sectionNumber })}
+          open={expandedSections.has(section.id)}
+          onToggle={() => toggleSection(section.id)}
+          busyKey={switchingTopicKey}
+          onSwitch={onSwitchTopic}
+          onStartStep={onStartStep}
+        />
+      );
+    }
 
     return (
       <div
@@ -670,9 +742,10 @@ const StudyPlanOverview = ({
           isActive ? 'sov3-card--active' : '',
           isLocked && !isDev ? 'sov3-card--locked' : '',
           isLocked && isDev ? 'sov3-card--dev' : '',
+          isLocked ? 'sov3-card--openable' : '',
           isExpanded ? 'sov3-card--expanded' : '',
         ].filter(Boolean).join(' ')}
-        onClick={isComplete ? () => toggleSection(section.id) : undefined}
+        onClick={canOpen ? () => toggleSection(section.id) : undefined}
       >
         {/* Card header */}
         <div className="sov3-card__header">
@@ -731,7 +804,7 @@ const StudyPlanOverview = ({
             )}
           </div>
 
-          {isComplete && (
+          {canOpen && (
             <div className={`sov3-card__chevron ${isExpanded ? 'sov3-card__chevron--open' : ''}`}>
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" width="18" height="18">
                 <polyline points="6 9 12 15 18 9" />
@@ -748,11 +821,6 @@ const StudyPlanOverview = ({
             </button>
           )}
 
-          {isLocked && !isDev && (
-            <div className="sov3-card__upcoming-tag">
-              {t('study.upcoming', 'Upcoming')}
-            </div>
-          )}
         </div>
 
         {/* Expanded steps list */}
@@ -770,7 +838,8 @@ const StudyPlanOverview = ({
     const isDone = examNode.status === 'done';
     const isActive = examNode.status === 'active';
     const isLocked = examNode.status === 'locked';
-    const canClick = !isLocked || isDev;
+    const canClick = !isLocked;
+    const pickable = isLocked && !!onStartStep && !(examNode.nodeProgress > 0);
     const topicLabel = getStepTopicLabel(examNode.label);
     const score = examNode.nodeProgress || 0;
     const scoreLevel = score >= 85 ? 'strong' : score >= 60 ? 'developing' : 'weak';
@@ -783,9 +852,18 @@ const StudyPlanOverview = ({
           'sov3-milestone',
           (isDone || score > 0) ? 'sov3-milestone--done' : '',
           isActive && score === 0 ? 'sov3-milestone--active' : '',
-          isLocked && !isDev ? 'sov3-milestone--locked' : '',
+          isLocked && !isDev && !pickable ? 'sov3-milestone--locked' : '',
+          pickable ? 'sov3-milestone--pickable' : '',
         ].filter(Boolean).join(' ')}
-        onClick={canClick ? () => onNodeSelect(examNode) : undefined}
+        role={canClick || pickable ? 'button' : undefined}
+        tabIndex={canClick || pickable ? 0 : undefined}
+        aria-label={pickable ? t('topicJourney.startStep', { step: t('study.miniTest', 'Mini-Test'), topic: topicLabel }) : undefined}
+        onKeyDown={canClick || pickable ? (e) => {
+          if (e.key !== 'Enter' && e.key !== ' ') return;
+          e.preventDefault();
+          if (canClick) onNodeSelect(examNode); else if (!switchingTopicKey) onStartStep(examNode);
+        } : undefined}
+        onClick={canClick ? () => onNodeSelect(examNode) : pickable ? () => { if (!switchingTopicKey) onStartStep(examNode); } : undefined}
       >
         {/* Connector line above */}
         <div className="sov3-milestone__connector" />
@@ -813,6 +891,10 @@ const StudyPlanOverview = ({
 
         {/* Action / Result */}
         <div className="sov3-milestone__action">
+          {pickable && (switchingTopicKey === `step:${examNode.id}`
+            ? <span className="sov3-step__step-num">{t('topicJourney.switching')}</span>
+            : <svg className="sov3-step__arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+                strokeLinecap="round" strokeLinejoin="round" width="16" height="16" aria-hidden="true"><polyline points="9 18 15 12 9 6" /></svg>)}
           {(isDone || score > 0) && score > 0 && (
             <>
               <div className={`sov3-milestone__result sov3-milestone__result--${scoreLevel}`}>
@@ -1005,7 +1087,6 @@ const StudyPlanOverview = ({
       {tonightPanel}
 
       {/* Where she is across topics, the way Tonight's plan shows rounds. */}
-      {!tonightPanel && <TopicJourneyPanel journey={journey} />}
 
       {/* When the plan last changed from her answers: the line that answers
           "is this plan still current?", which is what re-uploads were for. */}
@@ -1105,6 +1186,7 @@ const StudyPlanOverview = ({
               estimatedMinutes={snap.estMin}
               onCtaClick={handleCtaClick}
               language={language}
+              compact={todayCardShown}
             />
           );
         })()}
@@ -1127,7 +1209,7 @@ const StudyPlanOverview = ({
           schedule={schedule}
           projection={projection}
           onNodeSelect={onNodeSelect}
-          planTuned={completedCount === 0}
+          journey={journey}
           expanded={showFullPlan}
           onToggleFull={() => setShowFullPlan(v => !v)}
         />
@@ -1137,12 +1219,29 @@ const StudyPlanOverview = ({
           Reference view. Hidden until the student asks for it (or earns it by
           getting a third of the way in) so the first impression is a short
           session, not a 20-row backlog. */}
-      {showFullPlan && (
+      {/* With no today's card (a finished block, a finished plan) there is no
+          link to open the plan, so it is simply shown. */}
+      {(showFullPlan || (!todayCardShown && !tonightPanel)) && (
         <div className="sov3-sections">
+          {(Object.keys(switchTargets.bySection).length > 0 || switchTargets.later.length > 0) && (
+            <p className="tj-hint sov3-switch-hint">{t('topicJourney.switchHint')}</p>
+          )}
           {renderOrder.map(item =>
             item.type === 'section'
               ? renderSectionCard(item.data)
-              : renderMilestone(item.data)
+              // A topic's mini-test is drawn inside its TopicCard.
+              : (cardStepIds.has(item.data.id) ? null : renderMilestone(item.data))
+          )}
+          {/* Topics the plan has not laid out as steps yet. */}
+          {switchTargets.later.length > 0 && (
+            <>
+              <p className="sov3-later__label">{t('topicJourney.later')}</p>
+              {switchTargets.later.map(option => (
+                <TopicCard key={option.key} option={option} open={openLaterKey === option.key}
+                  busyKey={switchingTopicKey} onSwitch={onSwitchTopic} onStartStep={onStartStep}
+                  onToggle={() => setOpenLaterKey(openLaterKey === option.key ? null : option.key)} />
+              ))}
+            </>
           )}
         </div>
       )}

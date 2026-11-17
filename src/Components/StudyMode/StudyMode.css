@@ -15257,3 +15257,73 @@ body.dark-mode .sov3-step__restore-btn:hover { background: rgba(184, 165, 212, .
 .sov3-adapted-note { margin: 8px 0 0; font-size: 13px; color: var(--text-secondary, #6b6b6b); }
 body.dark-mode .sov3-step__why { color: #d4c8e8; }
 body.dark-mode .sov3-adapted-note { color: #bbb; }
+
+/* ── Today's card, trimmed (2026-11-16, todayCardModel.js) ─────────────
+   Topic, next step, one button, one reason. "Topic 2 of 5" is the card's
+   first line and opens her topics in place; the full plan is one quiet
+   link at the bottom. */
+.tsc__topic-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: -4px 0 -4px -8px;
+  padding: 4px 8px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--study-coral, #e88d7d);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.tsc__topic-toggle:hover,
+.tsc__topic-toggle:focus-visible { background: rgba(232, 141, 125, 0.1); }
+.tsc__topic-toggle:focus-visible { outline: 2px solid var(--study-coral, #e88d7d); outline-offset: 1px; }
+
+.tsc .tj-bare {
+  margin: 0 0 14px;
+  padding: 2px 0 6px;
+  border-bottom: 1px solid rgba(100, 100, 100, 0.12);
+}
+.tsc__focus--plain { display: block; }
+.tsc__next-step {
+  margin: 4px 0 0;
+  font-size: 14.5px;
+  line-height: 1.45;
+  color: var(--text-primary, #3d3d3d);
+}
+.tsc__focus--plain .tsc__focus-why { margin-top: 4px; }
+
+/* The exam countdown and readiness, as one line above today's card. */
+.wud-line {
+  max-width: 640px;
+  margin: 0 auto 10px;
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-secondary, #6b6b6b);
+  text-align: left;
+}
+.wud-line--urgent { color: var(--study-coral, #e88d7d); }
+
+body.dark-mode .tsc__topic-toggle { color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tsc__topic-toggle:hover,
+body.dark-mode .tsc__topic-toggle:focus-visible { background: rgba(200, 180, 220, 0.12); }
+body.dark-mode .tsc__topic-toggle:focus-visible { outline-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tsc .tj-bare { border-bottom-color: rgba(255, 255, 255, 0.08); }
+body.dark-mode .tsc__next-step { color: #ececec; }
+body.dark-mode .wud-line { color: #b5b5b5; }
+body.dark-mode .wud-line--urgent { color: var(--dark-accent, #b8a5d4); }
+
+/* ── One list: the full plan carries the topic switch (2026-11-16) ──────
+   A section she has not started opens like a finished one, showing its
+   steps and, when it is another topic, "Study this now". Topics still held
+   back are listed after the sections. */
+.sov3-card--openable { cursor: pointer; }
+.sov3-card--openable .sov3-card__header { pointer-events: auto; }
+.sov3-card__switch { display: flex; justify-content: flex-end; padding: 4px 16px 14px; }
+.sov3-switch-hint { margin: 0 4px 2px; }
+.sov3-later__label { margin: 8px 4px 0; font-size: 12.5px; font-weight: 700; color: var(--text-secondary, #6b6b6b); }
+.tsc__eyebrow--topic { text-transform: none; letter-spacing: 0; font-size: 12.5px; }
+body.dark-mode .sov3-later__label { color: #b5b5b5; }

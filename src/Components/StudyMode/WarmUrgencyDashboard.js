@@ -141,6 +141,10 @@ const WarmUrgencyDashboard = ({
   estimatedMinutes = null,
   onCtaClick,
   language,
+  // One quiet line (countdown, estimated readiness) for the middle of a plan,
+  // where today's card is the only card. The full dashboard is for a finished
+  // plan, where it carries the practice-round button.
+  compact = false,
 }) => {
   const { t } = useTranslation();
 
@@ -240,6 +244,14 @@ const WarmUrgencyDashboard = ({
 
   // Nothing worth a card: no exam date, no progress, no action.
   if (!dateInfo && !showProgress && !showCta && !showReadiness) return null;
+
+  if (compact && !showCta) {
+    const parts = [];
+    if (countdownLabel) parts.push(countdownLabel);
+    if (showReadiness) parts.push(t('warmUrgency.readinessLine', '{{pct}}% estimated readiness', { pct: readinessPct }));
+    if (parts.length === 0) return null;
+    return <p className={`wud-line wud-line--${tier}`} title={dateInfo?.full}>{parts.join(' · ')}</p>;
+  }
 
   return (
     <div className={`wud wud--${tier}`}>

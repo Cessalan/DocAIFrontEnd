@@ -1,9 +1,8 @@
 import React, { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
-import { getStepTopicLabel } from './planFormatting';
-import { getStudyNodeIcon } from './planNodeIcon';
-import { buildMissionArc } from './missionArc';
+import { getStepTopicLabel, formatNodeType } from './planFormatting';
 import { gradedQuestionCount } from './readinessProjection';
+import { nextStep, supportLine } from './todayCardModel';
 
 /**
  * TodaySessionCard — today's mission, framed as an OUTCOME.
@@ -23,42 +22,41 @@ import { gradedQuestionCount } from './readinessProjection';
  * whether they'll be ready. So the footer is a readiness projection instead:
  * finishing this session moves a number they recognise. Action → outcome.
  *
+ * 2026-11-16: the card was trimmed to the topic, the next step, one button and
+ * ONE reason (todayCardModel.js). The focus tags, the Learn/Practice/Review
+ * strip and the tuned note are gone, and the topics panel that sat above the
+ * card is now its first line, "Topic 2 of 5". Her topics themselves, and the
+ * way to switch between them, are the full plan under the card: one list, not
+ * a list of topics in the card and the same topics again as sections below
+ * it. The overview was answering "what do I do now" three times.
+ *
  * There is exactly ONE actionable control. The old per-node list put a CTA
  * inside a row and rendered the other rows inert, which made the card look
  * like a menu where only one item worked. Now the beats summarise and the
  * button acts.
  *
  * Behavioural levers still in play:
- *   - GOAL GRADIENT: the arc advances visibly per beat rather than per 1/16th
- *     of a plan.
- *   - ENDOWED PROGRESS: the plan arrives already tuned by onboarding, and says
- *     so. People finish what looks already started.
+ *   - GOAL GRADIENT: one named next step with its minutes, not 1/16th of a plan.
  *   - A DEADLINE: "Day 3 of 20" makes the slice obviously today's.
  *
- * Window from `buildStudySchedule`, numbers from `projectReadiness`, beats from
- * `buildMissionArc`. This component is presentational.
+ * Window from `buildStudySchedule`, numbers from `projectReadiness`, the step and
+ * the one reason from `todayCardModel`. This component is presentational.
  *
  * @param {Object}   schedule      - from buildStudySchedule()
  * @param {Object}   projection    - from projectReadiness()
  * @param {Function} onNodeSelect  - (node) => start/resume that node
- * @param {boolean}  [planTuned]   - Show the endowed "tuned for you" note
  * @param {boolean}  [expanded]    - Whether the full plan is currently shown
  * @param {Function} onToggleFull  - Toggle the full plan list
  */
-
-const PHASE_COPY = {
-  learn: ['study.arcLearn', 'Learn'],
-  practice: ['study.arcPractice', 'Practice'],
-  review: ['study.arcReview', 'Review'],
-};
 
 const TodaySessionCard = ({
   schedule,
   projection = null,
   onNodeSelect,
-  planTuned = true,
   expanded = false,
   onToggleFull,
+  // Her topics (topicJourneyModel), for "Topic 2 of 5".
+  journey = null,
 }) => {
   const { t } = useTranslation();
 
@@ -69,6 +67,7 @@ const TodaySessionCard = ({
     missionComplete = false,
     allDone = false,
     totalNodes = 0,
+    completedCount = 0,
     remainingNodes = 0,
     nextUpNodes = [],
     hasExam = false,
@@ -82,22 +81,10 @@ const TodaySessionCard = ({
   const {
     hasData: hasReadiness = false,
     currentPct = null,
-    todayPct = null,
-    planPct = null,
-    movesToday = false,
-    focusTopic = null,
-    focusLevel = null,
   } = projection || {};
 
-  const primary = useMemo(
-    () => missionNodes.find(n => n.status !== 'done') || null,
-    [missionNodes]
-  );
-
-  const arc = useMemo(
-    () => buildMissionArc(missionNodes, primary?.id),
-    [missionNodes, primary]
-  );
+  const step = useMemo(() => nextStep(missionNodes, completedCount), [missionNodes, completedCount]);
+  const primary = step?.node || null;
 
   // Does today produce any graded answers? Drives the copy shown to students
   // who have no readiness score yet.
@@ -105,23 +92,6 @@ const TodaySessionCard = ({
     () => missionNodes.some(n => gradedQuestionCount(n.type) > 0),
     [missionNodes]
   );
-
-  // Subtopics the session actually covers, from node tags. Real detail beats a
-  // restated title — but tags are LLM-supplied and often absent, so this whole
-  // line is optional rather than faked from the topic name.
-  const focusTags = useMemo(() => {
-    const seen = [];
-    for (const n of missionNodes) {
-      for (const tag of n.tags || []) {
-        const clean = (tag || '').trim();
-        if (clean && !seen.some(s => s.toLowerCase() === clean.toLowerCase())) {
-          seen.push(clean);
-        }
-        if (seen.length === 3) return seen;
-      }
-    }
-    return seen;
-  }, [missionNodes]);
 
   // Distinct topics in tomorrow's slice — the return hook. A finished day that
   // ends in a full stop gives no reason to come back.
@@ -136,6 +106,25 @@ const TodaySessionCard = ({
   }, [nextUpNodes]);
 
   if (allDone || missionSize === 0) return null;
+
+  // "Topic 2 of 5". Only when there is more than one.
+  const currentTopic = journey && journey.total >= 2 ? journey.topics[journey.currentIndex] : null;
+  const topicToggle = currentTopic ? (
+    <span className="tsc__eyebrow tsc__eyebrow--topic">
+      {t('topicJourney.position', 'Topic {{number}} of {{total}}', { number: journey.currentIndex + 1, total: journey.total })}
+    </span>
+  ) : null;
+  const planToggle = totalNodes > missionNodes.length ? (
+    <button type="button" className="tsc__toggle" onClick={onToggleFull} aria-expanded={expanded}>
+      <span>
+        {expanded
+          ? t('study.hideFullPlan', 'Hide full plan')
+          : t('study.seePlanProgress', 'See full plan · {{done}} of {{total}} steps done', { done: completedCount, total: totalNodes })}
+      </span>
+      <svg className={`tsc__chev${expanded ? ' is-open' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
+        strokeLinecap="round" strokeLinejoin="round" width="15" height="15" aria-hidden="true"><polyline points="6 9 12 15 18 9" /></svg>
+    </button>
+  ) : null;
 
   const eyebrow =
     phase === 'examDay'
@@ -159,6 +148,7 @@ const TodaySessionCard = ({
 
     return (
       <div className="tsc tsc--complete">
+        {topicToggle && <div className="tsc__head">{topicToggle}</div>}
         <div className="tsc__done-head">
           <span className="tsc__done-check" aria-hidden="true">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6"
@@ -204,44 +194,21 @@ const TodaySessionCard = ({
             {t('study.keepGoing', 'Keep going anyway')}
           </button>
         )}
+        {planToggle}
       </div>
     );
   }
 
-  // ── Why today is worth doing ─────────────────────────────────────────
-  // Said in terms of the student's standing on this topic, not the node type.
-  // Omitted when we have nothing true to say — a generic "Let's study!" is
-  // worse than silence.
-  let whyLine = null;
-  if (phase === 'examDay') {
-    whyLine = t('study.whyExamDay', "Reviewing what you're most likely to miss — nothing new today.");
-  } else if (phase === 'final') {
-    whyLine = t('study.whyFinal', 'Consolidating what you already half-know is what pays off now.');
-  } else if (focusLevel === 'untested') {
-    whyLine = t('study.whyUntested', "You haven't been tested on this yet — today gives you a real score on it.");
-  } else if (focusLevel === 'weak') {
-    whyLine = t('study.whyWeak', "This is one of your weaker areas, so it's where today buys you the most.");
-  } else if (focusLevel === 'developing') {
-    whyLine = t('study.whyDeveloping', "You're close on this one. Today should tip it over.");
-  } else if (focusLevel === 'strong') {
-    whyLine = t('study.whyStrong', 'A quick pass to keep this one sharp.');
-  }
+  // One reason, chosen in todayCardModel: a real number first, otherwise the
+  // one sentence that is true of her. Nothing when there is nothing to say.
+  const support = supportLine({ phase, projection, missionHasGraded });
 
-  const headline = focusTopic || getStepTopicLabel(primary?.label) || null;
-
-  // Medallion glyph = the beat the student is actually in, so the art always
-  // matches the work. (Deliberately NOT a topic illustration: topics come from
-  // whatever the student uploaded, so any per-topic artwork would be guessing.)
-  const activeArc = arc.find(a => a.status === 'active') || arc[0];
-
-  const ctaLabel = primary?.nodeProgress > 0
-    ? t('study.continueMission', 'Continue mission')
-    : t('study.startMission', 'Start mission');
+  const headline = currentTopic?.topic || getStepTopicLabel(primary?.label) || null;
 
   return (
     <div className={`tsc tsc--${phase}`}>
       <div className="tsc__head">
-        <span className="tsc__eyebrow">{eyebrow}</span>
+        {topicToggle || <span className="tsc__eyebrow">{eyebrow}</span>}
         <span className="tsc__meta">
           {dayLabel && <span className="tsc__day">{dayLabel}</span>}
           {remainingMissionMinutes > 0 && (
@@ -252,51 +219,18 @@ const TodaySessionCard = ({
         </span>
       </div>
 
-      {/* ── What we're doing, and why ── */}
-      <div className="tsc__focus">
-        {activeArc && (
-          <span className="tsc__medallion" aria-hidden="true">
-            {getStudyNodeIcon(activeArc.iconType)}
-          </span>
-        )}
+      {/* ── What she is on, and the step the button opens ── */}
+      <div className="tsc__focus tsc__focus--plain">
         <div className="tsc__focus-text">
           {headline && <h3 className="tsc__focus-topic">{headline}</h3>}
-          {focusTags.length > 0 && (
-            <p className="tsc__focus-tags">
-              {t('study.focusPrefix', 'Focus:')} {focusTags.join(', ')}
+          {step && (
+            <p className="tsc__next-step">
+              {t('study.nextStepLine', 'Next: {{step}}, about {{min}} min.', { step: formatNodeType(primary.type, t), min: step.minutes })}
             </p>
           )}
-          {whyLine && <p className="tsc__focus-why">{whyLine}</p>}
+          {support && <p className="tsc__focus-why">{t(support.key, support.fallback, support.params)}</p>}
         </div>
       </div>
-
-      {/* ── The shape of the session ── */}
-      {arc.length > 0 && (
-        <ol className="tsc__arc">
-          {arc.map((beat, i) => {
-            const [key, fallback] = PHASE_COPY[beat.key];
-            return (
-              <li key={beat.key} className={`tsc__beat is-${beat.status}`}>
-                <span className="tsc__beat-icon" aria-hidden="true">
-                  {getStudyNodeIcon(beat.iconType, beat.status === 'done' ? 'done' : undefined)}
-                </span>
-                <span className="tsc__beat-name">{t(key, fallback)}</span>
-                <span className="tsc__beat-min">
-                  {t('study.aboutMinutes', '~{{min}} min', { min: beat.minutes })}
-                </span>
-                {i < arc.length - 1 && (
-                  <span className="tsc__beat-sep" aria-hidden="true">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"
-                         strokeLinecap="round" strokeLinejoin="round" width="12" height="12">
-                      <path d="M5 12h13M12 6l6 6-6 6" />
-                    </svg>
-                  </span>
-                )}
-              </li>
-            );
-          })}
-        </ol>
-      )}
 
       {/* ── The one action ── */}
       <button
@@ -304,83 +238,17 @@ const TodaySessionCard = ({
         className="tsc__cta"
         onClick={() => primary && onNodeSelect?.(primary)}
       >
-        <span className="tsc__cta-label">{ctaLabel}</span>
+        <span className="tsc__cta-label">
+          {step?.started ? t('study.nextContinue', 'Continue') : t('study.nextStart', 'Start')}
+        </span>
         <svg className="tsc__cta-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor"
              strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" width="17" height="17" aria-hidden="true">
           <path d="M5 12h13M12 6l6 6-6 6" />
         </svg>
       </button>
 
-      {/* ── What it gets you ──
-          The replacement for the old step-count footer. Only rendered with a
-          real number behind it; see readinessProjection.js for the model. */}
-      {hasReadiness && movesToday && currentPct != null && todayPct != null && (
-        <div className="tsc__outcome">
-          <span className="tsc__outcome-spark" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="currentColor" width="13" height="13">
-              <path d="M13 2 4 14h6l-1 8 9-12h-6l1-8z" />
-            </svg>
-          </span>
-          <span className="tsc__outcome-text">
-            {t('study.completeToRaise', "Complete today's mission")}{' '}
-            {/* Both numbers, not just the destination: the jump is the point,
-                and it has to be legible without cross-referencing the ring. */}
-            <strong className="tsc__outcome-pct">
-              {t('study.readinessJump', '{{from}}% → {{to}}%', { from: currentPct, to: todayPct })}
-            </strong>{' '}
-            {t('study.estimatedReadiness', 'estimated readiness')}
-          </span>
-        </div>
-      )}
-
-      {/* First-timers have no score to move yet, but today's quiz creates one.
-          Saying so is honest and still an outcome — better than the silence
-          that a numbers-only footer would leave here. */}
-      {!hasReadiness && missionHasGraded && (
-        <div className="tsc__outcome tsc__outcome--soft">
-          <span className="tsc__outcome-text">
-            {t('study.firstScore', "Today's practice gives you your first readiness score.")}
-          </span>
-        </div>
-      )}
-
-      {/* Today doesn't move the score (no graded node in the slice), but the
-          plan still lands somewhere — so point at that rather than going quiet. */}
-      {hasReadiness && !movesToday && planPct != null && currentPct != null && planPct > currentPct + 2 && (
-        <div className="tsc__outcome tsc__outcome--soft">
-          <span className="tsc__outcome-text">
-            {t('study.groundworkToday', "Groundwork today — finishing your plan puts you near {{pct}}% estimated readiness.", { pct: planPct })}
-          </span>
-        </div>
-      )}
-
       {/* Reference material, deliberately quiet and last. */}
-      {totalNodes > missionNodes.length && (
-        <button type="button" className="tsc__toggle" onClick={onToggleFull} aria-expanded={expanded}>
-          <span>
-            {expanded
-              ? t('study.hideFullPlan', 'Hide full plan')
-              : t('study.seeWholePlan', 'See the whole plan')}
-          </span>
-          <svg
-            className={`tsc__chev${expanded ? ' is-open' : ''}`}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"
-            strokeLinecap="round" strokeLinejoin="round" width="15" height="15" aria-hidden="true"
-          >
-            <polyline points="6 9 12 15 18 9" />
-          </svg>
-        </button>
-      )}
-
-      {planTuned && (
-        <p className="tsc__tuned-note">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.6"
-               strokeLinecap="round" strokeLinejoin="round" width="11" height="11" aria-hidden="true">
-            <polyline points="3 8.5 6.5 12 13 4.5" />
-          </svg>
-          {t('study.tunedFromAnswers', 'Tuned from your onboarding answers')}
-        </p>
-      )}
+      {planToggle}
     </div>
   );
 };

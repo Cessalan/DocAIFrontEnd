@@ -15,6 +15,51 @@
 .tj-mark.is-done { background: var(--primary-coral, #e88d7d); border-color: var(--primary-coral, #e88d7d); }
 .tj-mark.is-current { border: 3px solid var(--primary-coral, #e88d7d); }
 
+/* A topic she can switch to is a whole-row button (topicSwitchModel.js): the
+   row itself is the control, with one chevron, and the explanation is said
+   once above the list rather than on every row. */
+.tj-hint { margin: 6px 0 2px; font-size: 13px; color: var(--text-secondary, #6b6b6b); }
+.tj-topic.is-switchable { display: block; padding: 0; }
+.tj-topic__btn { display: flex; gap: 12px; align-items: flex-start; width: 100%; padding: 10px 6px 10px 0; margin: 0;
+  background: none; border: 0; border-radius: 8px; font: inherit; color: inherit; text-align: left; cursor: pointer; }
+.tj-topic__btn:hover:not(:disabled), .tj-topic__btn:focus-visible { background: rgba(232, 141, 125, 0.08); }
+.tj-topic__btn:focus-visible { outline: 2px solid var(--primary-coral, #e88d7d); outline-offset: 1px; }
+.tj-topic__btn:disabled { cursor: default; opacity: 0.6; }
+.tj-topic__text { flex: 1; min-width: 0; }
+.tj-topic.is-switchable b { font-weight: 500; font-size: 15px; color: var(--text-primary, #3d3d3d); }
+.tj-chevron { flex: 0 0 16px; margin-top: 3px; color: var(--text-muted, #999); transition: transform 0.18s ease; }
+.tj-chevron.is-open { transform: rotate(180deg); }
+/* The opened row: what is in the topic, and the one button that switches. */
+.tj-topic__more { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;
+  padding: 0 6px 12px 0; }
+.tj-topic__more.has-mark { padding-left: 24px; }
+.tj-switch__list .tj-topic__more { padding-left: 6px; }
+.tj-topic__more .tj-note { margin: 0; }
+/* Secondary on purpose: a screen has one filled button (the step she is on).
+   Switching topic is always there and never competes with it. */
+.tj-go { padding: 7px 14px; border: 1.5px solid var(--primary-coral, #e88d7d); border-radius: 10px; background: transparent;
+  color: var(--primary-coral-dark, #c46a5a); font: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+.tj-go:hover:not(:disabled) { background: rgba(232, 141, 125, 0.1); }
+/* The topic cards under "Switch topic" (TopicCard.js). */
+.tj-cards { display: flex; flex-direction: column; gap: 10px; margin-top: 6px; }
+.sov3-card__header--toggle { cursor: pointer; border-radius: 10px; }
+.sov3-card__header--toggle:focus-visible { outline: 2px solid var(--primary-coral, #e88d7d); outline-offset: 3px; }
+.sov3-card--topic .sov3-card__switch { padding: 10px 0 2px; }
+.tj-go:focus-visible { outline: 2px solid var(--primary-coral-dark, #c46a5a); outline-offset: 2px; }
+.tj-go:disabled { opacity: 0.7; cursor: default; }
+.tj-more--btn { display: block; padding: 4px 0; background: none; border: 0; font: inherit; font-size: 13px;
+  color: var(--primary-coral-dark, #c46a5a); cursor: pointer; text-align: left; }
+.tj-more--btn:hover { text-decoration: underline; }
+
+/* "Switch topic" on a step and between steps (TopicSwitcher). */
+.tj-switch { width: 100%; max-width: 560px; margin: 0 auto; text-align: left; }
+.tj-switch__toggle { display: inline-flex; align-items: center; gap: 8px; padding: 8px 10px; margin-left: -10px;
+  background: none; border: 0; border-radius: 8px; font: inherit; font-size: 14px; color: var(--text-secondary, #6b6b6b); cursor: pointer; }
+.tj-switch__toggle:hover, .tj-switch__toggle:focus-visible { background: rgba(232, 141, 125, 0.08); color: var(--text-primary, #3d3d3d); }
+.tj-switch__list { padding: 2px 4px 6px 6px; }
+.tj-switch__list .tj-topic__btn { padding-left: 6px; }
+.tj-switch--step { margin-bottom: 8px; }
+
 /* After a step that finishes a topic (NodeTransition). */
 .tj-handoff { margin: 4px 0 16px; padding: 12px 14px; border-radius: 12px; background: rgba(232, 141, 125, 0.08); }
 .tj-handoff p { margin: 0; }
@@ -30,3 +75,39 @@ body.dark-mode .tj-mark { border-color: #777; }
 body.dark-mode .tj-mark.is-done { background: var(--dark-accent, #b8a5d4); border-color: var(--dark-accent, #b8a5d4); }
 body.dark-mode .tj-mark.is-current { border-color: var(--dark-accent, #b8a5d4); }
 body.dark-mode .tj-handoff { background: rgba(200, 180, 220, 0.1); }
+body.dark-mode .tj-hint, body.dark-mode .tj-switch__toggle { color: #b5b5b5; }
+body.dark-mode .tj-topic.is-switchable b { color: #ececec; }
+body.dark-mode .tj-chevron { color: #8a8a8a; }
+body.dark-mode .tj-topic__btn:hover:not(:disabled), body.dark-mode .tj-topic__btn:focus-visible,
+body.dark-mode .tj-switch__toggle:hover, body.dark-mode .tj-switch__toggle:focus-visible { background: rgba(200, 180, 220, 0.1); }
+body.dark-mode .tj-switch__toggle:hover, body.dark-mode .tj-switch__toggle:focus-visible { color: #ececec; }
+body.dark-mode .tj-topic__btn:focus-visible { outline-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tj-more--btn { color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tj-go { border-color: var(--dark-accent, #b8a5d4); color: var(--dark-accent, #b8a5d4); background: transparent; }
+body.dark-mode .tj-go:hover:not(:disabled) { background: rgba(200, 180, 220, 0.12); }
+body.dark-mode .sov3-card__header--toggle:focus-visible { outline-color: var(--dark-accent, #b8a5d4); }
+body.dark-mode .tj-go:focus-visible { outline-color: #e2d6f2; }
+
+/* A step she can pick (2026-11-17). Drawn at full strength, like any step:
+   dimming said "locked". The row is the control, with one arrow; hover and
+   keyboard focus only add a highlight, they never reveal anything. */
+.sov3-step--pickable { cursor: pointer; border-radius: 12px; transition: background 0.15s ease; }
+.sov3-step--pickable .sov3-step__icon { background: rgba(232, 141, 125, 0.12); color: #c46a5a; }
+.sov3-step--pickable .sov3-step__icon svg { opacity: 1; }
+.sov3-step--pickable:hover, .sov3-step--pickable:focus-visible { background: rgba(232, 141, 125, 0.07); }
+.sov3-step--pickable:focus-visible { outline: 2px solid var(--primary-coral, #e88d7d); outline-offset: 1px; }
+.sov3-step--pickable:hover .sov3-step__arrow, .sov3-step--pickable:focus-visible .sov3-step__arrow { color: var(--primary-coral, #e88d7d); transform: translateX(2px); }
+.sov3-step__arrow { display: block; color: var(--text-muted, #aaa); transition: color 0.15s ease, transform 0.15s ease; }
+.sov3-step__action { display: flex; align-items: center; gap: 8px; }
+.sov3-milestone--pickable { cursor: pointer; }
+.sov3-milestone--pickable:hover, .sov3-milestone--pickable:focus-visible { border-color: rgba(232, 141, 125, 0.45); }
+.sov3-milestone--pickable:focus-visible { outline: 2px solid var(--primary-coral, #e88d7d); outline-offset: 2px; }
+.sov3-milestone--pickable:hover .sov3-step__arrow { color: var(--primary-coral, #e88d7d); transform: translateX(2px); }
+/* The suggested next step: a label, not a second button. */
+.sov3-step__up-next { padding: 3px 9px; border-radius: 999px; background: rgba(232, 141, 125, 0.14);
+  color: var(--primary-coral-dark, #c46a5a); font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+body.dark-mode .sov3-step--pickable .sov3-step__icon { background: rgba(244, 168, 150, 0.12); color: #f4a896; }
+body.dark-mode .sov3-step--pickable:hover, body.dark-mode .sov3-step--pickable:focus-visible { background: rgba(200, 180, 220, 0.08); }
+body.dark-mode .sov3-step__arrow { color: #8a8a8a; }
+body.dark-mode .sov3-step--pickable:hover .sov3-step__arrow, body.dark-mode .sov3-milestone--pickable:hover .sov3-step__arrow { color: #f4a896; }
+body.dark-mode .sov3-step__up-next { background: rgba(244, 168, 150, 0.15); color: #f4a896; }

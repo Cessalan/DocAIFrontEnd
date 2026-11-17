@@ -32,6 +32,8 @@ import '../ChatInerface/paperTransition.css';
 import { computeReadinessDelta } from './readinessDelta';
 import { countDetours, resolveNodeTopic, testedSkills as findTestedSkills } from './nodeTopic';
 import { topicHandoff, topicJourney } from './topicJourneyModel';
+import { switchOptions } from './topicSwitchModel';
+import { TopicSwitcher } from './TopicJourney';
 import { buildExperimentNode } from './nodeReadout';
 import { getTopicProgress, savePracticeAttempt } from '../../Services/TopicProgressService';
 import { PracticeAttemptRecord } from '../../Services/topicProgressModel';
@@ -62,6 +64,7 @@ import {
   getStudyPerformance,
   appendPhase2,
   extendStudyPath,
+  switchStudyTopic,
   getStudySession
 } from '../../Services/StudySessionService';
 import { adaptPlan } from './planAdaptModel';
@@ -274,6 +277,10 @@ const StudyModeContainer = ({
   // Tracked locally so the block-complete card updates the moment an extend
   // lands, without waiting for the parent's chat doc to round-trip.
   const [reserveRemaining, setReserveRemaining] = useState(null);
+  // The steps held back, kept here because the studyState prop goes stale once
+  // a block is extended, a plan change is accepted or she switches topic.
+  const [reserveNodes, setReserveNodes] = useState(studyState?.reserve?.nodes || []);
+  const [switchingTopicKey, setSwitchingTopicKey] = useState(null);
 
   // Quiz mastery summary (shown after every quiz instead of immediately advancing)
   const [quizSummaryData, setQuizSummaryData] = useState(null);
@@ -1415,6 +1422,7 @@ const StudyModeContainer = ({
           result = await adaptPathAfterNode(chatId, activeNodeId, pending);
           adaptedNodes = result.nodes;
           setReserveRemaining(result.reserveCount);
+          setReserveNodes(pending.reserve || []);
           logFunnelStep(FUNNEL.PLAN_CHANGE_ACCEPTED, changeProps(pending));
         } catch (error) {
           // The plan moved under the proposal (another tab, a stale screen):
@@ -1717,11 +1725,62 @@ const StudyModeContainer = ({
       setActiveNodeId(session.path.activeNodeId);
       setIsComplete(false);
     }
+    setReserveNodes(session?.reserve?.nodes || []);
     setReserveRemaining(result.remaining);
 
     setPathUpdateToast({ count: result.added });
     setTimeout(() => setPathUpdateToast(null), 3500);
   }, [chatId]);
+
+  /**
+   * She picked a topic to study now (topicSwitchModel.js). The plan is
+   * rewritten from its saved state in one write, then the picked topic's
+   * first step opens straight away. From the between-steps screen the step
+   * she just finished is closed in that same write.
+   */
+  const handleSwitchTopic = useCallback(async (targetKey, source, targetNodeId = null) => {
+    if (viewOnly || (!targetKey && !targetNodeId) || advanceLockRef.current) return;
+    advanceLockRef.current = true;
+    setSwitchingTopicKey(targetNodeId ? `step:${targetNodeId}` : targetKey);
+    const finishedNodeId = view === 'transition' && !isReviewingNode ? activeNodeId : null;
+    const finishedNode = finishedNodeId ? nodesRef.current.find(n => n.id === finishedNodeId) : null;
+    try {
+      const result = await switchStudyTopic(chatId, targetKey, { finishedNodeId, source, targetNodeId });
+      if (!result) {
+        // The saved plan no longer has that topic open (another tab, a stale
+        // screen): show the plan as it really is.
+        const session = await getStudySession(chatId);
+        if (session?.path?.nodes) {
+          setNodes(session.path.nodes);
+          setReserveNodes(session.reserve?.nodes || []);
+        }
+        setView('overview');
+        return;
+      }
+      if (result.closedNodeId) logAdaptedStep(FUNNEL.ADAPTED_STEP_COMPLETED, finishedNode);
+      const first = result.nodes.find(n => n.id === result.activeNodeId);
+      pendingAdaptationRef.current = null;
+      setPlanAdvance(null);
+      setCustomEcho(null);
+      setNodes(result.nodes);
+      setReserveNodes(result.reserve);
+      setReserveRemaining(result.reserveCount);
+      setIsComplete(false);
+      setIsReviewingNode(false);
+      setActiveNodeId(first.id);
+      setActiveNode(first);
+      setCurrentContent(null);
+      const outcome = await handleStartNode(first);
+      // A mini-test asks how she wants it first; that dialog lives on the plan.
+      if (outcome === 'blocked' || outcome === 'exam_config') setView('overview');
+    } catch (error) {
+      console.error('❌ Could not switch topic:', error);
+      setView('overview');
+    } finally {
+      advanceLockRef.current = false;
+      setSwitchingTopicKey(null);
+    }
+  }, [chatId, view, activeNodeId, isReviewingNode, viewOnly, handleStartNode, logAdaptedStep]);
 
   /* The drill, offered at the one moment it answers a question she can ask.
      At the empty-chat door "test my readiness" is abstract — she has uploaded
@@ -2174,6 +2233,13 @@ const StudyModeContainer = ({
     return () => cancelAnimationFrame(frame);
   }, [planAdvance, view]);
 
+  // The topics she can switch to right now. Between steps the step on screen
+  // counts as finished, the same way the topic path counts it.
+  const topicOptions = (viewOnly || tonight) ? [] : switchOptions({
+    nodes, reserve: reserveNodes, activeNodeId,
+    finishedNodeId: view === 'transition' && !isReviewingNode ? activeNodeId : null,
+  });
+
   // Build studyState for overview (with updated local state)
   const currentStudyState = {
     ...studyState,
@@ -2185,6 +2251,7 @@ const StudyModeContainer = ({
     },
     reserve: {
       ...studyState?.reserve,
+      nodes: reserveNodes,
       remaining: reserveRemaining !== null
         ? reserveRemaining
         : (studyState?.reserve?.remaining || 0)
@@ -2252,9 +2319,12 @@ const StudyModeContainer = ({
           nodeTopic={activeNodeTopic}
           detoursTaken={countDetours(nodes, activeNodeTopic)}
           topicHandoff={topicHandoff(
-            topicJourney({ nodes, reserveNodes: studyState?.reserve?.nodes, topicProgress,
+            topicJourney({ nodes, reserveNodes, topicProgress,
               activeNodeId: activeNode?.id, finishedNodeId: activeNode?.id }),
-            activeNodeTopic, getNextPlannedNode(), nodes.concat(studyState?.reserve?.nodes || []))}
+            activeNodeTopic, getNextPlannedNode(), nodes.concat(reserveNodes))}
+          topicSwitcher={<TopicSwitcher options={topicOptions} busyKey={switchingTopicKey}
+            onSwitch={(key) => handleSwitchTopic(key, 'between_steps')}
+            onStartStep={(node) => handleSwitchTopic(null, 'between_steps', node.id)} />}
           isAdvancing={isAdvancing}
           isLoadingPractice={isLoadingPractice}
           isLoadingCustom={isLoadingCustom}
@@ -2342,6 +2412,10 @@ const StudyModeContainer = ({
           isGeneratingPhase2={isGeneratingPhase2}
           onStartPhase2={handleStartPhase2}
           onExtendBlock={handleExtendBlock}
+          topicOptions={topicOptions}
+          switchingTopicKey={switchingTopicKey}
+          onSwitchTopic={(key) => handleSwitchTopic(key, 'overview')}
+          onStartStep={(node) => handleSwitchTopic(null, 'overview', node.id)}
           onDrillGaps={handleDrillGaps}
           classNote={viewOnly ? null : <ClassmatesNote chatId={chatId} />}
           tonightPanel={tonight ? (
@@ -2431,8 +2505,13 @@ const StudyModeContainer = ({
         <div className="study-focused-layout">
           <div className="study-content-centered">
             {activeNode && realNodes.some(node => node.id === activeNode.id) && <p className="study-arrival-step" ref={arrivalHeadingRef} tabIndex={-1}>
-              {language.startsWith('fr') ? 'Étape' : 'Step'} {realNodes.findIndex(node => node.id === activeNode.id) + 1} {language.startsWith('fr') ? 'sur' : 'of'} {realNodes.length} · {formatNodeType(activeNode.type, t)}
+              {/* The step type and topic, not "Step 4 of 11": once she can pick
+                  any step, a position in the list says little (2026-11-17). */}
+              {formatNodeType(activeNode.type, t)}{activeNodeTopic ? ` · ${activeNodeTopic}` : ''}
             </p>}
+            {!isReviewingNode && !autoLaunching && <TopicSwitcher className="tj-switch--step" options={topicOptions}
+              busyKey={switchingTopicKey} onSwitch={(key) => handleSwitchTopic(key, 'step')}
+              onStartStep={(node) => handleSwitchTopic(null, 'step', node.id)} />}
             {isLoadingContent || autoLaunching ? (
               <StudyLoadingScreen
                 nodeType={activeNode?.type || 'lesson'}

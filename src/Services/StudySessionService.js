@@ -31,6 +31,7 @@ import { clarityEvent } from './ClarityService';
 import { rememberStepFinished } from '../Components/ChatInerface/uploadGateModel';
 import { buildFirstBlock, extendWithReserve, isRealNode } from '../Components/StudyMode/firstBlock';
 import { estimateMinutes } from '../Components/StudyMode/planFormatting';
+import { planTopicSwitch } from '../Components/StudyMode/topicSwitchModel';
 
 /**
  * Create a new study session from the existing chat
@@ -1726,6 +1727,78 @@ export const extendStudyPath = async (chatId) => {
     console.error('❌ Error extending study path:', error);
     throw error;
   }
+};
+
+/**
+ * She picked a topic to study now (topicSwitchModel.js). The picked topic's
+ * unfinished steps move to where she is, out of reserve if they were held
+ * there, and its first step becomes the active one. One write, computed from
+ * the SAVED plan, so a stale screen can never drop or duplicate a step.
+ *
+ * `finishedNodeId` is the step she has just finished when she switches from
+ * the between-steps screen: it is closed as done in the same write, exactly
+ * as completeNodeAndAdvance would have closed it.
+ *
+ * @param {string} chatId
+ * @param {string} targetKey - topicKey of the picked topic
+ * @param {Object} [options]
+ * @param {string} [options.finishedNodeId]
+ * @param {string} [options.source] - where she switched from, for analytics
+ * @returns {Promise<{nodes, reserve, activeNodeId, reserveCount, topic, closedNodeId}|null>}
+ *          null when the saved plan has nothing to switch to
+ */
+export const switchStudyTopic = async (chatId, targetKey, { finishedNodeId = null, source = null, targetNodeId = null } = {}) => {
+  const docRef = doc(db, 'chats', chatId);
+  const docSnap = await getDoc(docRef);
+  if (!docSnap.exists()) throw new Error('Study session not found');
+  const data = docSnap.data();
+  const study = data.study || {};
+
+  const plan = planTopicSwitch({
+    nodes: study.path?.nodes || [],
+    reserve: study.reserve?.nodes || [],
+    activeNodeId: study.path?.activeNodeId || null,
+    finishedNodeId,
+    targetKey,
+    // One step she picked rather than a whole topic.
+    targetNodeId,
+  });
+  if (!plan) return null;
+
+  const counted = plan.nodes.filter(n => isRealNode(n) && n.status !== 'skipped');
+  const reserveCount = plan.reserve.filter(isRealNode).length;
+  await updateDoc(docRef, {
+    'study.status': 'active',
+    'study.path.nodes': plan.nodes,
+    'study.path.activeNodeId': plan.activeNodeId,
+    'study.path.totalNodes': counted.length,
+    'study.path.estimatedMinutes': estimateMinutes(counted),
+    'study.reserve.nodes': plan.reserve,
+    'study.reserve.remaining': reserveCount,
+    'study.lastActionAt': serverTimestamp(),
+    updatedAt: serverTimestamp()
+  });
+
+  if (plan.closedNodeId) {
+    const closed = plan.nodes.find(n => n.id === plan.closedNodeId);
+    const uid = data.userId || auth.currentUser?.uid;
+    if (uid) {
+      rememberStepFinished(uid);
+      Promise.resolve()
+        .then(() => updateDoc(doc(db, 'users', uid), { 'activation.lastStepAt': serverTimestamp() }))
+        .catch((err) => devLog('activation stamp skipped:', err?.message));
+    }
+    clarityEvent('study_node_completed');
+    clarityEvent(`study_node_completed_${closed?.type || 'unknown'}`);
+  }
+  // Counts only: topic names come from her own files and stay in Firestore.
+  clarityEvent('study_topic_switched', {
+    source, singleStep: !!targetNodeId, movedCount: plan.movedCount, fromReserveCount: plan.fromReserveCount, betweenSteps: !!plan.closedNodeId,
+  });
+  devLog(`✅ Switched topic: ${plan.movedCount} steps moved, ${reserveCount} still in reserve`);
+
+  return { nodes: plan.nodes, reserve: plan.reserve, activeNodeId: plan.activeNodeId, reserveCount,
+    topic: plan.topic, closedNodeId: plan.closedNodeId };
 };
 
 /**
