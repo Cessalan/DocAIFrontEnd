@@ -103,6 +103,13 @@ export const FUNNEL = Object.freeze({
   READINESS_RECHECKED: 'readiness_rechecked',
   PLAN_PREVIEW_VIEWED: 'plan_preview_viewed',
   PAYWALL_VIEWED: 'paywall_viewed',
+  // The line about Pro under a Tonight round that improved (roundOfferModel.js).
+  // Its clicks arrive as paywall_viewed with trigger 'round_offer'; this is the
+  // denominator, one per round.
+  ROUND_OFFER_VIEWED: 'round_offer_viewed',
+  // Her results by question type beside other students' average (PeerTypes.js).
+  // One per screen; `headline` says which sentence she saw, if any.
+  PEER_COMPARISON_VIEWED: 'peer_comparison_viewed',
   // The other half of a view. Without it you know who was asked but not
   // whether she said no or simply never answered, and those are different
   // problems with different fixes.

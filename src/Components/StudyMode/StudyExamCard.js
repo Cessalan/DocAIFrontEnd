@@ -366,11 +366,13 @@ const StudyExamCard = ({
 
       {questionType === 'matrix' && currentQuestion && (
         <MatrixQuestion key={currentIndex} quiz={currentQuestion} previousAnswer={answers[currentIndex]}
-          onAnswerSelect={handleComplexAnswer} onNext={handleNext} isLastQuestion={isLastQuestion} viewOnly={viewOnly} />
+          onAnswerSelect={handleComplexAnswer} onNext={handleNext} isLastQuestion={isLastQuestion} viewOnly={viewOnly}
+          peerSurface="plan_exam" />
       )}
       {/* ── SATA Renderer ── */}
       {questionType === 'sata' && currentQuestion && (
         <SATAQuestion
+          peerSurface="plan_exam"
           quiz={currentQuestion}
           quizIndex={currentIndex}
           totalQuestions={totalQuestions}

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useTranslation } from 'react-i18next';
 import { atTurnLimit, MAX_MESSAGE_CHARS } from './examDebriefConversation';
+import ExamScoreMeter from './ExamScoreMeter';
 import './ExamDebriefModal.css';
 
 /**
@@ -49,6 +50,9 @@ import './ExamDebriefModal.css';
  * @param {boolean}  isThinking Waiting on the tutor's next line.
  * @param {boolean}  isDone     The conversation has closed.
  * @param {Function} onSend     (text) => void
+ * @param {Function} onScore    (status, value) => void — the score meter's answer
+ *                              (examScoreModel.js). Replaces the three opening
+ *                              chips: the first thing she is asked for is her result.
  * @param {Function} onDismiss  Closed without saying anything.
  * @param {Function} onClose    Closed after taking part.
  */
@@ -59,6 +63,7 @@ const ExamDebriefModal = ({
   isThinking,
   isDone,
   onSend,
+  onScore,
   onDismiss,
   onClose
 }) => {
@@ -188,7 +193,11 @@ const ExamDebriefModal = ({
             </div>
           )}
 
-          {!hasSpoken && !isThinking && (
+          {!hasSpoken && !isThinking && onScore && (
+            <ExamScoreMeter onAnswer={onScore} />
+          )}
+
+          {!hasSpoken && !isThinking && !onScore && (
             <div className="exam-debrief-suggestions">
               {suggestions.map((suggestion) => (
                 <button

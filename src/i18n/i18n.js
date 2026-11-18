@@ -154,6 +154,13 @@ const resources = {
       upgrade: {
         // Her own format gap (Common/gapOfferModel.js). Counts from the
         // readiness check, percentages from saved practice. No em dashes.
+        // Opened from the line under a Tonight round that improved. The numbers
+        // are that round's own before and after ("1 / 2", "4 / 5").
+        round: {
+          title: "Keep the rounds going.",
+          body: "{{name}}: {{before}} earlier, {{after}} now. With Pro the rounds have no question limit, so you can move on to the next weak spot.",
+          bodyExam: "{{name}}: {{before}} earlier, {{after}} now. Your exam is {{when}}. With Pro the rounds have no question limit, so you can move on to the next weak spot."
+        },
         gap: {
           title: "Stop losing points on {{format}}",
           titleHard: "Stop losing points on the harder questions",
@@ -372,6 +379,7 @@ const resources = {
         planCardTitle: "Follow your study plan",
         planCardDesc: "A personalized, step-by-step plan built from your notes to help you master the material.",
         planCardNote: "Best for building knowledge and long-term retention",
+        planRowHint: "A step-by-step plan built from your notes",
         drillCardTitle: "Find my weak spots",
         drillCardDesc: "Get challenged with difficult questions from your notes and see what you need to work on.",
         drillCardCta: "Test my exam readiness",
@@ -379,7 +387,6 @@ const resources = {
         newBadge: "New",
         prepareTagline: "A personalized study plan built from your notes",
         howToAddNotes: "How would you like to add your notes?",
-        planRowHint: "A step-by-step plan built from your notes",
         uploadShort: "Upload notes",
         pasteShort: "Paste notes",
         back: "Back",
@@ -1127,6 +1134,16 @@ const resources = {
         suggestWell: "It went well",
         suggestHarder: "Harder than I expected",
         suggestRough: "It was rough",
+        // The score meter that opens the debrief (ExamDebrief/examScoreModel.js).
+        // `said` and `notYetSaid` are sent into the conversation as her words.
+        score: {
+          question: "What did you get?",
+          unset: "Slide to your score",
+          save: "Save my score",
+          notYet: "I don't know my score yet",
+          said: "I got {{score}}%",
+          notYetSaid: "I don't know my score yet"
+        },
         placeholder: "Tell us how it went\u2026",
         typing: "Typing",
         send: "Send",
@@ -1424,6 +1441,11 @@ const resources = {
       // Tonight's plan (StudyMode/TonightPlan.js, tonightPlanModel.js): the
       // exam-is-close plan as open-ended rounds. Honest numbers only, the
       // caveat once, nothing scolds. No em dashes.
+      peer: {
+        quizRight: 'Only {{percent}}% of students get {{typeIn}} right.',
+        quizMissed: 'Most students miss these. {{percent}}% get {{typeIn}} right.',
+        typeIn: { mcq: 'multiple choice', sata: 'select-all', casestudy: 'priority and ordering', matrix: 'matrix questions' },
+      },
       tonight: {
         title: "Tonight's plan",
         why: "Your exam is close, so we work on what's costing you the most points, one at a time. When one is fixed, the next one starts. Keep going as long as you like.",
@@ -1460,6 +1482,14 @@ const resources = {
           measured: { title: "Here's where you stand.", body: "Now we work on the weakest part first." }
         },
         caveat: "Small numbers, so this shows a direction, not a guarantee.",
+        // The line about Pro under a round that improved. No em dashes.
+        offer: {
+          line_one: "Rounds use your free questions. You have {{count}} left.",
+          line_other: "Rounds use your free questions. You have {{count}} left.",
+          lineLow_one: "You are down to {{count}} free question.",
+          lineLow_other: "You are down to {{count}} free questions.",
+          cta: "Keep going without a limit"
+        },
         skill: { sata: "Select-all questions", priority: "Who goes first" },
         target: { find: "Finding your weak spot", mixed: "Mixed review" },
         reason: {
@@ -3058,6 +3088,11 @@ const resources = {
 
       // Upgrade / monetization modal
       upgrade: {
+        round: {
+          title: "Continue les tours.",
+          body: "{{name}} : {{before}} avant, {{after}} maintenant. Avec Pro, les tours n'ont pas de limite de questions : tu peux passer au point faible suivant.",
+          bodyExam: "{{name}} : {{before}} avant, {{after}} maintenant. Ton examen est {{when}}. Avec Pro, les tours n'ont pas de limite de questions : tu peux passer au point faible suivant."
+        },
         gap: {
           title: "Arrête de perdre des points sur {{format}}",
           titleHard: "Arrête de perdre des points sur les questions plus difficiles",
@@ -3270,6 +3305,7 @@ const resources = {
         planCardTitle: "Suivre ton plan d'étude",
         planCardDesc: "Un plan personnalisé, étape par étape, construit à partir de tes notes pour maîtriser la matière.",
         planCardNote: "Idéal pour construire tes connaissances sur la durée",
+        planRowHint: "Un plan étape par étape, construit à partir de tes notes",
         drillCardTitle: "Trouver mes points faibles",
         drillCardDesc: "Fais-toi challenger avec des questions difficiles tirées de tes notes et vois ce qu'il te reste à travailler.",
         drillCardCta: "Tester ma préparation",
@@ -3300,7 +3336,6 @@ const resources = {
         timeoutError: "Cette réponse n'est jamais arrivée. Rien n'est perdu — réessaie.",
         retry: "Réessayer",
         copyMessageAria: "Copier le message",
-        planRowHint: "Un plan étape par étape, construit à partir de tes notes",
         copyTooltip: "Copier",
         rewrite: "Reformuler",
         rewriting: "Reformulation…",
@@ -3977,6 +4012,14 @@ const resources = {
         suggestWell: "\u00c7a s'est bien pass\u00e9",
         suggestHarder: "Plus difficile que pr\u00e9vu",
         suggestRough: "C'\u00e9tait dur",
+        score: {
+          question: "Quelle note avez-vous eue\u00a0?",
+          unset: "Faites glisser jusqu'\u00e0 votre note",
+          save: "Enregistrer ma note",
+          notYet: "Je ne connais pas encore ma note",
+          said: "J'ai eu {{score}}\u00a0%",
+          notYetSaid: "Je ne connais pas encore ma note"
+        },
         placeholder: "Racontez-nous comment \u00e7a s'est pass\u00e9\u2026",
         typing: "En train d'\u00e9crire",
         send: "Envoyer",
@@ -4264,6 +4307,11 @@ const resources = {
         method: "Un fait, une question, chaque option.",
         close: "Retour à la question"
       },
+      peer: {
+        quizRight: 'Seulement {{percent}} % des étudiants réussissent les questions {{typeIn}}.',
+        quizMissed: 'La plupart des étudiants les manquent. {{percent}} % réussissent les questions {{typeIn}}.',
+        typeIn: { mcq: 'à choix multiples', sata: 'à réponses multiples', casestudy: 'de priorité et d’ordre', matrix: 'en matrice' },
+      },
       tonight: {
         title: "Ton plan de ce soir",
         why: "Ton examen approche, alors on travaille sur ce qui te coûte le plus de points, un à la fois. Quand un point est réglé, le suivant commence. Continue aussi longtemps que tu veux.",
@@ -4300,6 +4348,13 @@ const resources = {
           measured: { title: "Voici où tu en es.", body: "Maintenant on travaille d'abord la partie la plus faible." }
         },
         caveat: "Petits nombres : ça montre une direction, pas une garantie.",
+        offer: {
+          line_one: "Les tours utilisent tes questions gratuites. Il t'en reste {{count}}.",
+          line_other: "Les tours utilisent tes questions gratuites. Il t'en reste {{count}}.",
+          lineLow_one: "Il ne te reste que {{count}} question gratuite.",
+          lineLow_other: "Il ne te reste que {{count}} questions gratuites.",
+          cta: "Continuer sans limite"
+        },
         skill: { sata: "Questions à choix multiples (toutes les réponses)", priority: "Qui passe en premier" },
         target: { find: "Trouver ton point faible", mixed: "Révision mélangée" },
         reason: {

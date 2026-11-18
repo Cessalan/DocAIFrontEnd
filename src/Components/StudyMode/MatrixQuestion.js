@@ -1,5 +1,6 @@
 import React, { useId, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import PeerLine from '../Common/PeerLine';
 import './MatrixQuestion.css';
 
 export function gradeMatrix(question, selections) {
@@ -9,7 +10,7 @@ export function gradeMatrix(question, selections) {
     isCorrect: rows.length > 0 && score === rows.length, percentage: rows.length ? Math.round(score / rows.length * 100) : 0 };
 }
 
-export default function MatrixQuestion({ quiz, previousAnswer, onAnswerSelect, onNext, isLastQuestion, viewOnly = false, deferFeedback = false }) {
+export default function MatrixQuestion({ quiz, previousAnswer, onAnswerSelect, onNext, isLastQuestion, viewOnly = false, deferFeedback = false, peerSurface = 'quiz' }) {
   const { t } = useTranslation();
   const group = useId();
   const [selections, setSelections] = useState(previousAnswer?.selectedRows || {});
@@ -33,6 +34,7 @@ export default function MatrixQuestion({ quiz, previousAnswer, onAnswerSelect, o
     <p className="matrix-instruction" id={`${group}-instruction`}>{t('matrix.instruction', 'Choose one answer in each row. A column can be used more than once.')}</p>
     {submitted && <div className="matrix-feedback">
       <p role="status">{t('matrix.score', { score: result.score, total: result.maxScore, defaultValue: '{{score}} of {{total}} rows correct' })}</p>
+      {!deferFeedback && <PeerLine format="matrix" correct={!!result.isCorrect} surface={peerSurface} />}
     </div>}
     <div className="matrix-scroll" role="region" aria-label={t('matrix.table', 'Answer grid')} tabIndex={0}>
       <table aria-describedby={`${group}-instruction`}>

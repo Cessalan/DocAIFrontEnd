@@ -155,7 +155,7 @@ export const storableTranscript = (messages = []) =>
  * @param {string} [params.locale]
  * @returns {{sentiment: ?number, reasons: string[], comment: ?string, context: Object}}
  */
-export const buildDebriefWrite = ({ insights, messages = [], exam = {}, locale } = {}) => {
+export const buildDebriefWrite = ({ insights, messages = [], exam = {}, locale, score = null } = {}) => {
   const normalized = normalizeInsights(insights);
 
   return {
@@ -172,6 +172,10 @@ export const buildDebriefWrite = ({ insights, messages = [], exam = {}, locale }
       examLabel: exam.label || null,
       examDay: exam.day || null,
       daysAfterExam: typeof exam.daysAgo === 'number' ? exam.daysAgo : null,
+      // From the score meter (examScoreModel.js): a whole percentage, or null
+      // with the reason in scoreStatus ('not_yet', 'skipped').
+      score: typeof score?.score === 'number' ? score.score : null,
+      scoreStatus: score?.scoreStatus || null,
       locale: locale || null,
       devPreview: exam.devPreview === true ? true : null
     }

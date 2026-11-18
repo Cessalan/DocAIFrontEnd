@@ -149,6 +149,9 @@ export function UsageProvider({ children }) {
   // check, or from saved practice when she opens the offer herself. Null =
   // the modal shows its ordinary copy. See Common/gapOfferModel.js.
   const [upgradeGap, setUpgradeGap] = useState(null);
+  // The Tonight round she was looking at when she tapped the offer under it:
+  // { name, before, after }, already worded. Only with reason 'round'.
+  const [upgradeRound, setUpgradeRound] = useState(null);
   const practiceGapRef = useRef(null);
 
   // ── Dev-only paywall preview ─────────────────────────────────────────────
@@ -426,6 +429,7 @@ export function UsageProvider({ children }) {
       setUpgradeReason(normalizedReason);
       setUpgradeTopic(cleanTopicLabel(ctx?.topic));
       setUpgradeGap(gap || null);
+      setUpgradeRound(normalizedReason === 'round' ? ctx?.round || null : null);
       setShowUpgrade(true);
       loadPracticeGap();
     },
@@ -467,11 +471,12 @@ export function UsageProvider({ children }) {
             paywallOpenRef.current = false;
             if (!quota.isPro) logFunnelStep(FUNNEL.PAYWALL_DISMISSED, { reason: upgradeReason || 'none' });
           }
-          setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setUpgradeGap(null); setDevSim(null);
+          setShowUpgrade(false); setUpgradeReason(null); setUpgradeTopic(null); setUpgradeGap(null); setUpgradeRound(null); setDevSim(null);
         }}
         reason={upgradeReason}
         topic={upgradeTopic}
         gap={upgradeGap}
+        round={upgradeRound}
         limit={quota.limit}
         used={devSim ? devSim.used : quota.used}
         remaining={devSim ? (devSim.remaining ?? 0) : quota.remaining}

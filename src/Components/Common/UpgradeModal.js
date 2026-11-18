@@ -112,7 +112,7 @@ const UpgradeModal = ({
   isOpen, onClose, limit = 50, used = 0, remaining = Infinity, msUntilReset = 0,
   user = {}, studyGoal = null, examDate = null, topic = null, isPro = false,
   reason = null, planLimit = 3, plansRemaining = Infinity, planMsUntilReset = 0,
-  onManageSubscription = null, gap = null,
+  onManageSubscription = null, gap = null, round = null,
 }) => {
   const { t } = useTranslation();
   const [portalLoading, setPortalLoading] = useState(false);
@@ -242,10 +242,17 @@ const UpgradeModal = ({
   const showGap = Boolean(gap) && !isUploadGate && !isPlanGate && !blocked;
   const gapFormatName = (format) => t(`upgrade.gap.format.${format}`);
 
+  // She tapped the line under a Tonight round that improved (StudyMode/
+  // roundOfferModel.js). The copy repeats that round's own before and after;
+  // like the gap, it yields to the limit copy if she is actually out.
+  const showRound = reason === 'round' && Boolean(round?.name) && !blocked;
+
   // Headline: interruption first when we actually blocked them, goal-based
   // aspiration when they opened this themselves.
   let title;
-  if (showGap) {
+  if (showRound) {
+    title = t('upgrade.round.title');
+  } else if (showGap) {
     title = gap.weakest
       ? t('upgrade.gap.title', { format: gapFormatName(gap.weakest) })
       : t('upgrade.gap.titleHard');
@@ -268,7 +275,10 @@ const UpgradeModal = ({
   }
 
   let subtitle;
-  if (showGap) {
+  if (showRound) {
+    subtitle = t(examSoon ? 'upgrade.round.bodyExam' : 'upgrade.round.body',
+      { name: round.name, before: round.before, after: round.after, when: whenLabel });
+  } else if (showGap) {
     subtitle = examSoon
       ? t('upgrade.gap.bodyExam', { when: whenLabel })
       : t('upgrade.gap.body');

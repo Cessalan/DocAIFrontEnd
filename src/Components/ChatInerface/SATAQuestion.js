@@ -38,6 +38,7 @@ import MethodWalkthrough from './MethodWalkthrough';
 import { toIndices, ruleLine } from './walkthroughModel';
 import { explanationLead, verdictDetail } from './sataFeedbackModel';
 import { fetchQuizWalkthrough } from '../../Services/FastAPICalls';
+import PeerLine from '../Common/PeerLine';
 
 // ============================================
 // CONSTANTS
@@ -190,6 +191,10 @@ function SATAQuestion({
   // Opens with no backend call and is offered even after a right answer,
   // because there it is the demonstration, not a remedy for a miss.
   presetWalkthrough = null,
+  // The line about other students under the verdict (PeerLine.js). The card
+  // shows it itself, whenever it shows a verdict, so every screen that
+  // renders a select-all gets it. `peerSurface` only names the screen.
+  peerSurface = 'quiz',
   // Wraps the walkthrough request: called with the normal fetch, returns a
   // promise of the walkthrough. A shared set (PublicQuiz) uses it to serve a
   // walkthrough saved by an earlier visitor instead of generating it again.
@@ -623,6 +628,9 @@ function SATAQuestion({
               </strong>
               {verdict && <span> {t(verdict.key, verdict.values)}</span>}
             </p>
+            {!deferFeedback && (
+              <PeerLine format="sata" correct={!!scoreResult.isFullyCorrect} surface={peerSurface} />
+            )}
 
             {/* The method in one line, readable without opening anything. */}
             {!scoreResult.isFullyCorrect && rule && !walkthrough.open && (

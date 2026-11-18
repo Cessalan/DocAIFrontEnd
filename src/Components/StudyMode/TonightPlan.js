@@ -1,6 +1,9 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { KIND, OUTCOME, ROLE, isComparable, tonightRole } from './tonightPlanModel';
+import { buildRoundOffer } from './roundOfferModel';
+import { useUsageLimit } from '../../Contexts/UsageContext/UsageContext';
+import { logFunnelStep, FUNNEL } from '../../Services/FunnelService';
 import './TonightPlan.css';
 
 /**
@@ -143,6 +146,20 @@ export function TonightPanel({ tonight, nodes = [], activeNodeId, daysToExam, ne
 export function TonightRoundView({ mode, round, fixTally, nextTarget, evidence, busy, onContinue, onNextRound, onStop }) {
   const { t } = useTranslation();
   const name = useTargetName();
+  const { isPro, remaining, openUpgrade } = useUsageLimit();
+
+  // The quiet line about Pro, only under a result that measurably improved
+  // (roundOfferModel.js). Logged once per round so the line has a denominator.
+  const offer = mode === 'result' ? buildRoundOffer({ round, isPro, remaining }) : null;
+  const offerRound = offer ? round.n : null;
+  const loggedOffer = useRef(null);
+  useEffect(() => {
+    if (offerRound == null || loggedOffer.current === offerRound) return;
+    loggedOffer.current = offerRound;
+    logFunnelStep(FUNNEL.ROUND_OFFER_VIEWED, { round: offerRound, questionsRemaining: offer.remaining, low: offer.low });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [offerRound]);
+
   if (!round) return null;
 
   if (mode === 'between') {
@@ -177,6 +194,18 @@ export function TonightRoundView({ mode, round, fixTally, nextTarget, evidence, 
       </button>
       <button type="button" className="tn-stop" disabled={busy} onClick={onStop}>{t('tonight.stop')}</button>
       <p className="tn-hint">{t('tonight.hintStop')}</p>
+      {offer && (
+        <p className="tn-offer">
+          {t(offer.low ? 'tonight.offer.lineLow' : 'tonight.offer.line', { count: offer.remaining })}{' '}
+          <button type="button" className="tn-offer__link"
+            onClick={() => openUpgrade('round', {
+              trigger: 'round_offer', reachedStep: 'tonight_round',
+              round: { name: name(round), before: score(offer.before), after: score(offer.after) },
+            })}>
+            {t('tonight.offer.cta')}
+          </button>
+        </p>
+      )}
     </section>
   );
 }

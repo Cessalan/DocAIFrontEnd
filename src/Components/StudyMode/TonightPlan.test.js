@@ -4,6 +4,14 @@ import '../../i18n/i18n';
 import { TonightPanel, TonightRoundView } from './TonightPlan';
 import { initTonight, startRound, completeRound, currentRound, roundNodes, examEvidence, pickTarget, buildTonightPath } from './tonightPlanModel';
 
+// A free student with questions left unless a test says otherwise. Mocked so
+// the view can be rendered without the provider (and without Firebase).
+const mockUsage = { isPro: true, remaining: Infinity, openUpgrade: jest.fn() };
+jest.mock('../../Contexts/UsageContext/UsageContext', () => ({ useUsageLimit: () => mockUsage }));
+jest.mock('../../Services/FunnelService', () => ({ logFunnelStep: jest.fn(), FUNNEL: { ROUND_OFFER_VIEWED: 'round_offer_viewed' } }));
+const { logFunnelStep } = require('../../Services/FunnelService');
+beforeEach(() => { Object.assign(mockUsage, { isPro: true, remaining: Infinity }); mockUsage.openUpgrade.mockClear(); logFunnelStep.mockClear(); });
+
 const t = (key, opts) => key + (opts ? JSON.stringify(opts) : '');
 const CHECK = [
   { format: 'mcq', topic: 'Cardiac meds', correct: true },
@@ -86,4 +94,35 @@ it('after she stops, the panel offers the next round from the evidence', () => {
   expect(screen.getByText('Your next weakest: 1 of 2 right so far.')).toBeInTheDocument();
   fireEvent.click(screen.getByText('Start round 2'));
   expect(onNextRound).toHaveBeenCalled();
+});
+
+it('a free student sees one line about Pro under a round that improved, and it opens the offer with her numbers', () => {
+  Object.assign(mockUsage, { isPro: false, remaining: 13 });
+  let tonight = startRound(initTonight(CHECK));
+  tonight = completeRound(tonight, examEvidence(exam(true, true, true, true, false)));
+  render(<TonightRoundView mode="result" round={tonight.rounds[0]} nextTarget={pickTarget(tonight)} evidence={tonight.evidence}
+    onNextRound={() => {}} onStop={() => {}} />);
+  expect(screen.getByText(/You are down to 13 free questions\./)).toBeInTheDocument();
+  expect(logFunnelStep).toHaveBeenCalledTimes(1);
+  expect(logFunnelStep).toHaveBeenCalledWith('round_offer_viewed', { round: 1, questionsRemaining: 13, low: true });
+  fireEvent.click(screen.getByText('Keep going without a limit'));
+  expect(mockUsage.openUpgrade).toHaveBeenCalledWith('round', {
+    trigger: 'round_offer', reachedStep: 'tonight_round',
+    round: { name: 'Select-all questions', before: '1 / 3', after: '4 / 5' },
+  });
+});
+
+it('no line about Pro for a Pro student, or under a round that did not improve', () => {
+  let fixed = startRound(initTonight(CHECK));
+  fixed = completeRound(fixed, examEvidence(exam(true, true, true, true, false)));
+  const { unmount } = render(<TonightRoundView mode="result" round={fixed.rounds[0]} onNextRound={() => {}} onStop={() => {}} />);
+  expect(screen.queryByText('Keep going without a limit')).toBeNull();
+  unmount();
+
+  Object.assign(mockUsage, { isPro: false, remaining: 40 });
+  let missed = startRound(initTonight(CHECK));
+  missed = completeRound(missed, examEvidence(exam(false, false, true, false, false)));
+  render(<TonightRoundView mode="result" round={missed.rounds[0]} onNextRound={() => {}} onStop={() => {}} />);
+  expect(screen.queryByText('Keep going without a limit')).toBeNull();
+  expect(logFunnelStep).not.toHaveBeenCalled();
 });

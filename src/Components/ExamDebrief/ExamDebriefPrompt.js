@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import ExamDebriefModal from './ExamDebriefModal';
 import { atTurnLimit } from './examDebriefConversation';
+import { SCORE_STATUS, scoreAnswer, scoreMessage } from './examScoreModel';
 import { EXAM_DEBRIEF_DEV_OPEN } from './devTrigger';
 import {
   findPendingExamDebrief,
@@ -102,6 +103,9 @@ const ExamDebriefPrompt = ({ uid }) => {
   // save: she can send her next message well inside the round trip.
   const savePromiseRef = useRef(null);
   const studyContextRef = useRef(null);
+  // Her answer on the score meter (examScoreModel.js). Typing instead of
+  // using the meter leaves it as `skipped`.
+  const scoreRef = useRef(scoreAnswer(SCORE_STATUS.SKIPPED));
 
   /* `t` is read through a ref, and the open effect below depends on `uid`
      ALONE. react-i18next hands back a new `t` identity when the language
@@ -122,6 +126,7 @@ const ExamDebriefPrompt = ({ uid }) => {
    */
   const openConversation = useCallback((pending) => {
     savePromiseRef.current = null;
+    scoreRef.current = scoreAnswer(SCORE_STATUS.SKIPPED);
     setExam(pending);
     setIsDone(false);
     setIsThinking(false);
@@ -222,7 +227,8 @@ const ExamDebriefPrompt = ({ uid }) => {
         insights,
         messages: transcript,
         signalId: previous?.signalId,
-        locale: i18n.language
+        locale: i18n.language,
+        score: scoreRef.current
       });
       savePromiseRef.current = pending;
       return pending;
@@ -241,7 +247,7 @@ const ExamDebriefPrompt = ({ uid }) => {
       // She has taken part. Whatever happens next, this exam is never raised
       // again — including if she closes the tab mid-answer.
       if (isFirstAnswer && !exam.devPreview) {
-        markExamDebriefHandled(uid, exam, 'answered');
+        markExamDebriefHandled(uid, exam, 'answered', scoreRef.current);
       }
 
       try {
@@ -291,6 +297,18 @@ const ExamDebriefPrompt = ({ uid }) => {
     [messages, exam, uid, i18n.language, persist]
   );
 
+  // The score meter's answer: kept as a number, then said in the conversation
+  // in her words so the tutor responds to it like anything else she tells it.
+  const handleScore = useCallback(
+    (status, value) => {
+      const answer = scoreAnswer(status, value);
+      scoreRef.current = answer;
+      const { key, values } = scoreMessage(answer);
+      handleSend(translateRef.current(key, values));
+    },
+    [handleSend]
+  );
+
   // Closed without saying anything. Recorded as a dismissal rather than left
   // pending: a skip is an answer to "do you want to talk about this", and
   // asking again would be the app arguing with it.
@@ -310,6 +328,7 @@ const ExamDebriefPrompt = ({ uid }) => {
       isThinking={isThinking}
       isDone={isDone}
       onSend={handleSend}
+      onScore={handleScore}
       onDismiss={handleDismiss}
       onClose={handleClose}
     />

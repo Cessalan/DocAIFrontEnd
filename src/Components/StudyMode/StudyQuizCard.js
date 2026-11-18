@@ -288,6 +288,10 @@ const StudyQuizCard = ({ chatId, nodeId, topic, content, savedProgress, isReview
   // Missing questionType still means MCQ, which keeps every saved quiz working.
   const isSata = currentQuestion.questionType === 'sata';
   const isCaseStudy = ['casestudy', 'ordering', 'bowtie'].includes(currentQuestion.questionType);
+
+  // Names this screen for the line about other students, which the select-all
+  // and matrix cards show under their own verdict (PeerLine.js).
+  const peerSurface = practiceMode ? 'chat_quiz' : 'plan_quiz';
   const rationale = currentQuestion.rationale || currentQuestion.justification || '';
   const correctBlurb = currentQuestion.correctBlurb || currentQuestion.correct_blurb || '';
 
@@ -1243,7 +1247,7 @@ const StudyQuizCard = ({ chatId, nodeId, topic, content, savedProgress, isReview
               <MatrixQuestion key={currentQueuePosition + ':' + isReviewRound} quiz={currentQuestion}
                 previousAnswer={practiceMode ? currentQuestion.userSelection : !isReviewRound ? reasoningAnswers[currentQueuePosition] : null}
                 onAnswerSelect={handleComplexAnswer} onNext={handleNextQuestion} viewOnly={viewOnly}
-                isLastQuestion={lastInView} deferFeedback={deferFeedback} />
+                isLastQuestion={lastInView} deferFeedback={deferFeedback} peerSurface={peerSurface} />
             ) : isCaseStudy ? (
               <CaseStudyQuestion key={`${currentQueuePosition}-${isReviewRound}`}
                 tutorPanel={caseStudyTutor} onOpenTutor={onCaseTutor}
@@ -1269,6 +1273,7 @@ const StudyQuizCard = ({ chatId, nodeId, topic, content, savedProgress, isReview
                 isLastQuestion={lastInView}
                 inModal={false}
                 deferFeedback={deferFeedback}
+                peerSurface={peerSurface}
               />
             ) : (
             <>

@@ -248,6 +248,149 @@
   border-color: var(--primary-coral, #e88d7d);
 }
 
+/* ---------- Score meter (ExamScoreMeter.js) ----------
+   Sits on her side of the conversation, under the opener, because what it
+   produces is her answer. Unset until she moves it: no thumb, no fill. */
+
+.exam-score {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+  padding: 14px 16px 12px;
+  border: 1px solid rgba(232, 141, 125, 0.35);
+  border-radius: 16px;
+  --exam-score-accent: var(--primary-coral, #e88d7d);
+  --exam-score-track: rgba(100, 80, 60, 0.12);
+  --exam-score-ink: var(--text-primary, #3d3d3d);
+  --exam-score-muted: var(--text-secondary, #6b6b6b);
+}
+
+.exam-score-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.exam-score-label {
+  font-size: 14.5px;
+  font-weight: 600;
+  color: var(--exam-score-ink);
+}
+
+.exam-score-value {
+  font-size: 26px;
+  font-weight: 600;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--exam-score-accent);
+}
+
+.exam-score-value.is-unset {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--exam-score-muted);
+}
+
+.exam-score-range {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 28px;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.exam-score-range::-webkit-slider-runnable-track {
+  height: 8px;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    var(--exam-score-accent) 0, var(--exam-score-accent) var(--exam-score-fill, 0%),
+    var(--exam-score-track) var(--exam-score-fill, 0%));
+}
+
+.exam-score-range::-moz-range-track {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--exam-score-track);
+}
+
+.exam-score-range::-moz-range-progress {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--exam-score-accent);
+}
+
+.exam-score-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 24px;
+  height: 24px;
+  margin-top: -8px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--exam-score-accent);
+  box-shadow: 0 2px 6px rgba(100, 80, 60, 0.2);
+}
+
+.exam-score-range::-moz-range-thumb {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 2px solid var(--exam-score-accent);
+}
+
+/* Unset: the thumb is there to grab but quiet, and the track shows no fill. */
+.exam-score-range.is-unset::-webkit-slider-thumb { border-color: var(--exam-score-muted); box-shadow: none; }
+.exam-score-range.is-unset::-moz-range-thumb { border-color: var(--exam-score-muted); }
+.exam-score-range.is-unset::-moz-range-progress { background: transparent; }
+
+.exam-score-range:focus-visible {
+  outline: 2px solid var(--exam-score-accent);
+  outline-offset: 4px;
+  border-radius: 8px;
+}
+
+.exam-score-scale {
+  display: flex;
+  justify-content: space-between;
+  margin-top: -6px;
+  font-size: 11px;
+  color: var(--exam-score-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.exam-score-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.exam-score-later {
+  padding: 8px 0;
+  background: none;
+  border: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--exam-score-muted);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.exam-score-later:hover { color: var(--exam-score-ink); }
+
+.exam-score-save:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
 /* ---------- Composer ---------- */
 
 .exam-debrief-composer {
@@ -409,6 +552,19 @@ body.dark-mode .exam-debrief-suggestion {
   border-color: rgba(200, 180, 220, 0.45);
   color: var(--dark-accent-light, #d4c8e8);
 }
+
+body.dark-mode .exam-score {
+  border-color: rgba(200, 180, 220, 0.35);
+  --exam-score-accent: var(--dark-accent, #b8a5d4);
+  --exam-score-track: rgba(255, 255, 255, 0.14);
+  --exam-score-ink: rgba(255, 255, 255, 0.92);
+  --exam-score-muted: rgba(255, 255, 255, 0.6);
+}
+
+/* Separate rules: a browser drops a whole selector list it can't parse, and
+   each engine only knows its own thumb pseudo-element. */
+body.dark-mode .exam-score-range::-webkit-slider-thumb { background: #2a2a2e; }
+body.dark-mode .exam-score-range::-moz-range-thumb { background: #2a2a2e; }
 
 body.dark-mode .exam-debrief-suggestion:hover {
   background: rgba(200, 180, 220, 0.14);

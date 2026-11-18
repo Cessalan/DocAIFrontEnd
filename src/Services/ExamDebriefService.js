@@ -291,7 +291,7 @@ export const nextDebriefMessage = async ({ messages, exam, studyContext, locale 
  * @param {Object} exam    From findPendingExamDebrief.
  * @param {string} status  'answered' | 'dismissed'
  */
-export const markExamDebriefHandled = async (uid, exam, status) => {
+export const markExamDebriefHandled = async (uid, exam, status, score = null) => {
   if (!uid || !exam?.key) return { success: false };
 
   try {
@@ -299,7 +299,10 @@ export const markExamDebriefHandled = async (uid, exam, status) => {
       [`${FIELD}.${exam.key}`]: {
         status,
         day: exam.day || dayKey(exam.date),
-        at: new Date()
+        at: new Date(),
+        // Her result, from the score meter (examScoreModel.js). Kept next to
+        // the exam it belongs to, so the next exam can start from it.
+        ...(score ? { score: score.score, scoreStatus: score.scoreStatus } : {})
       }
     });
     return { success: true };
@@ -325,10 +328,10 @@ export const markExamDebriefHandled = async (uid, exam, status) => {
  * @param {string}   [params.locale]
  * @returns {Promise<{success: boolean, signalId?: string}>}
  */
-export const saveExamDebrief = async ({ exam, insights, messages, signalId, locale }) => {
+export const saveExamDebrief = async ({ exam, insights, messages, signalId, locale, score }) => {
   if (!exam?.key) return { success: false, reason: "missing-exam" };
 
-  const write = buildDebriefWrite({ insights, messages, exam, locale });
+  const write = buildDebriefWrite({ insights, messages, exam, locale, score });
 
   return recordSignal({
     surface: SURFACE.EXAM_DEBRIEF,

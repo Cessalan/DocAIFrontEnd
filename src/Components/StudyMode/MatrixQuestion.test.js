@@ -90,3 +90,13 @@ test('resuming a study quiz restores submitted matrix rows without another perfo
   expect(screen.getByRole('radio', { name: 'Finding 1: Expected' })).toBeChecked();
   expect(onAnswer).not.toHaveBeenCalled();
 });
+
+test('says how other students do on matrix questions once she has answered, never before or under exam conditions', () => {
+  const { unmount } = render(<MatrixQuestion quiz={quiz} />);
+  expect(screen.queryByText('peer.quizMissed')).not.toBeInTheDocument();
+  answer();
+  expect(screen.getByText('peer.quizMissed')).toBeInTheDocument();
+  unmount();
+  render(<MatrixQuestion quiz={quiz} deferFeedback previousAnswer={{ selectedRows: { r0: 'expected', r1: 'unexpected', r2: 'expected' } }} />);
+  expect(screen.queryByText('peer.quizRight')).not.toBeInTheDocument();
+});
